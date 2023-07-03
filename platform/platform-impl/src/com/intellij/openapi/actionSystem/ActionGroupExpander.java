@@ -20,7 +20,7 @@ public interface ActionGroupExpander {
     return ApplicationManager.getApplication().getService(ActionGroupExpander.class);
   }
 
-  boolean allowsFastUpdate(@Nullable Project project, @NotNull String place);
+  boolean allowsFastUpdate(@Nullable Project project, @NotNull ActionGroup group, @NotNull String place);
 
   @NotNull CancellablePromise<List<AnAction>> expandActionGroupAsync(@NotNull PresentationFactory factory,
                                                                      @NotNull DataContext context,

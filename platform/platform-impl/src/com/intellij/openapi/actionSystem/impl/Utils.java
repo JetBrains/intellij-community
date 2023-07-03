@@ -166,9 +166,11 @@ public final class Utils {
                                                                           boolean fastTrack) {
     LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + dumpDataContextClass(context));
     ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction);
-    List<AnAction> actions = !fastTrack ? null : expandActionGroupFastTrack(place, updater, group, group instanceof CompactActionGroup, null);
-    if (actions != null) {
-      return Promises.resolvedCancellablePromise(actions);
+    if (ActionGroupExpander.getInstance().allowsFastUpdate(CommonDataKeys.PROJECT.getData(context), group, place)) {
+      List<AnAction> actions = !fastTrack ? null : expandActionGroupFastTrack(place, updater, group, group instanceof CompactActionGroup, null);
+      if (actions != null) {
+        return Promises.resolvedCancellablePromise(actions);
+      }
     }
     return updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
   }
@@ -231,7 +233,7 @@ public final class Utils {
       if (isContextMenu) {
         ActionUpdater.cancelAllUpdates("context menu requested");
       }
-      if (expander.allowsFastUpdate(project, place) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt")) {
+      if (expander.allowsFastUpdate(project, group, place) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt")) {
         Set<String> missedKeys = new HashSet<>();
         list = expandActionGroupFastTrack(place, updater, group, group instanceof CompactActionGroup, missedKeys::add);
         if (list != null && missedKeys.isEmpty()) {
