@@ -92,6 +92,12 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
     return null;
   }
 
+  /**
+   * Check if the given text starts with an HTML block tag.
+   *
+   * @param text the text to check
+   * @return true if the text starts with an HTML block tag, false otherwise
+   */
   private static boolean startsWithHtmlBlockTag(String text) {
     String startTag = HtmlUtil.getStartTag(text);
     if (startTag == null) return false;
