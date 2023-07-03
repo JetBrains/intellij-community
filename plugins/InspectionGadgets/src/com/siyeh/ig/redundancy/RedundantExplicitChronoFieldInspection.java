@@ -32,16 +32,13 @@ public class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLoca
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
-        PsiMethod method = call.resolveMethod();
-        if (method == null) {
-          return;
-        }
-        String methodName = method.getName();
+        String methodName = call.getMethodExpression().getReferenceName();
         if (!"get".equals(methodName) && !"with".equals(methodName) &&
             !"plus".equals(methodName) && !"minus".equals(methodName)) {
           return;
         }
-        if (!CAN_BE_SIMPLIFIED_MATCHERS.methodMatches(method)) return;
+
+        if (!CAN_BE_SIMPLIFIED_MATCHERS.matches(call)) return;
         int fieldArgumentIndex = 1;
         if ("get".equals(methodName) || "with".equals(methodName)) {
           fieldArgumentIndex = 0;
