@@ -3,6 +3,8 @@ rootProject.name = "mermaid"
 include(":plugin")
 include(":browser:mermaid-api")
 include(":browser:extension")
+include(":examples:test-data")
+includeBuild("examples/extractor")
 
 dependencyResolutionManagement {
   repositories {

@@ -10,12 +10,12 @@ import org.jetbrains.intellij.utils.ArchiveUtils
 import org.jetbrains.intellij.utils.DependenciesDownloader
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.Date
 
 plugins {
   java
   `javascript-binaries`
+  `example-test-data`
   kotlin("jvm")
   id("org.jetbrains.intellij") version "1.13.3"
   id("org.jetbrains.changelog") version "1.3.1"
@@ -33,7 +33,10 @@ dependencies {
   testImplementation("junit:junit:4.13.2")
   testImplementation(platform("org.junit:junit-bom:5.9.3"))
   testImplementation("org.junit.jupiter:junit-jupiter")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+  testImplementation(project(":examples:test-data"))
+  exampleTestDataImplementation(project(":examples:test-data", configurations.exampleTestData))
 }
 
 val generatedGrammarSourcesPath
@@ -151,6 +154,13 @@ tasks {
     jvmArgs = commonJvmArgs
   }
 
+  fun Test.withExampleTestData() {
+    jvmArgumentProviders.add {
+      val path = configurations.exampleTestDataImplementation.get().resolve().single()
+      listOf("-Dexample.test.data.path=$path")
+    }
+  }
+
   val modernTests by registering(Test::class) {
     useJUnitPlatform {
       excludeTags("PreviewTest")
@@ -194,6 +204,7 @@ tasks {
         TestLogEvent.STANDARD_OUT
       )
     }
+    withExampleTestData()
     afterSuite { descriptor, result ->
       if (descriptor.parent == null) {
         logger.lifecycle(result.createResultMessage())
