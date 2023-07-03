@@ -56,11 +56,11 @@ class CopyReferenceActionFilesTest {
   fun `reference to file registered as source root must contain its name`() = runBlocking {
     // CPP-4315 "Edit | Copy Reference" result doesn't contain the file name
     lateinit var dir: VirtualFile
-    lateinit var dir_subfile: VirtualFile
+    lateinit var dirSubFile: VirtualFile
     lateinit var file: VirtualFile
     writeAction {
       dir = rootDir.createChildDirectory(this, "dir")
-      dir_subfile = dir.createChildData(this, "dir_subfile.txt")
+      dirSubFile = dir.createChildData(this, "dir_subfile.txt")
       file = rootDir.createChildData(this, "file.txt")
       PsiTestUtil.addContentRoot(module, rootDir)
       PsiTestUtil.addSourceRoot(module, dir)
@@ -68,7 +68,7 @@ class CopyReferenceActionFilesTest {
     }
     readAction {
       assertEquals("dir", CopyReferenceAction.elementToFqn(psiManager.findDirectory(dir)))
-      assertEquals("dir_subfile.txt", CopyReferenceAction.elementToFqn(psiManager.findFile(dir_subfile)))
+      assertEquals("dir_subfile.txt", CopyReferenceAction.elementToFqn(psiManager.findFile(dirSubFile)))
       assertEquals("file.txt", CopyReferenceAction.elementToFqn(psiManager.findFile(file)))
     }
   }
@@ -77,18 +77,18 @@ class CopyReferenceActionFilesTest {
   fun `reference to file registered as content root must contain its full path`() = runBlocking {
     // IDEA-144300 Copy Reference for source folder/content root copies empty string
     lateinit var dir: VirtualFile
-    lateinit var dir_subfile: VirtualFile
+    lateinit var dirSubFile: VirtualFile
     lateinit var file: VirtualFile
     writeAction {
       dir = rootDir.createChildDirectory(this, "dir")
-      dir_subfile = dir.createChildData(this, "dir_subfile.txt")
+      dirSubFile = dir.createChildData(this, "dir_subfile.txt")
       file = rootDir.createChildData(this, "file.txt")
       PsiTestUtil.addContentRoot(module, dir)
       PsiTestUtil.addContentRoot(module, file)
     }
     readAction {
       assertEquals(dir.getPath(), CopyReferenceAction.elementToFqn(psiManager.findDirectory(dir)))
-      assertEquals("dir_subfile.txt", CopyReferenceAction.elementToFqn(psiManager.findFile(dir_subfile)))
+      assertEquals("dir_subfile.txt", CopyReferenceAction.elementToFqn(psiManager.findFile(dirSubFile)))
       assertEquals(file.getPath(), CopyReferenceAction.elementToFqn(psiManager.findFile(file)))
     }
   }
@@ -97,19 +97,19 @@ class CopyReferenceActionFilesTest {
   fun `reference to file registered as nested content root must contain path from outer most root`() = runBlocking {
     // IDEA-144300 Copy Reference for source folder/content root copies empty string
     lateinit var dir: VirtualFile
-    lateinit var dir_dir: VirtualFile
-    lateinit var dir_dir_file: VirtualFile
+    lateinit var dirDir: VirtualFile
+    lateinit var dirDirFile: VirtualFile
     writeAction {
       dir = rootDir.createChildDirectory(this, "dir")
-      dir_dir = dir.createChildDirectory(this, "dir_dir")
-      dir_dir_file = dir_dir.createChildData(this, "file.txt")
+      dirDir = dir.createChildDirectory(this, "dir_dir")
+      dirDirFile = dirDir.createChildData(this, "file.txt")
       PsiTestUtil.addContentRoot(module, dir)
-      PsiTestUtil.addContentRoot(module, dir_dir)
+      PsiTestUtil.addContentRoot(module, dirDir)
     }
     readAction {
       assertEquals(dir.getPath(), CopyReferenceAction.elementToFqn(psiManager.findDirectory(dir)))
-      assertEquals("dir_dir", CopyReferenceAction.elementToFqn(psiManager.findDirectory(dir_dir)))
-      assertEquals("dir_dir/file.txt", CopyReferenceAction.elementToFqn(psiManager.findFile(dir_dir_file)))
+      assertEquals("dir_dir", CopyReferenceAction.elementToFqn(psiManager.findDirectory(dirDir)))
+      assertEquals("dir_dir/file.txt", CopyReferenceAction.elementToFqn(psiManager.findFile(dirDirFile)))
     }
   }
 
@@ -117,19 +117,19 @@ class CopyReferenceActionFilesTest {
   fun `reference to file under exclude root must contain path from the corresponding content root`() = runBlocking {
     // IDEA-144316 Copy Reference should work for excluded subfolders same way as it works for regular project subdirs
     lateinit var dir: VirtualFile
-    lateinit var dir_dir: VirtualFile
-    lateinit var dir_dir_file: VirtualFile
+    lateinit var dirDir: VirtualFile
+    lateinit var dirDirFile: VirtualFile
     writeAction {
       dir = rootDir.createChildDirectory(this, "dir")
-      dir_dir = dir.createChildDirectory(this, "dir_dir")
-      dir_dir_file = dir_dir.createChildData(this, "file.txt")
+      dirDir = dir.createChildDirectory(this, "dir_dir")
+      dirDirFile = dirDir.createChildData(this, "file.txt")
       PsiTestUtil.addContentRoot(module, dir)
-      PsiTestUtil.addExcludedRoot(module, dir_dir)
+      PsiTestUtil.addExcludedRoot(module, dirDir)
     }
     readAction {
       assertEquals(dir.getPath(), CopyReferenceAction.elementToFqn(psiManager.findDirectory(dir)))
-      assertEquals("dir_dir", CopyReferenceAction.elementToFqn(psiManager.findDirectory(dir_dir)))
-      assertEquals("dir_dir/file.txt", CopyReferenceAction.elementToFqn(psiManager.findFile(dir_dir_file)))
+      assertEquals("dir_dir", CopyReferenceAction.elementToFqn(psiManager.findDirectory(dirDir)))
+      assertEquals("dir_dir/file.txt", CopyReferenceAction.elementToFqn(psiManager.findFile(dirDirFile)))
     }
   }
 }
