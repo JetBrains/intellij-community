@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.containers.ConcurrentIntObjectMap
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.TestOnly
 
 class InlayHintsSinkImpl(val editor: Editor) : InlayHintsSink {
   private val buffer = HintsBuffer()
@@ -43,6 +44,11 @@ class InlayHintsSinkImpl(val editor: Editor) : InlayHintsSink {
 
   internal fun complete(): HintsBuffer {
     return buffer
+  }
+
+  @TestOnly
+  fun reset() {
+    buffer.clear()
   }
 }
 

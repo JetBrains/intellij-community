@@ -17,7 +17,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -45,10 +44,11 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
     if (savedStamp != null && savedStamp == currentStamp) return null
 
     val language = file.language
-    val collectors = getProviders(file, editor).mapNotNull { it.getCollectorWrapperFor(file, editor, language) }
-    val priorityRange: ProperTextRange = HighlightingSessionImpl.getFromCurrentIndicator(file).visibleRange
+    val hintSink = InlayHintsSinkImpl(editor)
+    val collectors = getProviders(file, editor).mapNotNull { it.getCollectorWrapperFor(file, editor, language, hintSink) }
+    val priorityRange = HighlightingSessionImpl.getFromCurrentIndicator(file).visibleRange
 
-    return InlayHintsPass(file, collectors, editor, priorityRange)
+    return InlayHintsPass(file, collectors, editor, priorityRange, hintSink)
   }
 
   companion object {

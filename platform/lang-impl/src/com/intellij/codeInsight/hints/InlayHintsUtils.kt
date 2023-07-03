@@ -44,9 +44,9 @@ internal fun <T : Any> ProviderWithSettings<T>.withSettingsCopy(): ProviderWithS
 
 internal fun <T : Any> ProviderWithSettings<T>.getCollectorWrapperFor(file: PsiFile,
                                                                       editor: Editor,
-                                                                      language: Language): CollectorWithSettings<T>? {
+                                                                      language: Language,
+                                                                      sink: InlayHintsSinkImpl): CollectorWithSettings<T>? {
   val key = provider.key
-  val sink = InlayHintsSinkImpl(editor)
   val collector = provider.getCollectorFor(file, editor, settings, sink) ?: return null
   return CollectorWithSettings(collector, key, language, sink)
 }

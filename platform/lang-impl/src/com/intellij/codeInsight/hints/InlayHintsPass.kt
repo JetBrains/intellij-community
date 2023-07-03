@@ -24,21 +24,19 @@ import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentIntObjectMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.stream.IntStream
 
 class InlayHintsPass(
   private val rootElement: PsiElement,
   private val enabledCollectors: List<CollectorWithSettings<out Any>>,
   private val editor: Editor,
-  private val priorityRange: ProperTextRange
+  private val priorityRange: ProperTextRange,
+  private val sharedSink: InlayHintsSinkImpl,
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true), DumbAware {
-  private var allHints: HintsBuffer? = null
 
   override fun doCollectInformation(progress: ProgressIndicator) {
     if (!HighlightingLevelManager.getInstance(myFile.project).shouldHighlight(myFile)) return
     if (enabledCollectors.isEmpty()) return
-    val buffers = ConcurrentLinkedQueue<HintsBuffer>()
 
     val allDivided = mutableListOf<Divider.DividedElements>()
     progress.checkCanceled()
@@ -71,26 +69,13 @@ class InlayHintsPass(
       throw ProcessCanceledException()
     }
 
-    for (collector in enabledCollectors) {
-      val hints = collector.sink.complete()
-      buffers.add(hints)
-    }
-
-    val iterator = buffers.iterator()
-    if (!iterator.hasNext()) return
-    val allHintsAccumulator = iterator.next()
-    for (hintsBuffer in iterator) {
-      progress.checkCanceled()
-      allHintsAccumulator.mergeIntoThis(hintsBuffer)
-    }
-    allHints = allHintsAccumulator
   }
 
   override fun doApplyInformationToEditor() {
     if (editor !is EditorImpl) return
     val positionKeeper = EditorScrollingPositionKeeper(editor)
     positionKeeper.savePosition()
-    applyCollected(allHints, rootElement, editor)
+    applyCollected(sharedSink.complete(), rootElement, editor)
     positionKeeper.restorePosition(false)
     if (rootElement === myFile) {
       InlayHintsPassFactory.putCurrentModificationStamp(myEditor, myFile)

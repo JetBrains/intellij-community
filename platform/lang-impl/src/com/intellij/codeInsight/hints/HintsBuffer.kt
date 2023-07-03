@@ -5,6 +5,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.editor.Inlay
 import com.intellij.util.containers.ConcurrentIntObjectMap
 import it.unimi.dsi.fastutil.ints.IntSet
+import org.jetbrains.annotations.TestOnly
 
 /**
  * Utility class to accumulate hints. Thread-safe.
@@ -13,12 +14,6 @@ class HintsBuffer {
   val inlineHints: ConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, HorizontalConstraints>>> = ConcurrentCollectionFactory.createConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, HorizontalConstraints>>>()
   internal val blockBelowHints: ConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>> = ConcurrentCollectionFactory.createConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>()
   internal val blockAboveHints: ConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>> = ConcurrentCollectionFactory.createConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>()
-
-  internal fun mergeIntoThis(another: HintsBuffer) {
-    mergeIntoThis(inlineHints, another.inlineHints)
-    mergeIntoThis(blockBelowHints, another.blockBelowHints)
-    mergeIntoThis(blockAboveHints, another.blockAboveHints)
-  }
 
   /**
    * Counts all offsets of given [placement] which are not inside [other]
@@ -43,6 +38,13 @@ class HintsBuffer {
     return getMap(placement).remove(offset)
   }
 
+  @TestOnly
+  fun clear() {
+    inlineHints.clear()
+    blockAboveHints.clear()
+    blockBelowHints.clear()
+  }
+
   @Suppress("UNCHECKED_CAST")
   private fun getMap(placement: Inlay.Placement) : ConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, *>>> {
     return when (placement) {
@@ -51,18 +53,5 @@ class HintsBuffer {
       Inlay.Placement.BELOW_LINE -> blockBelowHints
       Inlay.Placement.AFTER_LINE_END -> TODO()
     } as ConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, *>>>
-  }
-}
-
-private fun <V> mergeIntoThis(one: ConcurrentIntObjectMap<MutableList<V>>, another: ConcurrentIntObjectMap<MutableList<V>>) {
-  for (otherEntry in another.entrySet()) {
-    val otherOffset = otherEntry.key
-    val current = one.get(otherOffset)
-    if (current == null) {
-      one.put(otherOffset, otherEntry.value)
-    }
-    else {
-      current.addAll(otherEntry.value)
-    }
   }
 }
