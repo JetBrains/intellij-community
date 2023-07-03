@@ -320,7 +320,7 @@ final class ActionUpdater {
    */
   @NotNull
   List<AnAction> expandActionGroupWithTimeout(ActionGroup group, boolean hideDisabled) {
-    return expandActionGroupWithTimeout(group, hideDisabled, Registry.intValue("actionSystem.update.timeout.ms"));
+    return expandActionGroupWithTimeout(group, hideDisabled, -1);
   }
 
   /**
@@ -328,6 +328,7 @@ final class ActionUpdater {
    */
   @NotNull
   List<AnAction> expandActionGroupWithTimeout(ActionGroup group, boolean hideDisabled, int timeoutMs) {
+    if (timeoutMs <= 0) timeoutMs = Registry.intValue("actionSystem.update.timeout.ms");
     List<AnAction> result = ProgressIndicatorUtils.withTimeout(timeoutMs, () -> expandActionGroup(group, hideDisabled));
     try {
       return result != null ? result : expandActionGroup(group, hideDisabled, myCheapStrategy);
@@ -612,7 +613,7 @@ final class ActionUpdater {
     }
     else if (isPopup) {
       if (hideDisabledChildren && !(group instanceof CompactActionGroup)) {
-        return Collections.singletonList(new Compact(group));
+        return Collections.singletonList(ActionGroupUtil.forceHideDisabledChildren(group));
       }
       else {
         return Collections.singletonList(group);
@@ -842,13 +843,6 @@ final class ActionUpdater {
                          @NotNull Supplier<? extends T> supplier) {
       String operationNameFull = Utils.operationName(action, operationName, updater.myPlace);
       return updater.callAction(action, operationNameFull, updateThread, supplier);
-    }
-  }
-
-  private static class Compact extends ActionGroupWrapper implements CompactActionGroup {
-
-    Compact(@NotNull ActionGroup action) {
-      super(action);
     }
   }
 

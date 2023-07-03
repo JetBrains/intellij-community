@@ -44,6 +44,17 @@ public final class ActionGroupUtil {
   }
 
   @ApiStatus.Experimental
+  public static @NotNull ActionGroup forceHideDisabledChildren(@NotNull ActionGroup actionGroup) {
+    class Compact extends ActionGroupWrapper implements CompactActionGroup {
+
+      Compact(@NotNull ActionGroup action) {
+        super(action);
+      }
+    }
+    return actionGroup instanceof CompactActionGroup ? actionGroup : new Compact(actionGroup);
+  }
+
+  @ApiStatus.Experimental
   public static @NotNull ActionGroup forceRecursiveUpdateInBackground(@NotNull ActionGroup actionGroup) {
     class MyGroup extends ActionGroup implements ActionUpdateThreadAware.Recursive {
       {
@@ -60,6 +71,6 @@ public final class ActionGroupUtil {
         return new AnAction[] { actionGroup };
       }
     }
-    return new MyGroup();
+    return actionGroup instanceof ActionUpdateThreadAware.Recursive ? actionGroup : new MyGroup();
   }
 }

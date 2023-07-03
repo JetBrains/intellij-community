@@ -440,6 +440,7 @@ class TBPanelActionGroup extends TBPanel {
         myActionGroup,
         myFactory, dataContext,
         ActionPlaces.TOUCHBAR_GENERAL,
+        false,
         Registry.intValue("actionSystem.update.touchbar.timeout.ms"));
       _applyPresentationChanges(actions);
     }

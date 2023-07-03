@@ -10,7 +10,6 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -189,25 +188,19 @@ private val firstUpdateFastTrackUpdateTimeout = 30.seconds.inWholeMilliseconds
 private val useAsyncExpand = System.getProperty("idea.app.menu.async.expand", "false").toBoolean()
 
 internal suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
-                                           menuBar: Component,
+                                           menuBar: JComponent,
                                            frame: JFrame,
                                            presentationFactory: PresentationFactory,
                                            isFirstUpdate: Boolean): List<ActionGroup> {
-  if (!useAsyncExpand) {
+  val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode()
+  if (!useAsyncExpand && !isUnitTestMode) {
     return syncExpandMainActionGroup(mainActionGroup, serviceAsync<ActionManager>(), frame, menuBar, presentationFactory)
   }
-
   try {
     return withContext(CoroutineName("expandMainActionGroup") + Dispatchers.EDT) {
       val targetComponent = serviceAsync<WindowManager>().getFocusedComponent(frame) ?: menuBar
       val dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(targetComponent))
-      val fastTrackTimeout = if (isFirstUpdate) firstUpdateFastTrackUpdateTimeout else Utils.getFastTrackTimeout()
-      Utils.expandActionGroupAsync(/* group = */ mainActionGroup,
-                                   /* presentationFactory = */ presentationFactory,
-                                   /* context = */ dataContext,
-                                   /* place = */ ActionPlaces.MAIN_MENU,
-                                   /* isToolbarAction = */ false,
-                                   /* fastTrackTimeout = */ fastTrackTimeout)
+      Utils.expandActionGroupAsync(mainActionGroup, presentationFactory, dataContext, ActionPlaces.MAIN_MENU, false, isFirstUpdate)
     }.await().filterIsInstance<ActionGroup>()
   }
   catch (e: ProcessCanceledException) {
@@ -226,27 +219,10 @@ private suspend fun syncExpandMainActionGroup(mainActionGroup: ActionGroup,
                                               menuBar: Component,
                                               presentationFactory: PresentationFactory): List<ActionGroup> {
   return subtask("expandMainActionGroup", Dispatchers.EDT) {
-    val children = mainActionGroup.getChildren(null, actionManager)
-    if (children.isEmpty()) {
-      return@subtask emptyList()
-    }
-
     val targetComponent = WindowManager.getInstance().getFocusedComponent(frame) ?: menuBar
     val dataContext = DataManager.getInstance().getDataContext(targetComponent)
-    val list = mutableListOf<ActionGroup>()
-    for (action in children) {
-      if (action !is ActionGroup) {
-        continue
-      }
-
-      val presentation = presentationFactory.getPresentation(action)
-      val e = AnActionEvent(null, dataContext, ActionPlaces.MAIN_MENU, presentation, actionManager, 0)
-      ActionUtil.performDumbAwareUpdate(action, e, false)
-      if (presentation.isVisible) {
-        list.add(action)
-      }
-    }
-    list
+    Utils.expandActionGroupWithTimeout(mainActionGroup, presentationFactory, dataContext, ActionPlaces.MAIN_MENU, false, -1)
+      .filterIsInstance<ActionGroup>()
   }
 }
 

@@ -36,7 +36,6 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.animation.AlphaAnimated;
 import com.intellij.util.animation.AlphaAnimationContext;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
@@ -1315,62 +1314,53 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (forced) myForcedUpdateRequested = true;
     boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
+    ActionGroup adjustedGroup = myHideDisabled ? ActionGroupUtil.forceHideDisabledChildren(myActionGroup) : myActionGroup;
     DataContext dataContext = Utils.wrapDataContext(getDataContext());
-    ActionUpdater updater = new ActionUpdater(myPresentationFactory, dataContext, myPlace, false, true);
     if (Utils.isAsyncDataContext(dataContext) && !isUnitTestMode) {
       CancellablePromise<List<AnAction>> lastUpdate = myLastUpdate;
       myLastUpdate = null;
       if (lastUpdate != null) lastUpdate.cancel();
 
-      updateActionsImplFastTrack(updater);
-
-      boolean forcedActual = forced || myForcedUpdateRequested;
-      CancellablePromise<List<AnAction>> promise = myLastUpdate = updater.expandActionGroupAsync(myActionGroup, myHideDisabled);
-      promise
-        .onSuccess(actions -> {
-          if (myLastUpdate == promise) myLastUpdate = null;
-          actionsUpdated(forcedActual, actions);
-        })
-        .onError(ex -> {
-          if (!(ex instanceof ControlFlowException || ex instanceof CancellationException)) {
-            LOG.error(ex);
-          }
-        });
+      boolean firstTimeFastTrack = !hasVisibleActions() &&
+                                   getComponentCount() == 1 &&
+                                   getClientProperty(SUPPRESS_FAST_TRACK) == null;
+      CancellablePromise<List<AnAction>> promise = myLastUpdate =
+        Utils.expandActionGroupAsync(adjustedGroup, myPresentationFactory, dataContext, myPlace, true, firstTimeFastTrack);
+      if (promise.isSucceeded()) {
+        myLastUpdate = null;
+        List<AnAction> fastActions;
+        try {
+          fastActions = promise.get(0, TimeUnit.MILLISECONDS);
+        }
+        catch (Throwable th) {
+          throw new AssertionError(th);
+        }
+        actionsUpdated(true, fastActions);
+      }
+      else {
+        if (firstTimeFastTrack) {
+          putClientProperty(SUPPRESS_FAST_TRACK, true);
+        }
+        boolean forcedActual = forced || myForcedUpdateRequested;
+        promise
+          .onSuccess(actions -> {
+            if (myLastUpdate == promise) myLastUpdate = null;
+            actionsUpdated(forcedActual, actions);
+          })
+          .onError(ex -> {
+            if (!(ex instanceof ControlFlowException || ex instanceof CancellationException)) {
+              LOG.error(ex);
+            }
+          });
+      }
     }
     else {
       boolean forcedActual = forced || myForcedUpdateRequested;
-      actionsUpdated(forcedActual, updater.expandActionGroupWithTimeout(myActionGroup, myHideDisabled));
+      actionsUpdated(forcedActual, Utils.expandActionGroupWithTimeout(adjustedGroup, myPresentationFactory, dataContext, myPlace, true, -1));
     }
     if (mySecondaryActionsButton != null) {
       mySecondaryActionsButton.update();
       mySecondaryActionsButton.repaint();
-    }
-  }
-
-  private void updateActionsImplFastTrack(@NotNull ActionUpdater updater) {
-    boolean firstTime = myVisibleActions.isEmpty() &&
-                        getComponentCount() == 1 &&
-                        getClientProperty(SUPPRESS_FAST_TRACK) == null;
-    if (!firstTime) {
-      return;
-    }
-
-    long fastTrackTimeout;
-    if (PlatformUtils.isJetBrainsClient()) {
-      fastTrackTimeout = -1;
-    }
-    else if (ActionPlaces.MAIN_TOOLBAR.equals(myPlace) && ExperimentalUI.isNewUI()) {
-      fastTrackTimeout = 5_000;
-    }
-    else {
-      fastTrackTimeout = Utils.getFastTrackTimeout();
-    }
-    List<AnAction> actions = Utils.expandActionGroupFastTrack(updater, myActionGroup, myHideDisabled, null, fastTrackTimeout);
-    if (actions != null) {
-      actionsUpdated(true, actions);
-    }
-    else {
-      putClientProperty(SUPPRESS_FAST_TRACK, true);
     }
   }
 

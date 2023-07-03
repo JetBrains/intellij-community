@@ -154,7 +154,7 @@ public final class Utils {
                                                                           @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place) {
-    return expandActionGroupAsync(group, presentationFactory, context, place, false, getFastTrackTimeout());
+    return expandActionGroupAsync(group, presentationFactory, context, place, false, true);
   }
 
   @ApiStatus.Internal
@@ -163,10 +163,10 @@ public final class Utils {
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place,
                                                                           boolean isToolbarAction,
-                                                                          long fastTrackTimeout) {
+                                                                          boolean fastTrack) {
     LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + dumpDataContextClass(context));
     ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction);
-    List<AnAction> actions = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, null, fastTrackTimeout);
+    List<AnAction> actions = !fastTrack ? null : expandActionGroupFastTrack(place, updater, group, group instanceof CompactActionGroup, null);
     if (actions != null) {
       return Promises.resolvedCancellablePromise(actions);
     }
@@ -174,17 +174,13 @@ public final class Utils {
   }
 
   @ApiStatus.Internal
-  public static long getFastTrackTimeout() {
-    return Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 50);
-  }
-
-  @ApiStatus.Internal
   public static List<AnAction> expandActionGroupWithTimeout(@NotNull ActionGroup group,
                                                             @NotNull PresentationFactory presentationFactory,
                                                             @NotNull DataContext context,
                                                             @NotNull String place,
+                                                            boolean isToolbarAction,
                                                             int timeoutMs) {
-    return new ActionUpdater(presentationFactory, context, place, false, false)
+    return new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction)
       .expandActionGroupWithTimeout(group, group instanceof CompactActionGroup, timeoutMs);
   }
 
@@ -237,7 +233,7 @@ public final class Utils {
       }
       if (expander.allowsFastUpdate(project, place) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt")) {
         Set<String> missedKeys = new HashSet<>();
-        list = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, missedKeys::add, getFastTrackTimeout());
+        list = expandActionGroupFastTrack(place, updater, group, group instanceof CompactActionGroup, missedKeys::add);
         if (list != null && missedKeys.isEmpty()) {
           if (onProcessed != null) onProcessed.run();
           return list;
@@ -307,11 +303,14 @@ public final class Utils {
     });
   }
 
-  static @Nullable List<AnAction> expandActionGroupFastTrack(@NotNull ActionUpdater updater,
-                                                             @NotNull ActionGroup group,
-                                                             boolean hideDisabled,
-                                                             @Nullable Consumer<? super String> missedKeys,
-                                                             long maxTime) {
+  private static @Nullable List<AnAction> expandActionGroupFastTrack(@NotNull String place,
+                                                                     @NotNull ActionUpdater updater,
+                                                                     @NotNull ActionGroup group,
+                                                                     boolean hideDisabled,
+                                                                     @Nullable Consumer<? super String> missedKeys) {
+    boolean mainMenuOrToolbarFirstTime = ExperimentalUI.isNewUI() &&
+                                         (ActionPlaces.MAIN_MENU.equals(place) || ActionPlaces.MAIN_TOOLBAR.equals(place));
+    int maxTime = mainMenuOrToolbarFirstTime ? 5_000 : Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 20);
     if (maxTime < 1) return null;
     BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(updater.asFastUpdateSession(missedKeys, queue::offer));
