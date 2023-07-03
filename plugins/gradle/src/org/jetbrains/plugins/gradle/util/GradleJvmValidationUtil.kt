@@ -56,7 +56,7 @@ fun validateGradleJavaHome(gradleVersion: GradleVersion, javaHome: String?): Jav
   val javaSdkType = ExternalSystemJdkUtil.getJavaSdkType()
   val versionString = javaSdkType.getVersionString(javaHome) ?: return JavaHomeValidationStatus.Invalid
   val javaVersion = JavaVersion.tryParse(versionString) ?: return JavaHomeValidationStatus.Invalid
-  if (!GradleJvmSupportMatrix.isSupported(gradleVersion, versionString)) {
+  if (!GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)) {
     return JavaHomeValidationStatus.Unsupported(javaVersion, gradleVersion)
   }
   return JavaHomeValidationStatus.Success(javaHome)
