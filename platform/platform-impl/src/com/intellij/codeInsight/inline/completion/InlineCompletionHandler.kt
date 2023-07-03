@@ -15,11 +15,9 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
+import com.intellij.util.applyIf
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectIndexed
-import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -28,7 +26,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   private var runningJob: Job? = null
 
   private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
-    return InlineCompletionProvider.extensions().filter { it.isEnabled(event) }.firstOrNull()
+    return InlineCompletionProvider.extensions().firstOrNull { it.isEnabled(event) }
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
@@ -52,7 +50,9 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     runningJob?.cancel()
     runningJob = scope.launch {
       val modificationStamp = request.document.modificationStamp
-      val resultFlow = provider.getProposals(request)
+      val resultFlow = withContext(Dispatchers.IO) {
+        provider.getProposals(request)
+      }
 
       val editor = request.editor
       val offset = request.endOffset
@@ -60,14 +60,8 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
       val inlineState = editor.initOrGetInlineCompletionState()
 
       withContext(Dispatchers.EDT) {
-        resultFlow.let {
-          // In case lookup is shown - request must be only single line, due to lookup render issues
-          if (LookupManager.getActiveLookup(request.editor) != null) {
-            it.takeFirstLine()
-          }
-          else {
-            it
-          }
+        resultFlow.applyIf(LookupManager.getActiveLookup(request.editor) != null) {
+          takeFirstLine()
         }.collectIndexed { index, value ->
           if (index == 0 && modificationStamp != request.document.modificationStamp) {
             cancel()
@@ -102,17 +96,14 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     inlineContext.lastModificationStamp = editor.document.modificationStamp
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private fun Flow<InlineCompletionElement>.takeFirstLine(): Flow<InlineCompletionElement> {
-    var found = false
-    return takeWhile {
-      val value = it.text
-      !found.also {
-        if (value.contains("\n")) found = true
-      }
-    }.mapLatest {
-      it.withText(it.text.takeWhile { c -> c != '\n' })
-    }
+  private fun Flow<InlineCompletionElement>.takeFirstLine() = takeWhileInclusive {
+    it.text.contains("\n")
+  }
+
+  private fun <T> Flow<T>.takeWhileInclusive(predicate: (T) -> Boolean) = transformWhile { value ->
+    emit(value) // the first not matching value will also be emitted
+
+    predicate(value)
   }
 
 

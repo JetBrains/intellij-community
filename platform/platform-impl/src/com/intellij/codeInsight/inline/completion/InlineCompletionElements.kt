@@ -3,7 +3,7 @@ package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -41,8 +41,8 @@ sealed interface InlineCompletionEvent {
    */
   @ApiStatus.Experimental
   class DirectCall(val editor: Editor, val file: PsiFile, val caret: EditorCaret) : InlineCompletionEvent {
-    override fun toRequest(): InlineCompletionRequest? {
-      return InlineCompletionRequest(this, file, editor, editor.document, caret.offset, caret.offset, null)
+    override fun toRequest(): InlineCompletionRequest {
+      return InlineCompletionRequest(this, file, editor, editor.document, caret.offset, caret.offset)
     }
   }
 
@@ -56,9 +56,9 @@ sealed interface InlineCompletionEvent {
       val project = editor.project ?: return null
       if (editor.caretModel.caretCount != 1) return null
 
-      val file = ReadAction.compute<PsiFile, Throwable> { PsiManager.getInstance(project).findFile(virtualFile) }
+      val file = runReadAction { PsiManager.getInstance(project).findFile(virtualFile) } ?: return null
 
-      return InlineCompletionRequest(this, file, editor, event.document, event.offset, event.offset + event.newLength, null)
+      return InlineCompletionRequest(this, file, editor, event.document, event.offset, event.offset + event.newLength)
     }
   }
 
@@ -81,11 +81,12 @@ sealed interface InlineCompletionEvent {
       val project = editor.project ?: return null
       if (editor.caretModel.caretCount != 1) return null
 
-      val file = ReadAction.compute<PsiFile, Throwable> { PsiManager.getInstance(project).findFile(virtualFile) }
+      val (file, offset) = runReadAction {
+        PsiManager.getInstance(project).findFile(virtualFile) to editor.caretModel.offset
+      }
+      if (file == null) return null
 
-      val offset = ReadAction.compute<Int, Throwable> { editor.caretModel.offset }
-
-      return InlineCompletionRequest(this, file, editor, editor.document, offset, offset, null)
+      return InlineCompletionRequest(this, file, editor, editor.document, offset, offset)
     }
   }
 
@@ -106,9 +107,11 @@ sealed interface InlineCompletionEvent {
 
       val virtualFile = editor.virtualFile ?: return null
       val project = editor.project ?: return null
-      val file = ReadAction.compute<PsiFile, Throwable> { PsiManager.getInstance(project).findFile(virtualFile) }
 
-      val offset = ReadAction.compute<Int, Throwable> { editor.caretModel.offset }
+      val (file, offset) = runReadAction {
+        PsiManager.getInstance(project).findFile(virtualFile) to editor.caretModel.offset
+      }
+      if (file == null) return null
 
       return InlineCompletionRequest(this, file, editor, editor.document, offset, offset, item)
     }

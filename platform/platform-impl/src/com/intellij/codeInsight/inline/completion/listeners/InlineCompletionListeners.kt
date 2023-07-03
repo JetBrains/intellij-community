@@ -74,7 +74,7 @@ class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter() {
   )
 
   override fun keyReleased(event: KeyEvent) {
-    if (usedKeys.contains(event.keyCode)) {
+    if (event.keyCode in usedKeys) {
       return
     }
     editor.resetInlineCompletionContext()

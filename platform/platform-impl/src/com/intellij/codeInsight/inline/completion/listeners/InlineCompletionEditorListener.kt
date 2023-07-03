@@ -17,10 +17,10 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 class InlineCompletionEditorListener(scope: CoroutineScope) : EditorFactoryListener {
-  val caretListener = InlineCompletionCaretListener()
-  val focusListener = InlineCompletionFocusListener()
+  private val caretListener = InlineCompletionCaretListener()
+  private val focusListener = InlineCompletionFocusListener()
 
-  val handler = InlineCompletionHandler(scope)
+  private val handler = InlineCompletionHandler(scope)
 
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor

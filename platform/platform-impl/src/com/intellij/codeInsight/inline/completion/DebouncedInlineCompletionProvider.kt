@@ -13,7 +13,7 @@ import kotlin.time.Duration
 @ApiStatus.Experimental
 abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
   private var jobCall: Job? = null
-  abstract val delay: Duration
+  protected abstract val delay: Duration
 
   /**
    * Returns a Flow of InlineCompletionElement objects with debounced proposals for the given InlineCompletionRequest.
