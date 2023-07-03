@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="lucene-sandbox" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-sandbox:9.6.0" />
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-sandbox:9.6.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/9.6.0/lucene-sandbox-9.6.0.jar">
+          <sha256sum>aa240762a4639bf21c599e82c1c6ff16097d6aad619785772db159ed60169b43</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/9.6.0/lucene-sandbox-9.6.0.jar!/" />
     </CLASSES>

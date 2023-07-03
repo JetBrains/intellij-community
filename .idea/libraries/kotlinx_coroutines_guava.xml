@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinx-coroutines-guava" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.7.1" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.7.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-guava/1.7.1/kotlinx-coroutines-guava-1.7.1.jar">
+          <sha256sum>be7ac4726a9d356d03be71c76ceb083e4f4653e2668c0be4af9198e424d7ffd6</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-guava/1.7.1/kotlinx-coroutines-guava-1.7.1.jar!/" />
     </CLASSES>

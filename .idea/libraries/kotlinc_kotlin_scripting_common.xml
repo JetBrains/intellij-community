@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-common" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-common:1.9.20-dev-5455" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-common:1.9.20-dev-5455">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.9.20-dev-5455/kotlin-scripting-common-1.9.20-dev-5455.jar">
+          <sha256sum>b3fcec43e0e7a23428d39d97e4dd814cd86a6306aa19e3be0e84c06eb476f694</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.9.20-dev-5455/kotlin-scripting-common-1.9.20-dev-5455.jar!/" />
     </CLASSES>

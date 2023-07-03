@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="download-pgp-verifier" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.infra:download-pgp-verifier:1.0.2" />
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.infra:download-pgp-verifier:1.0.2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/infra/download-pgp-verifier/1.0.2/download-pgp-verifier-1.0.2.jar">
+          <sha256sum>81110da550181e2f8d90c7161f71fb8e9f8777632e75c37fbed5fbf3a0feacb4</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/infra/download-pgp-verifier/1.0.2/download-pgp-verifier-1.0.2.jar!/" />
     </CLASSES>

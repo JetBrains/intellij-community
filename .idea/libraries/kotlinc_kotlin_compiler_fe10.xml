@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-fe10" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fe10-for-ide:1.9.20-dev-5455" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fe10-for-ide:1.9.20-dev-5455">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/1.9.20-dev-5455/kotlin-compiler-fe10-for-ide-1.9.20-dev-5455.jar">
+          <sha256sum>6a8087e8fac9bc271395381224804214313c4c5c2232bd5760e7628629c5ccaa</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/1.9.20-dev-5455/kotlin-compiler-fe10-for-ide-1.9.20-dev-5455.jar!/" />
     </CLASSES>

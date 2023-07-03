@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="tcServiceMessages" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.teamcity:serviceMessages:2019.1.4" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.teamcity:serviceMessages:2019.1.4">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/teamcity/serviceMessages/2019.1.4/serviceMessages-2019.1.4.jar">
+          <sha256sum>8bfad3bc663424b7143fde7399e278e6c8202e021863937918314cf6e45a1251</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/teamcity/serviceMessages/2019.1.4/serviceMessages-2019.1.4.jar!/" />
     </CLASSES>

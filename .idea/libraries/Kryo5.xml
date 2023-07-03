@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="Kryo5" type="repository">
-    <properties maven-id="com.esotericsoftware.kryo:kryo5:5.5.0" />
+    <properties maven-id="com.esotericsoftware.kryo:kryo5:5.5.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/esotericsoftware/kryo/kryo5/5.5.0/kryo5-5.5.0.jar">
+          <sha256sum>5dab506f91ab06adad1acb5fe904e587c2781593a7930f003e84f6597622f3b2</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/esotericsoftware/kryo/kryo5/5.5.0/kryo5-5.5.0.jar!/" />
     </CLASSES>

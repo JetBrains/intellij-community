@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="automaton" type="repository">
-    <properties maven-id="dk.brics:automaton:1.12-1" />
+    <properties maven-id="dk.brics:automaton:1.12-1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/dk/brics/automaton/1.12-1/automaton-1.12-1.jar">
+          <sha256sum>d75c864362cb9fdb741809c2317a4dcfa7433c9043d773269b4a7b1b1c2234f9</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/dk/brics/automaton/1.12-1/automaton-1.12-1.jar!/" />
     </CLASSES>

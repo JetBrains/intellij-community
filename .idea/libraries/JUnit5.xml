@@ -1,6 +1,21 @@
 <component name="libraryTable">
   <library name="JUnit5" type="repository">
-    <properties maven-id="org.junit.jupiter:junit-jupiter-api:5.9.1" />
+    <properties maven-id="org.junit.jupiter:junit-jupiter-api:5.9.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.9.1/junit-jupiter-api-5.9.1.jar">
+          <sha256sum>5d2fe4d719dffb25a95d77e9c7a34893cbbb1b4cc6c86f2726af7e0fb7035b2f</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar">
+          <sha256sum>58812de60898d976fb81ef3b62da05c6604c18fd4a249f5044282479fc286af2</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.9.1/junit-platform-commons-1.9.1.jar">
+          <sha256sum>a8e82d510bbbce5fe1777b2ecf7bc68401e9ae8327009e029b2db5798403d25e</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar">
+          <sha256sum>b509448ac506d607319f182537f0b35d71007582ec741832a1f111e5b5b70b38</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.9.1/junit-jupiter-api-5.9.1.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar!/" />

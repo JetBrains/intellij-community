@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="rd-text" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-text:2023.2.2" />
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-text:2023.2.2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.2.2/rd-text-2023.2.2.jar">
+          <sha256sum>41b0ba599ce429cd7d91c8e8cd5a7539d002a5afc64f3aabc97d743a7f6b62ff</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.2.2/rd-text-2023.2.2.jar!/" />
     </CLASSES>

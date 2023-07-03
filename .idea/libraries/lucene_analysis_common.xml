@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="lucene-analysis-common" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-analysis-common:9.6.0" />
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-analysis-common:9.6.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/9.6.0/lucene-analysis-common-9.6.0.jar">
+          <sha256sum>f2f0d724c99440f4ab9304c06e7966653d088e872a2bbd709605dff547e5a494</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/9.6.0/lucene-analysis-common-9.6.0.jar!/" />
     </CLASSES>

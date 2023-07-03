@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-stdlib-minimal-for-test" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-stdlib-minimal-for-test-for-ide:1.9.20-dev-5455" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-stdlib-minimal-for-test-for-ide:1.9.20-dev-5455">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.9.20-dev-5455/kotlin-stdlib-minimal-for-test-for-ide-1.9.20-dev-5455.jar">
+          <sha256sum>0aaeafdc18a4718c7e1a68091e366d344cce4937b55875bbd8e6062d8cfce4e7</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.9.20-dev-5455/kotlin-stdlib-minimal-for-test-for-ide-1.9.20-dev-5455.jar!/" />
     </CLASSES>

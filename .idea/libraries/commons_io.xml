@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="commons-io" type="repository">
-    <properties maven-id="commons-io:commons-io:2.11.0" />
+    <properties maven-id="commons-io:commons-io:2.11.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/commons-io/commons-io/2.11.0/commons-io-2.11.0.jar">
+          <sha256sum>961b2f6d87dbacc5d54abf45ab7a6e2495f89b75598962d8c723cea9bc210908</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.11.0/commons-io-2.11.0.jar!/" />
     </CLASSES>

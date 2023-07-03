@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.low-level-api-fir" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:low-level-api-fir-for-ide:1.9.20-dev-5455" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:low-level-api-fir-for-ide:1.9.20-dev-5455">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/1.9.20-dev-5455/low-level-api-fir-for-ide-1.9.20-dev-5455.jar">
+          <sha256sum>4047368b7e4c3a94c10e580fcd5fd6093189b676bfb963b9624ef07c96daab4c</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/1.9.20-dev-5455/low-level-api-fir-for-ide-1.9.20-dev-5455.jar!/" />
     </CLASSES>

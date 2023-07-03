@@ -13,7 +13,13 @@
     <orderEntry type="library" scope="RUNTIME" name="okhttp" level="project" />
     <orderEntry type="module-library">
       <library name="intellij.remoterobot.remote.fixtures" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.intellij.remoterobot:remote-fixtures:0.11.16" />
+        <properties include-transitive-deps="false" maven-id="com.intellij.remoterobot:remote-fixtures:0.11.16">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-fixtures/0.11.16/remote-fixtures-0.11.16.jar">
+              <sha256sum>f7d51a8bda35e72bb4ef01301916b96a793c9f8ddd26474da54c38fa9e8ec2cc</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-fixtures/0.11.16/remote-fixtures-0.11.16.jar!/" />
         </CLASSES>
@@ -32,6 +38,56 @@
     <orderEntry type="module-library">
       <library name="intellij.remoterobot.robot.server.core" type="repository">
         <properties maven-id="com.intellij.remoterobot:robot-server-core:0.11.16">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/remoterobot/robot-server-core/0.11.16/robot-server-core-0.11.16.jar">
+              <sha256sum>7a7b77c25d28059eecc73075198eab5d06b23774ab6e0aab10b1fc9e82f0abbd</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-robot/0.11.16/remote-robot-0.11.16.jar">
+              <sha256sum>f20be85d7ec4ad921b9d14f116b8661ab9e6a1a1df20bf2101c9c532bdd0a513</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.0/slf4j-api-2.0.0.jar">
+              <sha256sum>a223e6df91b84f19d49c5ebc5f5f97c7f4438419f84a52fa05e1cfc6eed38aa9</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.7.10/kotlin-reflect-1.7.10.jar">
+              <sha256sum>187c5e5a588a6ed18c3a41b54df138a5944121bdb396be1c3fa4abee67397955</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/retrofit2/retrofit/2.9.0/retrofit-2.9.0.jar">
+              <sha256sum>e6ea1929c46852f5bec66ab3357da383476cef4e8d1deefdbf195b79cc4d6581</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/3.14.9/okhttp-3.14.9.jar">
+              <sha256sum>2570fab55515cbf881d7a4ceef49fc515490bc027057e666776a2832465aeca0</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okio/okio/1.17.2/okio-1.17.2.jar">
+              <sha256sum>f80ce42d2ffac47ad4c47e1d6f980d604d247ceb1a886705cf4581ab0c9fe2b8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/retrofit2/converter-gson/2.9.0/converter-gson-2.9.0.jar">
+              <sha256sum>32aa206b9a29c9df5eda93a092cfb3b0b9133e232c062baa882f0319f0e79f0e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/mozilla/rhino/1.7.14/rhino-1.7.14.jar">
+              <sha256sum>c9290b0d801bf0dbbbc44338e0f769b7650a0c5d04e6bb1aeb85775c0211b003</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/assertj/assertj-swing-junit/3.17.1/assertj-swing-junit-3.17.1.jar">
+              <sha256sum>e56fea51b7969240460d027a17f1c704b43e4eeca49a8c57206d573da3e30871</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/junit/junit/4.12/junit-4.12.jar">
+              <sha256sum>59721f0805e223d84b90677887d9ff567dc534d7c502ca903c0c2b17f05c116a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar">
+              <sha256sum>66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/assertj/assertj-swing/3.17.1/assertj-swing-3.17.1.jar">
+              <sha256sum>e36445438d72d83cc48015dcb3f14d9a97eaa42c4663a9826db2bb50e4c7713b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/assertj/assertj-core/3.17.2/assertj-core-3.17.2.jar">
+              <sha256sum>d9a978d559d0b52a87f419b3d8f5bb137b97c661f7be2134e0498b454e4b980e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/easytesting/fest-util/1.2.5/fest-util-1.2.5.jar">
+              <sha256sum>7b52f4d3ad41b7ed71f5b6b11833113b7e08326c8ef70d2dedf0b430c7ba5341</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/easytesting/fest-reflect/1.4.1/fest-reflect-1.4.1.jar">
+              <sha256sum>c1ca19fcf0cd3555baf7c2af147c04ad22b4393ab75e5db0284e5170fb554c16</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />

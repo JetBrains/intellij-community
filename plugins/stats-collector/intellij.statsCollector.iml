@@ -17,7 +17,13 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module-library">
       <library name="completion-log-events" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-log-events:0.0.3" />
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-log-events:0.0.3">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-log-events/0.0.3/completion-log-events-0.0.3.jar">
+              <sha256sum>f6f453ba3dc824d16ae0911e403dcde8e18e0ea7406c91e2832e8b6248a1f404</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-log-events/0.0.3/completion-log-events-0.0.3.jar!/" />
         </CLASSES>

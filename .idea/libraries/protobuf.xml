@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="protobuf" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.google.protobuf:protobuf-java:3.19.6" />
+    <properties include-transitive-deps="false" maven-id="com.google.protobuf:protobuf-java:3.19.6">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.19.6/protobuf-java-3.19.6.jar">
+          <sha256sum>6a9a2dff91dcf71f85be71ae971f6164b5a631dcd34bff08f0618535ca44ad02</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.19.6/protobuf-java-3.19.6.jar!/" />
     </CLASSES>

@@ -19,7 +19,13 @@
     <orderEntry type="module" module-name="intellij.completionMlRanking" />
     <orderEntry type="module-library">
       <library name="completion-ranking-kotlin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-kotlin:0.3.5" />
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-kotlin:0.3.5">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.3.5/completion-ranking-kotlin-0.3.5.jar">
+              <sha256sum>d410d83df200f3b9df5992c2653bbe2bff528a9bc9463cc4cacc644b5274029a</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.3.5/completion-ranking-kotlin-0.3.5.jar!/" />
         </CLASSES>

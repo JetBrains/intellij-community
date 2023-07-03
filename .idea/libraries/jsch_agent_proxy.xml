@@ -1,6 +1,26 @@
 <component name="libraryTable">
   <library name="jsch-agent-proxy" type="repository">
     <properties maven-id="com.jcraft:jsch.agentproxy.connector-factory:0.0.9">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.connector-factory/0.0.9/jsch.agentproxy.connector-factory-0.0.9.jar">
+          <sha256sum>30fffe206fc598b464b255ae0300b1088fb9b47501e0266831c0167d36639884</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.core/0.0.9/jsch.agentproxy.core-0.0.9.jar">
+          <sha256sum>0ccda6cd8ec515bee1fef22d7737b52ac52d1c64c075d4d988136b60125a1eff</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.usocket-jna/0.0.9/jsch.agentproxy.usocket-jna-0.0.9.jar">
+          <sha256sum>a5a0f8d3c1c5fb2df2abc4cb68d79b38e71fb37fc2a84d898d2f775150f43a5f</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.usocket-nc/0.0.9/jsch.agentproxy.usocket-nc-0.0.9.jar">
+          <sha256sum>eab73aaf832a88c39c7e86559cacc6e7938948ce6f8e8c0e44811ef062ac9e63</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.sshagent/0.0.9/jsch.agentproxy.sshagent-0.0.9.jar">
+          <sha256sum>10a27a381f10b5efc33acd4f4200dda9fc9e70d304c8aad52e713064ee6f4655</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.pageant/0.0.9/jsch.agentproxy.pageant-0.0.9.jar">
+          <sha256sum>737ad86ce82b56152f4f463fc00fb5b4b1dab9dab095e356bcc488c49cfc32a8</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="net.java.dev.jna:jna" />
         <dependency maven-id="net.java.dev.jna:jna-platform" />

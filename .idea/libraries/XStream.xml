@@ -1,6 +1,18 @@
 <component name="libraryTable">
   <library name="XStream" type="repository">
-    <properties maven-id="com.thoughtworks.xstream:xstream:1.4.20" />
+    <properties maven-id="com.thoughtworks.xstream:xstream:1.4.20">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.20/xstream-1.4.20.jar">
+          <sha256sum>87df0f0be57c92037d0110fbb225a30b651702dc275653d285afcfef31bc2e81</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar">
+          <sha256sum>aeeee23a3303d811bca8790ea7f25b534314861c03cff36dafdcc2180969eb97</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar">
+          <sha256sum>34e08ee62116071cbb69c0ed70d15a7a5b208d62798c59f2120bb8929324cb63</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.20/xstream-1.4.20.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar!/" />

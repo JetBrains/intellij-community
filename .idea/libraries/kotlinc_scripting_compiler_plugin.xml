@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.scripting-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:scripting-compiler-plugin-for-ide:1.9.20-dev-5455" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:scripting-compiler-plugin-for-ide:1.9.20-dev-5455">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/1.9.20-dev-5455/scripting-compiler-plugin-for-ide-1.9.20-dev-5455.jar">
+          <sha256sum>13e97bc228b2409a2f8691a6810c5a5bd20450f5eb757326df619ffafc78c55b</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/1.9.20-dev-5455/scripting-compiler-plugin-for-ide-1.9.20-dev-5455.jar!/" />
     </CLASSES>

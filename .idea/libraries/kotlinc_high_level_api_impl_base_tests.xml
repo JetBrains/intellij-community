@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.high-level-api-impl-base-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-impl-base-tests-for-ide:1.9.20-dev-5455" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-impl-base-tests-for-ide:1.9.20-dev-5455">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/1.9.20-dev-5455/high-level-api-impl-base-tests-for-ide-1.9.20-dev-5455.jar">
+          <sha256sum>44eda4351becc3eac489d7040d6f3a8b8b9d120a72934e83e2c45272577e877d</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/1.9.20-dev-5455/high-level-api-impl-base-tests-for-ide-1.9.20-dev-5455.jar!/" />
     </CLASSES>

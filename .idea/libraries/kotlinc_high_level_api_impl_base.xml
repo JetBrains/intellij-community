@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.high-level-api-impl-base" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-impl-base-for-ide:1.9.20-dev-5455" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-impl-base-for-ide:1.9.20-dev-5455">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-for-ide/1.9.20-dev-5455/high-level-api-impl-base-for-ide-1.9.20-dev-5455.jar">
+          <sha256sum>718c75be6ded485a244be9e8f4dde44d96636c404694bdc4914aef2e72c42402</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-for-ide/1.9.20-dev-5455/high-level-api-impl-base-for-ide-1.9.20-dev-5455.jar!/" />
     </CLASSES>

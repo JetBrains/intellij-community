@@ -1,6 +1,44 @@
 <component name="libraryTable">
   <library name="maven-resolver-provider" type="repository">
     <properties maven-id="org.apache.maven:maven-resolver-provider:3.8.5">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-resolver-provider/3.8.5/maven-resolver-provider-3.8.5.jar">
+          <sha256sum>4b9f827efb393696431978dc0354651f1a95d4c52ba07c92d830efe5dc9b1012</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/3.8.5/maven-model-3.8.5.jar">
+          <sha256sum>7c9eeb30ac1941ea9bdf76c08c162ed98c005913e5bff66de3f1027a304546dc</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/3.8.5/maven-model-builder-3.8.5.jar">
+          <sha256sum>6bcd688b4700bc0d9046c531c316e75674f53b345d4432d6a7f62812b2424bef</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1.26/plexus-interpolation-1.26.jar">
+          <sha256sum>b3b5412ce17889103ea564bcdfcf9fb3dfa540344ffeac6b538a73c9d7182662</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.8.5/maven-artifact-3.8.5.jar">
+          <sha256sum>91172bc294d6eab02fc9f45f4ea01fd0e418962d128cf489abea7b6957d988ee</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/3.8.5/maven-builder-support-3.8.5.jar">
+          <sha256sum>a205eaa76609ae0039bf38fe9a9c024c646eded05d176effbef524f04a2c2761</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/eclipse/sisu/org.eclipse.sisu.inject/0.3.5/org.eclipse.sisu.inject-0.3.5.jar">
+          <sha256sum>c5994010bcdce1d2bd603a4d50c47191ddbd7875d1157b23aaa26d33c82fda13</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/3.8.5/maven-repository-metadata-3.8.5.jar">
+          <sha256sum>24d89a1b23dc0427ac67895a741802fd23897bdf135d87fe586d718b38a3e924</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-api/1.6.3/maven-resolver-api-1.6.3.jar">
+          <sha256sum>d0b28ed944058ba4f9be4b54c25d6d5269cc4f3f3c49aa450d4dc2f7e0d552f6</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-spi/1.6.3/maven-resolver-spi-1.6.3.jar">
+          <sha256sum>17441a39045ac19bc4a8068fb7284facebf6337754bf2bf8f26a76b5f98ed108</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-util/1.6.3/maven-resolver-util-1.6.3.jar">
+          <sha256sum>cdcad9355b625743f40e4cead9a96353404e010c39c808d23b044be331afa251</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-impl/1.6.3/maven-resolver-impl-1.6.3.jar">
+          <sha256sum>17aaebe6e3e59df8cb5b4ec210196f7084637312b9bc4ff14cb77ad1ae3c381b</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="org.apache.commons:commons-lang3" />
         <dependency maven-id="org.codehaus.plexus:plexus-utils" />

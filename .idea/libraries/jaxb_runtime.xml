@@ -1,6 +1,23 @@
 <component name="libraryTable">
   <library name="jaxb-runtime" type="repository">
     <properties maven-id="org.glassfish.jaxb:jaxb-runtime:2.3.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/glassfish/jaxb/jaxb-runtime/2.3.1/jaxb-runtime-2.3.1.jar">
+          <sha256sum>45fecfa5c8217ce1f3652ab95179790ec8cc0dec0384bca51cbeb94a293d9f2f</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/glassfish/jaxb/txw2/2.3.1/txw2-2.3.1.jar">
+          <sha256sum>34975dde1c6920f1a39791142235689bc3cd357e24d05edd8ff93b885bd68d60</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/sun/istack/istack-commons-runtime/3.0.7/istack-commons-runtime-3.0.7.jar">
+          <sha256sum>6443e10ba2e259fb821d9b6becf10db5316285fc30c53cec9d7b19a3877e7fdf</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jvnet/staxex/stax-ex/1.8/stax-ex-1.8.jar">
+          <sha256sum>95b05d9590af4154c6513b9c5dc1fb2e55b539972ba0a9ef28e9a0c01d83ad77</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/sun/xml/fastinfoset/FastInfoset/1.2.15/FastInfoset-1.2.15.jar">
+          <sha256sum>785861db11ca1bd0d1956682b974ad73eb19cd3e01a4b3fa82d62eca97210aec</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="javax.activation:javax.activation-api" />
         <dependency maven-id="javax.xml.bind:jaxb-api" />

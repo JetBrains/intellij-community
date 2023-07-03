@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-fir" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fir-for-ide:1.9.20-dev-5455" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fir-for-ide:1.9.20-dev-5455">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/1.9.20-dev-5455/kotlin-compiler-fir-for-ide-1.9.20-dev-5455.jar">
+          <sha256sum>cab21e924889eb86f73f4cc6f0bcd2e29b5037000c5ad25d32491d1ff9511ae4</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/1.9.20-dev-5455/kotlin-compiler-fir-for-ide-1.9.20-dev-5455.jar!/" />
     </CLASSES>

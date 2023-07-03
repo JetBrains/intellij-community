@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="rd-framework" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-framework:2023.2.2" />
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-framework:2023.2.2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2023.2.2/rd-framework-2023.2.2.jar">
+          <sha256sum>1ba96a7a60fabd476c8ff1a04d8777ec67392134a807b571a21d1cd73f9e48c0</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2023.2.2/rd-framework-2023.2.2.jar!/" />
     </CLASSES>

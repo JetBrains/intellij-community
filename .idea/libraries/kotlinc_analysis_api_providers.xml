@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.analysis-api-providers" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-providers-for-ide:1.9.20-dev-5455" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-providers-for-ide:1.9.20-dev-5455">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-providers-for-ide/1.9.20-dev-5455/analysis-api-providers-for-ide-1.9.20-dev-5455.jar">
+          <sha256sum>fa57d9e567d17165c2c891cdf69e38f3714eb74049977d4a3d4acedf50b05f64</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-providers-for-ide/1.9.20-dev-5455/analysis-api-providers-for-ide-1.9.20-dev-5455.jar!/" />
     </CLASSES>
