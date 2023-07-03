@@ -17,7 +17,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil.SelectableTemplateElement
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil.createNavigatableButtonWithPopup
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil.createSettingsPresentation
@@ -125,7 +125,7 @@ class KotlinVariableInplaceIntroducer(
 
         val result = super.buildTemplateAndStart(refs, stringUsages, scope, containingFile)
         val variable = addedVariable
-        val templateState = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor))
+        val templateState = TemplateManagerImpl.getTemplateState(InjectedLanguageEditorUtil.getTopLevelEditor(myEditor))
         if (templateState != null && variable?.typeReference != null) {
             templateState.addTemplateStateListener(createTypeReferencePostprocessor(variable))
         }
@@ -182,7 +182,7 @@ class KotlinVariableInplaceIntroducer(
 
     }
 
-    override fun getComponent() = myWholePanel
+    override fun getComponent(): JPanel? = myWholePanel
 
     override fun performIntroduce() {
         val newName = inputName ?: return
