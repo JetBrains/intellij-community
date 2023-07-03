@@ -382,3 +382,10 @@ fun getArgumentNameIfCanBeUsedForCalls(argument: KtValueArgument, resolvedCall: 
 
     return valueParameterSymbol.name
 }
+
+val KtIfExpression.branches: List<KtExpression?> get() = ifBranchesOrThis()
+
+private fun KtExpression.ifBranchesOrThis(): List<KtExpression?> {
+    if (this !is KtIfExpression) return listOf(this)
+    return listOf(then) + `else`?.ifBranchesOrThis().orEmpty()
+}
