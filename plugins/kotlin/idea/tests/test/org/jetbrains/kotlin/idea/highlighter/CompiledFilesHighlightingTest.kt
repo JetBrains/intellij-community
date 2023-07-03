@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.psi.PsiManager
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.TestDataPath
@@ -15,7 +16,9 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.io.URLUtil
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.jvmDecompiler.KotlinBytecodeDecompilerTask
 import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.runner.RunWith
 import java.io.File
@@ -40,7 +43,18 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
         doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlibNative)
     }
 
-    private fun doTestWithLibraryFile(libraryFile: File) {
+    @TestMetadata("kotlin/annotations/OptIn.kt")
+    fun testDecompiledCodeKotlinAnnotationsOptInKt() {
+        withLibrary(TestKotlinArtifacts.kotlinStdlib) {
+            doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlibCommonSources) {
+                val file = PsiManager.getInstance(project).findFile(it) ?: error("unable to locate PSI for $it")
+                val ktFile = file as? KtFile ?: error("file expected to be KtFile")
+                KotlinBytecodeDecompilerTask(ktFile).generateDecompiledVirtualFile() ?: error("unable to generate decompiled file")
+            }
+        }
+    }
+
+    private fun doTestWithLibraryFile(libraryFile: File, openFileAction: (VirtualFile) -> VirtualFile = { it }) {
         val libraryVirtualFile =
             if (libraryFile.extension == "jar") {
                 StandardFileSystems.jar().findFileByPath(libraryFile.absolutePath + URLUtil.JAR_SEPARATOR)
@@ -51,13 +65,20 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
         for (childName in fileName().split("/")) {
             virtualFile = virtualFile.findChild(childName) ?: error("unable to locate $childName in $virtualFile")
         }
+        withLibrary(libraryFile) {
+            val fileToOpen = openFileAction(virtualFile)
+            myFixture.openFileInEditor(fileToOpen)
+            doTest()
+        }
+    }
+
+    private fun withLibrary(libraryFile: File, block: () -> Unit) {
         val libraryName = "library ${libraryFile.name}"
         ConfigLibraryUtil.addLibrary(module, libraryName) {
             addRoot(libraryFile, OrderRootType.CLASSES)
         }
         try {
-            myFixture.openFileInEditor(virtualFile)
-            doTest()
+            block()
         } finally {
             ConfigLibraryUtil.removeLibrary(module, libraryName)
         }
@@ -68,7 +89,7 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
         try {
             withCustomCompilerOptions(fileText, project, module) {
                 (myFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(false)
-                val data = ExpectedHighlightingData(DocumentImpl(fileText), true, true, true, true)
+                val data = ExpectedHighlightingData(DocumentImpl(fileText), true, true, true)
                 data.init()
                 (myFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(data)
             }
