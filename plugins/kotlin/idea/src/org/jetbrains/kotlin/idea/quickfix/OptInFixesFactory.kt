@@ -4,14 +4,16 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.resolveClassByFqName
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Companion.asKtClass
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
@@ -22,9 +24,7 @@ import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.resolve.constants.KClassValue
@@ -38,35 +38,24 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * The logic for adding OptIn to the entire file or as a compiler argument is in [OptInFileLevelFixesFactory]
  */
 internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
-    override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
-        val element = diagnostic.psiElement
-        val containingDeclaration: KtDeclaration = element.getParentOfTypesAndPredicate(
-            true,
-            KtDeclarationWithBody::class.java,
-            KtClassOrObject::class.java,
-            KtProperty::class.java,
-            KtTypeAlias::class.java
-        ) {
-            !KtPsiUtil.isLocal(it)
-        } ?: return emptyList()
+    private data class CandidateData(val element: KtDeclaration, val kind: AddAnnotationFix.Kind)
 
+    override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
+        val element = diagnostic.psiElement.findParentOfType<KtElement>(strict = false) ?: return emptyList()
         val annotationFqName = OptInFixesUtils.annotationFqName(diagnostic) ?: return emptyList()
-        val moduleDescriptor = containingDeclaration.resolveToDescriptorIfAny()?.module ?: return emptyList()
+        val moduleDescriptor = element.getResolutionFacade().moduleDescriptor
         val annotationClassDescriptor =
             moduleDescriptor.resolveClassByFqName(annotationFqName, NoLookupLocation.FROM_IDE) ?: return emptyList()
 
         val applicableTargets = AnnotationChecker.applicableTargetSet(annotationClassDescriptor)
-        val context = when (element) {
-            is KtElement -> element.analyze()
-            else -> containingDeclaration.analyze()
-        }
-
+        val context = element.analyze()
         val isOverrideError = diagnostic.factory == OPT_IN_OVERRIDE_ERROR || diagnostic.factory == OPT_IN_OVERRIDE
         val optInFqName = OptInFixesUtils.optInFqName(moduleDescriptor)
 
         val result = mutableListOf<IntentionAction>()
 
-        fun collectPropagateOptInAnnotationFix(targetElement: KtDeclaration, kind: AddAnnotationFix.Kind) {
+        fun collectPropagateOptInAnnotationFix(targetElement: KtElement, kind: AddAnnotationFix.Kind) {
+            if (targetElement !is KtDeclaration || KtPsiUtil.isLocal(targetElement)) return
             val elementDescriptor = targetElement.toDescriptor() as? ClassDescriptor
             val actualTargetList = AnnotationChecker.getDeclarationSiteActualTargetList(targetElement, elementDescriptor, context)
             if (actualTargetList.none { it in applicableTargets }) return
@@ -88,35 +77,55 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
         }
 
         fun collectUseOptInAnnotationFix(targetElement: KtDeclaration, kind: AddAnnotationFix.Kind) {
-            val existingAnnotationEntry = targetElement.findAnnotation(optInFqName)?.createSmartPointer()
+            val existingAnnotationEntry = (targetElement as? KtAnnotated)?.findAnnotation(optInFqName)?.createSmartPointer()
 
             val quickFix =
-                if (isOverrideError) UseOptInAnnotationFix(
-                    targetElement,
-                    optInFqName,
-                    kind,
-                    annotationFqName,
-                    existingAnnotationEntry
-                )
+                if (isOverrideError) UseOptInAnnotationFix(targetElement, optInFqName, kind, annotationFqName, existingAnnotationEntry)
                 else HighPriorityUseOptInAnnotationFix(targetElement, optInFqName, kind, annotationFqName, existingAnnotationEntry)
 
             result.add(quickFix)
         }
 
-        val kind = if (containingDeclaration is KtConstructor<*>) AddAnnotationFix.Kind.Constructor
-        else AddAnnotationFix.Kind.Declaration(containingDeclaration.name)
-
-        collectPropagateOptInAnnotationFix(containingDeclaration, kind)
-        collectUseOptInAnnotationFix(containingDeclaration, kind)
-
-        val containingClassOrObject = containingDeclaration.containingClassOrObject
-        if (containingDeclaration is KtCallableDeclaration && containingClassOrObject != null) {
-            val kind1 = AddAnnotationFix.Kind.ContainingClass(containingClassOrObject.name)
-            collectPropagateOptInAnnotationFix(containingClassOrObject, kind1)
-            collectUseOptInAnnotationFix(containingClassOrObject, kind1)
+        val candidates = element.collectCandidates()
+        candidates.forEach { (targetElement, kind) ->
+            collectPropagateOptInAnnotationFix(targetElement, kind)
+            collectUseOptInAnnotationFix(targetElement, kind)
         }
 
         return result
+    }
+
+    private fun PsiElement.collectCandidates(): List<CandidateData> {
+        val result = mutableListOf<CandidateData>()
+
+        val containingDeclaration: KtDeclaration = this.getParentOfTypesAndPredicate(
+            strict = false,
+            KtDeclarationWithBody::class.java,
+            KtClassOrObject::class.java,
+            KtProperty::class.java,
+            KtTypeAlias::class.java
+        ) {
+            !KtPsiUtil.isLocal(it)
+        } ?: return emptyList()
+
+        val containingDeclarationCandidate = containingDeclaration.findContainingDeclarationCandidate()
+        result.add(containingDeclarationCandidate)
+        if (containingDeclaration is KtCallableDeclaration) containingDeclaration.findContainingClassOrObjectCandidate()
+            ?.let { result.add(it) }
+
+        return result
+    }
+
+    private fun KtDeclaration.findContainingDeclarationCandidate(): CandidateData {
+        val kind = if (this is KtConstructor<*>) AddAnnotationFix.Kind.Constructor
+        else AddAnnotationFix.Kind.Declaration(name)
+
+        return CandidateData(this, kind)
+    }
+
+    private fun KtDeclaration.findContainingClassOrObjectCandidate(): CandidateData? {
+        val containingClassOrObject = if (this is KtClassOrObject) this else this.containingClassOrObject ?: return null
+        return CandidateData(containingClassOrObject, AddAnnotationFix.Kind.ContainingClass(containingClassOrObject.name))
     }
 
     private fun KtDeclaration.isSubclassOptPropagateApplicable(annotationFqName: FqName): Boolean {
