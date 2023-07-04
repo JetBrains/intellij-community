@@ -19,6 +19,7 @@ import com.intellij.codeInsight.JavaCodeInsightTestCase
 import com.intellij.ide.actions.CopyReferenceAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.JavaModuleType
+import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
@@ -79,6 +80,25 @@ class CopyReferenceActionFilesTest extends JavaCodeInsightTestCase {
     assertEquals("dir", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir)))
     assertEquals("dir_subfile.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(dir_subfile)))
     assertEquals("file.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(file)))
+  }
+  
+  void testCopyFile_UnderNonJavaSourceRootMustIncludePathFromContentRoot() throws Exception {
+    VirtualFile srcRoot
+    VirtualFile file
+
+    ApplicationManager.application.runWriteAction(new Runnable() {
+      @Override
+      void run() {
+        getModule().setModuleType(ModuleTypeId.WEB_MODULE)
+        srcRoot = additionalRoot.createChildDirectory(this, "src")
+        file = srcRoot.createChildData(this, "file.txt")
+
+        PsiTestUtil.addContentRoot(getModule(), additionalRoot)
+        PsiTestUtil.addSourceRoot(getModule(), srcRoot)
+      }
+    })
+
+    assertEquals("src/file.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(file)))
   }
 
   void testCopyFile_RegisteredAsContentRoot_ShouldContainItsFullPath() throws Exception {
