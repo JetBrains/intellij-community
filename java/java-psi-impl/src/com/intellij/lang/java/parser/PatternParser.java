@@ -64,19 +64,7 @@ public class PatternParser {
   }
 
   private PsiBuilder.@NotNull Marker parsePattern(final PsiBuilder builder, boolean expectVar) {
-    PsiBuilder.Marker guardPattern = builder.mark();
-    PsiBuilder.Marker primaryPattern = parsePrimaryPattern(builder, expectVar);
-    if (builder.getTokenType() != JavaTokenType.ANDAND) {
-      guardPattern.drop();
-      return primaryPattern;
-    }
-    builder.advanceLexer();
-    PsiBuilder.Marker guardingExpression = myParser.getExpressionParser().parseConditionalAndForbiddingLambda(builder);
-    if (guardingExpression == null) {
-      error(builder, JavaPsiBundle.message("expected.expression"));
-    }
-    done(guardPattern, JavaElementType.GUARDED_PATTERN);
-    return guardPattern;
+    return parsePrimaryPattern(builder, expectVar);
   }
 
   PsiBuilder.@NotNull Marker parsePrimaryPattern(final PsiBuilder builder, boolean expectVar) {

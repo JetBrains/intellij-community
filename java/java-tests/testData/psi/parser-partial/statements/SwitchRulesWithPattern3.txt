@@ -3,43 +3,31 @@ PsiJavaFile:SwitchRulesWithPattern3.java
     PsiKeyword:case('case')
     PsiWhiteSpace(' ')
     PsiCaseLabelElementList
-      PsiGuardedPattern
-        PsiParenthesizedPattern
-          PsiJavaToken:LPARENTH('(')
-          PsiGuardedPattern
-            PsiTypeTestPattern
-              PsiPatternVariable:i
-                PsiModifierList:
-                  <empty list>
-                PsiTypeElement:Integer
-                  PsiJavaCodeReferenceElement:Integer
-                    PsiIdentifier:Integer('Integer')
-                    PsiReferenceParameterList
-                      <empty list>
-                PsiWhiteSpace(' ')
-                PsiIdentifier:i('i')
-            PsiWhiteSpace(' ')
-            PsiJavaToken:ANDAND('&&')
-            PsiWhiteSpace(' ')
-            PsiBinaryExpression:i > 10
-              PsiReferenceExpression:i
+      PsiPatternGuard
+        PsiTypeTestPattern
+          PsiPatternVariable:when
+            PsiModifierList:
+              <empty list>
+            PsiTypeElement:A
+              PsiJavaCodeReferenceElement:A
+                PsiIdentifier:A('A')
                 PsiReferenceParameterList
                   <empty list>
-                PsiIdentifier:i('i')
-              PsiWhiteSpace(' ')
-              PsiJavaToken:GT('>')
-              PsiWhiteSpace(' ')
-              PsiLiteralExpression:10
-                PsiJavaToken:INTEGER_LITERAL('10')
-          PsiJavaToken:RPARENTH(')')
+            PsiWhiteSpace(' ')
+            PsiIdentifier:when('when')
         PsiWhiteSpace(' ')
-        PsiJavaToken:ANDAND('&&')
+        PsiKeyword:when('when')
         PsiWhiteSpace(' ')
-        PsiMethodCallExpression:boolExpr()
-          PsiReferenceExpression:boolExpr
+        PsiMethodCallExpression:when.foo()
+          PsiReferenceExpression:when.foo
+            PsiReferenceExpression:when
+              PsiReferenceParameterList
+                <empty list>
+              PsiIdentifier:when('when')
+            PsiJavaToken:DOT('.')
             PsiReferenceParameterList
               <empty list>
-            PsiIdentifier:boolExpr('boolExpr')
+            PsiIdentifier:foo('foo')
           PsiExpressionList
             PsiJavaToken:LPARENTH('(')
             PsiJavaToken:RPARENTH(')')
@@ -49,5 +37,4 @@ PsiJavaFile:SwitchRulesWithPattern3.java
     PsiBlockStatement
       PsiCodeBlock
         PsiJavaToken:LBRACE('{')
-        PsiWhiteSpace(' ')
         PsiJavaToken:RBRACE('}')
