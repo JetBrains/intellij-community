@@ -215,7 +215,6 @@ object CommunityRepositoryModules {
     plugin("intellij.terminal") { spec ->
       spec.withResource("resources/zsh/.zshenv", "zsh")
       spec.withResource("resources/zsh/hooks.zsh", "zsh")
-      spec.withResource("resources/pwsh/pwsh.ps1", "pwsh")
       spec.withResource("resources/shell-integrations", "shell-integrations")
     },
     plugin("intellij.emojipicker") { spec ->
