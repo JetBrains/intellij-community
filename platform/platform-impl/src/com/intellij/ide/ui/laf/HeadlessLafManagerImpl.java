@@ -95,6 +95,12 @@ final class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
+  public void setRememberSchemeForLaf(boolean rememberSchemeForLaf) { }
+
+  @Override
+  public void rememberSchemeForLaf(@NotNull String schemeName) { }
+
+  @Override
   public void addLafManagerListener(@NotNull LafManagerListener listener) { }
 
   @Override
