@@ -279,7 +279,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testQualifiedTypeInStringLiteral() {
-    doTest("LiteralString",
+    doTest("str",
            """
              import typing
 
@@ -1300,7 +1300,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testGenericUserFunctionWithManyParamsAndNestedCall() {
-    doTest("tuple[bool, int, LiteralString]",
+    doTest("tuple[bool, int, str]",
            """
              from typing import TypeVar
 
@@ -2163,7 +2163,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicClass() {
-    doTest("A[float, bool, list[LiteralString]]",
+    doTest("A[float, bool, list[str]]",
            """
              from typing import TypeVarTuple, Generic, Tuple
 
@@ -2182,7 +2182,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicClassField() {
-    doTest("tuple[int, float, bool, list[LiteralString]]",
+    doTest("tuple[int, float, bool, list[str]]",
            """
              from typing import TypeVarTuple, Generic, Tuple
 
@@ -2226,7 +2226,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicClassMethodPlus() {
-    doTest("A[int, LiteralString, bool, int]",
+    doTest("A[int, str, bool, int]",
            """
              from __future__ import annotations
              from typing import TypeVarTuple, Generic, Tuple, TypeVar
@@ -2273,7 +2273,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicClassMethodAddAxisPrefix() {
-    doTest("Array[LiteralString, int, bool]",
+    doTest("Array[str, int, bool]",
            """
              from __future__ import annotations
              from typing import Generic, TypeVarTuple, Tuple, NewType, TypeVar
@@ -2297,7 +2297,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicClassMethodAddAxisSuffix() {
-    doTest("Array[list[int], bool, LiteralString]",
+    doTest("Array[list[int], bool, str]",
            """
              from __future__ import annotations
              from typing import Generic, TypeVarTuple, Tuple, NewType, TypeVar
@@ -2321,7 +2321,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicClassMethodAddAxisPrefixAndSuffix() {
-    doTest("Array[LiteralString, dict[int, LiteralString], int, str, list[int], bool]",
+    doTest("Array[str, dict[int, str], int, str, list[int], bool]",
            """
              from __future__ import annotations
              from typing import Generic, TypeVarTuple, Tuple, NewType, TypeVar
@@ -2396,7 +2396,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicStarArgs() {
-    doTest("tuple[int, LiteralString]",
+    doTest("tuple[int, str]",
            """
              from typing import TypeVarTuple, Tuple
 
@@ -2412,7 +2412,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicStarArgsOfGenericVariadics() {
-    doTest("tuple[int, LiteralString]",
+    doTest("tuple[int, str]",
            """
              from typing import Tuple, TypeVarTuple
 
@@ -2428,7 +2428,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicStarArgsPrefixSuffix() {
-    doTest("tuple[LiteralString, list, dict, bool, int]",
+    doTest("tuple[str, list, dict, bool, int]",
            """
              from typing import TypeVarTuple, Tuple
 
@@ -2444,7 +2444,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicStarArgsAndTypeVars() {
-    doTest("tuple[LiteralString, list[int], bool, int]",
+    doTest("tuple[str, list[int], bool, int]",
            """
              from typing import TypeVarTuple, Tuple, TypeVar
 
@@ -3206,7 +3206,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicMethodCallUnification() {
-    doTest("tuple[int, LiteralString, float]", """
+    doTest("tuple[int, str, float]", """
       from typing import Generic, TypeVarTuple, Tuple
                       
       Ts = TypeVarTuple("Ts")
@@ -3302,7 +3302,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testTypeVarsNotSpecializedOnInheritanceDistinctTypeVars() {
-    doTest("tuple[int, LiteralString]",
+    doTest("tuple[int, str]",
            """
              from typing import Generic, TypeVar
 
@@ -3327,7 +3327,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testTypeVarsNotSpecializedOnInheritanceReusedTypeVars() {
-    doTest("tuple[int, LiteralString]",
+    doTest("tuple[int, str]",
            """
              from typing import Generic, TypeVar
 
@@ -3414,7 +3414,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicClassSpecializesInheritedParameterAndAddsNewOne() {
-    doTest("StrBoxWithExtra[int, LiteralString, float]",
+    doTest("StrBoxWithExtra[int, str, float]",
            """
              from typing import Generic, TypeVarTuple, Tuple
                           
@@ -3532,7 +3532,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicClassTypeHintedInDocstrings() {
-    doTest("tuple[int, LiteralString, float]",
+    doTest("tuple[int, str, float]",
            """
              from typing import Generic, TypeVar, TypeVarTuple, Tuple
                            
@@ -3579,7 +3579,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testDecoratorWithArgumentCalledAsFunction() {
-    doTest("(LiteralString) -> int",
+    doTest("(str) -> int",
            """
              from typing import Callable, TypeVar
 
@@ -3600,7 +3600,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicDecoratorWithArgumentCalledAsFunction() {
-    doTest("(LiteralString, int) -> tuple[int, str, float]",
+    doTest("(str, int) -> tuple[int, str, float]",
            """
             from typing import Callable, TypeVar, TypeVarTuple, Tuple
                                     
@@ -3666,7 +3666,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53522
   public void testGenericIteratorParameterizedWithAnotherGeneric() {
-    doTest("Entry[LiteralString]",
+    doTest("Entry[str]",
            """
              from typing import Iterator, Generic, TypeVar
 
@@ -3688,7 +3688,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicIteratorParameterizedWithAnotherGenericVariadic() {
-    doTest("Entry[LiteralString, int, float]",
+    doTest("Entry[str, int, float]",
            """
              from typing import Iterator, Generic, Tuple, TypeVarTuple
                              
@@ -3795,7 +3795,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-50542
   public void testReusedTypeVarsInOppositeOrderDoNotCauseRecursiveSubstitution() {
-    doTest("LiteralString",
+    doTest("str",
            """
              from typing import TypeVar
                           
@@ -4045,7 +4045,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-61883
   public void testGenericUserFunctionWithManyParamsAndNestedCallWithPEP695Syntax() {
-    doTest("tuple[bool, int, LiteralString]",
+    doTest("tuple[bool, int, str]",
            """
              def myid[T](x: T) -> T:
                  pass
@@ -4266,7 +4266,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-61883
   public void testGenericVariadicClassWithPEP695Syntax() {
-    doTest("A[float, bool, list[LiteralString]]",
+    doTest("A[float, bool, list[str]]",
            """
              from typing import Generic, Tuple
                           
@@ -4281,7 +4281,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-61883
   public void testGenericVariadicClassFieldWithPEP695Syntax() {
-    doTest("tuple[int, float, bool, list[LiteralString]]",
+    doTest("tuple[int, float, bool, list[str]]",
            """
              from typing import Tuple
 
@@ -4314,7 +4314,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-61883
   public void testGenericVariadicClassMethodAddAxisPrefixWithPEP695Syntax() {
-    doTest("Array[LiteralString, int, bool]",
+    doTest("Array[str, int, bool]",
            """
              from __future__ import annotations
              from typing import Tuple, NewType
@@ -4333,7 +4333,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-61883
   public void testGenericVariadicStarArgsAndTypeVarsWithPEP695Syntax() {
-    doTest("tuple[LiteralString, list[int], bool, int]",
+    doTest("tuple[str, list[int], bool, int]",
            """
              from typing import TypeVarTuple, Tuple, TypeVar
 

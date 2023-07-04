@@ -13,7 +13,7 @@ def b(x: int) -> Point:
     return <warning descr="TypedDict 'Point' has missing key: 'y'">{'x': 42}</warning>
 
 def c() -> Point:
-    return {'x': <warning descr="Expected type 'int', got 'LiteralString' instead">'abc'</warning>, 'y': 42}
+    return {'x': <warning descr="Expected type 'int', got 'str' instead">'abc'</warning>, 'y': 42}
 
 def d() -> Point:
     return {'x': 42, 'y': 42, <warning descr="Extra key 'k' for TypedDict 'Point'">'k': 42</warning>}
@@ -22,7 +22,7 @@ def e1(x: int):
     return {'x': x}
 
 def e(x: int) -> Point:
-    return <warning descr="Expected type 'Point', got 'dict[LiteralString, int]' instead">e1(x)</warning>
+    return <warning descr="Expected type 'Point', got 'dict[str, int]' instead">e1(x)</warning>
 
 def f1(x: int) -> Point:
     pass
@@ -34,7 +34,7 @@ def g() -> Point:
     x = int(input())
     y = {'x': x}
     if x > 0:
-        return <warning descr="Expected type 'Point', got 'dict[LiteralString, int]' instead">y</warning>
+        return <warning descr="Expected type 'Point', got 'dict[str, int]' instead">y</warning>
     elif x == 0:
         return Point(x=442, y=42)
     else:

@@ -433,8 +433,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   public void testMultilineStringDefault() {
     final int offset = loadTest(1).get("<arg2>").getTextOffset();
-    feignCtrlP(offset).check("length: int = 12, allowed_chars: LiteralString = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'",
-                             new String[]{"allowed_chars: LiteralString = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'"},
+    feignCtrlP(offset).check("length: int = 12, allowed_chars: str = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'",
+                             new String[]{"allowed_chars: str = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'"},
                              ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
@@ -551,7 +551,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testEscapingInDefaultValue() {
     final int offset = loadTest(1).get("<arg1>").getTextOffset();
 
-    feignCtrlP(offset).check("p: LiteralString = \"\\n\", t: LiteralString = \"\\t\", r: LiteralString = \"\\r\"", new String[]{"p: LiteralString = \"\\n\", "});
+    feignCtrlP(offset).check("p: str = \"\\n\", t: str = \"\\t\", r: str = \"\\r\"", new String[]{"p: str = \"\\n\", "});
   }
 
   public void testJustTypingCallable() {
@@ -733,7 +733,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg3>").getTextOffset()).check("x, z: int = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check("x, y, z: list = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x, y: int = ...", new String[]{"x, "});
-        feignCtrlP(marks.get("<arg6>").getTextOffset()).check("x, y: LiteralString = ...", new String[]{"x, "});
+        feignCtrlP(marks.get("<arg6>").getTextOffset()).check("x, y: str = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int = ...", new String[]{"x: int = ..."});
         feignCtrlP(marks.get("<arg8>").getTextOffset()).check("x, y, z: list = ...", new String[]{"x, "});
       }
