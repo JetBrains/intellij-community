@@ -150,7 +150,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final @NotNull DocumentEx myDocument;
 
   private final JPanel myPanel;
-  private final @NotNull JScrollPane myScrollPane;
+  private final @NotNull MyScrollPane myScrollPane;
   private final @NotNull EditorComponentImpl myEditorComponent;
   private final @NotNull EditorGutterComponentImpl myGutterComponent;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
@@ -185,8 +185,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final List<EditorMouseListener> myMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final @NotNull List<EditorMouseMotionListener> myMouseMotionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private boolean myIsInsertMode = true;
-
   private final @NotNull CaretCursor myCaretCursor;
   private final ScrollingTimer myScrollingTimer = new ScrollingTimer();
 
@@ -213,7 +211,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private MyEditable myEditable;
 
   private @NotNull EditorColorsScheme myScheme;
-  private boolean myIsViewer;
   private final @NotNull SelectionModelImpl mySelectionModel;
   private final @NotNull EditorMarkupModelImpl myMarkupModel;
   private final @NotNull EditorFilteringMarkupModelEx myDocumentMarkupModel;
@@ -232,8 +229,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int myMouseSelectionState;
   private @Nullable FoldRegion myMouseSelectedRegion;
 
-  private int myHorizontalTextAlignment = TEXT_ALIGNMENT_LEFT;
-
   @MagicConstant(intValues = {MOUSE_SELECTION_STATE_NONE, MOUSE_SELECTION_STATE_LINE_SELECTED, MOUSE_SELECTION_STATE_WORD_SELECTED})
   private @interface MouseSelectionState {
   }
@@ -246,8 +241,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Disposable myHighlighterDisposable = Disposer.newDisposable();
   private final TextDrawingCallback myTextDrawingCallback = new MyTextDrawingCallback();
 
-  @MagicConstant(intValues = {VERTICAL_SCROLLBAR_LEFT, VERTICAL_SCROLLBAR_RIGHT})
-  private int myScrollBarOrientation;
   private boolean myKeepSelectionOnMousePress;
 
   private boolean myUpdateCursor;
@@ -263,21 +256,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private MyInputMethodHandler myInputMethodRequestsHandler;
   private InputMethodRequests myInputMethodRequestsSwingWrapper;
-  private boolean myIsOneLineMode;
   private final MouseDragSelectionEventHandler mouseDragHandler = new MouseDragSelectionEventHandler(e -> {
     processMouseDragged(e);
     return Unit.INSTANCE;
   });
-  private boolean myIsRendererMode;
   private VirtualFile myVirtualFile;
-  private boolean myIsColumnMode;
   private @Nullable Color myForcedBackground;
   private @Nullable Dimension myPreferredSize;
 
   private final Alarm myMouseSelectionStateAlarm = new Alarm();
   private Runnable myMouseSelectionStateResetRunnable;
 
-  private boolean myEmbeddedIntoDialogWrapper;
   private int myDragOnGutterSelectionStartLine = -1;
   private RangeMarker myDraggedRange;
   private boolean myDragStarted;
@@ -293,16 +282,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final @NotNull IndentsModel myIndentsModel;
 
-  private @Nullable CharSequence myPlaceholderText;
   private @Nullable TextAttributes myPlaceholderAttributes;
-  private boolean myShowPlaceholderWhenFocused;
 
-  private boolean myStickySelection;
   private int myStickySelectionStart;
-  private boolean myScrollToCaret = true;
-
   private boolean myPurePaintingMode;
-  private boolean myPaintSelection;
 
   private final EditorSizeAdjustmentStrategy mySizeAdjustmentStrategy = new EditorSizeAdjustmentStrategy();
   private final Disposable myDisposable = Disposer.newDisposable();
@@ -338,10 +321,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   boolean myDocumentChangeInProgress;
   private boolean myErrorStripeNeedsRepaint;
 
-  private String myContextMenuGroupId = IdeActions.GROUP_BASIC_EDITOR_POPUP;
   private final List<EditorPopupHandler> myPopupHandlers = new ArrayList<>();
-
-  private boolean myUseEditorAntialiasing = true;
 
   private final ImmediatePainter myImmediatePainter;
 
@@ -364,11 +344,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myProject = project;
     myDocument = (DocumentEx)document;
     myVirtualFile = file;
-    myScheme = createBoundColorSchemeDelegate(null);
-    myScrollPane = new MyScrollPane(); // create UI after scheme initialization
-    myIsViewer = viewer;
     myKind = kind;
     mySettings = new SettingsImpl(this, kind);
+    mySettings.setViewer(viewer);
+    myScheme = createBoundColorSchemeDelegate(null);
+    myScrollPane = new MyScrollPane(); // create UI after scheme initialization
 
     MarkupModelEx documentMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true);
 
@@ -436,7 +416,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCaretModel.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
-        if (myStickySelection) {
+        if (mySettings.isStickySelection()) {
           int selectionStart = Math.min(myStickySelectionStart, getDocument().getTextLength());
           mySelectionModel.setSelection(selectionStart, myCaretModel.getVisualPosition(), myCaretModel.getOffset());
         }
@@ -462,8 +442,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCaretModel.addCaretListener(myMarkupModel, myCaretModel);
 
     myCaretCursor = new CaretCursor();
-
-    myScrollBarOrientation = VERTICAL_SCROLLBAR_RIGHT;
 
     mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListener() {
       @Override
@@ -549,7 +527,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, myFocusModeModel);
     myPopupHandlers.add(new DefaultPopupHandler());
     PopupMenuPreloader.install(myEditorComponent, ActionPlaces.EDITOR_POPUP, null,
-                               () -> ContextMenuPopupHandler.getGroupForId(myContextMenuGroupId));
+                               () -> ContextMenuPopupHandler.getGroupForId(mySettings.getContextMenuGroupId()));
 
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
     Disposer.register(myDisposable, myScrollingPositionKeeper);
@@ -818,12 +796,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setContextMenuGroupId(@Nullable String groupId) {
-    myContextMenuGroupId = groupId;
+    mySettings.setContextMenuGroupId(groupId);
   }
 
   @Override
   public @Nullable String getContextMenuGroupId() {
-    return myContextMenuGroupId;
+    return mySettings.getContextMenuGroupId();
   }
 
   @Override
@@ -853,22 +831,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setViewer(boolean isViewer) {
-    myIsViewer = isViewer;
+    mySettings.setViewer(isViewer);
   }
 
   @Override
   public boolean isViewer() {
-    return myIsViewer || myIsRendererMode;
+    return mySettings.isViewer() || mySettings.isRendererMode();
   }
 
   @Override
   public boolean isRendererMode() {
-    return myIsRendererMode;
+    return mySettings.isRendererMode();
   }
 
   @Override
   public void setRendererMode(boolean isRendererMode) {
-    myIsRendererMode = isRendererMode;
+    mySettings.setRendererMode(isRendererMode);
   }
 
   @Override
@@ -1085,8 +1063,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myScrollPane.setViewportView(myEditorComponent);
     //myScrollPane.setBorder(null);
-    myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-    myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    myScrollPane.setVerticalScrollBarVisible(mySettings.isVerticalScrollbarVisible());
+    myScrollPane.setHorizontalScrollBarVisible(mySettings.isHorizontalScrollbarVisible());
 
     myScrollPane.setRowHeaderView(myGutterComponent);
 
@@ -1412,28 +1390,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setInsertMode(boolean mode) {
     assertIsDispatchThread();
-    boolean oldValue = myIsInsertMode;
-    myIsInsertMode = mode;
+    boolean oldValue = mySettings.isInsertMode();
+    mySettings.setInsertMode(mode);
     myPropertyChangeSupport.firePropertyChange(PROP_INSERT_MODE, oldValue, mode);
     myCaretCursor.repaint();
   }
 
   @Override
   public boolean isInsertMode() {
-    return myIsInsertMode;
+    return mySettings.isInsertMode();
   }
 
   @Override
   public void setColumnMode(boolean mode) {
     assertIsDispatchThread();
-    boolean oldValue = myIsColumnMode;
-    myIsColumnMode = mode;
+    boolean oldValue = mySettings.isColumnMode();
+    mySettings.setColumnMode(mode);
     myPropertyChangeSupport.firePropertyChange(PROP_COLUMN_MODE, oldValue, mode);
   }
 
   @Override
   public boolean isColumnMode() {
-    return myIsColumnMode;
+    return mySettings.isColumnMode();
   }
 
   @Override
@@ -1776,7 +1754,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public void hideCursor() {
-    if (!myIsViewer && EMPTY_CURSOR != null && Registry.is("ide.hide.cursor.when.typing")) {
+    if (!mySettings.isViewer() && EMPTY_CURSOR != null && Registry.is("ide.hide.cursor.when.typing")) {
       myDefaultCursor = EMPTY_CURSOR;
       updateEditorCursor();
     }
@@ -1787,11 +1765,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public boolean isScrollToCaret() {
-    return myScrollToCaret;
+    return mySettings.isScrollToCaret();
   }
 
   public void setScrollToCaret(boolean scrollToCaret) {
-    myScrollToCaret = scrollToCaret;
+    mySettings.setScrollToCaret(scrollToCaret);
   }
 
   public @NotNull Disposable getDisposable() {
@@ -1881,12 +1859,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public boolean isStickySelection() {
-    return myStickySelection;
+    return mySettings.isStickySelection();
   }
 
   @Override
   public void setStickySelection(boolean enable) {
-    myStickySelection = enable;
+    mySettings.setStickySelection(enable);
     if (enable) {
       myStickySelectionStart = getCaretModel().getOffset();
     }
@@ -1896,11 +1874,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public void setHorizontalTextAlignment(@MagicConstant(intValues = {TEXT_ALIGNMENT_LEFT, TEXT_ALIGNMENT_RIGHT}) int alignment) {
-    myHorizontalTextAlignment = alignment;
+    mySettings.setRightAligned(TEXT_ALIGNMENT_RIGHT == alignment);
   }
 
   public boolean isRightAligned() {
-    return myHorizontalTextAlignment == TEXT_ALIGNMENT_RIGHT;
+    return mySettings.isRightAligned();
   }
 
   @Override
@@ -2070,7 +2048,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setPlaceholder(@Nullable CharSequence text) {
-    myPlaceholderText = text;
+    mySettings.setPlaceholder(text != null ? text.toString() : null);
   }
 
   @Override
@@ -2083,16 +2061,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public CharSequence getPlaceholder() {
-    return myPlaceholderText;
+    return mySettings.getPlaceholder();
   }
 
   @Override
   public void setShowPlaceholderWhenFocused(boolean show) {
-    myShowPlaceholderWhenFocused = show;
+    mySettings.setShowPlaceholderWhenFocused(show);
   }
 
   public boolean getShowPlaceholderWhenFocused() {
-    return myShowPlaceholderWhenFocused;
+    return mySettings.getShowPlaceholderWhenFocused();
   }
 
   Color getBackgroundColor(final @NotNull TextAttributes attributes) {
@@ -2124,11 +2102,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public boolean isPaintSelection() {
-    return myPaintSelection || !isOneLineMode() || IJSwingUtilities.hasFocus(getContentComponent());
+    return mySettings.isPaintSelection() || !isOneLineMode() || IJSwingUtilities.hasFocus(getContentComponent());
   }
 
   public void setPaintSelection(boolean paintSelection) {
-    myPaintSelection = paintSelection;
+    mySettings.setPaintSelection(paintSelection);
   }
 
   @Override
@@ -2335,7 +2313,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       y = visualLineToY(Math.max(0, visualLineCount - 1));
     }
     VisualPosition visualPosition = xyToVisualPosition(new Point(x, y));
-    if (myIsInsertMode == mySettings.isBlockCursor() && !visualPosition.leansRight && visualPosition.column > 0) {
+    if (mySettings.isInsertMode() == mySettings.isBlockCursor() && !visualPosition.leansRight && visualPosition.column > 0) {
       // adjustment for block caret
       visualPosition = new VisualPosition(visualPosition.line, visualPosition.column - 1, true);
     }
@@ -2907,19 +2885,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public boolean isOneLineMode() {
-    return myIsOneLineMode;
+    return mySettings.isOneLineMode();
   }
 
   @Override
   public boolean isEmbeddedIntoDialogWrapper() {
-    return myEmbeddedIntoDialogWrapper;
+    return mySettings.isEmbeddedIntoDialogWrapper();
   }
 
   @Override
   public void setEmbeddedIntoDialogWrapper(boolean b) {
     assertIsDispatchThread();
 
-    myEmbeddedIntoDialogWrapper = b;
+    mySettings.setEmbeddedIntoDialogWrapper(b);
     myScrollPane.setFocusable(!b);
     myEditorComponent.setFocusCycleRoot(!b);
     myEditorComponent.setFocusable(b);
@@ -2927,8 +2905,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setOneLineMode(boolean isOneLineMode) {
-    if (isOneLineMode == myIsOneLineMode) return;
-    myIsOneLineMode = isOneLineMode;
+    if (isOneLineMode == mySettings.isOneLineMode()) return;
+    mySettings.setOneLineMode(isOneLineMode);
+
+    // todo move to state listener
     mouseDragHandler.setNativeSelectionEnabled(isOneLineMode);
     getScrollPane().setInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, null);
     JBScrollPane pane = ObjectUtils.tryCast(getScrollPane(), JBScrollPane.class);
@@ -3398,35 +3378,32 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setVerticalScrollbarOrientation(int type) {
     assertIsDispatchThread();
-    if (myScrollBarOrientation == type) return;
+    boolean isOnLeft = type == VERTICAL_SCROLLBAR_LEFT;
+    if (mySettings.isVerticalScrollbarOnLeft() == isOnLeft) return;
+    mySettings.setVerticalScrollbarOnLeft(isOnLeft);
+
     int currentHorOffset = myScrollingModel.getHorizontalScrollOffset();
-    myScrollBarOrientation = type;
-    myScrollPane.putClientProperty(JBScrollPane.Flip.class,
-                                   type == VERTICAL_SCROLLBAR_LEFT
-                                   ? JBScrollPane.Flip.HORIZONTAL
-                                   : null);
+    myScrollPane.putClientProperty(JBScrollPane.Flip.class, isOnLeft ? JBScrollPane.Flip.HORIZONTAL : null);
     myScrollingModel.scrollHorizontally(currentHorOffset);
   }
 
   @Override
   public void setVerticalScrollbarVisible(boolean b) {
-    myScrollPane
-      .setVerticalScrollBarPolicy(b ? ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+    myScrollPane.setVerticalScrollBarVisible(b);
   }
 
   @Override
   public void setHorizontalScrollbarVisible(boolean b) {
-    myScrollPane.setHorizontalScrollBarPolicy(
-      b ? ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED : ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    myScrollPane.setHorizontalScrollBarVisible(b);
   }
 
   @Override
   public int getVerticalScrollbarOrientation() {
-    return myScrollBarOrientation;
+    return mySettings.isVerticalScrollbarOnLeft() ? EditorEx.VERTICAL_SCROLLBAR_LEFT : EditorEx.VERTICAL_SCROLLBAR_RIGHT;
   }
 
   public boolean isMirrored() {
-    return myScrollBarOrientation != EditorEx.VERTICAL_SCROLLBAR_RIGHT;
+    return mySettings.isVerticalScrollbarOnLeft();
   }
 
   @NotNull
@@ -4429,11 +4406,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   boolean useEditorAntialiasing() {
-    return myUseEditorAntialiasing;
+    return mySettings.isUseAntialiasing();
   }
 
   public void setUseEditorAntialiasing(boolean value) {
-    myUseEditorAntialiasing = value;
+    mySettings.setUseAntialiasing(value);
   }
 
   private @NotNull EditorMouseEvent createEditorMouseEvent(@NotNull MouseEvent e) {
@@ -5165,7 +5142,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private class DefaultPopupHandler extends ContextMenuPopupHandler {
     @Override
     public @Nullable ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
-      String contextMenuGroupId = myContextMenuGroupId;
+      String contextMenuGroupId = mySettings.getContextMenuGroupId();
       Inlay<?> inlay = event.getInlay();
       if (inlay != null) {
         ActionGroup group = inlay.getRenderer().getContextMenuGroup(inlay);
@@ -5257,6 +5234,40 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     protected void setupCorners() {
       super.setupCorners();
       setBorder(new TablessBorder());
+    }
+
+    @Override
+    public int getVerticalScrollBarPolicy() {
+      return mySettings.isVerticalScrollbarVisible()
+             ? ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
+             : ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER;
+    }
+
+    @Override
+    public void setVerticalScrollBarPolicy(int policy) {
+      this.setVerticalScrollBarVisible(policy == ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+    }
+
+    void setVerticalScrollBarVisible(boolean visible) {
+      mySettings.setVerticalScrollbarVisible(visible);
+      super.setVerticalScrollBarPolicy(getVerticalScrollBarPolicy());
+    }
+
+    @Override
+    public int getHorizontalScrollBarPolicy() {
+      return mySettings.isHorizontalScrollbarVisible()
+             ? ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
+             : ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
+    }
+
+    @Override
+    public void setHorizontalScrollBarPolicy(int policy) {
+      this.setHorizontalScrollBarVisible(policy == ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    }
+
+    void setHorizontalScrollBarVisible(boolean visible) {
+      mySettings.setHorizontalScrollbarVisible(visible);
+      super.setHorizontalScrollBarPolicy(getHorizontalScrollBarPolicy());
     }
   }
 
