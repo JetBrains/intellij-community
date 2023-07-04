@@ -10,7 +10,6 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.BoundSearchableConfigurable
-import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
@@ -30,8 +29,7 @@ private const val PROMO_URL = "https://youtu.be/WGwECgPmQ-8"
 /**
  * @author Konstantin Bulenkov
  */
-open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.message("configurable.new.ui.name"),
-                                                                    "reference.settings.ide.settings.new.ui"), Configurable.Beta {
+open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.message("configurable.new.ui.name"), "reference.settings.ide.settings.new.ui") {
 
   companion object {
     @JvmStatic
