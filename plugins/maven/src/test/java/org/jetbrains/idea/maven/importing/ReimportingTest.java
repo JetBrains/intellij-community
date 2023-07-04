@@ -17,7 +17,6 @@ import com.intellij.util.io.DirectoryContentSpecKt;
 import kotlin.Unit;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
 import java.io.File;
@@ -313,7 +312,7 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
       <version>1</version>
       """);
     importProject();
-    assertEquals("1.7", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
+    assertEquals("1.8", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
 
     createModulePom("m1", """
       <groupId>test</groupId>
@@ -359,7 +358,7 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
       <version>1</version>
       """);
     importProject();
-    assertEquals("1.7", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
+    assertEquals("1.8", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
   }
 
   private static String createPomXmlWithModuleDependency(final String dependencyType) {

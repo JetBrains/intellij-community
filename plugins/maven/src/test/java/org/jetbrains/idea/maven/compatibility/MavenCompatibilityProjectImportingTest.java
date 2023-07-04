@@ -36,6 +36,7 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
   public static List<String[]> getMavenVersions() {
     return Arrays.asList(
       new String[]{"4.0.0-alpha-7"},
+      new String[]{"3.9.3"},
       new String[]{"3.9.2"},
       new String[]{"3.9.1"},
       new String[]{"3.9.0"},
@@ -414,7 +415,15 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
       expectedVersion = VersionComparatorUtil.compare(myMavenVersion, "4.0.0-alpha-7") >= 0 ? LanguageLevel.JDK_1_8 : LanguageLevel.JDK_1_7;
     }
     else {
-      expectedVersion = VersionComparatorUtil.compare(myMavenVersion, "3.9.0") >= 0 ? LanguageLevel.JDK_1_7 : LanguageLevel.JDK_1_5;
+      if (VersionComparatorUtil.compare(myMavenVersion, "3.9.3") >= 0) {
+        expectedVersion = LanguageLevel.JDK_1_8;
+      }
+      else if (VersionComparatorUtil.compare(myMavenVersion, "3.9.0") >= 0) {
+        expectedVersion = LanguageLevel.JDK_1_7;
+      }
+      else {
+        expectedVersion = LanguageLevel.JDK_1_5;
+      }
     }
     assertEquals(expectedVersion, LanguageLevelUtil.getCustomLanguageLevel(getModule("project")));
   }

@@ -951,7 +951,19 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                        </build>
                        """);
 
-    if (mavenVersionIsOrMoreThan("3.9.0")) {
+    if (mavenVersionIsOrMoreThan("3.9.3")) {
+      assertDocumentation("""
+          Type: <b>java.lang.String</b><br>Default Value: <b>1.8</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.
+
+          NOTE:\s
+
+          Since 3.8.0 the default value has changed from 1.5 to 1.6
+
+          Since 3.9.0 the default value has changed from 1.6 to 1.7
+
+          Since 3.11.0 the default value has changed from 1.7 to 1.8</i>""");
+    }
+    else if (mavenVersionIsOrMoreThan("3.9.0")) {
       assertDocumentation("""
           Type: <b>java.lang.String</b><br>Default Value: <b>1.7</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i><p>The -source argument for the Java compiler.</p>
 

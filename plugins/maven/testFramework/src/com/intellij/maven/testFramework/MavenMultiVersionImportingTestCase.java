@@ -77,6 +77,9 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
 
   protected LanguageLevel getDefaultLanguageLevel() {
     var version = getActualVersion(myMavenVersion);
+    if (VersionComparatorUtil.compare("3.9.3", version) <= 0) {
+      return LanguageLevel.JDK_1_8;
+    }
     if (VersionComparatorUtil.compare("3.9.0", version) <= 0) {
       return LanguageLevel.JDK_1_7;
     }
@@ -86,6 +89,9 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
   @NotNull
   protected String getDefaultPluginVersion(String pluginId) {
     if (pluginId.equals("org.apache.maven:maven-compiler-plugin")) {
+      if (mavenVersionIsOrMoreThan("3.9.3")) {
+        return "3.11.0";
+      }
       if (mavenVersionIsOrMoreThan("3.9.0")) {
         return "3.10.1";
       }
