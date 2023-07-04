@@ -1,6 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.completion
 
+import org.jetbrains.terminal.completion.ShellArgument
+import org.jetbrains.terminal.completion.ShellCommand
+import org.jetbrains.terminal.completion.ShellCommandParserDirectives
+import org.jetbrains.terminal.completion.ShellOption
+
 internal abstract class CommandPartNode<T>(val text: String, open val spec: T?, val parent: CommandPartNode<*>?) {
   val children: MutableList<CommandPartNode<*>> = mutableListOf()
 
@@ -10,8 +15,8 @@ internal abstract class CommandPartNode<T>(val text: String, open val spec: T?, 
 }
 
 internal class SubcommandNode(text: String,
-                              override val spec: ShellSubcommand,
-                              parent: CommandPartNode<*>?) : CommandPartNode<ShellSubcommand>(text, spec, parent) {
+                              override val spec: ShellCommand,
+                              parent: CommandPartNode<*>?) : CommandPartNode<ShellCommand>(text, spec, parent) {
   fun getMergedParserDirectives(): ShellCommandParserDirectives {
     val directives = mutableListOf<ShellCommandParserDirectives>()
     directives.add(spec.parserDirectives)

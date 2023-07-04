@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.terminal.exp.util
 
 import org.jetbrains.plugins.terminal.exp.completion.CommandSpecManager
-import org.jetbrains.plugins.terminal.exp.completion.ShellSubcommand
+import org.jetbrains.terminal.completion.ShellCommand
 
 class FakeCommandSpecManager : CommandSpecManager {
-  override fun getCommandSpec(commandName: String): ShellSubcommand? {
+  override fun getCommandSpec(commandName: String): ShellCommand? {
     return null
   }
 }

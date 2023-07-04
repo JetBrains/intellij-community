@@ -3,6 +3,9 @@ package org.jetbrains.plugins.terminal.exp.completion
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.terminal.completion.BaseSuggestion
+import org.jetbrains.terminal.completion.ShellCommand
+import org.jetbrains.terminal.completion.ShellOption
 
 internal class CommandTreeBuilder private constructor(
   private val suggestionsProvider: CommandTreeSuggestionsProvider,
@@ -13,7 +16,7 @@ internal class CommandTreeBuilder private constructor(
     fun build(suggestionsProvider: CommandTreeSuggestionsProvider,
               commandSpecManager: CommandSpecManager,
               command: String,
-              commandSpec: ShellSubcommand,
+              commandSpec: ShellCommand,
               arguments: List<String>): SubcommandNode {
       val builder = CommandTreeBuilder(suggestionsProvider, commandSpecManager, arguments)
       val root = builder.createSubcommandNode(command, commandSpec, null)
@@ -118,19 +121,19 @@ internal class CommandTreeBuilder private constructor(
 
   private fun createChildNode(name: String, suggestion: BaseSuggestion, parent: CommandPartNode<*>?): CommandPartNode<*> {
     return when (suggestion) {
-      is ShellSubcommand -> createSubcommandNode(name, suggestion, parent)
+      is ShellCommand -> createSubcommandNode(name, suggestion, parent)
       is ShellOption -> OptionNode(name, suggestion, parent)
       is ShellArgumentSuggestion -> ArgumentNode(name, suggestion.argument, parent)
       else -> throw IllegalArgumentException("Unknown suggestion: $suggestion")
     }
   }
 
-  private fun createSubcommandNode(name: String, subcommand: ShellSubcommand, parent: CommandPartNode<*>?): SubcommandNode {
+  private fun createSubcommandNode(name: String, subcommand: ShellCommand, parent: CommandPartNode<*>?): SubcommandNode {
     val spec = getLoadedCommandSpec(subcommand)
     return SubcommandNode(name, spec, parent)
   }
 
-  private fun getLoadedCommandSpec(spec: ShellSubcommand): ShellSubcommand {
+  private fun getLoadedCommandSpec(spec: ShellCommand): ShellCommand {
     val specRef = spec.loadSpec ?: return spec
     val loadedSpec = commandSpecManager.getCommandSpec(specRef)
     return if (loadedSpec != null) {

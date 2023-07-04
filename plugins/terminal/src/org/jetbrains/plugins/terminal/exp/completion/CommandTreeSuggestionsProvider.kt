@@ -1,6 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.completion
 
+import org.jetbrains.terminal.completion.BaseSuggestion
+import org.jetbrains.terminal.completion.ShellArgument
+import org.jetbrains.terminal.completion.ShellOption
+import org.jetbrains.terminal.completion.ShellSuggestion
+
 internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: ShellRuntimeDataProvider) {
   fun getSuggestionsOfNext(node: CommandPartNode<*>, nextNodeText: String): List<BaseSuggestion> {
     return when (node) {

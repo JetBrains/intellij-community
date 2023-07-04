@@ -5,10 +5,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.serialization.json.Json
+import org.jetbrains.terminal.completion.ShellCommand
 import java.io.IOException
 
 class IJCommandSpecManager : CommandSpecManager {
-  private val completionSpecs: MutableMap<String, ShellSubcommand> = HashMap()
+  private val completionSpecs: MutableMap<String, ShellCommand> = HashMap()
 
   private val json: Json = Json {
     ignoreUnknownKeys = true
@@ -25,7 +26,7 @@ class IJCommandSpecManager : CommandSpecManager {
    *     - sub.json
    *     - sub2.json
    */
-  override fun getCommandSpec(commandName: String): ShellSubcommand? {
+  override fun getCommandSpec(commandName: String): ShellCommand? {
     completionSpecs[commandName]?.let { return it }
 
     val (spec, path) = if (commandName.contains('/')) {
@@ -47,7 +48,7 @@ class IJCommandSpecManager : CommandSpecManager {
       return null
     }
 
-    val subcommand: ShellSubcommand? = try {
+    val subcommand: ShellCommand? = try {
       val specJson = specUrl.readText()
       json.decodeFromString(specJson)
     }

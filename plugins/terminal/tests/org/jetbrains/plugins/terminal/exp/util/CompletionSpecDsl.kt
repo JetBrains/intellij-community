@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.util
 
-import org.jetbrains.plugins.terminal.exp.completion.*
+import org.jetbrains.terminal.completion.*
 
 @DslMarker
 annotation class CommandSpecDsl
 
 @CommandSpecDsl
-internal fun commandSpec(vararg names: String, content: SubcommandContext.() -> Unit): ShellSubcommand {
+internal fun commandSpec(vararg names: String, content: SubcommandContext.() -> Unit): ShellCommand {
   val context = SubcommandContextImpl(names.asList())
   content(context)
   return context.build()
@@ -29,7 +29,7 @@ internal interface SubcommandContext : BaseCommandPartContext {
 
   fun subcommand(vararg names: String, content: (SubcommandContext.() -> Unit)? = null)
   fun option(vararg names: String, content: (OptionContext.() -> Unit)? = null)
-  fun argument(name: String, isOptional: Boolean = false, content: (ArgumentContext.() -> Unit)? = null)
+  fun argument(displayName: String, isOptional: Boolean = false, content: (ArgumentContext.() -> Unit)? = null)
   fun additionalSuggestion(suggestion: ShellSuggestion)
 }
 
@@ -69,9 +69,9 @@ private abstract class BaseCommandPartContextImpl : BaseCommandPartContext {
 
 private class SubcommandContextImpl(private val names: List<String>) : SubcommandContext, BaseCommandPartContextImpl() {
   override var requiresSubcommand: Boolean = false
-  override var parserDirectives: ShellCommandParserDirectives = DEFAULT_PARSER_DIRECTIVES
+  override var parserDirectives = ShellCommandParserDirectives()
 
-  private val subcommands: MutableList<ShellSubcommand> = mutableListOf()
+  private val subcommands: MutableList<ShellCommand> = mutableListOf()
   private val options: MutableList<ShellOption> = mutableListOf()
   private val args: MutableList<ShellArgument> = mutableListOf()
   private val additionalSuggestions: MutableList<ShellSuggestion> = mutableListOf()
@@ -88,8 +88,8 @@ private class SubcommandContextImpl(private val names: List<String>) : Subcomman
     options.add(context.build())
   }
 
-  override fun argument(name: String, isOptional: Boolean, content: (ArgumentContext.() -> Unit)?) {
-    val context = ArgumentContextImpl(name, isOptional)
+  override fun argument(displayName: String, isOptional: Boolean, content: (ArgumentContext.() -> Unit)?) {
+    val context = ArgumentContextImpl(displayName, isOptional)
     content?.invoke(context)
     args.add(context.build())
   }
@@ -98,9 +98,9 @@ private class SubcommandContextImpl(private val names: List<String>) : Subcomman
     additionalSuggestions.add(suggestion)
   }
 
-  fun build(): ShellSubcommand {
+  fun build(): ShellCommand {
     if (names.isEmpty()) error("At least one name must be provided")
-    return ShellSubcommand(
+    return ShellCommand(
       names = names,
       requiresSubcommand = requiresSubcommand,
       subcommands = subcommands,
@@ -161,7 +161,7 @@ private class OptionContextImpl(private val names: List<String>) : OptionContext
   }
 }
 
-private class ArgumentContextImpl(private val name: String, private val isOptional: Boolean) : ArgumentContext {
+private class ArgumentContextImpl(private val displayName: String, private val isOptional: Boolean) : ArgumentContext {
   override var description: String? = null
   override var isVariadic: Boolean = false
   override var optionsCanBreakVariadicArg: Boolean = true
@@ -190,7 +190,7 @@ private class ArgumentContextImpl(private val name: String, private val isOption
 
   fun build(): ShellArgument {
     return ShellArgument(
-      name = name,
+      displayName = displayName,
       description = description,
       suggestions = suggestions,
       templates = templates,

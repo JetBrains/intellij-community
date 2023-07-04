@@ -10,6 +10,8 @@ import com.intellij.sh.psi.ShSimpleCommand
 import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.TreeTraversal
 import org.jetbrains.plugins.terminal.exp.completion.*
+import org.jetbrains.terminal.completion.BaseSuggestion
+import org.jetbrains.terminal.completion.ShellCommand
 
 class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>() {
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
@@ -50,13 +52,13 @@ class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>()
   }
 
   private fun computeCompletionElements(session: TerminalSession, command: String, arguments: List<String>): List<LookupElement>? {
-    val commandSpec: ShellSubcommand = IJCommandSpecManager.getInstance().getCommandSpec(command)
-                                       ?: return null
+    val commandSpec: ShellCommand = IJCommandSpecManager.getInstance().getCommandSpec(command)
+                                    ?: return null
     return computeCompletionElements(session, commandSpec, command, arguments)
   }
 
   private fun computeCompletionElements(session: TerminalSession,
-                                        spec: ShellSubcommand,
+                                        spec: ShellCommand,
                                         command: String,
                                         arguments: List<String>): List<LookupElement> {
     val completeArguments = arguments.subList(0, arguments.size - 1)

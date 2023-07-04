@@ -8,6 +8,8 @@ import org.jetbrains.plugins.terminal.exp.completion.*
 import org.jetbrains.plugins.terminal.exp.util.FakeCommandSpecManager
 import org.jetbrains.plugins.terminal.exp.util.FakeShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.util.commandSpec
+import org.jetbrains.terminal.completion.ShellCommandParserDirectives
+import org.jetbrains.terminal.completion.ShellSuggestionsGenerator
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

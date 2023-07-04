@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.completion
 
+import org.jetbrains.terminal.completion.ShellCommand
+
 interface CommandSpecManager {
   /**
    * [commandName] can be the main command name or the path of subcommand.
@@ -13,5 +15,5 @@ interface CommandSpecManager {
    *     - sub.json
    *     - sub2.json
    */
-  fun getCommandSpec(commandName: String): ShellSubcommand?
+  fun getCommandSpec(commandName: String): ShellCommand?
 }
