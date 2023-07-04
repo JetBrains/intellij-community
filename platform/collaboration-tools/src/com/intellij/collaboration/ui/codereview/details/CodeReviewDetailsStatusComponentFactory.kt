@@ -12,6 +12,7 @@ import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
 import com.intellij.collaboration.ui.util.*
 import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.*
@@ -52,7 +53,7 @@ object CodeReviewDetailsStatusComponentFactory {
   fun createConflictsComponent(scope: CoroutineScope, hasConflicts: Flow<Boolean>): JComponent {
     return ReviewDetailsStatusLabel("Code review status: review has conflicts").apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
-      icon = AllIcons.RunConfigurations.TestError
+      icon = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Error else AllIcons.RunConfigurations.TestError
       text = CollaborationToolsBundle.message("review.details.status.conflicts")
       bindVisibilityIn(scope, hasConflicts)
     }
@@ -61,7 +62,7 @@ object CodeReviewDetailsStatusComponentFactory {
   fun <T> createNeedReviewerComponent(scope: CoroutineScope, reviewersReview: Flow<Map<T, ReviewState>>): JComponent {
     return ReviewDetailsStatusLabel("Code review status: need reviewer").apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
-      icon = AllIcons.RunConfigurations.TestError
+      icon = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Error else AllIcons.RunConfigurations.TestError
       text = CollaborationToolsBundle.message("review.details.status.reviewer.missing")
       bindVisibilityIn(scope, reviewersReview.map { it.isEmpty() })
     }
@@ -70,7 +71,7 @@ object CodeReviewDetailsStatusComponentFactory {
   fun createRequiredReviewsComponent(scope: CoroutineScope, requiredApprovingReviewsCount: Flow<Int>, isDraft: Flow<Boolean>): JComponent {
     return ReviewDetailsStatusLabel("Code review status: required reviews").apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
-      icon = AllIcons.RunConfigurations.TestError
+      icon = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Error else AllIcons.RunConfigurations.TestError
       bindVisibilityIn(scope, combine(requiredApprovingReviewsCount, isDraft) { requiredApprovingReviewsCount, isDraft ->
         requiredApprovingReviewsCount > 0 && !isDraft
       })
@@ -83,7 +84,7 @@ object CodeReviewDetailsStatusComponentFactory {
   fun createRestrictionComponent(scope: CoroutineScope, isRestricted: Flow<Boolean>, isDraft: Flow<Boolean>): JComponent {
     return ReviewDetailsStatusLabel("Code review status: restricted rights").apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
-      icon = AllIcons.RunConfigurations.TestError
+      icon = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Error else AllIcons.RunConfigurations.TestError
       text = CollaborationToolsBundle.message("review.details.status.not.authorized.to.merge")
       bindVisibilityIn(scope, combine(isRestricted, isDraft) { isRestricted, isDraft ->
         isRestricted && !isDraft
@@ -211,10 +212,10 @@ object CodeReviewDetailsStatusComponentFactory {
     val failed = jobs.count { it.status == CodeReviewCIJobState.FAILED }
     val pending = jobs.count { it.status == CodeReviewCIJobState.PENDING }
     return when {
-      jobs.all { it.status == CodeReviewCIJobState.SUCCESS } -> AllIcons.RunConfigurations.TestPassed
-      pending != 0 && failed != 0 -> AllIcons.RunConfigurations.TestCustom
-      pending != 0 -> AllIcons.RunConfigurations.TestNotRan
-      else -> AllIcons.RunConfigurations.TestError
+      jobs.all { it.status == CodeReviewCIJobState.SUCCESS } -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Success else AllIcons.RunConfigurations.TestPassed
+      pending != 0 && failed != 0 -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.FailedInProgress else AllIcons.Status.FailedInProgress
+      pending != 0 -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Run.TestNotRunYet else AllIcons.RunConfigurations.TestNotRan
+      else -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Error else AllIcons.RunConfigurations.TestError
     }
   }
 
@@ -245,9 +246,9 @@ object CodeReviewDetailsStatusComponentFactory {
         append(value.name, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, SimpleColoredComponent.BrowserLauncherTag(value.detailsUrl))
       }
       component.icon = when (value.status) {
-        CodeReviewCIJobState.SUCCESS -> AllIcons.RunConfigurations.TestPassed
-        CodeReviewCIJobState.PENDING -> AllIcons.RunConfigurations.TestNotRan
-        CodeReviewCIJobState.FAILED -> AllIcons.RunConfigurations.TestError
+        CodeReviewCIJobState.SUCCESS -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Success else AllIcons.RunConfigurations.TestPassed
+        CodeReviewCIJobState.PENDING -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Run.TestNotRunYet else AllIcons.RunConfigurations.TestNotRan
+        CodeReviewCIJobState.FAILED -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Error else AllIcons.RunConfigurations.TestError
       }
 
       return component
