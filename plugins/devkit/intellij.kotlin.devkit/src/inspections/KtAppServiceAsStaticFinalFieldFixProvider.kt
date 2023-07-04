@@ -14,9 +14,9 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.intentions.ConvertPropertyToFunctionIntention
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlinePropertyProcessor
@@ -84,7 +84,7 @@ private class KtWrapInSupplierQuickFix(ktProperty: KtProperty) : WrapInSupplierQ
   }
 
   private fun suggestSupplierPropertyName(property: KtProperty): String {
-    return Fe10KotlinNameSuggester.suggestNameByName(
+    return KotlinNameSuggester.suggestNameByName(
       defaultSupplierElementName(property),
       Fe10KotlinNewDeclarationNameValidator(
         property.containingClassOrObject ?: property.containingFile,

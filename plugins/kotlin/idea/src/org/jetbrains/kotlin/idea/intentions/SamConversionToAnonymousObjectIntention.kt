@@ -8,7 +8,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -137,7 +137,7 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
             val functionParameterName: (ValueParameterDescriptor, Int) -> String = { parameter, index ->
                 val name = parameter.name
                 if (name.isSpecial) {
-                    Fe10KotlinNameSuggester.suggestNameByName((samParameters.getOrNull(index)?.name ?: name).asString(), nameValidator)
+                    KotlinNameSuggester.suggestNameByName((samParameters.getOrNull(index)?.name ?: name).asString(), nameValidator)
                 } else {
                     name.asString()
                 }

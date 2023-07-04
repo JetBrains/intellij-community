@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
@@ -48,7 +49,7 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
         val classNames = element.objectDeclaration.superTypeListEntries
             .mapNotNull { it.typeReference?.typeElement?.let { Fe10KotlinNameSuggester.suggestTypeAliasNameByPsi(it, validator) } }
             .takeIf { it.isNotEmpty() }
-            ?: listOf(Fe10KotlinNameSuggester.suggestNameByName("O", validator))
+            ?: listOf(KotlinNameSuggester.suggestNameByName("O", validator))
 
         val className = classNames.first()
         val psiFactory = KtPsiFactory(element.project)

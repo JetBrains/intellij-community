@@ -352,6 +352,22 @@ class KotlinNameSuggester(
 
     companion object {
         /**
+         * Validates [name] and slightly improves it by adding a number suffix in case of conflicts.
+         *
+         * @param name to check in scope
+         * @return [name] or nameI, where I is an integer
+         */
+        fun suggestNameByName(name: String, validator: (String) -> Boolean): String {
+            if (validator(name)) return name
+            var i = 1
+            while (i <= MAX_NUMBER_OF_SUGGESTED_NAME_CHECKS && !validator(name + i)) {
+                ++i
+            }
+
+            return name + i
+        }
+
+        /**
          * Returns a name sequence from a given name, appending numeric suffixes.
          * Example: foo -> [foo, foo2, foo3, ...]
          */
@@ -381,6 +397,8 @@ class KotlinNameSuggester(
             "T", "U", "V", "W", "X", "Y", "Z", "A", "B", "C", "D", "E",
             "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "R", "S"
         )
+
+        private const val MAX_NUMBER_OF_SUGGESTED_NAME_CHECKS = 1000
 
         private val KOTLIN_HARD_KEYWORDS = KtTokens.KEYWORDS.types.filterIsInstance<KtKeywordToken>().map { it.value }
         private val KOTLIN_SOFT_KEYWORDS = KtTokens.SOFT_KEYWORDS.types.filterIsInstance<KtKeywordToken>().map { it.value }

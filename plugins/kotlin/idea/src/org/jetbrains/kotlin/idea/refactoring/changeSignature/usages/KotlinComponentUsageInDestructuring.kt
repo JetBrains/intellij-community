@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
@@ -50,7 +50,7 @@ class KotlinComponentUsageInDestructuring(element: KtDestructuringDeclarationEnt
                 if (oldIndex >= 0 && oldIndex < currentEntries.size) {
                     appendChildRange(PsiChildRange.singleElement(currentEntries[oldIndex]))
                 } else {
-                    appendFixedText(Fe10KotlinNameSuggester.suggestNameByName(paramInfo.name, nameValidator))
+                    appendFixedText(KotlinNameSuggester.suggestNameByName(paramInfo.name, nameValidator))
                 }
             }
             appendFixedText(")")

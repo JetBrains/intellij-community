@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -99,7 +99,7 @@ class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
                     if (usagesToReplace.isEmpty() && variableToDrop == null && underscoreSupported && !allUnused) {
                         "_"
                     } else {
-                        Fe10KotlinNameSuggester.suggestNameByName(name ?: descriptor.name.asString(), validator)
+                        KotlinNameSuggester.suggestNameByName(name ?: descriptor.name.asString(), validator)
                     }
 
                 runWriteActionIfPhysical(element) {

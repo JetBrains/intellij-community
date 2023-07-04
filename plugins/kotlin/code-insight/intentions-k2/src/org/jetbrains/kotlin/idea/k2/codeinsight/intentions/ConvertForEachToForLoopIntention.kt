@@ -8,6 +8,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
@@ -54,12 +55,6 @@ internal class ConvertForEachToForLoopIntention
         val returnsToReplace: ReturnsToReplace,
         val implicitReceiverInfo: ImplicitReceiverInfo?,
     )
-
-    private object LoopLabelSuggester : AbstractKotlinNameSuggester() {
-        fun suggest(lambda: KtLambdaExpression): String = suggestNameByName("loop") { candidate ->
-            !lambda.anyDescendantOfType<KtLabeledExpression> { it.getLabelName() == candidate }
-        }
-    }
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.a.for.loop")
 
@@ -151,7 +146,7 @@ internal class ConvertForEachToForLoopIntention
         val factory = KtPsiFactory(lambda.project)
         val body = lambda.bodyExpression ?: return null
 
-        val loopLabelName by lazy { LoopLabelSuggester.suggest(lambda) }
+        val loopLabelName by lazy { suggestLoopName(lambda) }
         var needLoopLabel = false
 
         for (returnExpr in context.returnsToReplace.dereferenceValidPointers()) {
@@ -174,6 +169,11 @@ internal class ConvertForEachToForLoopIntention
             loop
         }
     }
+
+    private fun suggestLoopName(lambda: KtLambdaExpression): String =
+        KotlinNameSuggester.suggestNameByName("loop") { candidate ->
+            !lambda.anyDescendantOfType<KtLabeledExpression> { it.getLabelName() == candidate }
+        }
 
     private fun getLoopRange(receiver: KtExpression?, context: Context, factory: KtPsiFactory): KtExpression? {
         return if (receiver != null) {

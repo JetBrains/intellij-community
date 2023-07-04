@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.cfg.pseudocode.getExpectedTypePredicate
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.InstructionWithReceivers
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
@@ -152,7 +153,7 @@ internal fun ExtractionData.inferParametersInfo(
                 currentName = "$currentName$index"
             }
 
-            mirrorVarName = if (descriptorToExtract in modifiedVarDescriptors) Fe10KotlinNameSuggester.suggestNameByName(
+            mirrorVarName = if (descriptorToExtract in modifiedVarDescriptors) KotlinNameSuggester.suggestNameByName(
                 name,
                 varNameValidator
             ) else null

@@ -10,8 +10,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -84,7 +84,7 @@ class IncompleteDestructuringQuickfix : LocalQuickFix {
             val additionalEntries = primaryParameters
                 .drop(currentEntries.size)
                 .map {
-                    val name = Fe10KotlinNameSuggester.suggestNameByName(it.name.asString(), nameValidator)
+                    val name = KotlinNameSuggester.suggestNameByName(it.name.asString(), nameValidator)
                     if (hasType) {
                         val type = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(it.type)
                         "$name: $type"

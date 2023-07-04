@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
@@ -25,7 +26,6 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.DeletePsiElementsFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.isNonNullableBooleanType
 import org.jetbrains.kotlin.idea.codeinsight.utils.isNullableAnyType
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.GenerateFunctionFix
-import org.jetbrains.kotlin.idea.core.AbstractKotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
@@ -39,14 +39,6 @@ import org.jetbrains.kotlin.util.OperatorNameConventions.EQUALS
 import org.jetbrains.kotlin.util.OperatorNameConventions.HASH_CODE
 
 class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
-    /**
-     * A name suggester object for `hashCode()` result.
-     *
-     * TODO: Replace [HashCodeResultVariableNameSuggester] with [org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester].
-     *  At this moment, it causes a compile error "Class [org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester] is compiled by
-     *  a pre-release version of Kotlin and cannot be loaded by this version of the compiler"
-     */
-    private object HashCodeResultVariableNameSuggester : AbstractKotlinNameSuggester()
 
     private class Equals(function: String, body: String) : GenerateFunctionFix(function, body) {
         override fun getName() = KotlinBundle.message("equals.text")
@@ -325,7 +317,7 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
             bodyText =
                 if (propertyIterator.hasNext()) { // TODO: Confirm that `variablesForHashCode.map { it.name?.quoteIfNeeded()!! }` is safe here
                     val validator = CollectingNameValidator(variablesForHashCode.map { it.name?.quoteIfNeeded()!! })
-                    val resultVarName = HashCodeResultVariableNameSuggester.suggestNameByName("result", validator)
+                    val resultVarName = KotlinNameSuggester.suggestNameByName("result", validator)
                     buildString {
                         append("var $resultVarName = $initialValue\n")
                         propertyIterator.forEach { append("$resultVarName = 31 * $resultVarName + ${it.genVariableHashCode(true)}\n") }

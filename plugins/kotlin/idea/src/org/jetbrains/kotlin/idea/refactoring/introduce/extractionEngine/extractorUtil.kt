@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
@@ -712,7 +713,7 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
         }
         if ((declaration.descriptor as? PropertyDescriptor)?.let { DescriptorUtils.isOverride(it) } == true) {
             val scope = declaration.getResolutionScope()
-            val newName = Fe10KotlinNameSuggester.suggestNameByName(descriptor.name) {
+            val newName = KotlinNameSuggester.suggestNameByName(descriptor.name) {
                 it != descriptor.name && scope.getAllAccessibleVariables(Name.identifier(it)).isEmpty()
             }
             declaration.setName(newName)

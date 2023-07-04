@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -55,7 +55,7 @@ abstract class AssignToVariableResultTransformation(
                         && resolutionScope.findPackage(identifier) == null
             }
 
-            val uniqueName = Fe10KotlinNameSuggester.suggestNameByName("test", ::isUniqueName)
+            val uniqueName = KotlinNameSuggester.suggestNameByName("test", ::isUniqueName)
 
             val copy = initializationStatement.copied()
             copy.initializer!!.replace(resultCallChain)

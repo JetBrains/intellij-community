@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInliner
 
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.computeTypeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -63,7 +64,7 @@ internal fun MutableCodeToInline.introduceValue(
 
     fun suggestName(validator: (String) -> Boolean): Name {
         val name = if (nameSuggestion != null)
-            Fe10KotlinNameSuggester.suggestNameByName(nameSuggestion, validator)
+            KotlinNameSuggester.suggestNameByName(nameSuggestion, validator)
         else
             Fe10KotlinNameSuggester.suggestNamesByExpressionOnly(value, bindingContext, validator, "t").first()
         return Name.identifier(name)

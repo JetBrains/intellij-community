@@ -26,6 +26,8 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 
+@Suppress("DEPRECATION")
+@Deprecated("Use 'org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester' instead")
 object Fe10KotlinNameSuggester : AbstractKotlinNameSuggester() {
     fun suggestNamesByExpressionAndType(
         expression: KtExpression,

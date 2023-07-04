@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -497,7 +498,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
                 val ktype = resolutionFacade?.let { p.type?.resolveToKotlinType(it) }
                 StringBuilder().apply {
                     append(p.suggestedName ?: ktype?.let { Fe10KotlinNameSuggester.suggestNamesByType(it, validator).firstOrNull() })
-                        ?: Fe10KotlinNameSuggester.suggestNameByName("v", validator)
+                        ?: KotlinNameSuggester.suggestNameByName("v", validator)
                     ktype?.fqName?.toString()?.let { append(": ").append(it) }
                 }
             },
@@ -535,7 +536,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
                 append(if (immutable) "val" else "var")
                 append(" ")
                 append(suggestedName ?: ktype?.let { Fe10KotlinNameSuggester.suggestNamesByType(it, validator).firstOrNull() })
-                    ?: Fe10KotlinNameSuggester.suggestNameByName("v", validator)
+                    ?: KotlinNameSuggester.suggestNameByName("v", validator)
                 ktype?.fqName?.toString()?.let { append(": ").append(it) }
                 append(" = null")
                 append("}")

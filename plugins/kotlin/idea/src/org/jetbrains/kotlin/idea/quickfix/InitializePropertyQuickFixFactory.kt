@@ -17,9 +17,9 @@ import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.shorten.runRefactoringAndKeepDelayedRequests
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
@@ -137,7 +137,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                         val initializerText = propertyDescriptor.type.getDefaultInitializer() ?: "null"
                         val newParam = KotlinParameterInfo(
                             callableDescriptor = originalDescriptor.baseDescriptor,
-                            name = Fe10KotlinNameSuggester.suggestNameByName(propertyDescriptor.name.asString(), validator),
+                            name = KotlinNameSuggester.suggestNameByName(propertyDescriptor.name.asString(), validator),
                             originalTypeInfo = KotlinTypeInfo(false, propertyDescriptor.type),
                             defaultValueForCall = KtPsiFactory(element!!.project).createExpression(initializerText)
                         )

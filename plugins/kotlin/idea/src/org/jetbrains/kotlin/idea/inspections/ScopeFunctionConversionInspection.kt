@@ -12,6 +12,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -296,7 +297,7 @@ class ConvertScopeFunctionToParameter(counterpartName: String) : ConvertScopeFun
         return if (parameterType != null)
             Fe10KotlinNameSuggester.suggestNamesByType(parameterType, ::isNameUnique).first()
         else {
-            Fe10KotlinNameSuggester.suggestNameByName("p", ::isNameUnique)
+            KotlinNameSuggester.suggestNameByName("p", ::isNameUnique)
         }
     }
 }

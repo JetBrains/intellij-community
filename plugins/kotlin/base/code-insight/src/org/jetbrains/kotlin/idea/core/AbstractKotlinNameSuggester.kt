@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core
 
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.lexer.KotlinLexer
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -11,6 +12,8 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeSmart
 
+@Suppress("DEPRECATION")
+@Deprecated("Use 'org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester' instead")
 abstract class AbstractKotlinNameSuggester {
     fun suggestNamesByFqName(
         fqName: FqName,
@@ -39,15 +42,15 @@ abstract class AbstractKotlinNameSuggester {
      * @param name to check it in scope
      * @return name or nameI, where I is number
      */
-    fun suggestNameByName(name: String, validator: (String) -> Boolean): String {
-        if (validator(name)) return name
-        var i = 1
-        while (i <= MAX_NUMBER_OF_SUGGESTED_NAME_CHECKS && !validator(name + i)) {
-            ++i
-        }
-
-        return name + i
-    }
+    @Deprecated(
+        "Use 'org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.suggestNameByName' instead",
+        ReplaceWith(
+            "KotlinNameSuggester.suggestNameByName(name, validator)",
+            "org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester"
+        )
+    )
+    fun suggestNameByName(name: String, validator: (String) -> Boolean): String =
+        KotlinNameSuggester.suggestNameByName(name, validator)
 
     fun suggestNamesForTypeParameters(count: Int, validator: (String) -> Boolean): List<String> {
         val result = ArrayList<String>()

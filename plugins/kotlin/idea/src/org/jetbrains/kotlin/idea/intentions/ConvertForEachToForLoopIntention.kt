@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.builtins.StandardNames
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
@@ -110,7 +110,7 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
         val body = functionLiteral.bodyExpression!!
         val function = functionLiteral.functionLiteral
 
-        val loopLabelName = Fe10KotlinNameSuggester.suggestNameByName("loop") { candidate ->
+        val loopLabelName = KotlinNameSuggester.suggestNameByName("loop") { candidate ->
             !functionLiteral.anyDescendantOfType<KtLabeledExpression> { it.getLabelName() == candidate }
         }
         var needLoopLabel = false

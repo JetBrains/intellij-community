@@ -6,9 +6,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
@@ -63,7 +63,7 @@ class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCall
         val nameValidator = CollectingNameValidator(
             filter = Fe10KotlinNewDeclarationNameValidator(functionLiteral, null, KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER)
         )
-        val indexParameterName = Fe10KotlinNameSuggester.suggestNameByName("index", nameValidator)
+        val indexParameterName = KotlinNameSuggester.suggestNameByName("index", nameValidator)
         val indexParameter = psiFactory.createParameter(indexParameterName)
         if (parameters.isEmpty()) {
             parameterList.addParameter(indexParameter)
