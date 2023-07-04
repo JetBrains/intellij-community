@@ -9,13 +9,13 @@ class C:
 
     def f(self):
         self.x = 1
-        self.x = <warning descr="Expected type 'int', got 'LiteralString' instead">'bar'</warning>
+        self.x = <warning descr="Expected type 'int', got 'str' instead">'bar'</warning>
         self.y = 1
-        self.y = <warning descr="Expected type 'int', got 'LiteralString' instead">'bar'</warning>
+        self.y = <warning descr="Expected type 'int', got 'str' instead">'bar'</warning>
         self.z = 1
-        self.z = <warning descr="Expected type 'int', got 'LiteralString' instead">'bar'</warning>
+        self.z = <warning descr="Expected type 'int', got 'str' instead">'bar'</warning>
 
         self.class_var = 1
-        self.class_var = <warning descr="Expected type 'int', got 'LiteralString' instead">'bar'</warning>
+        self.class_var = <warning descr="Expected type 'int', got 'str' instead">'bar'</warning>
         C.class_var = 1
         C.class_var = 'bar'
