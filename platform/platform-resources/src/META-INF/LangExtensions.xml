@@ -1385,32 +1385,28 @@
                             order="after LineSeparator"/>
     <statusBarWidgetFactory id="PowerSaveMode" implementation="com.intellij.openapi.wm.impl.status.PowerSaveStatusWidgetFactory"
                             order="after Encoding"/>
-    <statusBarWidgetFactory id="largeFileEncodingWidget"
-                            implementation="com.intellij.largeFilesEditor.encoding.LargeFileEncodingWidgetFactory"
+    <statusBarWidgetFactory id="largeFileEncodingWidget" implementation="com.intellij.largeFilesEditor.encoding.LargeFileEncodingWidgetFactory"
                             order="after PowerSaveMode"/>
     <statusBarWidgetFactory id="InsertOverwrite" implementation="com.intellij.openapi.wm.impl.status.ColumnSelectionModeWidgetFactory"
                             order="after largeFileEncodingWidget"/>
-    <statusBarWidgetFactory id="CodeStyleStatusBarWidget"
-                            implementation="com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidgetFactory"
+    <statusBarWidgetFactory id="CodeStyleStatusBarWidget" implementation="com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidgetFactory"
                             order="after InsertOverwrite"/>
     <statusBarWidgetFactory id="ReadOnlyAttribute" implementation="com.intellij.openapi.wm.impl.status.ReadOnlyAttributeWidgetFactory"
                             order="after CodeStyleStatusBarWidget"/>
     <statusBarWidgetFactory id="inspectionProfileWidget" implementation="com.intellij.openapi.wm.impl.status.InspectionProfileWidgetFactory"
                             order="after ReadOnlyAttribute"/>
-
     <statusBarWidgetFactory id="Notifications" implementation="com.intellij.notification.impl.widget.NotificationWidgetFactory"
                             order="after inspectionProfileWidget"/>
     <statusBarWidgetFactory id="FatalError" implementation="com.intellij.openapi.wm.impl.status.FatalErrorWidgetFactory"
                             order="after Notifications"/>
     <statusBarWidgetFactory id="WriteThread" implementation="com.intellij.openapi.wm.impl.status.WriteThreadIndicatorWidgetFactory"
                             order="last"/>
-    <statusBarWidgetFactory id="Memory" implementation="com.intellij.openapi.wm.impl.status.MemoryIndicatorWidgetFactory" order="last"/>
-    <statusBarWidgetFactory id="settingsEntryPointWidget"
-                            implementation="com.intellij.ide.actions.SettingsEntryPointAction$StatusBarManager" order="last"/>
-    <statusBarWidgetFactory id="SmartModeIndicator"
-                            implementation="com.intellij.openapi.wm.impl.status.SmartModeIndicatorWidgetFactory"/>
-    <statusBarWidgetFactory id="IndexesAndVfsFlushIndicator"
-                            implementation="com.intellij.openapi.wm.impl.status.IndexesAndVfsFlushIndicatorWidgetFactory"/>
+    <statusBarWidgetFactory id="Memory" implementation="com.intellij.openapi.wm.impl.status.MemoryIndicatorWidgetFactory"
+                            order="last"/>
+    <statusBarWidgetFactory id="settingsEntryPointWidget" implementation="com.intellij.ide.actions.SettingsEntryPointAction$StatusBarManager"
+                            order="last"/>
+    <statusBarWidgetFactory id="SmartModeIndicator" implementation="com.intellij.openapi.wm.impl.status.SmartModeIndicatorWidgetFactory"/>
+    <statusBarWidgetFactory id="IndexesAndVfsFlushIndicator" implementation="com.intellij.openapi.wm.impl.status.IndexesAndVfsFlushIndicatorWidgetFactory"/>
 
     <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.DetectableIndentOptionsProvider" order="last"/>
     <lang.formatter.restriction implementation="com.intellij.formatting.ExcludedFileFormattingRestriction"/>

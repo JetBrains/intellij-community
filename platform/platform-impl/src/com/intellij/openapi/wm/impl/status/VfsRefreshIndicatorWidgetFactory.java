@@ -67,21 +67,15 @@ public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFa
 
   @RequiresEdt
   public static void start(@NotNull StatusBar statusBar, @NotNull @NlsContexts.Tooltip String tooltipText) {
-    var widget = ((VfsRefreshWidget)statusBar.getWidget(ID));
-    if (widget != null) {
-      widget.myComponent.setIcon(widget.myProgress);
-      widget.myComponent.setEnabled(true);
-      widget.myComponent.setToolTipText(tooltipText);
+    if (statusBar.getWidget(ID) instanceof VfsRefreshWidget widget) {
+      widget.start(tooltipText);
     }
   }
 
   @RequiresEdt
   public static void stop(@NotNull StatusBar statusBar) {
-    var widget = ((VfsRefreshWidget)statusBar.getWidget(ID));
-    if (widget != null) {
-      widget.myComponent.setIcon(widget.myInactive);
-      widget.myComponent.setEnabled(false);
-      widget.myComponent.setToolTipText(UIBundle.message("status.bar.vfs.refresh.widget.tooltip"));
+    if (statusBar.getWidget(ID) instanceof VfsRefreshWidget widget) {
+      widget.stop();
     }
   }
 
@@ -102,6 +96,18 @@ public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFa
     @Override
     public JComponent getComponent() {
       return myComponent;
+    }
+
+    private void start(@NlsContexts.Tooltip String tooltipText) {
+      myComponent.setIcon(myProgress);
+      myComponent.setEnabled(true);
+      myComponent.setToolTipText(tooltipText);
+    }
+
+    private void stop() {
+      myComponent.setIcon(myInactive);
+      myComponent.setEnabled(false);
+      myComponent.setToolTipText(UIBundle.message("status.bar.vfs.refresh.widget.tooltip"));
     }
   }
 }
