@@ -5,16 +5,17 @@ import com.intellij.model.search.SearchService
 import com.intellij.model.search.Searcher
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
+import com.intellij.psi.util.PsiSuperMethodUtil
 import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.search.ideaExtensions.JavaOverridingMethodsSearcherFromKotlinParameters
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCallableSearch.SearchParameters
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -65,27 +66,46 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
 
         val superDeclarationPointer = runReadAction { ktCallableDeclaration.createSmartPointer() }
 
-        return CollectionQuery(
-            klass.findAllInheritors(parameters.searchScope).mapNotNull { it.unwrapped as? KtClassOrObject }.toList()
-        ).flatMapping { ktClassOrObject ->
-            val ktClassOrObjectPointer = runReadAction { ktClassOrObject.createSmartPointer() }
+        val allInheritors = klass.findAllInheritors(parameters.searchScope)
+        return CollectionQuery(allInheritors.toList()).flatMapping { psiElement ->
+            val psiElementPointer = runReadAction { psiElement.createSmartPointer() }
             object : AbstractQuery<PsiElement>() {
                 override fun processResults(consumer: Processor<in PsiElement>): Boolean = runReadAction {
-                    val classOrObject = ktClassOrObjectPointer.element ?: return@runReadAction true
+                    val element = psiElementPointer.element ?: return@runReadAction true
 
-                    analyze(classOrObject) {
-                        val superFunction = superDeclarationPointer.element ?: return@runReadAction false
+                    when (element) {
+                        is KtClassOrObject ->
+                            analyze(element) {
+                                val superFunction = superDeclarationPointer.element ?: return@runReadAction false
 
-                        (classOrObject.getSymbol() as KtSymbolWithMembers).getDeclaredMemberScope()
-                            .getCallableSymbols(ktCallableDeclarationName)
-                            .all { overridingSymbol ->
-                                val function = overridingSymbol.psi
-                                if (function != null && overridingSymbol.getDirectlyOverriddenSymbols().any { it.psi == superFunction }) {
-                                    consumer.process(function)
-                                } else {
-                                    true
+                                (element.getSymbol() as KtSymbolWithMembers).getDeclaredMemberScope()
+                                    .getCallableSymbols(ktCallableDeclarationName)
+                                    .all { overridingSymbol ->
+                                        val function = overridingSymbol.psi
+                                        if (function != null && overridingSymbol.getDirectlyOverriddenSymbols()
+                                                .any { it.psi == superFunction }
+                                        ) {
+                                            consumer.process(function)
+                                        } else {
+                                            true
+                                        }
+                                    }
+                            }
+                        is PsiClass -> {
+                            val superFunction = superDeclarationPointer.element ?: return@runReadAction false
+                            val lightMethods = superFunction.toLightMethods()
+                            val methodsByName = element.findMethodsByName(ktCallableDeclarationName.asString(), false)
+                            for (method in methodsByName) {
+                                for (lightMethod in lightMethods) {
+                                    if (PsiSuperMethodUtil.isSuperMethod(method, lightMethod)) {
+                                        if (!consumer.process(method)) return@runReadAction false
+                                    }
                                 }
                             }
+
+                            true
+                        }
+                        else -> true
                     }
                 }
             }

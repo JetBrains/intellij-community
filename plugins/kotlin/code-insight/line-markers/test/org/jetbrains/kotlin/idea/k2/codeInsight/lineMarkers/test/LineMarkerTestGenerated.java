@@ -303,6 +303,11 @@ public abstract class LineMarkerTestGenerated extends AbstractLineMarkerTest {
             performTest();
         }
 
+        @TestMetadata("OverrideFunctionInJava.kt")
+        public void testOverrideFunctionInJava() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("OverrideIconForOverloadMethodBug.kt")
         public void testOverrideIconForOverloadMethodBug() throws Exception {
             performTest();

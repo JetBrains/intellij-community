@@ -61,7 +61,7 @@ abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCa
 
         val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
             override fun compute(indicator: ProgressIndicator): List<PsiElement> {
-                return searchCallable(ktFunction).toList()
+                return searchCallable(ktFunction).toMutableSet().toList()
             }
         })
         val actual = render(result)

@@ -162,6 +162,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/overrideImplement/OverrideFunction.kt");
         }
 
+        @TestMetadata("OverrideFunctionInJava.kt")
+        public void testOverrideFunctionInJava() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/OverrideFunctionInJava.kt");
+        }
+
         @TestMetadata("OverrideIconForOverloadMethodBug.kt")
         public void testOverrideIconForOverloadMethodBug() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/OverrideIconForOverloadMethodBug.kt");
