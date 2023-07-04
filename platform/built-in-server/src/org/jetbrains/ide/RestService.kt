@@ -219,12 +219,12 @@ abstract class RestService : HttpRequestHandler() {
     try {
       val counter = abuseCounter.get((context.channel().remoteAddress() as InetSocketAddress).address)!!
       if (counter.incrementAndGet() > Registry.intValue("ide.rest.api.requests.per.minute", 30)) {
-        HttpResponseStatus.TOO_MANY_REQUESTS.orInSafeMode(HttpResponseStatus.OK).sendError(context.channel(), request)
+        HttpResponseStatus.TOO_MANY_REQUESTS.sendError(context.channel(), request)
         return true
       }
 
       if (!isHostTrusted(request, urlDecoder)) {
-        HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.OK).sendError(context.channel(), request)
+        HttpResponseStatus.FORBIDDEN.sendError(context.channel(), request)
         return true
       }
 
@@ -357,5 +357,11 @@ abstract class RestService : HttpRequestHandler() {
 }
 
 fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpResponseStatus {
-  return if (Registry.`is`("ide.http.server.response.actual.status", true) || ApplicationManager.getApplication()?.isUnitTestMode == true) this else safeStatus
+  if (Registry.`is`("ide.http.server.response.actual.status", true) ||
+      ApplicationManager.getApplication()?.isUnitTestMode == true) {
+    return this
+  }
+  else {
+    return safeStatus
+  }
 }
