@@ -127,7 +127,7 @@ open class DistributedTestHost {
               val action = queue.remove()
               actionTitle = action.title
               logger.info("'$actionTitle': preparing to start action")
-              showNotification(actionTitle)
+              showNotification("${session.agentInfo.id}: $actionTitle")
 
               // Flush all events to process pending protocol events and other things
               //   before actual test method execution
