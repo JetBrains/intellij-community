@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
@@ -58,8 +59,10 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
             { ExperimentalUI.isNewUI() },
             {
               if (it != ExperimentalUI.isNewUI()) {
-                ExperimentalUiCollector.logSwitchUi(ExperimentalUiCollector.SwitchSource.PREFERENCES, it)
-                ExperimentalUI.setNewUI(it)
+                ApplicationManager.getApplication().invokeLater {
+                  ExperimentalUiCollector.logSwitchUi(ExperimentalUiCollector.SwitchSource.PREFERENCES, it)
+                  ExperimentalUI.setNewUI(it)
+                }
               }
             })
           .enabled(PlatformUtils.isAqua().not()) // the new UI is always enabled for Aqua and cannot be disabled
