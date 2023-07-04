@@ -26,6 +26,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -240,39 +241,10 @@ public final class JavaLibraryUtil {
           return true;
         }
 
-        VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
-        if (coordinates != null && libraryFiles.length <= 1) {
-          allMavenCoords.add(coordinates.getGroupId() + ":" + coordinates.getArtifactId());
-        }
-        else {
-          JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-
-          for (VirtualFile libraryFile : libraryFiles) {
-            if (libraryFile.getFileSystem() != jarFileSystem) continue;
-
-            String nameWithoutExtension = libraryFile.getNameWithoutExtension();
-
-            jarLibrariesIndex.put(nameWithoutExtension, nameWithoutExtension);
-
-            String[] nameParts = nameWithoutExtension.split("-");
-            StringBuilder nameBuilder = new StringBuilder();
-
-            for (int i = 0; i < nameParts.length; i++) {
-              String part = nameParts[i];
-              if (!part.isEmpty() && isDecimalDigit(part.charAt(0))) {
-                break;
-              }
-
-              if (i > 0) {
-                nameBuilder.append("-");
-              }
-              nameBuilder.append(part);
-            }
-
-            String indexNamePart = nameBuilder.toString();
-            if (!indexNamePart.equals(nameWithoutExtension)) {
-              jarLibrariesIndex.put(indexNamePart, nameWithoutExtension);
-            }
+        if (library instanceof LibraryEx) {
+          LibraryProperties<?> libraryProperties = ((LibraryEx)library).getProperties();
+          if (libraryProperties == null || libraryProperties instanceof RepositoryLibraryProperties) {
+            collectFiles(library, coordinates, allMavenCoords, jarLibrariesIndex);
           }
         }
 
@@ -280,6 +252,47 @@ public final class JavaLibraryUtil {
       });
 
     return new Libraries(Set.copyOf(allMavenCoords), Map.copyOf(jarLibrariesIndex));
+  }
+
+  private static void collectFiles(@NotNull Library library,
+                                   @Nullable MavenCoordinates coordinates,
+                                   @NotNull Set<String> allMavenCoords,
+                                   @NotNull Map<String, String> jarLibrariesIndex) {
+    VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
+    if (coordinates != null && libraryFiles.length <= 1) {
+      allMavenCoords.add(coordinates.getGroupId() + ":" + coordinates.getArtifactId());
+    }
+    else {
+      JarFileSystem jarFileSystem = JarFileSystem.getInstance();
+
+      for (VirtualFile libraryFile : libraryFiles) {
+        if (libraryFile.getFileSystem() != jarFileSystem) continue;
+
+        String nameWithoutExtension = libraryFile.getNameWithoutExtension();
+
+        jarLibrariesIndex.put(nameWithoutExtension, nameWithoutExtension);
+
+        String[] nameParts = nameWithoutExtension.split("-");
+        StringBuilder nameBuilder = new StringBuilder();
+
+        for (int i = 0; i < nameParts.length; i++) {
+          String part = nameParts[i];
+          if (!part.isEmpty() && isDecimalDigit(part.charAt(0))) {
+            break;
+          }
+
+          if (i > 0) {
+            nameBuilder.append("-");
+          }
+          nameBuilder.append(part);
+        }
+
+        String indexNamePart = nameBuilder.toString();
+        if (!indexNamePart.equals(nameWithoutExtension)) {
+          jarLibrariesIndex.put(indexNamePart, nameWithoutExtension);
+        }
+      }
+    }
   }
 
   private record Libraries(Set<String> mavenLibraries,
