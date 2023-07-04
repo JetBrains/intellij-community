@@ -11,13 +11,13 @@ import com.intellij.util.BitUtil
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.references.getCalleeByLambdaArgument
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
 abstract class KotlinTargetElementEvaluator : TargetElementEvaluatorEx2(), TargetElementEvaluatorEx, TargetElementUtilExtender {
     companion object {
-        const val DO_NOT_UNWRAP_LABELED_EXPRESSION = 0x100
         const val BYPASS_IMPORT_ALIAS = 0x200
     }
 
@@ -29,7 +29,7 @@ abstract class KotlinTargetElementEvaluator : TargetElementEvaluatorEx2(), Targe
 
     override fun getAdditionalDefinitionSearchFlags() = 0
 
-    override fun getAdditionalReferenceSearchFlags() = DO_NOT_UNWRAP_LABELED_EXPRESSION or BYPASS_IMPORT_ALIAS
+    override fun getAdditionalReferenceSearchFlags() = BYPASS_IMPORT_ALIAS
 
     override fun getAllAdditionalFlags() = additionalDefinitionSearchFlags + additionalReferenceSearchFlags
 
@@ -53,10 +53,8 @@ abstract class KotlinTargetElementEvaluator : TargetElementEvaluatorEx2(), Targe
     override fun getElementByReference(ref: PsiReference, flags: Int): PsiElement? {
         if (ref is KtSimpleNameReference && ref.expression is KtLabelReferenceExpression) {
             val refTarget = ref.resolve() as? KtExpression ?: return null
-            if (!BitUtil.isSet(flags, DO_NOT_UNWRAP_LABELED_EXPRESSION)) {
-                return refTarget.getLabeledParent(ref.expression.getReferencedName()) ?: refTarget
-            }
-            return refTarget
+            refTarget.getLabeledParent(ref.expression.getReferencedName())?.let { return it }
+            return (refTarget as? KtFunction)?.getCalleeByLambdaArgument() ?: refTarget
         }
 
         if (!BitUtil.isSet(flags, BYPASS_IMPORT_ALIAS)) {
