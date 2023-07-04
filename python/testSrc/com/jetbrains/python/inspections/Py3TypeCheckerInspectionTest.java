@@ -298,7 +298,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
               y = attr.ib(default=0)
               z = attr.ib(default=attr.Factory(list))
              \s
-          Weak1(1, <warning descr="Expected type 'int', got 'LiteralString' instead">"str"</warning>, <warning descr="Expected type 'list', got 'int' instead">2</warning>)
+          Weak1(1, <warning descr="Expected type 'int', got 'str' instead">"str"</warning>, <warning descr="Expected type 'list', got 'int' instead">2</warning>)
 
 
           @attr.s
@@ -318,7 +318,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
               y = attr.ib(default=0, type=int)
               z = attr.ib(default=attr.Factory(list), type=typing.List[int])
              \s
-          Strong(1, <warning descr="Expected type 'int', got 'LiteralString' instead">"str"</warning>, <warning descr="Expected type 'list[int]', got 'list[LiteralString]' instead">["str"]</warning>)"""
+          Strong(1, <warning descr="Expected type 'int', got 'str' instead">"str"</warning>, <warning descr="Expected type 'list[int]', got 'list[str]' instead">["str"]</warning>)"""
       )
     );
   }
@@ -425,9 +425,9 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from typing import Annotated
                    A = Annotated[bool, 'Some constraint']
-                   a: A = <warning descr="Expected type 'bool', got 'LiteralString' instead">'str'</warning>
+                   a: A = <warning descr="Expected type 'bool', got 'str' instead">'str'</warning>
                    b: A = True
-                   c: Annotated[bool, 'Some constraint'] = <warning descr="Expected type 'bool', got 'LiteralString' instead">'str'</warning>
+                   c: Annotated[bool, 'Some constraint'] = <warning descr="Expected type 'bool', got 'str' instead">'str'</warning>
                    d: Annotated[str, 'Some constraint'] = 'str'
                    """);
   }
@@ -535,7 +535,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    def a(q: int) -> str: ...
 
 
-                   expr = Y(a, '1').f(<warning descr="Expected type 'int', got 'LiteralString' instead">"42"</warning>)
+                   expr = Y(a, '1').f(<warning descr="Expected type 'int', got 'str' instead">"42"</warning>)
                    """);
   }
 
@@ -620,7 +620,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    def add(x: Callable[P, int]) -> Callable[Concatenate[str, P], bool]: ...
 
 
-                   add(bar)("42", <warning descr="Expected type 'int', got 'LiteralString' instead">"42"</warning>, True)""");
+                   add(bar)("42", <warning descr="Expected type 'int', got 'str' instead">"42"</warning>, True)""");
   }
 
   // PY-49935
@@ -800,9 +800,9 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
                    res2 = twice(a_int_b_str, b="A", a=1)
 
-                   res3 = twice(a_int_b_str, <warning descr="Expected type 'int', got 'LiteralString' instead">"A"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>)
+                   res3 = twice(a_int_b_str, <warning descr="Expected type 'int', got 'str' instead">"A"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>)
 
-                   res4 = twice(a_int_b_str, <warning descr="Expected type 'str', got 'int' instead">b=1</warning>, <warning descr="Expected type 'int', got 'LiteralString' instead">a="A"</warning>)""");
+                   res4 = twice(a_int_b_str, <warning descr="Expected type 'str', got 'int' instead">b=1</warning>, <warning descr="Expected type 'int', got 'str' instead">a="A"</warning>)""");
   }
 
   // PY-50403
@@ -1086,13 +1086,13 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    myClass.foo(subClass)
                    myClass.foo(42)
                    myClass.foo(None)
-                   myClass.foo(<warning descr="Expected type 'MyClass | None | int' (matched generic type 'Self | None | int'), got 'LiteralString' instead">""</warning>)
+                   myClass.foo(<warning descr="Expected type 'MyClass | None | int' (matched generic type 'Self | None | int'), got 'str' instead">""</warning>)
 
                    subClass.foo(<warning descr="Expected type 'SubClass | None | int' (matched generic type 'Self | None | int'), got 'MyClass' instead">myClass</warning>)
                    subClass.foo(subClass)
                    subClass.foo(42)
                    subClass.foo(None)
-                   subClass.foo(<warning descr="Expected type 'SubClass | None | int' (matched generic type 'Self | None | int'), got 'LiteralString' instead">""</warning>)""");
+                   subClass.foo(<warning descr="Expected type 'SubClass | None | int' (matched generic type 'Self | None | int'), got 'str' instead">""</warning>)""");
   }
 
   // PY-53104
@@ -1287,7 +1287,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
                    foo(1, bar, args=(0, 'foo'))
 
-                   foo(1, bar, <warning descr="Expected type 'tuple[int, str]' (matched generic type 'tuple[*Ts]'), got 'tuple[LiteralString, int]' instead">args=('foo', 0)</warning>)
+                   foo(1, bar, <warning descr="Expected type 'tuple[int, str]' (matched generic type 'tuple[*Ts]'), got 'tuple[str, int]' instead">args=('foo', 0)</warning>)
                    """);
   }
 
@@ -1397,9 +1397,9 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    foo('', True, 42, c=True, b='')
                                       
                    foo('', b='', c=True<warning descr="Parameter 'args' unfilled, expected '*tuple[*Ts, int]'">)</warning>
-                   foo('', <warning descr="Expected type '*tuple[int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[LiteralString]' instead">''</warning>, b='', c=True)
-                   foo('', <warning descr="Expected type '*tuple[LiteralString, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[LiteralString, list]' instead">''</warning>, <warning descr="Expected type '*tuple[LiteralString, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[LiteralString, list]' instead">[False]</warning>, b='', c=True)
-                   foo('', <warning descr="Expected type '*tuple[LiteralString, LiteralString, LiteralString, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[LiteralString, LiteralString, LiteralString, float]' instead">''</warning>, <warning descr="Expected type '*tuple[LiteralString, LiteralString, LiteralString, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[LiteralString, LiteralString, LiteralString, float]' instead">''</warning>, <warning descr="Expected type '*tuple[LiteralString, LiteralString, LiteralString, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[LiteralString, LiteralString, LiteralString, float]' instead">''</warning>, <warning descr="Expected type '*tuple[LiteralString, LiteralString, LiteralString, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[LiteralString, LiteralString, LiteralString, float]' instead">1.1</warning>, b='', c=True)
+                   foo('', <warning descr="Expected type '*tuple[int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str]' instead">''</warning>, b='', c=True)
+                   foo('', <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, list]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, list]' instead">[False]</warning>, b='', c=True)
+                   foo('', <warning descr="Expected type '*tuple[str, str, str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, str, str, float]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, str, str, float]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, str, str, float]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, str, str, float]' instead">1.1</warning>, b='', c=True)
                    """);
   }
 
@@ -1420,13 +1420,13 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    foo((), '', 1, b='')
                    foo(([], {}), '', [], {}, 1, b='')
                                       
-                   foo(('', 1), b=''<warning descr="Parameter 'args' unfilled, expected '*tuple[str, LiteralString, int, int]'">)</warning>
-                   foo(('', 1), <warning descr="Expected type '*tuple[str, LiteralString, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, LiteralString, LiteralString, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, LiteralString, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, LiteralString, LiteralString, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, LiteralString, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, LiteralString, LiteralString, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, LiteralString, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, LiteralString, LiteralString, int]' instead">1</warning>, b='')
-                   foo((1,1), <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">1</warning>, b='')
-                   foo(('',), <warning descr="Expected type '*tuple[str, LiteralString, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, LiteralString, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, LiteralString, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">1</warning>, b='')
+                   foo(('', 1), b=''<warning descr="Parameter 'args' unfilled, expected '*tuple[str, str, int, int]'">)</warning>
+                   foo(('', 1), <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">1</warning>, b='')
+                   foo((1,1), <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, b='')
+                   foo(('',), <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, b='')
                    x: Any
-                   foo((), <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, Any]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, Any]' instead">42</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, Any]' instead">x</warning>, b='')
-                   foo(([], {}), <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, list, TypedDict]' instead">''</warning>, <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, list, TypedDict]' instead">[]</warning>, <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, list, TypedDict]' instead">{}</warning>, b='')
+                   foo((), <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">42</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">x</warning>, b='')
+                   foo(([], {}), <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, TypedDict]' instead">''</warning>, <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, TypedDict]' instead">[]</warning>, <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, TypedDict]' instead">{}</warning>, b='')
                    """);
   }
 
@@ -1465,13 +1465,13 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    foo((), '', 1, b='')
                    foo(([], {}), '', [], {}, 1, b='')
                                       
-                   foo(('', 1), b=''<warning descr="Parameter 'args' unfilled, expected '*tuple[str, LiteralString, int, int]'">)</warning>
-                   foo(('', 1), <warning descr="Expected type '*tuple[str, LiteralString, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, LiteralString, LiteralString, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, LiteralString, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, LiteralString, LiteralString, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, LiteralString, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, LiteralString, LiteralString, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, LiteralString, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, LiteralString, LiteralString, int]' instead">1</warning>, b='')
-                   foo((1,1), <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">1</warning>, b='')
-                   foo(('',), <warning descr="Expected type '*tuple[str, LiteralString, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, LiteralString, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, LiteralString, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">1</warning>, b='')
+                   foo(('', 1), b=''<warning descr="Parameter 'args' unfilled, expected '*tuple[str, str, int, int]'">)</warning>
+                   foo(('', 1), <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">1</warning>, b='')
+                   foo((1,1), <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, b='')
+                   foo(('',), <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, b='')
                    x: Any
-                   foo((), <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, Any]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, Any]' instead">42</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, Any]' instead">x</warning>, b='')
-                   foo(([], {}), <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, list, TypedDict]' instead">''</warning>, <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, list, TypedDict]' instead">[]</warning>, <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, list, TypedDict]' instead">{}</warning>, b='')
+                   foo((), <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">42</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">x</warning>, b='')
+                   foo(([], {}), <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, TypedDict]' instead">''</warning>, <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, TypedDict]' instead">[]</warning>, <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, TypedDict]' instead">{}</warning>, b='')
                    """);
   }
 
@@ -1492,13 +1492,13 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    foo((), '', 1, b='')
                    foo(([], {}), '', [], {}, 1, b='')
                                       
-                   foo(('', 1), b=''<warning descr="Parameter 'args' unfilled, expected '*tuple[str, LiteralString, int, int]'">)</warning>
-                   foo(('', 1), <warning descr="Expected type '*tuple[str, LiteralString, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, LiteralString, LiteralString, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, LiteralString, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, LiteralString, LiteralString, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, LiteralString, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, LiteralString, LiteralString, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, LiteralString, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, LiteralString, LiteralString, int]' instead">1</warning>, b='')
-                   foo((1,1), <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">1</warning>, b='')
-                   foo(('',), <warning descr="Expected type '*tuple[str, LiteralString, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, LiteralString, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, LiteralString, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, int]' instead">1</warning>, b='')
+                   foo(('', 1), b=''<warning descr="Parameter 'args' unfilled, expected '*tuple[str, str, int, int]'">)</warning>
+                   foo(('', 1), <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">1</warning>, b='')
+                   foo((1,1), <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, b='')
+                   foo(('',), <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, b='')
                    x: Any
-                   foo((), <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, Any]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, Any]' instead">42</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, int, Any]' instead">x</warning>, b='')
-                   foo(([], {}), <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, list, TypedDict]' instead">''</warning>, <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, list, TypedDict]' instead">[]</warning>, <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[LiteralString, list, TypedDict]' instead">{}</warning>, b='')
+                   foo((), <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">42</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">x</warning>, b='')
+                   foo(([], {}), <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, TypedDict]' instead">''</warning>, <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, TypedDict]' instead">[]</warning>, <warning descr="Expected type '*tuple[str, list, TypedDict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, TypedDict]' instead">{}</warning>, b='')
                    """);
   }
 
@@ -1515,8 +1515,8 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    foo(1)
                    foo(1, 2, 3)
 
-                   foo(<warning descr="Expected type 'int', got 'LiteralString' instead">''</warning>)
-                   foo(1, <warning descr="Expected type 'int', got 'LiteralString' instead">''</warning>)
+                   foo(<warning descr="Expected type 'int', got 'str' instead">''</warning>)
+                   foo(1, <warning descr="Expected type 'int', got 'str' instead">''</warning>)
                    """);
   }
 
@@ -1633,7 +1633,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                                       
                    IntTuple = tuple[int, *Ts]
                                       
-                   c: IntTuple[()] = <warning descr="Expected type 'tuple[int]', got 'tuple[int, LiteralString]' instead">(1, "")</warning>
+                   c: IntTuple[()] = <warning descr="Expected type 'tuple[int]', got 'tuple[int, str]' instead">(1, "")</warning>
                     """);
   }
 
@@ -1806,8 +1806,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testLiteralStringEqualsToStr() {
     doTestByText("""
                    from typing_extensions import LiteralString
-                   literal_string: LiteralString
-                   s: str = literal_string
+                   s: str
                    literal_string: LiteralString = <warning descr="Expected type 'LiteralString', got 'str' instead">s</warning>
                    literal_string: LiteralString = "hello"
                    """);
@@ -1828,6 +1827,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                              
                    plain_string: str
                    expect_literal_string(<warning descr="Expected type 'LiteralString', got 'str' instead">literal_string + plain_string</warning>)
+                   expect_literal_string(<warning descr="Expected type 'LiteralString', got 'str' instead">plain_string + literal_string</warning>)
                    """);
   }
 
@@ -1872,7 +1872,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    def literal_identity(s: LiteralString) -> LiteralString:
                        return s
                    hello: Literal["hello"] = "hello"
-                   y1 = literal_identity(hello) # no warning expected
+                   literal_identity(hello)
                    """);
   }
 
@@ -1898,7 +1898,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    plain_string: str
                    literal_string: LiteralString
                    calc('literal string', plain_string)
-                   #calc(literal_string, plain_string) # treat LiteralStrings as str in generic substitution todo lada uncomment
+                   calc(literal_string, <warning descr="Expected type 'LiteralString' (matched generic type 'T'), got 'str' instead">plain_string</warning>)
                    """);
   }
 
