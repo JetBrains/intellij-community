@@ -93,7 +93,7 @@ fun Lifetime.startWithModalProgressAsync(
 }
 
 @Deprecated("Use withModalProgress")
-private suspend fun <T>  withModalProgressContextBridge(
+suspend fun <T>  withModalProgressContext(
   @Nls(capitalization = Nls.Capitalization.Title) title: String,
   canBeCancelled: Boolean = true,
   isIndeterminate: Boolean = true,
@@ -111,15 +111,15 @@ private suspend fun <T>  withModalProgressContextBridge(
 }
 
 @Deprecated("Use withModalProgress")
-private suspend fun <T>  withModalProgressContextBridge(
+suspend fun <T>  withModalProgressContext(
   @Nls(capitalization = Nls.Capitalization.Title) title: String,
   canBeCancelled: Boolean = true,
   project: Project? = null,
   action: suspend ProgressCoroutineScope.() -> T
-): T = withModalProgressContextBridge(title, canBeCancelled, true, project, Lifetime.Eternal, action)
+): T = withModalProgressContext(title, canBeCancelled, true, project, Lifetime.Eternal, action)
 
 @Deprecated("Use withModalProgress")
-suspend fun <T>  withModalProgressContext(
+suspend fun <T>  withModalProgressContext2(
   @Nls(capitalization = Nls.Capitalization.Title) title: String,
   canBeCancelled: Boolean = true,
   isIndeterminate: Boolean = true,
@@ -164,7 +164,7 @@ fun Lifetime.launchUnderModalProgress(
   project: Project? = null,
   action: suspend ProgressCoroutineScope.() -> Unit
 ): Job = launchBackground {
-  withModalProgressContextBridge(title, canBeCancelled, isIndeterminate, project, this@launchUnderModalProgress, action)
+  withModalProgressContext(title, canBeCancelled, isIndeterminate, project, this@launchUnderModalProgress, action)
 }
 
 @Deprecated("Use launchWithBackgroundProgress")
@@ -194,7 +194,7 @@ fun <T> Lifetime.startUnderModalProgressAsync(
   project: Project? = null,
   action: suspend ProgressCoroutineScope.() -> T
 ): Deferred<T> = startBackgroundAsync {
-  withModalProgressContextBridge(title, canBeCancelled, isIndeterminate, project, this@startUnderModalProgressAsync, action)
+  withModalProgressContext(title, canBeCancelled, isIndeterminate, project, this@startUnderModalProgressAsync, action)
 }
 
 @Deprecated("Use startWithBackgroundProgressAsync")
