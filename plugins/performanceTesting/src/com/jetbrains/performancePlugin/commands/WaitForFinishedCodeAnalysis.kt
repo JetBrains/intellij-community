@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -25,7 +26,7 @@ import kotlin.io.path.readLines
 class WaitForFinishedCodeAnalysis(text: String, line: Int) : AbstractCommand(text, line) {
   companion object {
     const val PREFIX = CMD_PREFIX + "waitForFinishedCodeAnalysis"
-    private val LOG = Logger.getInstance(WaitForFinishedCodeAnalysis::class.java)
+    private val LOG = logger<WaitForFinishedCodeAnalysis>()
   }
 
   override fun _execute(context: PlaybackContext): Promise<Any?> {

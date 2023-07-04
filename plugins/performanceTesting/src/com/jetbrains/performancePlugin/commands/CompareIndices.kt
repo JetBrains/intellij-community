@@ -7,6 +7,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbService
@@ -51,7 +52,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
 internal const val PREFIX = AbstractCommand.CMD_PREFIX + "compareIndices"
-private val LOG = Logger.getInstance(CompareIndices::class.java)
+private val LOG = logger<CompareIndices>()
 
 /**
  * Fully compares two indexes built for the same project: the *stored* index and the *current* index,

@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -20,7 +21,7 @@ class CodeAnalysisCommand(text: String, line: Int) : AbstractCommand(text, line)
   companion object {
     const val PREFIX = CMD_PREFIX + "codeAnalysis"
 
-    private val LOG = Logger.getInstance(CodeAnalysisCommand::class.java)
+    private val LOG = logger<CodeAnalysisCommand>()
   }
 
   override fun _execute(context: PlaybackContext): Promise<Any?> {

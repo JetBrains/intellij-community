@@ -3,6 +3,7 @@ package com.jetbrains.performancePlugin.commands
 import com.intellij.ide.actions.cache.ProjectRecoveryScope
 import com.intellij.ide.actions.cache.RecoveryAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.util.indexing.RefreshIndexableFilesAction
@@ -14,7 +15,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
 
 
-private val LOG = Logger.getInstance(RecoveryActionCommand::class.java)
+private val LOG = logger<RecoveryActionCommand>()
 
 class RecoveryActionCommand(text: String, line: Int) : AbstractCommand(text, line) {
 

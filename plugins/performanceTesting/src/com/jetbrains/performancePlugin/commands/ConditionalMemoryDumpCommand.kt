@@ -2,6 +2,7 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.util.MemoryDumpHelper
@@ -10,7 +11,7 @@ class ConditionalMemoryDumpCommand(text: String, line: Int) : PerformanceCommand
   companion object {
     const val NAME = "conditionalMemoryDumpCommand"
     const val PREFIX = CMD_PREFIX + NAME
-    private val LOG = Logger.getInstance(ConditionalMemoryDumpCommand::class.java)
+    private val LOG = logger<ConditionalMemoryDumpCommand>()
   }
 
   override suspend fun doExecute(context: PlaybackContext) {

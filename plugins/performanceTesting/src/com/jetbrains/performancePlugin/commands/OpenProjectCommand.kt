@@ -9,6 +9,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -60,7 +61,7 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "openProject"
 
-    private val LOG = Logger.getInstance(OpenProjectCommand::class.java)
+    private val LOG = logger<OpenProjectCommand>()
 
     fun shouldOpenInSmartMode(project: Project): Boolean {
       return (!SystemProperties.getBooleanProperty("performance.execute.script.right.after.ide.opened", false)

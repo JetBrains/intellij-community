@@ -1,6 +1,7 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
@@ -22,7 +23,7 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
   companion object {
     const val NAME = "waitVcsLogIndexing"
     const val PREFIX = CMD_PREFIX + NAME
-    private val LOG = Logger.getInstance(WaitVcsLogIndexingCommand::class.java)
+    private val LOG = logger<WaitVcsLogIndexingCommand>()
   }
 
   private val executor: ScheduledExecutorService = AppExecutorUtil.getAppScheduledExecutorService()

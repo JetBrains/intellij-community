@@ -1,6 +1,7 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
@@ -27,7 +28,7 @@ import java.nio.file.Paths
 class CompareProjectFiles(text: String, line: Int) : AbstractCommand(text, line) {
   companion object {
     const val PREFIX = CMD_PREFIX + "compareProjectFiles"
-    private val LOG = Logger.getInstance(CompareProjectFiles::class.java)
+    private val LOG = logger<CompareProjectFiles>()
 
     @JvmStatic
     fun main(args: Array<String>) {
