@@ -35,8 +35,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
 import com.intellij.ui.ListenerUtil
 import com.intellij.ui.components.JBLayeredPane
+import com.intellij.ui.components.JBScrollBar
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.Alarm
@@ -46,6 +49,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.NonNls
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.FocusAdapter
@@ -410,9 +414,10 @@ class CombinedDiffViewer(
     val stickyHeaderY = headerHeightInViewport - headerHeight
 
     //scrollPane.verticalScrollBar.add(JBScrollBar.LEADING, stickyHeader)
-
+    val showBorder = viewRect.minY > block.component.bounds.minY
     stickyHeaderPanel.setContent(stickyHeader)
     stickyHeaderPanel.setBounds(0, stickyHeaderY, block.component.width, headerHeight)
+    stickyHeaderPanel.border = JBUI.Borders.customLineBottom(if (!showBorder) CombinedDiffUI.MAIN_HEADER_BACKGROUND else CombinedDiffUI.EDITOR_BORDER_COLOR)
     stickyHeaderPanel.repaint()
   }
 

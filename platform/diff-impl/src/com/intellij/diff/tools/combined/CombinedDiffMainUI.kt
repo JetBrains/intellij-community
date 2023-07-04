@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.ui.GuiUtils
-import com.intellij.ui.JBColor
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.panels.Wrapper
@@ -243,7 +242,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
       .addToRight(rightToolbarWrapper)
       .apply {
         border = JBUI.Borders.compound(
-          JBUI.Borders.customLineBottom(JBColor.border()),
+          JBUI.Borders.customLineBottom(CombinedDiffUI.EDITOR_BORDER_COLOR),
           JBUI.Borders.empty(5, 10)
         )
       }

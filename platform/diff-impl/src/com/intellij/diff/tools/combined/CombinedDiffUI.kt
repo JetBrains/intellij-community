@@ -8,19 +8,19 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
 
+internal object CombinedDiffUI {
+  val MAIN_HEADER_BACKGROUND: Color = JBColor.lazy {
+    return@lazy if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.EditorTabs.background() else UIUtil.getPanelBackground()
+  }
 
-object CombinedDiffUI {
-  val MAIN_HEADER_BACKGROUND: Color
-    get() = JBColor.lazy {
-      return@lazy if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.EditorTabs.background() else UIUtil.getPanelBackground()
-    }
-
-  val BLOCK_HEADER_BACKGROUND: Color
-    get() = JBColor.lazy {
-      EditorColorsManager.getInstance().globalScheme.defaultBackground
-    }
+  val BLOCK_HEADER_BACKGROUND: Color = JBColor.lazy {
+    EditorColorsManager.getInstance().globalScheme.defaultBackground
+  }
 
   val LOADING_BLOCK_BACKGROUND: Color
     get() = BLOCK_HEADER_BACKGROUND
 
+  val EDITOR_BORDER_COLOR: Color = JBColor.lazy {
+    JBUI.CurrentTheme.Editor.BORDER_COLOR
+  }
 }

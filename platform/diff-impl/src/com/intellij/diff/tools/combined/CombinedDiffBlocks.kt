@@ -14,8 +14,6 @@ import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.CheckBox
@@ -23,7 +21,6 @@ import com.intellij.ui.components.panels.OpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.FontUtil
 import com.intellij.util.IconUtil.getIcon
-import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -79,19 +76,8 @@ class CombinedSimpleDiffHeader(project: Project,
   init {
     background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
 
-    addToCenter(if (withPathOnly) buildPathComponent(project, blockId) else buildToolbar(project, blockId).component)
-    border = JBUI.Borders.compound(
-      IdeBorderFactory.createBorder(SideBorder.BOTTOM),
-      JBUI.Borders.empty(12, 10)
-    )
-  }
-
-  private fun buildPathComponent(project: Project, blockId: CombinedPathBlockId): JComponent {
-    background = UIUtil.getListBackground()
-    return OpaquePanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(3), 0))
-      .apply {
-        add(createTextComponent(project, blockId.path))
-      }
+    addToCenter(if (withPathOnly) createTextComponent(project, blockId.path) else buildToolbar(project, blockId).component)
+    border = JBUI.Borders.empty(12, 10)
   }
 
   private fun buildToolbar(project: Project, blockId: CombinedPathBlockId): ActionToolbar {
@@ -180,7 +166,10 @@ class CombinedSimpleDiffBlock(project: Project,
   private val pathOnlyHeader: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, true)
   private val headerWithToolbar: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, false)
 
-  override val header: Wrapper = Wrapper(if (isPathOnlyHeader) pathOnlyHeader else headerWithToolbar)
+  override val header: Wrapper = Wrapper(if (isPathOnlyHeader) pathOnlyHeader else headerWithToolbar).apply {
+    border = JBUI.Borders.customLineTop(CombinedDiffUI.EDITOR_BORDER_COLOR)
+  }
+
   override val stickyHeader: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, false)
   override val body: Wrapper = Wrapper(initialContent)
 
