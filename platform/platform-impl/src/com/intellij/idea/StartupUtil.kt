@@ -214,15 +214,12 @@ fun CoroutineScope.startApplication(args: List<String>,
         appStarter = appStarterDeferred.await(),
         euaDocumentDeferred = euaDocumentDeferred,
       )
-    }
 
-    if ((ConfigImportHelper.isNewUser() ||
-         // config directory may exist even if user is a new.
-         !(BundledPluginsState.checkStateExistedAtTheStart() || ApplicationManagerEx.isInIntegrationTest()))
-        && System.getProperty(NewUiValue.KEY) == null) {
-      runCatching {
-        EarlyAccessRegistryManager.setAndFlush(mapOf(NewUiValue.KEY to true.toString()))
-      }.getOrLogException(logDeferred.await())
+      if (ConfigImportHelper.isNewUser() && System.getProperty(NewUiValue.KEY) == null) {
+        runCatching {
+          EarlyAccessRegistryManager.setAndFlush(mapOf(NewUiValue.KEY to true.toString()))
+        }.getOrLogException(log)
+      }
     }
 
     PluginManagerCore.scheduleDescriptorLoading(asyncScope, zipFilePoolDeferred)
@@ -346,6 +343,7 @@ fun isConfigImportNeeded(configPath: Path): Boolean {
   return !Files.exists(configPath)
          || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME))
          || customTargetDirectoryToImportConfig != null
+         || !(BundledPluginsState.checkStateExistedAtTheStart() || ApplicationManagerEx.isInIntegrationTest())
 }
 
 /**
