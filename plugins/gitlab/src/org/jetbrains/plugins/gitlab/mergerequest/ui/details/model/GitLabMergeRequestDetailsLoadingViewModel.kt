@@ -20,6 +20,8 @@ internal interface GitLabMergeRequestDetailsLoadingViewModel {
 
   fun requestLoad()
 
+  fun refreshData()
+
   sealed interface LoadingState {
     object Loading : LoadingState
     class Error(val exception: Throwable) : LoadingState
@@ -68,6 +70,13 @@ internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
   override fun requestLoad() {
     scope.launch {
       loadingRequests.emit(Unit)
+    }
+  }
+
+  override fun refreshData() {
+    scope.launch {
+      val mergeRequest = mergeRequestFlow.first().getOrNull()
+      mergeRequest?.refreshData()
     }
   }
 }

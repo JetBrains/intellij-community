@@ -77,6 +77,7 @@ internal class GitLabReviewTabComponentFactory(
   ): JComponent {
     val reviewDetailsVm = GitLabMergeRequestDetailsLoadingViewModelImpl(project, cs, ctx.currentUser, ctx.projectData, reviewId).apply {
       requestLoad()
+      refreshData()
     }
 
     val detailsVmFlow = reviewDetailsVm.mergeRequestLoadingFlow.mapLatest {
@@ -128,7 +129,6 @@ internal class GitLabReviewTabComponentFactory(
         awaitCancellation()
       }
     }
-
 
     val avatarIconsProvider = ctx.avatarIconProvider
     return GitLabMergeRequestDetailsComponentFactory.createDetailsComponent(
