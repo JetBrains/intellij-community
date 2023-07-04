@@ -158,7 +158,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 
         when {
             deepestSuperMethods.isEmpty() -> preprocessAndPass(element)
-            wrappedMethod != null && (wrappedMethod.isConstructor || element !is KtNamedFunction) -> {
+            wrappedMethod != null && (wrappedMethod.isConstructor || deepestSuperMethods.size == 1 || element !is KtNamedFunction) -> {
                 javaMethodProcessorInstance.substituteElementToRename(wrappedMethod, editor, Pass.create(::preprocessAndPass))
             }
             else -> {
