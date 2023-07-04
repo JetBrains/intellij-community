@@ -688,7 +688,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     val available = availableIntentions
       .map { (ModCommandService.getInstance().unwrap(it) ?: IntentionActionDelegate.unwrap(it))::class.java }
       .filter { it.name.startsWith("com.intellij.codeInsight.") &&
-                !it.name.startsWith("com.intellij.codeInsight.intention.impl.")}
+                !(it.name.startsWith("com.intellij.codeInsight.intention.impl.") && it.name.endsWith("Action"))}
       .map { it.simpleName }
     assertThat(available).describedAs(availableIntentions.toString()).containsExactlyInAnyOrder(*fixes)
   }
