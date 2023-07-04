@@ -327,13 +327,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     }
 
     @Override
-    protected int disposeLongTimeout() {
-      if (SqliteVcsLogStorageBackendKt.isSqliteBackend(myBackend)) return 5000;
-
-      return super.disposeLongTimeout();
-    }
-
-    @Override
     protected @NotNull SingleTask startNewBackgroundTask() {
       ProgressIndicator indicator = myProgress.createProgressIndicator(true, INDEXING);
       Consumer<ProgressIndicator> task = progressIndicator -> {
