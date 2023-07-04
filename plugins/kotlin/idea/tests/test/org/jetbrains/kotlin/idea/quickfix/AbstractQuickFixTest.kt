@@ -23,6 +23,7 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.caches.resolve.ResolveInDispatchThreadException
 import org.jetbrains.kotlin.idea.caches.resolve.forceCheckForResolveInDispatchThreadInTests
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
@@ -60,6 +61,8 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         val beforeFileText = FileUtil.loadFile(File(beforeFileName))
         InTextDirectivesUtils.checkIfMuted(beforeFileText)
         withCustomCompilerOptions(beforeFileText, project, module) {
+            loadScriptConfiguration()
+
             val inspections = parseInspectionsToEnable(beforeFileName, beforeFileText).toTypedArray()
             try {
                 myFixture.enableInspections(*inspections)
@@ -91,6 +94,11 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
     protected open fun configExtra(options: String) {
 
+    }
+
+    private fun loadScriptConfiguration() {
+        val file = myFixture.configureByFile(fileName())
+        ScriptConfigurationManager.getInstance(project).getConfiguration(file as KtFile)
     }
 
     private fun getPathAccordingToPackage(name: String, text: String): String {

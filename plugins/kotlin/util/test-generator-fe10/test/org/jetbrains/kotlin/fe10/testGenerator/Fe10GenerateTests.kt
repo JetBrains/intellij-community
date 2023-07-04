@@ -397,7 +397,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractK1QuickFixTest> {
-            model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
+            model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kts?$"))
         }
 
         testClass<AbstractGotoSuperTest> {
