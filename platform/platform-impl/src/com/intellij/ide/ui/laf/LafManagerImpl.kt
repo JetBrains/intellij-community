@@ -178,8 +178,8 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private var isUpdatingPlugin = false
   private var themeIdBeforePluginUpdate: String? = null
   private var autodetect = false
-  // History records of Laf to EditorColorScheme
-  private val lafToPreviousScheme: MutableList<Pair<String, String>> = mutableListOf()
+  // We remember the last used editor scheme for each laf in order to restore it after switching laf
+  private val lafToPreviousScheme: MutableMap<String, String> = mutableMapOf()
 
   override fun getDefaultLightLaf(): LookAndFeelInfo {
     return if (ExperimentalUI.isNewUI()) {
@@ -381,7 +381,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     if (lafsToSchemesElement != null) {
       val lafToSchemes = lafsToSchemesElement.getChildren(ELEMENT_LAF_TO_SCHEME)
       for (lafToScheme in lafToSchemes) {
-        lafToPreviousScheme.add(Pair(lafToScheme.getAttributeValue(ATTRIBUTE_LAF), lafToScheme.getAttributeValue(ATTRIBUTE_SCHEME)))
+        lafToPreviousScheme.put(lafToScheme.getAttributeValue(ATTRIBUTE_LAF), lafToScheme.getAttributeValue(ATTRIBUTE_SCHEME))
       }
     }
 
@@ -461,9 +461,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
     if (lafToPreviousScheme.isNotEmpty()) {
       val lafsToSchemes = Element(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)
-      val lafToPreviousSchemeSorted = lafToPreviousScheme
-        .associate { it.first to it.second } // removing older records for the same LaF
-        .toList().sortedBy { it.first }
+      val lafToPreviousSchemeSorted = lafToPreviousScheme.toList().sortedBy { it.first }
       for ((laf, scheme) in lafToPreviousSchemeSorted) {
         val lafToScheme = Element(ELEMENT_LAF_TO_SCHEME)
         lafToScheme.setAttribute(ATTRIBUTE_LAF, laf)
@@ -1010,16 +1008,12 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   }
 
   override fun getPreviousSchemeForLaf(lookAndFeelInfo: LookAndFeelInfo): EditorColorsScheme? {
-    val schemeName = lafToPreviousScheme.findLast { it.first == lookAndFeelInfo.name }?.second ?: return null
+    val schemeName = lafToPreviousScheme[lookAndFeelInfo.name] ?: return null
     return EditorColorsManager.getInstance().getScheme(schemeName)
   }
 
-  override fun forgetLastLafToScheme() {
-    lafToPreviousScheme.removeLastOrNull()
-  }
-
-  override fun rememberSchemeForLaf(lookAndFeelInfo: LookAndFeelInfo, editorColorsScheme: EditorColorsScheme) {
-    lafToPreviousScheme.add(Pair(lookAndFeelInfo.name, editorColorsScheme.name))
+  private fun rememberSchemeForLaf(lookAndFeelInfo: LookAndFeelInfo, editorColorsScheme: EditorColorsScheme) {
+    lafToPreviousScheme[lookAndFeelInfo.name] = editorColorsScheme.name
   }
 
   private inner class UiThemeEpListener : ExtensionPointListener<UIThemeProvider> {

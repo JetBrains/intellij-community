@@ -83,7 +83,6 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
         Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES) {
 
         lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : ((LafManagerImpl)lafManager).getDefaultDarkLaf(), true);
-        lafManager.forgetLastLafToScheme();
         lafManager.updateUI();
         SwingUtilities.invokeLater(DarculaInstaller::install);
       }
@@ -98,7 +97,6 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
             Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES)) {
 
         lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : ((LafManagerImpl)lafManager).getDefaultLightLaf(), true);
-        lafManager.forgetLastLafToScheme();
         lafManager.updateUI();
         SwingUtilities.invokeLater(DarculaInstaller::uninstall);
       }
