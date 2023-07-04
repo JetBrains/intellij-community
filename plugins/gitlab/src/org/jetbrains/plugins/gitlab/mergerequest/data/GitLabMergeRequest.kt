@@ -11,6 +11,7 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.api.loadUpdatableJsonList
@@ -27,6 +28,7 @@ import kotlin.time.Duration.Companion.seconds
 private val LOG = logger<GitLabMergeRequest>()
 
 interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
+  val glProject: GitLabProjectCoordinates
 
   val id: GitLabMergeRequestId
   val gid: String
@@ -104,7 +106,7 @@ internal class LoadedGitLabMergeRequest(
     GitLabMergeRequestDiscussionsContainer {
   private val cs = parentCs.childScope(Dispatchers.Default + CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
-  private val glProject = projectMapping.repository
+  override val glProject: GitLabProjectCoordinates = projectMapping.repository
 
   override val id: GitLabMergeRequestId = mergeRequest
   override val gid: String = mergeRequest.id
