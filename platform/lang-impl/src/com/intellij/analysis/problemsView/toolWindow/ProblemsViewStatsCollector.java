@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ToggleOptionAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -17,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 final class ProblemsViewStatsCollector extends CounterUsagesCollector {
   private static final String UNKNOWN = "unknown";
-  private static final List<String> TABS = List.of("CurrentFile", "ProjectErrors", UNKNOWN);
+  private static final List<String> TABS = List.of("CurrentFile", "ProjectErrors", "ServerSide", "Vulnerabilities", UNKNOWN);
 
   private static final EventField<String> TAB_NAME = EventFields.String("scope_tab", TABS);
   private static final EventField<Integer> PROBLEMS_COUNT = EventFields.Int("problems_count");
@@ -25,7 +26,7 @@ final class ProblemsViewStatsCollector extends CounterUsagesCollector {
   private static final EventField<Long> DURATION = EventFields.Long("duration_seconds");
   private static final EventField<Integer> PROBLEM_SEVERITY = EventFields.Int("severity");
 
-  private static final EventLogGroup PROBLEMS_VIEW_GROUP = new EventLogGroup("problems.view.sessions", 1);
+  private static final EventLogGroup PROBLEMS_VIEW_GROUP = new EventLogGroup("problems.view.sessions", 2);
   private static final VarargEventId TAB_SHOWN = PROBLEMS_VIEW_GROUP.registerVarargEvent(
     "problems.tab.shown", TAB_NAME, PROBLEMS_COUNT, PREVIEW_ENABLED);
   private static final VarargEventId TAB_HIDDEN = PROBLEMS_VIEW_GROUP.registerVarargEvent(
@@ -78,6 +79,21 @@ final class ProblemsViewStatsCollector extends CounterUsagesCollector {
     PROBLEM_SELECTED.log(panel.getProject(),
                          TAB_NAME.with(tabName(panel)),
                          PROBLEM_SEVERITY.with(problemSeverity(problem)));
+  }
+
+  static void logTabShown(Project project, String tabName, int problemsCount) {
+    TAB_SHOWN.log(project,
+                  TAB_NAME.with(tabName),
+                  PROBLEMS_COUNT.with(problemsCount),
+                  PREVIEW_ENABLED.with(false));
+  }
+
+  static void logTabHidden(Project project, String tabName, int problemsCount, long durationNano) {
+    TAB_HIDDEN.log(project,
+                   TAB_NAME.with(tabName),
+                   PROBLEMS_COUNT.with(problemsCount),
+                   PREVIEW_ENABLED.with(false),
+                   DURATION.with(TimeUnit.NANOSECONDS.toSeconds(durationNano)));
   }
 
   @Override
