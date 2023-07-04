@@ -15,6 +15,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
+import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.ui.comment.DelegatingGitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.forNewNote
@@ -46,8 +47,11 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
 
   override val number: String = "!${mergeRequest.number}"
   override val author: GitLabUserDTO = mergeRequest.author
-  override val title: Flow<String> = mergeRequest.title
-  override val descriptionHtml: Flow<String> = mergeRequest.descriptionHtml
+  override val title: SharedFlow<String> = mergeRequest.details.map { it.title }
+    .modelFlow(cs, LOG)
+  override val descriptionHtml: SharedFlow<String> = mergeRequest.details.map { it.description }.map {
+    if (it.isNotBlank()) GitLabUIUtil.convertToHtml(it) else it
+  }.modelFlow(cs, LOG)
   override val url: String = mergeRequest.url
 
   private val _showEvents = MutableStateFlow(preferences.showEventsInTimeline)

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageDialog
@@ -20,6 +21,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
+import org.jetbrains.plugins.gitlab.mergerequest.data.reviewState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModel.SubmittableReview
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModelImpl
@@ -33,21 +35,21 @@ internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewMod
   val currentUser: GitLabUserDTO
   val author: GitLabUserDTO
 
-  val reviewRequestState: Flow<ReviewRequestState>
+  val reviewRequestState: SharedFlow<ReviewRequestState>
   val reviewers: StateFlow<List<GitLabReviewerDTO>>
-  val reviewState: Flow<ReviewState>
-  val role: Flow<ReviewRole>
+  val reviewState: SharedFlow<ReviewState>
+  val role: SharedFlow<ReviewRole>
 
-  val isMergeable: Flow<Boolean>
+  val isMergeable: SharedFlow<Boolean>
   val isApproved: StateFlow<Boolean>
 
-  val shouldBeRebased: Flow<Boolean>
+  val shouldBeRebased: SharedFlow<Boolean>
 
-  val userCanApprove: Flow<Boolean>
-  val userCanManage: Flow<Boolean>
-  val userCanMerge: Flow<Boolean>
+  val userCanApprove: SharedFlow<Boolean>
+  val userCanManage: SharedFlow<Boolean>
+  val userCanMerge: SharedFlow<Boolean>
 
-  val submittableReview: Flow<SubmittableReview?>
+  val submittableReview: SharedFlow<SubmittableReview?>
   var submitReviewInputHandler: (suspend (GitLabMergeRequestSubmitReviewViewModel) -> Unit)?
 
   /**
@@ -99,37 +101,45 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   override val author: GitLabUserDTO = mergeRequest.author
 
-  override val isApproved: StateFlow<Boolean> = mergeRequest.isApproved.stateIn(scope, SharingStarted.Lazily, false)
+  override val isApproved: StateFlow<Boolean> = mergeRequest.details.mapState(scope) { it.isApproved }
 
-  override val reviewRequestState: Flow<ReviewRequestState> = mergeRequest.reviewRequestState
-  override val reviewers: StateFlow<List<GitLabReviewerDTO>> = mergeRequest.reviewers.stateIn(scope, SharingStarted.Lazily, emptyList())
+  override val reviewRequestState: SharedFlow<ReviewRequestState> = mergeRequest.details.map { it.reviewState }
+    .modelFlow(scope, LOG)
+  override val reviewers: StateFlow<List<GitLabReviewerDTO>> = mergeRequest.details.mapState(scope) {
+    it.reviewers
+  }
   override val reviewerReviews: Flow<Map<GitLabReviewerDTO, ReviewState>> = reviewers.map { reviewers ->
     reviewers.associateWith { it.mergeRequestInteraction.toReviewState() }
   }
-  override val reviewState: Flow<ReviewState> = combine(reviewerReviews, isApproved) { reviewerReviews, isApproved ->
+  override val reviewState: SharedFlow<ReviewState> = combine(reviewerReviews, isApproved) { reviewerReviews, isApproved ->
     val reviewStates = reviewerReviews.values
     when {
       isApproved -> ReviewState.ACCEPTED
       reviewStates.any { it == ReviewState.WAIT_FOR_UPDATES } -> ReviewState.WAIT_FOR_UPDATES
       else -> ReviewState.NEED_REVIEW
     }
-  }
-  override val role: Flow<ReviewRole> = reviewers.map { reviewers ->
+  }.modelFlow(scope, LOG)
+  override val role: SharedFlow<ReviewRole> = reviewers.map { reviewers ->
     when {
       author.username == currentUser.username -> ReviewRole.AUTHOR
       reviewers.any { it.username == currentUser.username } -> ReviewRole.REVIEWER
       else -> ReviewRole.GUEST
     }
-  }
+  }.modelFlow(scope, LOG)
 
-  override val isMergeable: Flow<Boolean> = mergeRequest.isMergeable
-  override val shouldBeRebased: Flow<Boolean> = mergeRequest.shouldBeRebased
+  override val isMergeable: SharedFlow<Boolean> = mergeRequest.details.map { it.isMergeable }
+    .modelFlow(scope, LOG)
+  override val shouldBeRebased: SharedFlow<Boolean> = mergeRequest.details.map { it.shouldBeRebased }
+    .modelFlow(scope, LOG)
 
-  override val userCanApprove: Flow<Boolean> = mergeRequest.userPermissions.map { it.canApprove }
-  override val userCanManage: Flow<Boolean> = mergeRequest.userPermissions.map { it.canUpdate }
-  override val userCanMerge: Flow<Boolean> = mergeRequest.userPermissions.map { it.canMerge }
+  override val userCanApprove: SharedFlow<Boolean> = mergeRequest.details.map { it.userPermissions.canApprove }
+    .modelFlow(scope, LOG)
+  override val userCanManage: SharedFlow<Boolean> = mergeRequest.details.map { it.userPermissions.updateMergeRequest }
+    .modelFlow(scope, LOG)
+  override val userCanMerge: SharedFlow<Boolean> = mergeRequest.details.map { it.userPermissions.canMerge }
+    .modelFlow(scope, LOG)
 
-  override val submittableReview: Flow<SubmittableReview?> = mergeRequest.getSubmittableReview(currentUser).modelFlow(scope, LOG)
+  override val submittableReview: SharedFlow<SubmittableReview?> = mergeRequest.getSubmittableReview(currentUser).modelFlow(scope, LOG)
   override var submitReviewInputHandler: (suspend (GitLabMergeRequestSubmitReviewViewModel) -> Unit)? = null
 
   override fun submitReview() {
@@ -144,9 +154,10 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   }
 
   override fun merge() = runAction {
-    val title = mergeRequest.title.stateIn(scope).value
-    val sourceBranch = mergeRequest.sourceBranch.stateIn(scope).value
-    val targetBranch = mergeRequest.targetBranch.stateIn(scope).value
+    val details = mergeRequest.details.first()
+    val title = details.title
+    val sourceBranch = details.sourceBranch
+    val targetBranch = details.targetBranch
     val commitMessage: String? = withContext(scope.coroutineContext + Dispatchers.EDT) {
       val dialog = ReviewMergeCommitMessageDialog(
         project,
@@ -167,11 +178,12 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   }
 
   override fun squashAndMerge() = runAction {
-    val sourceBranch = mergeRequest.sourceBranch.stateIn(scope).value
-    val targetBranch = mergeRequest.targetBranch.stateIn(scope).value
-    val changesState = mergeRequest.changes.stateIn(scope).value
+    val details = mergeRequest.details.first()
+    val sourceBranch = details.sourceBranch
+    val targetBranch = details.targetBranch
+    val commits = details.commits
     val commitMessage: String? = withContext(scope.coroutineContext + Dispatchers.EDT) {
-      val body = "* " + StringUtil.join(changesState.commits, { it.fullTitle }, "\n\n* ")
+      val body = "* " + StringUtil.join(commits, { it.fullTitle }, "\n\n* ")
       val dialog = ReviewMergeCommitMessageDialog(
         project,
         CollaborationToolsBundle.message("dialog.review.merge.commit.title.with.squash"),

@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
-import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestFullDetails
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 internal class GitLabMergeRequestBranchesViewModel(
@@ -42,13 +43,13 @@ internal class GitLabMergeRequestBranchesViewModel(
 
   private val cs: CoroutineScope = parentCs.childScope()
 
-  override val sourceBranch: StateFlow<String> = with(mergeRequest) {
-    combineState(cs, targetProject, sourceProject, sourceBranch) { targetProject, sourceProject, sourceBranch ->
-      if (sourceProject == null) return@combineState ""
-      if (targetProject == sourceProject) return@combineState sourceBranch
-      val sourceProjectOwner = sourceProject.ownerPath
-      return@combineState "$sourceProjectOwner:$sourceBranch"
-    }
+  override val sourceBranch: StateFlow<String> = mergeRequest.details.mapState(cs, ::getSourceBranchName)
+
+  private fun getSourceBranchName(details: GitLabMergeRequestFullDetails): String {
+    if (details.sourceProject == null) return ""
+    if (details.targetProject == details.sourceProject) return details.sourceBranch
+    val sourceProjectOwner = details.sourceProject.ownerPath
+    return "$sourceProjectOwner:${details.sourceBranch}"
   }
 
   override val isCheckedOut: SharedFlow<Boolean> = callbackFlow {
@@ -88,8 +89,9 @@ internal class GitLabMergeRequestBranchesViewModel(
   }
 
   private suspend fun getBranchToCheckout(): String? {
-    val sourceProject = mergeRequest.sourceProject.value ?: return null
-    val sourceBranch = mergeRequest.sourceBranch.value
+    val details = mergeRequest.details.first()
+    val sourceProject = details.sourceProject ?: return null
+    val sourceBranch = details.sourceBranch
 
     val headRemote = coroutineToIndicator {
       git.findOrCreateRemote(repository, sourceProject)
@@ -133,9 +135,8 @@ internal class GitLabMergeRequestBranchesViewModel(
 
   override fun showBranches() {
     cs.launch {
-      val source = sourceBranch.value
-      val target = mergeRequest.targetBranch.value
-      _showBranchesRequests.emit(CodeReviewBranches(source, target))
+      val details = mergeRequest.details.first()
+      _showBranchesRequests.emit(CodeReviewBranches(details.sourceBranch, details.targetBranch))
     }
   }
 

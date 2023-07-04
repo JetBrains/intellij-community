@@ -57,7 +57,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
 
   private val cs = parentCs.childScope(Dispatchers.Default + CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
-  override val canAddNotes: Boolean = mr.userPermissions.value.canComment
+  override val canAddNotes: Boolean = mr.details.value.userPermissions.createNote
 
   private val reloadRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply {
     tryEmit(Unit)

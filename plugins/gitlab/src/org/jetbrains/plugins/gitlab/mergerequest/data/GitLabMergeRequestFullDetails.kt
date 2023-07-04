@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
+import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
@@ -66,3 +67,15 @@ data class GitLabMergeRequestFullDetails(
     )
   }
 }
+
+val GitLabMergeRequestFullDetails.reviewState: ReviewRequestState
+  get() =
+    if (draft) {
+      ReviewRequestState.DRAFT
+    }
+    else when (state) {
+      GitLabMergeRequestState.CLOSED -> ReviewRequestState.CLOSED
+      GitLabMergeRequestState.MERGED -> ReviewRequestState.MERGED
+      GitLabMergeRequestState.OPENED -> ReviewRequestState.OPENED
+      else -> ReviewRequestState.OPENED // to avoid null state
+    }

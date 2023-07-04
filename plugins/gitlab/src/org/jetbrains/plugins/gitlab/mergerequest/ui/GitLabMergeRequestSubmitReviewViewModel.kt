@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui
 
+import com.intellij.collaboration.async.modelFlow
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.childScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -44,7 +46,9 @@ internal interface GitLabMergeRequestSubmitReviewViewModel {
 }
 
 internal fun GitLabMergeRequest.getSubmittableReview(currentUser: GitLabUserDTO): Flow<SubmittableReview?> =
-  combine(draftNotes, userPermissions, approvedBy) { draftNotes, permissions, approvals ->
+  combine(draftNotes, details) { draftNotes, details ->
+    val permissions = details.userPermissions
+    val approvals = details.approvedBy
     val draftComments = draftNotes.count()
     val canChangeApproval = permissions.canApprove || approvals.any { it.id == currentUser.id }
     if (draftComments > 0 || canChangeApproval) SubmittableReview(draftComments)
@@ -65,7 +69,8 @@ class GitLabMergeRequestSubmitReviewViewModelImpl(
   override val error: Flow<Throwable?> get() = _error.asStateFlow()
 
   override val draftCommentsCount: Flow<Int> = mergeRequest.draftNotes.map { it.count() }
-  override val isApproved: Flow<Boolean> = mergeRequest.approvedBy.map { it.any { user -> user.id == currentUser.id } }
+  override val isApproved: Flow<Boolean> = mergeRequest.details.map { it.approvedBy.any { user -> user.id == currentUser.id } }
+    .modelFlow(cs, thisLogger())
   override val text: MutableStateFlow<String> = mergeRequest.draftReviewText
 
 

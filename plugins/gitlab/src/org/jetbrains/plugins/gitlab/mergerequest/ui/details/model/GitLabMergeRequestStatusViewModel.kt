@@ -25,9 +25,9 @@ class GitLabMergeRequestStatusViewModel(
 ) : CodeReviewStatusViewModel {
   private val cs = parentCs.childScope()
 
-  private val pipeline: Flow<GitLabPipelineDTO?> = mergeRequest.pipeline
+  private val pipeline: SharedFlow<GitLabPipelineDTO?> = mergeRequest.details.map { it.headPipeline }.modelFlow(cs, thisLogger())
 
-  override val hasConflicts: SharedFlow<Boolean> = mergeRequest.hasConflicts.modelFlow(cs, thisLogger())
+  override val hasConflicts: SharedFlow<Boolean> = mergeRequest.details.map { it.conflicts }.modelFlow(cs, thisLogger())
 
   override val ciJobs: SharedFlow<List<CodeReviewCIJob>> = pipeline.map {
     it?.jobs?.map { job -> job.convert() } ?: emptyList()

@@ -2,9 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.api.HttpStatusErrorException
-import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
-import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
@@ -18,7 +16,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabETagUpdatableListLoader
-import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -35,31 +32,14 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val url: String
   val author: GitLabUserDTO
 
-  val targetProject: StateFlow<GitLabProjectDTO>
-  val sourceProject: StateFlow<GitLabProjectDTO?>
-  val title: Flow<String>
-  val description: Flow<String>
-  val descriptionHtml: Flow<String>
-  val targetBranch: StateFlow<String>
-  val sourceBranch: StateFlow<String>
-  val isApproved: Flow<Boolean>
-  val hasConflicts: Flow<Boolean>
-  val isDraft: Flow<Boolean>
-  val reviewRequestState: Flow<ReviewRequestState>
-  val isMergeable: Flow<Boolean>
-  val shouldBeRebased: Flow<Boolean>
-  val approvedBy: Flow<List<GitLabUserDTO>>
-  val reviewers: Flow<List<GitLabReviewerDTO>>
-  val pipeline: Flow<GitLabPipelineDTO?>
-  val changes: Flow<GitLabMergeRequestChanges>
+  val isLoading: SharedFlow<Boolean>
 
-  val isLoading: Flow<Boolean>
+  val details: StateFlow<GitLabMergeRequestFullDetails>
+  val changes: SharedFlow<GitLabMergeRequestChanges>
 
   val labelEvents: Flow<List<GitLabResourceLabelEventDTO>>
   val stateEvents: Flow<List<GitLabResourceStateEventDTO>>
   val milestoneEvents: Flow<List<GitLabResourceMilestoneEventDTO>>
-
-  val userPermissions: StateFlow<CurrentUserPermissions>
 
   // NOT a great place for it, but placing it in VM layer is a pain in the neck
   val draftReviewText: MutableStateFlow<String>
@@ -85,13 +65,6 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   suspend fun setReviewers(reviewers: List<GitLabUserDTO>)
 
   suspend fun reviewerRereview(reviewers: Collection<GitLabReviewerDTO>)
-
-  data class CurrentUserPermissions(
-    val canApprove: Boolean,
-    val canMerge: Boolean,
-    val canComment: Boolean,
-    val canUpdate: Boolean
-  )
 }
 
 internal class LoadedGitLabMergeRequest(
@@ -117,33 +90,9 @@ internal class LoadedGitLabMergeRequest(
 
   private val mergeRequestDetailsState: MutableStateFlow<GitLabMergeRequestFullDetails> =
     MutableStateFlow(GitLabMergeRequestFullDetails.fromGraphQL(mergeRequest))
+  override val details: StateFlow<GitLabMergeRequestFullDetails> = mergeRequestDetailsState.asStateFlow()
 
-  override val targetProject: StateFlow<GitLabProjectDTO> = mergeRequestDetailsState.mapState(cs) { it.targetProject }
-  override val sourceProject: StateFlow<GitLabProjectDTO?> = mergeRequestDetailsState.mapState(cs) { it.sourceProject }
-  override val title: Flow<String> = mergeRequestDetailsState.map { it.title }
-  override val description: Flow<String> = mergeRequestDetailsState.map { it.description }
-  override val descriptionHtml: Flow<String> = description.map { if (it.isNotBlank()) GitLabUIUtil.convertToHtml(it) else it }
-  override val targetBranch: StateFlow<String> = mergeRequestDetailsState.mapState(cs) { it.targetBranch }
-  override val sourceBranch: StateFlow<String> = mergeRequestDetailsState.mapState(cs) { it.sourceBranch }
-  override val isApproved: Flow<Boolean> = mergeRequestDetailsState.map { it.isApproved }
-  override val hasConflicts: Flow<Boolean> = mergeRequestDetailsState.map { it.conflicts }
-  override val isDraft: Flow<Boolean> = mergeRequestDetailsState.map { it.draft }
-  override val reviewRequestState: Flow<ReviewRequestState> =
-    combine(isDraft, mergeRequestDetailsState.map { it.state }) { isDraft, requestState ->
-      if (isDraft) return@combine ReviewRequestState.DRAFT
-      return@combine when (requestState) {
-        GitLabMergeRequestState.CLOSED -> ReviewRequestState.CLOSED
-        GitLabMergeRequestState.MERGED -> ReviewRequestState.MERGED
-        GitLabMergeRequestState.OPENED -> ReviewRequestState.OPENED
-        else -> ReviewRequestState.OPENED // to avoid null state
-      }
-    }
-  override val isMergeable: Flow<Boolean> = mergeRequestDetailsState.map { it.isMergeable }
-  override val shouldBeRebased: Flow<Boolean> = mergeRequestDetailsState.map { it.shouldBeRebased }
-  override val approvedBy: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.approvedBy }
-  override val reviewers: Flow<List<GitLabReviewerDTO>> = mergeRequestDetailsState.map { it.reviewers }
-  override val pipeline: Flow<GitLabPipelineDTO?> = mergeRequestDetailsState.map { it.headPipeline }
-  override val changes: Flow<GitLabMergeRequestChanges> = mergeRequestDetailsState
+  override val changes: SharedFlow<GitLabMergeRequestChanges> = mergeRequestDetailsState
     .distinctUntilChangedBy(GitLabMergeRequestFullDetails::diffRefs).map {
       GitLabMergeRequestChangesImpl(project, cs, api, projectMapping, it)
     }.modelFlow(cs, LOG)
@@ -176,13 +125,7 @@ internal class LoadedGitLabMergeRequest(
   override val milestoneEvents = milestoneEventsLoader.batches.collectBatches().modelFlow(cs, LOG)
 
   private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
-  override val isLoading: Flow<Boolean> = _isLoading.asSharedFlow()
-
-  override val userPermissions: StateFlow<GitLabMergeRequest.CurrentUserPermissions> = mergeRequestDetailsState.mapState(cs) {
-    with(it.userPermissions) {
-      GitLabMergeRequest.CurrentUserPermissions(canApprove, canMerge, createNote, updateMergeRequest)
-    }
-  }
+  override val isLoading: SharedFlow<Boolean> = _isLoading.asSharedFlow()
 
   override val draftReviewText: MutableStateFlow<String> = MutableStateFlow("")
 
