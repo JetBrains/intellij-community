@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnn
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
@@ -256,7 +257,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             commonParent.putCopyableUserData(COMMON_PARENT_KEY, true)
 
             analyzeInModalWindow(commonContainer, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-                ConvertToBlockBodyUtils.createContext(commonContainer, ::shortenReferences, reformat = false)?.let {
+                ConvertToBlockBodyUtils.createContext(commonContainer, ShortenReferencesFacility.getInstance(), reformat = false)?.let {
                     ConvertToBlockBodyUtils.convert(commonContainer, it)
                 }
                 val newCommonContainer = commonContainer.bodyBlockExpression.sure { "New body is not found: $commonContainer" }

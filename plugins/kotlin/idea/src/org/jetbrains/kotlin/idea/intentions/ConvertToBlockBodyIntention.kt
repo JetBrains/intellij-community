@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -60,7 +61,7 @@ class ConvertToBlockBodyIntention : SelfTargetingIntention<KtDeclarationWithBody
                 bodyTypeIsUnit = bodyType?.isUnit() == true,
                 bodyTypeIsNothing = bodyType?.isNothing() == true,
                 reformat = reformat,
-                shortenReferences = { ShortenReferences.DEFAULT.process(it) }
+                shortenReferences = ShortenReferencesFacility.getInstance()
             )
         }
 

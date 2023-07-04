@@ -2,10 +2,10 @@
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic.ReturnInFunctionWithExpressionBody
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinDiagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
-import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
+import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils.createContext
 import org.jetbrains.kotlin.idea.quickfix.ConvertToBlockBodyFix
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -16,7 +16,7 @@ object ConvertToBlockBodyFixFactory {
             val element = diagnostic.psi
             val declaration = element.getStrictParentOfType<KtDeclarationWithBody>()
                 ?: return@diagnosticFixFactory emptyList()
-            val context = ConvertToBlockBodyUtils.createContext(declaration, ::shortenReferences, reformat = false)
+            val context = createContext(declaration, ShortenReferencesFacility.getInstance(), reformat = false)
                 ?: return@diagnosticFixFactory emptyList()
             listOf(ConvertToBlockBodyFix(declaration, context))
         }

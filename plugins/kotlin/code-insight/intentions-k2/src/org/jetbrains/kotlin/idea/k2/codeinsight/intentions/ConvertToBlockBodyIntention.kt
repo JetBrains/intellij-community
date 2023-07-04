@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
@@ -28,9 +28,8 @@ internal class ConvertToBlockBodyIntention :
     override fun isApplicableByPsi(element: KtDeclarationWithBody) = ConvertToBlockBodyUtils.isConvertibleByPsi(element)
 
     context(KtAnalysisSession)
-    override fun prepareContext(element: KtDeclarationWithBody): ConvertToBlockBodyContext? {
-        return ConvertToBlockBodyUtils.createContext(element, ::shortenReferences, reformat = true)
-    }
+    override fun prepareContext(element: KtDeclarationWithBody): ConvertToBlockBodyContext? =
+        ConvertToBlockBodyUtils.createContext(element, ShortenReferencesFacility.getInstance(), reformat = true)
 
     override fun apply(element: KtDeclarationWithBody, context: ConvertToBlockBodyContext, project: Project, editor: Editor?) {
         ConvertToBlockBodyUtils.convert(element, context)

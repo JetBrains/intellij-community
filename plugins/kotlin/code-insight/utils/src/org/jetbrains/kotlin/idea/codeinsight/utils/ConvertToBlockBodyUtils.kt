@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
@@ -19,7 +20,7 @@ data class ConvertToBlockBodyContext(
     val bodyTypeIsUnit: Boolean,
     val bodyTypeIsNothing: Boolean,
     val reformat: Boolean,
-    val shortenReferences: (KtTypeReference) -> Unit
+    val shortenReferences: ShortenReferencesFacility
 )
 
 object ConvertToBlockBodyUtils {
@@ -29,7 +30,7 @@ object ConvertToBlockBodyUtils {
     context(KtAnalysisSession)
     fun createContext(
         declaration: KtDeclarationWithBody,
-        shortenReferences: (KtTypeReference) -> Unit,
+        shortenReferences: ShortenReferencesFacility,
         reformat: Boolean,
     ): ConvertToBlockBodyContext? {
         if (!isConvertibleByPsi(declaration)) return null
@@ -75,7 +76,7 @@ object ConvertToBlockBodyUtils {
         fun KtCallableDeclaration.setTypeReference() {
             val addedTypeReference = setTypeReference(KtPsiFactory(project).createType(context.returnTypeString))
             if (addedTypeReference != null) {
-                context.shortenReferences(addedTypeReference)
+                context.shortenReferences.shorten(addedTypeReference)
             }
         }
 
