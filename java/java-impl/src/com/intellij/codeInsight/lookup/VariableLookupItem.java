@@ -11,7 +11,7 @@ import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommandService;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.RecursionManager;
@@ -247,7 +247,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       if (fix != null) {
         ModCommandAction.ActionContext actionContext = ModCommandAction.ActionContext.from(context.getEditor(), context.getFile());
         if (fix.getPresentation(actionContext) != null) {
-          ModCommandService.getInstance().executeInteractively(actionContext, fix.perform(actionContext), context.getEditor());
+          ModCommandExecutor.getInstance().executeInteractively(actionContext, fix.perform(actionContext), context.getEditor());
         }
       }
     }

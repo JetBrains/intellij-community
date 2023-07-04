@@ -47,13 +47,13 @@ public abstract class ModCommandQuickFix implements LocalQuickFix {
   @Override
   public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     ModCommand command = perform(project, descriptor);
-    ModCommandService.getInstance().executeInteractively(ModCommandAction.ActionContext.from(descriptor), command, null);
+    ModCommandExecutor.getInstance().executeInteractively(ModCommandAction.ActionContext.from(descriptor), command, null);
   }
 
   @Override
   public final void applyFixNonInteractively(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     ModCommand command = perform(project, descriptor);
-    ModCommandService.getInstance().executeInBatch(ModCommandAction.ActionContext.from(descriptor), command);
+    ModCommandExecutor.getInstance().executeInBatch(ModCommandAction.ActionContext.from(descriptor), command);
   }
 
   @Override

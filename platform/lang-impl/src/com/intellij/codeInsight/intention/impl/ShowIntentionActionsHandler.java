@@ -29,7 +29,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommandService;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -294,7 +294,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     Project project = context.project();
     IntentionFUSCollector.record(project, commandAction, context.file().getLanguage());
     CommandProcessor.getInstance().executeCommand(project, () -> {
-      ModCommandService.getInstance().executeInteractively(context, contextAndCommand.command(), hostEditor);
+      ModCommandExecutor.getInstance().executeInteractively(context, contextAndCommand.command(), hostEditor);
     }, commandName, null);
   }
 

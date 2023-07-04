@@ -3,7 +3,7 @@ package com.siyeh.ipp.expression;
 
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommandService;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.CaretModel;
@@ -38,7 +38,7 @@ public class EliminateParenthesesIntentionTest extends IPPTestCase {
       ModCommand command = intention.perform(context);
       CommandProcessor.getInstance().executeCommand(
         getProject(),
-        () -> ModCommandService.getInstance().executeInBatch(context, command),
+        () -> ModCommandExecutor.getInstance().executeInBatch(context, command),
         "", null);
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     });

@@ -6,16 +6,14 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.modcommand.ModCommandAction.ActionContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
 /**
- * A support service to handle {@link ModCommand} and {@link ModCommandAction}
+ * A support service for {@link ModCommand} and {@link ModCommandAction}. In general, should not be used directly.
  */
 public interface ModCommandService {
   /**
@@ -56,24 +54,6 @@ public interface ModCommandService {
    * does not wrap a {@code ModCommandAction}.
    */
   @Nullable ModCommandAction unwrap(@NotNull LocalQuickFix fix);
-
-  /**
-   * Executes given {@link ModCommand} interactively (may require user input, navigate into editors, etc.).
-   *
-   * @param context current context
-   * @param command a command to execute
-   * @param editor context editor, if known
-   */
-  @RequiresEdt
-  void executeInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @Nullable Editor editor);
-
-  /**
-   * Executes given {@link ModCommand} in batch (applies default options, do not navigate)
-   *
-   * @param context current context
-   * @param command a command to execute
-   */
-  void executeInBatch(@NotNull ActionContext context, @NotNull ModCommand command);
 
   /**
    * Implementation of ModCommands.psiUpdate; should not be used directly.

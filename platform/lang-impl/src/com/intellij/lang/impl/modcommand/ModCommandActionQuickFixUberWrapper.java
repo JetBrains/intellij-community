@@ -9,7 +9,7 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommandService;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -75,7 +75,7 @@ public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntenti
                      @NotNull PsiElement endElement) {
     ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(editor, file).withElement(startElement);
     ModCommand command = myAction.perform(context);
-    ModCommandService.getInstance().executeInteractively(context, command, editor);
+    ModCommandExecutor.getInstance().executeInteractively(context, command, editor);
   }
 
   @Override
