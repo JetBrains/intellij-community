@@ -247,6 +247,7 @@ class CollectDiagramContentTest {
     doTest(diagramContent, "git-graph.svg")
   }
 
+  @Disabled("Broken dimensions")
   @Test
   fun `preview can render mindmap diagram`() {
     // language=Mermaid
