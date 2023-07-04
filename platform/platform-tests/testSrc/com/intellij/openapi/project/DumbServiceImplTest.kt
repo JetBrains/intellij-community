@@ -31,8 +31,8 @@ import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.yield
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -98,22 +98,21 @@ class DumbServiceImplTest {
   }
 
   @Test
+  @Suppress("INVISIBLE_MEMBER")
   fun `test runWhenSmart does not hang in scheduler queue after Default dispatcher starvation`() {
     val releaseDefaultDispatcher = CountDownLatch(1)
     val inSmartMode = CountDownLatch(1)
 
     try {
       // occupy all the Dispatcher.Default threads with useless work
-      CoroutineScope(Dispatchers.Default).launch {
-        while (releaseDefaultDispatcher.count > 0) {
+      val defaultDispatcherJob = CoroutineScope(Dispatchers.Default).launch {
+        repeat(kotlinx.coroutines.scheduling.CORE_POOL_SIZE) {
           launch {
-            releaseDefaultDispatcher.awaitOrThrow(10, "releaseDefaultDispatcher was not invoked")
+            delay(10_000)
+            fail("this coroutine should have been cancelled")
           }
-          yield() // let just submitted coroutine to start and use current thread, so `yield` will suspend until releaseDefaultDispatcher.
         }
       }
-
-      Thread.sleep(100) // saturate default dispatcher (wait until `launch` suspended and cannot create new tasks)
 
       runInEdtAndWait {
         dumbService.queue {
@@ -130,13 +129,13 @@ class DumbServiceImplTest {
       // We want dumb service to become dumb and then smart WHILE all the dispatcher threads are busy, so all the StateFlows listeners
       //   missed both these events (due to conflation)
       for (i in 1..10) {
-        if (runInEdtAndGet { !dumbService.isDumb }) break
+        if (!dumbService.isDumb) break
         Thread.sleep(100)
       }
       assertFalse("Dumb mode didn't finish", runInEdtAndGet { dumbService.isDumb })
 
       // now release Default dispatcher and see if runnable is executed (it should)
-      releaseDefaultDispatcher.countDown()
+      defaultDispatcherJob.cancel()
       inSmartMode.awaitOrThrow(5, "Smart mode runnable didn't run")
     }
     finally {
