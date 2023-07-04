@@ -286,7 +286,9 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 <node_text> {
   [\"] { yybegin(node_quoted_text); return DOUBLE_QUOTE; }
   [\"]/` { yypushstate(md_string); return DOUBLE_QUOTE; }
-  [^\s\n\r;\])\"\}]+/[\s\])\"\}/\\] { return ALIAS; }
+
+  [!#$%&'*+,-\.`?:=<>\w\^]+ | [\\/] { return ALIAS; }
+
   [^\S\n\r]+ { return WHITE_SPACE; }
   "]" { yybegin(flowchart_body); return CLOSE_SQUARE; }
   ")" { yybegin(flowchart_body); return CLOSE_ROUND; }

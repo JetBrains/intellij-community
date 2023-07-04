@@ -197,7 +197,6 @@ class FlowchartTest : MermaidLexerTestCase() {
     doTest(content)
   }
 
-
   fun `test frontmatter`() {
     val content = """
     ---
@@ -206,6 +205,32 @@ class FlowchartTest : MermaidLexerTestCase() {
     ---
     flowchart LR
       id
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test shapes with slashes`() {
+    val content = """
+    flowchart
+      A[/foo/]
+      B[/foo\]
+      C[\foo\]
+      D[\foo/]
+      
+      A[/ foo /]
+      B[/ foo \]
+      C[\ foo \]
+      D[\ foo /]
+      
+      A[/foo//]
+      B[/foo/\]
+      C[\foo\\]
+      D[\foo\/]
+      
+      A[/foo //]
+      B[/foo /\]
+      C[\foo \\]
+      D[\foo \/]
     """.trimIndent()
     doTest(content)
   }
