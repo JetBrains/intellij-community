@@ -74,19 +74,22 @@ class CombinedSimpleDiffBlockFactory : CombinedDiffBlockFactory<CombinedPathBloc
 }
 
 class CombinedSimpleDiffHeader(project: Project,
-                                       blockId: CombinedPathBlockId,
-                                       withPathOnly: Boolean) : BorderLayoutPanel() {
+                               blockId: CombinedPathBlockId,
+                               withPathOnly: Boolean) : BorderLayoutPanel() {
   init {
-    border = IdeBorderFactory.createBorder(SideBorder.TOP or SideBorder.BOTTOM)
+    background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
 
     addToCenter(if (withPathOnly) buildPathComponent(project, blockId) else buildToolbar(project, blockId).component)
+    border = JBUI.Borders.compound(
+      IdeBorderFactory.createBorder(SideBorder.BOTTOM),
+      JBUI.Borders.empty(12, 10)
+    )
   }
 
   private fun buildPathComponent(project: Project, blockId: CombinedPathBlockId): JComponent {
     background = UIUtil.getListBackground()
     return OpaquePanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(3), 0))
       .apply {
-        border = JBEmptyBorder(UIUtil.PANEL_SMALL_INSETS)
         add(createTextComponent(project, blockId.path))
       }
   }
@@ -101,8 +104,8 @@ class CombinedSimpleDiffHeader(project: Project,
     val toolbar = ActionManager.getInstance().createActionToolbar("CombinedDiffBlockHeaderToolbar", toolbarGroup, true)
     toolbar.targetComponent = this
     toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-    toolbar.component.background = UIUtil.getListBackground()
-    toolbar.component.border = JBEmptyBorder(UIUtil.PANEL_SMALL_INSETS)
+    toolbar.component.background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
+    toolbar.component.border = JBUI.Borders.empty()
 
     return toolbar
   }
@@ -143,14 +146,16 @@ class CombinedSimpleDiffHeader(project: Project,
 
   companion object {
     private fun createTextComponent(project: Project, path: FilePath): JComponent {
-      return SimpleColoredComponent().append(path.name)
-        .apply {
-          val parentPath = path.parentPath?.let(FilePath::getPresentableUrl)?.let(FileUtil::getLocationRelativeToUserHome)
-          if (parentPath != null) {
-            append(FontUtil.spaceAndThinSpace() + parentPath, SimpleTextAttributes.GRAYED_ATTRIBUTES)
-          }
-          icon = getIcon(project, path)
+      val simpleColoredComponent = SimpleColoredComponent()
+      simpleColoredComponent.append(path.name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+      simpleColoredComponent.apply {
+        val parentPath = path.parentPath?.let(FilePath::getPresentableUrl)?.let(FileUtil::getLocationRelativeToUserHome)
+        if (parentPath != null) {
+          append(FontUtil.spaceAndThinSpace() + parentPath, SimpleTextAttributes.GRAYED_ATTRIBUTES)
         }
+        icon = getIcon(project, path)
+      }
+      return simpleColoredComponent
     }
 
     private fun getIcon(project: Project?, path: FilePath): Icon? {
@@ -166,9 +171,9 @@ class CombinedSimpleDiffHeader(project: Project,
 data class CombinedPathBlockId(val path: FilePath, val fileStatus: FileStatus, val tag: Any? = null) : CombinedBlockId
 
 class CombinedSimpleDiffBlock(project: Project,
-                                       override val id: CombinedPathBlockId,
-                                       initialContent: JComponent,
-                                       isPathOnlyHeader: Boolean) :
+                              override val id: CombinedPathBlockId,
+                              initialContent: JComponent,
+                              isPathOnlyHeader: Boolean) :
   JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)),
   CombinedDiffBlock<CombinedPathBlockId> {
 
@@ -184,6 +189,8 @@ class CombinedSimpleDiffBlock(project: Project,
   init {
     add(header)
     add(body)
+    isOpaque = true
+    background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
   }
 
   override fun updateBlockContent(newContent: CombinedDiffBlockContent) {
