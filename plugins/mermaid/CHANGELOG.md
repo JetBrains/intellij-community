@@ -3,10 +3,15 @@
 ## [Unreleased]
 
 ## 0.0.13
+- [MERMAID-67](https://youtrack.jetbrains.com/issue/MERMAID-67) Fixed parsing of signals surrounded by spaces in sequence diagrams
 - [MERMAID-69](https://youtrack.jetbrains.com/issue/MERMAID-69) Added support for Markdown strings inside flowchart and mindmap labels
+- [MERMAID-70](https://youtrack.jetbrains.com/issue/MERMAID-70) Fixed parsing of shapes with slashes in flowcharts
+- [MERMAID-73](https://youtrack.jetbrains.com/issue/MERMAID-73) Fixed parsing of colon characters in class diagrams
+- [MERMAID-75](https://youtrack.jetbrains.com/issue/MERMAID-75) Fixed parsing of title statements in sequence diagrams
 - [MERMAID-77](https://youtrack.jetbrains.com/issue/MERMAID-77) Added support for quadrant charts
 - [MERMAID-78](https://youtrack.jetbrains.com/issue/MERMAID-78) Added support for hyphens inside class diagram identifiers
 - [MERMAID-79](https://youtrack.jetbrains.com/issue/MERMAID-79) Added support for namespaces in class diagrams
+- [MERMAID-81](https://youtrack.jetbrains.com/issue/MERMAID-81) Add Markdown language injections to Markdown strings 
 
 ## 0.0.12
 - [MERMAID-56](https://youtrack.jetbrains.com/issue/MERMAID-56) Fixed freezes during diagram directive editing
