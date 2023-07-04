@@ -117,32 +117,32 @@ private fun Int.roundToOneSignificantDigit(): Int {
   return (this - this % p).coerceAtLeast(10) // 623 -> 623 - (623 % 100) = 600
 }
 
-private class DaemonFusCollector : CounterUsagesCollector() {
+class DaemonFusCollector : CounterUsagesCollector() {
   companion object {
     @JvmField
     val GROUP: EventLogGroup = EventLogGroup("daemon", 5)
     @JvmField
-    val ERRORS: IntEventField = EventFields.Int("errors")
+    internal val ERRORS: IntEventField = EventFields.Int("errors")
     @JvmField
-    val WARNINGS: IntEventField = EventFields.Int("warnings")
+    internal val WARNINGS: IntEventField = EventFields.Int("warnings")
     @JvmField
-    val LINES: IntEventField = EventFields.Int("lines")
+    internal val LINES: IntEventField = EventFields.Int("lines")
     @JvmField
     /**
      * `true` if the daemon was started with the entire file range,
      * `false` when the daemon was started with sub-range of the file, for example, after the change inside a code block
      */
-    val ENTIRE_FILE_HIGHLIGHTED: BooleanEventField = EventFields.Boolean("entireFileHighlighted")
+    internal val ENTIRE_FILE_HIGHLIGHTED: BooleanEventField = EventFields.Boolean("entireFileHighlighted")
 
     @JvmField
     /**
      * `true` if the daemon was finished because of some cancellation event (e.g., user tried to type something into the editor).
      * Usually it means the highlighting results are incomplete.
      */
-    val CANCELED: BooleanEventField = EventFields.Boolean("canceled")
+    internal val CANCELED: BooleanEventField = EventFields.Boolean("canceled")
 
     @JvmField
-    val FINISHED: VarargEventId = GROUP.registerVarargEvent("finished",
+    internal val FINISHED: VarargEventId = GROUP.registerVarargEvent("finished",
          EventFields.DurationMs, ERRORS, WARNINGS, LINES, EventFields.FileType, ENTIRE_FILE_HIGHLIGHTED, CANCELED)
   }
 

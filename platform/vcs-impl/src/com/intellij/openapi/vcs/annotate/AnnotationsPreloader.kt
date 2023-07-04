@@ -45,13 +45,15 @@ internal class AnnotationsPreloader(private val project: Project) {
     updateQueue.queue(object : DisposableUpdate(project, file) {
       override fun doRun() {
         try {
-          val start = if (LOG.isDebugEnabled) System.currentTimeMillis() else 0
+          val start = System.currentTimeMillis()
 
           if (!FileEditorManager.getInstance(project).isFileOpen(file)) return
           val annotationProvider = getAnnotationProvider(project, file) ?: return
 
           annotationProvider.populateCache(file)
-          LOG.debug { "Preloaded VCS annotations for ${file.name} in ${System.currentTimeMillis() - start} ms" }
+          val durationMs = System.currentTimeMillis() - start
+          VcsAnnotationPreloaderFusCollector.ANNOTATION_LOADED.log(project, durationMs)
+          LOG.debug { "Preloaded VCS annotations for ${file.name} in $durationMs ms" }
 
           runInEdt {
             refreshCodeAuthorInlayHints(project, file)
