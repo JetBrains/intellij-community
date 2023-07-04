@@ -26,6 +26,11 @@ object AnnotationModificationHelper {
         if (modifierList == null) {
             val addedAnnotation = element.addAnnotationEntry(psiFactory.createAnnotationEntry(annotationText))
             ShortenReferencesFacility.getInstance().shorten(addedAnnotation)
+            if (element !is KtScriptInitializer) return true
+
+            val addedModifierList = addedAnnotation.parent as? KtModifierList ?: return false
+            val newLine = psiFactory.createNewLine()
+            addedModifierList.addAfter(newLine, addedAnnotation)
             return true
         }
 
