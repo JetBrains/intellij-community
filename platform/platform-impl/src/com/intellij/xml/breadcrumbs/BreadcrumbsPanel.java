@@ -46,10 +46,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -132,11 +129,23 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
 
     EditorGutter gutter = editor.getGutter();
     if (gutter instanceof EditorGutterComponentEx gutterComponent) {
-      MouseEventAdapter mouseListener = new MouseEventAdapter<>(gutterComponent) {
+      if (!(gutterComponent instanceof MouseListener)) {
+        LOG.error("Can't delegate mouse events to EditorGutterComponentEx: " + gutterComponent);
+      }
+
+      MouseEventAdapter<EditorGutterComponentEx> mouseListener = new MouseEventAdapter<>(gutterComponent) {
         @NotNull
         @Override
         protected MouseEvent convert(@NotNull MouseEvent event) {
           return convert(event, gutterComponent);
+        }
+
+        @Override
+        protected MouseListener getMouseListener(@NotNull EditorGutterComponentEx adapter) {
+          if (adapter instanceof MouseListener && adapter.isShowing()) {
+            return (MouseListener)adapter;
+          }
+          return null;
         }
       };
       ComponentAdapter resizeListener = new ComponentAdapter() {
