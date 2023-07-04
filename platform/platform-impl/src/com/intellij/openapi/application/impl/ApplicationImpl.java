@@ -1492,13 +1492,23 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void runWithoutImplicitRead(@NotNull Runnable runnable) {
-    if (!StartupUtil.isImplicitReadOnEDTDisabled()) {
+    if (StartupUtil.isImplicitReadOnEDTDisabled()) {
       runnable.run();
       return;
     }
     runWithDisabledImplicitRead(runnable);
   }
 
+  @Override
+  public void runWithImplicitRead(@NotNull Runnable runnable) {
+    if (!StartupUtil.isImplicitReadOnEDTDisabled()) {
+      runnable.run();
+      return;
+    }
+    runWithEnabledImplicitRead(runnable);
+  }
+
+  @Deprecated
   private void runWithDisabledImplicitRead(@NotNull Runnable runnable) {
     // This method is used to allow easily find stack traces which violate disabled ImplicitRead
     boolean oldVal = myLock.isImplicitReadAllowed();
@@ -1510,6 +1520,19 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       myLock.setAllowImplicitRead(oldVal);
     }
   }
+
+  private void runWithEnabledImplicitRead(@NotNull Runnable runnable) {
+    // This method is used to allow easily find stack traces which violate disabled ImplicitRead
+    boolean oldVal = myLock.isImplicitReadAllowed();
+    try {
+      myLock.setAllowImplicitRead(true);
+      runnable.run();
+    }
+    finally {
+      myLock.setAllowImplicitRead(oldVal);
+    }
+  }
+
 
   /** Count read & write actions executed, and report to OpenTelemetry Metrics */
   private static class OTelReadWriteActionsMonitor implements AutoCloseable{
