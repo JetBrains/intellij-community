@@ -673,9 +673,13 @@ class QuickFixRegistrar : QuickFixContributor {
         JAVA_MODULE_DOES_NOT_DEPEND_ON_MODULE.registerFactory(KotlinAddRequiredModuleFix)
 
         OPT_IN_USAGE.registerFactory(OptInFixesFactory)
+        OPT_IN_USAGE.registerFactory(OptInFileLevelFixesFactory)
         OPT_IN_USAGE_ERROR.registerFactory(OptInFixesFactory)
+        OPT_IN_USAGE_ERROR.registerFactory(OptInFileLevelFixesFactory)
         OPT_IN_OVERRIDE.registerFactory(OptInFixesFactory)
+        OPT_IN_OVERRIDE.registerFactory(OptInFileLevelFixesFactory)
         OPT_IN_OVERRIDE_ERROR.registerFactory(OptInFixesFactory)
+        OPT_IN_OVERRIDE_ERROR.registerFactory(OptInFileLevelFixesFactory)
         OPT_IN_IS_NOT_ENABLED.registerFactory(MakeModuleOptInFix)
         OPT_IN_MARKER_ON_WRONG_TARGET.registerFactory(OptInAnnotationWrongTargetFixesFactory)
         OPT_IN_MARKER_WITH_WRONG_TARGET.registerFactory(RemoveWrongOptInAnnotationTargetFactory)

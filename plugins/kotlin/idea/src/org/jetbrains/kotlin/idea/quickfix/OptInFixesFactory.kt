@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.resolveClassByFqName
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -32,6 +31,12 @@ import org.jetbrains.kotlin.resolve.constants.KClassValue
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+/**
+ * [OptInFixesFactory] is responsible for adding fixes for code elements only,
+ * for example, "Opt in for 'MyExperimentalAPI' on containing class 'Bar'"
+ *
+ * The logic for adding OptIn to the entire file or as a compiler argument is in [OptInFileLevelFixesFactory]
+ */
 internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         val element = diagnostic.psiElement
@@ -111,20 +116,6 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
             collectUseOptInAnnotationFix(containingClassOrObject, kind1)
         }
 
-
-        val containingFile = containingDeclaration.containingKtFile
-        val module = containingFile.module
-        if (module != null) {
-            result.add(OptInFileLevelFixesFactory.LowPriorityMakeModuleOptInFix(containingFile, module, annotationFqName))
-        }
-
-        // Add the file-level annotation `@file:OptIn(...)`
-        result.add(
-            OptInFileLevelFixesFactory.UseOptInFileAnnotationFix(
-                containingFile, optInFqName, annotationFqName,
-                OptInFileLevelFixesFactory.findFileAnnotation(containingFile, optInFqName)?.createSmartPointer()
-            )
-        )
         return result
     }
 
