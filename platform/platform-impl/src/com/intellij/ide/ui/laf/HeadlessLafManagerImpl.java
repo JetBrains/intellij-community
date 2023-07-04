@@ -90,18 +90,8 @@ final class HeadlessLafManagerImpl extends LafManager {
   public void setPreferredLightLaf(UIManager.@NotNull LookAndFeelInfo value) { }
 
   @Override
-  public void rememberSchemeForLaf(UIManager.@NotNull LookAndFeelInfo lookAndFeelInfo, @NotNull EditorColorsScheme editorColorsScheme) {
-
-  }
-
-  @Override
   public @Nullable EditorColorsScheme getPreviousSchemeForLaf(UIManager.@NotNull LookAndFeelInfo lookAndFeelInfo) {
     return null;
-  }
-
-  @Override
-  public void forgetLastLafToScheme() {
-
   }
 
   @Override
