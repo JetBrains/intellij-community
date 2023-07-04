@@ -6,7 +6,6 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Compan
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.getInlineCompletionState
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.initOrGetInlineCompletionState
 import com.intellij.codeInsight.lookup.LookupEvent
-import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -15,9 +14,10 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
-import com.intellij.util.applyIf
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectIndexed
+import kotlinx.coroutines.flow.transformWhile
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -60,15 +60,18 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
       val inlineState = editor.initOrGetInlineCompletionState()
 
       withContext(Dispatchers.EDT) {
-        resultFlow.applyIf(LookupManager.getActiveLookup(request.editor) != null) {
-          takeFirstLine()
-        }.collectIndexed { index, value ->
+        resultFlow.collectIndexed { index, value ->
           if (index == 0 && modificationStamp != request.document.modificationStamp) {
             cancel()
             return@collectIndexed
           }
 
-          inlineState.suggestions = listOf(InlineCompletionElement(value.text))
+          if (index == 0) {
+            inlineState.suggestions = listOf(InlineCompletionElement(value.text))
+          }
+          else {
+            inlineState.suggestions = inlineState.suggestions.map { it.withText(it.text + value.text) }
+          }
           showInlineSuggestion(editor, inlineState, offset)
         }
       }
