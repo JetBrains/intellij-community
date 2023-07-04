@@ -1841,7 +1841,8 @@ public final class HighlightUtil {
   }
 
   static HighlightInfo.Builder checkInstanceOfPatternSupertype(@NotNull PsiInstanceOfExpression expression) {
-    PsiTypeTestPattern pattern = getTypeTestPattern(expression.getPattern());
+    @Nullable PsiPattern expressionPattern = expression.getPattern();
+    PsiTypeTestPattern pattern = tryCast(expressionPattern, PsiTypeTestPattern.class);
     if (pattern == null) return null;
     PsiPatternVariable variable = pattern.getPatternVariable();
     if (variable == null) return null;
@@ -1863,26 +1864,6 @@ public final class HighlightUtil {
       return info;
     }
     return null;
-  }
-
-  @Contract(value = "null -> null", pure = true)
-  private static @Nullable PsiTypeTestPattern getTypeTestPattern(@Nullable PsiPattern expressionPattern) {
-    PsiPattern innerMostPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(expressionPattern);
-    if (innerMostPattern == null) return null;
-
-    PsiTypeTestPattern pattern = tryCast(innerMostPattern, PsiTypeTestPattern.class);
-    if (pattern != null) return pattern;
-
-    PsiGuardedPattern guardedPattern = tryCast(innerMostPattern, PsiGuardedPattern.class);
-    if (guardedPattern == null) return null;
-
-    Object condition = ExpressionUtils.computeConstantExpression(guardedPattern.getGuardingExpression());
-    if (!Boolean.TRUE.equals(condition)) return null;
-
-    PsiPattern patternInGuard = JavaPsiPatternUtil.skipParenthesizedPatternDown(guardedPattern.getPrimaryPattern());
-    if (patternInGuard == null || patternInGuard instanceof PsiTypeTestPattern) return (PsiTypeTestPattern)patternInGuard;
-
-    return getTypeTestPattern(patternInGuard);
   }
 
   static HighlightInfo.Builder checkPolyadicOperatorApplicable(@NotNull PsiPolyadicExpression expression) {
@@ -3629,7 +3610,7 @@ public final class HighlightUtil {
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module != null) {
       LanguageLevel moduleLanguageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
-      if (moduleLanguageLevel.isAtLeast(feature.level)) {
+      if (moduleLanguageLevel.isAtLeast(feature.level) && !feature.isLimited()) {
         for (FilePropertyPusher<?> pusher : FilePropertyPusher.EP_NAME.getExtensions()) {
           if (pusher instanceof JavaLanguageLevelPusher) {
             String newMessage = ((JavaLanguageLevelPusher)pusher).getInconsistencyLanguageLevelMessage(message, level, file);
