@@ -4,6 +4,7 @@ package com.intellij.html.webSymbols.elements
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor
 import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
+import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator.Companion.hasOnlyStandardHtmlSymbolsOrExtensions
 import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator.HtmlElementDescriptorBasedSymbol
 import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator.StandardHtmlSymbol
 import com.intellij.psi.PsiElement
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.NonNls
 open class WebSymbolElementDescriptor private constructor(private val tag: XmlTag,
                                                           private val name: String,
                                                           val symbol: WebSymbol)
-  : XmlElementDescriptorEx, XmlElementDescriptorAwareAboutChildren {
+  : XmlElementDescriptorEx, XmlElementDescriptorAwareAboutChildren, XmlCustomElementDescriptor {
 
   constructor(info: WebSymbolHtmlElementInfo, tag: XmlTag) : this(tag, info.name, info.symbol)
 
@@ -144,6 +145,9 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
     ?: true
 
   override fun init(element: PsiElement) {}
+
+  override fun isCustomElement(): Boolean =
+    !symbol.hasOnlyStandardHtmlSymbolsOrExtensions()
 
   private fun getStandardHtmlElementDescriptor() =
     ((symbol as? StandardHtmlSymbol)

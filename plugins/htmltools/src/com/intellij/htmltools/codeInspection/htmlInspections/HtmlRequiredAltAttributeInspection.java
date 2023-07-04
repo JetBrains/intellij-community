@@ -8,6 +8,7 @@ import com.intellij.codeInspection.htmlInspections.HtmlLocalInspectionTool;
 import com.intellij.htmltools.HtmlToolsBundle;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.XmlCustomElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -30,6 +31,7 @@ public class HtmlRequiredAltAttributeInspection extends HtmlLocalInspectionTool 
     if (!HtmlUtil.isHtmlTagContainingFile(tag)) return;
     if (tag.getAttribute(ALT) != null) return;
     if (XmlExtension.getExtension(tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, ALT)) return;
+    if (XmlCustomElementDescriptor.isCustomElement(tag)) return;
     if (!htmlTagsWithRequiredAltAttribute.contains(tag.getName())) return;
     //H36
     if (tag.getName().equalsIgnoreCase("input")) {

@@ -159,11 +159,10 @@ public final class HtmlUtil {
   }
 
   public static boolean isSingleHtmlTag(@NotNull XmlTag tag, boolean toLowerCase) {
-    final XmlExtension extension = XmlExtension.getExtensionByElement(tag);
     final String name = tag.getName();
     boolean result = EMPTY_TAGS_MAP.contains(!toLowerCase || tag.isCaseSensitive()
                                              ? name : StringUtil.toLowerCase(name));
-    return result && (extension == null || !extension.isSingleTagException(tag));
+    return result && !XmlCustomElementDescriptor.isCustomElement(tag);
   }
 
   public static boolean isSingleHtmlTag(String tagName, boolean caseSensitive) {
