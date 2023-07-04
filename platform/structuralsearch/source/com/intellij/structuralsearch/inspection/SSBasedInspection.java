@@ -182,7 +182,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
     final Map<Configuration, Matcher> compiledPatterns = checkOutCompiledPatterns(configurations, project);
     session.putUserData(COMPILED_PATTERNS, compiledPatterns);
-    return new SSBasedVisitor(compiledPatterns, profile, holder);
+    return new SSBasedVisitor(compiledPatterns, holder);
   }
 
   public static void register(@NotNull Configuration configuration) {
@@ -453,12 +453,11 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   private class SSBasedVisitor extends PsiElementVisitor {
 
     private final Map<Configuration, Matcher> myCompiledOptions;
-    private final InspectionProfileImpl myProfile;
+
     private @NotNull final ProblemsHolder myHolder;
 
-    SSBasedVisitor(Map<Configuration, Matcher> compiledOptions, InspectionProfileImpl profile, @NotNull ProblemsHolder holder) {
+    SSBasedVisitor(Map<Configuration, Matcher> compiledOptions, @NotNull ProblemsHolder holder) {
       myCompiledOptions = compiledOptions;
-      myProfile = profile;
       myHolder = holder;
     }
 
@@ -476,9 +475,6 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
 
     private void processElement(PsiElement element, Configuration configuration, Matcher matcher) {
-      if (!myProfile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuid()), element)) {
-        return;
-      }
       final NodeIterator matchedNodes = SsrFilteringNodeIterator.create(element);
       if (!matcher.checkIfShouldAttemptToMatch(matchedNodes)) {
         return;
