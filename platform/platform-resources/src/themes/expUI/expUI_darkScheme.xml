@@ -5,6 +5,8 @@
     <property name="ideVersion">2023.1.0.0</property>
     <property name="modified">2023-02-21T12:03:22</property>
     <property name="originalScheme">New Dark RC</property>
+    <property name="lcNameBundle">messages.EditorBundle</property>
+    <property name="lcNameKey">intellij.dark.scheme.name</property>
   </metaInfo>
   <colors>
     <option name="ADDED_LINES_COLOR" value="549159" />

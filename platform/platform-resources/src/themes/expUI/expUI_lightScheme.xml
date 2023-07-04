@@ -5,6 +5,8 @@
     <property name="ideVersion">2022.1.0.0</property>
     <property name="modified">2021-11-01T18:43:47</property>
     <property name="originalScheme">_@user_IntelliJ Light</property>
+    <property name="lcNameBundle">messages.EditorBundle</property>
+    <property name="lcNameKey">intellij.light.scheme.name</property>
   </metaInfo>
   <colors>
     <option name="ADDED_LINES_COLOR" value="7fc784" />
