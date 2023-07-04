@@ -66,6 +66,9 @@ class Outer {
     }.run();
   }
 
+  private final InnerImmutable obj = new InnerImmutable(); 
+
+  private final class InnerImmutable {}
 }
 class ThisExpression {
   private final boolean test = this instanceof Sub;

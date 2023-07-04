@@ -36,6 +36,19 @@ class CanBeStaticVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
+  public void visitNewExpression(@NotNull PsiNewExpression expression) {
+    super.visitNewExpression(expression);
+    PsiJavaCodeReferenceElement classRef = expression.getClassReference();
+    if (expression.getQualifier() == null &&
+        classRef != null && classRef.resolve() instanceof PsiClass cls &&
+        !cls.hasModifierProperty(PsiModifier.STATIC) &&
+        !ClassUtil.isTopLevelClass(cls)) {
+      canBeStatic = false;
+      stopWalking();
+    }
+  }
+
+  @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
     super.visitReferenceExpression(ref);
     PsiElement element = ref.resolve();
