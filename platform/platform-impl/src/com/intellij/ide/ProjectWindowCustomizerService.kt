@@ -37,10 +37,6 @@ private fun getProjectNameForIcon(project: Project): String {
   return RecentProjectIconHelper.getProjectName(path)
 }
 
-private fun isForceColorfulToolbar() = Registry.`is`("ide.colorful.toolbar.force", true)
-
-private fun conditionToEnable() = isForceColorfulToolbar() || ProjectManagerEx.getOpenProjects().size > 1
-
 @Service(Service.Level.PROJECT)
 private class ProjectWindowCustomizerIconCache(private val project: Project) {
   var cachedIcon = getIconRaw()
@@ -91,8 +87,7 @@ class ProjectWindowCustomizerService : Disposable {
 
   private data class ProjectColors(val gradient: Color, val background: Color)
 
-  private var wasGradientPainted = isForceColorfulToolbar()
-
+  private var wasGradientPainted = false
   private var ourSettingsValue = UISettings.getInstance().differentiateProjects
   private val colorCache = mutableMapOf<String, ProjectColors>()
   private val listeners = mutableListOf<(Boolean) -> Unit>()
@@ -182,6 +177,8 @@ class ProjectWindowCustomizerService : Disposable {
       fireUpdate()
     }
   }
+
+  private fun conditionToEnable() = ProjectManagerEx.getOpenProjects().size > 1 || Registry.`is`("ide.colorful.toolbar.force")
 
   fun addListener(disposable: Disposable, fireFirstTime: Boolean, listener: (Boolean) -> Unit) {
     if (fireFirstTime) {
