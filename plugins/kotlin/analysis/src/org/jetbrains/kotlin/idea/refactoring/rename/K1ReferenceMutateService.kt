@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
-import org.jetbrains.kotlin.idea.references.KtDefaultAnnotationArgumentReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
@@ -158,16 +157,6 @@ class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
         }
 
         return renameByPropertyName(newName.identifier)
-    }
-
-    override fun KtDefaultAnnotationArgumentReference.renameTo(newElementName: String): KtValueArgument {
-        val psiFactory = KtPsiFactory(expression.project)
-        val newArgument = psiFactory.createArgument(
-          expression.getArgumentExpression(),
-          Name.identifier(newElementName.quoteIfNeeded()),
-          expression.getSpreadElement() != null
-        )
-        return expression.replaced(newArgument)
     }
 
     private fun KtExpression.createCall(

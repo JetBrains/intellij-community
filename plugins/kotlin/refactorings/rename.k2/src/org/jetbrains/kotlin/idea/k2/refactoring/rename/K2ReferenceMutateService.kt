@@ -5,15 +5,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
-import org.jetbrains.kotlin.idea.references.KtDefaultAnnotationArgumentReference
-import org.jetbrains.kotlin.idea.references.KtReferenceMutateService
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtValueArgument
 
 /**
  * At the moment, this implementation of [KtReferenceMutateService] is not able to do any of required operations. It is OK and
@@ -30,10 +27,6 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     }
 
     override fun SyntheticPropertyAccessorReference.renameTo(newElementName: String): KtElement? {
-        operationNotSupportedInK2Error()
-    }
-
-    override fun KtDefaultAnnotationArgumentReference.renameTo(newElementName: String): KtValueArgument {
         operationNotSupportedInK2Error()
     }
 

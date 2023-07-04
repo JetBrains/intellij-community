@@ -136,7 +136,15 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
 
     protected abstract fun SyntheticPropertyAccessorReference.renameTo(newElementName: String): KtElement?
 
-    protected abstract fun KtDefaultAnnotationArgumentReference.renameTo(newElementName: String): KtValueArgument
+    protected fun KtDefaultAnnotationArgumentReference.renameTo(newElementName: String): KtValueArgument {
+        val psiFactory = KtPsiFactory(expression.project)
+        val newArgument = psiFactory.createArgument(
+          expression.getArgumentExpression(),
+          Name.identifier(newElementName.quoteIfNeeded()),
+          expression.getSpreadElement() != null
+        )
+        return expression.replaced(newArgument)
+    }
 
     /**
      * Converts a call to an operator to a regular explicit function call.
