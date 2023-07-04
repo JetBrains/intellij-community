@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.types.Variance
@@ -23,7 +24,7 @@ class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
             element.getKtType() ?: return KotlinBundle.message("type.provider.unknown.type")
         }
         @NlsSafe
-        val rendered = ktType.render(position = Variance.INVARIANT)
+        val rendered = ktType.render(renderer = KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
         StringUtil.escapeXmlEntities(rendered)
     }
 
