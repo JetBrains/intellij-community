@@ -21,6 +21,7 @@ import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Point
 import java.awt.event.MouseEvent
+import java.util.function.Supplier
 import javax.swing.Icon
 
 internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
@@ -104,7 +105,7 @@ private fun createAction(toolWindowToolbar: ToolWindowToolbar): DumbAwareAction 
   }
 }
 
-internal abstract class AbstractMoreSquareStripeButton(action: AnAction) : AbstractSquareStripeButton(action, createPresentation()) {
+internal abstract class AbstractMoreSquareStripeButton(action: AnAction, minimumSize: Supplier<Dimension>? = null) : AbstractSquareStripeButton(action, createPresentation(), minimumSize) {
   override fun update() {
     super.update()
     val project = dataContext.getData(CommonDataKeys.PROJECT)

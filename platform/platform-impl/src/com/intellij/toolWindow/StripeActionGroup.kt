@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.IdeActions.GROUP_MAIN_TOOLBAR_CENTER
 import com.intellij.openapi.actionSystem.IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.keymap.impl.ui.Group
@@ -80,7 +81,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     }
 
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-      return object : SquareStripeButton(this@MyButtonAction, window, presentation) {
+      return object : SquareStripeButton(this@MyButtonAction, window, presentation, { ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
         override fun isFocused(): Boolean = false
 
         override fun addNotify() {
@@ -112,7 +113,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-      return object : AbstractMoreSquareStripeButton(this) {
+      return object : AbstractMoreSquareStripeButton(this, { ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
         init {
           setLook(SquareStripeButtonLook(this))
         }
