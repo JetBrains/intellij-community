@@ -179,6 +179,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private var themeIdBeforePluginUpdate: String? = null
   private var autodetect = false
   // We remember the last used editor scheme for each laf in order to restore it after switching laf
+  private var rememberSchemeForLaf = true
   private val lafToPreviousScheme: MutableMap<String, String> = mutableMapOf()
 
   override fun getDefaultLightLaf(): LookAndFeelInfo {
@@ -565,9 +566,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private fun setLookAndFeelImpl(lookAndFeelInfo: LookAndFeelInfo, installEditorScheme: Boolean, processChangeSynchronously: Boolean) {
     val oldLaf = myCurrentLaf
 
-    if (oldLaf != null) {
-      rememberSchemeForLaf(oldLaf, EditorColorsManager.getInstance().globalScheme)
-    }
+    rememberSchemeForLaf(EditorColorsManager.getInstance().globalScheme.name)
 
     if (oldLaf !== lookAndFeelInfo && oldLaf is UIThemeBasedLookAndFeelInfo) {
       oldLaf.dispose()
@@ -1012,8 +1011,15 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     return EditorColorsManager.getInstance().getScheme(schemeName)
   }
 
-  private fun rememberSchemeForLaf(lookAndFeelInfo: LookAndFeelInfo, editorColorsScheme: EditorColorsScheme) {
-    lafToPreviousScheme[lookAndFeelInfo.name] = editorColorsScheme.name
+  override fun setRememberSchemeForLaf(rememberSchemeForLaf: Boolean) {
+    this.rememberSchemeForLaf = rememberSchemeForLaf
+  }
+
+  override fun rememberSchemeForLaf(schemeName: String) {
+    val lookAndFeelInfo = myCurrentLaf
+    if (rememberSchemeForLaf && lookAndFeelInfo != null) {
+      lafToPreviousScheme[lookAndFeelInfo.name] = schemeName
+    }
   }
 
   private inner class UiThemeEpListener : ExtensionPointListener<UIThemeProvider> {
