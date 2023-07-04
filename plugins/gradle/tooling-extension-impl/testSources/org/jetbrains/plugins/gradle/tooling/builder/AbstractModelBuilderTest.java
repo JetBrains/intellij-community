@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
@@ -151,7 +150,7 @@ public abstract class AbstractModelBuilderTest {
       boolean isCompositeBuildsSupported = _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
       final ProjectImportAction projectImportAction = new ProjectImportAction(false, isCompositeBuildsSupported);
       projectImportAction.addProjectImportModelProvider(new ClassSetImportModelProvider(getModels(),
-                                                                                        Collections.<Class<?>>singleton(IdeaProject.class)));
+                                                                                        Collections.singleton(IdeaProject.class)));
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
       GradleExecutionSettings executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
       GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings);
@@ -215,13 +214,10 @@ public abstract class AbstractModelBuilderTest {
     final DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
 
     final String filterKey = "to_filter";
-    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, new Function<IdeaModule, Pair<String, T>>() {
-      @Override
-      public Pair<String, T> fun(IdeaModule module) {
-        final T value = allModels.getModel(module, aClass);
-        final String key = value != null ? module.getGradleProject().getPath() : filterKey;
-        return Pair.create(key, value);
-      }
+    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, module -> {
+      final T value = allModels.getModel(module, aClass);
+      final String key = value != null ? module.getGradleProject().getPath() : filterKey;
+      return Pair.create(key, value);
     });
 
     map.remove(filterKey);

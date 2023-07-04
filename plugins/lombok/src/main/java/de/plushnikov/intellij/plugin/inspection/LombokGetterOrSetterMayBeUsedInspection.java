@@ -135,7 +135,6 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
 
   private class LombokGetterOrSetterMayBeUsedFix implements LocalQuickFix {
     private final @NotNull String myText;
-    private Project project;
 
     private LombokGetterOrSetterMayBeUsedFix(@NotNull String text) {
       myText = text;
@@ -157,7 +156,6 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      this.project = project;
       final PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiMethod) {
         new LombokGetterOrSetterMayBeUsedVisitor(null, this).visitMethodForFix((PsiMethod)element);
@@ -193,6 +191,7 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
       if (modifierList == null) {
         return false;
       }
+      Project project = fieldOrClass.getProject();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiAnnotation annotation = factory.createAnnotationFromText("@" + getAnnotationName(), fieldOrClass);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(annotation);
@@ -201,7 +200,7 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
     }
 
     private void removeMethodAndMoveJavaDoc(@NotNull PsiField field, @NotNull PsiMethod method) {
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(field.getProject());
       CommentTracker tracker = new CommentTracker();
       PsiDocComment methodJavaDoc = method.getDocComment();
       if (methodJavaDoc != null) {

@@ -27,7 +27,6 @@ import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil;
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -100,7 +99,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
       result = new ArtifactQueryResolver(configuration, scope, myProject, myDownloadJavadoc, myDownloadSources, mySourceSetFinder).resolve();
     } else {
       result = new ExternalDepsResolutionResult(findDependencies(configuration, configuration.getAllDependencies(), scope),
-                                                new ArrayList<File>());
+                                                new ArrayList<>());
     }
 
     Set<ExternalDependency> fileDependencies = findAllFileDependencies(configuration.getAllDependencies(), scope);
@@ -111,8 +110,8 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
 
   protected static Multimap<ModuleComponentIdentifier, ProjectDependency> collectProjectDeps(@NotNull final Configuration configuration) {
     return projectDeps(configuration,
-                       ArrayListMultimap.<ModuleComponentIdentifier, ProjectDependency>create(),
-                       new HashSet<Configuration>());
+                       ArrayListMultimap.create(),
+                       new HashSet<>());
   }
 
   private static Multimap<ModuleComponentIdentifier, ProjectDependency> projectDeps(Configuration conf,
@@ -595,12 +594,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
           File[] hashDirs = versionDir.listFiles();
           if (hashDirs != null) {
             for (File hashDir : hashDirs) {
-              File[] sourcesJars = hashDir.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                  return name.endsWith("sources.jar");
-                }
-              });
+              File[] sourcesJars = hashDir.listFiles((dir, name) -> name.endsWith("sources.jar"));
 
               if (sourcesJars != null && sourcesJars.length > 0) {
                 sourcesFile = sourcesJars[0];
@@ -724,7 +718,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
                                                    @Nullable final String scope) {
     Set<ExternalDependency> result = new LinkedHashSet<>();
 
-    Set<ResolvedArtifact> resolvedArtifacts = myIsPreview ? Collections.<ResolvedArtifact>emptySet() :
+    Set<ResolvedArtifact> resolvedArtifacts = myIsPreview ? Collections.emptySet() :
                                               configuration.getResolvedConfiguration().getLenientConfiguration()
                                                 .getArtifacts(Specs.SATISFIES_ALL);
 
@@ -746,7 +740,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
           projectDependency.setScope(scope);
           projectDependency.setProjectPath(project.getPath());
           projectDependency.setConfigurationName(targetConfiguration == null ? "default" : targetConfiguration.getName());
-          Set<File> artifacts = new LinkedHashSet<>(targetConfiguration == null ? Collections.<File>emptySet() :
+          Set<File> artifacts = new LinkedHashSet<>(targetConfiguration == null ? Collections.emptySet() :
                                                     targetConfiguration.getAllArtifacts().getFiles().getFiles());
           projectDependency.setProjectDependencyArtifacts(artifacts);
           projectDependency.setProjectDependencyArtifactsSources(findArtifactSources(artifacts, mySourceSetFinder));

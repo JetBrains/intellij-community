@@ -978,7 +978,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     MavenRepositorySystem repositorySystem = myRepositorySystem;
     RepositorySystemSession session = getComponent(LegacySupport.class).getRepositorySession();
 
-    ArtifactRepository repository = repositorySystem.buildArtifactRepository(repo);
+    ArtifactRepository repository = MavenRepositorySystem.buildArtifactRepository(repo);
 
     if (session != null) {
       repositorySystem.injectMirror(session, Collections.singletonList(repository));

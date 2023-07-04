@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.util.text.VersionComparatorUtil;
@@ -328,7 +328,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
     try {
       ArchetypeDataSource source = getComponent(ArchetypeDataSource.class, "catalog");
       Properties properties = new Properties();
-      properties.put(ARCHETYPE_CATALOG_PROPERTY, path);
+      properties.setProperty(ARCHETYPE_CATALOG_PROPERTY, path);
       ArchetypeCatalog archetypeCatalog = source.getArchetypeCatalog(properties);
       return getArchetypes(archetypeCatalog);
     }
@@ -344,7 +344,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
     try {
       ArchetypeDataSource source = getComponent(ArchetypeDataSource.class, "remote-catalog");
       Properties properties = new Properties();
-      properties.put(REPOSITORY_PROPERTY, url);
+      properties.setProperty(REPOSITORY_PROPERTY, url);
       ArchetypeCatalog archetypeCatalog = source.getArchetypeCatalog(properties);
       return getArchetypes(archetypeCatalog);
     }

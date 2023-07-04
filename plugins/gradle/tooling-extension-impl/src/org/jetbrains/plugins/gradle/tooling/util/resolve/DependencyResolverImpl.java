@@ -219,7 +219,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
             }
           }
         }
-        resolvedArtifacts.put(dependency, Collections.<ResolvedArtifact>emptySet());
+        resolvedArtifacts.put(dependency, Collections.emptySet());
       }
       catch (Exception ignore) {
         // ignore other artifact resolution exceptions

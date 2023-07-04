@@ -336,9 +336,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
     if (refElement instanceof RefMethod refMethod) {
       PsiMethod psiMethod = refMethod.getUastElement().getJavaPsi();
-      if (psiMethod != null) {
-        appendMethodParameters(buf, psiMethod, false);
-      }
+      appendMethodParameters(buf, psiMethod, false);
     }
 
     buf.append(HTMLComposerImpl.CODE_CLOSING);

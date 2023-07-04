@@ -591,7 +591,7 @@ public final class PathManager {
               log(path + ": '" + key + "' cannot be redefined");
             }
             else if (!sysProperties.containsKey(key)) {
-              sysProperties.put(key, substituteVars((String)value, homePath));
+              sysProperties.setProperty((String)key, substituteVars((String)value, homePath));
             }
             return null;
           }

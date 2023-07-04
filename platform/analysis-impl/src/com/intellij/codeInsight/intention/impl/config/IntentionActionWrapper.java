@@ -114,7 +114,7 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
     if (instance == null) {
       CommonIntentionAction base = extension.getInstance();
       instance = base instanceof IntentionAction action ? action :
-                 ((ModCommandAction)base).asIntention();
+                 base.asIntention();
     }
     return instance;
   }

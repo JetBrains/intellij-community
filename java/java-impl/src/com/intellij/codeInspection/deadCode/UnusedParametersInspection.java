@@ -51,10 +51,10 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     if (uMethod == null) return null;
     PsiElement element = uMethod.getJavaPsi();
     if (refMethod.isAppMain()) {
-      if (element == null || !element.getLanguage().isKindOf("kotlin")) return null;
+      if (!element.getLanguage().isKindOf("kotlin")) return null;
     }
     else if (refMethod.isEntry()) return null;
-    if (element != null && EntryPointsManager.getInstance(manager.getProject()).isEntryPoint(element)) return null;
+    if (EntryPointsManager.getInstance(manager.getProject()).isEntryPoint(element)) return null;
 
     List<ProblemDescriptor> result = new ArrayList<>();
     for (RefParameter refParameter : unusedParameters) {
@@ -112,9 +112,6 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
         UMethod uastElement = refMethod.getUastElement();
         if (uastElement == null) return;
         PsiMethod element = uastElement.getJavaPsi();
-        if (element == null) {
-          return;
-        }
         PsiMethod[] derived = OverridingMethodsSearch.search(element).toArray(PsiMethod.EMPTY_ARRAY);
         for (RefParameter refParameter : unusedParameters) {
           if (refMethod.isAbstract() && derived.length == 0) {

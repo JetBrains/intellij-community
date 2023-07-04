@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import org.gradle.api.Project;
@@ -86,7 +86,7 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
         buildScriptClasspath.add(new ClasspathEntryModelImpl(
           projectDependencyArtifacts,
           projectDependencyArtifactsSources,
-          Collections.<File>emptySet()
+          Collections.emptySet()
         ));
       }
       else if (dependency instanceof ExternalLibraryDependency) {
@@ -109,8 +109,8 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
         FileCollectionDependency fileCollectionDependency = (FileCollectionDependency)dependency;
         buildScriptClasspath.add(new ClasspathEntryModelImpl(
           fileCollectionDependency.getFiles(),
-          Collections.<File>emptySet(),
-          Collections.<File>emptySet()
+          Collections.emptySet(),
+          Collections.emptySet()
         ));
       }
     }
@@ -129,6 +129,6 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
 
   @NotNull
   private static List<File> singletonListOrEmpty(@Nullable File file) {
-    return file == null ? Collections.<File>emptyList() : Collections.singletonList(file);
+    return file == null ? Collections.emptyList() : Collections.singletonList(file);
   }
 }

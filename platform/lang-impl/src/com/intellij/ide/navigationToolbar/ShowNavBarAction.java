@@ -55,7 +55,7 @@ final class ShowNavBarAction extends AnAction implements DumbAware, PopupAction 
   private static boolean isInsideNavBar(Component c) {
     return c == null
            || c instanceof NavBarPanel
-           || ComponentUtil.getParentOfType((Class<NavBarListWrapper>)NavBarListWrapper.class, c) != null;
+           || ComponentUtil.getParentOfType(NavBarListWrapper.class, c) != null;
   }
 
   @Override

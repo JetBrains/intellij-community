@@ -8,10 +8,18 @@ import org.jetbrains.annotations.NotNull;
  * A command that displays an message.
  *
  * @param messageText localized message to display
- * @param kind
+ * @param kind message kind
  */
 public record ModDisplayMessage(@NlsContexts.Tooltip @NotNull String messageText, MessageKind kind) implements ModCommand {
   public enum MessageKind {
-    INFORMATION, ERROR;
+    /**
+     * Informational message
+     */
+    INFORMATION,
+
+    /**
+     * Error message
+     */
+    ERROR
   }
 }

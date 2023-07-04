@@ -347,12 +347,9 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         ProjectModelConsumer modelConsumer = new ProjectModelConsumer() {
           @Override
           public void consume(final @NotNull Object object, final @NotNull Class clazz) {
-            Runnable convert = new Runnable() {
-              @Override
-              public void run() {
-                Object o = myModelConverter.convert(object);
-                allModels.addModel(o, clazz, project);
-              }
+            Runnable convert = () -> {
+              Object o = myModelConverter.convert(object);
+              allModels.addModel(o, clazz, project);
             };
             if (myConverterExecutor != null) {
               myConverterExecutor.execute(convert);
@@ -393,12 +390,9 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
           @Override
           public void consumeProjectModel(@NotNull final ProjectModel projectModel, @NotNull final Object object, @NotNull final Class clazz) {
             obtainedModels.add(clazz.getName());
-            Runnable convert = new Runnable() {
-              @Override
-              public void run() {
-                Object converted = myModelConverter.convert(object);
-                allModels.addModel(converted, clazz, projectModel);
-              }
+            Runnable convert = () -> {
+              Object converted = myModelConverter.convert(object);
+              allModels.addModel(converted, clazz, projectModel);
             };
             if (myConverterExecutor != null) {
               myConverterExecutor.execute(convert);
@@ -410,12 +404,9 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
           @Override
           public void consume(@NotNull final BuildModel buildModel, @NotNull final Object object, @NotNull final Class clazz) {
             obtainedModels.add(clazz.getName());
-            Runnable convert = new Runnable() {
-              @Override
-              public void run() {
-                Object converted = myModelConverter.convert(object);
-                allModels.addModel(converted, clazz, buildModel);
-              }
+            Runnable convert = () -> {
+              Object converted = myModelConverter.convert(object);
+              allModels.addModel(converted, clazz, buildModel);
             };
             if (myConverterExecutor != null) {
               myConverterExecutor.execute(convert);

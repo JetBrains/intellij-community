@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.booleanIsAlwaysInverted;
 
 import com.intellij.analysis.AnalysisScope;
@@ -74,7 +74,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
         refMethod.isConstructor() ||
         hasNonInvertedCalls(refMethod) ||
         !refMethod.getSuperMethods().isEmpty()) return null;
-    UMethod uMethod = (UMethod)refMethod.getUastElement();
+    UMethod uMethod = refMethod.getUastElement();
     if (uMethod == null) return null;
     PsiElement anchor = UDeclarationKt.getAnchorPsi(uMethod);
     if (anchor != null) {
@@ -197,8 +197,8 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
   private static class BooleanInvertedAnnotator extends RefGraphAnnotator {
     @Override
     public void onInitialize(RefElement refElement) {
-      if (!(refElement instanceof RefMethod) || ((RefMethod)refElement).isConstructor()) return;
-      final UMethod method = (UMethod)((RefMethod)refElement).getUastElement();
+      if (!(refElement instanceof RefMethod refMethod) || refMethod.isConstructor()) return;
+      final UMethod method = refMethod.getUastElement();
       if (!PsiTypes.booleanType().equals(method.getReturnType())) return;
       refElement.putUserData(ALWAYS_INVERTED, Boolean.TRUE); //initial mark boolean methods
     }
