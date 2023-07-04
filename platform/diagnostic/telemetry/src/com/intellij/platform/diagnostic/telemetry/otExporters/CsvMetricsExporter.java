@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.diagnostic.telemetry;
+package com.intellij.platform.diagnostic.telemetry.otExporters;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils;
+import com.intellij.platform.diagnostic.telemetry.RollingFileSupplier;
 import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.metrics.InstrumentType;
 import io.opentelemetry.sdk.metrics.data.AggregationTemporality;
@@ -9,6 +11,7 @@ import io.opentelemetry.sdk.metrics.data.MetricData;
 import io.opentelemetry.sdk.metrics.export.MetricExporter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,7 +43,8 @@ import static java.nio.file.StandardOpenOption.*;
 public final class CsvMetricsExporter implements MetricExporter {
   private static final Logger LOG = Logger.getInstance(CsvMetricsExporter.class);
 
-  private static final String HTML_PLOTTER_NAME = "open-telemetry-metrics-plotter.html";
+  @VisibleForTesting
+  public static final String HTML_PLOTTER_NAME = "open-telemetry-metrics-plotter.html";
 
 
   private final @NotNull RollingFileSupplier writeToFileSupplier;
@@ -69,7 +73,7 @@ public final class CsvMetricsExporter implements MetricExporter {
     final Path targetToCopyTo = targetDir.resolve(HTML_PLOTTER_NAME);
     final URL plotterHtmlUrl = CsvMetricsExporter.class.getResource(HTML_PLOTTER_NAME);
     if (plotterHtmlUrl == null) {
-      LOG.info(HTML_PLOTTER_NAME + " is not found in classpath");
+      LOG.warn(HTML_PLOTTER_NAME + " is not found in classpath");
     }
     else {
       try (InputStream stream = plotterHtmlUrl.openStream()) {

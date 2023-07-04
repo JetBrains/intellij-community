@@ -4,6 +4,7 @@ package com.intellij.platform.diagnostic.telemetry
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedSpansProcessor
+import com.intellij.platform.diagnostic.telemetry.otExporters.CsvMetricsExporter
 import com.intellij.util.ConcurrencyUtil
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
@@ -85,7 +86,8 @@ open class OpenTelemetryDefaultConfigurator(protected val mainScope: CoroutineSc
       MetricsExporterEntry(
         metrics = listOf(
           FilteredMetricsExporter(
-            CsvMetricsExporter(RollingFileSupplier(metricsReportingPath))) { metric -> metric.belongsToScope(PlatformMetrics) }
+            CsvMetricsExporter(
+              RollingFileSupplier(metricsReportingPath))) { metric -> metric.belongsToScope(PlatformMetrics) }
         ),
         duration = Duration.ofMinutes(1))
     )
