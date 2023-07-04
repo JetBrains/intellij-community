@@ -6,7 +6,7 @@ import com.intellij.ui.scale.JBUIScale
 object ToolbarComboWidgetUiSizes {
 
   @JvmStatic
-  val gapBeforeSeparator: Int get() = JBUIScale.scale(3)
+  val separatorGap: Int get() = JBUIScale.scale(3)
 
   @JvmStatic
   val gapAfterLeftIcons: Int get() = JBUIScale.scale(6)
