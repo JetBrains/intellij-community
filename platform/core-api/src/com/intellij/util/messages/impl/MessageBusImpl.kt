@@ -18,7 +18,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.lang.invoke.MethodHandle
 import java.lang.reflect.InvocationHandler
@@ -307,16 +306,6 @@ open class MessageBusImpl : MessageBus {
       holder.disconnectIfNeeded(predicate)
     }
     subscriberCache.clear()
-  }
-
-  @TestOnly
-  fun sortSubscribers(topic: Topic<*>, comparator: Comparator<in Any?>) {
-    subscriberCache.compute(topic) { _, array ->
-      if (array == null) throw AssertionError("No subscribers for topic yet. Nothing to sort.")
-      val sorted = arrayOf(*array)
-      sorted.sortWith(comparator)
-      sorted
-    }
   }
 }
 
