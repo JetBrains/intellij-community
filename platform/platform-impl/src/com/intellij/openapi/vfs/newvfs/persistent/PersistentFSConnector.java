@@ -70,8 +70,7 @@ final class PersistentFSConnector {
   public static void disconnect(@NotNull PersistentFSConnection connection) throws IOException {
     connectDisconnectLock.lock();
     try {
-      connection.doForce();
-      connection.closeFiles();
+      connection.close();
     }
     finally {
       connectDisconnectLock.unlock();

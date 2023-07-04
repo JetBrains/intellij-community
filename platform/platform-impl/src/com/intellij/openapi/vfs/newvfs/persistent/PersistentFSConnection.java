@@ -41,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -98,7 +99,7 @@ public final class PersistentFSConnection {
 
   private final @Nullable Closeable flushingTask;
 
-  /** accessed under {@link #r}/{@link #w} */
+  /** How many errors were detected that are likely caused by VFS corruptions -- i.e. broken internal invariants */
   private final AtomicInteger corruptionsDetected = new AtomicInteger();
 
   PersistentFSConnection(@NotNull PersistentFSPaths paths,
@@ -167,9 +168,9 @@ public final class PersistentFSConnection {
     return myEnumeratedAttributes;
   }
 
-  @NotNull("Content hash enumerator must be initialized")
+  @NotNull
   ContentHashEnumerator getContentHashesEnumerator() {
-    return myContentHashesEnumerator;
+    return Objects.requireNonNull(myContentHashesEnumerator, "Content hash enumerator must be initialized");
   }
 
   @NotNull("Vfs must be initialized")
@@ -250,13 +251,12 @@ public final class PersistentFSConnection {
     return corruptionsDetected.get();
   }
 
-  void closeFiles() throws IOException {
+  void close() throws IOException {
     if (flushingTask != null) {
       flushingTask.close();
     }
 
-    writeConnectionState();
-    myRecords.force();
+    doForce();
     closeStorages(myRecords,
                   myNames,
                   myAttributesStorage,

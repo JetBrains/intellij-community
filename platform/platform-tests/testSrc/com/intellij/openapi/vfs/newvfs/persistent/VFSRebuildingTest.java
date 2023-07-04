@@ -6,7 +6,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFact
 import com.intellij.testFramework.TemporaryDirectory;
 import com.intellij.util.io.PageCacheUtils;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -193,7 +192,7 @@ public class VFSRebuildingTest {
   //==== more top-level tests
 
   @Test
-  public void VFS_isRebuild_OnlyIf_ImplementationVersionChanged() throws Exception {
+  public void VFS_isRebuilt_OnlyIf_ImplementationVersionChanged() throws Exception {
     //skip IN_MEMORY impl, since it is not really persistent
     //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_VFS_ENABLED (will fail)
     final List<RecordsStorageKind> allKinds = PageCacheUtils.LOCK_FREE_VFS_ENABLED ?
@@ -238,7 +237,7 @@ public class VFSRebuildingTest {
 
 
   @Test
-  public void VFS_isRebuild_IfAnyStorageFileRemoved() throws Exception {
+  public void VFS_isRebuilt_If_AnyStorageFileRemoved() throws Exception {
     //skip IN_MEMORY impl, since it is not really persistent
     //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_VFS_ENABLED (will fail)
     final List<RecordsStorageKind> allKinds = PageCacheUtils.LOCK_FREE_VFS_ENABLED ?
@@ -284,12 +283,88 @@ public class VFSRebuildingTest {
         }
       }
 
-      //FIXME Files currently ignored by 'attributes_enums.dat'
+      //FIXME RC: currently 'attributes_enums.dat' is not checked during VFS init
       filesNotLeadingToVFSRebuild.remove("attributes_enums.dat");
       assertTrue(
         "VFS[" + storageKind + "] is not rebuild even though " + filesNotLeadingToVFSRebuild + " were deleted",
         filesNotLeadingToVFSRebuild.isEmpty()
       );
+    }
+  }
+
+
+  @Test
+  public void VFS_MustNOT_FailOnReopen_if_ExplicitlyDisconnected() throws IOException {
+    final Path cachesDir = temporaryDirectory.createDir();
+    final int version = 1;
+
+    final PersistentFSConnection connection = PersistentFSConnector.tryInit(
+      cachesDir,
+      version,
+      true,
+      new InvertedNameIndex(),
+      Collections.emptyList()
+    );
+    try {
+      final PersistentFSRecordsStorage records = connection.getRecords();
+      records.setConnectionStatus(PersistentFSHeaders.CONNECTED_MAGIC);
+    }
+    finally {
+      //stamps connectionStatus=SAFELY_CLOSED_MAGIC
+      connection.close();
+    }
+
+    final PersistentFSConnection reopenedConnection = PersistentFSConnector.tryInit(
+      cachesDir,
+      version,
+      true,
+      new InvertedNameIndex(),
+      Collections.emptyList()
+    );
+    try {
+      assertEquals("connectionStatus must be SAFELY_CLOSED since connection was disconnect()-ed",
+                   PersistentFSHeaders.SAFELY_CLOSED_MAGIC,
+                   reopenedConnection.getRecords().getConnectionStatus());
+    }
+    finally {
+      PersistentFSConnector.disconnect(reopenedConnection);
+    }
+  }
+
+  @Test
+  public void VFS_Must_FailOnReopen_RequestingRebuild_if_NOT_ExplicitlyDisconnected() throws IOException {
+    final Path cachesDir = temporaryDirectory.createDir();
+    final int version = 1;
+
+    final PersistentFSConnection connection = PersistentFSConnector.tryInit(
+      cachesDir,
+      version,
+      true,
+      new InvertedNameIndex(),
+      Collections.emptyList()
+    );
+    try {
+      final PersistentFSRecordsStorage records = connection.getRecords();
+      records.setConnectionStatus(PersistentFSHeaders.CONNECTED_MAGIC);
+
+      //do NOT call connection.close() -- just reopen the connection:
+
+      try {
+        PersistentFSConnector.tryInit(
+          cachesDir,
+          version,
+          true,
+          new InvertedNameIndex(),
+          Collections.emptyList()
+        );
+        fail("VFS init must fail with");
+      }
+      catch (VFSNeedsRebuildException requestToRebuild) {
+        //OK, this is what we expect
+      }
+    }
+    finally {
+      connection.close();
     }
   }
 
