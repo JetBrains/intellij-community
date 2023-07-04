@@ -20,12 +20,17 @@ import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.Component
+import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
+import java.util.function.Supplier
 
-internal abstract class AbstractSquareStripeButton(action: AnAction, presentation: Presentation) :
-  ActionButton(action, presentation, ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
+internal abstract class AbstractSquareStripeButton(
+  action: AnAction, presentation: Presentation,
+  minimumSize: Supplier<Dimension>? = null
+) :
+  ActionButton(action, presentation, ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, minimumSize ?: Supplier { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
 
   protected fun doInit(popupBuilder: () -> ActionGroup) {
     setLook(SquareStripeButtonLook(this))
@@ -55,8 +60,8 @@ internal abstract class AbstractSquareStripeButton(action: AnAction, presentatio
   }
 }
 
-internal open class SquareStripeButton(action: SquareAnActionButton, val toolWindow: ToolWindowImpl, presentation: Presentation) :
-  AbstractSquareStripeButton(action, presentation) {
+internal open class SquareStripeButton(action: SquareAnActionButton, val toolWindow: ToolWindowImpl, presentation: Presentation, minimumSize: Supplier<Dimension>? = null) :
+  AbstractSquareStripeButton(action, presentation, minimumSize) {
   constructor(action: SquareAnActionButton, toolWindow: ToolWindowImpl) : this(action, toolWindow, createPresentation(toolWindow))
   constructor(toolWindow: ToolWindowImpl) : this(SquareAnActionButton(toolWindow), toolWindow)
   companion object {
