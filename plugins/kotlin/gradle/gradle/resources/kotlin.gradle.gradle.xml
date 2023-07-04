@@ -22,10 +22,6 @@
             interface="org.jetbrains.kotlin.idea.gradle.configuration.serialize.KotlinExtrasSerializationService"
             dynamic="true"/>
 
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.mppProjectResolve"
-            interface="org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinMppGradleProjectResolverExtension"
-            dynamic="true"/>
 
   </extensionPoints>
 
