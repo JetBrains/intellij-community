@@ -518,13 +518,18 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "{" { return OPEN_CURLY; }
   "}" { return CLOSE_CURLY; }
 }
+<struct> {
+  ":" { return COLON; }
+}
+<class_diagram> {
+  ":" { yypushstate(class_member); return COLON; }
+}
 <class_diagram, struct, class_member, class_in_relation> {
   [~] { yypushstate(generic); return TILDA; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
   [`] { yypushstate(back_quoted_string); return BACK_QUOTE; }
   "<<" { yypushstate(annotation); return ANNOTATION_START; }
 
-  ":" { yypushstate(class_member); return COLON; }
   "+" { return PLUS; }
   "-" { return MINUS; }
   "#" { return POUND; }
