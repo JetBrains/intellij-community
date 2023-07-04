@@ -366,6 +366,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 
 //---sequence---------------------------------------------------------------------
+
 <sequence> {
   "participant" { yybegin(sequence_id); return Sequence.PARTICIPANT; }
   "actor" { yybegin(sequence_id); return Sequence.ACTOR; }
@@ -392,13 +393,6 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "link" { return LINK; }
   "links" { yybegin(sequence_links); return Sequence.LINKS; }
 
-  [^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)?+ { return ID; }
-
-  ":" { yybegin(sequence_message); return COLON; }
-  "+" { return PLUS; }
-  "-" { return MINUS; }
-  "," { return COMMA; }
-
   "->>" { return Sequence.SOLID_ARROW; }
   "-->>" { return Sequence.DOTTED_ARROW; }
   "->" { return Sequence.SOLID_OPEN_ARROW; }
@@ -407,6 +401,15 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   \-\-[x] { return Sequence.DOTTED_CROSS; }
   \-[\)] { return Sequence.SOLID_POINT; }
   \-\-[\)] { return Sequence.DOTTED_POINT; }
+
+  [^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)*/"-"?"->"">"?[^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)?+ { return ID; }
+  [^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)*/"-"?"-"[>x)][^\S\n\r]*[^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)?+ { return ID; }
+  [^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)* { return ID; }
+
+  ":" { yybegin(sequence_message); return COLON; }
+  "+" { return PLUS; }
+  "-" { return MINUS; }
+  "," { return COMMA; }
 }
 <autonumbers> {
   [0-9]+ { return NUM; }

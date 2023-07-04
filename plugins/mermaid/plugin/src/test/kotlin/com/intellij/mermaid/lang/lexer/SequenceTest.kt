@@ -165,4 +165,30 @@ class SequenceTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test different signals and spacing`() {
+    val content = """
+    sequenceDiagram
+      Bob-->Alice: I am good thanks!
+      Bob -->Alice: I am good thanks!
+      Bob--> Alice: I am good thanks!
+      Bob --> Alice: I am good thanks!
+    
+      Bob-->>Alice: I am good thanks!
+      Bob -->>Alice: I am good thanks!
+      Bob-->> Alice: I am good thanks!
+      Bob -->> Alice: I am good thanks!
+    
+      Bob--xAlice: I am good thanks!
+      Bob --xAlice: I am good thanks!
+      Bob--x Alice: I am good thanks!
+      Bob --x Alice: I am good thanks!
+    
+      Bob--)Alice: I am good thanks!
+      Bob --)Alice: I am good thanks!
+      Bob--) Alice: I am good thanks!
+      Bob --) Alice: I am good thanks!
+    """.trimIndent()
+    doTest(content)
+  }
 }

@@ -4,7 +4,8 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.readText
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
@@ -22,15 +23,7 @@ class OfficialExamplesParsingTest {
     get() = fixtureExtension.fixture
 
   private val ignoredTests = listOf(
-    "flowchart-14",
-    "flowchart-15",
-    "flowchart-16",
-    "flowchart-17",
-    "gitgraph-14",
-    "sequenceDiagram-0",
-    "sequenceDiagram-21",
-    "examples-2",
-    "examples-7"
+    "gitgraph-14"
   )
 
   @TestTemplate
