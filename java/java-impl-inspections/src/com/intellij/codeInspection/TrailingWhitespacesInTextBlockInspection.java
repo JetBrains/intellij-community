@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -118,9 +118,8 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
     manager.performActionWithFormatterDisabled(() -> toReplace.replace(replacement));
   }
 
-  private static class ReplaceTrailingWhiteSpacesFix implements LocalQuickFix {
+  private static class ReplaceTrailingWhiteSpacesFix extends PsiUpdateModCommandQuickFix {
     private final String myMessage;
-    @SafeFieldForPreview
     private final @NotNull Function<@NotNull TransformationContext, ? extends @Nullable CharSequence> myTransformation;
 
     private ReplaceTrailingWhiteSpacesFix(@NotNull String message,
@@ -130,19 +129,13 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
     }
 
     @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      IntentionPreviewInfo info = LocalQuickFix.super.generatePreview(project, previewDescriptor);
-      return info == IntentionPreviewInfo.DIFF ? IntentionPreviewInfo.DIFF_NO_TRIM : info;
-    }
-
-    @Override
     public @IntentionFamilyName @NotNull String getFamilyName() {
       return JavaBundle.message(myMessage);
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiLiteralExpression expression = tryCast(descriptor.getPsiElement(), PsiLiteralExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiLiteralExpression expression = tryCast(element, PsiLiteralExpression.class);
       if (expression == null || !expression.isTextBlock()) return;
       String[] lines = PsiLiteralUtil.getTextBlockLines(expression);
       if (lines == null) return;
