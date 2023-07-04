@@ -8,7 +8,7 @@ class Test {
   void test1(Object o) {
     int a;
     switch (o) {
-      case ((String s)): {
+      case String s: {
         if (<warning descr="Condition 's == null' is always 'false'">s == null</warning>) {
           System.out.println();
         }
@@ -28,7 +28,7 @@ class Test {
   void test2(Object o) {
     int a;
     switch (o) {
-      case (String s): {
+      case String s: {
         if (<warning descr="Condition 's instanceof CharSequence' is always 'true'">s instanceof CharSequence</warning>) {
           System.out.println(s);
         }
@@ -57,7 +57,7 @@ class Test {
   int test4(String s) {
     s = FSD;
     return switch (s) {
-      case (String ss) when (<warning descr="Condition 'ss.length() < 3 || ss.length() == 4' is always 'false'"><warning descr="Condition 'ss.length() < 3' is always 'false'">ss.length() < 3</warning> || <warning descr="Condition 'ss.length() == 4' is always 'false' when reached">ss.length() == 4</warning></warning>) -> 1;
+      case String ss when (<warning descr="Condition 'ss.length() < 3 || ss.length() == 4' is always 'false'"><warning descr="Condition 'ss.length() < 3' is always 'false'">ss.length() < 3</warning> || <warning descr="Condition 'ss.length() == 4' is always 'false' when reached">ss.length() == 4</warning></warning>) -> 1;
       case <warning descr="Switch label 'String ss' is the only reachable in the whole switch">String ss</warning> -> 2;
     };
   }

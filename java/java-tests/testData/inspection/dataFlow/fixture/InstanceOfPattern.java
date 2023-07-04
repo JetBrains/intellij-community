@@ -21,7 +21,7 @@ public class InstanceOfPattern {
   }
 
   void testNullCheckUnusedPatternVariable(String s) {
-    if (s instanceof String s1) {
+    if (s instanceof String s1 && s1.length()==2) {
       System.out.println("foo");
     }
   }

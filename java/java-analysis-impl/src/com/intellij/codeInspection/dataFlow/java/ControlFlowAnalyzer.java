@@ -1121,24 +1121,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void processPattern(@NotNull PsiPattern sourcePattern, @Nullable PsiPattern innerPattern,
                               @NotNull PsiType checkType, @Nullable DfaAnchor instanceofAnchor, @NotNull DeferredOffset endPatternOffset) {
     if (innerPattern == null) return;
-    if (innerPattern instanceof PsiGuardedPattern guardedPattern) {
-      PsiPrimaryPattern primaryPattern = guardedPattern.getPrimaryPattern();
-      processPattern(sourcePattern, primaryPattern, checkType, instanceofAnchor, endPatternOffset);
-      PsiExpression expression = guardedPattern.getGuardingExpression();
-      if (expression != null) {
-        expression.accept(this);
-      }
-      else {
-        addInstruction(new PushValueInstruction(DfTypes.BOOLEAN));
-      }
-      DeferredOffset condGotoOffset = new DeferredOffset();
-      addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.TRUE));
-
-      addInstruction(new PushValueInstruction(DfTypes.FALSE));
-      addInstruction(new GotoInstruction(endPatternOffset));
-
-      condGotoOffset.setOffset(getInstructionCount());
-    }
     else if (innerPattern instanceof PsiParenthesizedPattern) {
       PsiPattern unwrappedPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(innerPattern);
       processPattern(sourcePattern, unwrappedPattern, checkType, instanceofAnchor, endPatternOffset);
@@ -1192,8 +1174,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                    @NotNull DeferredOffset endPatternOffset,
                                    @NotNull DfaVariableValue patternDfaVar,
                                    @Nullable DfaAnchor instanceofAnchor) {
-    boolean java19plus = PsiUtil.getLanguageLevel(myCodeFragment).isAtLeast(LanguageLevel.JDK_19_PREVIEW);
-    if (java19plus
+    boolean java20plus = PsiUtil.getLanguageLevel(myCodeFragment).isAtLeast(LanguageLevel.JDK_20_PREVIEW);
+    if (java20plus
         ? (sourcePattern == innerPattern || !JavaPsiPatternUtil.isUnconditionalForType(innerPattern, checkType))
         : !JavaPsiPatternUtil.isUnconditionalForType(innerPattern, checkType)) {
       addPatternTypeTest(innerPattern, instanceofAnchor, endPatternOffset, patternDfaVar);

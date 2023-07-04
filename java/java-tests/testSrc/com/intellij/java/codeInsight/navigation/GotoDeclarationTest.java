@@ -203,14 +203,6 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
     doTestGoToField();
   }
 
-  public void testGuardWithInstanceOfPatternMatchingInIf() {
-    doTestGoToSecondPatternVariable();
-  }
-
-  public void testGuardWithInstanceOfPatternMatchingInSwitch() {
-    doTestGoToSecondPatternVariable();
-  }
-
   private void doTestGoToField() {
     configure();
     final PsiField field = PsiTreeUtil.findChildOfType(getFile(), PsiField.class);

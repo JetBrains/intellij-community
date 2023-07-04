@@ -91,7 +91,7 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
            "    switch (e) {" +
            "      case A, B:" +
            "        break;" +
-           "      case /*'default' branch is unnecessary*/default/*_*//**/:" +
+           "      /*'default' branch is unnecessary*/default/*_*//**/:" +
            "        break;" +
            "    }" +
            "  }" +
@@ -137,7 +137,7 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
            "        break;" +
            "      case C2 c1:" +
            "        break;" +
-           "      case /*'default' branch is unnecessary*/default/*_*//**/:" +
+           "      /*'default' branch is unnecessary*/default/*_*//**/:" +
            "        break;" +
            "    }" +
            "  }" +
@@ -190,7 +190,7 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
            "  void x(J<Integer> j) {" +
            "    switch (j) {" +
            "      case D2 d2 -> {}" +
-           "      case /*'default' branch is unnecessary*/default/*_*//**/ -> {}" +
+           "      /*'default' branch is unnecessary*/default/*_*//**/ -> {}" +
            "    }" +
            "  }" +
            "}");
@@ -221,6 +221,6 @@ final class D2<T> implements J<T> {}
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_19;
+    return JAVA_21;
   }
 }

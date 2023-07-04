@@ -853,8 +853,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) add(GenericsHighlightUtil.checkInstanceOfGenericType(myLanguageLevel, expression));
     if (!myHolder.hasErrorResults() &&
         myLanguageLevel.isAtLeast(LanguageLevel.JDK_16) &&
-        // 5.20.2 Removed restriction on pattern instanceof for unconditional patterns (JEP 427)
-        myLanguageLevel.isLessThan(LanguageLevel.JDK_19_PREVIEW)) {
+        // 5.20.2 Removed restriction on pattern instanceof for unconditional patterns (JEP 432, 440)
+        (myLanguageLevel.isLessThan(LanguageLevel.JDK_21) && myLanguageLevel != LanguageLevel.JDK_20_PREVIEW)) {
       add(HighlightUtil.checkInstanceOfPatternSupertype(expression));
     }
   }
@@ -1947,22 +1947,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitParenthesizedPattern(@NotNull PsiParenthesizedPattern pattern) {
     super.visitParenthesizedPattern(pattern);
-    add(checkFeature(pattern, HighlightingFeature.GUARDED_AND_PARENTHESIZED_PATTERNS));
-  }
-
-  @Override
-  public void visitGuardedPattern(@NotNull PsiGuardedPattern pattern) {
-    super.visitGuardedPattern(pattern);
-    if (HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(pattern)) {
-      String message = JavaErrorBundle.message("guarded.patterns.unavailable");
-      add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern.getNode()).descriptionAndTooltip(message));
-    }
-    if (!myHolder.hasErrorResults()) {
-      add(checkFeature(pattern, HighlightingFeature.GUARDED_AND_PARENTHESIZED_PATTERNS));
-    }
-    if (myHolder.hasErrorResults()) return;
-    PsiExpression guardingExpr = pattern.getGuardingExpression();
-    add(checkGuardingExpressionHasBooleanType(guardingExpr));
+    add(checkFeature(pattern, HighlightingFeature.PARENTHESIZED_PATTERNS));
   }
 
   @Override

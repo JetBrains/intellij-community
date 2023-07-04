@@ -58,10 +58,10 @@ class Main {
     };
 
     switch (o) {
-      case (Integer i):
+      case Integer i:
         System.out.println("int");
         break;
-      case <error descr="Label is dominated by a preceding case label '(Integer i)'">Integer o1 when o1 != null</error>:
+      case <error descr="Label is dominated by a preceding case label 'Integer i'">Integer o1 when o1 != null</error>:
         System.out.println("num");
         break;
       default:
@@ -69,8 +69,8 @@ class Main {
         break;
     }
     str = switch (o) {
-      case (Integer i) -> "num";
-      case <error descr="Label is dominated by a preceding case label '(Integer i)'">Integer o1 when o1 != null</error> -> "int";
+      case Integer i -> "num";
+      case <error descr="Label is dominated by a preceding case label 'Integer i'">Integer o1 when o1 != null</error> -> "int";
       default -> "def";
     };
 
@@ -145,16 +145,16 @@ class Main {
     };
 
     switch (ii) {
-      case <error descr="'switch' has both an unconditional pattern and a default label">Object obj</error>, null:
+      case Object obj, <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>:
         System.out.println("int");
         break;
-      <error descr="'switch' has both an unconditional pattern and a default label">default</error>:
+      default:
         System.out.println("def");
         break;
     }
     str = switch (ii) {
-      case <error descr="'switch' has both an unconditional pattern and a default label">Object obj</error>, null -> "int";
-      <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> "def";
+      case Object obj, <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error> -> "int";
+      default -> "def";
     };
 
     switch (ii) {
@@ -214,7 +214,7 @@ class Main {
     str = switch (ii) {
       case Integer in when in != null -> "";
       case <error descr="Label is dominated by a preceding case label 'Integer in when in != null'">1</error> -> "";
-      case default -> "";
+      default -> "";
     };
     switch (d) {
       case Day dd when true: break;
@@ -248,7 +248,7 @@ class Main {
       case MONDAY, TUESDAY, WEDNESDAY -> "ok";
     };
     str = switch (d) {
-      case MONDAY, TUESDAY, default -> "ok";
+      case MONDAY, TUESDAY, <error descr="Default label not allowed here: 'default' can only be used as a single case label or paired only with 'null'">default</error> -> "ok";
     };
 
     switch (d) {

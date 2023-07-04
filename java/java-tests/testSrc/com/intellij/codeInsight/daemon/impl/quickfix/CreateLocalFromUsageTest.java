@@ -14,7 +14,7 @@ public class CreateLocalFromUsageTest extends LightQuickFixParameterizedTestCase
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    setLanguageLevel(LanguageLevel.JDK_20_PREVIEW);
+    setLanguageLevel(LanguageLevel.JDK_21);
     JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_LOCALS = getTestName(true).contains("final");
   }
 }

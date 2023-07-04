@@ -3,7 +3,7 @@ class Test {
   Integer i = 1;
   void test() {
     switch (i) {
-      case Object o:
+        case Object o:
         break;
     }
   }

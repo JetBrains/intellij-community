@@ -6,7 +6,7 @@ enum Day {
 class Test {
     int foo(Day d) {
         switch (d) {
-            case default:
+            default:
                 System.out.println(13);
         }
     }

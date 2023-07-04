@@ -12,7 +12,8 @@ class Main {
         case C, D -> System.out.println("bar");
         case E -> {
         }
-        case F, null -> System.out.println("baz");
+        case F -> System.out.println("baz");
+      case null -> System.out.println("baz");
     };
   }
 }

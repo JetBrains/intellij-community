@@ -55,7 +55,7 @@ class Test {
     switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning>:
         break;
-      case (Integer ii):
+      case Integer ii:
         break;
     }
   }
@@ -106,7 +106,7 @@ class Test {
     switch (<warning descr="Unboxing of 'createNullValue()' may produce 'NullPointerException'">createNullValue()</warning>) {
       case 1:
         break;
-      case ((Object o)):
+      case Object o:
         break;
     }
   }
@@ -173,7 +173,7 @@ class Test {
     i = 1;
     return switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning> -> 1;
-      case (Integer ii) -> 2;
+      case Integer ii -> 2;
     };
   }
 
@@ -212,7 +212,7 @@ class Test {
   int nullableCallWithUnconditionalPatternLabelExpr() {
     return switch (<warning descr="Unboxing of 'createNullValue()' may produce 'NullPointerException'">createNullValue()</warning>) {
       case 1 -> 1;
-      case ((Object o)) -> 2;
+      case Object o -> 2;
     };
   }
 

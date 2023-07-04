@@ -707,14 +707,14 @@ public class SwitchBlockHighlightingModel {
             if (isConstantLabelElement(nextElement)) {
               PsiExpression constExpr = ObjectUtils.tryCast(nextElement, PsiExpression.class);
               assert constExpr != null;
-              if ((PsiUtil.getLanguageLevel(constExpr).isAtLeast(LanguageLevel.JDK_19_PREVIEW) ||
+              if ((PsiUtil.getLanguageLevel(constExpr).isAtLeast(LanguageLevel.JDK_20_PREVIEW) ||
                    JavaPsiPatternUtil.isUnconditionalForType(currentElement, mySelectorType)) &&
                   JavaPsiPatternUtil.dominates(currentElement, constExpr.getType())) {
                 result.put(nextElement, current);
               }
             }
             else if (isNullType(nextElement) && JavaPsiPatternUtil.isUnconditionalForType(currentElement, mySelectorType)
-                     && PsiUtil.getLanguageLevel(nextElement).isLessThan(LanguageLevel.JDK_19_PREVIEW)) {
+                     && PsiUtil.getLanguageLevel(nextElement).isLessThan(LanguageLevel.JDK_20_PREVIEW)) {
               result.put(nextElement, current);
             }
             else if (JavaPsiPatternUtil.dominates(currentElement, nextElement)) {

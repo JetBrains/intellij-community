@@ -229,12 +229,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         else if (context instanceof PsiCaseLabelElementList list) {
           if (list.getElementCount() == 1) {
             PsiCaseLabelElement element = list.getElements()[0];
-            if (element instanceof PsiGuardedPattern guardedPattern) {
-              PsiExpression guardingExpression = guardedPattern.getGuardingExpression();
-              if (guardingExpression == null) return;
-              from = flow.getStartOffset(guardingExpression);
-            }
-            else if (element instanceof PsiPatternGuard patternGuard) {
+            if (element instanceof PsiPatternGuard patternGuard) {
               PsiExpression guardingExpression = patternGuard.getGuardingExpression();
               if (guardingExpression == null) return;
               from = flow.getStartOffset(guardingExpression);

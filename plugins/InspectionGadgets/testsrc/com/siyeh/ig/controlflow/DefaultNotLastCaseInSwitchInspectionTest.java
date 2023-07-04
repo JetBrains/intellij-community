@@ -20,6 +20,6 @@ public class DefaultNotLastCaseInSwitchInspectionTest extends LightJavaInspectio
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_19;
+    return JAVA_21;
   }
 }

@@ -379,14 +379,6 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
     if (normalizedPattern instanceof PsiTypeTestPattern typeTestPattern) {
       return createIfCondition(typeTestPattern, expressionText, commentTracker);
     }
-    else if (normalizedPattern instanceof PsiGuardedPattern guardedPattern) {
-      PsiPattern primaryPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(guardedPattern.getPrimaryPattern());
-      if (!(primaryPattern instanceof PsiTypeTestPattern typeTestPattern)) return null;
-      String primaryCondition = createIfCondition(typeTestPattern, expressionText, commentTracker);
-      PsiExpression guardingExpression = guardedPattern.getGuardingExpression();
-      if (guardingExpression == null) return null;
-      return primaryCondition + "&&" + commentTracker.textWithComments(guardingExpression);
-    }
     else if (normalizedPattern instanceof PsiDeconstructionPattern deconstructionPattern) {
       return createIfCondition(deconstructionPattern, expressionText, commentTracker);
     }

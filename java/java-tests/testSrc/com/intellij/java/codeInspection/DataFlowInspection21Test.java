@@ -5,11 +5,11 @@ import com.intellij.JavaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-public class DataFlowInspection19Test extends DataFlowInspectionTestCase {
+public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_19;
+    return JAVA_21;
   }
 
   @Override

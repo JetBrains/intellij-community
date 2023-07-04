@@ -121,7 +121,5 @@ public class RedundantCastInspectionTest extends LightJavaCodeInsightFixtureTest
   @TestFor(issues = "IDEA-317124")
   public void testInstanceofPattern() { doTest(); }
 
-  public void testSwitchSelectorJava17() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest); }
-
-  public void testSwitchSelectorJava19() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest); }
+  public void testSwitchSelectorJava21() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest); }
 }

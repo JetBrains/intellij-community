@@ -5,7 +5,8 @@ class X {
     private static String test(@Nullable Object object) {
         return switch (object) {
             case Integer i -> "x = " + i / 2;
-            case String s, null -> "nullable string";
+            case String s -> "nullable string";
+            case null -> "nullable string";
             default -> "default";
         };
     }

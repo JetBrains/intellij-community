@@ -506,11 +506,6 @@ public final class ExpectedTypesProvider {
       processGuard(guard);
     }
 
-    @Override
-    public void visitGuardedPattern(@NotNull PsiGuardedPattern pattern) {
-      processGuard(pattern);
-    }
-
     private void processGuard(@NotNull PsiCaseLabelElement guard) {
       final PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(guard, PsiSwitchBlock.class);
       if (switchBlock != null) {
