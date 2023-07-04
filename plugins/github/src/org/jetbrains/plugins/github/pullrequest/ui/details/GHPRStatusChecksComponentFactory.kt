@@ -7,8 +7,10 @@ import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.childScope
@@ -79,7 +81,7 @@ internal object GHPRStatusChecksComponentFactory {
   ): JComponent {
     val stateLabel = CodeReviewDetailsStatusComponentFactory.ReviewDetailsStatusLabel("Pull request status: loading label").apply {
       border = JBUI.Borders.empty(5, 0)
-      icon = AllIcons.RunConfigurations.TestNotRan
+      icon = if (ExperimentalUI.isNewUI()) ExpUiIcons.Run.TestNotRunYet else AllIcons.RunConfigurations.TestNotRan
       text = GithubBundle.message("pull.request.loading.status")
     }
     val accessDeniedLabel = createAccessDeniedLabel(scope, reviewStatusVm, securityService)
@@ -104,7 +106,7 @@ internal object GHPRStatusChecksComponentFactory {
 
     return CodeReviewDetailsStatusComponentFactory.ReviewDetailsStatusLabel("Code review status: access denied").apply {
       border = JBUI.Borders.empty(5, 0)
-      icon = AllIcons.RunConfigurations.TestError
+      icon = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Error else AllIcons.RunConfigurations.TestError
       bindTextIn(scope, reviewStatusVm.isDraft.map { isDraft ->
         when {
           !canClose -> GithubBundle.message("pull.request.repo.access.required")
