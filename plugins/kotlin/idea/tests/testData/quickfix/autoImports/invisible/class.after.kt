@@ -8,4 +8,3 @@ import simple.F
 fun main() {
     val f: F<caret>
 }
-/* IGNORE_FIR */
