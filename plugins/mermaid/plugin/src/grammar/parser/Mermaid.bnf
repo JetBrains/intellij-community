@@ -135,9 +135,22 @@ vertexText ::= OPEN_SQUARE nodeText CLOSE_SQUARE
   | TRAP_START nodeText TRAP_END
   | INV_TRAP_START nodeText INV_TRAP_END
   | DOUBLE_CIRCLE_START nodeText DOUBLE_CIRCLE_END
-nodeText ::= ALIAS+ | DOUBLE_QUOTE ALIAS+ DOUBLE_QUOTE | mdText
-complexLinkText ::= [quotedLinkText | mdText | LINK_TEXT] LINK_TEXT*
+
+nodeText ::=
+    (maybeEmptyQuotedNodeText | maybeEmptyMdText) ALIAS+
+  | (quotedNodeText | mdText) ALIAS*
+  | ALIAS+
+
+private quotedNodeText ::= DOUBLE_QUOTE ALIAS+ DOUBLE_QUOTE
+private maybeEmptyQuotedNodeText ::= DOUBLE_QUOTE ALIAS* DOUBLE_QUOTE
+
+complexLinkText ::=
+    (maybeEmptyQuotedLinkText | maybeEmptyMdText) LINK_TEXT+
+  | (quotedLinkText | mdText) LINK_TEXT*
+  | LINK_TEXT+
+
 private quotedLinkText ::= DOUBLE_QUOTE LINK_TEXT+ DOUBLE_QUOTE
+private maybeEmptyQuotedLinkText ::= DOUBLE_QUOTE LINK_TEXT* DOUBLE_QUOTE
 
 private mdText ::= DOUBLE_QUOTE BACK_QUOTE markdownValue BACK_QUOTE DOUBLE_QUOTE
 private maybeEmptyMdText ::= DOUBLE_QUOTE BACK_QUOTE [markdownValue] BACK_QUOTE DOUBLE_QUOTE
@@ -147,7 +160,10 @@ subgraphStatement ::= subgraphHeader separator EOL* subgraphBlock? END { impleme
 
 subgraphHeader ::= SUBGRAPH subgraphName
 subgraphName ::= subgraphId [OPEN_SQUARE nodeText CLOSE_SQUARE]
-private subgraphId ::= ((maybeEmptyString | maybeEmptyMdText) complexIdentifier*) | complexIdentifier
+private subgraphId ::=
+    (maybeEmptyString | maybeEmptyMdText) complexIdentifier
+  | (string | mdText) complexIdentifier?
+  | complexIdentifier
 
 subgraphBlock ::= subgraphLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private subgraphLines ::= (subgraphLine | IGNORED) [subgraphLines]
@@ -779,7 +795,10 @@ axisDetailsStatement ::= (X_AXIS | Y_AXIS) (quadrantComplexText) [ARROW quadrant
 
 quadrantDetailsStatement ::= QUADRANT quadrantComplexText
 
-quadrantComplexText ::= string | mdText | QUADRANT_TEXT+
+quadrantComplexText ::=
+    (maybeEmptyString | maybeEmptyMdText) QUADRANT_TEXT+
+  | (string | mdText) QUADRANT_TEXT*
+  | QUADRANT_TEXT+
 
 
 directive ::= OPEN_DIRECTIVE directiveContent? CLOSE_DIRECTIVE
