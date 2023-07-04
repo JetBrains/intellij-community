@@ -57,7 +57,7 @@ class UnsupportedGradleJvmIssueChecker : GradleIssueChecker {
   object Util {
 
     /**
-     * Checks that java which provided by [javaHome] is unsupported by IDEA.
+     * Checks that Java which provided by [javaHome] is not supported by IDEA Gradle integration.
      * @return false if java version supported or undefined, otherwise true.
      */
     @JvmStatic
