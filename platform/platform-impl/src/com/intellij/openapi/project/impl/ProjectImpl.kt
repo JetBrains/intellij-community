@@ -19,6 +19,7 @@ import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -56,13 +57,13 @@ import java.util.concurrent.atomic.AtomicReference
 internal val projectMethodType: MethodType = MethodType.methodType(Void.TYPE, Project::class.java)
 internal val projectAndScopeMethodType: MethodType = MethodType.methodType(Void.TYPE, Project::class.java, CoroutineScope::class.java)
 
+private val LOG = logger<ProjectImpl>()
+
 @Internal
 open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName: String?)
   : ClientAwareComponentManager(parent = parent,
                                 coroutineScope = parent.getCoroutineScope().namedChildScope("ProjectImpl")), ProjectEx, ProjectStoreOwner {
   companion object {
-    private val LOG = logger<ProjectImpl>()
-
     @Internal
     val RUN_START_UP_ACTIVITIES: Key<Boolean> = Key.create("RUN_START_UP_ACTIVITIES")
 
@@ -365,7 +366,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     // ensure that expensive save operation is not performed before startupActivityPassed
     // first save may be quite cost operation, because cache is not warmed up yet
     if (!isInitialized) {
-      LOG.debug("Skip save for $name: not initialized")
+      LOG.debug { "Skip save for $name: not initialized" }
       return
     }
 
@@ -377,7 +378,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   }
 
   @TestOnly
-  override fun getCreationTrace(): String? {
+  final override fun getCreationTrace(): String? {
     val trace = getUserData(CREATION_TRACE)
     val testName = getUserData(CREATION_TEST_NAME) ?: return trace
     return "created in test: $testName, used in tests: ${getUserData(USED_TEST_NAMES)}\n $trace"
@@ -389,7 +390,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     }
   }
 
-  override fun stopServicePreloading() {
+  final override fun stopServicePreloading() {
     super.stopServicePreloading()
 
     asyncPreloadServiceScope.cancel()

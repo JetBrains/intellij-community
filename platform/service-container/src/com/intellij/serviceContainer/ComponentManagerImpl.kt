@@ -131,7 +131,6 @@ abstract class ComponentManagerImpl(
 
   private val componentKeyToAdapter = ConcurrentHashMap<Any, ComponentAdapter>()
   private val componentAdapters = LinkedHashSetWrapper<MyComponentAdapter>()
-  private val serviceInstanceHotCache = ConcurrentHashMap<Class<*>, Any?>()
 
   protected val containerState = AtomicReference(ContainerState.PRE_INIT)
 
@@ -468,8 +467,6 @@ abstract class ComponentManagerImpl(
       LOG.assertTrue(oldAdapter != null)
     }
 
-    serviceInstanceHotCache.remove(key)
-
     val pluginDescriptor = oldAdapter?.pluginDescriptor ?: DefaultPluginDescriptor("test registerComponentImplementation")
     val newAdapter = MyComponentAdapter(componentKey = key,
                                         implementationClassName = implementation.name,
@@ -499,7 +496,6 @@ abstract class ComponentManagerImpl(
                                         implementationClass = implClass)
     componentKeyToAdapter.put(componentKey, newAdapter)
     componentAdapters.replace(oldAdapter, newAdapter)
-    serviceInstanceHotCache.remove(componentKey)
     if (parentDisposable != null) {
       Disposer.register(parentDisposable) {
         @Suppress("DEPRECATION")
@@ -508,7 +504,6 @@ abstract class ComponentManagerImpl(
         }
         componentKeyToAdapter.put(componentKey, oldAdapter)
         componentAdapters.replace(newAdapter, oldAdapter)
-        serviceInstanceHotCache.remove(componentKey)
       }
     }
   }
@@ -631,14 +626,7 @@ abstract class ComponentManagerImpl(
 
   @RequiresBlockingContext
   final override fun <T : Any> getService(serviceClass: Class<T>): T? {
-    // `computeIfAbsent` cannot be used because of recursive update
-    @Suppress("UNCHECKED_CAST")
-    var result = serviceInstanceHotCache.get(serviceClass) as T?
-    if (result == null) {
-      result = doGetService(serviceClass, true) ?: return postGetService(serviceClass, createIfNeeded = true)
-      serviceInstanceHotCache.putIfAbsent(serviceClass, result)
-    }
-    return result
+    return doGetService(serviceClass, true) ?: return postGetService(serviceClass, createIfNeeded = true)
   }
 
   final override suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
@@ -653,27 +641,13 @@ abstract class ComponentManagerImpl(
     val key = keyClass.name
     val adapter = componentKeyToAdapter.get(key) ?: return null
     check(adapter is BaseComponentAdapter) { "$adapter is not a service (key=$key)" }
-    val result = adapter.getInstanceAsync(componentManager = this, keyClass = keyClass)
-    serviceInstanceHotCache.putIfAbsent(keyClass, result)
-    return result
+    return adapter.getInstanceAsync(componentManager = this, keyClass = keyClass)
   }
 
   protected open fun <T : Any> postGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? = null
 
   final override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>): T? {
-    @Suppress("UNCHECKED_CAST")
-    var result = serviceInstanceHotCache.get(serviceClass) as T?
-    if (result != null) {
-      return result
-    }
-    result = doGetService(serviceClass, createIfNeeded = false)
-    if (result == null) {
-      return postGetService(serviceClass, createIfNeeded = false)
-    }
-    else {
-      serviceInstanceHotCache.putIfAbsent(serviceClass, result)
-      return result
-    }
+    return doGetService(serviceClass, createIfNeeded = false) ?: postGetService(serviceClass, createIfNeeded = false)
   }
 
   protected open fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
@@ -817,7 +791,6 @@ abstract class ComponentManagerImpl(
     else {
       registerAdapter(adapter, pluginDescriptor)
     }
-    serviceInstanceHotCache.remove(serviceInterface)
   }
 
   /**
@@ -834,7 +807,6 @@ abstract class ComponentManagerImpl(
                                                                   componentManager = this,
                                                                   implementationClass = instance.javaClass,
                                                                   deferred = CompletableDeferred(value = instance)))
-    serviceInstanceHotCache.put(serviceInterface, instance)
   }
 
   @Suppress("DuplicatedCode")
@@ -853,9 +825,7 @@ abstract class ComponentManagerImpl(
       componentKeyToAdapter.put(key, adapter)
       Disposer.register(parentDisposable) {
         componentKeyToAdapter.remove(key)
-        serviceInstanceHotCache.remove(serviceInterface)
       }
-      serviceInstanceHotCache.put(serviceInterface, instance)
     }
     else {
       val key = serviceInterface.name
@@ -866,7 +836,6 @@ abstract class ComponentManagerImpl(
                                                implementationClass = oldAdapter.getImplementationClass(),
                                                deferred = CompletableDeferred(value = instance))
       componentKeyToAdapter.put(key, newAdapter)
-      serviceInstanceHotCache.put(serviceInterface, instance)
       @Suppress("DuplicatedCode")
       Disposer.register(parentDisposable) {
         @Suppress("DEPRECATION")
@@ -874,7 +843,6 @@ abstract class ComponentManagerImpl(
           Disposer.dispose(instance)
         }
         componentKeyToAdapter.put(key, oldAdapter)
-        serviceInstanceHotCache.remove(serviceInterface)
       }
     }
   }
@@ -886,9 +854,7 @@ abstract class ComponentManagerImpl(
       null -> error("Trying to unregister $key service which is not registered")
       !is ServiceComponentAdapter -> error("$key service should be registered as a service, but was ${adapter::class.java}")
     }
-    serviceInstanceHotCache.remove(serviceInterface)
   }
-
 
   @Suppress("DuplicatedCode")
   fun <T : Any> replaceRegularServiceInstance(serviceInterface: Class<T>, instance: T) {
@@ -902,10 +868,8 @@ abstract class ComponentManagerImpl(
                                              implementationClass = oldAdapter.getImplementationClass(),
                                              deferred = CompletableDeferred(value = instance))
     componentKeyToAdapter.put(key, newAdapter)
-    serviceInstanceHotCache.put(serviceInterface, instance)
 
     (oldAdapter.getInitializedInstance() as? Disposable)?.let(Disposer::dispose)
-    serviceInstanceHotCache.put(serviceInterface, instance)
   }
 
   final override fun <T : Any> loadClass(className: String, pluginDescriptor: PluginDescriptor): Class<T> {
@@ -1018,8 +982,6 @@ abstract class ComponentManagerImpl(
         store.unloadComponent(instance)
       }
     }
-
-    serviceInstanceHotCache.clear()
   }
 
   open fun activityNamePrefix(): String? = null
@@ -1079,12 +1041,7 @@ abstract class ComponentManagerImpl(
 
   protected open suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
     val adapter = componentKeyToAdapter.get(serviceInterface) as ServiceComponentAdapter? ?: return
-    val instance = adapter.getInstanceAsync<Any>(componentManager = this, keyClass = null)
-    val implClass = instance.javaClass
-    // well, we don't know the interface class, so we cannot add any service to a hot cache
-    if (Modifier.isFinal(implClass.modifiers)) {
-      serviceInstanceHotCache.putIfAbsent(implClass, instance)
-    }
+    adapter.getInstanceAsync<Any>(componentManager = this, keyClass = null)
   }
 
   override fun isDisposed(): Boolean {
@@ -1136,7 +1093,6 @@ abstract class ComponentManagerImpl(
     // release references to the service instances
     componentKeyToAdapter.clear()
     componentAdapters.clear()
-    serviceInstanceHotCache.clear()
 
     messageBus?.let {
       // Must be after disposing `serviceParentDisposable`, because message bus disposes child buses, so we must dispose all services first.
@@ -1261,7 +1217,6 @@ abstract class ComponentManagerImpl(
 
     val adapter = componentKeyToAdapter.remove(componentKey) ?: return null
     componentAdapters.remove(adapter as MyComponentAdapter)
-    serviceInstanceHotCache.remove(componentKey)
     return adapter
   }
 
