@@ -7,6 +7,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.util.ThrowableConvertor
 import com.intellij.util.messages.Topic
@@ -116,4 +117,10 @@ abstract class ExecutionManager {
 
   @ApiStatus.Experimental
   abstract fun executePreparationTasks(environment: ExecutionEnvironment, currentState: RunProfileState): Promise<Any?>
+
+  @ApiStatus.Internal
+  abstract fun getRunningDescriptors(condition: Condition<in RunnerAndConfigurationSettings>): List<RunContentDescriptor>
+
+  @ApiStatus.Internal
+  abstract fun getExecutors(descriptor: RunContentDescriptor): Set<Executor>
 }

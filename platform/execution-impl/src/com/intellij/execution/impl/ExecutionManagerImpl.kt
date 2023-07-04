@@ -37,7 +37,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Condition
@@ -780,7 +783,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     })
   }
 
-  fun getRunningDescriptors(condition: Condition<in RunnerAndConfigurationSettings>): List<RunContentDescriptor> {
+  override fun getRunningDescriptors(condition: Condition<in RunnerAndConfigurationSettings>): List<RunContentDescriptor> {
     val result = SmartList<RunContentDescriptor>()
     for (entry in runningConfigurations) {
       if (entry.settings != null && condition.value(entry.settings)) {
@@ -803,7 +806,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     return result
   }
 
-  fun getExecutors(descriptor: RunContentDescriptor): Set<Executor> {
+  override fun getExecutors(descriptor: RunContentDescriptor): Set<Executor> {
     val result = HashSet<Executor>()
     for (entry in runningConfigurations) {
       if (descriptor === entry.descriptor) {
