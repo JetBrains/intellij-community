@@ -17,6 +17,7 @@ private val DEF_COLOR = Gray._200.withAlpha(50)
  * @author Alexander Lobas
  */
 class ShadowJava2DPainter(private val uiKeyGroup: String, private val roundedCorners: Boolean, private val borderColor: Color? = null) {
+  private var hideTopCorners = false
   private var hideBottomSide = false
 
   companion object {
@@ -25,8 +26,9 @@ class ShadowJava2DPainter(private val uiKeyGroup: String, private val roundedCor
     fun getInsets(uiKeyGroup: String): Insets = JBUI.insets("${uiKeyGroup}.Shadow.borderInsets", DEF_INSETS)
   }
 
-  fun hideBottomSide() {
-    hideBottomSide = true
+  fun hideSide(topCorners: Boolean, bottom: Boolean) {
+    hideTopCorners = topCorners
+    hideBottomSide = bottom
   }
 
   fun getInsets() = Companion.getInsets(uiKeyGroup)
@@ -66,14 +68,17 @@ class ShadowJava2DPainter(private val uiKeyGroup: String, private val roundedCor
       g.fillRect(xxLeft, yyBottom, widthLR, insets.bottom)
     }
 
-    setGradient(g, "left", "0", "1", x, yyTop, xxLeft, yyTop)
-    g.fillRect(x, yyTop, insets.left, heightTB)
+    val offset = if (hideTopCorners) JBUI.scale(7) else 0
+    setGradient(g, "left", "0", "1", x, yyTop + offset, xxLeft, yyTop + offset)
+    g.fillRect(x, yyTop + offset, insets.left, heightTB - offset)
 
-    setGradient(g, "right", "1", "0", xxRight, yyTop, x + width, yyTop)
-    g.fillRect(xxRight, yyTop, insets.right, heightTB)
+    setGradient(g, "right", "1", "0", xxRight, yyTop + offset, x + width, yyTop + offset)
+    g.fillRect(xxRight, yyTop + offset, insets.right, heightTB - offset)
 
-    drawCorner(g, "topLeft", x, y, insets.left, insets.top)
-    drawCorner(g, "topRight", xxRight, y, insets.right, insets.top)
+    if (!hideTopCorners) {
+      drawCorner(g, "topLeft", x, y, insets.left, insets.top)
+      drawCorner(g, "topRight", xxRight, y, insets.right, insets.top)
+    }
 
     if (!hideBottomSide) {
       drawCorner(g, "bottomRight", xxRight, yyBottom, insets.right, insets.bottom)
@@ -89,10 +94,10 @@ class ShadowJava2DPainter(private val uiKeyGroup: String, private val roundedCor
 
   private fun drawCorner(g: Graphics2D, side: String, x: Int, y: Int, width: Int, height: Int) {
     when (side) {
-      "topLeft" -> setGradient(g, side, "0", "1", x, y, x + width / 2, y + height / 2)
-      "topRight" -> setGradient(g, side, "0", "1", x + width, y, x + width / 2, y + height / 2)
-      "bottomRight" -> setGradient(g, side, "0", "1", x + width, y + height, x + width / 2, y + height / 2)
-      "bottomLeft" -> setGradient(g, side, "0", "1", x, y + height, x + width / 2, y + height / 2)
+      "topLeft" -> setGradient(g, side, "0", "1", x + width / 2, y + height / 2, x + width, y + height)
+      "topRight" -> setGradient(g, side, "0", "1", x + width / 2, y + height / 2, x, y + height)
+      "bottomRight" -> setGradient(g, side, "0", "1", x + width / 2, y + height / 2, x, y)
+      "bottomLeft" -> setGradient(g, side, "0", "1", x + width / 2, y + height / 2, x + width, y)
     }
     g.fillRect(x, y, width, height)
   }

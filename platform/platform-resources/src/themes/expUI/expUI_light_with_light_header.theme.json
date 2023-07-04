@@ -53,6 +53,26 @@
 
     "MenuBar.borderColor": "Grey12",
 
+    "Notification.Shadow": {
+      "borderInsets": "10,10,10,10",
+      "top0Color": "#FFFFFF00",
+      "top1Color": "#A0A0A010",
+      "bottom0Color": "#FFFFFF00",
+      "bottom1Color": "#A0A0A010",
+      "left0Color": "#FFFFFF00",
+      "left1Color": "#A0A0A010",
+      "right0Color": "#FFFFFF00",
+      "right1Color": "#A0A0A010",
+      "topLeft0Color": "#FFFFFF00",
+      "topLeft1Color": "#A0A0A010",
+      "topRight0Color": "#FFFFFF00",
+      "topRight1Color": "#A0A0A010",
+      "bottomLeft0Color": "#FFFFFF00",
+      "bottomLeft1Color": "#A0A0A010",
+      "bottomRight0Color": "#FFFFFF00",
+      "bottomRight1Color": "#A0A0A010"
+    },
+
     "Notification": {
       "background": "Grey14",
       "borderColor": "Grey11",

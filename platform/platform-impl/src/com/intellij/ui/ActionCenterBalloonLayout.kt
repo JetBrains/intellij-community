@@ -263,8 +263,10 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
         balloon.setAnimationEnabled(false)
         balloon.setZeroPositionInLayer(false)
 
-        balloon.setShadowBorderProvider(
-          NotificationBalloonRoundShadowBorderProvider(NotificationsUtil.getMoreButtonBackground(), NotificationsManagerImpl.BORDER_COLOR))
+        val provider = NotificationBalloonRoundShadowBorderProvider(NotificationsUtil.getMoreButtonBackground(),
+                                                                    NotificationsManagerImpl.BORDER_COLOR)
+        balloon.setShadowBorderProvider(provider)
+        provider.hideSide(true, false)
 
         balloon.setActionProvider(object : BalloonImpl.ActionProvider {
           override fun createActions(): List<BalloonImpl.ActionButton> {
@@ -281,7 +283,7 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
       if (hostBalloon is BalloonImpl) {
         val provider = hostBalloon.shadowBorderProvider
         if (provider is NotificationBalloonRoundShadowBorderProvider) {
-          provider.hideBottomSide()
+          provider.hideSide(false, true)
         }
       }
       return this
