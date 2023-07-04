@@ -33,9 +33,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         if (fqName.isRoot) return expression
 
         val containingFile = expression.containingKtFile
-        val unusedImportsBeforeChange = analyze(containingFile) { // TODO improve this
-            analyseImports(containingFile)
-        }.unusedImports
+        val unusedImportsBeforeChange = containingFile.unusedImports()
 
         val anchorElement = expression.parentOfType<KtUserType>(withSelf = false)
                             ?: expression.parentOfType<KtDotQualifiedExpression>(withSelf = false)
@@ -47,9 +45,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             else -> null
         } ?: return expression
 
-        val unusedImportsAfterChange = analyze(containingFile) {
-            analyseImports(containingFile)
-        }.unusedImports
+        val unusedImportsAfterChange = containingFile.unusedImports()
         val importsToRemove = unusedImportsAfterChange - unusedImportsBeforeChange
         importsToRemove.forEach {
             it.delete()
@@ -57,6 +53,10 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
         val newShortenings = analyze(newElement) { collectPossibleReferenceShorteningsInElement(newElement) }
         return newShortenings.invokeShortening().firstOrNull() ?: newElement
+    }
+
+    private fun KtFile.unusedImports(): Set<KtImportDirective> = analyze(this) {
+        analyseImports(this@unusedImports).unusedImports
     }
 
     private fun KtTypeElement.replaceWith(fqName: FqName): KtTypeElement {
