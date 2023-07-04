@@ -1311,7 +1311,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
       if (item.old.safeToolWindowPaneId != item.new.safeToolWindowPaneId
           || item.old.anchor != item.new.anchor
-          || item.old.order != item.new.order) {
+          || item.old.order != item.new.order
+          || item.old.isShowStripeButton != item.new.isShowStripeButton
+        ) {
         setToolWindowAnchorImpl(item.entry, item.old, item.new, item.new.safeToolWindowPaneId, item.new.anchor, item.new.order, null)
       }
 
