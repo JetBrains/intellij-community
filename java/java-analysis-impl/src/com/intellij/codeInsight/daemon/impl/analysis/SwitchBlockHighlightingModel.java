@@ -644,6 +644,14 @@ public class SwitchBlockHighlightingModel {
           holder.add(error);
           return;
         }
+        SelectorKind kind = getSwitchSelectorKind();
+        if (kind == SelectorKind.INT || kind == SelectorKind.STRING) {
+          return;
+        }
+        String expected = JavaErrorBundle.message("valid.switch.21.constant.types");
+        HighlightInfo.Builder infoIncompatibleTypes =
+          createError(expr, JavaErrorBundle.message("unexpected.type", expected, JavaHighlightUtil.formatType(expr.getType())));
+        holder.add(infoIncompatibleTypes.create());
         return;
       }
       HighlightInfo.Builder error = createError(label, JavaErrorBundle.message("switch.constant.expression.required"));
