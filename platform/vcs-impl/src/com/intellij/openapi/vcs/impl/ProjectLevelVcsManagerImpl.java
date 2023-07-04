@@ -623,7 +623,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
         return checker;
       }
     }
-    return new DefaultVcsRootChecker(vcs);
+    return new DefaultVcsRootChecker(vcs, getDescriptor(vcs.getName()));
   }
 
   @Override
