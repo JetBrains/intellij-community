@@ -34,8 +34,16 @@ class UiComponentFinder<T : UiComponent>(private val xpath: String, private val 
     many().singleOrNull()?.action()
   }
 
-  fun waitFor(timeout: Duration = Duration.ofSeconds(DEFAULT_FIND_TIMEOUT_SECONDS.toLong())): UiComponentFinder<T> {
+  fun waitForOne(timeout: Duration = Duration.ofSeconds(DEFAULT_FIND_TIMEOUT_SECONDS.toLong())): UiComponentFinder<T> {
     one(timeout)
+    return this
+  }
+
+  fun waitForCondition(timeout: Duration = Duration.ofSeconds(DEFAULT_FIND_TIMEOUT_SECONDS.toLong()),
+                       condition: UiComponentFinder<T>.() -> Boolean): UiComponentFinder<T> {
+    waitFor(timeout) {
+      this.condition()
+    }
     return this
   }
 

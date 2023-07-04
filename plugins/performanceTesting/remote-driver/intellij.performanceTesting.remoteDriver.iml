@@ -19,5 +19,6 @@
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.driver.model" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
   </component>
 </module>

@@ -19,8 +19,18 @@ open class UiComponent(override val driver: Driver, val remoteComponent: RemoteC
     }.single()
   }
 
+  fun hasText(text: String): Boolean {
+    return findAllText {
+      it.text == text
+    }.isNotEmpty()
+  }
+
   fun findText(predicate: (TextData) -> Boolean): UiText {
     return remoteComponent.findAllText().single(predicate).let { UiText(this, it) }
+  }
+
+  fun hasText(predicate: (TextData) -> Boolean): Boolean {
+    return remoteComponent.findAllText().any(predicate)
   }
 
   fun findAllText(predicate: (TextData) -> Boolean): List<UiText> {

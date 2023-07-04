@@ -5,6 +5,6 @@ package com.jetbrains.performancePlugin.remotedriver.dataextractor
 import org.assertj.swing.edt.GuiActionRunner
 import org.assertj.swing.edt.GuiQuery
 
-fun <ReturnType> computeOnEdt(query: () -> ReturnType): ReturnType = GuiActionRunner.execute(object : GuiQuery<ReturnType>() {
+internal fun <ReturnType> computeOnEdt(query: () -> ReturnType): ReturnType = GuiActionRunner.execute(object : GuiQuery<ReturnType>() {
   override fun executeInEDT(): ReturnType = query()
 })
