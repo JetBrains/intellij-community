@@ -8,8 +8,10 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.utils.FillInArgumentsUtils
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.utils.FillInArgumentsUtils.isApplicableByPsi
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.utils.FillInArgumentsUtils.fillInArguments
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.utils.FillInArgumentsUtils.findParameters
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.utils.FillInArgumentsUtils.getFunctionArguments
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 
@@ -25,7 +27,7 @@ internal class FillInMandatoryArgumentsIntention :
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtValueArgumentList> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtValueArgumentList): Boolean {
-        return element.arguments.isEmpty()
+        return isApplicableByPsi(element, false)
     }
 
     override fun apply(element: KtValueArgumentList, context: Context, project: Project, editor: Editor?) {
@@ -34,14 +36,15 @@ internal class FillInMandatoryArgumentsIntention :
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtValueArgumentList): Context {
-        val parameters = FillInArgumentsUtils.findParameters(element)
+        val parameters = findParameters(element)
         val mandatoryParametersList = mutableListOf<Name>()
-        for (param in parameters)  {
+        for (param in parameters) {
             if (!param.hasDefaultValue()) {
                 val parameterName = param.nameAsName ?: return Context(emptyList())
                 mandatoryParametersList.add(parameterName)
             }
         }
-        return Context(mandatoryParametersList)
+        val arguments = getFunctionArguments(element)
+        return Context(mandatoryParametersList.filter { it.asString() !in arguments })
     }
 }

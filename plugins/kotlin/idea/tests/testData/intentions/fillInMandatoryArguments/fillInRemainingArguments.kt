@@ -1,14 +1,12 @@
 // WITH_STDLIB
+// ERROR: No value passed for parameter 'd'
+// SKIP_ERRORS_AFTER
 // AFTER-WARNING: Unreachable code
-fun foo(): Foo = Foo(
-    a = TODO(),
-    b = TODO(),
-    d = TODO(),<caret>
-)
-
 data class Foo(
     val a: String,
     val b: String,
     val c: Int = 0,
     val d: Int
 )
+
+fun foo(a: String, b: String): Foo = Foo(a, b<caret>)

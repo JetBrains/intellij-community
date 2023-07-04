@@ -1,4 +1,11 @@
-fun foo(a: String, b: Int) {}
+// WITH_STDLIB
+// ERROR: No value passed for parameter 'a'
+// ERROR: No value passed for parameter 'b'
+// SKIP_ERRORS_AFTER
+// AFTER-WARNING: Unreachable code
+fun foo(a: String, b: Int) {
+    println("$a$b")
+}
 
 fun bar() {
     foo(<caret>)

@@ -10666,6 +10666,62 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/fillInMandatoryArguments")
+    public static class FillInMandatoryArguments extends AbstractK1IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("fillInArgumentsInConstructor.kt")
+        public void testFillInArgumentsInConstructor() throws Exception {
+            runTest("testData/intentions/fillInMandatoryArguments/fillInArgumentsInConstructor.kt");
+        }
+
+        @TestMetadata("fillInFunction.kt")
+        public void testFillInFunction() throws Exception {
+            runTest("testData/intentions/fillInMandatoryArguments/fillInFunction.kt");
+        }
+
+        @TestMetadata("fillInRemainingArguments.kt")
+        public void testFillInRemainingArguments() throws Exception {
+            runTest("testData/intentions/fillInMandatoryArguments/fillInRemainingArguments.kt");
+        }
+
+        @TestMetadata("noArguments.kt")
+        public void testNoArguments() throws Exception {
+            runTest("testData/intentions/fillInMandatoryArguments/noArguments.kt");
+        }
+
+        @TestMetadata("noMandatoryArguments.kt")
+        public void testNoMandatoryArguments() throws Exception {
+            runTest("testData/intentions/fillInMandatoryArguments/noMandatoryArguments.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/fillInOptionalArguments")
+    public static class FillInOptionalArguments extends AbstractK1IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("fillInConstructor.kt")
+        public void testFillInConstructor() throws Exception {
+            runTest("testData/intentions/fillInOptionalArguments/fillInConstructor.kt");
+        }
+
+        @TestMetadata("fillInFunction.kt")
+        public void testFillInFunction() throws Exception {
+            runTest("testData/intentions/fillInOptionalArguments/fillInFunction.kt");
+        }
+
+        @TestMetadata("fillInRemainingArguments.kt")
+        public void testFillInRemainingArguments() throws Exception {
+            runTest("testData/intentions/fillInOptionalArguments/fillInRemainingArguments.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/implementAbstractMember")
     public abstract static class ImplementAbstractMember extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)

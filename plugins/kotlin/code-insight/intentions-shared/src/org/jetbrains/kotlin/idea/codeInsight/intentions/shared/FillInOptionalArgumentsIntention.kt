@@ -4,21 +4,21 @@ package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.utils.FillInArgumentsUtils.isApplicableByPsi
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.utils.FillInArgumentsUtils.findParameters
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.utils.FillInArgumentsUtils.fillInArguments
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.utils.FillInArgumentsUtils.getFunctionArguments
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 
 internal class FillInOptionalArgumentsIntention :
     AbstractKotlinApplicableIntentionWithContext<KtValueArgumentList, FillInOptionalArgumentsIntention.Context>(KtValueArgumentList::class) {
 
-    class Context(val mandatoryParametersList: List<Name>)
+    class Context(val optionalParametersList: List<Name>)
 
     override fun getFamilyName(): String = KotlinBundle.message("intention.fill.in.optional.arguments")
 
@@ -27,44 +27,25 @@ internal class FillInOptionalArgumentsIntention :
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtValueArgumentList> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtValueArgumentList): Boolean {
-        val arguments = element.children.map { it.firstChild.text }.toSet()
-        val callElement = element.parent as KtCallElement
-        val resolvedReference = callElement.calleeExpression?.mainReference?.resolve() ?: return false
-        val paramsChildren = if (resolvedReference is KtFunction) {
-            resolvedReference.valueParameters
-        } else {
-            return false
-        }
-        for (param in paramsChildren)  {
-            val ktParam = (param as KtParameter)
-            val parameterName = ktParam.name ?: return false
-            if (ktParam.hasDefaultValue()) {
-                if (parameterName !in arguments)
-                    return true
-            } else {
-                if (parameterName !in arguments)
-                    return false
-            }
-        }
-        return false
+        return isApplicableByPsi(element, true)
     }
 
     override fun apply(element: KtValueArgumentList, context: Context, project: Project, editor: Editor?) {
-        fillInArguments(element, context.mandatoryParametersList)
+        fillInArguments(element, context.optionalParametersList)
     }
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtValueArgumentList): Context {
-        val arguments = element.arguments.mapNotNull { it.kotlinFqName?.shortName() }.toSet()
+        val arguments = getFunctionArguments(element)
         val parameters = findParameters(element)
-        val mandatoryParametersList = mutableListOf<Name>()
+        val optionalParametersList = mutableListOf<Name>()
         for (param in parameters)  {
             if (param.hasDefaultValue()) {
                 val parameterName = param.nameAsName
-                if (parameterName != null && parameterName !in arguments)
-                    mandatoryParametersList.add(parameterName)
+                if (parameterName != null && parameterName.asString() !in arguments)
+                    optionalParametersList.add(parameterName)
             }
         }
-        return Context(mandatoryParametersList)
+        return Context(optionalParametersList.filter { it.asString() !in arguments })
     }
 }
