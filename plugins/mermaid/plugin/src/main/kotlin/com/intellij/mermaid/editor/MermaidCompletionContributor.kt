@@ -68,6 +68,15 @@ class MermaidCompletionContributor : CompletionContributor() {
     //region Sequence
     extend(
       CompletionType.BASIC,
+      or(
+        psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.SEQUENCE_HEADER))
+          .andNot(psiElement().insideBlock(psiElement(MermaidTokens.Sequence.BOX))),
+        psiElement().afterLeaf(psiElement(MermaidTokens.Sequence.SEQUENCE))
+      ),
+      TitleCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
       psiElement()
         .insideDiagramAndNotAtStatement(psiElement(MermaidElements.SEQUENCE_HEADER))
         .andNot(psiElement().insideBlock(psiElement(MermaidTokens.Sequence.BOX))),

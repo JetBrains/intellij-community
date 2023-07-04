@@ -16,7 +16,8 @@ class SequenceCompletionTest : MermaidBaseTestCase("completion/diagrams/sequence
       "box",
       "participant",
       "actor",
-      "autonumber"
+      "autonumber",
+      "title"
     )
 
   fun `test at top level`() = doTest(*keywords)
@@ -32,6 +33,8 @@ class SequenceCompletionTest : MermaidBaseTestCase("completion/diagrams/sequence
   fun `test inside box block`() = doTest("participant", "actor", "end")
 
   fun `test after autonumber`() = doTest("off")
+
+  fun `test right after header`() = doTest("title")
 
   private fun doTest(vararg variants: String) {
     val testName = getTestName(true)

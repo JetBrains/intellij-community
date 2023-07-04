@@ -207,6 +207,7 @@ sequenceStatement ::= actorStatement
   | criticalStatement
   | directive
   | accStatement
+  | titleStatement
 
 idAlias ::= ALIAS+
 

@@ -366,8 +366,9 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 
 //---sequence---------------------------------------------------------------------
-
 <sequence> {
+  "title" { yypushstate(title); return TITLE; }
+
   "participant" { yybegin(sequence_id); return Sequence.PARTICIPANT; }
   "actor" { yybegin(sequence_id); return Sequence.ACTOR; }
   "activate" { return Sequence.ACTIVATE; }
