@@ -29,7 +29,7 @@ class KotlinExprTypePredicate(
         analyze(node) {
             val type = when {
                 node is KtClass -> (node.mainReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol)?.buildSelfClassType()
-                node is KtDeclaration -> node.getReturnKtType()
+                node is KtNamedDeclaration -> node.getReturnKtType()
                 node is KtExpression -> {
                     // because `getKtType` will return void for enum references we resolve and build type from the resolved class when
                     // possible.
