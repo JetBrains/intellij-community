@@ -232,7 +232,7 @@ private class JUnitMalformedSignatureVisitor(
           InheritanceUtil.isInheritor(attrValue.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
         }
         else if (attrValue is UCallExpression && attrValue.kind == UastCallKind.NESTED_ARRAY_INITIALIZER) {
-          return attrValue.valueArguments.any {
+          attrValue.valueArguments.any {
             it is UClassLiteralExpression && InheritanceUtil.isInheritor(it.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
           }
         }
