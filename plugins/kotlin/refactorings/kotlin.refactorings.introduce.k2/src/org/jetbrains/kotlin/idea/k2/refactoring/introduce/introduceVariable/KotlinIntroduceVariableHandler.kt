@@ -125,10 +125,12 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                 buildString {
                     append("$varOvVal ")
                     append(nameSuggestions.single().first())
-                    append(": ").append(
-                        analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-                            (expression.getKtType() ?: builtinTypes.ANY).render(position = Variance.INVARIANT)
-                        })
+                    if (KotlinCommonRefactoringSettings.getInstance().INTRODUCE_SPECIFY_TYPE_EXPLICITLY) {
+                        append(": ").append(
+                          analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+                              (expression.getKtType() ?: builtinTypes.ANY).render(position = Variance.INVARIANT)
+                          })
+                    }
                     append(" = ")
                     append(initializerText)
                 }.let { psiFactory.createProperty(it) }
