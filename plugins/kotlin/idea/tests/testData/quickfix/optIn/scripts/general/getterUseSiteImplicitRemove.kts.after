@@ -1,0 +1,11 @@
+// "Remove annotation" "true"
+// RUNTIME_WITH_SCRIPT_RUNTIME
+
+@RequiresOptIn
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.PROPERTY_GETTER)
+annotation class SomeOptInAnnotation
+
+class Foo(val value: Int) {
+    val bar: Boolean
+        get() = value > 0
+}

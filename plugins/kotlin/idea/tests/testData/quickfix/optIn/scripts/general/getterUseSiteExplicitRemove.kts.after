@@ -1,0 +1,7 @@
+// "Remove annotation" "true"
+// RUNTIME_WITH_SCRIPT_RUNTIME
+
+@RequiresOptIn
+annotation class SomeOptInAnnotation
+
+val someProperty: Int = 5

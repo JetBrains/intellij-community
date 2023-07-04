@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.diagnostics.Errors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Companion.asKtClass
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
@@ -29,6 +30,8 @@ import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.resolve.constants.KClassValue
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
+import org.jetbrains.kotlin.resolve.sam.SamConstructorDescriptor
+import org.jetbrains.kotlin.scripting.definitions.isScript
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
@@ -38,7 +41,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * The logic for adding OptIn to the entire file or as a compiler argument is in [OptInFileLevelFixesFactory]
  */
 internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
-    private data class CandidateData(val element: KtDeclaration, val kind: AddAnnotationFix.Kind)
+    private data class CandidateData(val element: KtElement, val kind: AddAnnotationFix.Kind)
 
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         val element = diagnostic.psiElement.findParentOfType<KtElement>(strict = false) ?: return emptyList()
@@ -76,7 +79,7 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
             result.add(quickFix)
         }
 
-        fun collectUseOptInAnnotationFix(targetElement: KtDeclaration, kind: AddAnnotationFix.Kind) {
+        fun collectUseOptInAnnotationFix(targetElement: KtElement, kind: AddAnnotationFix.Kind) {
             val existingAnnotationEntry = (targetElement as? KtAnnotated)?.findAnnotation(optInFqName)?.createSmartPointer()
 
             val quickFix =
@@ -86,7 +89,8 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
             result.add(quickFix)
         }
 
-        val candidates = element.collectCandidates()
+        val candidates = if (element.containingFile.isScript()) element.collectScriptCandidates() else element.collectCandidates()
+
         candidates.forEach { (targetElement, kind) ->
             collectPropagateOptInAnnotationFix(targetElement, kind)
             collectUseOptInAnnotationFix(targetElement, kind)
@@ -116,11 +120,66 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
         return result
     }
 
+    private fun KtElement.collectScriptCandidates(): List<CandidateData> {
+        val result = mutableListOf<CandidateData>()
+        var current: PsiElement? = this
+
+        fun CandidateData.addToResult() {
+            if (result.any { this.element == it.element }) return
+            result.add(this)
+        }
+
+        val closestDeclaration = this.findParentOfType<KtDeclaration>(strict = false)
+
+        while (current != null) {
+            when {
+                current is KtClassOrObject && closestDeclaration != current -> current.findContainingClassOrObjectCandidate()?.addToResult()
+                current is KtCallExpression -> current.findSamConstructorCallCandidate()?.addToResult()
+                current is KtDeclaration &&
+                        (current is KtDeclarationWithBody && !current.isLambda()
+                                || current is KtTypeAlias
+                                || current is KtProperty
+                                || current is KtClassOrObject) ->
+                    current.findContainingDeclarationCandidate().addToResult()
+            }
+            current = current.parent
+        }
+
+        this.findStatementCandidate()?.addToResult()
+
+        // For the case where two different elements have the same name
+        return result.sortedBy { it.kind == AddAnnotationFix.Kind.Self }
+    }
+
+    private fun KtDeclarationWithBody.isLambda() = descriptor?.name?.asString() == "<anonymous>"
+
+    private fun KtElement.findStatementCandidate(): CandidateData? {
+        require(this.containingFile.isScript())
+        var statementElement: KtElement = this
+        while (statementElement.parent !is KtBlockExpression && statementElement.parent !is KtClassBody) statementElement =
+            statementElement.parent as? KtElement ?: return null
+        return CandidateData(statementElement, AddAnnotationFix.Kind.Self)
+    }
+
     private fun KtDeclaration.findContainingDeclarationCandidate(): CandidateData {
         val kind = if (this is KtConstructor<*>) AddAnnotationFix.Kind.Constructor
         else AddAnnotationFix.Kind.Declaration(name)
 
         return CandidateData(this, kind)
+    }
+
+    private fun KtCallExpression.findSamConstructorCallCandidate(): CandidateData? {
+        val parent = this.parent
+        if (parent !is KtBlockExpression && parent !is KtScriptInitializer && parent !is KtAnnotatedExpression) return null
+        val resolvedCall = this.resolveToCall() ?: return null
+        if (resolvedCall.resultingDescriptor !is SamConstructorDescriptor) return null
+        val element = when {
+            parent is KtScriptInitializer -> parent
+            parent is KtAnnotatedExpression && parent.parent is KtScriptInitializer -> parent.parent
+            else -> this
+        }
+        val name = resolvedCall.resultingDescriptor.name.asString()
+        return CandidateData(element as KtElement, AddAnnotationFix.Kind.Declaration(name))
     }
 
     private fun KtDeclaration.findContainingClassOrObjectCandidate(): CandidateData? {
@@ -162,22 +221,32 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
      *
      */
     private open class UseOptInAnnotationFix(
-        element: KtDeclaration,
+        element: KtElement,
         optInFqName: FqName,
         private val kind: Kind,
         private val argumentClassFqName: FqName,
         existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
     ) : AddAnnotationFix(element, optInFqName, kind, argumentClassFqName, existingAnnotationEntry) {
 
-        private val elementName = element.name ?: "?"
-
         override fun getText(): String {
             val argumentText = argumentClassFqName.shortName().asString()
-            return when (kind) {
-                Kind.Self -> KotlinBundle.message("fix.opt_in.text.use.declaration", argumentText, elementName)
-                Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.use.constructor", argumentText)
-                is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.use.declaration", argumentText, kind.name ?: "?")
-                is Kind.ContainingClass -> KotlinBundle.message("fix.opt_in.text.use.containing.class", argumentText, kind.name ?: "?")
+            return when {
+                kind is Kind.Self -> KotlinBundle.message("fix.opt_in.text.use.statement", argumentText)
+                kind is Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.use.constructor", argumentText)
+                kind is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.use.declaration", argumentText, kind.name ?: "?")
+                kind is Kind.ContainingClass && element is KtObjectDeclaration && kind.name != null -> KotlinBundle.message(
+                    "fix.opt_in.text.use.containing.object",
+                    argumentText,
+                    kind.name
+                )
+
+                kind is Kind.ContainingClass && element is KtObjectDeclaration && kind.name == null -> KotlinBundle.message(
+                    "fix.opt_in.text.use.containing.anonymous.object",
+                    argumentText
+                )
+
+                kind is Kind.ContainingClass -> KotlinBundle.message("fix.opt_in.text.use.containing.class", argumentText, kind.name ?: "?")
+                else -> error("Unexpected kind type")
             }
         }
 
@@ -185,7 +254,7 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
     }
 
     private class HighPriorityUseOptInAnnotationFix(
-        element: KtDeclaration,
+        element: KtElement,
         optInFqName: FqName,
         kind: Kind,
         argumentClassFqName: FqName,
@@ -219,13 +288,19 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
             val annotationName = annotationFqName.shortName().asString()
             val annotationEntry = if (argumentClassFqName != null) "(${argumentClassFqName.shortName().asString()}::class)" else ""
             val argumentText = annotationName + annotationEntry
-            return when (kind) {
-                Kind.Self -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, "?")
-                Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.propagate.constructor", argumentText)
-                is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, kind.name ?: "?")
-                is Kind.ContainingClass -> KotlinBundle.message(
+            return when {
+                kind is Kind.Self -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, "?")
+                kind is Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.propagate.constructor", argumentText)
+                kind is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, kind.name ?: "?")
+                kind is Kind.ContainingClass && element is KtObjectDeclaration -> KotlinBundle.message(
+                    "fix.opt_in.text.propagate.containing.object", argumentText, kind.name ?: "?"
+                )
+
+                kind is Kind.ContainingClass -> KotlinBundle.message(
                     "fix.opt_in.text.propagate.containing.class", argumentText, kind.name ?: "?"
                 )
+
+                else -> error("Unexpected kind type")
             }
         }
 
