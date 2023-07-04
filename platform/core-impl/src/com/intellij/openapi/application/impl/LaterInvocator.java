@@ -188,8 +188,13 @@ public final class LaterInvocator {
    * Marks the given modality state (not {@code any()}) as transparent, i.e. {@code invokeLater} calls with its "parent" modality state
    * will also be executed within it. NB: this will cause all VFS/PSI/etc. events be executed inside your modal dialog, so you'll need
    * to handle them appropriately, so please consider making the dialog non-modal instead of using this API.
+   *
+   * @deprecated this makes unrelated dialogs appear on top of each other.
+   * If the dialog modality is transparent, then the dialog should not be modal in the first place.
    */
   @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public static void markTransparent(@NotNull ModalityState state) {
     assertIsDispatchThread();
     ((ModalityStateEx)state).markTransparent();
