@@ -36,6 +36,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.Centerizer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -68,8 +69,8 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   private val topPanel: JPanel
   private val leftToolbar: ActionToolbar
   private val rightToolbar: ActionToolbar
-  private val leftToolbarWrapper: Wrapper
-  private val rightToolbarWrapper: Wrapper
+  private val leftToolbarWrapper: Centerizer
+  private val rightToolbarWrapper: Centerizer
   private val diffInfoWrapper: Wrapper
   private val toolbarStatusPanel = Wrapper()
 
@@ -102,17 +103,16 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     context.putUserData(DiffUserDataKeysEx.LEFT_TOOLBAR, leftToolbar)
     leftToolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     leftToolbar.targetComponent = mainPanel
-    leftToolbarWrapper = Wrapper(leftToolbar.component)
+    leftToolbarWrapper = Centerizer(leftToolbar.component, Centerizer.TYPE.VERTICAL)
 
     rightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, rightToolbarGroup, true)
     rightToolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     rightToolbar.targetComponent = mainPanel
 
-    rightToolbarWrapper = Wrapper(JBUI.Panels.simplePanel(rightToolbar.component))
+    rightToolbarWrapper = Centerizer(rightToolbar.component, Centerizer.TYPE.VERTICAL)
 
     diffInfoWrapper = Wrapper()
     topPanel = buildTopPanel()
-    topPanel.border = JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0)
 
     val bottomContentSplitter = JBSplitter(true, "CombinedDiff.BottomComponentSplitter", 0.8f)
     bottomContentSplitter.firstComponent = contentPanel
@@ -137,7 +137,10 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     val toolbarComponents = viewer.init()
     val diffInfo = toolbarComponents.diffInfo
     if (diffInfo != null) {
-      diffInfoWrapper.setContent(diffInfo.component)
+      val component = diffInfo.component
+      component.background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
+      val centerizer = Centerizer(component, Centerizer.TYPE.BOTH)
+      diffInfoWrapper.setContent(centerizer)
     }
     else {
       diffInfoWrapper.setContent(null)
@@ -187,9 +190,14 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     collectToolbarActions(viewerActions)
     (leftToolbar as ActionToolbarImpl).clearPresentationCache()
     leftToolbar.updateActionsImmediately()
+    leftToolbar.background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
+    leftToolbar.border = JBUI.Borders.empty()
     DiffUtil.recursiveRegisterShortcutSet(leftToolbarGroup, mainPanel, null)
     (rightToolbar as ActionToolbarImpl).clearPresentationCache()
     rightToolbar.updateActionsImmediately()
+    rightToolbar.background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
+    rightToolbar.border = JBUI.Borders.empty()
+
     DiffUtil.recursiveRegisterShortcutSet(rightToolbarGroup, mainPanel, null)
   }
 
@@ -229,8 +237,16 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   }
 
   private fun buildTopPanel(): BorderLayoutPanel {
-    val rightPanel = JBUI.Panels.simplePanel(rightToolbarWrapper)
-    val topPanel = JBUI.Panels.simplePanel(diffInfoWrapper).addToLeft(leftToolbarWrapper).addToRight(rightPanel)
+    val topPanel = JBUI.Panels.simplePanel(diffInfoWrapper)
+      .andTransparent()
+      .addToLeft(leftToolbarWrapper)
+      .addToRight(rightToolbarWrapper)
+      .apply {
+        border = JBUI.Borders.compound(
+          JBUI.Borders.customLineBottom(JBColor.border()),
+          JBUI.Borders.empty(5, 10)
+        )
+      }
     GuiUtils.installVisibilityReferent(topPanel, leftToolbar.component)
     GuiUtils.installVisibilityReferent(topPanel, rightToolbar.component)
 
@@ -325,6 +341,12 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
       model.reload()
     }
 
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+      return super.createCustomComponent(presentation, place).apply {
+        background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
+      }
+    }
+
     override fun getTools(): List<CombinedDiffTool> = availableTools.toList()
 
     override fun getActiveTool(): DiffTool = activeTool
@@ -333,6 +355,10 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   }
 
   private inner class MyMainPanel : JBPanelWithEmptyText(BorderLayout()), DataProvider {
+    init {
+      background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
+    }
+
     override fun getPreferredSize(): Dimension {
       val windowSize = DiffUtil.getDefaultDiffPanelSize()
       val size = super.getPreferredSize()
