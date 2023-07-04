@@ -213,8 +213,6 @@ public abstract class XmlExtension {
     return false;
   }
 
-  public boolean isSingleTagException(@NotNull XmlTag tag) { return false; }
-
   public boolean isValidTagNameChar(final char c) {
     return false;
   }

@@ -42,10 +42,6 @@ open class WebSymbolsXmlExtension : HtmlXmlExtension() {
     return super.getPrefixDeclaration(context, namespacePrefix)
   }
 
-  override fun isSingleTagException(tag: XmlTag): Boolean =
-    tag.descriptor.let { it is WebSymbolElementDescriptor && !it.symbol.hasOnlyStandardHtmlSymbolsOrExtensions() }
-    || super.isSingleTagException(tag)
-
   companion object {
     val instance: WebSymbolsXmlExtension = WebSymbolsXmlExtension()
   }
