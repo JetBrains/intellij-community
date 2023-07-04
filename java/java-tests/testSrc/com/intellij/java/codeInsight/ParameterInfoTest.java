@@ -562,6 +562,26 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     }
   }
 
+  @NeedsIndex.SmartMode(reason = "MethodParameterInfoHandler.appendModifierList doesn't work in dumb mode")
+  public void testQualifierTypeUse() {
+    configureJava("""
+                    import java.lang.annotation.*;
+                    import java.util.Map;
+                    class X {
+                        void foo(@NotNull Map.Entry p, @NotNull Map m, Map.Entry p1, Map.@NotNull Entry p2) {
+                    
+                            foo(<caret>);
+                        }
+                    }
+                    
+                    @Documented
+                    @Target({ElementType.TYPE_USE, ElementType.PARAMETER})
+                    @interface NotNull {}
+                    """);
+    showParameterInfo();
+    checkHintContents("<html><b>@NotNull Map.Entry p</b>, @NotNull Map m, Entry p1, @NotNull Entry p2</html>");
+  }
+
   public void testCustomHandlerHighlighterWithEscaping() {
     myFixture.configureByText(PlainTextFileType.INSTANCE, " ");
 
