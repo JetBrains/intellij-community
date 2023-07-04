@@ -27,7 +27,7 @@ class ProprietaryBuildTools(
    * Describes address and credentials of Mac machine which is used to sign and build *.dmg installer for macOS. If `null` only *.sit
    * archive will be built.
    */
-  val macHostProperties: MacHostProperties?,
+  val macOsCodesignIdentity: MacOsCodesignIdentity?,
 
   /**
    * Describes a server that can be used to download built artifacts to install plugins into IDE
@@ -67,7 +67,7 @@ class ProprietaryBuildTools(
         }
       },
       scrambleTool = null,
-      macHostProperties = null,
+      macOsCodesignIdentity = null,
       artifactsServer = null,
       featureUsageStatisticsProperties = null,
       licenseServerHost = null

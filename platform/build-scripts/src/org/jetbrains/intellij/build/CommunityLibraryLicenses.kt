@@ -798,10 +798,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "ssh-nio-fs", libraryName = "ssh-nio-fs",
                    url = "https://github.com/JetBrains/intellij-deps-ssh-nio-fs")
       .mit("https://github.com/JetBrains/intellij-deps-ssh-nio-fs/blob/master/LICENSE"),
-    LibraryLicense(name = "SSHJ",
-                   libraryName = "SSHJ",
-                   url = "https://github.com/hierynomus/sshj")
-      .apache("https://github.com/hierynomus/sshj/blob/master/LICENSE"),
     LibraryLicense(name = "StreamEx", libraryName = "StreamEx",
                    url = "https://github.com/amaembo/streamex")
       .apache("https://github.com/amaembo/streamex/blob/master/LICENSE"),
