@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoComponent;
@@ -11,6 +12,7 @@ import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.codeInspection.DataFlowInspection8Test;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -532,6 +534,32 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     type('(');
     waitForAllAsyncStuff();
     checkHintContents(null);
+  }
+
+  @NeedsIndex.SmartMode(reason = "MethodParameterInfoHandler.appendModifierList doesn't work in dumb mode")
+  public void testInferredAnnotation() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("tu", myFixture);
+    NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
+    String defaultNotNull = nnnManager.getDefaultNotNull();
+    nnnManager.setDefaultNotNull("tu.NotNull");
+    try {
+      configureJava("""
+                      class X {
+                          public static void main(String[] args) {
+                              System.out.println(getSomething(<caret>));
+                          }
+                                          
+                          public static String getSomething(Something l) {
+                              return l.toString();
+                          }
+                      }
+                      """);
+      showParameterInfo();
+      checkHintContents("<html><b>@NotNull Something l</b></html>");
+    }
+    finally {
+      nnnManager.setDefaultNotNull(defaultNotNull);
+    }
   }
 
   public void testCustomHandlerHighlighterWithEscaping() {

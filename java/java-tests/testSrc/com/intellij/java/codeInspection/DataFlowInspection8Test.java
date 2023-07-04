@@ -149,7 +149,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("foo", myFixture);
   }
 
-  static void setupTypeUseAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {
+   public static void setupTypeUseAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {
     setupCustomAnnotations(pkg, "{ElementType.TYPE_USE}", fixture);
   }
 

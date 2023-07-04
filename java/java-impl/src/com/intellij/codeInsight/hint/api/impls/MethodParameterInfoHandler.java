@@ -806,9 +806,9 @@ public final class MethodParameterInfoHandler
           String qualifiedName = annotation.getQualifiedName();
           if (NON_DOCUMENTED_JETBRAINS_ANNOTATIONS.contains(qualifiedName)) continue;
         }
-        if (resolved instanceof PsiClass &&
-            (!JavaDocInfoGenerator.isDocumentedAnnotationType((PsiClass)resolved) ||
-             AnnotationTargetUtil.findAnnotationTarget((PsiClass)resolved, PsiAnnotation.TargetType.TYPE_USE) != null)) {
+        if (resolved instanceof PsiClass cls && !AnnotationUtil.isInferredAnnotation(annotation) &&
+            (!JavaDocInfoGenerator.isDocumentedAnnotationType(cls) ||
+             AnnotationTargetUtil.findAnnotationTarget(cls, PsiAnnotation.TargetType.TYPE_USE) != null)) {
           continue;
         }
 
