@@ -1376,7 +1376,7 @@
 
     <search.optionContributor implementation="com.intellij.codeInspection.ex.InspectionSearchableOptionContributor"/>
 
-    <statusBarWidgetFactory id="vfsRefreshWidget" implementation="com.intellij.openapi.wm.impl.status.VfsRefreshIndicatorWidgetFactory"
+    <statusBarWidgetFactory id="VfsRefresh" implementation="com.intellij.openapi.wm.impl.status.VfsRefreshIndicatorWidgetFactory"
                             order="first"/>
     <statusBarWidgetFactory id="Position" implementation="com.intellij.openapi.wm.impl.status.PositionPanelWidgetFactory"/>
     <statusBarWidgetFactory id="LineSeparator" implementation="com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory"
