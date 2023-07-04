@@ -164,7 +164,7 @@ private fun getSmartSelectSuggestions(
 private fun isUnitTypeOrNull(element: KtExpression): Boolean {
     return analyzeInModalWindow(element, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
         val expressionType = element.getKtType()
-        expressionType == null || expressionType isEqualTo builtinTypes.UNIT
+        expressionType == null || expressionType.isUnit
     }
 }
 

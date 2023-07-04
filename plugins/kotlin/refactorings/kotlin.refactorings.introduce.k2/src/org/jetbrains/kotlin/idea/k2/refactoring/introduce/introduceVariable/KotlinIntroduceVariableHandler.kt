@@ -450,7 +450,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             analyze(expression) {
                 val expressionType = expression.getKtType()
 
-                if (expressionType != null && expressionType isEqualTo builtinTypes.UNIT) {
+                if (expressionType != null && expressionType.isUnit) {
                     showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.expression.has.unit.type"))
                 }
                 val renderer = KtTypeRendererForSource.WITH_SHORT_NAMES.with {
