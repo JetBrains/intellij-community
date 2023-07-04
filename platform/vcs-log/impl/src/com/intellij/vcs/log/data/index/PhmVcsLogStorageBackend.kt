@@ -161,6 +161,7 @@ internal class PhmVcsLogStorageBackend(
 
       override fun flush() = force()
       override fun close(performCommit: Boolean) = force()
+      override fun interrupt() = force()
     }
   }
 

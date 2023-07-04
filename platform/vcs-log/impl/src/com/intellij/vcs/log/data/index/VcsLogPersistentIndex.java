@@ -469,7 +469,12 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       }
       finally {
         try {
-          mutator.close(performCommit);
+          if (myDisposableFlag.isDisposed()) {
+            mutator.interrupt();
+          }
+          else {
+            mutator.close(performCommit);
+          }
         }
         catch (AlreadyClosedException | ProcessCanceledException ignored) {
         }

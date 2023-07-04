@@ -60,4 +60,5 @@ interface VcsLogWriter {
   fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails)
   fun flush()
   fun close(performCommit: Boolean)
+  fun interrupt()
 }

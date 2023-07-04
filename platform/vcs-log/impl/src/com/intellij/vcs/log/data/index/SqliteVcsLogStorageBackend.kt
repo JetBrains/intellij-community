@@ -655,6 +655,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
 
 @Suppress("SqlResolve")
 private class SqliteVcsLogWriter(private val connection: SqliteConnection, private val storage: VcsLogStorage) : VcsLogWriter {
+
   init {
     connection.beginTransaction()
   }
@@ -782,6 +783,8 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection, priva
       }
     }
   }
+
+  override fun interrupt() = connection.interruptAndClose()
 }
 
 private fun readIntArray(statement: SqlitePreparedStatement<IntBinder>): IntArray {
