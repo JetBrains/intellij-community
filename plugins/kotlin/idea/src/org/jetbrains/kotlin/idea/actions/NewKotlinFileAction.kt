@@ -50,7 +50,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.util.*
 import javax.swing.Icon
 
-class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
+internal class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
     override fun isAvailable(dataContext: DataContext): Boolean {
         if (!super.isAvailable(dataContext)) return false
 
@@ -104,7 +104,7 @@ class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
     override fun equals(other: Any?): Boolean = other is NewKotlinFileAction
 }
 
-abstract class AbstractNewKotlinFileAction : CreateFileFromTemplateAction() {
+internal abstract class AbstractNewKotlinFileAction : CreateFileFromTemplateAction() {
 
     private fun KtFile.editor(): Editor? =
         FileEditorManager.getInstance(this.project).selectedTextEditor?.takeIf { it.document == this.viewProvider.document }
