@@ -402,7 +402,7 @@ val isImplicitReadOnEDTDisabled: Boolean
   get() = "false" != System.getProperty(DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY)
 
 internal val isAutomaticIWLOnDirtyUIDisabled: Boolean
-  get() = java.lang.Boolean.getBoolean(DISABLE_AUTOMATIC_WIL_ON_DIRTY_UI_PROPERTY)
+  get() = "false" !=  System.getProperty(DISABLE_AUTOMATIC_WIL_ON_DIRTY_UI_PROPERTY)
 
 @Internal
 // called by the app after startup
