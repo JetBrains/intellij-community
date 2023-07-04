@@ -5,6 +5,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.hints.VcsCodeVisionProvider
+import com.intellij.codeInsight.hints.codeVision.CodeVisionFusCollector
 import com.intellij.codeInsight.hints.isCodeAuthorInlayHintsEnabled
 import com.intellij.codeInsight.hints.refreshCodeAuthorInlayHints
 import com.intellij.ide.PowerSaveMode
@@ -45,13 +46,15 @@ internal class AnnotationsPreloader(private val project: Project) {
     updateQueue.queue(object : DisposableUpdate(project, file) {
       override fun doRun() {
         try {
-          val start = if (LOG.isDebugEnabled) System.currentTimeMillis() else 0
+          val start = System.currentTimeMillis()
 
           if (!FileEditorManager.getInstance(project).isFileOpen(file)) return
           val annotationProvider = getAnnotationProvider(project, file) ?: return
 
           annotationProvider.populateCache(file)
-          LOG.debug { "Preloaded VCS annotations for ${file.name} in ${System.currentTimeMillis() - start} ms" }
+          val durationMs = System.currentTimeMillis() - start
+          CodeVisionFusCollector.ANNOTATION_LOADED.log(project, durationMs)
+          LOG.debug { "Preloaded VCS annotations for ${file.name} in $durationMs ms" }
 
           runInEdt {
             refreshCodeAuthorInlayHints(project, file)
