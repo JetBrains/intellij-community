@@ -21,7 +21,7 @@ class ShadowJava2DPainter(private val uiKeyGroup: String, private val roundedCor
   private var hideBottomSide = false
 
   companion object {
-    fun enabled(): Boolean = Registry.`is`("ide.java2d.shadowEnabled", false)
+    fun enabled(): Boolean = Registry.`is`("ide.java2d.shadowEnabled", true)
 
     fun getInsets(uiKeyGroup: String): Insets = JBUI.insets("${uiKeyGroup}.Shadow.borderInsets", DEF_INSETS)
   }
