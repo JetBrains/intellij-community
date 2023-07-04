@@ -58,7 +58,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       myAlternativeResolveTracker.isAlternativeResolveEnabled = enabled
     }
 
-  override val modificationTracker: ModificationTracker = ModificationTracker { myState.value.modificationCounter }
+  override val modificationTracker: ModificationTracker get() = this
 
   @Volatile
   var dumbModeStartTrace: Throwable? = null
@@ -459,7 +459,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   override fun getModificationCount(): Long {
-    return modificationTracker.modificationCount
+    return myState.value.modificationCounter
   }
 
   internal val dumbStateAsFlow: StateFlow<DumbState> = myState
