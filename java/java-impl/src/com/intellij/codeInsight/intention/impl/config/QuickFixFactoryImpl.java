@@ -307,7 +307,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createReplaceWithListAccessFix(@NotNull PsiArrayAccessExpression expression) {
-    return new ReplaceWithListAccessFix(expression);
+    return new ReplaceWithListAccessFix(expression).asIntention();
   }
 
   @NotNull
@@ -333,13 +333,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createRemoveQualifierFix(@NotNull PsiExpression qualifier,
                                                   @NotNull PsiReferenceExpression expression,
                                                   @NotNull PsiClass resolved) {
-    return new RemoveQualifierFix(qualifier, expression, resolved);
+    return new RemoveQualifierFix(expression, resolved).asIntention();
   }
 
   @NotNull
   @Override
   public IntentionAction createRemoveParameterListFix(@NotNull PsiMethod parent) {
-    return new RemoveParameterListFix(parent);
+    return new RemoveParameterListFix(parent).asIntention();
   }
 
   @NotNull
@@ -446,7 +446,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createRemoveNewQualifierFix(@NotNull PsiNewExpression expression, PsiClass aClass) {
-    return new RemoveNewQualifierFix(expression, aClass);
+    return new RemoveNewQualifierFix(expression, aClass).asIntention();
   }
 
   @NotNull
@@ -540,7 +540,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createReplaceWithTypePatternFix(@NotNull PsiReferenceExpression exprToReplace,
                                                                   @NotNull PsiClass resolvedExprClass,
                                                                   @NotNull String patternVarName) {
-    return new ReplaceWithTypePatternFix(exprToReplace, resolvedExprClass, patternVarName);
+    return new ReplaceWithTypePatternFix(exprToReplace, resolvedExprClass, patternVarName).asIntention();
   }
 
   @NotNull
@@ -849,10 +849,10 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createNotIterableForEachLoopFix(@NotNull PsiExpression expression) {
     final PsiElement parent = expression.getParent();
-    if (parent instanceof PsiForeachStatement) {
+    if (parent instanceof PsiForeachStatement forEach) {
       final PsiType type = expression.getType();
       if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_ITERATOR)) {
-        return new ReplaceIteratorForEachLoopWithIteratorForLoopFix((PsiForeachStatement)parent);
+        return new ReplaceIteratorForEachLoopWithIteratorForLoopFix(forEach).asIntention();
       }
     }
     return null;

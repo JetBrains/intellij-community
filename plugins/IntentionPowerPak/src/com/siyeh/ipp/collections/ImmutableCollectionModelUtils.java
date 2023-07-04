@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.collections;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -12,7 +12,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -25,7 +24,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
@@ -64,8 +66,8 @@ final class ImmutableCollectionModelUtils {
     return name == null || resolveHelper.resolveReferencedClass(name, context) != parameter;
   }
 
-  static void replaceWithMutable(@NotNull ImmutableCollectionModel model, @Nullable Editor editor) {
-    ToMutableCollectionConverter.convert(model, editor);
+  static void replaceWithMutable(@NotNull ImmutableCollectionModel model, @NotNull ModPsiUpdater updater) {
+    ToMutableCollectionConverter.convert(model, updater);
   }
 
   @Nullable
@@ -157,15 +159,14 @@ final class ImmutableCollectionModelUtils {
    * Replaces immutable collection creation with mutable one.
    */
   private static final class ToMutableCollectionConverter {
-
     private final PsiElementFactory myElementFactory;
     private final JavaCodeStyleManager myCodeStyleManager;
-    private final Editor myEditor;
+    private final @NotNull ModPsiUpdater myUpdater;
 
-    private ToMutableCollectionConverter(@NotNull Project project, @Nullable Editor editor) {
+    private ToMutableCollectionConverter(@NotNull Project project, @NotNull ModPsiUpdater updater) {
       myElementFactory = PsiElementFactory.getInstance(project);
       myCodeStyleManager = JavaCodeStyleManager.getInstance(project);
-      myEditor = editor;
+      myUpdater = updater;
     }
 
     private void replaceWithMutable(@NotNull ImmutableCollectionModel model) {
@@ -181,7 +182,7 @@ final class ImmutableCollectionModelUtils {
         String initializerText = model.myType.getInitializerText(model.myIsVarArgCall ? null : call.getText());
         PsiElement anchor = addUpdates(assignedVariable, model, statement);
         PsiReplacementUtil.replaceExpressionAndShorten(call, initializerText, new CommentTracker());
-        if (myEditor != null) myEditor.getCaretModel().moveToOffset(anchor.getTextRange().getEndOffset());
+        myUpdater.moveTo(anchor.getTextRange().getEndOffset());
       }
       else {
         createVariable(statement, model);
@@ -198,14 +199,14 @@ final class ImmutableCollectionModelUtils {
       PsiDeclarationStatement declaration = createDeclaration(name, type, model, statement);
       if (declaration == null) return;
       PsiVariable declaredVariable = (PsiVariable)declaration.getDeclaredElements()[0];
-      PsiElement anchor = addUpdates(name, model, declaration);
+      addUpdates(name, model, declaration);
       if (call.getParent() instanceof PsiExpressionStatement) {
         new CommentTracker().deleteAndRestoreComments(statement);
       }
       else {
         PsiReplacementUtil.replaceExpression(call, name, new CommentTracker());
       }
-      if (myEditor != null) VariableRenamer.rename(declaredVariable, names, myEditor, anchor);
+      myUpdater.rename(declaredVariable, List.of(names));
     }
 
     @Nullable
@@ -284,8 +285,8 @@ final class ImmutableCollectionModelUtils {
       return null;
     }
 
-    static void convert(@NotNull ImmutableCollectionModel model, @Nullable Editor editor) {
-      new ToMutableCollectionConverter(model.myCall.getProject(), editor).replaceWithMutable(model);
+    static void convert(@NotNull ImmutableCollectionModel model, @NotNull ModPsiUpdater updater) {
+      new ToMutableCollectionConverter(model.myCall.getProject(), updater).replaceWithMutable(model);
     }
   }
 
@@ -316,35 +317,6 @@ final class ImmutableCollectionModelUtils {
         case LIST -> "new ArrayList<>()";
         case SET -> "new HashSet<>()";
       };
-    }
-  }
-
-  /**
-   * Renames given variable and moves caret to anchor after renaming.
-   */
-  private static final class VariableRenamer extends VariableInplaceRenamer {
-
-    private final PsiElement myAnchor;
-
-    private VariableRenamer(@NotNull PsiNamedElement elementToRename, @NotNull Editor editor, @NotNull PsiElement anchor) {
-      super(elementToRename, editor);
-      this.myAnchor = anchor;
-      editor.getCaretModel().moveToOffset(elementToRename.getTextOffset());
-    }
-
-    @Override
-    public void finish(boolean success) {
-      super.finish(success);
-      myEditor.getCaretModel().moveToOffset(myAnchor.getTextRange().getEndOffset());
-    }
-
-    static void rename(@NotNull PsiNamedElement elementToRename,
-                       String @NotNull [] names,
-                       @NotNull Editor editor,
-                       @NotNull PsiElement anchor) {
-      PsiDocumentManager.getInstance(elementToRename.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-      LinkedHashSet<String> suggestions = new LinkedHashSet<>(Arrays.asList(names));
-      new VariableRenamer(elementToRename, editor, anchor).performInplaceRefactoring(suggestions);
     }
   }
 }
