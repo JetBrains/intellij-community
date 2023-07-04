@@ -58,13 +58,7 @@ public abstract class LafManager {
   public abstract void setPreferredLightLaf(@NotNull UIManager.LookAndFeelInfo value);
 
   @ApiStatus.Internal
-  public abstract void rememberSchemeForLaf(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo, @NotNull EditorColorsScheme editorColorsScheme);
-
-  @ApiStatus.Internal
   public abstract @Nullable EditorColorsScheme getPreviousSchemeForLaf(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo);
-
-  @ApiStatus.Internal
-  public abstract void forgetLastLafToScheme();
 
   @ApiStatus.Internal
   public void applyDensity() { }
