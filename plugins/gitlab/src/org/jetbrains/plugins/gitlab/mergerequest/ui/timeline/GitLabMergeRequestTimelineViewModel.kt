@@ -19,6 +19,7 @@ import org.jetbrains.plugins.gitlab.ui.comment.DelegatingGitLabNoteEditingViewMo
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.forNewNote
 import org.jetbrains.plugins.gitlab.ui.comment.onDoneIn
+import java.net.URL
 
 interface GitLabMergeRequestTimelineViewModel : GitLabMergeRequestViewModel {
   val currentUser: GitLabUserDTO
@@ -26,6 +27,8 @@ interface GitLabMergeRequestTimelineViewModel : GitLabMergeRequestViewModel {
   val timelineItems: SharedFlow<List<GitLabMergeRequestTimelineItemViewModel>>
 
   val newNoteVm: NewGitLabNoteViewModel?
+
+  val serverUrl: URL
 
   fun requestLoad()
 
@@ -74,6 +77,8 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
     else {
       null
     }
+
+  override val serverUrl: URL = mergeRequest.glProject.serverPath.toURL()
 
   private val _diffRequests = MutableSharedFlow<ChangesSelection.Precise>()
   val diffRequests: Flow<ChangesSelection.Precise> = _diffRequests.asSharedFlow()

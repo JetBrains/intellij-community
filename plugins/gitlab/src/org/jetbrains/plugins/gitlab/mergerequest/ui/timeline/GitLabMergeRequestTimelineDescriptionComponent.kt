@@ -11,8 +11,6 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory.createTextPanel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
@@ -29,11 +27,11 @@ internal object GitLabMergeRequestTimelineDescriptionComponent {
 
   fun createComponent(
     cs: CoroutineScope,
-    vm: GitLabMergeRequestViewModel,
+    vm: GitLabMergeRequestTimelineViewModel,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   ): JComponent {
     val titlePanel = GitLabMergeRequestTimelineUIUtil.createTitleTextPane(vm.author, date = null)
-    val descriptionTextComponent = createTextPanel(cs, vm.descriptionHtml.map { it.ifBlank { noDescriptionHtmlText } })
+    val descriptionTextComponent = createTextPanel(cs, vm.descriptionHtml.map { it.ifBlank { noDescriptionHtmlText } }, vm.serverUrl)
 
 
     return CodeReviewChatItemUIUtil.buildDynamic(CodeReviewChatItemUIUtil.ComponentType.FULL,

@@ -10,9 +10,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
+import java.net.URL
 import java.util.*
 
 interface GitLabNoteViewModel {
@@ -20,6 +22,7 @@ interface GitLabNoteViewModel {
   val author: GitLabUserDTO
   val createdAt: Date?
   val isDraft: Boolean
+  val serverUrl: URL
 
   val discussionState: Flow<GitLabDiscussionStateContainer>
 
@@ -34,7 +37,8 @@ private val LOG = logger<GitLabNoteViewModel>()
 class GitLabNoteViewModelImpl(
   parentCs: CoroutineScope,
   note: GitLabNote,
-  isMainNote: Flow<Boolean>
+  isMainNote: Flow<Boolean>,
+  glProject: GitLabProjectCoordinates
 ) : GitLabNoteViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default)
@@ -43,6 +47,7 @@ class GitLabNoteViewModelImpl(
   override val author: GitLabUserDTO = note.author
   override val createdAt: Date? = note.createdAt
   override val isDraft: Boolean = note is GitLabMergeRequestDraftNote
+  override val serverUrl: URL = glProject.serverPath.toURL()
 
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
     if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, note) else null

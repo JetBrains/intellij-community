@@ -303,7 +303,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       if (collapsed) mainNote.body else mainNote.bodyHtml
     }.flatMapLatest { it }
 
-    val textPane = GitLabNoteComponentFactory.createTextPanel(cs, textFlow)
+    val textPane = GitLabNoteComponentFactory.createTextPanel(cs, textFlow, vm.serverUrl)
     val layout = SizeRestrictedSingleComponentLayout()
     return JPanel(layout).apply {
       name = "Text pane wrapper"

@@ -11,6 +11,7 @@ import com.intellij.util.childScope
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiffDiscussionViewModel.NoteItem
@@ -44,7 +45,8 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
   diffData: GitTextFilePatchWithHistory,
   currentUser: GitLabUserDTO,
   discussion: GitLabMergeRequestDiscussion,
-  discussionsViewOption: Flow<DiscussionsViewOption>
+  discussionsViewOption: Flow<DiscussionsViewOption>,
+  glProject: GitLabProjectCoordinates
 ) : GitLabMergeRequestDiffDiscussionViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
@@ -68,7 +70,7 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
     }
   }.mapCaching(
     GitLabNote::id,
-    { note -> GitLabNoteViewModelImpl(this, note, discussion.notes.map { it.firstOrNull()?.id == note.id }) },
+    { note -> GitLabNoteViewModelImpl(this, note, discussion.notes.map { it.firstOrNull()?.id == note.id }, glProject) },
     GitLabNoteViewModelImpl::destroy
   ).combine(expandRequested) { notes, expanded ->
     if (initialNotesSize!! <= 3 || notes.size <= 3 || expanded) {
@@ -115,7 +117,8 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
 class GitLabMergeRequestDiffDraftDiscussionViewModel(
   parentCs: CoroutineScope,
   diffData: GitTextFilePatchWithHistory,
-  note: GitLabMergeRequestDraftNote
+  note: GitLabMergeRequestDraftNote,
+  glProject: GitLabProjectCoordinates
 ) : GitLabMergeRequestDiffDiscussionViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
@@ -123,7 +126,7 @@ class GitLabMergeRequestDiffDraftDiscussionViewModel(
   override val id: String = note.id
 
   override val notes: Flow<List<NoteItem>> = flowOf(
-    listOf(NoteItem.Note(GitLabNoteViewModelImpl(cs, note, flowOf(true))))
+    listOf(NoteItem.Note(GitLabNoteViewModelImpl(cs, note, flowOf(true), glProject)))
   )
 
   override val location: Flow<DiffLineLocation?> = note.position.map {

@@ -15,10 +15,13 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussi
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import org.jetbrains.plugins.gitlab.ui.comment.*
+import java.net.URL
 
 interface GitLabMergeRequestTimelineDiscussionViewModel :
   GitLabMergeRequestTimelineItemViewModel,
   CollapsibleTimelineItemViewModel {
+  val serverUrl: URL
+
   val author: Flow<GitLabUserDTO>
 
   val diffVm: Flow<GitLabDiscussionDiffViewModel?>
@@ -51,10 +54,11 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val mainNote: Flow<GitLabNoteViewModel> = discussion.notes
     .map { it.first() }
     .distinctUntilChangedBy { it.id }
-    .mapScoped { GitLabNoteViewModelImpl(this, it, flowOf(true)) }
+    .mapScoped { GitLabNoteViewModelImpl(this, it, flowOf(true), mr.glProject) }
     .modelFlow(cs, LOG)
 
   override val id: String = discussion.id
+  override val serverUrl: URL = mr.glProject.serverPath.toURL()
   override val author: Flow<GitLabUserDTO> = mainNote.map { it.author }
 
   private val _repliesFolded = MutableStateFlow(true)
@@ -64,7 +68,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     .map { it.drop(1) }
     .mapCaching(
       GitLabNote::id,
-      { note -> GitLabNoteViewModelImpl(this, note, flowOf(false)) },
+      { note -> GitLabNoteViewModelImpl(this, note, flowOf(false), mr.glProject) },
       GitLabNoteViewModelImpl::destroy
     )
     .modelFlow(cs, LOG)
@@ -131,9 +135,10 @@ class GitLabMergeRequestTimelineDraftDiscussionViewModel(
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
   override val mainNote: Flow<GitLabNoteViewModel> =
-    flowOf(GitLabNoteViewModelImpl(cs, draftNote, flowOf(true)))
+    flowOf(GitLabNoteViewModelImpl(cs, draftNote, flowOf(true), mr.glProject))
 
   override val id: String = draftNote.id
+  override val serverUrl: URL = mr.glProject.serverPath.toURL()
   override val author: Flow<GitLabUserDTO> = flowOf(currentUser)
 
   private val _repliesFolded = MutableStateFlow(true)
