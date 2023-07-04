@@ -5,7 +5,6 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -78,7 +77,6 @@ public final class GitVcs extends AbstractVcs {
   @NotNull
   public static GitVcs getInstance(@NotNull Project project) {
     GitVcs gitVcs = (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
-    ProgressManager.checkCanceled();
     return Objects.requireNonNull(gitVcs);
   }
 

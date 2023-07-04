@@ -106,9 +106,13 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @Override
   public @Nullable AbstractVcs findVcsByName(@Nullable String name) {
-    AbstractVcs result = name == null || myProject.isDisposed() ? null : AllVcses.getInstance(myProject).getByName(name);
-    ProgressManager.checkCanceled();
-    return result;
+    if (name == null) return null;
+    AbstractVcs vcs = AllVcses.getInstance(myProject).getByName(name);
+    if (vcs == null && myProject.isDisposed()) {
+      // Take readLock to avoid race between Project.isDisposed and Disposer.dispose.
+      ReadAction.run(ProgressManager::checkCanceled);
+    }
+    return vcs;
   }
 
   @Override
