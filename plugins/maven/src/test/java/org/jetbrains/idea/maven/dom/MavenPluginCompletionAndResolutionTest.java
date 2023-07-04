@@ -87,7 +87,10 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                        """);
 
 
-    if (mavenVersionIsOrMoreThan("3.9.0")) {
+    if (mavenVersionIsOrMoreThan("3.9.3")) {
+      assertCompletionVariants(myProjectPom, "2.0.2", "3.1", "3.10.1", "3.11.0");
+    }
+    else if (mavenVersionIsOrMoreThan("3.9.0")) {
       assertCompletionVariants(myProjectPom, "2.0.2", "3.1", "3.10.1");
     }
     else {
@@ -171,7 +174,10 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                        </build>
                        """);
 
-    if (mavenVersionIsOrMoreThan("3.9.0")) {
+    if (mavenVersionIsOrMoreThan("3.9.3")) {
+      assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1", "3.11.0");
+    }
+    else if (mavenVersionIsOrMoreThan("3.9.0")) {
       assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1");
     }
     else {
