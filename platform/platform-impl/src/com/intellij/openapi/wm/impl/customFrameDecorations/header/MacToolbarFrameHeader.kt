@@ -27,6 +27,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import java.awt.BorderLayout
 import java.awt.Graphics
+import java.awt.Graphics2D
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.beans.PropertyChangeListener
@@ -152,7 +153,8 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
   }
 
   override fun paintComponent(g: Graphics) {
-    if (view == ToolbarHeaderView && ProjectWindowCustomizerService.getInstance().paint(window = frame, parent = this, g = g)) {
+    if (view == ToolbarHeaderView &&
+        ProjectWindowCustomizerService.getInstance().paint(window = frame, parent = this, g = g as Graphics2D)) {
       return
     }
 

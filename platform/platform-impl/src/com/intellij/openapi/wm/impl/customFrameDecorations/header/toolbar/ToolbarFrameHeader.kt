@@ -33,11 +33,8 @@ import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import java.awt.BorderLayout
-import java.awt.CardLayout
-import java.awt.Graphics
+import java.awt.*
 import java.awt.GridBagConstraints.*
-import java.awt.GridBagLayout
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
@@ -66,8 +63,6 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
   private val toolbarHeaderTitle = SimpleCustomDecorationPath(frame).apply {
     isOpaque = false
   }
-  private val customizer: ProjectWindowCustomizerService
-    get() = ProjectWindowCustomizerService.getInstance()
 
   private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -122,9 +117,8 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
   }
 
   private fun createToolbarPlaceholder(): JPanel {
-    val panel = JPanel()
+    val panel = JPanel(BorderLayout())
     panel.isOpaque = false
-    panel.layout = BorderLayout()
     panel.border = JBUI.Borders.empty(0, JBUI.scale(4))
     return panel
   }
@@ -150,6 +144,9 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     get() = if (isToolbarInHeader()) ShowMode.TOOLBAR else ShowMode.MENU
 
   init {
+    // color full toolbar
+    isOpaque = false
+
     mainMenuButton.expandableMenu = expandableMenu
     layout = GridBagLayout()
     val gb = GridBag().anchor(WEST)
@@ -160,11 +157,6 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     buttonPanes?.let { add(wrap(it.getView()), gb.next().anchor(EAST)) }
 
     setCustomFrameTopBorder(isTopNeeded = { false }, isBottomNeeded = { mode == ShowMode.MENU })
-
-    customizer.addListener(coroutineScope, true) {
-      isOpaque = !it
-      revalidate()
-    }
 
     scheduleUpdateToolbar()
   }
@@ -180,9 +172,12 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     updateRequests.tryEmit(Unit)
   }
 
-  override fun paint(g: Graphics) {
-    customizer.paint(window = frame, parent = this, g = g)
-    super.paint(g)
+  override fun paintComponent(g: Graphics) {
+    if (!ProjectWindowCustomizerService.getInstance().paint(window = frame, parent = this, g = g as Graphics2D)) {
+      // isOpaque is false to paint colorful toolbar gradient, so, we have to draw background on our own
+      g.color = background
+      g.fillRect(0, 0, width, height)
+    }
   }
 
   private suspend fun doUpdateToolbar(isCompactHeader: Boolean) {

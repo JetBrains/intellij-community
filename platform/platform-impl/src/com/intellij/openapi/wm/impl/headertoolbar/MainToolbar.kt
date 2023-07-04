@@ -76,12 +76,12 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
 
 private object DefaultMainToolbarFlavor : MainToolbarFlavor
 
-internal class MainToolbar(
+internal class MainToolbar constructor(
   private val coroutineScope: CoroutineScope,
   frame: JFrame,
   isOpaque: Boolean = false,
-  background: Color? = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true),
-  val layoutCallBack: LayoutCallBack? = null,
+  background: Color? = null,
+  @JvmField val layoutCallBack: LayoutCallBack? = null,
 ) : JPanel(HorizontalLayout(10)) {
   private val flavor: MainToolbarFlavor
 

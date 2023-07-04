@@ -727,7 +727,10 @@ private val isDecoratedMenu: Boolean
 private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame): JComponent {
   if (ExperimentalUI.isNewUI()) {
     val toolbar = withContext(Dispatchers.EDT) {
-      val toolbar = MainToolbar(coroutineScope = coroutineScope, frame = frame, isOpaque = true)
+      val toolbar = MainToolbar(coroutineScope = coroutineScope,
+                                frame = frame,
+                                isOpaque = true,
+                                background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true))
       toolbar.border = JBUI.Borders.emptyLeft(5)
       toolbar
     }

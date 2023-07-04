@@ -10,6 +10,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.ProjectActivity
@@ -84,6 +86,8 @@ private fun isForceColorfulToolbar() = Registry.`is`("ide.colorful.toolbar.force
 
 private fun conditionToEnable() = isForceColorfulToolbar() || ProjectManagerEx.getOpenProjects().size > 1
 
+private data class ProjectColors(@JvmField val gradient: Color, @JvmField val background: Color)
+
 @Service
 class ProjectWindowCustomizerService : Disposable {
   companion object {
@@ -103,8 +107,6 @@ class ProjectWindowCustomizerService : Disposable {
       return result
     }
   }
-
-  private data class ProjectColors(@JvmField val gradient: Color, @JvmField val background: Color)
 
   private var wasGradientPainted = isForceColorfulToolbar()
 
@@ -179,8 +181,10 @@ class ProjectWindowCustomizerService : Disposable {
     }
   }
 
-  fun isAvailable(): Boolean = !ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()  &&
-                               (PlatformUtils.isRider () || Registry.`is`("ide.colorful.toolbar"))
+  fun isAvailable(): Boolean {
+    return !ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled() &&
+           (PlatformUtils.isRider () || Registry.`is`("ide.colorful.toolbar", true))
+  }
 
   fun isActive(): Boolean = wasGradientPainted && ourSettingsValue && isAvailable()
 
@@ -188,12 +192,8 @@ class ProjectWindowCustomizerService : Disposable {
     get() = PropertiesComponent.getInstance().getBoolean("colorful.instances.gotIt.shown", false)
     set(value) { PropertiesComponent.getInstance().setValue("colorful.instances.gotIt.shown", value) }
 
-  fun paint(window: Window, parent: JComponent, g: Graphics): Boolean {
-    return paint(project = ProjectFrameHelper.getFrameHelper(window)?.project ?: return false, parent = parent, g = g as Graphics2D)
-  }
-
   fun enableIfNeeded() {
-    if (conditionToEnable() && !wasGradientPainted) {
+    if (!wasGradientPainted && conditionToEnable()) {
       wasGradientPainted = true
       fireUpdate()
     }
@@ -213,15 +213,17 @@ class ProjectWindowCustomizerService : Disposable {
     listeners.forEach { it(isActive()) }
   }
 
-  fun shouldShowGotIt(): Boolean = !gotItShown
-
   private fun recordGotItShown() {
     gotItShown = true
   }
 
   fun showGotIt(project: Project, component: JComponent) {
-    if (!PlatformUtils.isRider()) return
-    if (!shouldShowGotIt() || !isActive()) return
+    if (!PlatformUtils.isRider()) {
+      return
+    }
+    if (gotItShown || !isActive()) {
+      return
+    }
 
     val gotIt = GotItTooltip("colorful.instances", IdeBundle.message("colorfulInstances.gotIt.text"), this).apply {
       withHeader(IdeBundle.message("colorfulInstances.gotIt.title"))
@@ -239,13 +241,16 @@ class ProjectWindowCustomizerService : Disposable {
   /**
    * @return true if method painted something
    */
-  fun paint(project: Project, parent: JComponent, g: Graphics2D): Boolean {
+  fun paint(window: Window, parent: JComponent, g: Graphics2D): Boolean {
     if (!isActive() || !getPaintingType().isGradient()) {
       return false
     }
 
+    val project = ProjectFrameHelper.getFrameHelper(window)?.project ?: return false
+
     g.color = parent.background
-    g.fillRect(0, 0, parent.width, parent.height)
+    val height = parent.height
+    g.fillRect(0, 0, parent.width, height)
 
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
     val color = getGradientProjectColor(project)
@@ -255,12 +260,12 @@ class ProjectWindowCustomizerService : Disposable {
     val y = parent.y.toFloat()
     if (getPaintingType().isCircularGradient()) {
       val offset = 150f
-      g.paint = RadialGradientPaint(x + offset, y + parent.height / 2, length - offset, floatArrayOf(0.0f, 0.6f), arrayOf(color, parent.background))
+      g.paint = RadialGradientPaint(x + offset, y + height / 2, length - offset, floatArrayOf(0.0f, 0.6f), arrayOf(color, parent.background))
     }
     else {
       g.paint = GradientPaint(x, y, color, length.toFloat(), y, parent.background)
     }
-    g.fillRect(0, 0, length, parent.height)
+    g.fillRect(0, 0, length, height)
 
     return true
   }
@@ -280,8 +285,14 @@ class ProjectWindowCustomizerService : Disposable {
 }
 
 private class ProjectWindowCustomizerListener : ProjectActivity, UISettingsListener {
+  init {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
   override suspend fun execute(project: Project) {
-    ProjectWindowCustomizerService.getInstance().enableIfNeeded()
+    serviceAsync<ProjectWindowCustomizerService>().enableIfNeeded()
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
