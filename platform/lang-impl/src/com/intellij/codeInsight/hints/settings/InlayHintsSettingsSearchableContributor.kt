@@ -28,12 +28,13 @@ private class InlayHintsSettingsSearchableContributor : SearchableOptionContribu
       addOption(processor, name, id)
       val providerWithSettings = provider.withSettings(providerInfo.language, InlayHintsSettings.instance())
       val configurable = providerWithSettings.configurable
-      @Suppress("SENSELESS_COMPARISON") // for some reason (kotlin bug?) there is no check between kotlin and java and sometimes here comes null
-      if (configurable == null) {
-        PluginException.createByClass("Configurable must not be null, provider: ${provider.key.id}", null, provider.javaClass)
-      }
-      for (case in configurable.cases) {
-        addOption(processor, case.name, id)
+
+      try {
+        for (case in configurable.cases) {
+          addOption(processor, case.name, id)
+        }
+      } catch(e: RuntimeException) {
+        PluginException.createByClass("provider: ${provider.key.id}", e, provider.javaClass)
       }
     }
     InlayParameterHintsExtension.point?.extensions?.flatMap { it.instance.supportedOptions }?.forEach { addOption(processor, it.name, null) }
