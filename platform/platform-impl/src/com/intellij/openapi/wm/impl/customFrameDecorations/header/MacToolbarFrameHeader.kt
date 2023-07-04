@@ -158,7 +158,7 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
 
     // isOpaque is false to paint colorful toolbar gradient, so, we have to draw background on our own
     g.color = background
-    g.fillRect(0, 0, parent.width, parent.height)
+    g.fillRect(0, 0, width, height)
   }
 
   override fun updateUI() {
