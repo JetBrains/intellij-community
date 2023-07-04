@@ -107,7 +107,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "mindmap" { yybegin(mindmap); return Mindmap.MINDMAP; }
   "timeline" { yybegin(timeline); return Timeline.TIMELINE; }
   "quadrantChart" { yybegin(quadrant); return Quadrant.QUADRANT_CHART; }
-  "zenuml"(\n|.)* { return ZenUML.ZEN_UML; }
+  "zenuml"[^]* { return ZenUML.ZEN_UML; }
 
   --- { yybegin(frontmatter); return Frontmatter.FRONTMATTER_START; }
 
