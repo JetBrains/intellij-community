@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
+import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.util.ui.JBUI
@@ -24,6 +25,7 @@ import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JRootPane
+
 
 private const val GAP_FOR_BUTTONS = 80
 private const val DEFAULT_HEADER_HEIGHT = 40
@@ -38,9 +40,9 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   private val TOOLBAR_CARD = "TOOLBAR_CARD"
   private val PATH_CARD = "PATH_CARD"
 
-  init {
-    isOpaque = false
+  private val customizer get() = ProjectWindowCustomizerService.getInstance()
 
+  init {
     layout = AdjustableSizeCardLayout()
     root.addPropertyChangeListener(MacMainFrameDecorator.FULL_SCREEN, PropertyChangeListener { updateBorders() })
     add(ideMenu)
@@ -59,6 +61,11 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
         MacFullScreenControlsManager.updateColors(frame)
       }
     })
+
+    customizer.addListener(disposable = this, fireFirstTime = true) {
+      isOpaque = !it
+      revalidate()
+    }
   }
 
   private fun createToolBar(): MainToolbar {
@@ -115,7 +122,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
 
   private fun updateVisibleCard() {
     val cardToShow = if (isCompact) PATH_CARD else TOOLBAR_CARD
-    (layout as? CardLayout)?.show(this, cardToShow)
+    (getLayout() as? CardLayout)?.show(this, cardToShow)
 
     revalidate()
     repaint()
@@ -144,6 +151,11 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   override fun getComponent(): JComponent = this
 
   override fun dispose() {}
+
+  private fun getElementRect(comp: Component): RelativeRectangle {
+    val rect = Rectangle(comp.size)
+    return RelativeRectangle(comp, rect)
+  }
 
   override fun getHeaderBackground(active: Boolean): Color {
     return JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(active)
