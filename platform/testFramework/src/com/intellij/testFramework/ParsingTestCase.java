@@ -378,6 +378,29 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     checkResult(myFilePrefix + name, myFile);
   }
 
+  protected void doReparseTest(String textBefore, String textAfter) {
+    var file = createFile("test." + myFileExt, textBefore);
+    var fileAfter = createFile("test." + myFileExt, textAfter);
+
+    var rangeStart = StringUtil.commonPrefixLength(textBefore, textAfter);
+    var rangeEnd = textBefore.length() - StringUtil.commonSuffixLength(textBefore, textAfter);
+
+    assert (rangeStart <= rangeEnd);
+
+    var psiToStringDefault = DebugUtil.psiToString(fileAfter, true, false);
+    DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
+      new BlockSupportImpl().reparseRange(
+        file,
+        file.getNode(),
+        new TextRange(rangeStart, rangeEnd),
+        fileAfter.getText(),
+        new EmptyProgressIndicator(),
+        file.getText()
+      ).performActualPsiChange(file);
+    });
+    assertEquals(psiToStringDefault, DebugUtil.psiToString(file, true, false));
+  }
+
   protected PsiFile createPsiFile(@NotNull String name, @NotNull String text) {
     return createFile(name + "." + myFileExt, text);
   }
