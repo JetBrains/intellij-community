@@ -44,7 +44,11 @@ class GHPullRequest(id: String,
 
   open class Repository(val owner: Owner, val isFork: Boolean)
 
-  class HeadRepository(owner: Owner, isFork: Boolean, val url: @NlsSafe String, val sshUrl: @NlsSafe String) : Repository(owner, isFork)
+  class HeadRepository(owner: Owner, isFork: Boolean,
+                       val nameWithOwner: @NlsSafe String,
+                       val url: @NlsSafe String,
+                       val sshUrl: @NlsSafe String)
+    : Repository(owner, isFork)
 
   class Owner(val login: String)
 }

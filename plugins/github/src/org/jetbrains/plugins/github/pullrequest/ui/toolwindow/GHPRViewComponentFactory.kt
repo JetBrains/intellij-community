@@ -180,7 +180,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
       val scope = DisposingScope(disposable, SupervisorJob() + Dispatchers.Main.immediate)
       val reviewDetailsVm = GHPRDetailsViewModelImpl(detailsModel, stateModel)
-      val reviewBranchesVm = GHPRBranchesViewModel(scope, project, repository, model)
+      val reviewBranchesVm = GHPRBranchesViewModel(scope, project, dataContext.repositoryDataService.repositoryMapping, model)
       val reviewStatusVm = GHPRStatusViewModelImpl(scope, project, stateModel)
       val reviewFlowVm = GHPRReviewFlowViewModelImpl(scope,
                                                      metadataModel,

@@ -30,6 +30,7 @@ fragment pullRequestInfo on PullRequest {
     owner {
       login
     }
+    nameWithOwner
     isFork
     url
     sshUrl

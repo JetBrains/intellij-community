@@ -7,40 +7,28 @@ import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
-import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.util.childScope
-import git4idea.commands.Git
-import git4idea.fetch.GitFetchSupport
-import git4idea.i18n.GitBundle
+import git4idea.remote.hosting.GitRemoteBranchesUtil
+import git4idea.remote.hosting.HostedGitRepositoryRemote
 import git4idea.remote.hosting.currentBranchNameFlow
-import git4idea.repo.GitRemote
-import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitBranchPopupActions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
-import org.jetbrains.plugins.github.util.GithubGitHelper
-import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
-import org.jetbrains.plugins.github.util.GithubSettings
+import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 
 internal class GHPRBranchesViewModel(
   parentCs: CoroutineScope,
   private val project: Project,
-  private val repository: GitRepository,
+  private val mapping: GHGitRepositoryMapping,
   detailsModel: SingleValueModel<GHPullRequest>
 ) : CodeReviewBranchesViewModel {
   private val cs = parentCs.childScope()
 
-  private val git: Git = Git.getInstance()
-  private val vcsNotifier: VcsNotifier = project.service<VcsNotifier>()
+  private val gitRepository = mapping.remote.repository
 
   private val detailsState: StateFlow<GHPullRequest> = detailsModel.asStateFlow()
 
@@ -58,7 +46,7 @@ internal class GHPRBranchesViewModel(
     }
   }
 
-  override val isCheckedOut: SharedFlow<Boolean> = repository.currentBranchNameFlow().combine(sourceBranch) { currentBranch, sourceBranch ->
+  override val isCheckedOut: SharedFlow<Boolean> = gitRepository.currentBranchNameFlow().combine(sourceBranch) { currentBranch, sourceBranch ->
     currentBranch == sourceBranch
   }.modelFlow(cs, thisLogger())
 
@@ -66,64 +54,22 @@ internal class GHPRBranchesViewModel(
   override val showBranchesRequests: SharedFlow<CodeReviewBranches> = _showBranchesRequests
 
   override fun fetchAndCheckoutRemoteBranch() {
-    val pullRequest = detailsState.value
-    val headBranch = pullRequest.headRefName
-    val headRepository = pullRequest.headRepository
-    if (headRepository == null) {
-      vcsNotifier.notifyError(
-        GithubNotificationIdsHolder.PULL_REQUEST_CANNOT_SET_TRACKING_BRANCH,
-        GithubBundle.message("pull.request.branch.checkout.remote.cannot.find"),
-        GithubBundle.message("pull.request.branch.checkout.resolve.head.failed")
-      )
-      return
+    cs.launch {
+      val details = detailsState.first()
+      val remoteDescriptor = details.getRemoteDescriptor() ?: return@launch
+      GitRemoteBranchesUtil.fetchAndCheckoutRemoteBranch(gitRepository, remoteDescriptor, details.headRefName)
     }
-    val remoteName = headRepository.owner.login
-    val httpForkUrl = headRepository.url
-    val sshForkUrl = headRepository.sshUrl
-
-    object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.task.indicator"), true) {
-      override fun run(indicator: ProgressIndicator) {
-        val headRemote = git.findOrCreateRemote(repository, remoteName, httpForkUrl, sshForkUrl)
-        if (headRemote == null) {
-          vcsNotifier.notifyError(
-            GithubNotificationIdsHolder.PULL_REQUEST_CANNOT_SET_TRACKING_BRANCH,
-            GithubBundle.message("pull.request.branch.checkout.remote.cannot.find"),
-            GithubBundle.message("pull.request.branch.checkout.resolve.remote.failed") + "\n$httpForkUrl" + "\n$sshForkUrl"
-          )
-          return
-        }
-
-        val fetchResult = GitFetchSupport.fetchSupport(project).fetch(repository, headRemote, headBranch)
-        if (fetchResult.showNotificationIfFailed(GitBundle.message("branches.update.failed"))) {
-          val branch = "${headRemote.name}/${headBranch}"
-          invokeLater {
-            GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction.checkoutRemoteBranch(project, listOf(repository), branch)
-            GHPRStatisticsCollector.logDetailsBranchCheckedOut(project)
-          }
-        }
-      }
-    }.queue()
   }
 
-  private fun Git.findOrCreateRemote(repository: GitRepository, remoteName: String, httpUrl: String, sshUrl: String): GitRemote? {
-    val existingRemote = GithubGitHelper.getInstance().findRemote(repository, httpUrl, sshUrl)
-    if (existingRemote != null) return existingRemote
-
-    val useSshUrl = GithubSettings.getInstance().isCloneGitUsingSsh
-    val remoteUrl = if (useSshUrl) sshUrl else httpUrl
-
-    if (repository.remotes.any { it.name == remoteName }) {
-      return createRemote(repository, "pull_$remoteName", remoteUrl)
-    }
-    return createRemote(repository, remoteName, remoteUrl)
+  private fun GHPullRequest.getRemoteDescriptor(): HostedGitRepositoryRemote? = headRepository?.let {
+    HostedGitRepositoryRemote(
+      it.owner.login,
+      mapping.repository.serverPath.toURI(),
+      it.nameWithOwner,
+      it.url,
+      it.sshUrl
+    )
   }
-
-  private fun Git.createRemote(repository: GitRepository, remoteName: String, url: String): GitRemote? =
-    with(repository) {
-      addRemote(this, remoteName, url)
-      update()
-      remotes.find { it.name == remoteName }
-    }
 
   override fun showBranches() {
     cs.launchNow {

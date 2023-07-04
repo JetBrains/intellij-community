@@ -3,43 +3,33 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
-import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.withBackgroundProgress
-import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.util.childScope
-import git4idea.GitUtil
-import git4idea.commands.Git
-import git4idea.fetch.GitFetchSupport
-import git4idea.i18n.GitBundle
-import git4idea.repo.GitRemote
+import git4idea.remote.hosting.GitRemoteBranchesUtil
+import git4idea.remote.hosting.HostedGitRepositoryRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
-import git4idea.ui.branch.GitBranchPopupActions
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestFullDetails
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 internal class GitLabMergeRequestBranchesViewModel(
   private val project: Project,
   parentCs: CoroutineScope,
   private val mergeRequest: GitLabMergeRequest,
-  private val repository: GitRepository
+  private val mapping: GitLabProjectMapping
 ) : CodeReviewBranchesViewModel {
-  private val git: Git = Git.getInstance()
-  private val vcsNotifier: VcsNotifier = project.service<VcsNotifier>()
+  private val gitRepository: GitRepository = mapping.remote.repository
 
   private val cs: CoroutineScope = parentCs.childScope()
 
@@ -54,7 +44,7 @@ internal class GitLabMergeRequestBranchesViewModel(
 
   override val isCheckedOut: SharedFlow<Boolean> = callbackFlow {
     val cs = this
-    send(isBranchCheckedOut(repository, sourceBranch.value))
+    send(isBranchCheckedOut(gitRepository, sourceBranch.value))
 
     project.messageBus
       .connect(cs)
@@ -63,7 +53,7 @@ internal class GitLabMergeRequestBranchesViewModel(
       })
 
     sourceBranch.collect { sourceBranch ->
-      send(isBranchCheckedOut(repository, sourceBranch))
+      send(isBranchCheckedOut(gitRepository, sourceBranch))
     }
   }.modelFlow(cs, thisLogger())
 
@@ -72,64 +62,19 @@ internal class GitLabMergeRequestBranchesViewModel(
 
   override fun fetchAndCheckoutRemoteBranch() {
     cs.launch {
-      val branchToCheckout = withBackgroundProgress(
-        project,
-        CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")
-      ) {
-        withRawProgressReporter {
-          getBranchToCheckout()
-        }
-      } ?: return@launch
-
-      withContext(Dispatchers.Main) {
-        GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction
-          .checkoutRemoteBranch(project, listOf(repository), branchToCheckout)
-      }
+      val details = mergeRequest.details.first()
+      val remoteDescriptor = details.getRemoteDescriptor() ?: return@launch
+      GitRemoteBranchesUtil.fetchAndCheckoutRemoteBranch(gitRepository, remoteDescriptor, details.sourceBranch)
     }
   }
 
-  private suspend fun getBranchToCheckout(): String? {
-    val details = mergeRequest.details.first()
-    val sourceProject = details.sourceProject ?: return null
-    val sourceBranch = details.sourceBranch
-
-    val headRemote = coroutineToIndicator {
-      git.findOrCreateRemote(repository, sourceProject)
-    }
-    if (headRemote == null) {
-      withContext(Dispatchers.Main) {
-        notifyRemoteError(vcsNotifier, sourceProject)
-      }
-      return null
-    }
-    val fetchResult = coroutineToIndicator {
-      GitFetchSupport.fetchSupport(project).fetch(repository, headRemote, sourceBranch)
-    }
-    return withContext(Dispatchers.Main) {
-      val fetchOk = fetchResult.showNotificationIfFailed(GitBundle.message("branches.update.failed"))
-      if (fetchOk) {
-        "${headRemote.name}/${sourceBranch}"
-      }
-      else {
-        null
-      }
-    }
-  }
-
-  private fun notifyRemoteError(vcsNotifier: VcsNotifier, project: GitLabProjectDTO) {
-    var failedMessage = GitLabBundle.message("merge.request.branch.checkout.resolve.remote.failed")
-    val httpUrl = project.httpUrlToRepo
-    val sshUrl = project.sshUrlToRepo
-    if (httpUrl != null) {
-      failedMessage += "\n$httpUrl"
-    }
-    if (sshUrl != null) {
-      failedMessage += "\n$sshUrl"
-    }
-    vcsNotifier.notifyError(
-      MERGE_REQUEST_CANNOT_SET_TRACKING_BRANCH,
-      GitLabBundle.message("merge.request.branch.checkout.remote.cannot.find"),
-      failedMessage
+  private fun GitLabMergeRequestFullDetails.getRemoteDescriptor(): HostedGitRepositoryRemote? = sourceProject?.let {
+    HostedGitRepositoryRemote(
+      it.ownerPath,
+      mapping.repository.serverPath.toURI(),
+      it.path,
+      it.httpUrlToRepo,
+      it.sshUrlToRepo
     )
   }
 
@@ -139,72 +84,9 @@ internal class GitLabMergeRequestBranchesViewModel(
       _showBranchesRequests.emit(CodeReviewBranches(details.sourceBranch, details.targetBranch))
     }
   }
-
-  companion object {
-    private const val MERGE_REQUEST_CANNOT_SET_TRACKING_BRANCH = "gitlab.merge.request.cannot.set.tracking.branch"
-  }
 }
 
 private fun isBranchCheckedOut(repository: GitRepository, sourceBranch: String): Boolean {
   val currentBranchName = repository.currentBranchName
   return currentBranchName == sourceBranch
-}
-
-private fun Git.findOrCreateRemote(repository: GitRepository, project: GitLabProjectDTO): GitRemote? {
-  val existingRemote = findRemote(repository, project)
-  if (existingRemote != null) return existingRemote
-
-  val httpUrl = project.httpUrlToRepo
-  val sshUrl = project.sshUrlToRepo
-  val preferHttp = shouldAddHttpRemote(repository)
-  return if (preferHttp && httpUrl != null) {
-    createRemote(repository, project.ownerPath, httpUrl)
-  }
-  else if (sshUrl != null) {
-    createRemote(repository, project.ownerPath, sshUrl)
-  }
-  else {
-    null
-  }
-}
-
-private fun findRemote(repository: GitRepository, project: GitLabProjectDTO): GitRemote? =
-  repository.remotes.find {
-    val url = it.firstUrl
-    url != null && (url.removeSuffix("/").removeSuffix(GitUtil.DOT_GIT).endsWith(project.fullPath))
-  }
-
-private fun shouldAddHttpRemote(repository: GitRepository): Boolean {
-  val preferredRemoteUrl = repository.remotes.find { it.name == "origin" }?.firstUrl
-                           ?: repository.remotes.firstNotNullOfOrNull { it.firstUrl }
-  if (preferredRemoteUrl != null) {
-    return preferredRemoteUrl.startsWith("http")
-  }
-  return true
-}
-
-private fun Git.createRemote(repository: GitRepository, remoteName: String, url: String): GitRemote? {
-  val actualName = findNameForRemote(repository, remoteName) ?: return null
-  return with(repository) {
-    addRemote(this, actualName, url)
-    update()
-    remotes.find { it.name == actualName }
-  }
-}
-
-/**
- * Returns the [preferredName] if it is not taken or adds a numerical index to it
- */
-private fun findNameForRemote(repository: GitRepository, preferredName: String): String? {
-  val exitingNames = repository.remotes.mapTo(mutableSetOf(), GitRemote::getName)
-  if (!exitingNames.contains(preferredName)) {
-    return preferredName
-  }
-  else {
-    return sequenceOf(1..Int.MAX_VALUE).map {
-      "${preferredName}_$it"
-    }.find {
-      exitingNames.contains(it)
-    }
-  }
 }
