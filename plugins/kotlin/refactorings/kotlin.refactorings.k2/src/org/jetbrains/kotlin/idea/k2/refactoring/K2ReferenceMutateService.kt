@@ -2,8 +2,9 @@
 package org.jetbrains.kotlin.idea.k2.refactoring
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.parentOfTypes
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.psi.*
  * required operations. It is OK and on purpose - this functionality will be added later.
  */
 internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
+    @RequiresWriteLock
     override fun bindToFqName(
         simpleNameReference: KtSimpleNameReference,
         fqName: FqName,
@@ -35,14 +37,15 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             analyseImports(containingFile)
         }.unusedImports
 
-        val anchorElement = expression.parentOfTypes(KtTypeReference::class) ?: expression.topMostQualified()
+        val anchorElement = expression.parentOfType<KtUserType>(withSelf = false)
+                            ?: expression.parentOfType<KtDotQualifiedExpression>(withSelf = false)
+                            ?: expression
         val newElement = when (anchorElement) {
-            is KtTypeReference -> anchorElement.replaceWith(fqName)
+            is KtUserType -> anchorElement.replaceWith(fqName)
             is KtSimpleNameExpression -> anchorElement.replaceWith(fqName)
             is KtDotQualifiedExpression -> anchorElement.replaceWith(fqName)
-            else -> return expression
+            else -> null
         } ?: return expression
-
 
         val unusedImportsAfterChange = analyze(containingFile) {
             analyseImports(containingFile)
@@ -56,8 +59,9 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return newShortenings.invokeShortening().firstOrNull() ?: newElement
     }
 
-    private fun KtTypeReference.replaceWith(fqName: FqName): KtTypeReference {
-        val newReference = KtPsiFactory(project).createType(fqName.asString())
+    private fun KtTypeElement.replaceWith(fqName: FqName): KtTypeElement {
+        val newReference = KtPsiFactory(project).createType(fqName.asString()).typeElement
+                           ?: error("Could not create type from $fqName")
         return replaced(newReference)
     }
 
@@ -73,21 +77,16 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             is KtNameReferenceExpression -> {
                 psiFactory.createExpression(fqName.asString())
             }
-            is KtCallElement -> {
+            is KtCallExpression -> {
                 val newName = psiFactory.createSimpleName(fqName.shortName().asString())
                 selectorExpression.calleeExpression?.replace(newName)
-                val packageName = fqName.pathSegments().apply { removeLast() }.joinToString(".") { it.asString() }
-                psiFactory.createExpression("$packageName.${(selectorExpression as KtCallElement).text}")
+                val packageName = fqName.parent().asString()
+                psiFactory.createExpression("$packageName.${selectorExpression.text}")
             }
             else -> return null
         }
         return replaced(newExpression)
     }
-
-    private fun KtSimpleNameExpression.topMostQualified() = generateSequence<KtExpression>(this) { elem ->
-        val parent = elem.parent
-        if (parent is KtDotQualifiedExpression) parent else null
-    }.lastOrNull() ?: this
 
     override fun SyntheticPropertyAccessorReference.renameTo(newElementName: String): KtElement? {
         operationNotSupportedInK2Error()

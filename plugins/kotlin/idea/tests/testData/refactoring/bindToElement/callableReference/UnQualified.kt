@@ -1,5 +1,5 @@
-// BIND_TO org.jetbrains.B
-package org.jetbrains
+// BIND_TO test.B
+package test
 
 class A {
     fun foo() { }

@@ -1,5 +1,5 @@
-// BIND_TO org.jetbrains.B
-package org.jetbrains
+// BIND_TO test.B
+package test
 
 class A {
     fun foo() { }
@@ -10,5 +10,5 @@ class B {
 }
 
 fun foo() {
-    val x = <caret>org.jetbrains.A::foo
+    val x = test.<caret>A::foo
 }
