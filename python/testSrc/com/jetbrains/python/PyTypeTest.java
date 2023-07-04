@@ -108,7 +108,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testSetComp() {
-    doTest("set",
+    doTest("Set[int]",
            "expr = {i for i in range(3)}");
   }
 

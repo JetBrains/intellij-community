@@ -2,8 +2,12 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.util.SmartList;
 import com.jetbrains.python.psi.PyDictCompExpression;
 import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +20,16 @@ public class PyDictCompExpressionImpl extends PyComprehensionElementImpl impleme
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    return PyBuiltinCache.getInstance(this).getDictType();
+    final var resultExpr = getResultExpression();
+    final var cache = PyBuiltinCache.getInstance(this);
+    final var dictionary = cache.getDictType();
+    if (resultExpr instanceof PyKeyValueExpression keyValue && dictionary != null) {
+      final PyType keyType = context.getType(keyValue.getKey());
+      PyExpression value = keyValue.getValue();
+      final PyType valueType =  value != null ? context.getType(value) : null;
+      return new PyCollectionTypeImpl(dictionary.getPyClass(), false, new SmartList<>(keyType, valueType));
+    }
+    return dictionary;
   }
 
   @Override

@@ -1971,6 +1971,41 @@ public class Py3TypeTest extends PyTestCase {
            "expr = dict({'a': 1})");
   }
 
+  // PY-27708
+  public void testDictCompExpressionWithGenerics() {
+    doTest("dict[str, (Any) -> Any]",
+           """
+              from typing import Callable, Dict, Any
+
+              def test(x: Dict[str, Callable[[Any], Any]]):
+                  y = {k: v for k, v in x.items()}
+                  expr = y
+                    
+             """);
+  }
+
+  public void testDictFromKWArgs() {
+    doTest("dict[str, Any]",
+           """
+             def test(**kwargs):
+                 expr = {k: v for k, v in kwargs.items()}
+             """);
+  }
+
+
+  // PY-27708
+  public void testSetCompExpressionWithGenerics() {
+    doTest("set[(Any) -> Any]",
+           """
+             from typing import Callable, Any, Set
+                                
+             def test(x: Set[Callable[[Any], Any]]):
+                 y = {k for k in x}
+                 expr = y
+             """);
+  }
+  
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
