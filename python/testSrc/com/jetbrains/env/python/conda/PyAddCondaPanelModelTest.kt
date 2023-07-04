@@ -16,10 +16,10 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.hamcrest.MatcherAssert
-import org.hamcrest.Matchers.*
+import org.hamcrest.Matchers.hasItem
+import org.hamcrest.Matchers.not
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
@@ -28,6 +28,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.time.Duration.Companion.seconds
 
 
 @RunWith(Parameterized::class)
@@ -41,12 +42,13 @@ class PyAddCondaPanelModelTest {
   @Rule
   val projectRule: ProjectRule = ProjectRule()
 
-
   @Parameterized.Parameter(0)
   @JvmField
   var useLegacy: Boolean = false
 
   companion object {
+    private val timeout = 60.seconds
+
     @JvmStatic
     @Parameterized.Parameters
     fun data(): Collection<Array<Any>> = listOf(arrayOf(false), arrayOf(true))
@@ -60,7 +62,7 @@ class PyAddCondaPanelModelTest {
 
 
   @Test
-  fun testCondaDetection(): Unit = runTest {
+  fun testCondaDetection(): Unit = runTest(timeout = timeout) {
     val model = PyAddCondaPanelModel(null, emptyList(), projectRule.project)
     model.detectConda(coroutineContext)
     val detectedPath = model.condaPathTextBoxRwProp.get()
@@ -70,7 +72,7 @@ class PyAddCondaPanelModelTest {
   }
 
   @Test
-  fun testCondaCreateNewEnv(): Unit = runTest {
+  fun testCondaCreateNewEnv(): Unit = runTest(timeout = timeout) {
     val condaName = "someNewCondaEnv"
     val model = PyAddCondaPanelModel(null, emptyList(), projectRule.project)
     model.condaPathTextBoxRwProp.set(condaRule.condaPath.toString())
@@ -93,7 +95,7 @@ class PyAddCondaPanelModelTest {
   }
 
   @Test
-  fun testCondaCantUseNameUsedAlready(): Unit = runTest {
+  fun testCondaCantUseNameUsedAlready(): Unit = runTest(timeout = timeout) {
     val name = "cond_env_" + Math.random().toString().replace('.', '_')
 
     // Create env
@@ -114,7 +116,7 @@ class PyAddCondaPanelModelTest {
   }
 
   @Test
-  fun testCondaUseExistingEnv(): Unit = runTest {
+  fun testCondaUseExistingEnv(): Unit = runTest(timeout = timeout) {
     val model = PyAddCondaPanelModel(null, emptyList(), projectRule.project)
     model.condaPathTextBoxRwProp.set(condaRule.condaPath.toString())
     model.onLoadEnvsClicked(coroutineContext)
@@ -127,7 +129,7 @@ class PyAddCondaPanelModelTest {
   }
 
   @Test
-  fun testCondaModelValidation(): Unit = runTest {
+  fun testCondaModelValidation(): Unit = runTest(timeout = timeout) {
     val model = PyAddCondaPanelModel(null, emptyList(), projectRule.project)
     Assert.assertNotNull("No validation error, even though path not set", model.getValidationError())
 
