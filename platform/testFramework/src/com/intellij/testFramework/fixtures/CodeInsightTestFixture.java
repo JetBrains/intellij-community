@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.completion.CompletionType;
@@ -15,6 +15,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.find.usages.api.SearchTarget;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -81,6 +82,13 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return the file currently loaded into the in-memory editor.
    */
   PsiFile getFile();
+
+  /**
+   * @return the action context for current in-memory editor
+   */
+  default ModCommandAction.ActionContext getActionContext() {
+    return ModCommandAction.ActionContext.from(getEditor(), getFile());
+  }
 
   void setTestDataPath(@NotNull String dataPath);
 

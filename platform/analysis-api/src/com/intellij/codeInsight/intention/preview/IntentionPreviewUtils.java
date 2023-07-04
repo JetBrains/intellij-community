@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -186,6 +188,10 @@ public final class IntentionPreviewUtils {
           return new IntentionPreviewInfo.Html(new HtmlBuilder().append(
             AnalysisBundle.message("preview.cannot.perform.action")).br().append(message.messageText()).toFragment());
         }
+      }
+      else if (command instanceof ModCopyToClipboard copy) {
+        navigateInfo = new IntentionPreviewInfo.Html(HtmlChunk.text(
+          AnalysisBundle.message("preview.copy.to.clipboard", StringUtil.shortenTextWithEllipsis(copy.content(), 50, 10))));
       }
     }
     return customDiffList.isEmpty() ? navigateInfo :

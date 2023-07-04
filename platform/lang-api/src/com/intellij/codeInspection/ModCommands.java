@@ -33,6 +33,14 @@ public final class ModCommands {
   }
 
   /**
+   * @param content content to put into clipboard
+   * @return a command that copies the content to the clipboard
+   */
+  public static @NotNull ModCommand copyToClipboard(@NotNull String content) {
+    return new ModCopyToClipboard(content);
+  }
+  
+  /**
    * @param message error message to display
    * @return a command that displays the specified error message in the editor
    */

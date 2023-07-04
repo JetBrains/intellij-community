@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
@@ -22,8 +23,10 @@ public class CopyConcatenatedStringToClipboardIntentionTest extends IPPTestCase 
 
   public void testSimpleConcatenation() {
     myFixture.configureByFile(getTestName(false) + ".java");
-    myFixture.launchAction(myFixture.findSingleIntention(
-      IntentionPowerPackBundle.message("copy.concatenated.string.to.clipboard.intention.name")));
+    IntentionAction action = myFixture.findSingleIntention(
+      IntentionPowerPackBundle.message("copy.concatenated.string.to.clipboard.intention.name"));
+    myFixture.checkIntentionPreviewHtml(action, "Copy to clipboard the string &quot;&lt;html&gt;<br/>  &lt;body&gt;<br/>?<br/>  &lt;/body&gt;<br/>&lt;/html&gt;<br/>&quot;");
+    myFixture.launchAction(action);
     final Object result = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
     assertEquals("""
                    <html>

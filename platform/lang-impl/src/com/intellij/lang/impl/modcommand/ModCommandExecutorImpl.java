@@ -26,6 +26,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -47,6 +48,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -88,6 +90,10 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
       if (!onTheFly) return true;
       return executeHighlight(project, highlight);
     }
+    if (command instanceof ModCopyToClipboard copyToClipboard) {
+      if (!onTheFly) return true;
+      return executeCopyToClipboard(copyToClipboard);
+    }
     if (command instanceof ModNothing) {
       return true;
     }
@@ -109,6 +115,11 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
       return executeDelete(project, deleteFile);
     }
     throw new IllegalArgumentException("Unknown command: " + command);
+  }
+
+  private static boolean executeCopyToClipboard(@NotNull ModCopyToClipboard clipboard) {
+    CopyPasteManager.getInstance().setContents(new StringSelection(clipboard.content()));
+    return true;
   }
 
   private boolean executeDelete(Project project, ModDeleteFile file) {
