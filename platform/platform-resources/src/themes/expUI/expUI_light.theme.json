@@ -3,6 +3,7 @@
   "dark": false,
   "author": "JetBrains",
   "editorScheme": "/themes/expUI/expUI_lightScheme.xml",
+  "nameKey": "light.theme.name",
 
   "colors": {
     "Grey1": "#000000",

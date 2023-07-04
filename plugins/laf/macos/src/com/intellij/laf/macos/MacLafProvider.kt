@@ -1,10 +1,10 @@
 package com.intellij.laf.macos
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafProvider
 import com.intellij.ide.ui.laf.PluggableLafInfo
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.EditorTextField
 import javax.swing.LookAndFeel
 
@@ -22,8 +22,7 @@ internal class MacLafProvider : LafProvider {
   }
 
   companion object {
-    @NlsSafe
-    const val LAF_NAME = "macOS Light"
+    val LAF_NAME = IdeBundle.message("macOS.light.theme.name");
 
     private val instance: PluggableLafInfo = MacOsLookAndFeelInfo()
   }

@@ -2,6 +2,7 @@
   "name": "Windows 10 Light",
   "dark": false,
   "author": "JetBrains",
+  "nameKey": "windows.10.light.theme.name",
 
   "ui": {
     "*": {

@@ -35,7 +35,7 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
   private boolean myInitialised;
 
   public UIThemeBasedLookAndFeelInfo(@NotNull UITheme theme) {
-    super(theme.getName(), (theme.isDark() ? DarculaLaf.class : IntelliJLaf.class).getName());
+    super(theme.getDisplayName(), (theme.isDark() ? DarculaLaf.class : IntelliJLaf.class).getName());
     myTheme = theme;
   }
 

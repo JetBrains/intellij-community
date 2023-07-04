@@ -2,6 +2,7 @@
   "name": "macOS Light",
   "dark": false,
   "author": "JetBrains",
+  "nameKey": "macOS.light.theme.name",
 
   "ui": {
     "*": {

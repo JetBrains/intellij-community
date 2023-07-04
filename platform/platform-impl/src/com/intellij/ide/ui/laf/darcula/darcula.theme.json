@@ -2,6 +2,7 @@
   "name": "Darcula",
   "dark": true,
   "author": "JetBrains",
+  "nameKey": "darcula.theme.name",
 
   "ui": {
     "*": {

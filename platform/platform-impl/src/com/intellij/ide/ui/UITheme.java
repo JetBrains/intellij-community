@@ -2,6 +2,8 @@
 package com.intellij.ide.ui;
 
 import com.fasterxml.jackson.jr.ob.JSON;
+import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -59,6 +61,8 @@ public final class UITheme {
   private String editorSchemeName;
   private SVGLoader.SvgElementColorPatcherProvider colorPatcher;
   private SVGLoader.SvgElementColorPatcherProvider selectionColorPatcher;
+  private @Nullable String resourceBundle = "messages.IdeBundle";
+  private @Nullable String nameKey;
 
   private static final String OS_MACOS_KEY = "os.mac";
   private static final String OS_WINDOWS_KEY = "os.windows";
@@ -69,6 +73,14 @@ public final class UITheme {
 
   public String getName() {
     return name;
+  }
+
+  public String getDisplayName() {
+    if (resourceBundle != null & nameKey != null) {
+      ResourceBundle bundle = DynamicBundle.getResourceBundle(providerClassLoader, resourceBundle);
+      return AbstractBundle.message(bundle, nameKey);
+    }
+    return getName();
   }
 
   public boolean isDark() {
@@ -854,6 +866,16 @@ public final class UITheme {
   @SuppressWarnings("unused")
   private void setParentTheme(@Nullable String parentTheme) {
     this.parentTheme = parentTheme;
+  }
+
+  @SuppressWarnings("unused")
+  private void setNameKey(@Nullable String nameKey) {
+    this.nameKey = nameKey;
+  }
+
+  @SuppressWarnings("unused")
+  private void setResourceBundle(@Nullable String resourceBundle) {
+    this.resourceBundle = resourceBundle;
   }
 
   @SuppressWarnings("unused")

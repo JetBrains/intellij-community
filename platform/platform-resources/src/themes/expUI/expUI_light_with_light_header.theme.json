@@ -4,6 +4,7 @@
   "author": "JetBrains",
   "parentTheme": "Light",
   "editorScheme": "/themes/expUI/expUI_lightScheme.xml",
+  "nameKey": "light.header.theme.name",
 
   "ui": {
     "CodeWithMe.MainToolbar.NoConnectionLabelForeground": "Grey7",

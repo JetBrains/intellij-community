@@ -1,7 +1,8 @@
 {
-  "name": "High contrast",
+  "name": "High Contrast",
   "dark": true,
   "author": "JetBrains",
+  "nameKey": "high.contrast.theme.name",
 
   "editorScheme": "/themes/highContrastScheme.xml",
 
