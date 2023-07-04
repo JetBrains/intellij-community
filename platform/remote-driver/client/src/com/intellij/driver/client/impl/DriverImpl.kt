@@ -11,10 +11,11 @@ import com.intellij.driver.model.transport.*
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Proxy
+import java.lang.reflect.UndeclaredThrowableException
 import java.util.concurrent.ConcurrentHashMap
+import javax.management.InstanceNotFoundException
 import kotlin.reflect.KClass
 
-// todo slf4j logging for calls
 internal class DriverImpl(host: JmxHost?) : Driver {
   private val invoker: Invoker = JmxCallHandler.jmx(Invoker::class.java, host)
   private val sessionHolder = ThreadLocal<Session>()
@@ -27,6 +28,12 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     get() {
       try {
         invoker.getProductVersion()
+      }
+      catch (ut: UndeclaredThrowableException) {
+        if (ut.cause is InstanceNotFoundException) {
+          return false // Invoker is not yet registered in JMX
+        }
+        throw ut
       }
       catch (ioe: JmxCallException) {
         return false
