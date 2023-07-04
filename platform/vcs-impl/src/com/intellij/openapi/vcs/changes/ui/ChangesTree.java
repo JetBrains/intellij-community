@@ -33,6 +33,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.JBUI;
@@ -538,6 +539,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   @NotNull
+  @RequiresEdt
   public InclusionModel getInclusionModel() {
     return myInclusionModel;
   }
