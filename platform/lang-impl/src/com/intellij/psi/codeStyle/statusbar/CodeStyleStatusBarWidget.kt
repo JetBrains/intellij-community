@@ -3,12 +3,9 @@ package com.intellij.psi.codeStyle.statusbar
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
@@ -18,7 +15,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.*
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
-import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.messages.MessageBusConnection
 import javax.swing.JPanel
 
@@ -107,8 +103,7 @@ class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(pro
     get() = panel!!.text.isNullOrEmpty()
 
   companion object {
-    @JvmField
-    val WIDGET_ID: String = CodeStyleStatusBarWidget::class.java.name
+    const val WIDGET_ID: String = "CodeStyleStatusBarWidget"
 
     private fun getUiContributor(settings: TransientCodeStyleSettings): CodeStyleStatusBarUIContributor? {
       val modifier = settings.modifier
