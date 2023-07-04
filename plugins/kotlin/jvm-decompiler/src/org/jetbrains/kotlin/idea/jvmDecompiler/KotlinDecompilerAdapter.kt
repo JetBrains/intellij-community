@@ -33,10 +33,9 @@ class KotlinBytecodeDecompilerTask(private val file: KtFile) : Task.Backgroundab
     }
 
     override fun onSuccess() {
-        if (!file.isValid || file.project.isDisposed) return
+        if (!file.isValid) return
 
         val text = decompiledText
-        decompiledText = null
         if (text != null) {
             generateDecompiledVirtualFile(text)?.let {
                 OpenFileDescriptor(file.project, it).navigate(true)
