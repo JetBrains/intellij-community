@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.jvmDecompiler
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
@@ -21,33 +20,36 @@ class KotlinBytecodeDecompilerTask(private val file: KtFile) : Task.Backgroundab
     file.project,
     KotlinJvmDecompilerBundle.message("internal.action.text.decompile.kotlin.bytecode")
 ) {
+    private var decompiledText: String? = null
+
     override fun run(indicator: ProgressIndicator) {
         indicator.text = KotlinJvmDecompilerBundle.message("internal.indicator.text.decompiling", file.name)
 
-        val decompiledText = try {
+        decompiledText = try {
             KotlinBytecodeDecompiler.decompile(file)
         } catch (e: DecompileFailedException) {
             null
-        } ?: run {
-            ApplicationManager.getApplication().invokeLater {
-                Messages.showErrorDialog(
-                    KotlinJvmDecompilerBundle.message("internal.error.text.cannot.decompile", file.name),
-                    KotlinJvmDecompilerBundle.message("internal.title.decompiler.error")
-                )
-            }
-            return
         }
+    }
 
-        ApplicationManager.getApplication().invokeLater {
-            generateDecompiledVirtualFile(decompiledText)?.let {
+    override fun onSuccess() {
+        if (!file.isValid || file.project.isDisposed) return
+
+        val text = decompiledText
+        decompiledText = null
+        if (text != null) {
+            generateDecompiledVirtualFile(text)?.let {
                 OpenFileDescriptor(file.project, it).navigate(true)
             }
+        } else {
+            Messages.showErrorDialog(
+                KotlinJvmDecompilerBundle.message("internal.error.text.cannot.decompile", file.name),
+                KotlinJvmDecompilerBundle.message("internal.title.decompiler.error")
+            )
         }
     }
 
     fun generateDecompiledVirtualFile(decompiledText: String? = null): VirtualFile? {
-        if (!file.isValid || file.project.isDisposed) return null
-
         val text = decompiledText ?: try {
             KotlinBytecodeDecompiler.decompile(file)
         } catch (e: DecompileFailedException) {
