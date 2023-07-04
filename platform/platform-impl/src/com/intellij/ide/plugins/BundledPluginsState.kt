@@ -22,7 +22,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.exists
 import kotlin.io.path.readLines
 
@@ -44,24 +43,10 @@ class BundledPluginsState : ApplicationInitializedListener {
     val loadedPlugins: Set<IdeaPluginDescriptor>
       @VisibleForTesting get() = PluginManagerCore.getLoadedPlugins().filterTo(HashSet()) { it.isBundled }
 
-    private val stateExistedAtTheStart = AtomicReference<Boolean>(null)
-
-    /**
-     * should be called before writing to the file
-     */
-    fun checkStateExistedAtTheStart(bundledPluginsFile: Path = PathManager.getConfigDir().resolve(BUNDLED_PLUGINS_FILENAME)): Boolean {
-      if (stateExistedAtTheStart.get() == null) {
-        stateExistedAtTheStart.set(bundledPluginsFile.exists())
-      }
-      return stateExistedAtTheStart.get()
-    }
-
     @VisibleForTesting
     fun writePluginIdsToFile(pluginIds: Set<IdeaPluginDescriptor>, configDir: Path = PathManager.getConfigDir()) {
-      val bundledPluginsFile = configDir.resolve(BUNDLED_PLUGINS_FILENAME)
-      checkStateExistedAtTheStart(bundledPluginsFile)
       PluginManagerCore.writePluginIdsToFile(
-        bundledPluginsFile,
+        configDir.resolve(BUNDLED_PLUGINS_FILENAME),
         pluginIds.map { "${it.pluginId.idString}|${it.category}\n" },
       )
     }

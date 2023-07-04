@@ -11,7 +11,6 @@ import com.intellij.ide.*
 import com.intellij.ide.bootstrap.*
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
-import com.intellij.ide.plugins.BundledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.idea.DirectoryLock.CannotActivateException
@@ -217,7 +216,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
       if (ConfigImportHelper.isNewUser() && System.getProperty(NewUiValue.KEY) == null) {
         runCatching {
-          EarlyAccessRegistryManager.setAndFlush(mapOf(NewUiValue.KEY to true.toString()))
+          EarlyAccessRegistryManager.setAndFlush(mapOf(NewUiValue.KEY to "true"))
         }.getOrLogException(log)
       }
     }
@@ -336,10 +335,8 @@ fun CoroutineScope.startApplication(args: List<String>,
 }
 
 fun isConfigImportNeeded(configPath: Path): Boolean {
-  return !Files.exists(configPath)
-         || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME))
+  return !Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME))
          || customTargetDirectoryToImportConfig != null
-         || !(BundledPluginsState.checkStateExistedAtTheStart() || ApplicationManagerEx.isInIntegrationTest())
 }
 
 /**
