@@ -43,7 +43,7 @@ class HandlerLeakTest {
       // language=JavaScript
       val code = """
       (function some() {
-        return 2 + 2;
+        return new Promise(resolve => resolve(2 + 2));
       })();
       """.trimIndent()
       val result = browser.executeCancellableJavaScript(code)

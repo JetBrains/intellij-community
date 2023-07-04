@@ -310,7 +310,7 @@ class CollectDiagramContentTest {
 
   private suspend fun MermaidDiagramPreviewComponent.collectRenderedDiagram(): String {
     // language=JavaScript
-    val code = """window["collectDiagramContent"]();"""
+    val code = """new Promise(resolve => resolve(window["collectDiagramContent"]()));"""
     val result = browser.executeCancellableJavaScript(code)
     checkNotNull(result) { "collectDiagramContent returned no result" }
     return result

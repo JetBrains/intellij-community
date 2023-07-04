@@ -57,13 +57,24 @@ private suspend fun loadDiagram(browser: JBCefBrowser, diagramSource: String) {
   browser.waitForPageLoad(url)
   val content = PreviewEncodingUtil.encodeContent(diagramSource)
   // language=JavaScript
-  val code = """window["updateMermaidDiagramContent"]("$content");"""
+  val code = """
+  (function() {
+    return new Promise(resolve => {
+      window["updateMermaidDiagramContent"]("$content");
+      resolve();
+    });
+  })();
+  """.trimIndent()
   browser.executeCancellableJavaScript(code)
 }
 
 private suspend fun collectDiagramContent(browser: JBCefBrowser): String {
   // language=JavaScript
-  val code = """window["collectDiagramContent"]();"""
+  val code = """
+  (function() {
+    return new Promise(resolve => resolve(window["collectDiagramContent"]()));
+  })();
+  """.trimIndent()
   return browser.executeCancellableJavaScript(code)!!
 }
 

@@ -10,6 +10,11 @@ import org.intellij.lang.annotations.Language
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+/**
+ * [code] is expected to be **valid** js expression that returns an instance of Promise.
+ * Check [wrapWithErrorHandling] to see how this expression will be used.
+ * Also, consider wrapping your expression in a `(function() { ... })();`.
+ */
 @Throws(JsCallExecutionException::class)
 internal suspend fun JBCefBrowser.executeCancellableJavaScript(@Language("JavaScript") code: String): String? {
   return executeCancellableJsCall(browser = this, code)
@@ -81,26 +86,26 @@ private fun wrapWithErrorHandling(
 ): String {
   // language=JavaScript
   return """
-  (function() {  
-    try {
-      function payload() {
-        return $code;
-      }
-      const result = payload();
+  (function() {
+    // Should return promise
+    function payload() {
+      return $code;
+    }
+    payload().then(result => {
       // call back the related JBCefJSQuery
       window.${resultQuery.funcName}({
         request: "" + result,
         onSuccess: (response) => {}, 
         onFailure: (error_code, error_message) => {}
       });
-    } catch (error) {
+    }).catch(error => {
       // call back the related error handling JBCefJSQuery
       window.${errorQuery.funcName}({
         request: "" + error, 
         onSuccess: (response) => {}, 
         onFailure: (error_code, error_message) => {}
       });
-    }
+    });
   })();
   """.trimIndent()
 }

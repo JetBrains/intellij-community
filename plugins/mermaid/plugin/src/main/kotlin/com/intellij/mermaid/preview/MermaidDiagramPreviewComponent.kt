@@ -36,7 +36,14 @@ class MermaidDiagramPreviewComponent(private val project: Project): BorderLayout
   suspend fun update(text: String) {
     val content = PreviewEncodingUtil.encodeContent(text)
     // language=JavaScript
-    val code = """window["updateMermaidDiagramContent"]("$content");"""
+    val code = """
+    (function() {
+      return new Promise(resolve => {
+        window["updateMermaidDiagramContent"]("$content");
+        resolve();
+      });
+    })();
+    """.trimIndent()
     try {
       browser.executeCancellableJavaScript(code)
     } catch (exception: JsCallExecutionException) {
@@ -51,13 +58,18 @@ class MermaidDiagramPreviewComponent(private val project: Project): BorderLayout
   private suspend fun injectLinkOpener() {
     // language=JavaScript
     val code = """
-    window["openLink"] = function(link) {
-      window.${openLinkQuery.funcName}({
-        request: "" + link,
-        onSuccess: (response) => {}, 
-        onFailure: (errorCode, errorMessage) => {}
+    (function() {
+      return new Promise(resolve => {
+        window["openLink"] = function(link) {
+          window.${openLinkQuery.funcName}({
+            request: "" + link,
+            onSuccess: (response) => {}, 
+            onFailure: (errorCode, errorMessage) => {}
+          });
+        };
+        resolve();
       });
-    };
+    })();
     """.trimIndent()
     browser.executeCancellableJavaScript(code)
   }
