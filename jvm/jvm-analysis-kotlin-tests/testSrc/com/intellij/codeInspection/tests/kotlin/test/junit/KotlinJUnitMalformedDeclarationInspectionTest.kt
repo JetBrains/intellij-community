@@ -806,6 +806,33 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       }
     """.trimIndent())
   }
+  fun `test non-malformed with multiple extensions`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      class TestNonParameterResolver : org.junit.jupiter.api.extension.Extension { }
+      
+      class TestParameterResolver : org.junit.jupiter.api.extension.ParameterResolver {
+        override fun supportsParameter(
+          parameterContext: org.junit.jupiter.api.extension.ParameterContext, 
+          extensionContext: org.junit.jupiter.api.extension.ExtensionContext
+        ): Boolean = true
+    
+        override fun resolveParameter(
+          parameterContext: org.junit.jupiter.api.extension.ParameterContext, 
+          extensionContext: org.junit.jupiter.api.extension.ExtensionContext
+        ): Any = ""
+      }
+      
+      @org.junit.jupiter.api.extension.ExtendWith(TestNonParameterResolver::class)
+      @org.junit.jupiter.api.extension.ExtendWith(TestParameterResolver::class)
+      class ParameterResolver {
+        companion object {
+          @JvmStatic
+          @org.junit.jupiter.api.BeforeAll
+          fun beforeAll(foo: String) { println(foo) }
+        }
+      }
+    """.trimIndent())
+  }
   fun `test malformed before class method that is non-static`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MainTest {
