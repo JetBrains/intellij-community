@@ -124,7 +124,21 @@
     <orderEntry type="module" module-name="intellij.python.psi" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
-    <orderEntry type="library" name="completion-ranking-python–with-full-line" level="project" />
-    <orderEntry type="module" module-name="intellij.completionMlRankingModels" />
+    <orderEntry type="module-library">
+      <library name="completion-ranking-python-with-full-line" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python-with-full-line:0.0.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.0.1/completion-ranking-python-with-full-line-0.0.1.jar">
+              <sha256sum>1d9c23729484e00a4f7d9a4e72f1a6d90422c88e480b7dce3b7658dc5b18b131</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.0.1/completion-ranking-python-with-full-line-0.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
