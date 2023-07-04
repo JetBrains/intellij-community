@@ -29,6 +29,6 @@ public class CreateMissingEnumSwitchBranchesFixTest extends LightQuickFixParamet
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_20;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_21;
   }
 }

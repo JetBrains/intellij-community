@@ -19,7 +19,7 @@ record Pair<T>(T x, T y) {}
 record Top(Child c1, Child c2) {}
 record Child(I x, I y){}
 
-public class Basic {
+class Basic {
 
   String o;
   Super superInterface;
@@ -64,7 +64,7 @@ public class Basic {
     switch (<error descr="'switch' statement does not cover all possible input values">superInterface</error>) {
       case SuperChild superChild -> {}
       case SuperRecord(C i) -> {}
-      case SuperRecord(I i) r when i.hashCode() > 0 -> {}
+      case SuperRecord(I i) when i.hashCode() > 0 -> {}
     }
     switch (o) { //non-record is completed
       case String o -> {}
@@ -112,27 +112,27 @@ public class Basic {
 
   void testNested(Top t){
     switch (<error descr="'switch' statement does not cover all possible input values">t</error>){
-      case Top(Child(I x1, C y1) c1, Child(C x2, I y2) c2) -> {}
-      case Top(Child(I x1, D y1) c1, Child(I x2, C y2) c2) -> {}
+      case Top(Child(I x1, C y1), Child(C x2, I y2)) -> {}
+      case Top(Child(I x1, D y1) , Child(I x2, C y2)) -> {}
     }
     switch (t){
-      case Top(Child(I x1, C y1) c1, Child c2) -> {}
-      case Top(Child(I x1, D y1) c1, Child c2) -> {}
+      case Top(Child(I x1, C y1) , Child c2) -> {}
+      case Top(Child(I x1, D y1) , Child c2) -> {}
     }
     switch (t){
-      case Top(Child(I x1, C y1) c1, Child(I x2, I y2) c2) -> {}
-      case Top(Child(I x1, D y1) c1, Child(I x2, I y2) c2) -> {}
+      case Top(Child(I x1, C y1) , Child(I x2, I y2) ) -> {}
+      case Top(Child(I x1, D y1) , Child(I x2, I y2) ) -> {}
     }
     switch (<error descr="'switch' statement does not cover all possible input values">t</error>){
-      case Top(Child c1, Child(C x2, I y2) c2) -> {}
-      case Top(Child c1, Child(I x2, C y2) c2) -> {}
+      case Top(Child c1, Child(C x2, I y2) ) -> {}
+      case Top(Child c1, Child(I x2, C y2) ) -> {}
     }
     switch (<error descr="'switch' statement does not cover all possible input values">t</error>){
-      case Top(Child(I x1, C y1) c1, Child(I x2, I y2) c2) -> {}
-      case Top(Child(C x1, I y1) c1, Child(I x2, I y2) c2) -> {}
+      case Top(Child(I x1, C y1) , Child(I x2, I y2) ) -> {}
+      case Top(Child(C x1, I y1) , Child(I x2, I y2) ) -> {}
     }
     switch (t){
-      case Top(Child(I x1, I y1) c1, Child(I x2, I y2) c2) -> {}
+      case Top(Child(I x1, I y1) , Child(I x2, I y2) ) -> {}
     }
   }
 
@@ -195,7 +195,7 @@ public class Basic {
     }
   }
 
-  void emptyObject(Object o) {
+  void emptyObject0(Object o) {
     switch (<error descr="'switch' statement does not have any case clauses">o</error>) {  //error
     }
   }

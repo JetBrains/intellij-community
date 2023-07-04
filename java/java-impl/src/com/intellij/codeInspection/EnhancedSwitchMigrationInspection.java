@@ -330,7 +330,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         continue;
       }
       List<? extends PsiCaseLabelElement> caseExpressions = branch.myCaseExpressions;
-      if (caseExpressions == null) {
+      if (caseExpressions == null || caseExpressions.size() == 1) {
         result.add(branch);
         continue;
       }

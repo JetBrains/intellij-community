@@ -1,15 +1,14 @@
 class X {
   int switchTest1(Object obj) {
     return switch (obj) {
-      case (String s) -> 1;
-      case <error descr="Guarded patterns from JEP 406 are not available since Java 19 preview">Integer i && predicate()</error> -> 2;
+      case <error descr="Parenthesized patterns are not supported at language level '21'">(String s)</error> -> 1;
       case Integer i -> 3;
       case default -> 4;
       case null -> 10;
       case <error descr="Cannot resolve symbol 'Point'">Point</error>() -> 5;
       case <error descr="Cannot resolve symbol 'Point'">Point</error>(double x, double y) -> 6;
-      case <error descr="Cannot resolve symbol 'Point'">Point</error>() point -> 7;
-      case <error descr="Cannot resolve symbol 'Point'">Point</error>(double x, double y) point -> 8;
+      case <error descr="Cannot resolve symbol 'Point'">Point</error>() <error descr="Identifier is not allowed here">point</error> -> 7;
+      case <error descr="Cannot resolve symbol 'Point'">Point</error>(double x, double y) <error descr="Identifier is not allowed here">point</error> -> 8;
     };
   }
 
@@ -27,7 +26,7 @@ class X {
     }
 
     switch (point1) {
-      case <error descr="Cannot resolve symbol 'Point'">Point</error><?>() point -> {}
+      case <error descr="Cannot resolve symbol 'Point'">Point</error><?>() <error descr="Identifier is not allowed here">point</error> -> {}
     }
 
     switch (point1) {
@@ -35,7 +34,7 @@ class X {
     }
 
     switch (point1) {
-      case <error descr="Cannot resolve symbol 'Point'">Point</error><? extends String>()  point -> {}
+      case <error descr="Cannot resolve symbol 'Point'">Point</error><? extends String>()  <error descr="Identifier is not allowed here">point</error> -> {}
     }
 
     switch (point2) {
@@ -43,15 +42,15 @@ class X {
     }
 
     switch (point2) {
-      case <error descr="Cannot resolve symbol 'Point'">Point</error><? super String>() point -> {}
+      case <error descr="Cannot resolve symbol 'Point'">Point</error><? super String>() <error descr="Identifier is not allowed here">point</error> -> {}
     }
   }
 
   int instanceofTest(Object obj) {
-    if (obj instanceof (<error descr="Guarded patterns from JEP 406 are not available since Java 19 preview">Integer i && predicate()</error>)) {
+    if (obj instanceof (Integer i<error descr="')' expected"> </error>&& predicate())<error descr="Statement expected"><error descr="Unexpected token">)</error></error> {
       return 1;
     }
-    if (obj instanceof (String s)) {
+    if (obj instanceof <error descr="Parenthesized patterns are not supported at language level '21'">(String s)</error>) {
       return 3;
     }
     return 2;

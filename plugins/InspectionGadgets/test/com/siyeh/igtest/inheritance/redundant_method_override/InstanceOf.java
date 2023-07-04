@@ -17,10 +17,9 @@ class Foo {
   }
 
   void test2(Object obj) {
-    if (obj instanceof Point(double x, double y) point) {
+    if (obj instanceof Point(double x, double y)) {
       System.out.println(obj);
       System.out.println(x);
-      System.out.println(point);
       System.out.println(y);
     }
   }
@@ -30,28 +29,25 @@ class Foo {
   }
 
   void test4(Object obj) {
-    if (obj instanceof Point(double x, double y) point) {}
+    if (obj instanceof Point(double x, double y)) {}
   }
 
   void test5(Object obj) {
-    if (obj instanceof Rect(Point(double x1, double y1) point1, Point(double x2, double y2) point2) rect) {
+    if (obj instanceof Rect(Point(double x1, double y1), Point(double x2, double y2))) {
       System.out.println(x1);
       System.out.println(x2);
-      System.out.println(point2);
-      System.out.println(rect);
       System.out.println(y1);
       System.out.println(y2);
-      System.out.println(point1);
     }
   }
 
   void test6(Object obj) {
-    if (obj instanceof Point(double x, double y) point) {
+    if (obj instanceof Point(double x, double y)) {
     }
   }
 
   void test7(Object obj) {
-    if (obj instanceof Point(double x, double y) point) {
+    if (obj instanceof Point(double x, double y)) {
     }
   }
 
@@ -98,10 +94,9 @@ class Bar extends Foo {
 
   @Override
   void <warning descr="Method 'test2()' is identical to its super method">test2</warning>(Object o) {
-    if (o instanceof Point(double a, double b) p) {
+    if (o instanceof Point(double a, double b)) {
       System.out.println(o);
       System.out.println(a);
-      System.out.println(p);
       System.out.println(b);
     }
   }
@@ -113,30 +108,27 @@ class Bar extends Foo {
 
   @Override
   void test4(Object obj) {
-    if (obj instanceof Point(double x, <error descr="Incompatible types. Found: 'int', required: 'double'">int y</error>) point) {}
+    if (obj instanceof Point(double x, <error descr="Incompatible types. Found: 'int', required: 'double'">int y</error>)) {}
   }
 
   @Override
   void <warning descr="Method 'test5()' is identical to its super method">test5</warning>(Object o) {
-    if (o instanceof Rect(Point(double a1, double b1) p1, Point(double a2, double b2) p2) r) {
+    if (o instanceof Rect(Point(double a1, double b1), Point(double a2, double b2))) {
       System.out.println(a1);
       System.out.println(a2);
-      System.out.println(p2);
-      System.out.println(r);
       System.out.println(b1);
       System.out.println(b2);
-      System.out.println(p1);
     }
   }
 
   @Override
   void test6(Object obj) {
-    if (obj instanceof Point(double x, double y, <error descr="Incorrect number of nested patterns: expected 2 but found 3">double z)</error> point) {
+    if (obj instanceof Point(double x, double y, <error descr="Incorrect number of nested patterns: expected 2 but found 3">double z)</error>) {
     }
   }
 
   @Override
-  void test7(Object obj) {
+  void <warning descr="Method 'test7()' is identical to its super method">test7</warning>(Object obj) {
     if (obj instanceof Point(double x, double y)) {
     }
   }

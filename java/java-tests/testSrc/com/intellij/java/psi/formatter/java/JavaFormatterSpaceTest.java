@@ -921,25 +921,6 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testAndAndInGuardedPattern() {
-    doClassTest(
-      """
-        void test(Object obj){
-          switch(obj){
-          case String s&&s.isEmpty()->System.out.println();
-          }
-        }
-        """,
-
-      """
-        void test(Object obj) {
-            switch (obj) {
-                case String s && s.isEmpty() -> System.out.println();
-            }
-        }
-        """);
-  }
-
   public void testSnippet() {
     doTextTest(
       """

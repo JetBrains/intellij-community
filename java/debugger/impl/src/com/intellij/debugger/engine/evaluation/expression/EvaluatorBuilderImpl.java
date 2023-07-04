@@ -43,8 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.psi.util.JavaPsiPatternUtil.skipParenthesizedPatternDown;
-
 public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
   private static final EvaluatorBuilderImpl ourInstance = new EvaluatorBuilderImpl();
 
@@ -477,10 +475,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       PsiPrimaryPattern primaryPattern = JavaPsiPatternUtil.getTypedPattern(element);
       final Evaluator guardingEvaluator;
       final PsiExpression guardingExpression;
-      if (element instanceof PsiPattern pattern && skipParenthesizedPatternDown(pattern) instanceof PsiGuardedPattern guardedPattern) {
-        guardingExpression = guardedPattern.getGuardingExpression();
-      }
-      else if (element instanceof PsiPatternGuard patternGuard) {
+      if (element instanceof PsiPatternGuard patternGuard) {
         guardingExpression = patternGuard.getGuardingExpression();
       }
       else {

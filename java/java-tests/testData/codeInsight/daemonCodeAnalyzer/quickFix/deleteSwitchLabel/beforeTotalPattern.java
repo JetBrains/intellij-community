@@ -3,9 +3,9 @@ class Test {
   Integer i = 1;
   void test() {
     switch (i) {
-      case Object o:
-        break;
       case <caret>Integer ii when true:
+        break;
+      case Object o:
         break;
     }
   }

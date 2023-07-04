@@ -14,6 +14,6 @@ public class CreateMissingDeconstructionRecordClassBranchesFixTest extends Light
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_19;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_21;
   }
 }

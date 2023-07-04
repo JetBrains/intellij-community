@@ -5,7 +5,7 @@ import com.intellij.JavaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class LightDeconstructionAndGuardsHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor() = JAVA_19
+  override fun getProjectDescriptor() = JAVA_21
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/deconstructionAndGuards"
 
   fun testSwitchExpression() {

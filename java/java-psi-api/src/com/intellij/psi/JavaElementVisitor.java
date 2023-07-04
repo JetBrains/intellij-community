@@ -171,10 +171,6 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitStatement(statement);
   }
 
-  public void visitGuardedPattern(@NotNull PsiGuardedPattern pattern) {
-    visitPattern(pattern);
-  }
-
   public void visitIdentifier(@NotNull PsiIdentifier identifier) {
     visitJavaToken(identifier);
   }

@@ -23,7 +23,7 @@ public class IfCanBePatternSwitchFixTest extends IGQuickFixesTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
     super.tuneFixture(builder);
-    builder.setLanguageLevel(LanguageLevel.JDK_19_PREVIEW);
+    builder.setLanguageLevel(LanguageLevel.JDK_21);
     builder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 

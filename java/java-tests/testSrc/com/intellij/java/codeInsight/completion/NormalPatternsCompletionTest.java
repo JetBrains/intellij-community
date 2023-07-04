@@ -12,7 +12,7 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_19;
+    return JAVA_21;
   }
 
   @NeedsIndex.Full

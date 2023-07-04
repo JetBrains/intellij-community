@@ -44,6 +44,6 @@ class DuplicateBranchesInEnhancedSwitchTest : LightJavaCodeInsightFixtureTestCas
   }
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
-    return JAVA_19
+    return JAVA_21
   }
 }

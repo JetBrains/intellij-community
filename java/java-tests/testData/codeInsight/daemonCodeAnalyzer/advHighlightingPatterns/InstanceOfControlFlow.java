@@ -6,7 +6,7 @@ class X {
   }
 
   void ifParenthesizedPattern(Object obj) {
-    if (!(obj instanceof ((String s)))) return;
+    if (!(obj instanceof String s)) return;
     System.out.println(s.trim());
   }
 

@@ -742,8 +742,7 @@ public final class HighlightControlFlowUtil {
       if (parent instanceof PsiParameterList && parent.getParent() == lambdaExpression) {
         return null;
       }
-      if (PsiTreeUtil.getParentOfType(context, PsiGuardedPattern.class, true, PsiLambdaExpression.class) != null ||
-          PsiTreeUtil.getParentOfType(context, PsiPatternGuard.class, true, PsiLambdaExpression.class) != null) {
+      if (PsiTreeUtil.getParentOfType(context, PsiPatternGuard.class, true, PsiLambdaExpression.class) != null) {
         return null;
       }
       if (!isEffectivelyFinal(variable, lambdaExpression, context)) {
@@ -768,9 +767,9 @@ public final class HighlightControlFlowUtil {
    */
   @Nullable
   private static HighlightInfo.Builder checkFinalUsageInsideGuardedPattern(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
-    PsiCaseLabelElement refGuardedPattern = PsiTreeUtil.getParentOfType(context, PsiGuardedPattern.class, PsiPatternGuard.class);
+    PsiCaseLabelElement refGuardedPattern = PsiTreeUtil.getParentOfType(context, PsiPatternGuard.class);
     if (refGuardedPattern == null) return null;
-    PsiCaseLabelElement varGuardedPattern = PsiTreeUtil.getParentOfType(variable, PsiGuardedPattern.class, PsiPatternGuard.class);
+    PsiCaseLabelElement varGuardedPattern = PsiTreeUtil.getParentOfType(variable, PsiPatternGuard.class);
     if (refGuardedPattern != varGuardedPattern && !isEffectivelyFinal(variable, refGuardedPattern, context)) {
       String message = JavaErrorBundle.message("guarded.pattern.variable.must.be.final");
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(message);
@@ -862,7 +861,7 @@ public final class HighlightControlFlowUtil {
       if (parent instanceof PsiLambdaExpression) {
         return parent;
       }
-      if (parent instanceof PsiGuardedPattern || parent instanceof PsiPatternGuard) {
+      if (parent instanceof PsiPatternGuard) {
         return parent;
       }
       prevParent = parent;

@@ -46,11 +46,11 @@ public enum HighlightingFeature {
   LOCAL_INTERFACES(LanguageLevel.JDK_16, "feature.local.interfaces"),
   LOCAL_ENUMS(LanguageLevel.JDK_16, "feature.local.enums"),
   INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics"),
-  PARENTHESIZED_PATTERNS(LanguageLevel.JDK_20_PREVIEW, "feature.guarded.and.parenthesised.patterns"){
+  PARENTHESIZED_PATTERNS(LanguageLevel.JDK_20_PREVIEW, "feature.parenthesised.patterns"){
     @Override
     boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
       LanguageLevel until = LanguageLevel.JDK_20_PREVIEW;
-      return until == level;
+      return until == useSiteLevel;
     }
 
     @Override
@@ -74,7 +74,7 @@ public enum HighlightingFeature {
     @Override
     boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
       LanguageLevel until = LanguageLevel.JDK_20_PREVIEW;
-      return until == level;
+      return until == useSiteLevel;
     }
 
 

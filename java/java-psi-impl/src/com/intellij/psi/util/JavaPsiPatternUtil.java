@@ -122,9 +122,6 @@ public final class JavaPsiPatternUtil {
   @Contract(value = "null -> null", pure = true)
   @Nullable
   public static PsiPatternVariable getPatternVariable(@Nullable PsiCaseLabelElement pattern) {
-    if (pattern instanceof PsiGuardedPattern) {
-      return getPatternVariable(((PsiGuardedPattern)pattern).getPrimaryPattern());
-    }
     if (pattern instanceof PsiPatternGuard) {
       return getPatternVariable(((PsiPatternGuard)pattern).getPattern());
     }
@@ -143,10 +140,7 @@ public final class JavaPsiPatternUtil {
   @Contract(value = "null -> null", pure = true)
   @Nullable
   public static PsiPrimaryPattern getTypedPattern(@Nullable PsiCaseLabelElement element) {
-    if (element instanceof PsiGuardedPattern) {
-      return getTypedPattern(((PsiGuardedPattern)element).getPrimaryPattern());
-    }
-    else if (element instanceof PsiPatternGuard) {
+    if (element instanceof PsiPatternGuard) {
       return getTypedPattern(((PsiPatternGuard)element).getPattern());
     }
     else if (element instanceof PsiParenthesizedPattern) {
@@ -173,9 +167,6 @@ public final class JavaPsiPatternUtil {
   public static boolean containsPatternVariable(@Nullable PsiCaseLabelElement pattern) {
     if (pattern instanceof PsiPatternGuard) {
       return containsPatternVariable(((PsiPatternGuard)pattern).getPattern());
-    }
-    else if (pattern instanceof PsiGuardedPattern) {
-      return containsPatternVariable(((PsiGuardedPattern)pattern).getPrimaryPattern());
     }
     else if (pattern instanceof PsiTypeTestPattern) {
       return ((PsiTypeTestPattern)pattern).getPatternVariable() != null;
@@ -205,9 +196,6 @@ public final class JavaPsiPatternUtil {
 
   public static @Nullable PsiTypeElement getPatternTypeElement(@Nullable PsiCaseLabelElement pattern) {
     if (pattern == null) return null;
-    if (pattern instanceof PsiGuardedPattern) {
-      return getPatternTypeElement(((PsiGuardedPattern)pattern).getPrimaryPattern());
-    }
     else if (pattern instanceof PsiPatternGuard) {
       return getPatternTypeElement(((PsiPatternGuard)pattern).getPattern());
     }
@@ -236,12 +224,6 @@ public final class JavaPsiPatternUtil {
       Object constVal = evaluateConstant(guarded.getGuardingExpression());
       if (!Boolean.TRUE.equals(constVal)) return null;
       return findUnconditionalPattern(guarded.getPattern());
-    }
-    else if (pattern instanceof PsiGuardedPattern) {
-      PsiGuardedPattern guarded = (PsiGuardedPattern)pattern;
-      Object constVal = evaluateConstant(guarded.getGuardingExpression());
-      if (!Boolean.TRUE.equals(constVal)) return null;
-      return findUnconditionalPattern(guarded.getPrimaryPattern());
     }
     else if (pattern instanceof PsiParenthesizedPattern) {
       return findUnconditionalPattern(((PsiParenthesizedPattern)pattern).getPattern());
@@ -508,7 +490,7 @@ public final class JavaPsiPatternUtil {
    */
   public static @Nullable PsiType getContextType(@NotNull PsiPattern pattern) {
     PsiElement parent = pattern.getParent();
-    while (parent instanceof PsiParenthesizedPattern || parent instanceof PsiGuardedPattern) {
+    while (parent instanceof PsiParenthesizedPattern) {
       parent = parent.getParent();
     }
     if (parent instanceof PsiInstanceOfExpression) {

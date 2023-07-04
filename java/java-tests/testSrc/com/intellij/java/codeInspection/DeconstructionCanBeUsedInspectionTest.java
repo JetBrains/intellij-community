@@ -21,6 +21,6 @@ public class DeconstructionCanBeUsedInspectionTest extends LightQuickFixParamete
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_19;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_21;
   }
 }

@@ -16,6 +16,6 @@ public class AddMissingDeconstructionComponentsTest extends LightQuickFixParamet
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_19;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_21;
   }
 }

@@ -1655,9 +1655,6 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
         processPattern(deconstructionComponent);
       }
     }
-    else if (pattern instanceof PsiGuardedPattern) {
-      generateExpressionInstructions(((PsiGuardedPattern)pattern).getGuardingExpression());
-    }
   }
 
   @Override
