@@ -16,7 +16,9 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
@@ -32,6 +34,7 @@ import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.ToolWindowProperty
 import com.intellij.ui.ClientProperty
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.UIBundle
 import com.intellij.ui.content.Content
@@ -187,6 +190,18 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       }
     })
 
+    ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(
+      ActionManagerListener.TOPIC,
+      object : ActionManagerListener {
+        override fun toolbarAdded(toolbar: ActionToolbar) {
+          // Check if it's our toolbar to avoid traversing the whole hierarchy every time a toolbar is added somewhere.
+          if (ComponentUtil.getParentOfType(InternalDecoratorImpl::class.java, toolbar.component) == decorator) {
+            updateToolbarsVisibility()
+          }
+        }
+      }
+    )
+
     toolWindowFocusWatcher = ToolWindowFocusWatcher(toolWindow = this, component = decorator)
     contentManager.addContentManagerListener(object : ContentManagerListener {
       override fun selectionChanged(event: ContentManagerEvent) {
@@ -203,6 +218,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
 
     return contentManager
+  }
+
+  private fun updateToolbarsVisibility() {
+    ToggleToolbarAction.updateToolbarsVisibility(this, project.service())
   }
 
   fun onMovedOrResized() {

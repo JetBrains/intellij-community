@@ -332,6 +332,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     ourToolbars.add(this);
 
     updateActionsOnAdd();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(ActionManagerListener.TOPIC).toolbarAdded(this);
   }
 
   protected void updateActionsOnAdd() {

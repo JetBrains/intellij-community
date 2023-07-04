@@ -12,4 +12,7 @@ public interface ActionManagerListener {
 
   default void toolbarCreated(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, @NotNull ActionToolbar toolbar) {
   }
+
+  default void toolbarAdded(@NotNull ActionToolbar toolbar) {
+  }
 }
