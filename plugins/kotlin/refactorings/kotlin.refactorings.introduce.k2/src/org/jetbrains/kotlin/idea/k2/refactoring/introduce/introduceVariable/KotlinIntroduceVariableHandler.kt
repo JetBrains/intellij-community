@@ -474,7 +474,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     componentFunctions.map { listOf(it) }
                 } else {
                     listOf(analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-                        with(KotlinNameSuggester(KotlinNameSuggester.Case.CAMEL)) {
+                        with(KotlinNameSuggester()) {
                             suggestExpressionNames(expression).toList()
                         }
                     })

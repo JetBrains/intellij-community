@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Case.CAMEL
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -31,7 +32,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toUpperCaseAsciiOnly
 private annotation class NameSuggesterDsl
 
 class KotlinNameSuggester(
-    private val case: Case,
+    private val case: Case = CAMEL,
     private val escaping: EscapingRules = EscapingRules.DEFAULT,
     private val ignoreCompanionNames: Boolean = true
 ) {

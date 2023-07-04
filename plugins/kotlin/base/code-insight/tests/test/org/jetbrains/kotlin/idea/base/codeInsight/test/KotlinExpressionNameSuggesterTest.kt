@@ -5,7 +5,6 @@ import com.intellij.psi.util.findParentOfType
 import junit.framework.TestCase
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Case
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
@@ -41,7 +40,7 @@ class KotlinExpressionNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCa
 
         executeOnPooledThreadInReadAction {
             analyze(targetExpression) {
-                val actualNames = with(KotlinNameSuggester(Case.CAMEL)) {
+                val actualNames = with(KotlinNameSuggester()) {
                     suggestExpressionNames(targetExpression).toList().sorted()
                 }
 

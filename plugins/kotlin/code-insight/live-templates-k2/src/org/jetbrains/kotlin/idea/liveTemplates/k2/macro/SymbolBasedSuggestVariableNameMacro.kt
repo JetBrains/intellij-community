@@ -57,8 +57,6 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
 
         return emptyList()
     }
-
-    private companion object {
-        val NAME_SUGGESTER = KotlinNameSuggester(KotlinNameSuggester.Case.CAMEL)
-    }
 }
+
+private val NAME_SUGGESTER = KotlinNameSuggester()

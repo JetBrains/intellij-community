@@ -189,7 +189,7 @@ internal class WhenToIfIntention :
      */
     context(KtAnalysisSession)
     private fun getNewNameForExpression(expression: KtExpression): List<String> {
-        return with(KotlinNameSuggester(KotlinNameSuggester.Case.CAMEL)) {
+        return with(KotlinNameSuggester()) {
             suggestExpressionNames(expression).toList()
         }
     }
