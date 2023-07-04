@@ -4,6 +4,7 @@ import com.intellij.mermaid.lang.MermaidLanguage
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.parentOfType
 
 class MermaidElementFactory {
@@ -85,8 +86,8 @@ class MermaidElementFactory {
           markdown["`$value`"]
       """.trimIndent()
       val file = createFile(project, text)
-
-      return file.findElementAt("flowchart\n  markdown[\"`".length)?.parent as? MermaidMarkdownValue
+      val elements = SyntaxTraverser.psiTraverser(file).asSequence()
+      return elements.filterIsInstance<MermaidMarkdownValue>().firstOrNull()
     }
 
     private fun createFile(project: Project?, text: String): MermaidFile {
