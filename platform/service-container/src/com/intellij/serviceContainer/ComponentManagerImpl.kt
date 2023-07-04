@@ -652,9 +652,7 @@ abstract class ComponentManagerImpl(
   suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): T? {
     val key = keyClass.name
     val adapter = componentKeyToAdapter.get(key) ?: return null
-    check(adapter is ServiceComponentAdapter) {
-      "$adapter is not a service (key=$key)"
-    }
+    check(adapter is BaseComponentAdapter) { "$adapter is not a service (key=$key)" }
     val result = adapter.getInstanceAsync(componentManager = this, keyClass = keyClass)
     serviceInstanceHotCache.putIfAbsent(keyClass, result)
     return result
