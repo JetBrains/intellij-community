@@ -149,11 +149,11 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
       }
 
       if (isSeparatorShown(combo)) {
-        if (!skipNextGap) doClip(paintRect, getGapBeforeSeparator());
+        doClip(paintRect, getSeparatorGap());
         g2.setColor(c.isEnabled() ? UIManager.getColor("MainToolbar.separatorColor") : UIUtil.getLabelDisabledForeground());
         g2.fillRect(paintRect.x, ((int)paintRect.getCenterY()) - SEPARATOR_HEIGHT / 2, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
         separatorPosition = paintRect.x + combo.getInsets().left;
-        doClip(paintRect, SEPARATOR_WIDTH);
+        doClip(paintRect, SEPARATOR_WIDTH + getSeparatorGap());
         skipNextGap = false;
       }
 
@@ -249,7 +249,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     int right = calcIconsWidth(c.getRightIcons(), c.getRightIconsGap());
     if (right > 0) right += getGapBeforeRightIcons();
 
-    int separator = isSeparatorShown(c) ? getGapBeforeSeparator() + SEPARATOR_WIDTH : 0;
+    int separator = isSeparatorShown(c) ? 2 * getSeparatorGap() + SEPARATOR_WIDTH : 0;
     int expandButton = c.isExpandable() ? getGapBeforeExpandIcon() + EXPAND_ICON.getIconWidth() : 0;
 
     int otherElementsWidth = left + right + separator + expandButton;
@@ -318,8 +318,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     }
 
     if (isSeparatorShown(combo)) {
-      if (res.width > 0 && !skipNextGap) res.width += getGapBeforeSeparator();
-      res.width += SEPARATOR_WIDTH;
+      res.width += 2 * getSeparatorGap() + SEPARATOR_WIDTH;
       skipNextGap = false;
     }
 
@@ -401,8 +400,8 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
         return;
       }
 
-      Rectangle left = new Rectangle(compBounds.x, compBounds.y, separatorPosition - 1, compBounds.height);
-      Rectangle right = new Rectangle(separatorPosition + SEPARATOR_WIDTH + 1, compBounds.y, (compBounds.width - separatorPosition - SEPARATOR_WIDTH - 1), compBounds.height);
+      Rectangle left = new Rectangle(compBounds.x, compBounds.y, separatorPosition - getSeparatorGap(), compBounds.height);
+      Rectangle right = new Rectangle(separatorPosition + SEPARATOR_WIDTH + getSeparatorGap(), compBounds.y, (compBounds.width - separatorPosition - SEPARATOR_WIDTH - 1), compBounds.height);
 
       updateHoverRect(mousePosition.x <= separatorPosition ? left : right);
     }
