@@ -55,6 +55,23 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 // java highlighting: problems in java code like unresolved/incompatible symbols/methods etc.
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
+
+  private static final PsiTypeVisitor<Boolean> NON_ANNOTATION_TYPE_VISITOR = new PsiTypeVisitor<>() {
+    @Override
+    public Boolean visitClassType(@NotNull PsiClassType classType) {
+      for (PsiType p : classType.getParameters()) {
+        if (p.accept(this)) return true;
+      }
+      return super.visitClassType(classType);
+    }
+
+    @Override
+    public Boolean visitType(@NotNull PsiType type) {
+      return type.getAnnotations().length != 0;
+    }
+  };
+
+
   private @NotNull HighlightInfoHolder myHolder;
   private RefCountHolder myRefCountHolder; // can be null during partial file update
   private @NotNull LanguageLevel myLanguageLevel;
@@ -1987,6 +2004,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitDeconstructionPattern(@NotNull PsiDeconstructionPattern deconstructionPattern) {
     super.visitDeconstructionPattern(deconstructionPattern);
+    checkReferenceTypeIsNotAnnotated(deconstructionPattern.getTypeElement());
     PsiElement parent = deconstructionPattern.getParent();
     if (parent instanceof PsiForeachPatternStatement forEach) {
       add(checkFeature(deconstructionPattern, HighlightingFeature.RECORD_PATTERNS_IN_FOR_EACH));
@@ -2011,6 +2029,18 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     else {
       add(checkFeature(deconstructionPattern, HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
+    }
+  }
+
+  private void checkReferenceTypeIsNotAnnotated(@NotNull PsiTypeElement typeElement) {
+    Boolean hasAnnotation = typeElement.getType().accept(NON_ANNOTATION_TYPE_VISITOR);
+    if (hasAnnotation) {
+      String message = JavaErrorBundle.message("deconstruction.pattern.type.contain.annotation");
+      var info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(typeElement)
+        .descriptionAndTooltip(message)
+        .create();
+      myHolder.add(info);
     }
   }
 
