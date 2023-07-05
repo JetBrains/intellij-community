@@ -330,31 +330,33 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         continue;
       }
       List<? extends PsiCaseLabelElement> caseExpressions = branch.myCaseExpressions;
-      if (caseExpressions == null) {
+      if (caseExpressions == null || caseExpressions.size() <= 1) {
         result.add(branch);
         continue;
       }
-      PsiCaseLabelElement nullLabel = findNullLabel(caseExpressions);
-      if (nullLabel == null) {
-        result.add(branch);
-        continue;
+      List<PsiCaseLabelElement> previousExpressions = new ArrayList<>();
+      for (PsiCaseLabelElement expression : caseExpressions) {
+        PsiCaseLabelElement external = findNullLabel(List.of(expression));
+        if (external == null && expression instanceof PsiPattern) {
+          external = expression;
+        }
+        if (external == null) {
+          previousExpressions.add(expression);
+        }
+        else {
+          if (!previousExpressions.isEmpty()) {
+            SwitchBranch otherBranch =
+              new SwitchBranch(branch.myIsDefault, new ArrayList<>(previousExpressions), branch.myRuleResult, branch.myUsedElements);
+            result.add(otherBranch);
+            previousExpressions.clear();
+          }
+          SwitchBranch specialBranch = new SwitchBranch(branch.myIsDefault, List.of(external), branch.myRuleResult, branch.myUsedElements);
+          result.add(specialBranch);
+        }
       }
-      int index = caseExpressions.indexOf(nullLabel);
-      if (index == -1) {
-        result.add(branch);
-        continue;
-      }
-      List<? extends PsiCaseLabelElement> otherCases = new ArrayList<>(caseExpressions);
-      otherCases.remove(nullLabel);
-      SwitchBranch nullBranch = new SwitchBranch(branch.myIsDefault, List.of(nullLabel), branch.myRuleResult, branch.myUsedElements);
-      SwitchBranch otherBranch = new SwitchBranch(branch.myIsDefault, otherCases, branch.myRuleResult, branch.myUsedElements);
-      if (index == 0) {
-        result.add(nullBranch);
+      if (!previousExpressions.isEmpty()) {
+        SwitchBranch otherBranch = new SwitchBranch(branch.myIsDefault, previousExpressions, branch.myRuleResult, branch.myUsedElements);
         result.add(otherBranch);
-      }
-      else {
-        result.add(otherBranch);
-        result.add(nullBranch);
       }
     }
     return result;
