@@ -403,9 +403,9 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
    * Invoked when enclosed frame is being disposed.
    */
   override fun removeNotify() {
-    coroutineScope.cancel()
-
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      coroutineScope.cancel()
+
       jMenuBar = null
       if (helper is DecoratedHelper) {
         layeredPane.remove(helper.customFrameTitlePane.getComponent())
