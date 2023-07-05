@@ -45,7 +45,7 @@ public enum LanguageLevel {
   JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 21),;
 
   /**
-   * Should point to the last released JDK.
+   * Should point to the latest released JDK.
    */
   public static final LanguageLevel HIGHEST = JDK_20;
 
