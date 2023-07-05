@@ -131,7 +131,7 @@
     <applicationService serviceImplementation="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings"/>
     <projectService serviceImplementation="com.jetbrains.python.debugger.PyDebugValueExecutionService"/>
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
-    <programRunner implementation="com.jetbrains.python.run.PythonRunner" order="first"/>
+    <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
     <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>
     <runConfigurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
