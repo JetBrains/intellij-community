@@ -83,8 +83,8 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     }
 
     val text = document.text
-    val fragment: String = document.getText(formattingRange)
-    if (fragment.isEmpty()) return null
+    val fragment = runCatching { document.getText(formattingRange) }.getOrNull()
+    if (fragment.isNullOrBlank()) return null
 
     val editor = PsiEditorUtil.findEditor(file)
 
