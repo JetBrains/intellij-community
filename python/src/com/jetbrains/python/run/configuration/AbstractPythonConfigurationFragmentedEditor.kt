@@ -19,6 +19,7 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
     fragments.add(BeforeRunFragment.createBeforeRun(beforeRunComponent, null))
     fragments.addAll(BeforeRunFragment.createGroup())
     fragments.add(CommonParameterFragments.createRunHeader())
+    fragments.add(CommonTags.parallelRun())
 
     createEnvironmentFragments(fragments, runConfiguration)
     addInterpreterOptions(fragments)
