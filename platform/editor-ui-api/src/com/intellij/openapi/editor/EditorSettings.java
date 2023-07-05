@@ -3,7 +3,6 @@ package com.intellij.openapi.editor;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -221,80 +220,6 @@ public interface EditorSettings {
   default void setShowVisualFormattingLayer(@Nullable Boolean showVisualFormattingLayer) {}
 
   boolean isInsertParenthesesAutomatically();
-
-  default boolean isViewer() { return false; }
-
-  default void setViewer(boolean value) {}
-
-  default boolean isInsertMode() { return true; }
-
-  default void setInsertMode(boolean value) {}
-
-  default boolean isColumnMode() { return false; }
-
-  default void setColumnMode(boolean value) {}
-
-  default boolean isOneLineMode() { return false; }
-
-  default void setOneLineMode(boolean value) {}
-
-  default boolean isRendererMode() { return false; }
-
-  default void setRendererMode(boolean value) {}
-
-  default boolean isEmbeddedIntoDialogWrapper() { return false; }
-
-  default void setEmbeddedIntoDialogWrapper(boolean value) {}
-
-  default String getContextMenuGroupId() { return "BasicEditorPopupMenu"; }
-
-  default void setContextMenuGroupId(@Nullable String value) {}
-
-  default boolean isUseAntialiasing() { return true; }
-
-  default void setUseAntialiasing(boolean value) {}
-
-  default boolean isVerticalScrollbarOnLeft() { return false; }
-
-  default void setVerticalScrollbarOnLeft(boolean value) {}
-
-  default boolean isVerticalScrollbarVisible() { return true; }
-
-  default void setVerticalScrollbarVisible(boolean value) {}
-
-  default boolean isHorizontalScrollbarVisible() { return true; }
-
-  default void setHorizontalScrollbarVisible(boolean value) {}
-
-  default boolean isScrollToCaret() { return true; }
-
-  default void setScrollToCaret(boolean value) {}
-
-  default boolean isPaintSelection() { return false; }
-
-  default void setPaintSelection(boolean value) {}
-
-  default boolean isStickySelection() { return false; }
-
-  default void setStickySelection(boolean value) {}
-
-  default boolean isRightAligned() { return false; }
-
-  default void setRightAligned(boolean value) {}
-
-  @Nullable
-  default TextAttributes getPlaceholderAttributes() { return null; }
-
-  default void setPlaceholderAttributes(@Nullable TextAttributes value) {}
-
-  @Nullable
-  default String getPlaceholder() { return null; }
-
-  default void setPlaceholder(@Nullable String value) {}
-
-  default boolean getShowPlaceholderWhenFocused() { return false; }
-
-  default void setShowPlaceholderWhenFocused(boolean value) {}
 
   @ApiStatus.Experimental
   void addEditorSettingsListener(@NotNull EditorSettingsListener listener, @NotNull Disposable parentDisposable);

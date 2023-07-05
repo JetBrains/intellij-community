@@ -1,10 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
-import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
 import java.util.List;
@@ -58,23 +56,5 @@ public interface EditorSettingsListener extends EventListener {
   default void isPreselectRenameChanged(boolean newValue) {}
   default void isShowIntentionBulbChanged(boolean newValue) {}
   default void isShowingSpecialCharsChanged(boolean newValue) {}
-  default void isViewerChanged(boolean newValue) {}
-  default void isInsertModeChanged(boolean newValue) {}
-  default void isColumnModeChanged(boolean newValue) {}
-  default void isOneLineModeChanged(boolean newValue) {}
-  default void isRendererModeChanged(boolean newValue) {}
-  default void isEmbeddedIntoDialogWrapperChanged(boolean newValue) {}
-  default void contextMenuGroupIdChanged(@Nullable String newValue) {}
-  default void isUseAntialiasingChanged(boolean newValue) {}
-  default void isVerticalScrollbarOnLeftChanged(boolean newValue) {}
-  default void isVerticalScrollbarVisibleChanged(boolean newValue) {}
-  default void isHorizontalScrollbarVisibleChanged(boolean newValue) {}
-  default void isScrollToCaretChanged(boolean newValue) {}
-  default void isPaintSelectionChanged(boolean newValue) {}
-  default void isStickySelectionChanged(boolean newValue) {}
-  default void isRightAlignedChanged(boolean newValue) {}
-  default void placeholderAttributesChanged(@Nullable TextAttributes newValue) {}
-  default void placeholderChanged(@Nullable String newValue) {}
-  default void showPlaceholderWhenFocusedChanged(boolean newValue) {}
   default void lineNumerationTypeChanged(@NotNull EditorSettings.LineNumerationType newValue) {}
 }

@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl
 import com.intellij.application.options.CodeStyle
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -17,7 +16,6 @@ import com.intellij.openapi.editor.EditorSettingsListener
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
 import com.intellij.openapi.project.Project
@@ -93,24 +91,6 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   private var myWrapWhenTypingReachesRightMargin: Boolean? = null
   private var myShowIntentionBulb: Boolean? = null
   private var showingSpecialCharacters: Boolean? = null
-  private var myIsViewer = false
-  private var myIsInsertMode = true
-  private var myIsColumnMode = false
-  private var myIsOneLineMode = false
-  private var myIsRendererMode = false
-  private var myIsEmbeddedIntoDialogWrapper = false
-  private var myContextMenuGroupId: String? = IdeActions.GROUP_BASIC_EDITOR_POPUP
-  private var myIsUseAntialiasing = true
-  private var myIsVerticalScrollbarOnLeft = false
-  private var myIsVerticalScrollbarVisible = true
-  private var myIsHorizontalScrollbarVisible = true
-  private var myIsScrollToCaret = true
-  private var myIsPaintSelection = false
-  private var myIsStickySelection = false
-  private var myIsRightAligned = false
-  private var myPlaceholderAttributes: TextAttributes? = null
-  private var myPlaceholder: String? = null
-  private var myShowPlaceholderWhenFocused = false
   private val myComputableSettings = ArrayList<CacheableBackgroundComputable<*>>()
   private var myLineNumeration: EditorSettings.LineNumerationType? = null
 
@@ -836,192 +816,6 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
       fireEditorRefresh()
       myDispatcher.multicaster.isShowingSpecialCharsChanged(newState)
     }
-  }
-
-  override fun isViewer(): Boolean {
-    return myIsViewer
-  }
-
-  override fun setViewer(value: Boolean) {
-    if (value == myIsViewer) return
-    myIsViewer = value
-    myDispatcher.multicaster.isViewerChanged(value)
-  }
-
-  override fun isInsertMode(): Boolean {
-    return myIsInsertMode
-  }
-
-  override fun setInsertMode(value: Boolean) {
-    if (value == myIsInsertMode) return
-    myIsInsertMode = value
-    myDispatcher.multicaster.isInsertModeChanged(value)
-  }
-
-  override fun isColumnMode(): Boolean {
-    return myIsColumnMode
-  }
-
-  override fun setColumnMode(value: Boolean) {
-    if (value == myIsColumnMode) return
-    myIsColumnMode = value
-    myDispatcher.multicaster.isColumnModeChanged(value)
-  }
-
-  override fun isOneLineMode(): Boolean {
-    return myIsOneLineMode
-  }
-
-  override fun setOneLineMode(value: Boolean) {
-    if (value == myIsOneLineMode) return
-    myIsOneLineMode = value
-    myDispatcher.multicaster.isOneLineModeChanged(value)
-  }
-
-  override fun isRendererMode(): Boolean {
-    return myIsRendererMode
-  }
-
-  override fun setRendererMode(value: Boolean) {
-    if (value == myIsRendererMode) return
-    myIsRendererMode = value
-    myDispatcher.multicaster.isRendererModeChanged(value)
-  }
-
-  override fun isEmbeddedIntoDialogWrapper(): Boolean {
-    return myIsEmbeddedIntoDialogWrapper
-  }
-
-  override fun setEmbeddedIntoDialogWrapper(value: Boolean) {
-    if (value == myIsEmbeddedIntoDialogWrapper) return
-    myIsEmbeddedIntoDialogWrapper = value
-    myDispatcher.multicaster.isEmbeddedIntoDialogWrapperChanged(value)
-  }
-
-  override fun getContextMenuGroupId(): String? {
-    return myContextMenuGroupId
-  }
-
-  override fun setContextMenuGroupId(value: String?) {
-    if (value == myContextMenuGroupId) return
-    myContextMenuGroupId = value
-    myDispatcher.multicaster.contextMenuGroupIdChanged(value)
-  }
-
-  override fun isUseAntialiasing(): Boolean {
-    return myIsUseAntialiasing
-  }
-
-  override fun setUseAntialiasing(value: Boolean) {
-    if (value == myIsUseAntialiasing) return
-    myIsUseAntialiasing = value
-    myDispatcher.multicaster.isUseAntialiasingChanged(value)
-  }
-
-  override fun isVerticalScrollbarOnLeft(): Boolean {
-    return myIsVerticalScrollbarOnLeft
-  }
-
-  override fun setVerticalScrollbarOnLeft(value: Boolean) {
-    if (value == myIsVerticalScrollbarOnLeft) return
-    myIsVerticalScrollbarOnLeft = value
-    myDispatcher.multicaster.isVerticalScrollbarOnLeftChanged(value)
-  }
-
-  override fun isVerticalScrollbarVisible(): Boolean {
-    return myIsVerticalScrollbarVisible
-  }
-
-  override fun setVerticalScrollbarVisible(value: Boolean) {
-    if (value == myIsVerticalScrollbarVisible) return
-    myIsVerticalScrollbarVisible = value
-    myDispatcher.multicaster.isVerticalScrollbarVisibleChanged(value)
-  }
-
-  override fun isHorizontalScrollbarVisible(): Boolean {
-    return myIsHorizontalScrollbarVisible
-  }
-
-  override fun setHorizontalScrollbarVisible(value: Boolean) {
-    if (value == myIsHorizontalScrollbarVisible) return
-    myIsHorizontalScrollbarVisible = value
-    myDispatcher.multicaster.isHorizontalScrollbarVisibleChanged(value)
-  }
-
-  override fun isScrollToCaret(): Boolean {
-    return myIsScrollToCaret
-  }
-
-  override fun setScrollToCaret(value: Boolean) {
-    if (value == myIsScrollToCaret) return
-    myIsScrollToCaret = value
-    myDispatcher.multicaster.isScrollToCaretChanged(value)
-  }
-
-  override fun isPaintSelection(): Boolean {
-    return myIsPaintSelection
-  }
-
-  override fun setPaintSelection(value: Boolean) {
-    if (value == myIsPaintSelection) return
-    myIsPaintSelection = value
-    myDispatcher.multicaster.isPaintSelectionChanged(value)
-  }
-
-
-  override fun isStickySelection(): Boolean {
-    return myIsStickySelection
-  }
-
-  override fun setStickySelection(value: Boolean) {
-    if (value == myIsStickySelection) return
-
-    myIsStickySelection = value
-    myDispatcher.multicaster.isStickySelectionChanged(value)
-  }
-
-  override fun isRightAligned(): Boolean {
-    return myIsRightAligned
-  }
-
-  override fun setRightAligned(value: Boolean) {
-    if (value == myIsRightAligned) return
-
-    myIsRightAligned = value
-    myDispatcher.multicaster.isRightAlignedChanged(value)
-  }
-
-  override fun getPlaceholderAttributes(): TextAttributes? {
-    return myPlaceholderAttributes
-  }
-
-  override fun setPlaceholderAttributes(value: TextAttributes?) {
-    if (value == myPlaceholderAttributes) return
-
-    myPlaceholderAttributes = value
-    myDispatcher.multicaster.placeholderAttributesChanged(value)
-  }
-
-  override fun getPlaceholder(): String? {
-    return myPlaceholder
-  }
-
-  override fun setPlaceholder(value: String?) {
-    if (value == myPlaceholder) return
-
-    myPlaceholder = value
-    myDispatcher.multicaster.placeholderChanged(value)
-  }
-
-  override fun getShowPlaceholderWhenFocused(): Boolean {
-    return myShowPlaceholderWhenFocused
-  }
-
-  override fun setShowPlaceholderWhenFocused(value: Boolean) {
-    if (value == myShowPlaceholderWhenFocused) return
-
-    myShowPlaceholderWhenFocused = value
-    myDispatcher.multicaster.showPlaceholderWhenFocusedChanged(value)
   }
 
   override fun getLineNumerationType(): EditorSettings.LineNumerationType {
