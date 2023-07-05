@@ -4,7 +4,6 @@ package com.jetbrains.python.black
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.SystemInfo
@@ -26,8 +25,7 @@ class BlackFormatterUtil {
     const val PACKAGE_NAME: String = "black"
 
     fun isFileApplicable(vFile: VirtualFile): Boolean {
-      return FileTypeRegistry.getInstance().isFileOfType(vFile, PythonFileType.INSTANCE)
-             || FileTypeRegistry.getInstance().isFileOfType(vFile, PyiFileType.INSTANCE)
+      return vFile.fileType == PythonFileType.INSTANCE || vFile.fileType == PyiFileType.INSTANCE
     }
 
     fun isBlackFormatterInstalledOnProjectSdk(sdk: Sdk?): Boolean {

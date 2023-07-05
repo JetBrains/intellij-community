@@ -45,11 +45,17 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     val project = source.project
     val blackConfiguration = BlackFormatterConfiguration.getBlackConfiguration(project)
 
-    BlackFormatterAdvertiserService.getInstance().suggestBlack(project, blackConfiguration)
+    val vFile = source.virtualFile ?: return false
+
+    val isApplicable = BlackFormatterUtil.isFileApplicable(vFile)
+
+    if (isApplicable) {
+      BlackFormatterAdvertiserService.getInstance(source.project).suggestBlack(source, blackConfiguration)
+    }
 
     if (!blackConfiguration.enabledOnReformat) return false
-    val vFile = source.virtualFile ?: return false
-    return BlackFormatterUtil.isFileApplicable(vFile)
+
+    return isApplicable
   }
 
   override fun createFormattingTask(formattingRequest: AsyncFormattingRequest): FormattingTask? {
