@@ -268,7 +268,7 @@ public class SwitchBlockHighlightingModel {
 
   @Nullable
   private static HighlightInfo.Builder createQualifiedEnumConstantInfo(@NotNull PsiReferenceExpression expr) {
-    if (PsiUtil.getLanguageLevel(expr).isAtLeast(LanguageLevel.JDK_21)) return null;
+    if (HighlightingFeature.ENUM_QUALIFIED_NAME_IN_SWITCH.isAvailable(expr)) return null;
     PsiElement qualifier = expr.getQualifier();
     if (qualifier == null) return null;
     HighlightInfo.Builder result = createError(expr, JavaErrorBundle.message("qualified.enum.constant.in.switch"));
