@@ -9,10 +9,7 @@ import com.intellij.idea.IdeaLogger;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -220,33 +217,35 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
     initApplication();
 
-    projectTracker = ((TestProjectManager)ProjectManager.getInstance()).startTracking();
+    WriteIntentReadAction.run((ThrowableRunnable<? extends Exception>)() -> {
+      projectTracker = ((TestProjectManager)ProjectManager.getInstance()).startTracking();
 
-    if (myOldSdks == null) { // some bastard's overridden initApplication completely
-      myOldSdks = new SdkLeakTracker();
-    }
+      if (myOldSdks == null) { // some bastard's overridden initApplication completely
+        myOldSdks = new SdkLeakTracker();
+      }
 
-    setUpProject();
-    myEditorListenerTracker = new EditorListenerTracker();
-    myThreadTracker = new ThreadTracker();
+      setUpProject();
+      myEditorListenerTracker = new EditorListenerTracker();
+      myThreadTracker = new ThreadTracker();
 
-    boolean isTrackCodeStyleChanges = !(isStressTest() ||
-                                        ApplicationManager.getApplication() == null ||
-                                        ApplicationManager.getApplication() instanceof MockApplication);
+      boolean isTrackCodeStyleChanges = !(isStressTest() ||
+                                          ApplicationManager.getApplication() == null ||
+                                          ApplicationManager.getApplication() instanceof MockApplication);
 
-    myCodeStyleSettingsTracker = isTrackCodeStyleChanges ? new CodeStyleSettingsTracker(() -> CodeStyle.getDefaultSettings()) : null;
-    ourTestCase = this;
-    if (myProject != null) {
-      CodeStyle.setTemporarySettings(myProject, CodeStyle.createTestSettings());
-      InjectedLanguageManagerImpl.pushInjectors(myProject);
-      ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
-    }
+      myCodeStyleSettingsTracker = isTrackCodeStyleChanges ? new CodeStyleSettingsTracker(() -> CodeStyle.getDefaultSettings()) : null;
+      ourTestCase = this;
+      if (myProject != null) {
+        CodeStyle.setTemporarySettings(myProject, CodeStyle.createTestSettings());
+        InjectedLanguageManagerImpl.pushInjectors(myProject);
+        ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
+      }
 
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      EDT.dispatchAllInvocationEvents();
-    }
-    myVirtualFilePointerTracker = new VirtualFilePointerTracker();
-    myLibraryTableTracker = new LibraryTableTracker();
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        EDT.dispatchAllInvocationEvents();
+      }
+      myVirtualFilePointerTracker = new VirtualFilePointerTracker();
+      myLibraryTableTracker = new LibraryTableTracker();
+    });
   }
 
   public final Project getProject() {
@@ -628,14 +627,16 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     boolean runInCommand = annotatedWith(WrapInCommand.class);
     if (runInCommand) {
       Ref<Throwable> e = new Ref<>();
-      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-        try {
-          super.runTestRunnable(testRunnable);
-        }
-        catch (Throwable throwable) {
-          e.set(throwable);
-        }
-      }, null, null);
+      WriteIntentReadAction.run((Runnable)() -> {
+        CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+          try {
+            super.runTestRunnable(testRunnable);
+          }
+          catch (Throwable throwable) {
+            e.set(throwable);
+          }
+        }, null, null);
+      });
       if (!e.isNull()) {
         throw e.get();
       }

@@ -402,7 +402,13 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    testRunnable.run();
+    Application app = ApplicationManager.getApplication();
+    if (runInDispatchThread() && app != null && app.isDispatchThread()) {
+      WriteIntentReadAction.run(testRunnable);
+    }
+    else {
+      testRunnable.run();
+    }
   }
 
   /**
