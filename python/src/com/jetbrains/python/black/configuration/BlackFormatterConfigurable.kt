@@ -229,11 +229,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
     pathToBinaryRow.visible(isBinaryMode)
     sdkSelectionRow.visible(!isBinaryMode)
 
-    if (selectedSdk == null) {
-      packageNotInstalledErrorLabel.text = PyBundle.message("black.no.project.interpreter.error")
-      installButton.isVisible = false
-    }
-    else if (!isLocalSdk) {
+    if (!isLocalSdk && selectedSdk != null) {
       remoteSdkErrorLabel.isVisible = executionModeComboBox.selectedItem == BlackFormatterConfiguration.ExecutionMode.PACKAGE
     }
 
