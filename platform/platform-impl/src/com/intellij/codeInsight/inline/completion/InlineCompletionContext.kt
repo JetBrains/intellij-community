@@ -3,6 +3,7 @@ package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.resetInlineCompletionState
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionKeyListener
+import com.intellij.codeInsight.inline.completion.render.InlineCompletion
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
