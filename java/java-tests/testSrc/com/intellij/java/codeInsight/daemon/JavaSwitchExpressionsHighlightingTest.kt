@@ -26,6 +26,7 @@ class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCas
   fun testComplexTernaryInSwitch() = doTest()
   fun testQualifiedEnumInSwitch() =  IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
   fun testConstantAssignment() =  IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
+  fun testEnumDuplicates() =  IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
   fun testRedundantCastInSwitchBranch() {
     myFixture.enableInspections(RedundantCastInspection())
     doTest()
