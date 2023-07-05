@@ -298,7 +298,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
       //noinspection UseDPIAwareBorders
       selectablePanel.setBorder(
-        new EmptyBorder(0, innerInsets.left + leftRightInset, 0, hasNextIcon || hasInlineButtons ? leftRightInset : leftRightInset + leftRightInset));
+        new EmptyBorder(0, innerInsets.left + leftRightInset, 0, hasNextIcon || hasInlineButtons ? leftRightInset : leftRightInset + myButtonsSeparator.getPreferredSize().width));
     }
 
     if (step instanceof BaseListPopupStep) {
