@@ -76,7 +76,7 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
     val simpleId = GitLabMergeRequestId.Simple(id)
     return models.getOrPut(simpleId) {
       reloadMergeRequest
-        .filter { requestedId -> requestedId == id }
+        .filter { requestedId -> requestedId.iid == id.iid }
         .withInitial(id)
         .mapScoped { mrId ->
           runCatching {
