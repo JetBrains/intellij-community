@@ -5,47 +5,56 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.psi.PsiFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.black.configuration.BlackFormatterConfigurable
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration
+import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 @ApiStatus.Internal
-@Service(Service.Level.APP)
+@Service(Service.Level.PROJECT)
 class BlackFormatterAdvertiserService private constructor() {
 
   companion object {
     @NonNls
     const val SHOW_BLACK_FORMATTER_SUPPORT_NOTIFICATION = "black.formatter.show.support.notification"
 
-    fun getInstance(): BlackFormatterAdvertiserService =
-      ApplicationManager.getApplication().getService(BlackFormatterAdvertiserService::class.java)
+    fun getInstance(project: Project): BlackFormatterAdvertiserService =
+      project.getService(BlackFormatterAdvertiserService::class.java)
   }
 
   private var alreadyShown: Boolean = false
 
-  fun suggestBlack(project: Project, blackFormatterConfiguration: BlackFormatterConfiguration) {
-    if (blackFormatterConfiguration == BlackFormatterConfiguration() && !alreadyShown) {
-      if (BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(blackFormatterConfiguration.getSdk(project))) {
-        showBlackFormatterSupportNotification(project,
-                                              PyBundle.message("black.advertising.service.found.in.packages"))
-      }
-      else if (BlackFormatterUtil.isBlackExecutableDetected()) {
-        showBlackFormatterSupportNotification(project,
-                                              PyBundle.message("black.advertising.service.found.in.PATH",
-                                                                      if (SystemInfo.isWindows) 0 else 1))
+  @Synchronized
+  fun suggestBlack(psiFile: PsiFile, blackFormatterConfiguration: BlackFormatterConfiguration) {
+    if (!alreadyShown) {
+      val project = psiFile.project
+      val blackInstalled = project.modules
+        .mapNotNull { it.pythonSdk }
+        .any { BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(it) }
+
+      if (blackFormatterConfiguration == BlackFormatterConfiguration()) {
+        if (blackInstalled) {
+          showBlackFormatterSupportNotification(project,
+                                                PyBundle.message("black.advertising.service.found.in.packages"))
+        }
+        else if (BlackFormatterUtil.isBlackExecutableDetected()) {
+          showBlackFormatterSupportNotification(project,
+                                                PyBundle.message("black.advertising.service.found.in.PATH",
+                                                                 if (SystemInfo.isWindows) 0 else 1))
+        }
       }
     }
   }
 
-  @Synchronized
   private fun showBlackFormatterSupportNotification(project: Project, @Nls message: String) {
     val propertiesComponent = PropertiesComponent.getInstance()
     if (!propertiesComponent.getBoolean(SHOW_BLACK_FORMATTER_SUPPORT_NOTIFICATION, true)) {
