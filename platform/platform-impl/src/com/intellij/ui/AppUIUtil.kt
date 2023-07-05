@@ -29,6 +29,7 @@ import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.svg.loadWithSizes
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.PlatformUtils
@@ -45,6 +46,7 @@ import javax.swing.Action
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.border.Border
+import kotlin.math.roundToInt
 
 private const val VENDOR_PREFIX = "jetbrains-"
 private var ourIcons: MutableList<Image?>? = null
@@ -104,12 +106,15 @@ fun updateAppWindowIcon(window: Window) {
 /** Returns a HiDPI-aware image. */
 private fun loadAppIconImage(svgPath: String, scaleContext: ScaleContext, size: Int): Image? {
   val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+  val sysScale = scaleContext.getScale(ScaleType.SYS_SCALE).toFloat()
+  val userScale = scaleContext.getScale(ScaleType.USR_SCALE).toFloat()
+  val userSize = (size * userScale).roundToInt()
   val svgData = findSvgData(path = svgPath, classLoader = AppUIUtil::class.java.classLoader, pixScale = pixScale)
   if (svgData == null) {
     LOG.warn("Cannot load SVG application icon from $svgPath")
     return null
   }
-  return loadWithSizes(sizes = listOf(size), data = svgData, scale = pixScale).first()
+  return loadWithSizes(sizes = listOf(userSize), data = svgData, scale = sysScale).first()
 }
 
 fun loadSmallApplicationIcon(scaleContext: ScaleContext,
