@@ -17,6 +17,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Point
@@ -24,7 +25,8 @@ import java.awt.event.MouseEvent
 import java.util.function.Supplier
 import javax.swing.Icon
 
-internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
+@ApiStatus.Internal
+class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
                                       override val side: ToolWindowAnchor,
                                       vararg moveTo: ToolWindowAnchor) :
   AbstractMoreSquareStripeButton(createAction(toolWindowToolbar)) {
@@ -105,7 +107,8 @@ private fun createAction(toolWindowToolbar: ToolWindowToolbar): DumbAwareAction 
   }
 }
 
-internal abstract class AbstractMoreSquareStripeButton(action: AnAction, minimumSize: Supplier<Dimension>? = null) : AbstractSquareStripeButton(action, createPresentation(), minimumSize) {
+@ApiStatus.Internal
+abstract class AbstractMoreSquareStripeButton(action: AnAction, minimumSize: Supplier<Dimension>? = null) : AbstractSquareStripeButton(action, createPresentation(), minimumSize) {
   override fun update() {
     super.update()
     val project = dataContext.getData(CommonDataKeys.PROJECT)
