@@ -719,7 +719,12 @@ public class GitBranchPopupActions {
         GitRepository repository = repositories.get(0);
         GitRemoteBranch remoteBranch = Objects.requireNonNull(repository.getBranches().findRemoteBranch(remoteBranchName));
         String suggestedLocalName = remoteBranch.getNameForRemoteOperations();
+        checkoutRemoteBranch(project, repositories, remoteBranchName, suggestedLocalName);
+      }
 
+      @RequiresEdt
+      public static void checkoutRemoteBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
+                                              @NotNull String remoteBranchName, @NotNull String suggestedLocalName) {
         // can have remote conflict if git-svn is used  - suggested local name will be equal to selected remote
         if (BRANCH_NAME_HASHING_STRATEGY.equals(remoteBranchName, suggestedLocalName)) {
           askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName);

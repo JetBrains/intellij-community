@@ -60,7 +60,12 @@ internal class GHPRBranchesViewModel(
     cs.launch {
       val details = detailsState.first()
       val remoteDescriptor = details.getRemoteDescriptor() ?: return@launch
-      GitRemoteBranchesUtil.fetchAndCheckoutRemoteBranch(gitRepository, remoteDescriptor, details.headRefName)
+      val localPrefix = if(details.headRepository?.isFork == true) {
+        "fork/${remoteDescriptor.name}"
+      } else {
+        null
+      }
+      GitRemoteBranchesUtil.fetchAndCheckoutRemoteBranch(gitRepository, remoteDescriptor, details.headRefName, localPrefix)
     }
   }
 

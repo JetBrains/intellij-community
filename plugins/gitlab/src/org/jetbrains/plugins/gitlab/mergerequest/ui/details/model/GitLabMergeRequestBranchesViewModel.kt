@@ -56,7 +56,12 @@ internal class GitLabMergeRequestBranchesViewModel(
     cs.launch {
       val details = mergeRequest.details.first()
       val remoteDescriptor = details.getRemoteDescriptor() ?: return@launch
-      GitRemoteBranchesUtil.fetchAndCheckoutRemoteBranch(gitRepository, remoteDescriptor, details.sourceBranch)
+      val localPrefix = if(details.sourceProject?.fullPath != details.targetProject.fullPath) {
+        "fork/${remoteDescriptor.name}"
+      } else {
+        null
+      }
+      GitRemoteBranchesUtil.fetchAndCheckoutRemoteBranch(gitRepository, remoteDescriptor, details.sourceBranch, localPrefix)
     }
   }
 

@@ -9,6 +9,8 @@ import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.GitLocalBranch
+import git4idea.GitRemoteBranch
+import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
 import git4idea.commands.Git
 import git4idea.fetch.GitFetchSupport
@@ -34,18 +36,18 @@ object GitRemoteBranchesUtil {
    * Checks if the current HEAD is tracking a branch on remote
    */
   fun isRemoteBranchCheckedOut(repository: GitRepository, remote: HostedGitRepositoryRemote, branchName: String): Boolean {
-    val localBranch = findLocalBranchTrackingRemote(repository, remote, branchName) ?: return false
+    val existingRemote = findRemote(repository, remote) ?: return false
+    val localBranch = findLocalBranchTrackingRemote(repository, GitStandardRemoteBranch(existingRemote, branchName)) ?: return false
     return repository.currentBranchName == localBranch.name
   }
 
-  private fun findLocalBranchTrackingRemote(repository: GitRepository, remote: HostedGitRepositoryRemote, branchName: String): GitLocalBranch? {
-    val existingRemote = findRemote(repository, remote) ?: return null
-    return repository.branchTrackInfos.find {
-      it.remote == existingRemote && it.remoteBranch.nameForRemoteOperations == branchName
-    }?.localBranch
-  }
+  private fun findLocalBranchTrackingRemote(repository: GitRepository, branch: GitRemoteBranch): GitLocalBranch? =
+    repository.branchTrackInfos.find { it.remoteBranch == branch }?.localBranch
 
-  suspend fun fetchAndCheckoutRemoteBranch(repository: GitRepository, remote: HostedGitRepositoryRemote, remoteBranch: String) {
+  suspend fun fetchAndCheckoutRemoteBranch(repository: GitRepository,
+                                           remote: HostedGitRepositoryRemote,
+                                           remoteBranch: String,
+                                           newLocalBranchPrefix: String?) {
     val branchToCheckout = withBackgroundProgress(
       repository.project,
       CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")
@@ -55,13 +57,17 @@ object GitRemoteBranchesUtil {
       }
     } ?: return
 
+    val existingLocalBranch = findLocalBranchTrackingRemote(repository, branchToCheckout)
+    val suggestedName = existingLocalBranch?.name ?: newLocalBranchPrefix?.let { "$it/$remoteBranch" } ?: remoteBranch
     withContext(Dispatchers.Main) {
       GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction
-        .checkoutRemoteBranch(repository.project, listOf(repository), branchToCheckout)
+        .checkoutRemoteBranch(repository.project, listOf(repository), branchToCheckout.name, suggestedName)
     }
   }
 
-  private suspend fun getBranchToCheckout(repository: GitRepository, remote: HostedGitRepositoryRemote, remoteBranch: String): String? {
+  private suspend fun getBranchToCheckout(repository: GitRepository,
+                                          remote: HostedGitRepositoryRemote,
+                                          remoteBranch: String): GitRemoteBranch? {
     val headRemote = coroutineToIndicator {
       Git.getInstance().findOrCreateRemote(repository, remote)
     }
@@ -77,7 +83,7 @@ object GitRemoteBranchesUtil {
     return withContext(Dispatchers.Main) {
       val fetchOk = fetchResult.showNotificationIfFailed(GitBundle.message("notification.title.fetch.failure"))
       if (fetchOk) {
-        "${headRemote.name}/${remoteBranch}"
+        GitStandardRemoteBranch(headRemote, remoteBranch)
       }
       else {
         null
