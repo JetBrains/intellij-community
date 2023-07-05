@@ -9,17 +9,13 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.BuildOptions.Companion.REPAIR_UTILITY_BUNDLE_STEP
-import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.JvmArchitecture.Companion.currentJvmArch
-import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.OsFamily.Companion.currentOs
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
-import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.runProcess
-import org.jetbrains.intellij.build.suspendingRetryWithExponentialBackOff
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -46,11 +42,8 @@ class RepairUtilityBuilder {
     private val buildLock = Mutex()
     suspend fun bundle(context: BuildContext, os: OsFamily, arch: JvmArchitecture, distributionDir: Path) {
       context.executeStep(spanBuilder("bundle repair-utility").setAttribute("os", os.osName), REPAIR_UTILITY_BUNDLE_STEP) {
+        if (!canBinariesBeBuilt(context)) return@executeStep
         val cache = getBinaryCache(context).await()
-        if (cache.isEmpty()) {
-          return@executeStep
-        }
-
         val binary = findBinary(os, arch)
         val path = cache.get(binary)
         checkNotNull(path) {
@@ -71,12 +64,8 @@ class RepairUtilityBuilder {
         check(Files.exists(unpackedDistribution)) {
           "$unpackedDistribution doesn't exist"
         }
-
-        val cache = getBinaryCache(context).await()
-        if (cache.isEmpty()) {
-          return@executeStep
-        }
-
+        if (!canBinariesBeBuilt(context)) return@executeStep
+        check(getBinaryCache(context).await().isNotEmpty())
         val manifestGenerator = findBinary(currentOs, currentJvmArch)
         val distributionBinary = findBinary(os, arch)
         val binaryPath = repairUtilityProjectHome(context)?.resolve(manifestGenerator.relativeSourcePath)
@@ -131,6 +120,24 @@ class RepairUtilityBuilder {
       }
     }
 
+    private fun canBinariesBeBuilt(context: BuildContext): Boolean {
+      return !SystemInfoRt.isWindows &&
+             !context.isStepSkipped(REPAIR_UTILITY_BUNDLE_STEP) &&
+             repairUtilityProjectHome(context) != null &&
+             isDockerAvailable
+    }
+
+    private val isDockerAvailable by lazy {
+      try {
+        runBlocking { runProcess(args = listOf("docker", "--version"), inheritOut = true) }
+        true
+      }
+      catch (e: Exception) {
+        Span.current().addEvent("repair-utility cannot be built without Docker: ${e.message}")
+        false
+      }
+    }
+
     private fun repairUtilityProjectHome(context: BuildContext): Path? {
       val projectHome = context.paths.communityHomeDir.resolve("native/repair-utility")
       if (Files.exists(projectHome)) {
@@ -148,25 +155,8 @@ class RepairUtilityBuilder {
 
     private suspend fun buildBinaries(context: BuildContext): Map<Binary, Path> {
       return spanBuilder("build repair-utility").useWithScope2 {
-        if (SystemInfoRt.isWindows) {
-          // FIXME: Linux containers on Windows should be fine
-          Span.current().addEvent("repair-utility cannot be built on Windows yet")
-          return@useWithScope2 emptyMap()
-        }
-
         val projectHome = repairUtilityProjectHome(context) ?: return@useWithScope2 emptyMap()
         try {
-          val isDockerAvailable = withContext(Dispatchers.IO) {
-            try {
-              runProcess(args = listOf("docker", "--version"), inheritOut = true)
-              true
-            }
-            catch (e: Exception) {
-              Span.current().addEvent("repair-utility cannot be without Docker: ${e.message}")
-              false
-            }
-          }
-          if (!isDockerAvailable) return@useWithScope2 emptyMap()
           val baseUrl = context.applicationInfo.patchesUrl?.removeSuffix("/") ?: error("Missing download url")
           val baseName = baseArtifactName(context)
           val distributionUrls = BINARIES.associate {
@@ -239,7 +229,7 @@ class RepairUtilityBuilder {
     }
 
     fun executableFilesPatterns(context: BuildContext): List<String> {
-      return if (!SystemInfoRt.isWindows && !context.isStepSkipped(REPAIR_UTILITY_BUNDLE_STEP)) {
+      return if (canBinariesBeBuilt(context)) {
         listOf("bin/repair")
       }
       else emptyList()
