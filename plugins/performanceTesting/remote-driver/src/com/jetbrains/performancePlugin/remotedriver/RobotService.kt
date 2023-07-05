@@ -14,29 +14,18 @@ import java.awt.Component
 internal class RobotService {
   @Suppress("MemberVisibilityCanBePrivate")
   val robot: SmoothRobot = SmoothRobot()
-  val context: String = "root"
 
   private val xpathSearcher: XpathSearcher = XpathSearcher(TextToKeyCache)
 
-  fun findAll(xpath: String): List<RemoteComponent> {
-    return xpathSearcher.findComponents(xpath, null).map {
-      RemoteComponent(robot, xpath, xpathSearcher, it)
-    }
-  }
-}
-
-@Suppress("MemberVisibilityCanBePrivate")
-internal class RemoteComponent(val robot: Robot,
-                               val context: String,
-                               private val xpathSearcher: XpathSearcher,
-                               val component: Component) {
-  fun findAll(xpath: String): List<RemoteComponent> {
-    return xpathSearcher.findComponents(xpath, component).map {
-      RemoteComponent(robot, context + xpath, xpathSearcher, it)
-    }
+  fun findAll(xpath: String): List<Component> {
+    return xpathSearcher.findComponents(xpath, null)
   }
 
-  fun findAllText(): List<TextData> {
+  fun findAll(xpath: String, component: Component): List<Component> {
+    return xpathSearcher.findComponents(xpath, component)
+  }
+
+  fun findAllText(component: Component): List<TextData> {
     return TextParser.parseComponent(component, TextToKeyCache)
   }
 }

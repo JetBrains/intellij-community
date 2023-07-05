@@ -1,13 +1,12 @@
 package com.intellij.driver.sdk.ui.compenents
 
-import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.TreePathToRow
+import com.intellij.driver.sdk.ui.ComponentWrapper
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.UiComponent
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
-import com.intellij.driver.sdk.ui.remote.RemoteComponent
 import com.intellij.driver.sdk.ui.x
 import org.intellij.lang.annotations.Language
 
@@ -16,8 +15,8 @@ fun Finder.tree(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@c
                                                               JTreeUiComponent::class.java)
 
 
-class JTreeUiComponent(driver: Driver, remoteComponent: RemoteComponent) : UiComponent(driver, remoteComponent) {
-  private val fixture = driver.new(JTreeFixtureRef::class, remoteComponent.robot, remoteComponent.component)
+class JTreeUiComponent(data: ComponentWrapper) : UiComponent(data) {
+  private val fixture = driver.new(JTreeFixtureRef::class, robotService.robot, component)
 
   fun clickRow(row: Int) = fixture.clickRow(row)
   fun doubleClickRow(row: Int) = fixture.doubleClickRow(row)

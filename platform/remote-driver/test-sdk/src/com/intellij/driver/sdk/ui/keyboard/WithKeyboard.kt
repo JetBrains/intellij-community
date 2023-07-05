@@ -1,11 +1,11 @@
 package com.intellij.driver.sdk.ui.keyboard
 
-import com.intellij.driver.sdk.ui.remote.SearchContext
+import com.intellij.driver.sdk.ui.remote.RobotService
 
 interface WithKeyboard {
-  val searchContext: SearchContext
+  val robotService: RobotService
 
   fun keyboard(keyboardActions: RemoteKeyboard.() -> Unit) {
-    RemoteKeyboard(searchContext.robot).keyboardActions()
+    RemoteKeyboard(robotService.robot).keyboardActions()
   }
 }

@@ -8,17 +8,9 @@ internal const val REMOTE_ROBOT_MODULE_ID = "com.jetbrains.performancePlugin/int
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.RobotService",
         plugin = REMOTE_ROBOT_MODULE_ID)
-interface RobotService : SearchContext
-
-@Remote("com.jetbrains.performancePlugin.remotedriver.RemoteComponent",
-        plugin = REMOTE_ROBOT_MODULE_ID)
-interface RemoteComponent : SearchContext {
-  val component: Component
-  fun findAllText(): List<TextData>
-}
-
-interface SearchContext {
+interface RobotService {
   val robot: Robot
-  val context: String
-  fun findAll(@Language("xpath") xpath: String): List<RemoteComponent>
+  fun findAll(@Language("xpath") xpath: String): List<Component>
+  fun findAll(@Language("xpath") xpath: String, component: Component): List<Component>
+  fun findAllText(component: Component): List<TextData>
 }

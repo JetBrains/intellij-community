@@ -13,11 +13,11 @@ fun <T : UiComponent> Finder.x(@Language("xpath") xpath: String, type: Class<T>)
 }
 
 class UiComponentFinder<T : UiComponent>(private val xpath: String, private val type: Class<T>, private val finder: Finder) {
-  fun one(timeout: Duration = Duration.ofSeconds(DEFAULT_FIND_TIMEOUT_SECONDS.toLong())): T {
+  fun findOne(timeout: Duration = Duration.ofSeconds(DEFAULT_FIND_TIMEOUT_SECONDS.toLong())): T {
     return finder.find(xpath, type, timeout)
   }
 
-  fun oneOrNull(timeout: Duration = Duration.ofSeconds(DEFAULT_FIND_TIMEOUT_SECONDS.toLong())): T? {
+  fun findOneOrNull(timeout: Duration = Duration.ofSeconds(DEFAULT_FIND_TIMEOUT_SECONDS.toLong())): T? {
     return try {
       finder.find(xpath, type, timeout)
     }
@@ -26,21 +26,25 @@ class UiComponentFinder<T : UiComponent>(private val xpath: String, private val 
     }
   }
 
-  fun many(): List<T> {
+  fun findMany(): List<T> {
     return finder.findAll(xpath, type)
   }
 
   fun ifShowedOne(action: T.() -> Unit) {
-    many().singleOrNull()?.action()
+    findMany().singleOrNull()?.action()
   }
 
   fun waitForOne(timeout: Duration = Duration.ofSeconds(DEFAULT_FIND_TIMEOUT_SECONDS.toLong())): UiComponentFinder<T> {
-    one(timeout)
+    findOne(timeout)
     return this
   }
 
-  fun waitForCondition(timeout: Duration = Duration.ofSeconds(DEFAULT_FIND_TIMEOUT_SECONDS.toLong()),
-                       condition: UiComponentFinder<T>.() -> Boolean): UiComponentFinder<T> {
+  fun should(timeout: Int = DEFAULT_FIND_TIMEOUT_SECONDS,
+             condition: UiComponentFinder<T>.() -> Boolean): UiComponentFinder<T> {
+    return should(Duration.ofSeconds(timeout.toLong()), condition)
+  }
+  fun should(timeout: Duration = Duration.ofSeconds(DEFAULT_FIND_TIMEOUT_SECONDS.toLong()),
+             condition: UiComponentFinder<T>.() -> Boolean): UiComponentFinder<T> {
     waitFor(timeout) {
       this.condition()
     }
@@ -49,8 +53,19 @@ class UiComponentFinder<T : UiComponent>(private val xpath: String, private val 
 
   fun waitForExactAmount(amount: Int, timeout: Duration = Duration.ofSeconds(DEFAULT_FIND_TIMEOUT_SECONDS.toLong())): UiComponentFinder<T> {
     waitFor(timeout, errorMessage = "Failed to wait for $amount uiComponents($xpath) in ${finder.searchContext.context}") {
-      many().size == amount
+      findMany().size == amount
     }
     return this
+  }
+
+  fun click() {
+    findOne().click()
+  }
+
+  fun doubleClick() {
+    findOne().doubleClick()
+  }
+  fun rightClick() {
+    findOne().rightClick()
   }
 }

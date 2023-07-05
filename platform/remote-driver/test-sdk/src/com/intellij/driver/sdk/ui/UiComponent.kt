@@ -8,9 +8,22 @@ import com.intellij.driver.sdk.ui.remote.*
 import java.awt.Point
 
 
+data class ComponentWrapper(val driver: Driver, val robotService: RobotService, val component: Component, val foundByXpath: String)
+
 @Suppress("MemberVisibilityCanBePrivate")
-open class UiComponent(override val driver: Driver, val remoteComponent: RemoteComponent) : WithKeyboard, Finder {
-  override val searchContext: SearchContext = remoteComponent
+open class UiComponent(componentData: ComponentWrapper) : WithKeyboard, Finder {
+  override val driver: Driver = componentData.driver
+  override val robotService: RobotService = componentData.robotService
+  val component = componentData.component
+  private val foundByXpath = componentData.foundByXpath
+
+
+  override val searchContext: SearchContext = object : SearchContext {
+    override val context = foundByXpath
+    override fun findAll(xpath: String): List<Component> {
+      return robotService.findAll(xpath, component)
+    }
+  }
 
   // Search Text Locations
   fun findText(text: String): UiText {
@@ -26,65 +39,58 @@ open class UiComponent(override val driver: Driver, val remoteComponent: RemoteC
   }
 
   fun findText(predicate: (TextData) -> Boolean): UiText {
-    return remoteComponent.findAllText().single(predicate).let { UiText(this, it) }
+    return robotService.findAllText(component).single(predicate).let { UiText(this, it) }
   }
 
   fun hasText(predicate: (TextData) -> Boolean): Boolean {
-    return remoteComponent.findAllText().any(predicate)
+    return robotService.findAllText(component).any(predicate)
   }
 
   fun findAllText(predicate: (TextData) -> Boolean): List<UiText> {
-    return remoteComponent.findAllText().filter(predicate).map { UiText(this, it) }
+    return robotService.findAllText(component).filter(predicate).map { UiText(this, it) }
   }
 
   fun findAllText(): List<UiText> {
-    return remoteComponent.findAllText().map { UiText(this, it) }
+    return robotService.findAllText(component).map { UiText(this, it) }
   }
 
   // Mouse
   fun click(point: Point? = null) {
-    with(remoteComponent) {
-      if (point != null) {
-        robot.click(component, point)
-      } else {
-        robot.click(component)
-      }
+    if (point != null) {
+      robotService.robot.click(component, point)
+    }
+    else {
+      robotService.robot.click(component)
     }
   }
 
   fun doubleClick(point: Point? = null) {
-    with(remoteComponent) {
-      if (point != null) {
-        robot.click(component, point, RemoteMouseButton.LEFT, 2)
-      } else {
-        robot.doubleClick(component)
-      }
+    if (point != null) {
+      robotService.robot.click(component, point, RemoteMouseButton.LEFT, 2)
+    }
+    else {
+      robotService.robot.doubleClick(component)
     }
   }
 
   fun rightClick(point: Point? = null) {
-    with(remoteComponent) {
-      if (point != null) {
-        robot.click(component, point, RemoteMouseButton.RIGHT, 1)
-      } else {
-        robot.rightClick(component)
-      }
+    if (point != null) {
+      robotService.robot.click(component, point, RemoteMouseButton.RIGHT, 1)
     }
-  }
-  fun click(button: RemoteMouseButton, count: Int) {
-    with(remoteComponent) {
-      robot.click(component, button, count)
+    else {
+      robotService.robot.rightClick(component)
     }
   }
 
-  fun moveMouse() {
-    with(remoteComponent) {
-      robot.moveMouse(component)
-    }
+  fun click(button: RemoteMouseButton, count: Int) {
+    robotService.robot.click(component, button, count)
   }
+
+  fun moveMouse() {
+    robotService.robot.moveMouse(component)
+  }
+
   fun moveMouse(point: Point) {
-    with(remoteComponent) {
-      robot.moveMouse(component, point)
-    }
+    robotService.robot.moveMouse(component, point)
   }
 }

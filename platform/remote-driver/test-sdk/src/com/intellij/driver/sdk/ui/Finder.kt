@@ -1,8 +1,8 @@
 package com.intellij.driver.sdk.ui
 
 import com.intellij.driver.client.Driver
-import com.intellij.driver.sdk.ui.remote.RemoteComponent
-import com.intellij.driver.sdk.ui.remote.SearchContext
+import com.intellij.driver.sdk.ui.remote.Component
+import com.intellij.driver.sdk.ui.remote.RobotService
 import org.intellij.lang.annotations.Language
 import java.time.Duration
 
@@ -10,6 +10,7 @@ internal const val DEFAULT_FIND_TIMEOUT_SECONDS = 15
 
 interface Finder {
   val driver: Driver
+  val robotService: RobotService
   val searchContext: SearchContext
 
   fun find(@Language("xpath") xpath: String, timeout: Duration = Duration.ofSeconds(DEFAULT_FIND_TIMEOUT_SECONDS.toLong())): UiComponent {
@@ -32,8 +33,13 @@ interface Finder {
 
   fun <T : UiComponent> findAll(@Language("xpath") xpath: String, uiType: Class<T>): List<T> {
     return searchContext.findAll(xpath).map {
-      uiType.getConstructor(Driver::class.java,RemoteComponent::class.java)
-        .newInstance(driver, it)
+      uiType.getConstructor(ComponentWrapper::class.java)
+        .newInstance(ComponentWrapper(driver, robotService, it, xpath))
     }
   }
+}
+
+interface SearchContext {
+  val context: String
+  fun findAll(xpath: String): List<Component>
 }
