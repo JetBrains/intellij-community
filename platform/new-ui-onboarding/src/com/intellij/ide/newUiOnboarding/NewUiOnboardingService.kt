@@ -31,7 +31,8 @@ internal class NewUiOnboardingService(private val project: Project, private val 
     return listOf("projectWidget",
                   "runWidget",
                   "toolWindowLayouts",
-                  "moreToolWindows")
+                  "moreToolWindows",
+                  "navigationBar")
   }
 
   companion object {

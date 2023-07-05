@@ -12,6 +12,7 @@
     <step key="runWidget" implementationClass="com.intellij.ide.newUiOnboarding.steps.RunWidgetStep"/>
     <step key="toolWindowLayouts" implementationClass="com.intellij.ide.newUiOnboarding.steps.ToolWindowLayoutsStep"/>
     <step key="moreToolWindows" implementationClass="com.intellij.ide.newUiOnboarding.steps.MoreToolWindowsStep"/>
+    <step key="navigationBar" implementationClass="com.intellij.ide.newUiOnboarding.steps.NavigationBarStep"/>
   </extensions>
 
   <actions resource-bundle="messages.NewUiOnboardingBundle">
