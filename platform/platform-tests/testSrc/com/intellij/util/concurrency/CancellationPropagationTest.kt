@@ -26,6 +26,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
+import org.jetbrains.concurrency.AsyncPromise
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -870,5 +871,12 @@ class CancellationPropagationTest {
     job.join()
     Disposer.dispose(dummyDisposable)
     assertFalse(job.isCancelled)
+  }
+
+  @Test
+  fun `failing promise`() = timeoutRunBlocking {
+    withRootJob {
+      AsyncPromise<Unit>().apply { setError("bad") }.then {}
+    }.join()
   }
 }
