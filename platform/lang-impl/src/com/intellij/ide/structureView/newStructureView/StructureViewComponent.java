@@ -433,34 +433,44 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     AsyncPromise<TreePath> result = myCurrentFocusPromise = new AsyncPromise<>();
     int[] stage = {1, 0}; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
     TreePath[] deepestPath = {null};
-    TreeVisitor visitor = path -> {
-      if (myCurrentFocusPromise != result) {
-        result.setError("rejected");
-        return TreeVisitor.Action.INTERRUPT;
+    TreeVisitor visitor = new TreeVisitor() {
+      @Override
+      public @NotNull TreeVisitor.VisitThread visitThread() {
+        return VisitThread.BGT;
       }
-      Object last = path.getLastPathComponent();
-      Object userObject = unwrapNavigatable(last);
-      Object value = unwrapValue(last);
-      if (Comparing.equal(value, element) ||
-          userObject instanceof AbstractTreeNode && ((AbstractTreeNode<?>)userObject).canRepresent(element)) {
-        return TreeVisitor.Action.INTERRUPT;
-      }
-      if (value instanceof PsiElement && element instanceof PsiElement) {
-        if (PsiTreeUtil.isAncestor((PsiElement)value, (PsiElement)element, true)) {
-          int count = path.getPathCount();
-          if (stage[1] == 0 || stage[1] < count) {
-            stage[1] = count;
-            deepestPath[0] = path;
+
+      @Override
+      public @NotNull Action visit(@NotNull TreePath path) {
+        if (myCurrentFocusPromise != result) {
+          result.setError("rejected");
+          return TreeVisitor.Action.INTERRUPT;
+        }
+        Object last = path.getLastPathComponent();
+        Object userObject = unwrapNavigatable(last);
+        Object value = unwrapValue(last);
+        if (Comparing.equal(value, element) ||
+            userObject instanceof AbstractTreeNode && ((AbstractTreeNode<?>)userObject).canRepresent(element)) {
+          return TreeVisitor.Action.INTERRUPT;
+        }
+        if (value instanceof PsiElement && element instanceof PsiElement) {
+          if (PsiTreeUtil.isAncestor((PsiElement)value, (PsiElement)element, true)) {
+            int count = path.getPathCount();
+            if (stage[1] == 0 || stage[1] < count) {
+              stage[1] = count;
+              deepestPath[0] = path;
+            }
+          }
+          else if (stage[0] != 3) {
+            stage[0] = 2;
+            return TreeVisitor.Action.SKIP_CHILDREN;
           }
         }
-        else if (stage[0] != 3) {
-          stage[0] = 2;
-          return TreeVisitor.Action.SKIP_CHILDREN;
-        }
+        return TreeVisitor.Action.CONTINUE;
       }
-      return TreeVisitor.Action.CONTINUE;
     };
     Function<TreePath, Promise<TreePath>> action = path -> {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+
       if (select) {
         TreeUtil.selectPath(myTree, path);
       }
