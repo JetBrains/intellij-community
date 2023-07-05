@@ -979,9 +979,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     @Override
     protected boolean areSettingsMerged(@NotNull Map<String, Element> settings, @NotNull Element element) {
       // returns true when settings are default, so defaults will not be saved in profile
-      return Boolean.parseBoolean(element.getAttributeValue("enabled")) == myWrapper.isEnabledByDefault() &&
-             myWrapper.getDefaultLevel().toString().equals(element.getAttributeValue("level")) &&
-             Boolean.parseBoolean(element.getAttributeValue("enabled_by_default")) == myWrapper.isEnabledByDefault();
+      boolean enabled = myWrapper.isEnabledByDefault();
+      //noinspection SSBasedInspection
+      return myWrapper.getDefaultLevel().toString().equals(element.getAttributeValue("level")) &&
+             Boolean.parseBoolean(element.getAttributeValue("enabled")) == enabled &&
+             Boolean.parseBoolean(element.getAttributeValue("enabled_by_default")) == enabled &&
+             element.getChildren("scope").stream().allMatch(e -> Boolean.parseBoolean(e.getAttributeValue("enabled")) == enabled);
     }
   }
 }
