@@ -182,12 +182,14 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     }
 
     // write names
-    writeData { buffer ->
-      val shortBuffer = buffer.asShortBuffer()
-      for (name in names) {
-        shortBuffer.put(name.size.toShort())
+    for (list in names.asSequence().chunked(4096)) {
+      writeData { buffer ->
+        val shortBuffer = buffer.asShortBuffer()
+        for (name in list) {
+          shortBuffer.put(name.size.toShort())
+        }
+        buffer.position(buffer.position() + (shortBuffer.position() * Short.SIZE_BYTES))
       }
-      buffer.position(buffer.position() + (shortBuffer.position() * Short.SIZE_BYTES))
     }
 
     for (list in names.asSequence().chunked(1024)) {
