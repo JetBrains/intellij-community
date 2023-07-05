@@ -3,11 +3,12 @@ package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.analysis.problemsView.Problem;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.*;
+import com.intellij.internal.statistic.eventLog.events.EventField;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ToggleOptionAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -60,40 +61,42 @@ final class ProblemsViewStatsCollector extends CounterUsagesCollector {
     return highlighting != null ? highlighting.getSeverity() : HighlightSeverity.ERROR.myVal;
   }
 
-  static void tabShown(@NotNull ProblemsViewPanel panel) {
-    TAB_SHOWN.log(panel.getProject(),
-                  TAB_NAME.with(tabName(panel)),
-                  PROBLEMS_COUNT.with(problemsCount(panel)),
-                  PREVIEW_ENABLED.with(previewEnabled(panel)));
+  static void tabShown(@NotNull ProblemsViewTab tab) {
+    if (tab instanceof ProblemsViewPanel panel) {
+      TAB_SHOWN.log(panel.getProject(),
+                    TAB_NAME.with(tabName(panel)),
+                    PROBLEMS_COUNT.with(problemsCount(panel)),
+                    PREVIEW_ENABLED.with(previewEnabled(panel)));
+    }
+    else if (tab instanceof ProblemsViewTabWithMetrics panel) {
+      TAB_SHOWN.log(panel.getProject(),
+                    TAB_NAME.with(panel.getUsagesTabId()),
+                    PROBLEMS_COUNT.with(panel.getShownProblemsCount()),
+                    PREVIEW_ENABLED.with(false));
+    }
   }
 
-  static void tabHidden(@NotNull ProblemsViewPanel panel, long nano) {
-    TAB_HIDDEN.log(panel.getProject(),
-                   TAB_NAME.with(tabName(panel)),
-                   PROBLEMS_COUNT.with(problemsCount(panel)),
-                   PREVIEW_ENABLED.with(previewEnabled(panel)),
-                   DURATION.with(TimeUnit.NANOSECONDS.toSeconds(nano)));
+  static void tabHidden(@NotNull ProblemsViewTab tab, long nano) {
+    if (tab instanceof ProblemsViewPanel panel) {
+      TAB_HIDDEN.log(panel.getProject(),
+                     TAB_NAME.with(tabName(panel)),
+                     PROBLEMS_COUNT.with(problemsCount(panel)),
+                     PREVIEW_ENABLED.with(previewEnabled(panel)),
+                     DURATION.with(TimeUnit.NANOSECONDS.toSeconds(nano)));
+    }
+    else if (tab instanceof ProblemsViewTabWithMetrics panel) {
+      TAB_HIDDEN.log(panel.getProject(),
+                     TAB_NAME.with(panel.getUsagesTabId()),
+                     PROBLEMS_COUNT.with(panel.getShownProblemsCount()),
+                     PREVIEW_ENABLED.with(false),
+                     DURATION.with(TimeUnit.NANOSECONDS.toSeconds(nano)));
+    }
   }
 
   static void problemSelected(@NotNull ProblemsViewPanel panel, @NotNull Problem problem) {
     PROBLEM_SELECTED.log(panel.getProject(),
                          TAB_NAME.with(tabName(panel)),
                          PROBLEM_SEVERITY.with(problemSeverity(problem)));
-  }
-
-  static void logTabShown(Project project, String tabName, int problemsCount) {
-    TAB_SHOWN.log(project,
-                  TAB_NAME.with(tabName),
-                  PROBLEMS_COUNT.with(problemsCount),
-                  PREVIEW_ENABLED.with(false));
-  }
-
-  static void logTabHidden(Project project, String tabName, int problemsCount, long durationNano) {
-    TAB_HIDDEN.log(project,
-                   TAB_NAME.with(tabName),
-                   PROBLEMS_COUNT.with(problemsCount),
-                   PREVIEW_ENABLED.with(false),
-                   DURATION.with(TimeUnit.NANOSECONDS.toSeconds(durationNano)));
   }
 
   @Override
