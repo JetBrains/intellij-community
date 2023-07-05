@@ -13,10 +13,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.ui.Splash
 import com.intellij.ui.loadSplashImage
 import com.intellij.util.ui.StartupUiUtil
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Rectangle
@@ -69,19 +66,22 @@ internal suspend fun showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: De
 private suspend fun showLastProjectFrameIfAvailable(prepareActivity: Activity): Boolean {
   val activity = StartUpMeasurer.startActivity("splash as project frame initialization")
   val infoFile = Path.of(PathManager.getSystemPath(), "lastProjectFrameInfo")
-  var buffer: ByteBuffer
-  try {
-    Files.newByteChannel(infoFile).use { channel ->
-      buffer = ByteBuffer.allocate(channel.size().toInt())
-      do {
-        channel.read(buffer)
+  val buffer = try {
+    withContext(Dispatchers.IO) {
+      Files.newByteChannel(infoFile).use { channel ->
+        val buffer = ByteBuffer.allocate(channel.size().toInt())
+        do {
+          channel.read(buffer)
+        }
+        while (buffer.hasRemaining())
+        buffer.flip()
+        if (buffer.getShort().toInt() != 0) {
+          return@withContext null
+        }
+
+        buffer
       }
-      while (buffer.hasRemaining())
-      buffer.flip()
-      if (buffer.getShort().toInt() != 0) {
-        return false
-      }
-    }
+    } ?: return false
   }
   catch (ignore: NoSuchFileException) {
     return false

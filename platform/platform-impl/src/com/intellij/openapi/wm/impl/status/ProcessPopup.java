@@ -42,8 +42,7 @@ final class ProcessPopup {
   ProcessPopup(@NotNull InfoAndProgressPanel progressPanel) {
     myProgressPanel = progressPanel;
 
-    myIndicatorPanel = new JBPanelWithEmptyText().withEmptyText(IdeBundle.message("progress.window.empty.text")).andTransparent();
-    myIndicatorPanel.setLayout(new VerticalLayout(0));
+    myIndicatorPanel = new JBPanelWithEmptyText(new VerticalLayout(0)).withEmptyText(IdeBundle.message("progress.window.empty.text")).andTransparent();
     myIndicatorPanel.setBorder(JBUI.Borders.empty(10, 0, 18, 0));
     myIndicatorPanel.setFocusable(true);
     if (ExperimentalUI.isNewUI()) {

@@ -72,9 +72,10 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
 
   public static final Object FAKE_BALLOON = new Object();
 
-  private final IdeStatusBarImpl myStatusBar;
-  private final ProcessPopup myPopup;
-  private final ProcessBalloon myBalloon = new ProcessBalloon(3);
+  private final IdeStatusBarImpl statusBar;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private @Nullable ProcessPopup popup;
+  private final ProcessBalloon balloon = new ProcessBalloon(3);
 
   private final NotNullLazyValue<InfoAndProgressPanelImpl> myMainPanel;
 
@@ -108,10 +109,9 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
   };
 
   InfoAndProgressPanel(IdeStatusBarImpl statusBar) {
-    myStatusBar = statusBar;
+    this.statusBar = statusBar;
     myMainPanel = NotNullLazyValue.lazy(() -> new InfoAndProgressPanelImpl());
     myUpdateQueue = new MergingUpdateQueue("Progress indicator", 50, true, MergingUpdateQueue.ANY_COMPONENT);
-    myPopup = new ProcessPopup(this);
 
     runOnProgressRelatedChange(this::updateProgressIcon, this, true);
   }
@@ -121,17 +121,17 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
       if (!myDisposed) {
         MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable);
         if (powerSaveMode) {
-          connection.subscribe(PowerSaveMode.TOPIC, () -> UIUtil.invokeLaterIfNeeded(runnable));
+          connection.subscribe(PowerSaveMode.TOPIC, () -> EdtInvocationManager.invokeLaterIfNeeded(runnable));
         }
         connection.subscribe(ProgressSuspender.TOPIC, new ProgressSuspender.SuspenderListener() {
           @Override
           public void suspendableProgressAppeared(@NotNull ProgressSuspender suspender) {
-            UIUtil.invokeLaterIfNeeded(runnable);
+            EdtInvocationManager.invokeLaterIfNeeded(runnable);
           }
 
           @Override
           public void suspendedStatusChanged(@NotNull ProgressSuspender suspender) {
-            UIUtil.invokeLaterIfNeeded(runnable);
+            EdtInvocationManager.invokeLaterIfNeeded(runnable);
           }
         });
       }
@@ -200,6 +200,15 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
     }
   }
 
+  private ProcessPopup getPopup() {
+    ProcessPopup result = popup;
+    if (result == null) {
+      result = new ProcessPopup(this);
+      popup = result;
+    }
+    return result;
+  }
+
   void addProgress(@NotNull ProgressIndicatorEx original, @NotNull TaskInfo info) {
     ApplicationManager.getApplication().assertIsDispatchThread(); // `openProcessPopup` may require the dispatch thread
 
@@ -214,16 +223,16 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
       MyInlineProgressIndicator expanded = createInlineDelegate(info, original, false);
       MyInlineProgressIndicator compact = createInlineDelegate(info, original, true);
 
-      myPopup.addIndicator(expanded);
-      myBalloon.addIndicator(getRootPane(), compact);
+      getPopup().addIndicator(expanded);
+      balloon.addIndicator(getRootPane(), compact);
 
       updateProgressIcon();
 
       myMainPanel.get().updateProgress(compact);
 
       if (myInfos.size() > 1 && Registry.is("ide.windowSystem.autoShowProcessPopup") &&
-          // we don't want popup to activate another project's window or be shown above current project's window
-          myStatusBar.getProject() == ProjectUtil.getActiveProject()) {
+          // we don't want the popup to activate another project's window or be shown above current project's window
+          statusBar.getProject() == ProjectUtil.getActiveProject()) {
         openProcessPopup(false);
       }
 
@@ -252,15 +261,15 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
 
       boolean last = myOriginals.size() == 1;
 
-      if (!progress.isCompact()) {
-        myPopup.removeIndicator(progress);
+      if (!progress.isCompact() && popup != null) {
+        popup.removeIndicator(progress);
       }
 
       ProgressIndicatorEx original = removeFromMaps(progress);
       if (myOriginals.contains(original)) {
         Disposer.dispose(progress);
         if (progress.isCompact()) {
-          myBalloon.removeIndicator(getRootPane(), progress);
+          balloon.removeIndicator(getRootPane(), progress);
         }
         return;
       }
@@ -271,8 +280,8 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
     }
     Disposer.dispose(progress);
     if (progress.isCompact()) {
-      myBalloon.removeIndicator(getRootPane(), progress);
-      myStatusBar.notifyProgressRemoved();
+      balloon.removeIndicator(getRootPane(), progress);
+      statusBar.notifyProgressRemoved();
     }
   }
 
@@ -330,8 +339,11 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
   private void openProcessPopup(boolean requestFocus) {
     boolean shouldClosePopupAndOnProcessFinish;
     synchronized (myOriginals) {
-      if (myPopup.isShowing()) return;
-      myPopup.show(requestFocus);
+      if (popup != null && popup.isShowing()) {
+        return;
+      }
+
+      getPopup().show(requestFocus);
       shouldClosePopupAndOnProcessFinish = hasProgressIndicators();
       myMainPanel.get().updateProgressState(true);
     }
@@ -340,8 +352,11 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
 
   void hideProcessPopup() {
     synchronized (myOriginals) {
-      if (!myPopup.isShowing()) return;
-      myPopup.hide();
+      if (popup == null || !popup.isShowing()) {
+        return;
+      }
+
+      popup.hide();
       myMainPanel.get().updateProgressState(false);
     }
   }
@@ -453,7 +468,7 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
   }
 
   private void triggerPopupShowing() {
-    if (myPopup.isShowing()) {
+    if (popup != null && popup.isShowing()) {
       hideProcessPopup();
     }
     else {
@@ -482,7 +497,7 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
   }
 
   boolean isProcessWindowOpen() {
-    return myPopup.isShowing();
+    return popup != null && popup.isShowing();
   }
 
   void setProcessWindowOpen(boolean open) {
@@ -1143,8 +1158,9 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
 
     void updateState(@Nullable MyInlineProgressIndicator indicator) {
       if (getRootPane() == null) {
-        return; // e.g. project frame is closed
+        return; // e.g., project frame is closed
       }
+
       if (myIndicator != null) {
         if (myIndicator == indicator) {
           updateState();
@@ -1168,7 +1184,7 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
     }
 
     void updateState() {
-      updateState(myPopup.isShowing());
+      updateState(popup != null && popup.isShowing());
     }
 
     void updateState(boolean showPopup) {
@@ -1210,7 +1226,7 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
     @Override
     public void layoutContainer(Container parent) {
       if (parent.getComponentCount() != 2) {
-        return; // e.g. project frame is closed
+        return; // e.g., project frame is closed
       }
 
       Component infoPanel = parent.getComponent(0);

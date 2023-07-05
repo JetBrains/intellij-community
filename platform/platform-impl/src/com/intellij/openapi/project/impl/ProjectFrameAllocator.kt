@@ -255,7 +255,9 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
       updateFullScreenState(frameHelper, frameInfo)
 
       completeFrameAndCloseOnCancel(frameHelper, deferredProjectFrameHelper) {
-        frameHelper.init()
+        subtask("ProjectFrameHelper.init") {
+          frameHelper.init()
+        }
       }
     }
     return
