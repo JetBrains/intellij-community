@@ -190,9 +190,17 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
   }
 
   override fun setBounds(balloons: List<Balloon>, startX: Int, startY: Int) {
-    val shadowVerticalOffset = if (ShadowJava2DPainter.enabled()) 0 else JBUI.scale(8)
-    var verticalOffset = if (ShadowJava2DPainter.enabled()) 0 else JBUI.scale(2)
+    val javaShadow = ShadowJava2DPainter.enabled()
+    val shadowVerticalOffset = if (javaShadow) 0 else JBUI.scale(8)
+    var verticalOffset = if (javaShadow) 0 else JBUI.scale(2)
     var y = startY
+
+    if (javaShadow) {
+      val bottomOffset = JBUI.scale(10) - ShadowJava2DPainter.getInsets("Notification").bottom
+      if (bottomOffset > 0) {
+        y -= bottomOffset
+      }
+    }
 
     for (balloon in balloons) {
       val bounds = Rectangle(super.getSize(balloon))

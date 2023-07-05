@@ -55,7 +55,7 @@
     "MenuBar.borderColor": "Grey12",
 
     "Notification.Shadow": {
-      "borderInsets": "10,10,10,10",
+      "borderInsets": "5,5,5,5",
       "top0Color": "#FFFFFF00",
       "top1Color": "#A0A0A010",
       "bottom0Color": "#FFFFFF00",

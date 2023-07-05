@@ -714,7 +714,7 @@
       "bottomRight1Color": "#00000020"
     },
     "Notification.Shadow": {
-      "borderInsets": "10,10,10,10",
+      "borderInsets": "5,5,5,5",
       "top0Color": "#00000000",
       "top1Color": "#00000020",
       "bottom0Color": "#00000000",
