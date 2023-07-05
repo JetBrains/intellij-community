@@ -91,7 +91,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     record Stuff(@NotNull Map<Language, FileHighlightingSetting> fileHighlightingSettings,
                  boolean inLibrary,
                  boolean shouldHighlight){}
-    Stuff info = ReadAction.compute(() -> {
+    Stuff info = ReadAction.computeCancellable(() -> {
       PsiFile psiFile = getPsiFile();
       if (psiFile == null) {
         return new Stuff(Collections.emptyMap(),false,false);
@@ -186,6 +186,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
   /**
    * when highlighting level changed, re-create TrafficLightRenderer (and recompute levels in its ctr)
+   *
    * @see ErrorStripeUpdateManager#setOrRefreshErrorStripeRenderer(EditorMarkupModel, PsiFile)
    */
   public boolean isValid() {
@@ -307,7 +308,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     return status;
   }
 
-  protected void fillDaemonCodeAnalyzerErrorsStatus(@NotNull DaemonCodeAnalyzerStatus status, @NotNull SeverityRegistrar severityRegistrar) {
+  protected void fillDaemonCodeAnalyzerErrorsStatus(@NotNull DaemonCodeAnalyzerStatus status,
+                                                    @NotNull SeverityRegistrar severityRegistrar) {
   }
 
   protected final @NotNull Project getProject() {
@@ -338,7 +340,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       if (count > 0) {
         HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
         if (severity != null) {
-          Icon icon = mySeverityRegistrar.getRendererIconBySeverity(severity, status.minimumLevel == FileHighlightingSetting.FORCE_HIGHLIGHTING);
+          Icon icon =
+            mySeverityRegistrar.getRendererIconBySeverity(severity, status.minimumLevel == FileHighlightingSetting.FORCE_HIGHLIGHTING);
           SeverityStatusItem next = new SeverityStatusItem(severity, icon, count, severity.getCountMessage(count));
           while (!statusItems.isEmpty()) {
             SeverityStatusItem merged = StatusItemMerger.runMerge(ContainerUtil.getLastItem(statusItems), next);
@@ -379,7 +382,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
       return status.errorAnalyzingFinished ? result :
              result.withAnalyzingType(AnalyzingType.PARTIAL).
-             withPasses(ContainerUtil.map(status.passes, pass -> new PassWrapper(pass.getPresentableName(), toPercent(pass.getProgress(), pass.isFinished()))));
+               withPasses(ContainerUtil.map(status.passes, pass -> new PassWrapper(pass.getPresentableName(),
+                                                                                   toPercent(pass.getProgress(), pass.isFinished()))));
     }
     if (StringUtil.isNotEmpty(status.reasonWhyDisabled)) {
       return new AnalyzerStatus(AllIcons.General.InspectionsTrafficOff,
@@ -398,16 +402,18 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
                                       ? AllIcons.General.InspectionsOK
                                       : AllIcons.General.InspectionsOKEmpty;
       return isDumb ?
-        new AnalyzerStatus(AllIcons.General.InspectionsPause, title, details, myUIController).
-          withTextStatus(UtilBundle.message("heavyProcess.type.indexing")).
-          withAnalyzingType(AnalyzingType.SUSPENDED) :
-        new AnalyzerStatus(inspectionsCompletedIcon, title, details, myUIController);
+             new AnalyzerStatus(AllIcons.General.InspectionsPause, title, details, myUIController).
+               withTextStatus(UtilBundle.message("heavyProcess.type.indexing")).
+               withAnalyzingType(AnalyzingType.SUSPENDED) :
+             new AnalyzerStatus(inspectionsCompletedIcon, title, details, myUIController);
     }
 
-    return new AnalyzerStatus(AllIcons.General.InspectionsEye, DaemonBundle.message("no.errors.or.warnings.found"), details, myUIController).
+    return new AnalyzerStatus(AllIcons.General.InspectionsEye, DaemonBundle.message("no.errors.or.warnings.found"), details,
+                              myUIController).
       withTextStatus(DaemonBundle.message("iw.status.analyzing")).
       withAnalyzingType(AnalyzingType.EMPTY).
-      withPasses(ContainerUtil.map(status.passes, pass -> new PassWrapper(pass.getPresentableName(), toPercent(pass.getProgress(), pass.isFinished()))));
+      withPasses(ContainerUtil.map(status.passes,
+                                   pass -> new PassWrapper(pass.getPresentableName(), toPercent(pass.getProgress(), pass.isFinished()))));
   }
 
   private static int toPercent(double progress, boolean finished) {
@@ -433,19 +439,21 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     AbstractUIController() {
       ApplicationManager.getApplication().assertIsNonDispatchThread();
     }
+
     @Override
     public @NotNull List<InspectionsLevel> getAvailableLevels() {
       return inLibrary ?
-               Arrays.asList(InspectionsLevel.NONE, InspectionsLevel.SYNTAX) :
+             Arrays.asList(InspectionsLevel.NONE, InspectionsLevel.SYNTAX) :
              ApplicationManager.getApplication().isInternal() ?
-               Arrays.asList(InspectionsLevel.NONE, InspectionsLevel.SYNTAX, InspectionsLevel.ESSENTIAL, InspectionsLevel.ALL) :
-               Arrays.asList(InspectionsLevel.NONE, InspectionsLevel.SYNTAX, InspectionsLevel.ALL);
+             Arrays.asList(InspectionsLevel.NONE, InspectionsLevel.SYNTAX, InspectionsLevel.ESSENTIAL, InspectionsLevel.ALL) :
+             Arrays.asList(InspectionsLevel.NONE, InspectionsLevel.SYNTAX, InspectionsLevel.ALL);
     }
 
     @Override
     public @NotNull List<LanguageHighlightLevel> getHighlightLevels() {
       return ContainerUtil.map(myFileHighlightingSettings.entrySet(),
-                               entry -> new LanguageHighlightLevel(entry.getKey().getID(), FileHighlightingSetting.toInspectionsLevel(entry.getValue())));
+                               entry -> new LanguageHighlightLevel(entry.getKey().getID(),
+                                                                   FileHighlightingSetting.toInspectionsLevel(entry.getValue())));
     }
 
     @Override
@@ -539,21 +547,22 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     try {
       panel.apply();
     }
-    catch (ConfigurationException ignored) {}
+    catch (ConfigurationException ignored) {
+    }
   }
 
   protected class DefaultUIController extends AbstractUIController {
     private final List<AnAction> myMenuActions = initActions();
 
     private @NotNull List<AnAction> initActions() {
-        List<AnAction> result = new ArrayList<>();
-        result.add(new ConfigureInspectionsAction());
-        result.add(DaemonEditorPopup.createGotoGroup());
+      List<AnAction> result = new ArrayList<>();
+      result.add(new ConfigureInspectionsAction());
+      result.add(DaemonEditorPopup.createGotoGroup());
 
-        result.add(Separator.create());
-        result.add(new ShowImportTooltipAction());
+      result.add(Separator.create());
+      result.add(new ShowImportTooltipAction());
 
-        return result;
+      return result;
     }
 
     @Override
