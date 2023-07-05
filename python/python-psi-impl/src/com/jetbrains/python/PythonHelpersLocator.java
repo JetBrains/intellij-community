@@ -17,12 +17,11 @@ package com.jetbrains.python;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.LazyInitializer;
@@ -42,100 +41,29 @@ public final class PythonHelpersLocator {
   private static final Logger LOG = Logger.getInstance(PythonHelpersLocator.class);
   private static final String PROPERTY_HELPERS_LOCATION = "idea.python.helpers.path";
 
-  private static final LazyInitializer.LazyValue<@Nullable File> maybeCopiedHelpersRoot = new LazyInitializer.LazyValue<>(() -> {
-    try {
-      if (ApplicationInfo.getInstance().getBuild().isSnapshot()) {
-        // Although it runs not directly from the IDE, it's still built locally from sources, and it's supposed that
-        // copied code may change between runs.
-        return FileUtil.createTempDirectory("python-helpers", null, true);
-      }
-      else {
-        return new File(PathManager.getSystemPath());
-      }
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException("Failed to create temporary directory for helpers", e);
-    }
-  });
-
   private PythonHelpersLocator() { }
 
   /**
-   * @return the base directory under which various Python scripts and other auxiliary files are stored.
-   * @deprecated This method used to be cheap, but now it may invoke I/O. Consider choosing between
-   * {@link #predictHelpersPath()} and {@link #getCopiedHelpersPath()}. If you're not sure, prefer {@link #getCopiedHelpersPath()} and watch
-   * for exceptions.
+   * @return the base directory under which various scripts, etc. are stored.
    */
-  @Deprecated
   public static @NotNull File getHelpersRoot() {
     String property = System.getProperty(PROPERTY_HELPERS_LOCATION);
     if (property != null) {
       return new File(property);
     }
-    return assertHelpersLayout(getCopiedHelpersPath(ModuleHelpers.COMMUNITY));
+    return assertHelpersLayout(getHelperRoot(ModuleHelpers.COMMUNITY));
   }
 
-  /**
-   * @return the base directory under which various scripts, various Python scripts and other auxiliary files are supposed to be stored.
-   * The helper scripts may not be stored there at the time of calling this function.
-   */
-  public static @NotNull File predictHelpersPath() {
-    String property = System.getProperty(PROPERTY_HELPERS_LOCATION);
-    if (property != null) {
-      return new File(property);
-    }
-    return predictHelpersPath(ModuleHelpers.COMMUNITY);
-  }
-
-  /**
-   * @return the base directory under which various scripts, various Python scripts and other auxiliary files are stored.
-   * If the files haven't been copied yet, the functions does that blocking the current thread.
-   */
-  public static @NotNull File getCopiedHelpersPath() {
-    logErrorOnEdt();
-    String property = System.getProperty(PROPERTY_HELPERS_LOCATION);
-    if (property != null) {
-      return new File(property);
-    }
-    return assertHelpersLayout(getCopiedHelpersPath(ModuleHelpers.COMMUNITY));
-  }
-
-  /**
-   * @deprecated This method used to be cheap, but now it may invoke I/O. Consider choosing between
-   * {@link #predictHelpersProPath()} and {@link #getCopiedHelpersProPath()}. If you're unsure, prefer {@link #getCopiedHelpersProPath()}
-   * and watch for exceptions.
-   */
-  @Deprecated
   public static @NotNull Path getHelpersProRoot() {
-    return assertHelpersProLayout(getCopiedHelpersPath(ModuleHelpers.PRO)).toPath().normalize();
+    return assertHelpersProLayout(getHelperRoot(ModuleHelpers.PRO)).toPath().normalize();
   }
 
-  /**
-   * See {@link #predictHelpersPath()}.
-   */
-  public static @NotNull Path predictHelpersProPath() {
-    return predictHelpersPath(ModuleHelpers.PRO).toPath().normalize();
-  }
-
-  /**
-   * See {@link #getCopiedHelpersPath()}.
-   */
-  public static @NotNull Path getCopiedHelpersProPath() {
-    logErrorOnEdt();
-    return assertHelpersProLayout(getCopiedHelpersPath(ModuleHelpers.PRO)).toPath().normalize();
-  }
-
-  @NotNull
-  private static File predictHelpersPath(@NotNull ModuleHelpers moduleHelpers) {
-    return new File(maybeCopiedHelpersRoot.get(), moduleHelpers.getSubDirectory());
-  }
-
-  private static @NotNull File getCopiedHelpersPath(@NotNull ModuleHelpers moduleHelpers) {
+  private static @NotNull File getHelperRoot(@NotNull ModuleHelpers moduleHelpers) {
     if (PluginManagerCore.isRunningFromSources()) {
       return new File(PathManager.getCommunityHomePath(), moduleHelpers.myCommunityRepoRelativePath);
     }
     else {
-      @Nullable File helpersRootDir = ProgressIndicatorUtils.awaitWithCheckCanceled(moduleHelpers.copiedHelpersRoot.get());
+      @Nullable File helpersRootDir = ProgressIndicatorUtils.awaitWithCheckCanceled(moduleHelpers.copyRoot.get());
       if (helpersRootDir != null) {
         return helpersRootDir;
       }
@@ -143,18 +71,6 @@ public final class PythonHelpersLocator {
         @NonNls String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
         return new File(new File(jarPath).getParentFile(), moduleHelpers.myModuleName);
       }
-    }
-  }
-
-  private static void logErrorOnEdt() {
-    try {
-      Application app = ApplicationManager.getApplication();
-      if (app != null) {
-        app.assertIsNonDispatchThread();
-      }
-    }
-    catch (AssertionError err) {
-      Logger.getInstance(PythonHelpersLocator.class).error(err);
     }
   }
 
@@ -229,36 +145,51 @@ public final class PythonHelpersLocator {
      * There is no check for macOS though, since such problems may appear in other operating systems as well, and since it's a bad
      * idea to modify the IDE distributive during running in general.
      */
-    final LazyInitializer.LazyValue<@NotNull CompletableFuture<@Nullable File>> copiedHelpersRoot;
+    final LazyInitializer.LazyValue<@NotNull CompletableFuture<@Nullable File>> copyRoot;
 
     ModuleHelpers(@NotNull String moduleName, @NotNull String pluginRelativePath, @NotNull String communityRelativePath) {
       myModuleName = moduleName;
       myCommunityRepoRelativePath = communityRelativePath;
 
-      copiedHelpersRoot = new LazyInitializer.LazyValue<>(() -> {
+      copyRoot = new LazyInitializer.LazyValue<>(() -> {
         String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
         final File pluginBaseDir = getPluginBaseDir(jarPath);
         if (pluginBaseDir == null) {
           return CompletableFuture.completedFuture(null);
         }
-        return CompletableFuture.supplyAsync(() -> {
-          try {
-            final File helpersRootDir = predictHelpersPath(this);
-            if (!helpersRootDir.isDirectory()) {
-              NioFiles.createDirectories(helpersRootDir.toPath().getParent());
-              FileUtil.copyDir(new File(pluginBaseDir, pluginRelativePath), helpersRootDir, true);
+        return CompletableFuture.supplyAsync(
+          () -> {
+            try {
+              BuildNumber build = ApplicationInfo.getInstance().getBuild();
+              File systemRootDir;
+              if (build.isSnapshot()) {
+                // Although it runs not directly from the IDE, it's still built locally from sources, and it's supposed that
+                // copied code may change between runs.
+                systemRootDir = FileUtil.createTempDirectory("python-helpers", null, true);
+              }
+              else {
+                systemRootDir = new File(PathManager.getSystemPath());
+              }
+              File helpersRootDir = new File(
+                new File(
+                  systemRootDir,
+                  "python-helpers-" + build.asStringWithoutProductCode()
+                ),
+                moduleName
+              );
+              if (!helpersRootDir.isDirectory()) {
+                NioFiles.createDirectories(helpersRootDir.toPath().getParent());
+                FileUtil.copyDir(new File(pluginBaseDir, pluginRelativePath), helpersRootDir, true);
+              }
+              return helpersRootDir;
             }
-            return helpersRootDir;
-          }
-          catch (IOException e) {
-            throw new UncheckedIOException("Failed to create temporary directory for helpers", e);
-          }
-        }, ProcessIOExecutorService.INSTANCE);
+            catch (IOException e) {
+              throw new UncheckedIOException("Failed to create temporary directory for helpers", e);
+            }
+          },
+          ProcessIOExecutorService.INSTANCE
+        );
       });
-    }
-
-    @NotNull String getSubDirectory() {
-      return "python-helpers-" + ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode() + File.separator + myModuleName;
     }
   }
 }
