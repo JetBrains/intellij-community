@@ -1840,6 +1840,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
+            public static class TestKotlinTopLevelExternalFunction extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinTopLevelExternalFunction.0.kt")
+                public void testKotlinTopLevelExternalFunction() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinTopLevelExternalFunction.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinTopLevelMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
