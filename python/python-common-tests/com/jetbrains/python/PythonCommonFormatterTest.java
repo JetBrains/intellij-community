@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixture.PythonCommonTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -1058,18 +1059,36 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
   }
 
   // PY-27615
-  public void testFStringFragmentWrappingSplitInsideExpression() {
+  public void testFStringFragmentWrappingSplitInsideExpressionWithBackslash() {
+    PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = false;
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 20);
+    getCommonCodeStyleSettings().WRAP_LONG_LINES = true;
+    doTest();
+  }
+
+
+  public void testFStringFragmentWrappingSplitInsideExpressionWithParentheses() {
+    PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = true;
     getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 20);
     getCommonCodeStyleSettings().WRAP_LONG_LINES = true;
     doTest();
   }
 
   // PY-27615
-  public void testFStringFragmentWrappingSplitInsideNestedExpression() {
+  public void testFStringFragmentWrappingSplitInsideNestedExpressionWithBackslash() {
+    PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = false;
     getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 20);
     getCommonCodeStyleSettings().WRAP_LONG_LINES = true;
     doTest();
   }
+
+  // TODO enable after PY-61453 fixed
+  //public void testFStringFragmentWrappingSplitInsideNestedExpressionWithParentheses() {
+  //  PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = true;
+  //  getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 20);
+  //  getCommonCodeStyleSettings().WRAP_LONG_LINES = true;
+  //  doTest();
+  //}
 
   // PY-40778
   public void testFStringSpacesBetweenFragmentAndExpressionBracesPreserved() {
