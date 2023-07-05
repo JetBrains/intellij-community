@@ -17,7 +17,7 @@ class DeclarativeHintsDefaultProviderFactory : InlayHintsProviderFactory {
   override fun getProvidersForLanguage(language: Language): List<InlayProviderInfo> {
     val beans = InlayHintsProviderExtensionBean.EP.extensionList.filter {
       val beanLanguage = Language.findLanguageByID(it.language) ?: return@filter false
-      if (beanLanguage.isKindOf(beanLanguage)) {
+      if (language.isKindOf(beanLanguage)) {
         return@filter true
       }
       if (beanLanguage !is MetaLanguage) {
