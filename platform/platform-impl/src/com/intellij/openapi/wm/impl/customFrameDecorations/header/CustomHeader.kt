@@ -9,7 +9,6 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.internal.inspector.ConfigureCustomSizeAction.CustomSizeModel.height
 import com.intellij.internal.inspector.ConfigureCustomSizeAction.CustomSizeModel.width
 import com.intellij.openapi.MnemonicHelper
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.NlsActions
@@ -132,28 +131,28 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
     customTitleBar?.let {
       updateWinControlsTheme(background = background, customTitleBar = it)
     }
-    updateSize(mainToolbarActionSupplier = { computeMainActionGroups(CustomActionsSchema.getInstance()) })
+
+    updateSize()
   }
 
-  protected fun updateSize(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, String>>) {
+  protected open fun updateSize() {
     if (!ExperimentalUI.isNewUI()) {
       return
     }
 
-    updatePreferredSize(isCompactHeader = { (rootPane as? IdeRootPane)?.isCompactHeader(mainToolbarActionSupplier) == true })
-  }
-
-  protected fun updatePreferredSize(isCompactHeader: () -> Boolean): Dimension {
     val size = preferredSize
     size.height = JBUI.scale(
       when {
-        isCompactHeader() -> HEADER_HEIGHT_DFM
+        (rootPane as? IdeRootPane)?.isCompactHeader(mainToolbarActionSupplier = {
+          computeMainActionGroups(CustomActionsSchema.getInstance())
+        }) == true -> {
+          HEADER_HEIGHT_DFM
+        }
         UISettings.getInstance().compactMode -> HEADER_HEIGHT_COMPACT
         else -> HEADER_HEIGHT_NORMAL
       }
     )
     preferredSize = size
-    return size
   }
 
   protected open fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)

@@ -70,25 +70,22 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
   }
 
   override fun addWidget() {
-    addWidget(widget = mainMenuButton.button, parent = headerContent, position = HorizontalLayout.LEFT)
+    addWidget(widget = mainMenuButton.button, parent = headerContent, position = HorizontalLayout.Group.LEFT)
   }
 }
 
 private object DefaultMainToolbarFlavor : MainToolbarFlavor
 
-internal class MainToolbar constructor(
+internal class MainToolbar(
   private val coroutineScope: CoroutineScope,
   frame: JFrame,
   isOpaque: Boolean = false,
   background: Color? = null,
-  @JvmField val layoutCallBack: LayoutCallBack? = null,
 ) : JPanel(HorizontalLayout(10)) {
   private val flavor: MainToolbarFlavor
 
   init {
-    background?.let {
-      this.background = it
-    }
+    this.background = background
     this.isOpaque = isOpaque
     flavor = if (IdeRootPane.isMenuButtonInToolbar) {
       MenuButtonInToolbarMainToolbarFlavor(headerContent = this, coroutineScope = coroutineScope, frame = frame)
@@ -115,7 +112,7 @@ internal class MainToolbar constructor(
       flavor.addWidget()
 
       val widgets = actionGroups.map { (actionGroup, position) ->
-        createActionBar(actionGroup, customizationGroup, layoutCallBack) to position
+        createActionBar(actionGroup, customizationGroup) to position
       }
       for ((widget, position) in widgets) {
         addWidget(widget = widget.component, parent = this@MainToolbar, position = position)
@@ -263,8 +260,8 @@ internal class MainToolbar constructor(
   }
 }
 
-private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?, layoutCallBack: LayoutCallBack?): MyActionToolbarImpl {
-  val toolbar = MyActionToolbarImpl(group = group, layoutCallBack = layoutCallBack, customizationGroup = customizationGroup)
+private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?): MyActionToolbarImpl {
+  val toolbar = MyActionToolbarImpl(group = group, customizationGroup = customizationGroup)
   toolbar.setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
     toolbar.setActionButtonBorder(5, 5)
   toolbar.setCustomButtonLook(HeaderToolbarButtonLook())
@@ -278,14 +275,14 @@ private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?
   return toolbar
 }
 
-private fun addWidget(widget: JComponent, parent: JComponent, position: String) {
-  parent.add(position, widget)
+private fun addWidget(widget: JComponent, parent: JComponent, position: HorizontalLayout.Group) {
+  parent.add(widget, position)
   if (widget is Disposable) {
     logger<MainToolbar>().error("Do not implement Disposable: ${widget.javaClass.name}")
   }
 }
 
-internal suspend fun computeMainActionGroups(): List<Pair<ActionGroup, String>> {
+internal suspend fun computeMainActionGroups(): List<Pair<ActionGroup, HorizontalLayout.Group>> {
   return subtask("toolbar action groups computing") {
     serviceAsync<ActionManager>()
     val customActionSchema = CustomActionsSchema.getInstanceAsync()
@@ -293,11 +290,11 @@ internal suspend fun computeMainActionGroups(): List<Pair<ActionGroup, String>> 
   }
 }
 
-internal fun computeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, String>> {
+internal fun computeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, HorizontalLayout.Group>> {
   return sequenceOf(
-    GroupInfo("MainToolbarLeft", ActionsTreeUtil.getMainToolbarLeft(), HorizontalLayout.LEFT),
-    GroupInfo("MainToolbarCenter", ActionsTreeUtil.getMainToolbarCenter(), HorizontalLayout.CENTER),
-    GroupInfo("MainToolbarRight", ActionsTreeUtil.getMainToolbarRight(), HorizontalLayout.RIGHT)
+    GroupInfo("MainToolbarLeft", ActionsTreeUtil.getMainToolbarLeft(), HorizontalLayout.Group.LEFT),
+    GroupInfo("MainToolbarCenter", ActionsTreeUtil.getMainToolbarCenter(), HorizontalLayout.Group.CENTER),
+    GroupInfo("MainToolbarRight", ActionsTreeUtil.getMainToolbarRight(), HorizontalLayout.Group.RIGHT)
   )
     .mapNotNull { info ->
       customActionSchema.getCorrectedAction(info.id, info.name)?.let {
@@ -307,11 +304,7 @@ internal fun computeMainActionGroups(customActionSchema: CustomActionsSchema): L
     .toList()
 }
 
-private typealias LayoutCallBack = () -> Unit
-
-private class MyActionToolbarImpl(group: ActionGroup,
-                                  @JvmField val layoutCallBack: LayoutCallBack?,
-                                  customizationGroup: ActionGroup?)
+private class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
   : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true, false, true, customizationGroup, MAIN_TOOLBAR_ID) {
   private val iconUpdater = HeaderIconUpdater()
 
@@ -337,11 +330,6 @@ private class MyActionToolbarImpl(group: ActionGroup,
     }
   }
 
-  override fun doLayout() {
-    super.doLayout()
-    layoutCallBack?.invoke()
-  }
-
   private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, cmp: Component, toolbarHeight: Int) {
     val minSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
     if (!isSeparator(cmp)) {
@@ -364,7 +352,7 @@ private class MyActionToolbarImpl(group: ActionGroup,
 
     adjustIcons(presentation)
 
-    (component as? ActionButton)?.let { button -> button.setMinimumButtonSize(ActionToolbar.experimentalToolbarMinimumButtonSize()) }
+    (component as? ActionButton)?.setMinimumButtonSize(ActionToolbar.experimentalToolbarMinimumButtonSize())
 
     if (action is ComboBoxAction) {
       findComboButton(component)?.apply {
@@ -479,4 +467,4 @@ private class HeaderIconUpdater {
   }
 }
 
-private data class GroupInfo(@JvmField val id: String, @JvmField val name: String, @JvmField val align: String)
+private data class GroupInfo(@JvmField val id: String, @JvmField val name: String, @JvmField val align: HorizontalLayout.Group)
