@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
+import git4idea.GitLocalBranch
 import git4idea.GitUtil
 import git4idea.commands.Git
 import git4idea.fetch.GitFetchSupport
@@ -28,6 +29,21 @@ data class HostedGitRepositoryRemote(
 )
 
 object GitRemoteBranchesUtil {
+
+  /**
+   * Checks if the current HEAD is tracking a branch on remote
+   */
+  fun isRemoteBranchCheckedOut(repository: GitRepository, remote: HostedGitRepositoryRemote, branchName: String): Boolean {
+    val localBranch = findLocalBranchTrackingRemote(repository, remote, branchName) ?: return false
+    return repository.currentBranchName == localBranch.name
+  }
+
+  private fun findLocalBranchTrackingRemote(repository: GitRepository, remote: HostedGitRepositoryRemote, branchName: String): GitLocalBranch? {
+    val existingRemote = findRemote(repository, remote) ?: return null
+    return repository.branchTrackInfos.find {
+      it.remote == existingRemote && it.remoteBranch.nameForRemoteOperations == branchName
+    }?.localBranch
+  }
 
   suspend fun fetchAndCheckoutRemoteBranch(repository: GitRepository, remote: HostedGitRepositoryRemote, remoteBranch: String) {
     val branchToCheckout = withBackgroundProgress(

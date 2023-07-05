@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.openapi.components.service
@@ -12,6 +13,7 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.util.childScope
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.HostedGitRepositoryRemote
+import git4idea.remote.hosting.changesSignalFlow
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import kotlinx.coroutines.CoroutineScope
@@ -24,7 +26,6 @@ import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 internal class GitLabMergeRequestBranchesViewModel(
-  private val project: Project,
   parentCs: CoroutineScope,
   private val mergeRequest: GitLabMergeRequest,
   private val mapping: GitLabProjectMapping
@@ -42,20 +43,11 @@ internal class GitLabMergeRequestBranchesViewModel(
     return "$sourceProjectOwner:${details.sourceBranch}"
   }
 
-  override val isCheckedOut: SharedFlow<Boolean> = callbackFlow {
-    val cs = this
-    send(isBranchCheckedOut(gitRepository, sourceBranch.value))
-
-    project.messageBus
-      .connect(cs)
-      .subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
-        trySend(isBranchCheckedOut(it, sourceBranch.value))
-      })
-
-    sourceBranch.collect { sourceBranch ->
-      send(isBranchCheckedOut(gitRepository, sourceBranch))
-    }
-  }.modelFlow(cs, thisLogger())
+  override val isCheckedOut: SharedFlow<Boolean> = gitRepository.changesSignalFlow().withInitial(Unit)
+    .combine(mergeRequest.details) { _, details ->
+      val remote = details.getRemoteDescriptor() ?: return@combine false
+      GitRemoteBranchesUtil.isRemoteBranchCheckedOut(gitRepository, remote, details.sourceBranch)
+    }.modelFlow(cs, thisLogger())
 
   private val _showBranchesRequests = MutableSharedFlow<CodeReviewBranches>()
   override val showBranchesRequests: SharedFlow<CodeReviewBranches> = _showBranchesRequests
@@ -84,9 +76,4 @@ internal class GitLabMergeRequestBranchesViewModel(
       _showBranchesRequests.emit(CodeReviewBranches(details.sourceBranch, details.targetBranch))
     }
   }
-}
-
-private fun isBranchCheckedOut(repository: GitRepository, sourceBranch: String): Boolean {
-  val currentBranchName = repository.currentBranchName
-  return currentBranchName == sourceBranch
 }

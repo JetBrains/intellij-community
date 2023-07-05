@@ -15,17 +15,16 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 
-fun GitRepository.currentBranchNameFlow(): Flow<String?> = channelFlow {
-  send(currentBranchName)
+fun GitRepository.changesSignalFlow(): Flow<Unit> = channelFlow {
   project.messageBus
     .connect(this)
     .subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
-      if(it == this@currentBranchNameFlow) {
-        trySend(it.currentBranchName)
+      if (it == this@changesSignalFlow) {
+        trySend(Unit)
       }
     })
   awaitClose()
-}.distinctUntilChanged()
+}
 
 fun gitRemotesFlow(project: Project): Flow<Set<GitRemoteUrlCoordinates>> =
   callbackFlow {

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
@@ -12,7 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.HostedGitRepositoryRemote
-import git4idea.remote.hosting.currentBranchNameFlow
+import git4idea.remote.hosting.changesSignalFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -46,9 +47,11 @@ internal class GHPRBranchesViewModel(
     }
   }
 
-  override val isCheckedOut: SharedFlow<Boolean> = gitRepository.currentBranchNameFlow().combine(sourceBranch) { currentBranch, sourceBranch ->
-    currentBranch == sourceBranch
-  }.modelFlow(cs, thisLogger())
+  override val isCheckedOut: SharedFlow<Boolean> = gitRepository.changesSignalFlow().withInitial(Unit)
+    .combine(detailsState) { _, details ->
+      val remote = details.getRemoteDescriptor() ?: return@combine false
+      GitRemoteBranchesUtil.isRemoteBranchCheckedOut(gitRepository, remote, details.headRefName)
+    }.modelFlow(cs, thisLogger())
 
   private val _showBranchesRequests = MutableSharedFlow<CodeReviewBranches>()
   override val showBranchesRequests: SharedFlow<CodeReviewBranches> = _showBranchesRequests
