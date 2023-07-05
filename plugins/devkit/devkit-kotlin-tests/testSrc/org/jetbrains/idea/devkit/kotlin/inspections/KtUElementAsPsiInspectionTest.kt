@@ -146,4 +146,60 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   }
 
+  fun testPsiElementExtensionFunction() {
+    myFixture.configureByText("UastUsage.kt", """
+      import com.intellij.psi.PsiElement;
+      import org.jetbrains.uast.UClass;
+      import org.jetbrains.uast.UElement;
+
+      class UastUsage {
+        fun foo(uClass: UClass) {
+          <warning descr="Usage of UElement as PsiElement is not recommended">uClass</warning>.testPsiElement();
+          uClass.testUElement(); // no false positive
+        }
+
+        private fun PsiElement.testPsiElement() {}
+        private fun UElement.testUElement() {}
+      }
+      """.trimIndent())
+    myFixture.testHighlighting("UastUsage.kt")
+  }
+
+  fun testPsiElementExtensionFunctionInClassExtendingUElement() {
+    myFixture.configureByText("UastUsage.kt", """
+      import com.intellij.psi.PsiElement
+      import org.jetbrains.uast.UClass
+      import org.jetbrains.uast.UElement
+
+      class TestUElement : UElement {
+        fun foo(uClass: UClass) {
+          <warning descr="Usage of UElement as PsiElement is not recommended">uClass</warning>.testPsiElement()
+          uClass.testUElement(); // no false positive
+        }
+
+        private fun PsiElement.testPsiElement() {}
+        private fun UElement.testUElement() {}
+      }
+      """.trimIndent())
+    myFixture.testHighlighting("UastUsage.kt")
+  }
+
+  fun testTopLevelPsiElementExtensionFunction() {
+    myFixture.configureByText("UastUsage.kt", """
+      import com.intellij.psi.PsiElement
+      import org.jetbrains.uast.UClass
+      import org.jetbrains.uast.UElement
+
+      class UastUsage {
+        fun foo(uClass: UClass) {
+          <warning descr="Usage of UElement as PsiElement is not recommended">uClass</warning>.testPsiElement()
+          uClass.testUElement(); // no false positive
+        }
+      }
+
+      private fun PsiElement.testPsiElement() {}
+      private fun UElement.testUElement() {}
+      """.trimIndent())
+    myFixture.testHighlighting("UastUsage.kt")
+  }
 }

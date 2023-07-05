@@ -17,7 +17,7 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 private const val NOT_UELEMENT = -2
 private const val NOT_PSI_ELEMENT = -1
 
-private val ALLOWED_REDEFINITION = setOf(
+private val ALLOWED_REDEFINITION = setOf<String?>(
   UClass::class.java.name,
   UMethod::class.java.name,
   UVariable::class.java.name,
@@ -71,10 +71,18 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
       val psiMethod = node.resolve() ?: return
       val containingClass = psiMethod.containingClass ?: return
       if (containingClass.qualifiedName in ALLOWED_REDEFINITION) return
-      if (!isPsiElementClass(containingClass) && psiMethod.findSuperMethods().none { isPsiElementClass(it.containingClass) }) return
-      if (psiMethod.findSuperMethods().any { it.containingClass?.qualifiedName in ALLOWED_REDEFINITION }) return
-      node.sourcePsiElement?.let {
-        reportedElements.add(it)
+      if ((isPsiElementClass(containingClass) || psiMethod.findSuperMethods().any { isPsiElementClass(it.containingClass) }) &&
+          psiMethod.findSuperMethods().none { it.containingClass?.qualifiedName in ALLOWED_REDEFINITION }) {
+        node.sourcePsiElement?.let {
+          reportedElements.add(it)
+        }
+        return
+      }
+      val uMethod = node.resolveToUElement() as? UMethod ?: return
+      if (UElementAsPsiCheckProviders.allForLanguage(node.lang).any { it.isPsiElementReceiver(uMethod) }) {
+        node.receiver?.sourcePsi?.let {
+          reportedElements.add(it)
+        }
       }
     }
 

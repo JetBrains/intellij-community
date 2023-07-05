@@ -587,6 +587,11 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldFixProvider"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.uElementAsPsiCheckProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.UElementAsPsiCheckProvider"/>
+    </extensionPoint>
   </extensionPoints>
 
   <actions>
