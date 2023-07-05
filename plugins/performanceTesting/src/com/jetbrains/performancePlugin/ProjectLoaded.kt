@@ -139,6 +139,20 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
       Runnable {
         alarm.addRequest(Context.current().wrap(
           Runnable {
+            LOG.info("Is dumb: " + isDumb(project))
+            LOG.info("Are indicators empty:" + CoreProgressManager.getCurrentIndicators().isEmpty())
+            if (!CoreProgressManager.getCurrentIndicators().isEmpty()) {
+              CoreProgressManager.getCurrentIndicators().forEach {
+                LOG.info("Indicator text: " + it.text)
+                LOG.info("Indicator text2: " + it.text2)
+                LOG.info("Indicator is canceled: " + it.isCanceled)
+                LOG.info("Indicator isIndeterminate: " + it.isIndeterminate)
+                LOG.info("Indicator isShowing: " + it.isShowing)
+                LOG.info("Indicator toString: $it")
+                LOG.info("Indicator java class: ${it.javaClass}")
+              }
+            }
+            LOG.info("Is initialized: " + ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished)
             if (isDumb(project) || !CoreProgressManager.getCurrentIndicators().isEmpty() ||
                 !ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished) {
               runScriptWhenInitializedAndIndexed(project)

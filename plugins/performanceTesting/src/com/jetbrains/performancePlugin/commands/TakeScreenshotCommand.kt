@@ -71,6 +71,7 @@ fun takeScreenshotWithAwtRobot(fullPathToFile: String) {
 suspend fun captureComponent(component: Component, file: File) {
   if(component.width == 0 || component.height == 0) {
     LOG.info(component.name + " has zero size, skipping")
+    LOG.info(component.javaClass.toString())
     return
   }
   val image = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
