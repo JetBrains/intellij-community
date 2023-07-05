@@ -31,9 +31,15 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin", pattern = Patterns.JAVA, testMethodName = "doJavaParameterTest")
         }
         testClass<AbstractK2BindToElementTest> {
-            model("refactoring/bindToElement/constructorCall")
             model("refactoring/bindToElement/callableReference")
-            model("refactoring/bindToElement/typeReference")
+            model("refactoring/bindToElement/constructorCall")
+            model("refactoring/bindToElement/superTypeCall")
+            model("refactoring/bindToElement/annotationCall")
+            model("refactoring/bindToElement/propertyTypeReference")
+            model("refactoring/bindToElement/returnTypeReference")
+            model("refactoring/bindToElement/superTypeReference")
+            model("refactoring/bindToElement/delegatedSuperTypeReference")
+            model("refactoring/bindToElement/annotationReference")
             model("refactoring/bindToElement/import", isRecursive = false)
         }
     }
