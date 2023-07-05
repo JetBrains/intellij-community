@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.ide.util.scopeChooser
 
-package com.intellij.ide.util.scopeChooser;
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
+import com.intellij.openapi.project.Project
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
+interface ScopeDescriptorProvider {
+  fun getScopeDescriptors(project: Project): Array<ScopeDescriptor>
 
-public interface ScopeDescriptorProvider {
-  ScopeDescriptor[] EMPTY = new ScopeDescriptor[0];
-  ExtensionPointName<ScopeDescriptorProvider> EP_NAME = ExtensionPointName.create("com.intellij.scopeDescriptorProvider");
+  companion object {
+    @JvmField
+    val EMPTY: Array<ScopeDescriptor> = emptyArray()
 
-  ScopeDescriptor @NotNull [] getScopeDescriptors(Project project);
+    @JvmField
+    val EP_NAME: ExtensionPointName<ScopeDescriptorProvider> = create("com.intellij.scopeDescriptorProvider")
+  }
 }
