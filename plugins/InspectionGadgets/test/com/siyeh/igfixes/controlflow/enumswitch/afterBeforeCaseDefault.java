@@ -12,7 +12,7 @@ class Main {
         break;
         case ERROR:
             break;
-        case default:
+        default:
         throw new IllegalArgumentException("Unknown Status " + status);
     }
   }

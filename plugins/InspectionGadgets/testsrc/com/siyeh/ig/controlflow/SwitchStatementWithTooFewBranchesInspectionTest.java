@@ -22,6 +22,6 @@ public class SwitchStatementWithTooFewBranchesInspectionTest extends LightJavaIn
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_20;
+    return JAVA_21;
   }
 }
