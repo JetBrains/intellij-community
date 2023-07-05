@@ -16,6 +16,7 @@ import javax.swing.*;
  *
  * @see RunConfiguration
  * @see ConfigurationFactory#createTemplateConfiguration(com.intellij.openapi.project.Project)
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/execution.html">Execution (IntelliJ Platform Docs)</a>
  */
 public interface RunProfile {
    /**
@@ -38,7 +39,7 @@ public interface RunProfile {
 
   /**
    * Returns the icon for the run configuration. This icon is displayed in the tab showing the results of executing the run profile,
-   * and for persistent run configurations is also used in the run configuration management UI.
+   * and for persistent run configuration is also used in the run configuration management UI.
    *
    * @return the icon for the run configuration, or null if the default executor icon should be used.
    */

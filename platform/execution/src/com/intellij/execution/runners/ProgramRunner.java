@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
@@ -15,8 +15,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A ProgramRunner is responsible for the execution workflow of certain types of run configurations with a certain executor. For example,
  * one ProgramRunner can be responsible for debugging all Java-based run configurations (applications, JUnit tests, etc.); the run
- * configuration takes care of building a command line and the program runner takes care of how exactly it needs to be executed.
- *
+ * configuration takes care of building a command line, and the program runner takes care of how exactly it needs to be executed.
+ * <p>
  * A newly created program runner should be registered in a corresponding plugin.xml:
  * <pre>
  * &lt;extensions defaultExtensionNs="com.intellij"&gt;
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * &lt;/extensions&gt;
  * </pre>
  * @see AsyncProgramRunner
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/execution.html">Execution (IntelliJ Platform Docs)</a>
  */
 public interface ProgramRunner<Settings extends RunnerSettings> {
   ExtensionPointName<ProgramRunner<? extends RunnerSettings>> PROGRAM_RUNNER_EP = new ExtensionPointName<>("com.intellij.programRunner");

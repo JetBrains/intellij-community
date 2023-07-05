@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * @see RunProfile#getState(Executor, com.intellij.execution.runners.ExecutionEnvironment)
  * @see CommandLineState
  * @see com.intellij.execution.configuration.EmptyRunProfileState
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/execution.html">Execution (IntelliJ Platform Docs)</a>
  */
 public interface RunProfileState {
   /**
