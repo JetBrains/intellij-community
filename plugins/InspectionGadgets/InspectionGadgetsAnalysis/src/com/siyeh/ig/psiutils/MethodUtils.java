@@ -2,6 +2,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -588,6 +589,23 @@ public final class MethodUtils {
       }
 
       element = element.getContext();
+    }
+    return null;
+  }
+
+  /**
+   * @param element element to find a method from
+   * @return a method if the original element is inside method header; null otherwise
+   */
+  @Nullable
+  public static PsiMethod getJavaMethodFromHeader(@Nullable PsiElement element) {
+    if (element == null) return null;
+    if (element.getLanguage() != JavaLanguage.INSTANCE) return null;
+    PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
+    if (psiMethod != null && (element == psiMethod || element == psiMethod.getNameIdentifier() ||
+                                 PsiTreeUtil.isAncestor(psiMethod.getModifierList(), element, false) ||
+                                 PsiTreeUtil.isAncestor(psiMethod.getParameterList(), element, false))) {
+      return psiMethod;
     }
     return null;
   }

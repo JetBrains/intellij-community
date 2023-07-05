@@ -2,17 +2,15 @@
 
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInsight.intention.ReplaceConstructorWithFactoryAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameterList;
-import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
-import com.intellij.refactoring.RefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.fixes.RefactoringInspectionGadgetsFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +23,7 @@ public class PublicConstructorInspection extends BaseInspection {
   @Nullable
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
-    return new ReplaceConstructorWithFactoryMethodFix();
+    return new ReplaceConstructorWithFactoryAction().asQuickFix();
   }
 
   @NotNull
@@ -47,21 +45,6 @@ public class PublicConstructorInspection extends BaseInspection {
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PublicConstructorVisitor();
-  }
-
-  private static class ReplaceConstructorWithFactoryMethodFix extends RefactoringInspectionGadgetsFix {
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return InspectionGadgetsBundle.message("public.constructor.quickfix");
-    }
-
-    @NotNull
-    @Override
-    public RefactoringActionHandler getHandler() {
-      return JavaRefactoringActionHandlerFactory.getInstance().createReplaceConstructorWithFactoryHandler();
-    }
   }
 
   private static class PublicConstructorVisitor extends BaseInspectionVisitor {

@@ -134,20 +134,6 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
   }
 
   @Override
-  public ReplaceConstructorWithFactoryRefactoring createReplaceConstructorWithFactory(PsiMethod method,
-                                                                                      PsiClass targetClass,
-                                                                                      String factoryName) {
-    return new ReplaceConstructorWithFactoryRefactoringImpl(myProject, method, targetClass, factoryName);
-  }
-
-  @Override
-  public ReplaceConstructorWithFactoryRefactoring createReplaceConstructorWithFactory(PsiClass originalClass,
-                                                                                      PsiClass targetClass,
-                                                                                      String factoryName) {
-    return new ReplaceConstructorWithFactoryRefactoringImpl(myProject, originalClass, targetClass, factoryName);
-  }
-
-  @Override
   public ChangeClassSignatureRefactoringImpl createChangeClassSignatureProcessor(Project project,
                                                                            PsiClass aClass,
                                                                            TypeParameterInfo[] newSignature) {

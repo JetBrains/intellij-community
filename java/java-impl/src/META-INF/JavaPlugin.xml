@@ -2072,7 +2072,7 @@
     </intentionAction>
     <intentionAction>
       <language>JAVA</language>
-      <className>com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryAction</className>
+      <className>com.intellij.codeInsight.intention.ReplaceConstructorWithFactoryAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.refactorings</categoryKey>
     </intentionAction>

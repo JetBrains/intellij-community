@@ -68,15 +68,6 @@ public abstract class JavaRefactoringActionHandlerFactory {
    */
   public abstract RefactoringActionHandler createConvertToInstanceMethodHandler();
 
-  /**
-   * Creates handler for Replace Constructor With Factory Method refactoring.<p>
-   *
-   * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
-   * accepts either a {@code PsiMethod} that is a constructor, or a {@code PsiClass}
-   * with implicit default constructor.
-   */
-  public abstract RefactoringActionHandler createReplaceConstructorWithFactoryHandler();
-
 
   /**
    * Creates handler for Replace Constructor With Factory Method refactoring.<p>

@@ -22,7 +22,6 @@ import com.intellij.refactoring.invertBoolean.InvertBooleanHandler;
 import com.intellij.refactoring.makeStatic.MakeStaticHandler;
 import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
 import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
-import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryHandler;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperHandler;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 
@@ -60,11 +59,6 @@ public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActi
   @Override
   public RefactoringActionHandler createConvertToInstanceMethodHandler() {
     return new ConvertToInstanceMethodHandler();
-  }
-
-  @Override
-  public RefactoringActionHandler createReplaceConstructorWithFactoryHandler() {
-    return new ReplaceConstructorWithFactoryHandler();
   }
 
   @Override

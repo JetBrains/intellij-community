@@ -25,6 +25,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +73,7 @@ public class MakeStaticHandler implements RefactoringActionHandler, ContextAware
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
     PsiElement element = BaseRefactoringAction.getElementAtCaret(editor, file);
-    return RefactoringActionContextUtil.getJavaMethodHeader(element) != null || RefactoringActionContextUtil.isJavaClassHeader(element);
+    return MethodUtils.getJavaMethodFromHeader(element) != null || RefactoringActionContextUtil.isJavaClassHeader(element);
   }
 
   public static void invoke(final PsiTypeParameterListOwner member) {

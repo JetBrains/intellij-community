@@ -73,14 +73,6 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
                                                                    PsiClass aSuper,
                                                                    boolean replaceInstanceOf);
 
-  public abstract ReplaceConstructorWithFactoryRefactoring createReplaceConstructorWithFactory(PsiMethod method,
-                                                                                               PsiClass targetClass,
-                                                                                               String factoryName);
-
-  public abstract ReplaceConstructorWithFactoryRefactoring createReplaceConstructorWithFactory(PsiClass originalClass,
-                                                                                               PsiClass targetClass,
-                                                                                               String factoryName);
-
   public abstract ChangeClassSignatureRefactoring createChangeClassSignatureProcessor(Project project, PsiClass aClass, TypeParameterInfo[] newSignature);
   
   public abstract ChangeSignatureRefactoring createChangeSignatureProcessor(PsiMethod method,
