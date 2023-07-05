@@ -35,6 +35,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScri
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
@@ -1750,6 +1751,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @TargetVersions("2.5+")
   @Test
   public void testJavadocAndSourcesForDependencyWithMultipleArtifacts() throws Exception {
+    GradleSettings.getInstance(myProject).setDownloadSources(true);
     createProjectSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/ivy-1.0-SNAPSHOT.xml",
                          """
                            <?xml version="1.0" encoding="UTF-8"?>
@@ -1943,7 +1945,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testSourcesExcludedFromGradleCacheOnDisabledFlag() throws Exception {
-    setRegistryPropertyForTest("gradle.download.sources", "false");
     overrideGradleUserHome("project/cache");
     var dependency = "junit:junit:4.12";
     var dependencyName = "Gradle: junit:junit:4.12";
@@ -1962,7 +1963,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testSourcesExcludedFromGradleCacheOnDisabledFlagWithIdeaPlugin() throws Exception {
-    setRegistryPropertyForTest("gradle.download.sources", "false");
     overrideGradleUserHome("project/cache");
     var dependency = "junit:junit:4.12";
     var dependencyName = "Gradle: junit:junit:4.12";
@@ -1982,7 +1982,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testSourcesExcludedFromGradleMultiModuleProjectCacheOnDisabledFlag() throws Exception {
-    setRegistryPropertyForTest("gradle.download.sources", "false");
     overrideGradleUserHome("project/cache");
     var dependency = "junit:junit:4.12";
     var dependencyName = "Gradle: junit:junit:4.12";

@@ -54,6 +54,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   private boolean dropVmOptions;
   private boolean dropStoreExternallyCheckBox;
   private boolean dropDefaultProjectSettings;
+  private boolean dropDownloadSourcesCheckBox;
 
   @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
   private @Nullable JBLabel myServiceDirectoryLabel;
@@ -66,6 +67,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   private @Nullable JBCheckBox myGenerateImlFilesCheckBox;
   @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
   private @Nullable JBLabel myGenerateImlFilesHint;
+  private @Nullable JBCheckBox myDownloadSourcesCheckBox;
 
   private final @NotNull GradleSettingsControl myDefaultProjectSettingsControl = new IdeaGradleDefaultProjectSettingsControl();
 
@@ -88,6 +90,11 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     return this;
   }
 
+  public IdeaGradleSystemSettingsControlBuilder dropDownloadSources() {
+    dropDownloadSourcesCheckBox = true;
+    return this;
+  }
+
   @Override
   public void fillUi(@NotNull PaintAwarePanel canvas, int indentLevel) {
     addServiceDirectoryControl(canvas, indentLevel);
@@ -96,6 +103,9 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     }
     if (!dropStoreExternallyCheckBox) {
       addStoreExternallyCheckBox(canvas, indentLevel);
+    }
+    if (!dropDownloadSourcesCheckBox) {
+      addDownloadSourcesCheckBox(canvas, indentLevel);
     }
     if (!dropDefaultProjectSettings) {
       myDefaultProjectSettingsControl.fillUi(canvas, indentLevel);
@@ -130,6 +140,10 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
       myGenerateImlFilesCheckBox.setSelected(!myInitialSettings.getStoreProjectFilesExternally());
     }
 
+    if (myDownloadSourcesCheckBox != null) {
+      myDownloadSourcesCheckBox.setSelected(myInitialSettings.isDownloadSources());
+    }
+
     myDefaultProjectSettingsControl.reset();
   }
 
@@ -151,6 +165,11 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
       return true;
     }
 
+    if (myDownloadSourcesCheckBox != null &&
+        myDownloadSourcesCheckBox.isSelected() != myInitialSettings.isDownloadSources()) {
+      return true;
+    }
+
     if (myDefaultProjectSettingsControl.isModified()) {
       return true;
     }
@@ -169,6 +188,9 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     }
     if (myGenerateImlFilesCheckBox != null) {
       settings.setStoreProjectFilesExternally(!myGenerateImlFilesCheckBox.isSelected());
+    }
+    if (myDownloadSourcesCheckBox != null) {
+      settings.setDownloadSources(myDownloadSourcesCheckBox.isSelected());
     }
     myDefaultProjectSettingsControl.apply();
   }
@@ -271,6 +293,11 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     constraints.insets.left += UIUtil.getCheckBoxTextHorizontalOffset(myGenerateImlFilesCheckBox);
     constraints.insets.top = 0;
     canvas.add(myGenerateImlFilesHint, constraints);
+  }
+
+  private void addDownloadSourcesCheckBox(@NotNull PaintAwarePanel canvas, int indentLevel) {
+    myDownloadSourcesCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.download.sources"));
+    canvas.add(myDownloadSourcesCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
   }
 
   @Nullable

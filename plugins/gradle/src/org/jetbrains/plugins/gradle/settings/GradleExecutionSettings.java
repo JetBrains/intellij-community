@@ -32,6 +32,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   private boolean resolveModulePerSourceSet = true;
   private boolean useQualifiedModuleNames = false;
   private boolean delegatedBuild = true;
+  private boolean downloadSources = false;
 
   private boolean myBuiltInTestEventsUsed = false;
 
@@ -161,6 +162,14 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   public void setBuiltInTestEventsUsed(boolean isBuiltInTestEventsUsed) {
     myBuiltInTestEventsUsed = isBuiltInTestEventsUsed;
+  }
+
+  public boolean isDownloadSources() {
+    return downloadSources;
+  }
+
+  public void setDownloadSources(boolean downloadSources) {
+    this.downloadSources = downloadSources;
   }
 
   @Override

@@ -145,6 +145,7 @@ public final class GradleManager
         LOG.info("Instructing gradle to use java from " + javaHome);
       }
       result.setJavaHome(javaHome);
+      result.setDownloadSources(settings.isDownloadSources());
       String ideProjectPath;
       if (project.getBasePath() == null ||
           (project.getProjectFilePath() != null && StringUtil.endsWith(project.getProjectFilePath(), ".ipr"))) {

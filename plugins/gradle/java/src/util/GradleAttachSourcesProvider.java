@@ -106,7 +106,7 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
           GradleLog.LOG.warn(e);
           return ActionCallback.REJECTED;
         }
-        final String taskName = "DownloadSources";
+        final String taskName = "IjDownloadSources";
         // @formatter:off
         String initScript = "allprojects {\n" +
                             "  afterEvaluate { project ->\n" +

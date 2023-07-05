@@ -109,6 +109,7 @@ public final class GradleBuildSrcProjectsResolver {
           buildSrcProjectSettings.setRemoteProcessIdleTtlInMs(myMainBuildExecutionSettings.getRemoteProcessIdleTtlInMs());
           buildSrcProjectSettings.setVerboseProcessing(myMainBuildExecutionSettings.isVerboseProcessing());
           buildSrcProjectSettings.setWrapperPropertyFile(myMainBuildExecutionSettings.getWrapperPropertyFile());
+          buildSrcProjectSettings.setDownloadSources(myMainBuildExecutionSettings.isDownloadSources());
           buildSrcProjectSettings.setDelegatedBuild(myMainBuildExecutionSettings.isDelegatedBuild());
           buildSrcProjectSettings.withArguments(myMainBuildExecutionSettings.getArguments())
             .withEnvironmentVariables(myMainBuildExecutionSettings.getEnv())

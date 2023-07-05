@@ -42,6 +42,7 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
     usages.add(HAS_CUSTOM_GRADLE_VM_OPTIONS.metric(!gradleSettings.gradleVmOptions.isNullOrBlank()))
     usages.add(SHOW_SELECTIVE_IMPORT_DIALOG_ON_INITIAL_IMPORT.metric(gradleSettings.showSelectiveImportDialogOnInitialImport()))
     usages.add(STORE_PROJECT_FILES_EXTERNALLY.metric(gradleSettings.storeProjectFilesExternally))
+    usages.add(GRADLE_DOWNLOAD_DEPENDENCY_SOURCES.metric(gradleSettings.isDownloadSources))
 
     // project settings
     for (setting in gradleSettings.linkedProjectsSettings) {
@@ -90,7 +91,7 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("build.gradle.state", 4)
+    private val GROUP = EventLogGroup("build.gradle.state", 5)
     private val HAS_GRADLE_PROJECT = GROUP.registerEvent("hasGradleProject", EventFields.Enabled)
     private val OFFLINE_WORK = GROUP.registerEvent("offlineWork", EventFields.Enabled)
     private val HAS_CUSTOM_SERVICE_DIRECTORY_PATH = GROUP.registerEvent("hasCustomServiceDirectoryPath", EventFields.Enabled)
@@ -114,5 +115,6 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
                                                             EventFields.Enum("value", TestRunner::class.java){ it.name.lowercase() })
     private val GRADLE_JVM_TYPE = GROUP.registerEvent("gradleJvmType", JRE_TYPE_FIELD)
     private val GRADLE_JVM_VERSION = GROUP.registerEvent("gradleJvmVersion", VERSION_FIELD)
+    private val GRADLE_DOWNLOAD_DEPENDENCY_SOURCES = GROUP.registerEvent("gradleDownloadDependencySources", EventFields.Enabled)
   }
 }
