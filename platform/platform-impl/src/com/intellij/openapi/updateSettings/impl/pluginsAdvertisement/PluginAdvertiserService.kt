@@ -130,7 +130,7 @@ open class PluginAdvertiserServiceImpl(
         .map { it.pluginId }
         .mapNotNull { descriptorsById[it] }
         .filterNot { it.isEnabled }
-        .filter { pluginManagerFilters.allowInstallingPlugin(it) }
+        .filter { pluginManagerFilters.allowInstallingPlugin(it) && isCompatiblePlugin(it) }
         .toList()
 
       val suggestToInstall = if (plugins.isEmpty())
@@ -267,6 +267,11 @@ open class PluginAdvertiserServiceImpl(
     }
 
     return IdeBundle.message("plugins.configurable.suggested.features.dependency", it.implementationDisplayName)
+  }
+
+  private fun isCompatiblePlugin(descriptor: IdeaPluginDescriptor): Boolean {
+    val incompatibilityReason = PluginManagerCore.checkBuildNumberCompatibility(descriptor, PluginManagerCore.getBuildNumber())
+    return incompatibilityReason == null
   }
 
   private fun convertToNode(descriptor: IdeaPluginDescriptor?): PluginNode? {
