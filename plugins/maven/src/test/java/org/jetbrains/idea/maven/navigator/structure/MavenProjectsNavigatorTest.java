@@ -7,8 +7,10 @@ import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
+import com.intellij.util.WaitFor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter;
@@ -25,6 +27,8 @@ import org.junit.Test;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static org.jetbrains.concurrency.Promises.await;
 
 public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCase {
   private MavenProjectsNavigator myNavigator;
@@ -272,6 +276,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     myNavigator.setShowIgnored(true);
     waitForMavenUtilRunnablesComplete();
     assertTrue(getRootNodes().get(0).isVisible());
+    waitForPluginNodesUpdated();
     var childNodeNamesBefore = Arrays.stream(getRootNodes().get(0).getChildren()).map(node -> node.getName()).collect(Collectors.toSet());
     assertEquals(Set.of("Lifecycle", "Plugins", "m"), childNodeNamesBefore);
 
@@ -280,6 +285,12 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     assertTrue(getRootNodes().get(0).isVisible());
     var childNodeNamesAfter = Arrays.stream(getRootNodes().get(0).getChildren()).map(node -> node.getName()).collect(Collectors.toSet());
     assertEquals(Set.of("Lifecycle", "Plugins"), childNodeNamesAfter);
+  }
+
+  private void waitForPluginNodesUpdated() {
+    PluginsNode pluginsNode = getRootNodes().get(0).getPluginsNode();
+    PlatformTestUtil.waitWithEventsDispatching(() -> "Waiting for Plugins to be updated",
+                                               () ->!pluginsNode.getPluginNodes().isEmpty(), 10);
   }
 
   @Test

@@ -12,6 +12,7 @@ import icons.MavenIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -237,6 +238,11 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
       presentation.addText(":" + myMavenProject.getMavenId().getVersion(),
                            new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
     }
+  }
+
+  @TestOnly
+  public PluginsNode getPluginsNode(){
+    return myPluginsNode;
   }
 
   @Override
