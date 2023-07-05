@@ -3,10 +3,12 @@ package com.intellij.ui.components.panels
 
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBValue
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
+import java.util.function.IntSupplier
 import javax.swing.SwingConstants
 import kotlin.math.abs
-import kotlin.math.max
 
 /**
  * This class is intended to lay out added components horizontally.
@@ -21,10 +23,15 @@ import kotlin.math.max
  * @see VerticalLayout
  * @see ListLayout
  */
-class HorizontalLayout(private val gap: JBValue, private val alignment: Int = 0) : LayoutManager2 {
+class HorizontalLayout private constructor(private val gap: JBValue,
+                                           private val verticalAlignment: Int = FILL) : LayoutManager2 {
+  enum class Group {
+    LEFT, CENTER, RIGHT
+  }
+
   private val leftGroup = ArrayList<Component>()
-  private val rightGroup = ArrayList<Component>()
   private val centerGroup = ArrayList<Component>()
+  private val rightGroup = ArrayList<Component>()
 
   /**
    * Creates a layout with the specified gap and vertical alignment.
@@ -39,12 +46,15 @@ class HorizontalLayout(private val gap: JBValue, private val alignment: Int = 0)
    * @see SwingConstants.CENTER
    */
   @JvmOverloads
-  constructor(gap: Int, alignment: Int = FILL) : this(gap = JBValue.Float(max(0.0, gap.toDouble()).toFloat()), alignment = alignment)
+  constructor(gap: Int, alignment: Int = FILL) : this(gap = if (gap <= 0) JBValue.Float.EMPTY else JBValue.Float(gap.toFloat()),
+                                                      verticalAlignment = alignment)
 
   init {
-    check(alignment == FILL ||
-          alignment == SwingConstants.TOP || alignment == SwingConstants.BOTTOM || alignment == SwingConstants.CENTER) {
-      "unsupported alignment: $alignment"
+    check(verticalAlignment == FILL ||
+          verticalAlignment == SwingConstants.TOP ||
+          verticalAlignment == SwingConstants.BOTTOM ||
+          verticalAlignment == SwingConstants.CENTER) {
+      "unsupported alignment: $verticalAlignment"
     }
   }
 
@@ -58,11 +68,11 @@ class HorizontalLayout(private val gap: JBValue, private val alignment: Int = 0)
   fun components(): Sequence<Component> = sequenceOf(leftGroup, centerGroup, rightGroup).flatten()
 
   override fun addLayoutComponent(component: Component, constraints: Any?) {
-    if (constraints == null || constraints is String) {
-      addLayoutComponent(constraints as String, component)
-    }
-    else {
-      throw IllegalArgumentException("unsupported constraints: $constraints")
+    when (constraints) {
+      is Group -> addLayoutComponent(component, constraints)
+      null -> addLayoutComponent(LEFT, component)
+      is String -> addLayoutComponent(constraints as? String, component)
+      else -> throw IllegalArgumentException("unsupported constraints: $constraints")
     }
   }
 
@@ -76,13 +86,21 @@ class HorizontalLayout(private val gap: JBValue, private val alignment: Int = 0)
   }
 
   override fun addLayoutComponent(name: String?, component: Component) {
+    addLayoutComponent(component, group = when {
+      name == null || LEFT.equals(name, ignoreCase = true) -> Group.LEFT
+      CENTER.equals(name, ignoreCase = true) -> Group.CENTER
+      RIGHT.equals(name, ignoreCase = true) -> Group.RIGHT
+      else -> throw IllegalArgumentException("unsupported name: $name")
+    })
+  }
+
+  private fun addLayoutComponent(component: Component, group: Group) {
     synchronized(component.treeLock) {
-      when {
-        name == null || LEFT.equals(name, ignoreCase = true) -> leftGroup.add(component)
-        CENTER.equals(name, ignoreCase = true) -> centerGroup.add(component)
-        RIGHT.equals(name, ignoreCase = true) -> rightGroup.add(component)
-        else -> throw IllegalArgumentException("unsupported name: $name")
-      }
+      when (group) {
+        Group.LEFT -> leftGroup
+        Group.CENTER -> centerGroup
+        Group.RIGHT -> rightGroup
+      }.add(component)
     }
   }
 
@@ -107,7 +125,7 @@ class HorizontalLayout(private val gap: JBValue, private val alignment: Int = 0)
       val height = container.height - insets.top - insets.bottom
       var leftX = 0
       if (left != null) {
-        leftX = gap + layout(leftGroup, 0, height, insets)
+        leftX = gap + layout(list = leftGroup, startX = 0, height = height, insets = insets)
       }
       var rightX = width
       if (right != null) {
@@ -127,37 +145,40 @@ class HorizontalLayout(private val gap: JBValue, private val alignment: Int = 0)
         if (centerX < leftX) {
           centerX = leftX
         }
-        centerX = gap + layout(centerGroup, centerX, height, insets)
+        centerX = gap + layout(list = centerGroup, startX = centerX, height = height, insets = insets)
         if (rightX < centerX) {
           rightX = centerX
         }
       }
       if (right != null) {
-        layout(rightGroup, rightX, height, insets)
+        layout(list = rightGroup, startX = rightX, height = height, insets = insets)
       }
     }
   }
 
-  private fun layout(list: List<Component>, x: Int, height: Int, insets: Insets): Int {
-    @Suppress("NAME_SHADOWING")
-    var x = x
+  private fun layout(list: List<Component>, startX: Int, height: Int, insets: Insets): Int {
+    var x = startX
     val gap = gap.get()
     for (component in list) {
-      if (component.isVisible) {
-        val size = LayoutUtil.getPreferredSize(component)
-        var y = 0
-        if (alignment == FILL) {
-          size.height = height
-        }
-        else if (alignment != SwingConstants.TOP) {
-          y = height - size.height
-          if (alignment == SwingConstants.CENTER) {
-            y /= 2
-          }
-        }
-        component.setBounds(x + insets.left, y + insets.top, size.width, size.height)
-        x += size.width + gap
+      if (!component.isVisible) {
+        continue
       }
+
+      val size = LayoutUtil.getPreferredSize(component)
+      var y = 0
+      if (verticalAlignment == FILL) {
+        size.height = height
+      }
+      else if (verticalAlignment != SwingConstants.TOP) {
+        y = height - size.height
+        if (verticalAlignment == SwingConstants.CENTER) {
+          y /= 2
+        }
+      }
+
+      val width = size.width
+      component.setBounds(x + insets.left, y + insets.top, width, size.height)
+      x += width + gap
     }
     return x
   }

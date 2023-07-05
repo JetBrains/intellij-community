@@ -3,6 +3,7 @@ package com.intellij.util.ui;
 
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -81,6 +82,9 @@ public abstract class JBValue {
    * @see JBUI#value(float)
    */
   public static class Float extends JBValue {
+    @ApiStatus.Internal
+    public static final JBValue EMPTY = new Float(0f);
+
     private final float value;
 
     /**
