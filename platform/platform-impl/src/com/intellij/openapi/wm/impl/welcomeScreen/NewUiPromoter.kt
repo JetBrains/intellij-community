@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
 import com.intellij.ide.util.PropertiesComponent
@@ -9,9 +8,10 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.BannerStartPagePromoter
 import com.intellij.openapi.wm.StartPagePromoter.Companion.PRIORITY_LEVEL_HIGH
 import com.intellij.ui.ExperimentalUI
-import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 @ApiStatus.Internal
 class NewUiPromoter : BannerStartPagePromoter() {
@@ -51,13 +51,5 @@ class NewUiPromoter : BannerStartPagePromoter() {
     ExperimentalUiCollector.inviteBannerClosed.log()
     PropertiesComponent.getInstance().setValue(ExperimentalUI.NEW_UI_PROMO_BANNER_DISABLED_PROPERTY, true)
     panel.isVisible = false
-  }
-
-  override fun createHeader(): JLabel {
-    return super.createHeader().apply {
-      horizontalTextPosition = SwingConstants.LEFT
-      iconTextGap = JBUI.scale(6)
-      icon = AllIcons.General.Beta
-    }
   }
 }
