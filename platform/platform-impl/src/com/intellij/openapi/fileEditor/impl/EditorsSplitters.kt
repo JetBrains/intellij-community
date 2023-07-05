@@ -990,7 +990,13 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         fileEditorManager.addSelectionRecord(focusedFile, window)
         splitters.coroutineScope.launch(Dispatchers.EDT) {
           window.getComposite(focusedFile)?.let {
-            window.setComposite(it, true)
+            focusedFile.putUserData(OPENED_IN_BULK, true)
+            try {
+              window.setComposite(composite = it, options = FileEditorOpenOptions(requestFocus = true, usePreviewTab = it.isPreview))
+            }
+            finally {
+              focusedFile.putUserData(OPENED_IN_BULK, null)
+            }
           }
         }
       }
