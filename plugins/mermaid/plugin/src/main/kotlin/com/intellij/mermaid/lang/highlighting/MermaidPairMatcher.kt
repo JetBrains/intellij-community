@@ -46,7 +46,7 @@ class MermaidPairMatcher : PairedBraceMatcherAdapter(MyPairedBraceMatcher(), Mer
         BracePair(MermaidTokens.Mindmap.NODE_DESCR_START, MermaidTokens.Mindmap.NODE_DESCR_END, false),
 
         BracePair(MermaidTokens.ANNOTATION_START, MermaidTokens.ANNOTATION_END, false),
-        BracePair(MermaidTokens.OPEN_DIRECTIVE, MermaidTokens.CLOSE_DIRECTIVE, false)
+        BracePair(MermaidTokens.Directives.OPEN_DIRECTIVE, MermaidTokens.Directives.CLOSE_DIRECTIVE, false)
       )
 
       override fun getPairs(): Array<BracePair> = pairs

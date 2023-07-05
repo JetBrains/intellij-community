@@ -10,6 +10,7 @@
   tokenTypeClass="com.intellij.mermaid.lang.lexer.MermaidToken"
   parserImports=[
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Directives.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Frontmatter.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Journey.*'
@@ -802,12 +803,8 @@ quadrantComplexText ::=
   | QUADRANT_TEXT+
 
 
-directive ::= OPEN_DIRECTIVE directiveContent? CLOSE_DIRECTIVE
-private directiveContent ::= EOL* property EOL* [COMMA directiveContent]
-property ::= directiveKey EOL* COLON EOL* directiveValue
-directiveKey ::= maybeEmptyString | DIRECTIVE_TEXT
-directiveValue ::= maybeEmptyString | DIRECTIVE_TEXT | object
-object ::= OPEN_CURLY EOL* directiveContent EOL* CLOSE_CURLY
+directive ::= OPEN_DIRECTIVE directiveValue? CLOSE_DIRECTIVE
+directiveValue ::= DIRECTIVE_TEXT { mixin="com.intellij.mermaid.lang.psi.impl.MermaidLanguageInjectionHost" }
 
 flowchartClickStatement ::= CLICK [CLICK_DATA] [HREF] string [string] [LINK_TARGET]
   | CLICK [CALL] CLICK_DATA [callbackArgs] string

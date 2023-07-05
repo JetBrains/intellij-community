@@ -120,10 +120,17 @@
                  defaultValue="false"
                  description="Controls availability of experimental Export Diagram action"/>
 
-    <languageInjectionContributor implementationClass="com.intellij.mermaid.lang.injection.MarkdownInjector" language="Mermaid"/>
-    <lang.elementManipulator forClass="com.intellij.mermaid.lang.psi.MermaidLanguageInjectionHost"
-                             implementationClass="com.intellij.mermaid.lang.psi.MarkdownElementManipulator"/>
+    <languageInjectionContributor implementationClass="com.intellij.mermaid.lang.injection.MermaidInjector"
+                                  language="Mermaid"/>
 
+    <lang.elementManipulator forClass="com.intellij.mermaid.lang.psi.MermaidMarkdownValue"
+                             implementationClass="com.intellij.mermaid.lang.psi.MarkdownElementManipulator"/>
+    <lang.elementManipulator forClass="com.intellij.mermaid.lang.psi.MermaidDirectiveValue"
+                             implementationClass="com.intellij.mermaid.lang.psi.DirectiveManipulator"/>
+
+  </extensions>
+  <extensions defaultExtensionNs="JavaScript.JsonSchema">
+    <ProviderFactory implementation="com.intellij.mermaid.lang.injection.DirectiveJsonSchemaProviderFactory"/>
   </extensions>
   <actions>
     <action id="Mermaid.ExportDiagram"

@@ -6,12 +6,6 @@ import com.intellij.psi.tree.IElementType
 object MermaidTokens {
   //region General
   @JvmField
-  val OPEN_DIRECTIVE = MermaidToken("OPEN_DIRECTIVE")
-
-  @JvmField
-  val CLOSE_DIRECTIVE = MermaidToken("CLOSE_DIRECTIVE")
-
-  @JvmField
   val ACC_TITLE = MermaidToken("ACC_TITLE")
 
   @JvmField
@@ -25,21 +19,6 @@ object MermaidTokens {
 
   @JvmField
   val ACC_DESCR_MULTILINE_VALUE = MermaidToken("ACC_DESCR_MULTILINE_VALUE")
-
-//  @JvmField
-//  val TYPE_DIRECTIVE = MermaidToken("TYPE_DIRECTIVE")
-//
-//  @JvmField
-//  val PROPERTY_KEY = MermaidToken("PROPERTY_KEY")
-//
-//  @JvmField
-//  val PROPERTY_VALUE = MermaidToken("PROPERTY_VALUE")
-//
-//  @JvmField
-//  val ARG_DIRECTIVE = MermaidToken("ARG_DIRECTIVE")
-
-  @JvmField
-  val DIRECTIVE_TEXT = MermaidToken("DIRECTIVE_TEXT")
 
   @JvmField
   val COLON = MermaidToken("COLON")
@@ -230,6 +209,17 @@ object MermaidTokens {
   @JvmField
   val CLASS_DEF = MermaidToken("CLASS_DEF")
   //endregion
+
+  object Directives {
+    @JvmField
+    val OPEN_DIRECTIVE = MermaidToken("Directives.OPEN_DIRECTIVE")
+
+    @JvmField
+    val CLOSE_DIRECTIVE = MermaidToken("Directives.CLOSE_DIRECTIVE")
+
+    @JvmField
+    val DIRECTIVE_TEXT = MermaidToken("Directives.DIRECTIVE_TEXT")
+  }
 
   object Frontmatter {
     @JvmField

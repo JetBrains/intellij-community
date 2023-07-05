@@ -38,9 +38,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 %state back_quoted_string
 %state md_string
 
-%state directive
-%state directive_close
-//%state double_quoted_string_inside_directive
+%xstate directive
+
 %state click
 %state acc_title
 %state acc_descr
@@ -80,8 +79,9 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %%
 
+"%%"/"{"[^]* { yypushstate(directive); return Directives.OPEN_DIRECTIVE; }
+
 <YYINITIAL> {
-  "%%{" { yypushstate(directive); return OPEN_DIRECTIVE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
   [\n\r] { return EOL; }
   %%([^{][^\n\r]*)? { return LINE_COMMENT; }
@@ -116,40 +116,23 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^] { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 <directive> {
-  "}%%" { yypopstate(); return CLOSE_DIRECTIVE; }
-  [^\S\r\n]+ { return WHITE_SPACE; }
-  [\n\r] { return EOL; }
-  [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
-  "{" { return OPEN_CURLY; }
-  "}" { return CLOSE_CURLY; }
-  "," { return COMMA; }
-  ":" { return COLON; }
-  [^\s:,\{\}\%\"]+ { return DIRECTIVE_TEXT; }
+  [^%}]* { }
+  "}"/"%%" { return Directives.DIRECTIVE_TEXT; }
+  [^] { }
+  "%%" { yypopstate(); return Directives.CLOSE_DIRECTIVE; }
 }
-//<double_quoted_string_inside_directive> {
-//  [\"] { yybegin(directive); return DOUBLE_QUOTE; }
-//  [^\"]* { return STRING_VALUE; }
-//  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
-//}
 <frontmatter> {
   "---" { yybegin(YYINITIAL); return Frontmatter.FRONTMATTER_END; }
   [^\s]+ { return Frontmatter.FRONTMATTER_VALUE; }
 }
 
-<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, directive, timeline, quadrant> {
-  "%%{" { yypushstate(directive); return OPEN_DIRECTIVE; }
-  [^\S\r\n]+ { return WHITE_SPACE; }
+<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, timeline, quadrant> {
   %%([^{][^\n\r]*)? { return LINE_COMMENT; }
 }
 <pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, timeline, quadrant> {
   "accTitle" { yypushstate(acc_title); return ACC_TITLE; }
   "accDescr" { yypushstate(acc_descr); return ACC_DESCR; }
 }
-<pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, struct, entity_relationship, entity_attributes, gantt, requirement_diagram, requirement, req_element, gitgraph, c4, mindmap, timeline, quadrant> {
-  [\n\r] { return EOL; }
-  ";" { return SEMICOLON; }
-}
-
 <flowchart_body, gantt, class_diagram> {
   "click" { yypushstate(click); return CLICK; }
 }
@@ -1012,6 +995,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "}" { yypopstate(); return CLOSE_CURLY; }
 }
 
+";" { return SEMICOLON; }
 [^\S\n\r]+ { return WHITE_SPACE; }
 [\n\r] { return EOL; }
 [^] { return BAD_CHARACTER; }

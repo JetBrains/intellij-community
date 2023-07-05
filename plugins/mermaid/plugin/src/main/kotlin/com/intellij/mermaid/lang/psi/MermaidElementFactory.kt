@@ -90,6 +90,19 @@ class MermaidElementFactory {
       return elements.filterIsInstance<MermaidMarkdownValue>().firstOrNull()
     }
 
+    fun createDirectiveValue(project: Project, value: String): MermaidDirectiveValue? {
+      val text = buildString {
+        append("%%")
+        append(value)
+        appendLine("%%")
+        appendLine("graph")
+      }
+
+      val file = createFile(project, text)
+      val elements = SyntaxTraverser.psiTraverser(file).asSequence()
+      return elements.filterIsInstance<MermaidDirectiveValue>().firstOrNull()
+    }
+
     private fun createFile(project: Project?, text: String): MermaidFile {
       val name = "dummy.mermaid"
       return PsiFileFactory.getInstance(project).createFileFromText(name, MermaidLanguage, text) as MermaidFile

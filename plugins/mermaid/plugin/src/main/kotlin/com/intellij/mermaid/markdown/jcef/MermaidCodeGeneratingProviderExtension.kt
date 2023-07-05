@@ -36,9 +36,9 @@ internal class MermaidCodeGeneratingProviderExtension(collector: MarkdownCodeFen
     val lexer = MermaidLexer()
     lexer.start(raw)
 
-    while (lexer.tokenType in MermaidTokenTypeSets.WHITE_SPACES || lexer.tokenType == MermaidTokens.OPEN_DIRECTIVE) {
-      if (lexer.tokenType == MermaidTokens.OPEN_DIRECTIVE) {
-        while (lexer.tokenType != null && lexer.tokenType != MermaidTokens.CLOSE_DIRECTIVE) {
+    while (lexer.tokenType in MermaidTokenTypeSets.WHITE_SPACES || lexer.tokenType == MermaidTokens.Directives.OPEN_DIRECTIVE) {
+      if (lexer.tokenType == MermaidTokens.Directives.OPEN_DIRECTIVE) {
+        while (lexer.tokenType != null && lexer.tokenType != MermaidTokens.Directives.CLOSE_DIRECTIVE) {
           lexer.advance()
         }
       }
