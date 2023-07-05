@@ -229,7 +229,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       return;
     }
     CodeFloatingToolbar toolbar = CodeFloatingToolbar.getToolbar(myEditor);
-    if (toolbar != null) {
+    if (toolbar != null && myEditor.getSelectionModel().hasSelection()) {
       if (toolbar.isShown()) {
         showPopupFromToolbar(toolbar);
       } else {
