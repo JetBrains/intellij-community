@@ -1,1247 +1,1114 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl.status;
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.PowerSaveMode;
-import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
-import com.intellij.notification.ActionCenter;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.TaskInfo;
-import com.intellij.openapi.progress.impl.ProgressSuspender;
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
-import com.intellij.openapi.progress.util.TitledIndicator;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.panel.ProgressPanel;
-import com.intellij.openapi.ui.panel.ProgressPanelBuilder;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonHandler;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.NlsContexts.PopupContent;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.reference.SoftReference;
-import com.intellij.ui.AnimatedIcon;
-import com.intellij.ui.*;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.ActionLink;
-import com.intellij.ui.components.JBPanel;
-import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.*;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.openapi.wm.impl.status
 
-import javax.swing.*;
-import javax.swing.event.HyperlinkListener;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.lang.ref.WeakReference;
-import java.util.List;
-import java.util.*;
+import com.intellij.featureStatistics.FeatureUsageTracker
+import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.PowerSaveMode
+import com.intellij.ide.impl.ProjectUtil.getActiveProject
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettings.Companion.getInstance
+import com.intellij.ide.ui.UISettingsListener
+import com.intellij.idea.ActionsBundle
+import com.intellij.internal.statistic.service.fus.collectors.ProgressPaused
+import com.intellij.internal.statistic.service.fus.collectors.ProgressResumed
+import com.intellij.notification.ActionCenter
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.progress.impl.ProgressSuspender
+import com.intellij.openapi.progress.impl.ProgressSuspender.SuspenderListener
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
+import com.intellij.openapi.progress.util.TitledIndicator
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.panel.ProgressPanel
+import com.intellij.openapi.ui.panel.ProgressPanelBuilder
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.BalloonHandler
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.CustomStatusBarWidget
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidget
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.reference.SoftReference
+import com.intellij.ui.*
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.JBPanel
+import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.Alarm
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.JBIterable
+import com.intellij.util.ui.*
+import com.intellij.util.ui.StartupUiUtil.getCenterPoint
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
+import it.unimi.dsi.fastutil.ints.IntArrays
+import it.unimi.dsi.fastutil.ints.IntComparator
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
+import org.jetbrains.annotations.ApiStatus
+import java.awt.*
+import java.awt.event.ActionListener
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.lang.ref.WeakReference
+import javax.swing.*
+import javax.swing.event.HyperlinkListener
+import kotlin.math.max
 
-public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISettingsListener {
-  @ApiStatus.Internal
-  public enum AutoscrollLimit {
-    NOT_ALLOWED, ALLOW_ONCE, UNLIMITED
+class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatusBarImpl) : CustomStatusBarWidget, UISettingsListener {
+  companion object {
+    @JvmField
+    @ApiStatus.Internal
+    val FAKE_BALLOON: Any = Any()
   }
 
   @ApiStatus.Internal
-  public interface ScrollableToSelected {
-    void updateAutoscrollLimit(AutoscrollLimit limit);
+  enum class AutoscrollLimit {
+    NOT_ALLOWED,
+    ALLOW_ONCE,
+    UNLIMITED
   }
 
-  public static final Object FAKE_BALLOON = new Object();
+  @ApiStatus.Internal
+  interface ScrollableToSelected {
+    fun updateAutoscrollLimit(limit: AutoscrollLimit)
+  }
 
-  private final IdeStatusBarImpl statusBar;
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private @Nullable ProcessPopup popup;
-  private final ProcessBalloon balloon = new ProcessBalloon(3);
+  private var popup: ProcessPopup? = null
+  private val balloon = ProcessBalloon(3)
 
-  private final NotNullLazyValue<InfoAndProgressPanelImpl> myMainPanel;
+  private val mainPanelLazy = lazy(LazyThreadSafetyMode.NONE) { InfoAndProgressPanelImpl() }
+  private val mainPanel: InfoAndProgressPanelImpl
+    get() = mainPanelLazy.value
 
-  private final List<ProgressIndicatorEx> myOriginals = new ArrayList<>();
-  private final List<TaskInfo> myInfos = new ArrayList<>();
-  private final Map<InlineProgressIndicator, ProgressIndicatorEx> myInlineToOriginal = new HashMap<>();
-  private final Map<ProgressIndicatorEx, Set<MyInlineProgressIndicator>> myOriginalToInlines = new HashMap<>();
+  private val originals = ArrayList<ProgressIndicatorEx>()
+  private val infos = ArrayList<TaskInfo>()
+  private val inlineToOriginal = HashMap<InlineProgressIndicator, ProgressIndicatorEx>()
+  private val originalToInlines = HashMap<ProgressIndicatorEx?, MutableSet<MyInlineProgressIndicator>>()
+  private val updateQueue = MergingUpdateQueue("Progress indicator", 50, true, MergingUpdateQueue.ANY_COMPONENT)
+  private val queryAlarm = Alarm()
+  private var shouldClosePopupAndOnProcessFinish = false
+  private var currentRequestor: String? = null
+  private var disposed = false
+  private var lastShownBalloon: WeakReference<Balloon>? = null
+  private val dirtyIndicators = ReferenceOpenHashSet<InlineProgressIndicator>()
 
-  private final MergingUpdateQueue myUpdateQueue;
-  private final Alarm myQueryAlarm = new Alarm();
-
-  private boolean myShouldClosePopupAndOnProcessFinish;
-
-  private String myCurrentRequestor;
-  private boolean myDisposed;
-  private WeakReference<Balloon> myLastShownBalloon;
-
-  private final Set<InlineProgressIndicator> myDirtyIndicators = new ReferenceOpenHashSet<>();
-  private final Update myUpdateIndicators = new Update("UpdateIndicators", false, 1) {
-    @Override
-    public void run() {
-      List<InlineProgressIndicator> indicators;
-      synchronized (myDirtyIndicators) {
-        indicators = new ArrayList<>(myDirtyIndicators);
-        myDirtyIndicators.clear();
+  private val updateIndicators: Update = object : Update("UpdateIndicators", false, 1) {
+    override fun run() {
+      var indicators: List<InlineProgressIndicator>
+      synchronized(dirtyIndicators) {
+        indicators = ArrayList(dirtyIndicators)
+        dirtyIndicators.clear()
       }
-      for (InlineProgressIndicator indicator : indicators) {
-        indicator.updateAndRepaint();
+      for (indicator in indicators) {
+        indicator.updateAndRepaint()
       }
     }
-  };
-
-  InfoAndProgressPanel(IdeStatusBarImpl statusBar) {
-    this.statusBar = statusBar;
-    myMainPanel = NotNullLazyValue.lazy(() -> new InfoAndProgressPanelImpl());
-    myUpdateQueue = new MergingUpdateQueue("Progress indicator", 50, true, MergingUpdateQueue.ANY_COMPONENT);
-
-    runOnProgressRelatedChange(this::updateProgressIcon, this, true);
   }
 
-  private void runOnProgressRelatedChange(@NotNull Runnable runnable, @NotNull Disposable parentDisposable, boolean powerSaveMode) {
-    synchronized (myOriginals) {
-      if (!myDisposed) {
-        MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable);
-        if (powerSaveMode) {
-          connection.subscribe(PowerSaveMode.TOPIC, () -> EdtInvocationManager.invokeLaterIfNeeded(runnable));
+  init {
+    runOnProgressRelatedChange(runnable = { updateProgressIcon() }, parentDisposable = this, powerSaveMode = true)
+  }
+
+  private fun runOnProgressRelatedChange(runnable: () -> Unit, parentDisposable: Disposable, powerSaveMode: Boolean) {
+    synchronized(originals) {
+      if (disposed) {
+        return
+      }
+
+      val connection = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable)
+      if (powerSaveMode) {
+        connection.subscribe(PowerSaveMode.TOPIC, PowerSaveMode.Listener { EdtInvocationManager.invokeLaterIfNeeded(runnable) })
+      }
+      connection.subscribe(ProgressSuspender.TOPIC, object : SuspenderListener {
+        override fun suspendableProgressAppeared(suspender: ProgressSuspender) {
+          EdtInvocationManager.invokeLaterIfNeeded(runnable)
         }
-        connection.subscribe(ProgressSuspender.TOPIC, new ProgressSuspender.SuspenderListener() {
-          @Override
-          public void suspendableProgressAppeared(@NotNull ProgressSuspender suspender) {
-            EdtInvocationManager.invokeLaterIfNeeded(runnable);
-          }
 
-          @Override
-          public void suspendedStatusChanged(@NotNull ProgressSuspender suspender) {
-            EdtInvocationManager.invokeLaterIfNeeded(runnable);
-          }
-        });
-      }
+        override fun suspendedStatusChanged(suspender: ProgressSuspender) {
+          EdtInvocationManager.invokeLaterIfNeeded(runnable)
+        }
+      })
     }
   }
 
-  private JRootPane getRootPane() {
-    return myMainPanel.get().getRootPane();
-  }
+  private val rootPane: JRootPane?
+    get() = mainPanel.rootPane
 
-  private void handle(@NotNull MouseEvent e) {
+  internal fun handle(e: MouseEvent) {
     if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED)) {
-      triggerPopupShowing();
+      triggerPopupShowing()
     }
   }
 
-  @Override
-  public @NotNull String ID() {
-    return "InfoAndProgress";
-  }
+  override fun ID(): String = "InfoAndProgress"
 
-  @Override
-  public WidgetPresentation getPresentation() {
-    return null;
-  }
+  override fun getPresentation(): StatusBarWidget.WidgetPresentation? = null
 
   @ApiStatus.Experimental
-  public void setCentralComponent(@Nullable JComponent component) {
-    myMainPanel.get().setCentralComponent(component);
+  fun setCentralComponent(component: JComponent?) {
+    mainPanel.setCentralComponent(component)
   }
 
-  @Override
-  public void dispose() {
-    setRefreshHidden();
-    synchronized (myOriginals) {
-      restoreEmptyStatus();
-      for (InlineProgressIndicator indicator : myInlineToOriginal.keySet()) {
-        Disposer.dispose(indicator);
+  override fun dispose() {
+    setRefreshHidden()
+    synchronized(originals) {
+      restoreEmptyStatus()
+      for (indicator in inlineToOriginal.keys) {
+        Disposer.dispose(indicator)
       }
-      myInlineToOriginal.clear();
-      myOriginalToInlines.clear();
+      inlineToOriginal.clear()
+      originalToInlines.clear()
+      disposed = true
+    }
+    mainPanel.dispose()
+    infos.clear()
+  }
 
-      myDisposed = true;
+  override fun getComponent(): JComponent = mainPanel
+
+  val backgroundProcesses: List<Pair<TaskInfo, ProgressIndicatorEx>>
+    get() {
+      synchronized(originals) {
+        if (disposed || originals.isEmpty()) {
+          return emptyList()
+        }
+
+        val result = ArrayList<Pair<TaskInfo, ProgressIndicatorEx>>(originals.size)
+        for (i in originals.indices) {
+          result.add(Pair(infos[i], originals[i]))
+        }
+        return result
+      }
     }
 
-    myMainPanel.get().dispose();
-    myInfos.clear();
-  }
-
-  @Override
-  public JComponent getComponent() {
-    return myMainPanel.get();
-  }
-
-  @NotNull List<Pair<TaskInfo, ProgressIndicatorEx>> getBackgroundProcesses() {
-    synchronized (myOriginals) {
-      if (myDisposed || myOriginals.isEmpty()) {
-        return Collections.emptyList();
-      }
-
-      List<Pair<TaskInfo, ProgressIndicatorEx>> result = new ArrayList<>(myOriginals.size());
-      for (int i = 0; i < myOriginals.size(); i++) {
-        result.add(new Pair<>(myInfos.get(i), myOriginals.get(i)));
-      }
-      return Collections.unmodifiableList(result);
-    }
-  }
-
-  private ProcessPopup getPopup() {
-    ProcessPopup result = popup;
+  private fun getPopup(): ProcessPopup {
+    var result = popup
     if (result == null) {
-      result = new ProcessPopup(this);
-      popup = result;
+      result = ProcessPopup(this)
+      popup = result
     }
-    return result;
+    return result
   }
 
-  void addProgress(@NotNull ProgressIndicatorEx original, @NotNull TaskInfo info) {
-    ApplicationManager.getApplication().assertIsDispatchThread(); // `openProcessPopup` may require the dispatch thread
-
-    synchronized (myOriginals) {
-      if (myOriginals.isEmpty()) {
-        myMainPanel.get().updateNavBarAutoscrollToSelectedLimit(AutoscrollLimit.ALLOW_ONCE);
+  @RequiresEdt
+  fun addProgress(original: ProgressIndicatorEx, info: TaskInfo) {
+    // `openProcessPopup` may require the dispatch thread
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    synchronized(originals) {
+      if (originals.isEmpty()) {
+        mainPanel.updateNavBarAutoscrollToSelectedLimit(AutoscrollLimit.ALLOW_ONCE)
       }
-
-      myOriginals.add(original);
-      myInfos.add(info);
-
-      MyInlineProgressIndicator expanded = createInlineDelegate(info, original, false);
-      MyInlineProgressIndicator compact = createInlineDelegate(info, original, true);
-
-      getPopup().addIndicator(expanded);
-      balloon.addIndicator(getRootPane(), compact);
-
-      updateProgressIcon();
-
-      myMainPanel.get().updateProgress(compact);
-
-      if (myInfos.size() > 1 && Registry.is("ide.windowSystem.autoShowProcessPopup") &&
-          // we don't want the popup to activate another project's window or be shown above current project's window
-          statusBar.getProject() == ProjectUtil.getActiveProject()) {
-        openProcessPopup(false);
+      originals.add(original)
+      infos.add(info)
+      val expanded = createInlineDelegate(info = info, original = original, compact = false)
+      val compact = createInlineDelegate(info = info, original = original, compact = true)
+      getPopup().addIndicator(expanded)
+      balloon.addIndicator(rootPane, compact)
+      updateProgressIcon()
+      mainPanel.updateProgress(compact)
+      // we don't want the popup to activate another project's window or be shown above current project's window
+      if (infos.size > 1 && Registry.`is`("ide.windowSystem.autoShowProcessPopup", false) && statusBar.project === getActiveProject()) {
+        openProcessPopup(false)
       }
-
       if (original.isFinished(info)) {
         // already finished, progress might not send another finished message
-        removeProgress(expanded);
-        removeProgress(compact);
-        return;
+        removeProgress(expanded)
+        removeProgress(compact)
+        return
       }
-
-      runQuery();
+      runQuery()
     }
   }
 
-  private boolean hasProgressIndicators() {
-    synchronized (myOriginals) {
-      return !myOriginals.isEmpty();
-    }
-  }
+  private fun hasProgressIndicators(): Boolean = synchronized(originals) { !originals.isEmpty() }
 
-  private void removeProgress(@NotNull MyInlineProgressIndicator progress) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    synchronized (myOriginals) {
-      if (!myInlineToOriginal.containsKey(progress)) return; // already disposed
-
-      boolean last = myOriginals.size() == 1;
-
-      if (!progress.isCompact() && popup != null) {
-        popup.removeIndicator(progress);
+  @RequiresEdt
+  private fun removeProgress(progress: MyInlineProgressIndicator) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    synchronized(originals) {
+      // already disposed
+      if (!inlineToOriginal.containsKey(progress)) {
+        return
       }
-
-      ProgressIndicatorEx original = removeFromMaps(progress);
-      if (myOriginals.contains(original)) {
-        Disposer.dispose(progress);
-        if (progress.isCompact()) {
-          balloon.removeIndicator(getRootPane(), progress);
+      val last = originals.size == 1
+      if (!progress.isCompact && popup != null) {
+        popup!!.removeIndicator(progress)
+      }
+      val original = removeFromMaps(progress)
+      if (originals.contains(original)) {
+        Disposer.dispose(progress)
+        if (progress.isCompact) {
+          balloon.removeIndicator(rootPane, progress)
         }
-        return;
+        return
       }
-
-      myMainPanel.get().removeProgress(progress, last);
-
-      runQuery();
+      mainPanel.removeProgress(progress, last)
+      runQuery()
     }
-    Disposer.dispose(progress);
-    if (progress.isCompact()) {
-      balloon.removeIndicator(getRootPane(), progress);
-      statusBar.notifyProgressRemoved();
+    Disposer.dispose(progress)
+    if (progress.isCompact) {
+      balloon.removeIndicator(rootPane, progress)
+      statusBar.notifyProgressRemoved()
     }
   }
 
-  private ProgressIndicatorEx removeFromMaps(@NotNull MyInlineProgressIndicator progress) {
-    ProgressIndicatorEx original = myInlineToOriginal.get(progress);
-
-    myInlineToOriginal.remove(progress);
-    synchronized (myDirtyIndicators) {
-      myDirtyIndicators.remove(progress);
-    }
-
-    Set<MyInlineProgressIndicator> set = myOriginalToInlines.get(original);
+  private fun removeFromMaps(progress: MyInlineProgressIndicator): ProgressIndicatorEx? {
+    val original = inlineToOriginal[progress]
+    inlineToOriginal.remove(progress)
+    synchronized(dirtyIndicators) { dirtyIndicators.remove(progress) }
+    var set = originalToInlines.get(original)
     if (set != null) {
-      set.remove(progress);
+      set.remove(progress)
       if (set.isEmpty()) {
-        set = null;
-        myOriginalToInlines.remove(original);
+        set = null
+        originalToInlines.remove(original)
       }
     }
     if (set == null) {
-      int originalIndex = myOriginals.indexOf(original);
-      myOriginals.remove(originalIndex);
-      myInfos.remove(originalIndex);
+      val originalIndex = originals.indexOf(original)
+      originals.removeAt(originalIndex)
+      infos.removeAt(originalIndex)
     }
-
-    return original;
+    return original
   }
 
-  private void setInlineProgressByWeight() {
-    synchronized (myInfos) {
-      int size = myInfos.size();
-      Integer[] indexes = new Integer[size];
-      for (int i = 0; i < size; i++) {
-        indexes[i] = i;
-      }
-
-      ContainerUtil.sort(indexes, (index1, index2) -> myInfos.get(index1).getStatusBarIndicatorWeight() -
-                                                      myInfos.get(index2).getStatusBarIndicatorWeight());
-
-      int index = -1;
-
-      for (int i = 0; i < size; i++) {
-        ProgressSuspender suspender = ProgressSuspender.getSuspender(myOriginals.get(indexes[i]));
-        if (suspender == null || !suspender.isSuspended()) {
-          index = i;
-          break;
+  internal fun setInlineProgressByWeight() {
+    synchronized(infos) {
+      val size = infos.size
+      val indexes = IntArray(size) { it }
+      IntArrays.stableSort(indexes, 0, size, IntComparator { index1, index2 ->
+        infos.get(index1).statusBarIndicatorWeight - infos.get(index2).statusBarIndicatorWeight
+      })
+      var index = -1
+      for (i in 0 until size) {
+        val suspender = ProgressSuspender.getSuspender(originals[indexes[i]])
+        if (suspender == null || !suspender.isSuspended) {
+          index = i
+          break
         }
       }
-
-      int resultIndex = indexes[index == -1 ? 0 : index];
-      myMainPanel.get().updateProgressState(createInlineDelegate(myInfos.get(resultIndex), myOriginals.get(resultIndex), true));
+      val resultIndex = indexes[if (index == -1) 0 else index]
+      mainPanel.updateProgressState(createInlineDelegate(infos[resultIndex], originals[resultIndex], true))
     }
   }
 
-  private void openProcessPopup(boolean requestFocus) {
-    boolean shouldClosePopupAndOnProcessFinish;
-    synchronized (myOriginals) {
-      if (popup != null && popup.isShowing()) {
-        return;
+  private fun openProcessPopup(requestFocus: Boolean) {
+    var shouldClosePopupAndOnProcessFinish: Boolean
+    synchronized(originals) {
+      if (popup != null && popup!!.isShowing) {
+        return
       }
 
-      getPopup().show(requestFocus);
-      shouldClosePopupAndOnProcessFinish = hasProgressIndicators();
-      myMainPanel.get().updateProgressState(true);
+      getPopup().show(requestFocus)
+      shouldClosePopupAndOnProcessFinish = hasProgressIndicators()
+      mainPanel.updateProgressState(true)
     }
-    myShouldClosePopupAndOnProcessFinish = shouldClosePopupAndOnProcessFinish;
+    this.shouldClosePopupAndOnProcessFinish = shouldClosePopupAndOnProcessFinish
   }
 
-  void hideProcessPopup() {
-    synchronized (myOriginals) {
-      if (popup == null || !popup.isShowing()) {
-        return;
+  fun hideProcessPopup() {
+    synchronized(originals) {
+      if (popup == null || !popup!!.isShowing) {
+        return
       }
-
-      popup.hide();
-      myMainPanel.get().updateProgressState(false);
+      popup!!.hide()
+      mainPanel.updateProgressState(false)
     }
   }
 
-  public @Nullable @NlsContexts.StatusBarText String setText(@Nullable @NlsContexts.StatusBarText String text, @Nullable String requestor) {
-    if (myMainPanel.get().myShowNavBar) return text;
-
-    if (Strings.isEmpty(text) &&!Objects.equals(requestor, myCurrentRequestor) && !ActionCenter.EVENT_REQUESTOR.equals(requestor)) {
-      return myMainPanel.get().myStatusPanel.getText();
+  fun setText(text: @NlsContexts.StatusBarText String?, requestor: String?): @NlsContexts.StatusBarText String? {
+    if (mainPanel.showNavBar) {
+      return text
     }
 
-    boolean logMode = myMainPanel.get().myStatusPanel.updateText(ActionCenter.EVENT_REQUESTOR.equals(requestor) ? "" : text);
-    myCurrentRequestor = logMode ? ActionCenter.EVENT_REQUESTOR : requestor;
-    return text;
+    if (text.isNullOrEmpty() && requestor != currentRequestor && ActionCenter.EVENT_REQUESTOR != requestor) {
+      return mainPanel.statusPanel.text
+    }
+    val logMode = mainPanel.statusPanel.updateText(if (ActionCenter.EVENT_REQUESTOR == requestor) "" else text)
+    currentRequestor = if (logMode) ActionCenter.EVENT_REQUESTOR else requestor
+    return text
   }
 
-  void setRefreshVisible(@NlsContexts.Tooltip String tooltip) {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      if (!myMainPanel.get().myShowNavBar) {
-        myMainPanel.get().myRefreshIcon.setVisible(true);
-        myMainPanel.get().myRefreshIcon.setToolTipText(tooltip);
+  fun setRefreshVisible(tooltip: @NlsContexts.Tooltip String?) {
+    UIUtil.invokeLaterIfNeeded(Runnable {
+      if (!mainPanel.showNavBar) {
+        mainPanel.refreshIcon.isVisible = true
+        mainPanel.refreshIcon.setToolTipText(tooltip)
       }
       else {
-        var statusBar = UIUtil.getParentOfType(StatusBar.class, myMainPanel.get());
+        val statusBar = ComponentUtil.getParentOfType(StatusBar::class.java, mainPanel)
         if (statusBar != null) {
-          VfsRefreshIndicatorWidgetFactory.start(statusBar, tooltip);
+          VfsRefreshIndicatorWidgetFactory.start(statusBar, tooltip!!)
         }
       }
-    });
+    })
   }
 
-  void setRefreshHidden() {
-    myMainPanel.get().setRefreshHidden();
+  fun setRefreshHidden() {
+    mainPanel.setRefreshHidden()
   }
 
-  public BalloonHandler notifyByBalloon(@NotNull MessageType type,
-                                        @NotNull @PopupContent String htmlBody,
-                                        @Nullable Icon icon,
-                                        @Nullable HyperlinkListener listener) {
-    Balloon balloon = JBPopupFactory.getInstance()
+  fun notifyByBalloon(type: MessageType,
+                      htmlBody: @NlsContexts.PopupContent String,
+                      icon: Icon?,
+                      listener: HyperlinkListener?): BalloonHandler {
+    val balloon = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(htmlBody.replace("\n", "<br>"),
-                                    icon != null ? icon : type.getDefaultIcon(),
-                                    type.getTitleForeground(),
-                                    type.getPopupBackground(),
+                                    icon ?: type.defaultIcon,
+                                    type.titleForeground,
+                                    type.popupBackground,
                                     listener)
-      .setBorderColor(type.getBorderColor())
-      .createBalloon();
-
-    SwingUtilities.invokeLater(() -> {
-      Balloon oldBalloon = SoftReference.dereference(myLastShownBalloon);
+      .setBorderColor(type.borderColor)
+      .createBalloon()
+    SwingUtilities.invokeLater(Runnable {
+      val oldBalloon = SoftReference.dereference(lastShownBalloon)
       if (oldBalloon != null) {
-        balloon.setAnimationEnabled(false);
-        oldBalloon.setAnimationEnabled(false);
-        oldBalloon.hide();
+        balloon.setAnimationEnabled(false)
+        oldBalloon.setAnimationEnabled(false)
+        oldBalloon.hide()
       }
-      myLastShownBalloon = new WeakReference<>(balloon);
-
-      Component comp = myMainPanel.get();
+      lastShownBalloon = WeakReference(balloon)
+      val comp: Component = mainPanel
       if (comp.isShowing()) {
-        int offset = comp.getHeight() / 2;
-        Point point = new Point(comp.getWidth() - offset, comp.getHeight() - offset);
-        balloon.show(new RelativePoint(comp, point), Balloon.Position.above);
+        val offset = comp.height / 2
+        val point = Point(comp.width - offset, comp.height - offset)
+        balloon.show(RelativePoint(comp, point), Balloon.Position.above)
       }
       else {
-        JRootPane rootPane = SwingUtilities.getRootPane(comp);
+        val rootPane = SwingUtilities.getRootPane(comp)
         if (rootPane != null && rootPane.isShowing()) {
-          Container contentPane = rootPane.getContentPane();
-          Rectangle bounds = contentPane.getBounds();
-          Point target = StartupUiUtil.getCenterPoint(bounds, JBUI.size(1, 1));
-          target.y = bounds.height - 3;
-          balloon.show(new RelativePoint(contentPane, target), Balloon.Position.above);
+          val contentPane = rootPane.contentPane
+          val bounds = contentPane.bounds
+          val target = getCenterPoint(bounds, JBUI.size(1, 1))
+          target.y = bounds.height - 3
+          balloon.show(RelativePoint(contentPane, target), Balloon.Position.above)
         }
       }
-    });
-
-    return () -> SwingUtilities.invokeLater(balloon::hide);
+    })
+    return BalloonHandler { SwingUtilities.invokeLater(Runnable { balloon.hide() }) }
   }
 
-  private MyInlineProgressIndicator createInlineDelegate(TaskInfo info, ProgressIndicatorEx original, boolean compact) {
-    Set<MyInlineProgressIndicator> inlines = myOriginalToInlines.computeIfAbsent(original, __ -> new HashSet<>());
+  private fun createInlineDelegate(info: TaskInfo, original: ProgressIndicatorEx, compact: Boolean): MyInlineProgressIndicator {
+    val inlines = originalToInlines.computeIfAbsent(original) { HashSet() }
     if (!inlines.isEmpty()) {
-      for (MyInlineProgressIndicator eachInline : inlines) {
-        if (eachInline.isCompact() == compact) {
-          return eachInline;
+      for (eachInline in inlines) {
+        if (eachInline.isCompact == compact) {
+          return eachInline
         }
       }
     }
-
-    MyInlineProgressIndicator inline =
-      compact ? new MyInlineProgressIndicator(info, original) : new ProgressPanelProgressIndicator(info, original);
-    myInlineToOriginal.put(inline, original);
-    inlines.add(inline);
-
+    val inline = if (compact) MyInlineProgressIndicator(info, original) else ProgressPanelProgressIndicator(info, original)
+    inlineToOriginal.put(inline, original)
+    inlines.add(inline)
     if (compact) {
-      inline.getComponent().addMouseListener(new MouseAdapter() {
-        @Override
-        public void mousePressed(MouseEvent e) {
-          handle(e);
+      inline.component.addMouseListener(object : MouseAdapter() {
+        override fun mousePressed(e: MouseEvent) {
+          handle(e)
         }
 
-        @Override
-        public void mouseReleased(MouseEvent e) {
-          handle(e);
+        override fun mouseReleased(e: MouseEvent) {
+          handle(e)
         }
-      });
+      })
     }
-
-    return inline;
+    return inline
   }
 
-  private void triggerPopupShowing() {
-    if (popup != null && popup.isShowing()) {
-      hideProcessPopup();
+  internal fun triggerPopupShowing() {
+    if (popup != null && popup!!.isShowing) {
+      hideProcessPopup()
     }
     else {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("bg.progress.window.show.from.status.bar");
-      openProcessPopup(true);
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("bg.progress.window.show.from.status.bar")
+      openProcessPopup(true)
     }
   }
 
-  private void updateProgressIcon() {
-    AsyncProcessIcon progressIcon = myMainPanel.isComputed() ? myMainPanel.get().myInlinePanel.myProgressIcon : null;
-    if (progressIcon == null) {
-      return;
-    }
-
-    if (myOriginals.isEmpty() || PowerSaveMode.isEnabled() ||
-        myOriginals.stream().map(ProgressSuspender::getSuspender).allMatch(s -> s != null && s.isSuspended())) {
-      progressIcon.suspend();
+  private fun updateProgressIcon() {
+    val progressIcon = if (mainPanelLazy.isInitialized()) mainPanelLazy.value.inlinePanel.progressIcon else return
+    if (originals.isEmpty() ||
+        PowerSaveMode.isEnabled() ||
+        originals.asSequence().mapNotNull { ProgressSuspender.getSuspender(it) }.all { it.isSuspended }) {
+      progressIcon.suspend()
     }
     else {
-      progressIcon.resume();
+      progressIcon.resume()
     }
   }
 
-  private void restoreEmptyStatus() {
-    myMainPanel.get().restoreEmptyStatus();
+  private fun restoreEmptyStatus() {
+    mainPanel.restoreEmptyStatus()
   }
 
-  boolean isProcessWindowOpen() {
-    return popup != null && popup.isShowing();
-  }
-
-  void setProcessWindowOpen(boolean open) {
-    if (open) {
-      openProcessPopup(true);
-    }
-    else {
-      hideProcessPopup();
-    }
-  }
-
-  @Override
-  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    myMainPanel.get().uiSettingsChanged(uiSettings);
-  }
-
-  private class InfoAndProgressPanelImpl extends JBPanel<JBPanel<?>> implements UISettingsListener {
-
-
-    private final @NotNull JLabel myRefreshIcon = new JLabel(new AnimatedIcon.FS());
-    private final @NotNull StatusPanel myStatusPanel = new StatusPanel();
-    private final JPanel myRefreshAndInfoPanel = new JPanel();
-    private final InlineProgressPanel myInlinePanel = new InlineProgressPanel();
-    private JComponent myCentralComponent;
-    private boolean myShowNavBar;  // see also: `VfsRefreshIndicatorWidgetFactory#myAvailable`
-
-    InfoAndProgressPanelImpl() {
-      myRefreshIcon.setVisible(false);
-      setOpaque(false);
-      setBorder(JBUI.Borders.empty());
-
-      myRefreshAndInfoPanel.setLayout(new BorderLayout());
-      myRefreshAndInfoPanel.setOpaque(false);
-
-      myShowNavBar = ExperimentalUI.isNewUI() && UISettings.getInstance().getShowNavigationBarInBottom();
-
-      if (!myShowNavBar) {
-        myRefreshAndInfoPanel.add(myRefreshIcon, BorderLayout.WEST);
-        myRefreshAndInfoPanel.add(myStatusPanel, BorderLayout.CENTER);
+  var isProcessWindowOpen: Boolean
+    get() = popup != null && popup!!.isShowing
+    set(open) {
+      if (open) {
+        openProcessPopup(true)
       }
-
-      setRefreshHidden();
-
-      setLayout(new InlineLayout());
-      add(myRefreshAndInfoPanel);
-      add(myInlinePanel);
-
-      myRefreshAndInfoPanel.revalidate();
-      myRefreshAndInfoPanel.repaint();
+      else {
+        hideProcessPopup()
+      }
     }
 
-    @Override
-    public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-      boolean showNavBar = ExperimentalUI.isNewUI() && uiSettings.getShowNavigationBarInBottom();
-      if (showNavBar == myShowNavBar) {
-        return;
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    mainPanel.uiSettingsChanged(uiSettings)
+  }
+
+  private inner class InfoAndProgressPanelImpl : JBPanel<JBPanel<*>?>(), UISettingsListener {
+    val refreshIcon: JLabel = JLabel(AnimatedIcon.FS())
+    val statusPanel: StatusPanel = StatusPanel()
+    private val refreshAndInfoPanel = JPanel()
+    val inlinePanel: InlineProgressPanel = InlineProgressPanel(this@InfoAndProgressPanel)
+    private var centralComponent: JComponent? = null
+    // see also: `VfsRefreshIndicatorWidgetFactory#myAvailable`
+    var showNavBar: Boolean
+
+    init {
+      refreshIcon.isVisible = false
+      setOpaque(false)
+      setBorder(JBUI.Borders.empty())
+      refreshAndInfoPanel.setLayout(BorderLayout())
+      refreshAndInfoPanel.setOpaque(false)
+      showNavBar = ExperimentalUI.isNewUI() && getInstance().showNavigationBarInBottom
+      if (!showNavBar) {
+        refreshAndInfoPanel.add(refreshIcon, BorderLayout.WEST)
+        refreshAndInfoPanel.add(statusPanel, BorderLayout.CENTER)
       }
-      myShowNavBar = showNavBar;
+      setRefreshHidden()
+      setLayout(InlineLayout())
+      add(refreshAndInfoPanel)
+      add(inlinePanel)
+      refreshAndInfoPanel.revalidate()
+      refreshAndInfoPanel.repaint()
+    }
 
-      BorderLayout layout = (BorderLayout)myRefreshAndInfoPanel.getLayout();
-      Component c = layout.getLayoutComponent(BorderLayout.CENTER);
-      if (c != null) myRefreshAndInfoPanel.remove(c);
-
-      c = layout.getLayoutComponent(BorderLayout.WEST);
-      if (c != null) myRefreshAndInfoPanel.remove(c);
-
-      if (myShowNavBar) {
-        if (myCentralComponent != null) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            myRefreshAndInfoPanel.add(myCentralComponent, BorderLayout.CENTER);
-            myCentralComponent.updateUI();
-          });
+    override fun uiSettingsChanged(uiSettings: UISettings) {
+      val showNavBar = ExperimentalUI.isNewUI() && uiSettings.showNavigationBarInBottom
+      if (showNavBar == this.showNavBar) {
+        return
+      }
+      this.showNavBar = showNavBar
+      val layout = refreshAndInfoPanel.layout as BorderLayout
+      var c = layout.getLayoutComponent(BorderLayout.CENTER)
+      if (c != null) refreshAndInfoPanel.remove(c)
+      c = layout.getLayoutComponent(BorderLayout.WEST)
+      if (c != null) refreshAndInfoPanel.remove(c)
+      if (this.showNavBar) {
+        val centralComponent = centralComponent
+        if (centralComponent != null) {
+          ApplicationManager.getApplication().invokeLater(Runnable {
+            refreshAndInfoPanel.add(centralComponent, BorderLayout.CENTER)
+            centralComponent.updateUI()
+          })
         }
       }
       else {
-        myRefreshAndInfoPanel.add(myRefreshIcon, BorderLayout.WEST);
-        myRefreshAndInfoPanel.add(myStatusPanel, BorderLayout.CENTER);
-
-        myRefreshIcon.updateUI();
-        myStatusPanel.updateUI();
+        refreshAndInfoPanel.add(refreshIcon, BorderLayout.WEST)
+        refreshAndInfoPanel.add(statusPanel, BorderLayout.CENTER)
+        refreshIcon.updateUI()
+        statusPanel.updateUI()
       }
     }
 
-    void setRefreshHidden() {
-      if (!myShowNavBar) {
-        myRefreshIcon.setVisible(false);
+    fun setRefreshHidden() {
+      if (!showNavBar) {
+        refreshIcon.isVisible = false
       }
       else {
-        var statusBar = UIUtil.getParentOfType(StatusBar.class, this);
+        val statusBar = UIUtil.getParentOfType(
+          StatusBar::class.java, this)
         if (statusBar != null) {
-          VfsRefreshIndicatorWidgetFactory.stop(statusBar);
+          VfsRefreshIndicatorWidgetFactory.stop(statusBar)
         }
       }
     }
 
-    void setCentralComponent(@Nullable JComponent component) {
-      if (myShowNavBar) {
-        BorderLayout layout = (BorderLayout)myRefreshAndInfoPanel.getLayout();
-        Component c = layout.getLayoutComponent(BorderLayout.CENTER);
+    fun setCentralComponent(component: JComponent?) {
+      if (showNavBar) {
+        val layout = refreshAndInfoPanel.layout as BorderLayout
+        val c = layout.getLayoutComponent(BorderLayout.CENTER)
         if (c != null) {
-          myRefreshAndInfoPanel.remove(c);
-          myCentralComponent = null;
+          refreshAndInfoPanel.remove(c)
+          centralComponent = null
         }
         if (component != null) {
-          myRefreshAndInfoPanel.add(component, BorderLayout.CENTER);
+          refreshAndInfoPanel.add(component, BorderLayout.CENTER)
         }
       }
-      myCentralComponent = component;
+      centralComponent = component
     }
 
-    void updateNavBarAutoscrollToSelectedLimit(AutoscrollLimit autoscrollLimit) {
-      if (myCentralComponent instanceof ScrollableToSelected) {
-        ((ScrollableToSelected)myCentralComponent).updateAutoscrollLimit(autoscrollLimit);
+    fun updateNavBarAutoscrollToSelectedLimit(autoscrollLimit: AutoscrollLimit) {
+      val centralComponent = centralComponent
+      if (centralComponent is ScrollableToSelected) {
+        centralComponent.updateAutoscrollLimit(autoscrollLimit)
       }
     }
 
-    void removeProgress(@NotNull MyInlineProgressIndicator progress, boolean last) {
+    fun removeProgress(progress: MyInlineProgressIndicator, last: Boolean) {
       if (last) {
-        updateNavBarAutoscrollToSelectedLimit(AutoscrollLimit.UNLIMITED);
-        myInlinePanel.updateState(null);
-        if (myShouldClosePopupAndOnProcessFinish) {
-          hideProcessPopup();
+        updateNavBarAutoscrollToSelectedLimit(AutoscrollLimit.UNLIMITED)
+        inlinePanel.updateState(null)
+        if (shouldClosePopupAndOnProcessFinish) {
+          hideProcessPopup()
         }
       }
-      else if (myInlinePanel.myIndicator != null && myInlinePanel.myIndicator.getInfo() == progress.getInfo()) {
-        setInlineProgressByWeight();
+      else if (inlinePanel.indicator != null && inlinePanel.indicator!!.info === progress.info) {
+        setInlineProgressByWeight()
       }
       else {
-        myInlinePanel.updateState();
+        inlinePanel.updateState()
       }
     }
 
-    void updateProgress(@NotNull MyInlineProgressIndicator compact) {
-      myInlinePanel.updateProgress(compact);
+    fun updateProgress(compact: MyInlineProgressIndicator) {
+      inlinePanel.updateProgress(compact)
     }
 
-    void updateProgressState(MyInlineProgressIndicator delegate) {
-      myInlinePanel.updateState(delegate);
+    fun updateProgressState(delegate: MyInlineProgressIndicator?) {
+      inlinePanel.updateState(delegate)
     }
 
-    void updateProgressState(boolean showPopup) {
-      myInlinePanel.updateState(showPopup);
+    fun updateProgressState(showPopup: Boolean) {
+      inlinePanel.updateState(showPopup)
     }
 
-    void restoreEmptyStatus() {
-      removeAll();
-      setLayout(new BorderLayout());
-      add(myRefreshAndInfoPanel, BorderLayout.CENTER);
-
-      myRefreshAndInfoPanel.revalidate();
-      myRefreshAndInfoPanel.repaint();
+    fun restoreEmptyStatus() {
+      removeAll()
+      setLayout(BorderLayout())
+      add(refreshAndInfoPanel, BorderLayout.CENTER)
+      refreshAndInfoPanel.revalidate()
+      refreshAndInfoPanel.repaint()
     }
 
-    void dispose() {
-      GuiUtils.removePotentiallyLeakingReferences(myRefreshIcon);
+    fun dispose() {
+      GuiUtils.removePotentiallyLeakingReferences(refreshIcon)
     }
   }
 
-  private class ProgressPanelProgressIndicator extends MyInlineProgressIndicator {
-    private final ProgressPanel myProgressPanel;
-    private final InplaceButton myCancelButton;
-    private final InplaceButton mySuspendButton;
-    private final Runnable mySuspendUpdateRunnable;
+  private inner class ProgressPanelProgressIndicator(task: TaskInfo, original: ProgressIndicatorEx) :
+    MyInlineProgressIndicator(compact = false, task = task, original = original) {
+    private val progressPanel = ProgressPanel.getProgressPanel(progress)!!
+    private val cancelButton: InplaceButton?
+    private val suspendButton: InplaceButton?
+    private val suspendUpdateRunnable: Runnable
 
-    ProgressPanelProgressIndicator(@NotNull TaskInfo task, @NotNull ProgressIndicatorEx original) {
-      super(false, task, original);
-
-      myProgressPanel = Objects.requireNonNull(ProgressPanel.getProgressPanel(myProgress));
-      ClientProperty.put(myComponent, ProcessPopup.KEY, myProgressPanel);
-
-      myCancelButton = Objects.requireNonNull(myProgressPanel.getCancelButton());
-      myCancelButton.setPainting(task.isCancellable());
-
-      mySuspendButton = Objects.requireNonNull(myProgressPanel.getSuspendButton());
-      mySuspendUpdateRunnable = createSuspendUpdateRunnable(mySuspendButton);
-
-      setProcessNameValue(task.getTitle());
+    init {
+      ClientProperty.put(component, ProcessPopup.KEY, progressPanel)
+      cancelButton = progressPanel.getCancelButton()!!
+      cancelButton.setPainting(task.isCancellable())
+      suspendButton = progressPanel.getSuspendButton()!!
+      suspendUpdateRunnable = createSuspendUpdateRunnable(suspendButton)
+      setProcessNameValue(task.getTitle())
 
       // TODO: update javadoc for ProgressIndicator
     }
 
-    @Override
-    protected @NotNull Runnable createSuspendUpdateRunnable(@NotNull InplaceButton suspendButton) {
-      suspendButton.setVisible(false);
-
-      return () -> {
-        ProgressSuspender suspender = getSuspender();
-        suspendButton.setVisible(suspender != null);
-
-        if (suspender != null && (myProgressPanel.getState() == ProgressPanel.State.PAUSED) != suspender.isSuspended()) {
-          myProgressPanel.setState(suspender.isSuspended() ? ProgressPanel.State.PAUSED : ProgressPanel.State.PLAYING);
-          updateProgressIcon();
+    override fun createSuspendUpdateRunnable(suspendButton: InplaceButton): Runnable {
+      suspendButton.isVisible = false
+      return Runnable {
+        val suspender = suspender
+        suspendButton.isVisible = suspender != null
+        if (suspender != null && progressPanel.getState() == ProgressPanel.State.PAUSED != suspender.isSuspended) {
+          progressPanel.setState(if (suspender.isSuspended) ProgressPanel.State.PAUSED else ProgressPanel.State.PLAYING)
+          updateProgressIcon()
         }
-      };
+      }
     }
 
-    @Override
-    protected boolean canCheckPowerSaveMode() {
-      return false;
+    override fun canCheckPowerSaveMode(): Boolean = false
+
+    override fun createComponent(): JPanel {
+      val builder = ProgressPanelBuilder(progress).withTopSeparator()
+      builder.withText2()
+      builder.withCancel(Runnable { cancelRequest() })
+      val suspendRunnable = createSuspendRunnable()
+      builder.withPause(suspendRunnable).withResume(suspendRunnable)
+      return builder.createPanel()
     }
 
-    @Override
-    protected @NotNull JPanel createComponent() {
-      ProgressPanelBuilder builder = new ProgressPanelBuilder(myProgress).withTopSeparator();
-      builder.withText2();
-
-      builder.withCancel(this::cancelRequest);
-
-      Runnable suspendRunnable = createSuspendRunnable();
-      builder.withPause(suspendRunnable).withResume(suspendRunnable);
-
-      return builder.createPanel();
+    override fun getTextValue(): String? {
+      return progressPanel.getCommentText()
     }
 
-    @Override
-    protected @Nullable String getTextValue() {
-      return myProgressPanel.getCommentText();
+    override fun setTextValue(text: String) {
+      progressPanel.setCommentText(text)
     }
 
-    @Override
-    protected void setTextValue(@NotNull String text) {
-      myProgressPanel.setCommentText(text);
+    override fun setTextEnabled(value: Boolean) {
+      progressPanel.setCommentEnabled(value)
     }
 
-    @Override
-    protected void setTextEnabled(boolean value) {
-      myProgressPanel.setCommentEnabled(value);
+    override fun setText2Value(text: String) {
+      progressPanel.setText2(text)
     }
 
-    @Override
-    protected void setText2Value(@NotNull String text) {
-      myProgressPanel.setText2(text);
+    override fun setText2Enabled(value: Boolean) {
+      progressPanel.setText2Enabled(value)
     }
 
-    @Override
-    protected void setText2Enabled(boolean value) {
-      myProgressPanel.setText2Enabled(value);
+    override fun setProcessNameValue(text: String) {
+      progressPanel.setLabelText(text)
     }
 
-    @Override
-    protected void setProcessNameValue(@NotNull String text) {
-      myProgressPanel.setLabelText(text);
-    }
-
-    @Override
-    public void updateProgressNow() {
-      super.updateProgressNow();
-      mySuspendUpdateRunnable.run();
-      updateCancelButton(mySuspendButton, myCancelButton);
+    override fun updateProgressNow() {
+      super.updateProgressNow()
+      suspendUpdateRunnable.run()
+      updateCancelButton(suspendButton!!, cancelButton!!)
     }
   }
 
-  class MyInlineProgressIndicator extends InlineProgressIndicator implements TitledIndicator {
-    private ProgressIndicatorEx myOriginal;
-    PresentationModeProgressPanel myPresentationModeProgressPanel;
-    Balloon myPresentationModeBalloon;
-    boolean myPresentationModeShowBalloon;
+  internal open inner class MyInlineProgressIndicator(compact: Boolean, task: TaskInfo, original: ProgressIndicatorEx)
+    : InlineProgressIndicator(compact, task), TitledIndicator {
+    private var original: ProgressIndicatorEx?
+    @JvmField
+    var presentationModeProgressPanel: PresentationModeProgressPanel? = null
+    @JvmField
+    var presentationModeBalloon: Balloon? = null
+    @JvmField
+    var presentationModeShowBalloon: Boolean = false
 
-    MyInlineProgressIndicator(@NotNull TaskInfo task, @NotNull ProgressIndicatorEx original) {
-      this(true, task, original);
-    }
+    constructor(task: TaskInfo, original: ProgressIndicatorEx) : this(compact = true, task = task, original = original)
 
-    MyInlineProgressIndicator(boolean compact, @NotNull TaskInfo task, @NotNull ProgressIndicatorEx original) {
-      super(compact, task);
-      myOriginal = original;
-      original.addStateDelegate(this);
-      addStateDelegate(new AbstractProgressIndicatorExBase() {
-        @Override
-        public void cancel() {
-          super.cancel();
-          updateProgress();
+    init {
+      this.original = original
+      @Suppress("LeakingThis")
+      original.addStateDelegate(this)
+      addStateDelegate(object : AbstractProgressIndicatorExBase() {
+        override fun cancel() {
+          super.cancel()
+          updateProgress()
         }
-      });
-      runOnProgressRelatedChange(this::queueProgressUpdate, this, canCheckPowerSaveMode());
+      })
+      @Suppress("LeakingThis")
+      runOnProgressRelatedChange(runnable = { queueProgressUpdate() }, parentDisposable = this, powerSaveMode = canCheckPowerSaveMode())
     }
 
-    @Override
-    protected void createCompactTextAndProgress(@NotNull JPanel component) {
-      myText.setTextAlignment(Component.RIGHT_ALIGNMENT);
-      myText.recomputeSize();
-      UIUtil.setCursor(myText, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      UIUtil.setCursor(myProgress, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      super.createCompactTextAndProgress(component);
-      ((JComponent)myProgress.getParent()).setBorder(JBUI.Borders.empty(0, 8, 0, 4));
+    override fun createCompactTextAndProgress(component: JPanel) {
+      text.setTextAlignment(Component.RIGHT_ALIGNMENT)
+      text.recomputeSize()
+      UIUtil.setCursor(text, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+      UIUtil.setCursor(progress, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+      super.createCompactTextAndProgress(component)
+      (progress.parent as JComponent).setBorder(JBUI.Borders.empty(0, 8, 0, 4))
     }
 
-    protected boolean canCheckPowerSaveMode() {
-      return true;
+    protected open fun canCheckPowerSaveMode(): Boolean = true
+
+    override fun getText(): String {
+      val text = (super.getText() ?: "")
+      val suspender = suspender
+      return if (suspender != null && suspender.isSuspended) suspender.suspendedText else text
     }
 
-    @Override
-    public String getText() {
-      String text = StringUtil.notNullize(super.getText());
-      ProgressSuspender suspender = getSuspender();
-      return suspender != null && suspender.isSuspended() ? suspender.getSuspendedText() : text;
+    override fun createEastButtons(): Sequence<ProgressButton> {
+      return sequenceOf(createSuspendButton()) + super.createEastButtons()
     }
 
-    @Override
-    protected @NotNull JBIterable<ProgressButton> createEastButtons() {
-      return JBIterable.of(createSuspendButton()).append(super.createEastButtons());
+    protected fun updateCancelButton(suspend: InplaceButton, cancel: InplaceButton) {
+      val painting = info.isCancellable() && !isStopping
+      cancel.setPainting(painting)
+      cancel.isVisible = painting || !suspend.isVisible
     }
 
-    protected void updateCancelButton(@NotNull InplaceButton suspend, @NotNull InplaceButton cancel) {
-      boolean painting = getInfo().isCancellable() && !isStopping();
-      cancel.setPainting(painting);
-      cancel.setVisible(painting || !suspend.isVisible());
+    fun createPresentationButtons(): JBIterable<ProgressButton> {
+      val suspend = createSuspendButton()
+      val cancel = createCancelButton()
+      return JBIterable.of(suspend).append(ProgressButton(cancel.button,
+                                                          Runnable {
+                                                            updateCancelButton(suspend.button, cancel.button)
+                                                          }))
     }
 
-    @NotNull JBIterable<ProgressButton> createPresentationButtons() {
-      ProgressButton suspend = createSuspendButton();
-      ProgressButton cancel = createCancelButton();
-      return JBIterable.of(suspend).append(new ProgressButton(cancel.button, () -> updateCancelButton(suspend.button, cancel.button)));
+    private fun createSuspendButton(): ProgressButton {
+      val suspendButton = InplaceButton("", AllIcons.Actions.Pause, ActionListener { createSuspendRunnable().run() }).setFillBg(false)
+      return ProgressButton(suspendButton, createSuspendUpdateRunnable(suspendButton))
     }
 
-    private ProgressButton createSuspendButton() {
-      InplaceButton suspendButton = new InplaceButton("", AllIcons.Actions.Pause, e -> createSuspendRunnable().run()).setFillBg(false);
-      return new ProgressButton(suspendButton, createSuspendUpdateRunnable(suspendButton));
-    }
-
-    protected @NotNull Runnable createSuspendRunnable() {
-      return () -> {
-        ProgressSuspender suspender = getSuspender();
+    protected fun createSuspendRunnable(): Runnable {
+      return Runnable {
+        val suspender = suspender
         if (suspender == null) {
-          return;
+          return@Runnable
         }
-        if (suspender.isSuspended()) {
-          suspender.resumeProcess();
+        if (suspender.isSuspended) {
+          suspender.resumeProcess()
         }
         else {
-          suspender.suspendProcess(null);
+          suspender.suspendProcess(null)
         }
-        setInlineProgressByWeight();
-        (suspender.isSuspended() ? UIEventLogger.ProgressPaused : UIEventLogger.ProgressResumed).log();
-      };
+        setInlineProgressByWeight()
+        (if (suspender.isSuspended) ProgressPaused else ProgressResumed).log()
+      }
     }
 
-    protected @NotNull Runnable createSuspendUpdateRunnable(@NotNull InplaceButton suspendButton) {
-      suspendButton.setVisible(false);
-
-      return () -> {
-        ProgressSuspender suspender = getSuspender();
-        suspendButton.setVisible(suspender != null);
+    protected open fun createSuspendUpdateRunnable(suspendButton: InplaceButton): Runnable {
+      suspendButton.isVisible = false
+      return Runnable {
+        val suspender = suspender
+        suspendButton.isVisible = suspender != null
         if (suspender != null) {
-          String toolTipText = suspender.isSuspended()
-                               ? IdeBundle.message("comment.text.resume")
-                               : IdeBundle.message("comment.text.pause");
-          if (!toolTipText.equals(suspendButton.getToolTipText())) {
-            updateProgressIcon();
-            if (suspender.isSuspended()) {
-              showResumeIcons(suspendButton);
+          val toolTipText = if (suspender.isSuspended) IdeBundle.message("comment.text.resume")
+          else IdeBundle.message("comment.text.pause")
+          if (toolTipText != suspendButton.toolTipText) {
+            updateProgressIcon()
+            if (suspender.isSuspended) {
+              showResumeIcons(suspendButton)
             }
             else {
-              showPauseIcons(suspendButton);
+              showPauseIcons(suspendButton)
             }
-            suspendButton.setToolTipText(toolTipText);
+            suspendButton.setToolTipText(toolTipText)
           }
         }
-      };
+      }
     }
 
-    private void showPauseIcons(InplaceButton button) {
+    private fun showPauseIcons(button: InplaceButton) {
       setIcons(button, AllIcons.Process.ProgressPauseSmall, AllIcons.Process.ProgressPause, AllIcons.Process.ProgressPauseSmallHover,
-               AllIcons.Process.ProgressPauseHover);
+               AllIcons.Process.ProgressPauseHover)
     }
 
-    private void showResumeIcons(InplaceButton button) {
+    private fun showResumeIcons(button: InplaceButton) {
       setIcons(button, AllIcons.Process.ProgressResumeSmall, AllIcons.Process.ProgressResume, AllIcons.Process.ProgressResumeSmallHover,
-               AllIcons.Process.ProgressResumeHover);
+               AllIcons.Process.ProgressResumeHover)
     }
 
-    private void setIcons(InplaceButton button, Icon compactRegular, Icon regular, Icon compactHovered, Icon hovered) {
-      button.setIcons(isCompact() ? compactRegular : regular, null, isCompact() ? compactHovered : hovered);
-      button.revalidate();
-      button.repaint();
+    private fun setIcons(button: InplaceButton, compactRegular: Icon, regular: Icon, compactHovered: Icon, hovered: Icon) {
+      button.setIcons(if (isCompact) compactRegular else regular, null, if (isCompact) compactHovered else hovered)
+      button.revalidate()
+      button.repaint()
     }
 
-    protected @Nullable ProgressSuspender getSuspender() {
-      ProgressIndicatorEx original = myOriginal;
-      return original == null ? null : ProgressSuspender.getSuspender(original);
-    }
-
-    @Override
-    public void stop() {
-      super.stop();
-      updateProgress();
-    }
-
-    @Override
-    protected boolean isFinished() {
-      TaskInfo info = getInfo();
-      return info == null || isFinished(info);
-    }
-
-    @Override
-    public void finish(@NotNull TaskInfo task) {
-      super.finish(task);
-      queueRunningUpdate(() -> removeProgress(this));
-    }
-
-    @Override
-    public void dispose() {
-      super.dispose();
-      myOriginal = null;
-    }
-
-    @Override
-    protected void cancelRequest() {
-      myOriginal.cancel();
-    }
-
-    @Override
-    protected void queueProgressUpdate() {
-      synchronized (myDirtyIndicators) {
-        myDirtyIndicators.add(this);
+    protected val suspender: ProgressSuspender?
+      get() {
+        val original = original
+        return if (original == null) null else ProgressSuspender.getSuspender(original)
       }
-      myUpdateQueue.queue(myUpdateIndicators);
+
+    override fun stop() {
+      super.stop()
+      updateProgress()
     }
 
-    @Override
-    protected void queueRunningUpdate(@NotNull Runnable update) {
-      myUpdateQueue.queue(new Update(new Object(), false, 0) {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().invokeLater(update);
+    override fun isFinished(): Boolean {
+      val info = info
+      return info == null || isFinished(info)
+    }
+
+    override fun finish(task: TaskInfo) {
+      super.finish(task)
+      queueRunningUpdate(Runnable { removeProgress(this) })
+    }
+
+    override fun dispose() {
+      super.dispose()
+      original = null
+    }
+
+    override fun cancelRequest() {
+      original!!.cancel()
+    }
+
+    override fun queueProgressUpdate() {
+      synchronized(dirtyIndicators) { dirtyIndicators.add(this) }
+      updateQueue.queue(updateIndicators)
+    }
+
+    override fun queueRunningUpdate(update: Runnable) {
+      updateQueue.queue(object : Update(Any(), false, 0) {
+        override fun run() {
+          ApplicationManager.getApplication().invokeLater(update)
         }
-      });
+      })
     }
 
-    @Override
-    public void updateProgressNow() {
-      myProgress.setVisible(!PowerSaveMode.isEnabled() || !isPaintingIndeterminate());
-      super.updateProgressNow();
-      if (myPresentationModeProgressPanel != null) myPresentationModeProgressPanel.update();
+    override fun updateProgressNow() {
+      progress.isVisible = !PowerSaveMode.isEnabled() || !isPaintingIndeterminate
+      super.updateProgressNow()
+      if (presentationModeProgressPanel != null) presentationModeProgressPanel!!.update()
     }
 
-    public boolean showInPresentationMode() {
-      return !isProcessWindowOpen();
+    fun showInPresentationMode(): Boolean {
+      return !isProcessWindowOpen
     }
 
-    @Override
-    public void setTitle(@NotNull @NlsContexts.ProgressTitle String title) {
-      setProcessNameValue(title);
+    override fun setTitle(title: @NlsContexts.ProgressTitle String) {
+      setProcessNameValue(title)
     }
   }
 
-  private void runQuery() {
-    if (getRootPane() == null) return;
-
-    Set<InlineProgressIndicator> indicators = getCurrentInlineIndicators();
-    if (indicators.isEmpty()) return;
-
-    for (InlineProgressIndicator each : indicators) {
-      each.updateProgress();
+  private fun runQuery() {
+    if (rootPane == null) return
+    val indicators = currentInlineIndicators
+    if (indicators.isEmpty()) return
+    for (each in indicators) {
+      each.updateProgress()
     }
-    myQueryAlarm.cancelAllRequests();
-    myQueryAlarm.addRequest(this::runQuery, 2000);
+    queryAlarm.cancelAllRequests()
+    queryAlarm.addRequest(Runnable { runQuery() }, 2000)
   }
 
-  private @NotNull Set<InlineProgressIndicator> getCurrentInlineIndicators() {
-    synchronized (myOriginals) {
-      return myInlineToOriginal.keySet();
+  private val currentInlineIndicators: Set<InlineProgressIndicator>
+    get() {
+      synchronized(originals) { return inlineToOriginal.keys }
+    }
+
+  private class InlineLayout : AbstractLayoutManager() {
+    override fun preferredLayoutSize(parent: Container): Dimension {
+      val result = Dimension()
+      val count = parent.componentCount
+      for (i in 0 until count) {
+        val size = parent.getComponent(i).preferredSize
+        result.width += size.width
+        result.height = max(result.height.toDouble(), size.height.toDouble()).toInt()
+      }
+      return result
+    }
+
+    override fun layoutContainer(parent: Container) {
+      if (parent.componentCount != 2) {
+        return  // e.g., project frame is closed
+      }
+      val infoPanel = parent.getComponent(0)
+      val progressPanel = parent.getComponent(1)
+      val size = parent.size
+      val progressWidth = progressPanel.preferredSize.width
+      if (progressWidth > size.width) {
+        infoPanel.setBounds(0, 0, 0, 0)
+        progressPanel.setBounds(0, 0, size.width, size.height)
+      }
+      else {
+        infoPanel.setBounds(0, 0, size.width - progressWidth, size.height)
+        progressPanel.setBounds(size.width - progressWidth, 0, progressWidth, size.height)
+      }
     }
   }
 
-  private final class InlineProgressPanel extends NonOpaquePanel {
-    private final AsyncProcessIcon myProgressIcon = new AsyncProcessIcon("Background process");
-    private MyInlineProgressIndicator myIndicator;
-    private AsyncProcessIcon myProcessIconComponent;
-    private final ActionLink myMultiProcessLink = new ActionLink("", e -> { triggerPopupShowing(); }) {
-      @Override
-      public void updateUI() {
-        super.updateUI();
+  private class InlineProgressPanel(private val host: InfoAndProgressPanel) : NonOpaquePanel() {
+    companion object {
+      private val gap: Int
+        get() = JBUI.scale(10)
+
+      @Suppress("NAME_SHADOWING")
+      private fun setBounds(component: JComponent?, x: Int, centerY: Int, size: Dimension?, minusWidth: Boolean): Int {
+        var x = x
+        var size = size
+        if (size == null) {
+          size = component!!.getPreferredSize()
+        }
+        if (minusWidth) {
+          x -= size!!.width
+        }
+        component!!.setBounds(x, centerY - size!!.height / 2, size.width, size.height)
+        return x
+      }
+    }
+
+    val progressIcon: AsyncProcessIcon = AsyncProcessIcon("Background process")
+    var indicator: InfoAndProgressPanel.MyInlineProgressIndicator? = null
+    private var processIconComponent: AsyncProcessIcon? = null
+    private val multiProcessLink: ActionLink = object : ActionLink("", ActionListener { host.triggerPopupShowing() }) {
+      override fun updateUI() {
+        super.updateUI()
         if (!ExperimentalUI.isNewUI()) {
-          setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label());
+          setFont(if (SystemInfo.isMac) JBUI.Fonts.label(11f) else JBFont.label())
         }
       }
-    };
+    }
 
-    InlineProgressPanel() {
-      myProgressIcon.setOpaque(false);
-
-      myProgressIcon.addMouseListener(new MouseAdapter() {
-        @Override
-        public void mousePressed(MouseEvent e) {
-          handle(e);
+    init {
+      progressIcon.setOpaque(false)
+      progressIcon.addMouseListener(object : MouseAdapter() {
+        override fun mousePressed(e: MouseEvent) {
+          host.handle(e)
         }
 
-        @Override
-        public void mouseReleased(MouseEvent e) {
-          handle(e);
+        override fun mouseReleased(e: MouseEvent) {
+          host.handle(e)
         }
-      });
-
-      myProgressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      myProgressIcon.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border());
-      myProgressIcon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"));
-      Disposer.register(InfoAndProgressPanel.this, myProgressIcon);
-      setLayout(new AbstractLayoutManager() {
-        @Override
-        public Dimension preferredLayoutSize(Container parent) {
-          Dimension result = new Dimension();
-          if (myIndicator != null) {
-            JComponent component = myIndicator.getComponent();
-            if (component.isVisible()) {
-              Dimension size = component.getPreferredSize();
-              result.width += size.width;
-              result.height = Math.max(result.height, size.height);
+      })
+      progressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+      progressIcon.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border())
+      progressIcon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"))
+      Disposer.register(host, progressIcon)
+      setLayout(object : AbstractLayoutManager() {
+        override fun preferredLayoutSize(parent: Container): Dimension {
+          val result = Dimension()
+          if (indicator != null) {
+            val component = indicator!!.component
+            if (component.isVisible) {
+              val size = component.getPreferredSize()
+              result.width += size.width
+              result.height = max(result.height.toDouble(), size.height.toDouble()).toInt()
             }
           }
-          if (myMultiProcessLink.isVisible()) {
-            Dimension size = myMultiProcessLink.getPreferredSize();
-            result.width += (result.width > 0 ? getGap() : 0) + size.width;
-            result.height = Math.max(result.height, size.height);
+          if (multiProcessLink.isVisible) {
+            val size = multiProcessLink.getPreferredSize()
+            result.width += (if (result.width > 0) gap else 0) + size.width
+            result.height = max(result.height.toDouble(), size.height.toDouble()).toInt()
           }
-          if (myProcessIconComponent != null) {
-            result.height = Math.max(result.height, myProcessIconComponent.getPreferredSize().height);
+          if (processIconComponent != null) {
+            result.height = max(result.height.toDouble(), processIconComponent!!.getPreferredSize().height.toDouble()).toInt()
           }
-          JBInsets.addTo(result, parent.getInsets());
-          return result;
+          JBInsets.addTo(result, parent.insets)
+          return result
         }
 
-        @Override
-        public void layoutContainer(Container parent) {
-          if (myIndicator == null) {
-            hideProcessIcon();
-            return;
+        override fun layoutContainer(parent: Container) {
+          if (indicator == null) {
+            hideProcessIcon()
+            return
           }
-
-          Insets insets = parent.getInsets();
-          int x = insets.left;
-          int centerY = (parent.getHeight() + insets.top - insets.bottom) / 2;
-          int width = parent.getWidth() - insets.left - insets.right;
-          int rightX = parent.getWidth() - insets.right;
-          int gap = getGap();
-
-          JComponent indicator = myIndicator.getComponent();
-
-          if (indicator.isVisible()) {
-            int preferredWidth = preferredLayoutSize(parent).width - insets.left - insets.right;
-            Dimension indicatorSize = null;
-
+          val insets = parent.insets
+          val x = insets.left
+          val centerY = (parent.height + insets.top - insets.bottom) / 2
+          val width = parent.width - insets.left - insets.right
+          var rightX = parent.width - insets.right
+          val gap = gap
+          val indicator = indicator!!.component
+          if (indicator.isVisible) {
+            var preferredWidth = preferredLayoutSize(parent).width - insets.left - insets.right
+            var indicatorSize: Dimension? = null
             if (preferredWidth > width) {
-              int progressWidth2x = myIndicator.myProgress.getPreferredSize().width * 2;
-              if (width > progressWidth2x && myIndicator.myText.getPreferredSize().width > progressWidth2x) {
-                preferredWidth = width;
-                indicatorSize = new Dimension(width, indicator.getPreferredSize().height);
-                if (myMultiProcessLink.isVisible()) {
-                  indicatorSize.width -= myMultiProcessLink.getPreferredSize().width + gap;
+              val progressWidth2x = this@InlineProgressPanel.indicator!!.progress.getPreferredSize().width * 2
+              if (width > progressWidth2x && this@InlineProgressPanel.indicator!!.text.getPreferredSize().width > progressWidth2x) {
+                preferredWidth = width
+                indicatorSize = Dimension(width, indicator.getPreferredSize().height)
+                if (multiProcessLink.isVisible) {
+                  indicatorSize.width -= multiProcessLink.getPreferredSize().width + gap
                 }
               }
             }
-
             if (preferredWidth > width) {
-              indicator.setBounds(0, 0, 0, 0);
-
-              addProcessIcon();
-
-              Dimension iconSize = myProcessIconComponent.getPreferredSize();
-              preferredWidth = iconSize.width;
-
-              if (myMultiProcessLink.isVisible()) {
-                preferredWidth += gap + myMultiProcessLink.getPreferredSize().width;
+              indicator.setBounds(0, 0, 0, 0)
+              addProcessIcon()
+              val iconSize = processIconComponent!!.getPreferredSize()
+              preferredWidth = iconSize.width
+              if (multiProcessLink.isVisible) {
+                preferredWidth += gap + multiProcessLink.getPreferredSize().width
               }
-
               if (preferredWidth > width) {
-                if (myMultiProcessLink.isVisible()) {
-                  myMultiProcessLink.setBounds(0, 0, 0, 0);
+                if (multiProcessLink.isVisible) {
+                  multiProcessLink.setBounds(0, 0, 0, 0)
                 }
-
-                setBounds(myProcessIconComponent, 0, centerY, iconSize, false);
+                Companion.setBounds(processIconComponent, 0, centerY, iconSize, false)
               }
               else {
-                boolean miniWidth = true;
-
-                if (myMultiProcessLink.isVisible()) {
-                  rightX = setBounds(myMultiProcessLink, rightX, centerY, null, true) - gap;
+                var miniWidth = true
+                if (multiProcessLink.isVisible) {
+                  rightX = Companion.setBounds(multiProcessLink, rightX, centerY, null, true) - gap
                 }
                 else if (width < 60) {
-                  rightX = 0;
-                  miniWidth = false;
+                  rightX = 0
+                  miniWidth = false
                 }
-
-                setBounds(myProcessIconComponent, rightX, centerY, iconSize, miniWidth);
+                Companion.setBounds(processIconComponent, rightX, centerY, iconSize, miniWidth)
               }
-
-              myProcessIconComponent.setVisible(true);
+              processIconComponent!!.isVisible = true
             }
             else {
-              hideProcessIcon();
-
-              if (myMultiProcessLink.isVisible()) {
-                rightX = setBounds(myMultiProcessLink, rightX, centerY, null, true) - gap;
+              hideProcessIcon()
+              if (multiProcessLink.isVisible) {
+                rightX = Companion.setBounds(multiProcessLink, rightX, centerY, null, true) - gap
               }
-
-              setBounds(indicator, rightX, centerY, indicatorSize, true);
+              Companion.setBounds(indicator, rightX, centerY, indicatorSize, true)
             }
           }
           else {
-            Dimension linkSize = myMultiProcessLink.getPreferredSize();
-            int preferredWidth = linkSize.width;
-
+            val linkSize = multiProcessLink.getPreferredSize()
+            val preferredWidth = linkSize.width
             if (preferredWidth > width) {
-              myMultiProcessLink.setBounds(0, 0, 0, 0);
-
-              addProcessIcon();
-              setBounds(myProcessIconComponent, x, centerY, null, false);
-              myProcessIconComponent.setVisible(true);
+              multiProcessLink.setBounds(0, 0, 0, 0)
+              addProcessIcon()
+              Companion.setBounds(processIconComponent, x, centerY, null, false)
+              processIconComponent!!.isVisible = true
             }
             else {
-              hideProcessIcon();
-
-              setBounds(myMultiProcessLink, rightX, centerY, linkSize, true);
+              hideProcessIcon()
+              Companion.setBounds(multiProcessLink, rightX, centerY, linkSize, true)
             }
           }
         }
-      });
-      setBorder(JBUI.Borders.empty(0, 20, 0, 4));
-
-      add(myMultiProcessLink);
-      myMultiProcessLink.setVisible(false);
+      })
+      setBorder(JBUI.Borders.empty(0, 20, 0, 4))
+      add(multiProcessLink)
+      multiProcessLink.isVisible = false
     }
 
-    private static int getGap() {
-      return JBUI.scale(10);
-    }
-
-    private static int setBounds(JComponent component, int x, int centerY, @Nullable Dimension size, boolean minusWidth) {
-      if (size == null) {
-        size = component.getPreferredSize();
-      }
-      if (minusWidth) {
-        x -= size.width;
-      }
-      component.setBounds(x, centerY - size.height / 2, size.width, size.height);
-      return x;
-    }
-
-    private void addProcessIcon() {
-      if (myProcessIconComponent == null) {
-        add(myProcessIconComponent = myProgressIcon);
+    private fun addProcessIcon() {
+      if (processIconComponent == null) {
+        add(progressIcon.also { processIconComponent = it })
       }
     }
 
-    private void hideProcessIcon() {
-      if (myProcessIconComponent != null) {
-        myProcessIconComponent.setVisible(false);
+    private fun hideProcessIcon() {
+      if (processIconComponent != null) {
+        processIconComponent!!.isVisible = false
       }
     }
 
-    void updateProgress(MyInlineProgressIndicator compact) {
-      if (myIndicator == null) {
-        updateState(compact);
-      }
-      else {
-        setInlineProgressByWeight();
-      }
-    }
-
-    void updateState(@Nullable MyInlineProgressIndicator indicator) {
-      if (getRootPane() == null) {
-        return; // e.g., project frame is closed
-      }
-
-      if (myIndicator != null) {
-        if (myIndicator == indicator) {
-          updateState();
-          return;
-        }
-        remove(myIndicator.getComponent());
-      }
-
-      myIndicator = indicator;
-
+    fun updateProgress(compact: InfoAndProgressPanel.MyInlineProgressIndicator?) {
       if (indicator == null) {
-        myMultiProcessLink.setVisible(false);
-        doLayout();
-        revalidate();
-        repaint();
+        updateState(compact)
       }
       else {
-        add(indicator.getComponent());
-        updateState();
+        host.setInlineProgressByWeight()
       }
     }
 
-    void updateState() {
-      updateState(popup != null && popup.isShowing());
+    fun updateState(indicator: InfoAndProgressPanel.MyInlineProgressIndicator?) {
+      if (rootPane == null) {
+        return  // e.g., project frame is closed
+      }
+      if (this.indicator != null) {
+        if (this.indicator === indicator) {
+          updateState()
+          return
+        }
+        remove(this.indicator!!.component)
+      }
+      this.indicator = indicator
+      if (indicator == null) {
+        multiProcessLink.isVisible = false
+        doLayout()
+        revalidate()
+        repaint()
+      }
+      else {
+        add(indicator.component)
+        updateState()
+      }
     }
 
-    void updateState(boolean showPopup) {
-      if (myIndicator == null) {
-        return;
+    @JvmOverloads
+    fun updateState(showPopup: Boolean = host.popup != null && host.popup!!.isShowing) {
+      if (indicator == null) {
+        return
       }
-
-      int size = myOriginals.size();
-
-      myIndicator.getComponent().setVisible(!showPopup);
-      myMultiProcessLink.setVisible(showPopup || size > 1);
-
+      val size = host.originals.size
+      indicator!!.component.isVisible = !showPopup
+      multiProcessLink.isVisible = showPopup || size > 1
       if (showPopup) {
-        myMultiProcessLink.setText(IdeBundle.message("link.hide.processes", size));
+        multiProcessLink.setText(IdeBundle.message("link.hide.processes", size))
       }
       else if (size > 1) {
-        myMultiProcessLink.setText(IdeBundle.message("link.show.all.processes", size));
+        multiProcessLink.setText(IdeBundle.message("link.show.all.processes", size))
       }
-
-      doLayout();
-      revalidate();
-      repaint();
-    }
-  }
-
-  private static final class InlineLayout extends AbstractLayoutManager {
-    @Override
-    public Dimension preferredLayoutSize(Container parent) {
-      Dimension result = new Dimension();
-      int count = parent.getComponentCount();
-      for (int i = 0; i < count; i++) {
-        Dimension size = parent.getComponent(i).getPreferredSize();
-        result.width += size.width;
-        result.height = Math.max(result.height, size.height);
-      }
-      return result;
-    }
-
-    @Override
-    public void layoutContainer(Container parent) {
-      if (parent.getComponentCount() != 2) {
-        return; // e.g., project frame is closed
-      }
-
-      Component infoPanel = parent.getComponent(0);
-      Component progressPanel = parent.getComponent(1);
-      Dimension size = parent.getSize();
-      int progressWidth = progressPanel.getPreferredSize().width;
-
-      if (progressWidth > size.width) {
-        infoPanel.setBounds(0, 0, 0, 0);
-        progressPanel.setBounds(0, 0, size.width, size.height);
-      }
-      else {
-        infoPanel.setBounds(0, 0, size.width - progressWidth, size.height);
-        progressPanel.setBounds(size.width - progressWidth, 0, progressWidth, size.height);
-      }
+      doLayout()
+      revalidate()
+      repaint()
     }
   }
 }

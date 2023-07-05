@@ -30,7 +30,7 @@ public class OneLineProgressIndicator extends InlineProgressIndicator {
     super(true, task(withText ? IdeBundle.message("progress.text.downloading") : "", canBeCancelled));
 
     if (!withText) {
-      myText.getParent().remove(myText);
+      text.getParent().remove(text);
     }
     updateProgressNow();
     getComponent().setToolTipText(null);

@@ -48,14 +48,14 @@ internal class InlineCommitChecksProgressIndicator(isOnlyRunCommitChecks: Boolea
     val detailsPanel = NonOpaquePanel(HorizontalLayout(6)).apply {
       border = emptyTop(5)
 
-      add(myText)
+      add(text)
       add(myText2)
     }
 
-    component.add(myProgress, BorderLayout.CENTER)
+    component.add(progress, BorderLayout.CENTER)
     component.add(detailsPanel, BorderLayout.SOUTH)
 
-    myText.recomputeSize()
+    text.recomputeSize()
     myText2.recomputeSize()
   }
 
@@ -88,11 +88,11 @@ internal class PopupCommitChecksProgressIndicator(private val original: Progress
   }
 
   override fun createCompactTextAndProgress(component: JPanel) {
-    component.add(myText, BorderLayout.NORTH)
-    component.add(myProgress, BorderLayout.CENTER)
+    component.add(text, BorderLayout.NORTH)
+    component.add(progress, BorderLayout.CENTER)
     component.add(myText2, BorderLayout.SOUTH)
 
-    myText.recomputeSize()
+    text.recomputeSize()
     myText2.recomputeSize()
   }
 
