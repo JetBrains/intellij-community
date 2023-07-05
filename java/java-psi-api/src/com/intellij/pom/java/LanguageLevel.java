@@ -47,7 +47,7 @@ public enum LanguageLevel {
   /**
    * Should point to the last released JDK.
    */
-  public static final LanguageLevel HIGHEST = JDK_21;
+  public static final LanguageLevel HIGHEST = JDK_20;
 
   private final Supplier<@Nls String> myPresentableText;
   private final JavaVersion myVersion;
