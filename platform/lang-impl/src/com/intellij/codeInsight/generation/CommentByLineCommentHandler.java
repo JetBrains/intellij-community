@@ -195,7 +195,9 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
         }
 
         block.commenters[line - startLine] = commenter;
-        if (!isLineCommented(block, line, commenter) && (singleline || !DocumentUtil.isLineEmpty(document, line))) {
+        if (allLinesCommented
+            && !isLineCommented(block, line, commenter)
+            && (singleline || !DocumentUtil.isLineEmpty(document, line))) {
           allLinesCommented = false;
           if (commenter instanceof IndentedCommenter) {
             final Boolean value = ((IndentedCommenter)commenter).forceIndentedLineComment();
@@ -203,7 +205,6 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
               block.commentWithIndent = value;
             }
           }
-          break;
         }
       }
     }
@@ -627,6 +628,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
   private static void commentLine(Block block, int line, int offset) {
     Commenter commenter = block.blockSuitableCommenter;
     Document document = block.editor.getDocument();
+    if (commenter == null) commenter = block.commenters[line - block.startLine];
     if (commenter == null) commenter = findCommenter(block.editor, block.psiFile, line);
     if (commenter == null) return;
     if (commenter instanceof SelfManagingCommenter selfManagingCommenter) {
