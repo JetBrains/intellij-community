@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.CodeInsightActionHandler
+import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.getInlineCompletionContextOrNull
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.initOrGetInlineCompletionContext
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.getInlineCompletionState
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.initOrGetInlineCompletionState
@@ -68,11 +69,16 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
 
           if (index == 0) {
             inlineState.suggestions = listOf(InlineCompletionElement(value.text))
+            showInlineSuggestion(editor, inlineState, offset)
           }
           else {
+            if (editor.getInlineCompletionContextOrNull() == null) {
+              cancel()
+            }
+            ensureActive()
             inlineState.suggestions = inlineState.suggestions.map { it.withText(it.text + value.text) }
+            showInlineSuggestion(editor, inlineState, offset)
           }
-          showInlineSuggestion(editor, inlineState, offset)
         }
       }
     }
