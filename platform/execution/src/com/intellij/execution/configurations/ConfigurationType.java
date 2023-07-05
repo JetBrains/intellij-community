@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -11,9 +11,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * The type of a run configuration.
+ * A type of run configuration.
  *
  * @see ConfigurationTypeBase
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/run-configurations.html">Execution / Run Configurations (IntelliJ Platform Docs)</a>
  */
 public interface ConfigurationType extends PossiblyDumbAware {
   ExtensionPointName<ConfigurationType> CONFIGURATION_TYPE_EP = ExtensionPointName.create("com.intellij.configurationType");
@@ -60,7 +61,7 @@ public interface ConfigurationType extends PossiblyDumbAware {
   }
 
   /**
-   * Returns the configuration factories used by this configuration type. Normally each configuration type provides just a single factory.
+   * Returns the configuration factories used by this configuration type. Normally, each configuration type provides just a single factory.
    * You can return multiple factories if your configurations can be created in multiple variants (for example, local and remote for an
    * application server).
    *
@@ -80,7 +81,7 @@ public interface ConfigurationType extends PossiblyDumbAware {
   }
 
   /**
-   * Is configuration fully managed by RunManager.
+   * @return true if configuration is fully managed by {@link com.intellij.execution.RunManager}
    */
   default boolean isManaged() {
     return true;

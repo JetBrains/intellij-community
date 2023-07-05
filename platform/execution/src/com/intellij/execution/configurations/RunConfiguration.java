@@ -31,6 +31,8 @@ import java.util.List;
  * @see RunConfigurationBase
  * @see RefactoringListenerProvider
  * @see RunConfigurationExtensionBase
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/run-configurations.html">Execution / Run Configurations (IntelliJ Platform Docs)</a>
  */
 public interface RunConfiguration extends RunProfile, Cloneable {
   DataKey<RunConfiguration> DATA_KEY = DataKey.create("runtimeConfiguration");

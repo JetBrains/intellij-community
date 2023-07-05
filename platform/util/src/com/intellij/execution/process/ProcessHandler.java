@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Allows controlling and accessing the information about a running process.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/execution.html">Execution (IntelliJ Platform Docs)</a>
  */
 public abstract class ProcessHandler extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance(ProcessHandler.class);
