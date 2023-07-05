@@ -21,6 +21,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -91,8 +92,9 @@ class SdkmanrcWatcherService(private val project: Project, private val scope: Co
     connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: MutableList<out VFileEvent>) {
         for (event in events) {
-          if (event is VFileContentChangeEvent && event.path.endsWith(".sdkmanrc")) {
-            configureSdkFromSdkmanrc()
+          when {
+            !event.path.endsWith(".sdkmanrc") -> {}
+            event is VFileContentChangeEvent || event is VFileCreateEvent -> configureSdkFromSdkmanrc()
           }
         }
       }
