@@ -84,10 +84,10 @@ internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(fram
   }
 
   override fun addMenuItems(menu: JPopupMenu) {
-    menu.add(restoreAction)
-    menu.add(iconifyAction)
+    menu.add(restoreAction).apply { font = JBFont.create(font, false) }
+    menu.add(iconifyAction).apply { font = JBFont.create(font, false) }
     if (Toolkit.getDefaultToolkit().isFrameStateSupported(Frame.MAXIMIZED_BOTH)) {
-      menu.add(maximizeAction)
+      menu.add(maximizeAction).apply { font = JBFont.create(font, false) }
     }
 
     menu.add(JSeparator())
