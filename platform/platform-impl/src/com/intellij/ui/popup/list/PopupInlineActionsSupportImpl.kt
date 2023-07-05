@@ -46,7 +46,7 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
     val res: MutableList<InlineActionDescriptor> = mutableListOf()
 
     res.addAll(myStep.getInlineActions(element).map {
-      item: InlineActionItem -> InlineActionDescriptor(createInlineActionRunnable(item.action, event), true)
+      item: InlineActionItem -> InlineActionDescriptor(createInlineActionRunnable(item.action, event), !item.isKeepPopupOpen)
     })
     if (hasMoreButton(element)) res.add(InlineActionDescriptor(createNextStepRunnable(element), false))
     return res
@@ -92,7 +92,10 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
 
   private fun createNextStepRunnable(element: ActionItem) = Runnable { myListPopup.showNextStepPopup(myStep.onChosen(element, false), element) }
 
-  private fun createInlineActionRunnable(action: AnAction, inputEvent: InputEvent?) = Runnable { myStep.performAction(action, inputEvent) }
+  private fun createInlineActionRunnable(action: AnAction, inputEvent: InputEvent?) = Runnable {
+    myStep.performAction(action, inputEvent)
+    myStep.updateStepItems(myListPopup.list)
+  }
 
   private fun hasMoreButton(element: ActionItem) = myStep.hasSubstep(element)
                                                                     && !myListPopup.isShowSubmenuOnHover
