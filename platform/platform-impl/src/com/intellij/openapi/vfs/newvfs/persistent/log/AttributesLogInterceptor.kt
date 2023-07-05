@@ -7,10 +7,12 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.AttributesInterceptor
 
 class AttributesLogInterceptor(
-  private val context: VfsLogOperationWriteContext
+  private val context: VfsLogOperationWriteContext,
+  private val interceptMask: VfsOperationTagsMask = VfsOperationTagsMask.AttributesMask
 ) : AttributesInterceptor {
   override fun onWriteAttribute(underlying: (connection: PersistentFSConnection, fileId: Int, attribute: FileAttribute) -> AttributeOutputStream): (connection: PersistentFSConnection, fileId: Int, attribute: FileAttribute) -> AttributeOutputStream =
-    { connection, fileId, attribute ->
+    if (VfsOperationTag.ATTR_WRITE_ATTR !in interceptMask) underlying
+    else { connection, fileId, attribute ->
       val aos = underlying(connection, fileId, attribute)
       object : AttributeOutputStream(aos) {
         override fun writeEnumeratedString(str: String?) = aos.writeEnumeratedString(str)
@@ -30,7 +32,8 @@ class AttributesLogInterceptor(
     }
 
   override fun onDeleteAttributes(underlying: (connection: PersistentFSConnection, fileId: Int) -> Unit): (connection: PersistentFSConnection, fileId: Int) -> Unit =
-    { connection, fileId ->
+    if (VfsOperationTag.ATTR_DELETE_ATTRS !in interceptMask) underlying
+    else { connection, fileId ->
       { underlying(connection, fileId) } catchResult { result ->
         context.enqueueOperationWrite(VfsOperationTag.ATTR_DELETE_ATTRS) {
           VfsOperation.AttributesOperation.DeleteAttributes(fileId, result)
@@ -39,7 +42,8 @@ class AttributesLogInterceptor(
     }
 
   override fun onSetVersion(underlying: (version: Int) -> Unit): (version: Int) -> Unit =
-    { version ->
+    if (VfsOperationTag.ATTR_SET_VERSION !in interceptMask) underlying
+    else { version ->
       { underlying(version) } catchResult { result ->
         context.enqueueOperationWrite(VfsOperationTag.ATTR_SET_VERSION) {
           VfsOperation.AttributesOperation.SetVersion(version, result)

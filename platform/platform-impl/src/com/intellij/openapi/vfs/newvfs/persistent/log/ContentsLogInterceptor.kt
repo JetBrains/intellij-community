@@ -7,21 +7,24 @@ import com.intellij.util.io.storage.IAppenderStream
 import com.intellij.util.io.storage.IStorageDataOutput
 
 class ContentsLogInterceptor(
-  private val context: VfsLogOperationWriteContext
+  private val context: VfsLogOperationWriteContext,
+  private val interceptMask: VfsOperationTagsMask = VfsOperationTagsMask.ContentsMask
 ) : ContentsInterceptor {
 
   override fun onWriteBytes(underlying: (record: Int, bytes: ByteArraySequence, fixedSize: Boolean) -> Unit): (Int, ByteArraySequence, Boolean) -> Unit =
-    { record: Int, bytes: ByteArraySequence, fixedSize: Boolean ->
+    if (VfsOperationTag.CONTENT_WRITE_BYTES !in interceptMask) underlying
+    else { record: Int, bytes: ByteArraySequence, fixedSize: Boolean ->
       { underlying(record, bytes, fixedSize) } catchResult { result ->
         val data = bytes.toBytes()
-        context.enqueueOperationWithPayloadWrite(VfsOperationTag.CONTENT_WRITE_BYTES, data) { payloadRef->
+        context.enqueueOperationWithPayloadWrite(VfsOperationTag.CONTENT_WRITE_BYTES, data) { payloadRef ->
           VfsOperation.ContentsOperation.WriteBytes(record, fixedSize, payloadRef, result)
         }
       }
     }
 
   override fun onWriteStream(underlying: (record: Int) -> IStorageDataOutput): (record: Int) -> IStorageDataOutput =
-    { record ->
+    if (VfsOperationTag.CONTENT_WRITE_STREAM !in interceptMask) underlying
+    else { record ->
       val sdo = underlying(record)
       object : IStorageDataOutput by sdo {
         override fun close() {
@@ -30,7 +33,7 @@ class ContentsLogInterceptor(
         }
 
         private fun interceptClose(data: ByteArray, result: OperationResult<Unit>) {
-          context.enqueueOperationWithPayloadWrite(VfsOperationTag.CONTENT_WRITE_STREAM, data) { payloadRef->
+          context.enqueueOperationWithPayloadWrite(VfsOperationTag.CONTENT_WRITE_STREAM, data) { payloadRef ->
             VfsOperation.ContentsOperation.WriteStream(record, payloadRef, result)
           }
         }
@@ -38,7 +41,8 @@ class ContentsLogInterceptor(
     }
 
   override fun onWriteStream(underlying: (record: Int, fixedSize: Boolean) -> IStorageDataOutput): (record: Int, fixedSize: Boolean) -> IStorageDataOutput =
-    { record, fixedSize ->
+    if (VfsOperationTag.CONTENT_WRITE_STREAM_2 !in interceptMask) underlying
+    else { record, fixedSize ->
       val sdo = underlying(record, fixedSize)
       object : IStorageDataOutput by sdo {
         override fun close() {
@@ -47,7 +51,7 @@ class ContentsLogInterceptor(
         }
 
         private fun interceptClose(data: ByteArray, result: OperationResult<Unit>) {
-          context.enqueueOperationWithPayloadWrite(VfsOperationTag.CONTENT_WRITE_STREAM_2, data) { payloadRef->
+          context.enqueueOperationWithPayloadWrite(VfsOperationTag.CONTENT_WRITE_STREAM_2, data) { payloadRef ->
             VfsOperation.ContentsOperation.WriteStream2(record, fixedSize, payloadRef, result)
           }
         }
@@ -55,7 +59,8 @@ class ContentsLogInterceptor(
     }
 
   override fun onAppendStream(underlying: (record: Int) -> IAppenderStream): (record: Int) -> IAppenderStream =
-    { record ->
+    if (VfsOperationTag.CONTENT_APPEND_STREAM !in interceptMask) underlying
+    else { record ->
       val ias = underlying(record)
       object : IAppenderStream by ias {
         override fun close() {
@@ -64,7 +69,7 @@ class ContentsLogInterceptor(
         }
 
         private fun interceptClose(data: ByteArray, result: OperationResult<Unit>) {
-          context.enqueueOperationWithPayloadWrite(VfsOperationTag.CONTENT_APPEND_STREAM, data) { payloadRef->
+          context.enqueueOperationWithPayloadWrite(VfsOperationTag.CONTENT_APPEND_STREAM, data) { payloadRef ->
             VfsOperation.ContentsOperation.AppendStream(record, payloadRef, result)
           }
         }
@@ -72,26 +77,31 @@ class ContentsLogInterceptor(
     }
 
   override fun onReplaceBytes(underlying: (record: Int, offset: Int, bytes: ByteArraySequence) -> Unit): (record: Int, offset: Int, bytes: ByteArraySequence) -> Unit =
-    { record, offset, bytes ->
+    if (VfsOperationTag.CONTENT_REPLACE_BYTES !in interceptMask) underlying
+    else { record, offset, bytes ->
       { underlying(record, offset, bytes) } catchResult { result ->
         val data = bytes.toBytes()
-        context.enqueueOperationWithPayloadWrite(VfsOperationTag.CONTENT_REPLACE_BYTES, data) { payloadRef->
+        context.enqueueOperationWithPayloadWrite(VfsOperationTag.CONTENT_REPLACE_BYTES, data) { payloadRef ->
           VfsOperation.ContentsOperation.ReplaceBytes(record, offset, payloadRef, result)
         }
       }
     }
 
   override fun onAcquireNewRecord(underlying: () -> Int): () -> Int =
-    {
-      { underlying() } catchResult { result ->
-        context.enqueueOperationWrite(VfsOperationTag.CONTENT_ACQUIRE_NEW_RECORD) {
-          VfsOperation.ContentsOperation.AcquireNewRecord(result)
+    if (VfsOperationTag.CONTENT_ACQUIRE_NEW_RECORD !in interceptMask) underlying
+    else {
+      {
+        { underlying() } catchResult { result ->
+          context.enqueueOperationWrite(VfsOperationTag.CONTENT_ACQUIRE_NEW_RECORD) {
+            VfsOperation.ContentsOperation.AcquireNewRecord(result)
+          }
         }
       }
     }
 
   override fun onAcquireRecord(underlying: (record: Int) -> Unit): (record: Int) -> Unit =
-    { record ->
+    if (VfsOperationTag.CONTENT_ACQUIRE_RECORD !in interceptMask) underlying
+    else { record ->
       { underlying(record) } catchResult { result ->
         context.enqueueOperationWrite(VfsOperationTag.CONTENT_ACQUIRE_RECORD) {
           VfsOperation.ContentsOperation.AcquireRecord(record, result)
@@ -101,7 +111,8 @@ class ContentsLogInterceptor(
 
 
   override fun onReleaseRecord(underlying: (record: Int) -> Unit): (record: Int) -> Unit =
-    { record ->
+    if (VfsOperationTag.CONTENT_RELEASE_RECORD !in interceptMask) underlying
+    else { record ->
       { underlying(record) } catchResult { result ->
         context.enqueueOperationWrite(VfsOperationTag.CONTENT_RELEASE_RECORD) {
           VfsOperation.ContentsOperation.ReleaseRecord(record, result)
@@ -110,7 +121,8 @@ class ContentsLogInterceptor(
     }
 
   override fun onSetVersion(underlying: (version: Int) -> Unit): (version: Int) -> Unit =
-    { version ->
+    if (VfsOperationTag.CONTENT_SET_VERSION !in interceptMask) underlying
+    else { version ->
       { underlying(version) } catchResult { result ->
         context.enqueueOperationWrite(VfsOperationTag.CONTENT_SET_VERSION) {
           VfsOperation.ContentsOperation.SetVersion(version, result)
