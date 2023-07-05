@@ -186,4 +186,31 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
     myFixture.testHighlighting("UastUsage.java")
   }
 
+  // there was a bug reporting warning for nested methods multiple times (during analyzing top-level method and all nested)
+  fun testNestedMethods() {
+    myFixture.addClass("""
+      import com.intellij.psi.PsiElement;
+      import org.jetbrains.uast.UClass;
+      import org.jetbrains.uast.UElement;
+
+      class UastUsage {
+        void method(UClass uClass) {
+          new Runnable() {
+            public void run() {
+              new Runnable() {
+                public void run() {
+                  new Runnable() {
+                    public void run() {
+                      <warning descr="Usage of UElement as PsiElement is not recommended">uClass.getParent()</warning>;
+                    }
+                  };
+                }
+              };
+            }
+          };
+        }
+      }
+      """.trimIndent())
+    myFixture.testHighlighting("UastUsage.java")
+  }
 }

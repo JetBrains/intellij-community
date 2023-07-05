@@ -27,6 +27,9 @@ private val ALLOWED_REDEFINITION = setOf<String?>(
 class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
 
   override fun checkMethod(method: UMethod, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
+    // do not analyze nested methods to avoid warning duplicates
+    if (method.getUastParentOfType<UMethod>(true) != null) return null
+
     val sourcePsiElement = method.sourcePsiElement ?: return null
     val uElementType = psiClassType(UElement::class.java.name, sourcePsiElement.resolveScope) ?: return null
     val psiElementType = psiClassType(PsiElement::class.java.name, sourcePsiElement.resolveScope) ?: return null

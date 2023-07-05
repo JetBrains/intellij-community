@@ -202,4 +202,52 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
       """.trimIndent())
     myFixture.testHighlighting("UastUsage.kt")
   }
+
+  // there was a bug reporting warning for nested methods multiple times (during analyzing top-level method and all nested)
+  fun testNestedMethods() {
+    myFixture.configureByText("UastUsage.kt", """
+      import com.intellij.psi.PsiElement
+      import org.jetbrains.uast.UClass
+      import org.jetbrains.uast.UElement
+
+      class UastUsage {
+        fun function(uClass: UClass) {
+          object : Runnable {
+            override fun run() {
+              object : Runnable {
+                override fun run() {
+                  object : Runnable {
+                    override fun run() {
+                      uClass.<warning descr="Usage of UElement as PsiElement is not recommended">parent</warning>
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      """.trimIndent())
+    myFixture.testHighlighting("UastUsage.kt")
+  }
+
+  fun testNestedKotlinFunction() {
+    myFixture.configureByText("UastUsage.kt", """
+      import com.intellij.psi.PsiElement
+      import org.jetbrains.uast.UClass
+      import org.jetbrains.uast.UElement
+
+      class UastUsage {
+        fun foo(uClass: UClass) {
+          fun nested() {
+            <warning descr="Usage of UElement as PsiElement is not recommended">uClass</warning>.testPsiElement()
+          }
+          nested()
+        }
+      }
+
+      private fun PsiElement.testPsiElement() {}
+      """.trimIndent())
+    myFixture.testHighlighting("UastUsage.kt")
+  }
 }
