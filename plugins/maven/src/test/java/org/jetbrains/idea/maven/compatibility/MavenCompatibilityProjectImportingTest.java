@@ -65,13 +65,7 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
       new String[]{"3.2.2"},
       new String[]{"3.2.1"},
       new String[]{"3.1.1"},
-      new String[]{"3.1.0"},
-      new String[]{"3.0.5"},
-      new String[]{"3.0.4"},
-      new String[]{"3.0.3"},
-      new String[]{"3.0.2"},
-      new String[]{"3.0.1"},
-      new String[]{"3.0"}
+      new String[]{"3.1.0"}
     );
   }
 

@@ -213,8 +213,8 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     String version = MavenUtil.getMavenVersion(MavenUtil.getMavenHomeFile(getMavenHome()));
     String versionText = null;
     if (version != null) {
-      if (StringUtil.compareVersionNumbers(version, "3") < 0) {
-        versionText = getMaven2Message(version);
+      if (StringUtil.compareVersionNumbers(version, "3.1") < 0) {
+        versionText = getUnsupportedMavenMessage(version);
       }
       else {
         versionText = MavenProjectBundle.message("label.invalid.maven.home.version", version);
@@ -225,7 +225,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     }
     else if (localTarget) {
       if (MavenServerManager.BUNDLED_MAVEN_2.equals(mavenHomeField.getText().trim())) {
-        versionText = getMaven2Message(null);
+        versionText = getUnsupportedMavenMessage(null);
       }
       else {
         versionText = MavenProjectBundle.message("label.invalid.maven.home.directory");
@@ -235,7 +235,10 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   }
 
   @NlsContexts.Label
-  private static String getMaven2Message(String version) {
+  private static String getUnsupportedMavenMessage(String version) {
+    if (StringUtil.compareVersionNumbers(version, "3.1") < 0 && StringUtil.compareVersionNumbers(version, "2") > 0) {
+      return MavenProjectBundle.message("label.invalid.maven30");
+    }
     if (!MavenVersionSupportUtil.isMaven2PluginInstalled()) {
       return MavenProjectBundle.message("label.invalid.install.maven2plugin");
     }

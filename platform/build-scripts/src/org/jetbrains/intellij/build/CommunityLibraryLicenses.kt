@@ -696,9 +696,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "plexus-archiver", libraryName = "plexus-archiver",
                    url = "https://github.com/codehaus-plexus/plexus-archiver")
       .apache("https://github.com/codehaus-plexus/plexus-archiver/blob/master/LICENSE"),
-    LibraryLicense(name = "plexus-classworlds", attachedTo = "intellij.maven.server.m30.impl", version = "2.4",
-                   url = "https://github.com/codehaus-plexus/plexus-classworlds")
-      .apache("https://github.com/codehaus-plexus/plexus-classworlds/blob/master/LICENSE.txt"),
 
     LibraryLicense(name = "Plexus Utils", libraryName = "plexus-utils",
                    url = "https://github.com/codehaus-plexus/plexus-utils")

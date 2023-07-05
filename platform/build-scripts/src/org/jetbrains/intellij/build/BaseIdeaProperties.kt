@@ -28,9 +28,7 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
   "plugins/maven-server/lib/maven-server.jar" to "1.8",
   "plugins/maven-model/lib/maven-model.jar" to "1.8",
   "plugins/maven/lib/maven3-server-common.jar" to "1.8",
-  "plugins/maven/lib/maven30-server.jar" to "1.8",
   "plugins/maven/lib/maven3-server.jar" to "1.8",
-  "plugins/maven/lib/artifact-resolver-m3.jar" to "1.7",
   "plugins/maven/lib/artifact-resolver-m31.jar" to "1.7",
   "plugins/xpath/lib/rt/xslt-rt.jar" to "1.7",
 )

@@ -96,7 +96,6 @@ object CommunityRepositoryModules {
     plugin("intellij.maven") { spec ->
       spec.withModule("intellij.maven.jps")
       spec.withModule("intellij.maven.server.m3.common", "maven3-server-common.jar")
-      spec.withModule("intellij.maven.server.m30.impl", "maven30-server.jar")
       spec.withModule("intellij.maven.server.m3.impl", "maven3-server.jar")
       spec.withModule("intellij.maven.server.m36.impl", "maven36-server.jar")
       spec.withModule("intellij.maven.server.m40", "maven40-server.jar")
@@ -109,9 +108,6 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary(libraryName = "apache.maven.archetype.common:3.2.1", moduleName = "intellij.maven.server.indexer",
                              relativeOutputPath = "intellij.maven.server.indexer/lib")
 
-      spec.withModule("intellij.maven.artifactResolver.m3", "artifact-resolver-m3.jar")
-      spec.withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m3.jar")
-
       spec.withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
       spec.withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
 
@@ -119,11 +115,9 @@ object CommunityRepositoryModules {
 
       spec.doNotCopyModuleLibrariesAutomatically(listOf(
         "intellij.maven.artifactResolver.common",
-        "intellij.maven.artifactResolver.m3",
         "intellij.maven.artifactResolver.m31",
         "intellij.maven.server.m3.common",
         "intellij.maven.server.m3.impl",
-        "intellij.maven.server.m30.impl",
         "intellij.maven.server.m36.impl",
         "intellij.maven.server.m40",
         "intellij.maven.server.indexer",

@@ -32,7 +32,7 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
   @Override
   public boolean isSupportedByExtension(@Nullable File mavenHome) {
     String version = MavenUtil.getMavenVersion(mavenHome);
-    return StringUtil.compareVersionNumbers(version, "3") >= 0 && StringUtil.compareVersionNumbers(version, "4") < 0;
+    return StringUtil.compareVersionNumbers(version, "3.1") >= 0 && StringUtil.compareVersionNumbers(version, "4") < 0;
   }
 
   @Override
@@ -94,14 +94,9 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
     classpath.add(new File(root, "maven3-server-common.jar"));
     addDir(classpath, new File(root, "maven3-server-lib"), f -> true);
 
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
-      classpath.add(new File(root, "maven30-server.jar"));
-    }
-    else {
-      classpath.add(new File(root, "maven3-server.jar"));
-      if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
-        classpath.add(new File(root, "maven36-server.jar"));
-      }
+    classpath.add(new File(root, "maven3-server.jar"));
+    if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
+      classpath.add(new File(root, "maven36-server.jar"));
     }
   }
 
@@ -115,14 +110,9 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
     classpath.add(new File(root, "intellij.maven.server.m3.common"));
     addDir(classpath, new File(parentFile, "maven3-server-common/lib"), f -> true);
 
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
-      classpath.add(new File(root, "intellij.maven.server.m30.impl"));
-    }
-    else {
-      classpath.add(new File(root, "intellij.maven.server.m3.impl"));
-      if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
-        classpath.add(new File(root, "intellij.maven.server.m36.impl"));
-      }
+    classpath.add(new File(root, "intellij.maven.server.m3.impl"));
+    if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
+      classpath.add(new File(root, "intellij.maven.server.m36.impl"));
     }
   }
 

@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM31RtMarker;
-import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM3RtMarker;
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -236,23 +235,7 @@ public final class MavenExternalParameters {
   }
 
   private static String getArtifactResolverJar(@Nullable String mavenVersion) throws IOException {
-    Class<?> marker;
-
-    if (mavenVersion != null && mavenVersion.compareTo("3.1.0") >= 0) {
-      marker = MavenArtifactResolvedM31RtMarker.class;
-    }
-    else if (mavenVersion != null && mavenVersion.compareTo("3.0.0") >= 0) {
-      marker = MavenArtifactResolvedM3RtMarker.class;
-    }
-    else {
-      try {
-        marker = Class.forName("org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM2RtMarker");
-      }
-      catch (ClassNotFoundException e) {
-        LOG.error("Cannot find Maven2 artifact resolved, falling back to Maven3", e);
-        marker = MavenArtifactResolvedM3RtMarker.class;
-      }
-    }
+    Class<?> marker = MavenArtifactResolvedM31RtMarker.class;
 
     File classDirOrJar = new File(PathUtil.getJarPathForClass(marker));
 
