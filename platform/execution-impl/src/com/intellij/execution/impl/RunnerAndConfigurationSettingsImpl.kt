@@ -27,6 +27,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.text.nullize
 import org.jdom.Element
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
 private const val RUNNER_ID = "RunnerId"
@@ -600,7 +601,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
 // always write method element for shared settings for now due to preserve backward compatibility
 private val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
-  get() = ApplicationManager.getApplication().isUnitTestMode || isStoredInLocalWorkspace
+  get() = ApplicationManager.getApplication().isUnitTestMode && writeDefaultAttributeWithFalseValueInTests || isStoredInLocalWorkspace
+
+@set:TestOnly
+var writeDefaultAttributeWithFalseValueInTests: Boolean = true
 
 fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
   when (configuration) {

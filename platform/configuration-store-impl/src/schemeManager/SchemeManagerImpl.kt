@@ -31,6 +31,7 @@ import com.intellij.util.io.*
 import com.intellij.util.text.UniqueNameGenerator
 import org.jdom.Document
 import org.jdom.Element
+import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.nio.file.FileSystemException
 import java.nio.file.Files
@@ -689,6 +690,15 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
   override fun toString() = fileSpec
 
+  /**
+   * Call this method before invoking [com.intellij.openapi.components.impl.stores.IComponentStore.save] to ensure that schema will be saved 
+   * even if there were no changes. 
+   */
+  @TestOnly
+  fun forceSaving() {
+    schemeListManager.data.schemeToInfo.values.forEach { it.digest = null }
+  }
+  
   internal fun removeFirstScheme(isScheduleToDelete: Boolean, condition: (T) -> Boolean): T? {
     val iterator = schemes.iterator()
     for (scheme in iterator) {
