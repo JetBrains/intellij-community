@@ -8,4 +8,5 @@ interface Component {
   val y: Int
   val width: Int
   val height: Int
+  fun isVisible(): Boolean
 }

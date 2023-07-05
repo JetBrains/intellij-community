@@ -1,12 +1,11 @@
 package com.jetbrains.performancePlugin.remotedriver
 
-import com.intellij.driver.model.TextData
+import com.intellij.driver.model.TextDataList
 import com.intellij.openapi.components.Service
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextParser
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextToKeyCache
 import com.jetbrains.performancePlugin.remotedriver.robot.SmoothRobot
 import com.jetbrains.performancePlugin.remotedriver.xpath.XpathSearcher
-import org.assertj.swing.core.Robot
 import java.awt.Component
 
 @Suppress("unused")
@@ -25,7 +24,7 @@ internal class RobotService {
     return xpathSearcher.findComponents(xpath, component)
   }
 
-  fun findAllText(component: Component): List<TextData> {
-    return TextParser.parseComponent(component, TextToKeyCache)
+  fun findAllText(component: Component): TextDataList {
+    return TextParser.parseComponent(component, TextToKeyCache).let { TextDataList().apply { addAll(it) } }
   }
 }

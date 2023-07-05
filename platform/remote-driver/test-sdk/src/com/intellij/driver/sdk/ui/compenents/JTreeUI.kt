@@ -2,21 +2,18 @@ package com.intellij.driver.sdk.ui.compenents
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.TreePathToRow
-import com.intellij.driver.sdk.ui.ComponentWrapper
+import com.intellij.driver.model.TreePathToRowList
 import com.intellij.driver.sdk.ui.Finder
-import com.intellij.driver.sdk.ui.UiComponent
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
-import com.intellij.driver.sdk.ui.x
 import org.intellij.lang.annotations.Language
 
 
 fun Finder.tree(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='JTree']",
                                                               JTreeUiComponent::class.java)
 
-
-class JTreeUiComponent(data: ComponentWrapper) : UiComponent(data) {
-  private val fixture = driver.new(JTreeFixtureRef::class, robotService.robot, component)
+class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
+  private val fixture by lazy {  driver.new(JTreeFixtureRef::class, robotService.robot, component) }
 
   fun clickRow(row: Int) = fixture.clickRow(row)
   fun doubleClickRow(row: Int) = fixture.doubleClickRow(row)
@@ -69,5 +66,5 @@ interface JTreeFixtureRef: Component {
   fun separator(): String
   fun valueAt(row: Int): String
   fun valueAt(path: String): String
-  fun collectExpandedPaths(): List<TreePathToRow>
+  fun collectExpandedPaths(): TreePathToRowList
 }

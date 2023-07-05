@@ -1,6 +1,7 @@
 package com.jetbrains.performancePlugin.remotedriver.fixtures
 
 import com.intellij.driver.model.TreePathToRow
+import com.intellij.driver.model.TreePathToRowList
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.*
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.JComboBoxTextCellReader
@@ -24,19 +25,24 @@ class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeFixtur
     replaceCellReader(cellReader)
   }
 
-  fun collectExpandedPaths(): List<TreePathToRow> = computeOnEdt {
-    val paths = mutableListOf<List<String>>()
-    TreeUtil.visitVisibleRows(component, { path ->
-      val nodes = mutableListOf<String>()
-      path.path.forEach { nodes.add(cellReader.valueAt(component, it) ?: "") }
-      if (component.isRootVisible.not()) {
-        nodes.removeAt(0)
-      }
-      nodes
-    }, { paths.add(it) })
-    return@computeOnEdt paths
-  }.mapIndexed { index, path ->
-    TreePathToRow(path.filterNotNull().filter { it.isNotEmpty() }, index)
+  fun collectExpandedPaths(): TreePathToRowList {
+    val result = TreePathToRowList()
+    computeOnEdt {
+      val paths = mutableListOf<List<String>>()
+
+      TreeUtil.visitVisibleRows(component, { path ->
+        val nodes = mutableListOf<String>()
+        path.path.forEach { nodes.add(cellReader.valueAt(component, it) ?: "") }
+        if (component.isRootVisible.not()) {
+          nodes.removeAt(0)
+        }
+        nodes
+      }, { paths.add(it) })
+      return@computeOnEdt paths
+    }.forEachIndexed { index, path ->
+      result.add(TreePathToRow(path.filterNotNull().filter { it.isNotEmpty() }, index))
+    }
+    return result
   }
 }
 

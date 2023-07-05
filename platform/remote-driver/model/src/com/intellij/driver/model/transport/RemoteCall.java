@@ -92,17 +92,6 @@ public abstract class RemoteCall implements Serializable {
            || result instanceof LocalDateTime
            || result instanceof Duration
            || result instanceof Point
-           || result instanceof PassByValue
-           || isCollectionOfPassByValue(result);
-  }
-
-  private static boolean isCollectionOfPassByValue(Object result) {
-    if (result instanceof Collection<?> collection) {
-      if (collection.isEmpty()) return true;
-      return isPassByValue(collection.iterator().next());
-    }
-    else {
-      return false;
-    }
+           || result instanceof PassByValue;
   }
 }

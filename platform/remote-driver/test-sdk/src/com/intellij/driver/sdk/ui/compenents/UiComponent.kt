@@ -1,25 +1,42 @@
-package com.intellij.driver.sdk.ui
+package com.intellij.driver.sdk.ui.compenents
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.driver.model.TextData
+import com.intellij.driver.sdk.ui.*
+import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT_SECONDS
 import com.intellij.driver.sdk.ui.keyboard.WithKeyboard
-import com.intellij.driver.sdk.ui.remote.*
+import com.intellij.driver.sdk.ui.remote.Component
+import com.intellij.driver.sdk.ui.remote.RobotService
 import java.awt.Point
+import java.time.Duration
 
 
-data class ComponentWrapper(val driver: Driver, val robotService: RobotService, val component: Component, val foundByXpath: String)
+data class ComponentData(val xpath: String,
+                         val driver: Driver,
+                         val robotService: RobotService,
+                         val parentSearchContext: SearchContext,
+                         val foundComponent: Component?)
 
-@Suppress("MemberVisibilityCanBePrivate")
-open class UiComponent(componentData: ComponentWrapper) : WithKeyboard, Finder {
-  override val driver: Driver = componentData.driver
-  override val robotService: RobotService = componentData.robotService
-  val component = componentData.component
-  private val foundByXpath = componentData.foundByXpath
+open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
+  val component: Component by lazy {
+    data.foundComponent ?: findThisComponent()
+  }
 
+  private fun findThisComponent(): Component {
+    waitFor(Duration.ofSeconds(DEFAULT_FIND_TIMEOUT_SECONDS.toLong()),
+            errorMessage = "Can't find component with '${data.xpath}' in ${searchContext.context}") {
+      data.parentSearchContext.findAll(data.xpath).size == 1
+    }
+    return data.parentSearchContext.findAll(data.xpath).first()
+  }
+
+  override val driver: Driver = data.driver
+  override val robotService: RobotService = data.robotService
 
   override val searchContext: SearchContext = object : SearchContext {
-    override val context = foundByXpath
+    override val context: String = data.parentSearchContext.context + data.xpath
+
     override fun findAll(xpath: String): List<Component> {
       return robotService.findAll(xpath, component)
     }
@@ -45,6 +62,8 @@ open class UiComponent(componentData: ComponentWrapper) : WithKeyboard, Finder {
   fun hasText(predicate: (TextData) -> Boolean): Boolean {
     return robotService.findAllText(component).any(predicate)
   }
+
+  fun isVisible(): Boolean = component.isVisible()
 
   fun findAllText(predicate: (TextData) -> Boolean): List<UiText> {
     return robotService.findAllText(component).filter(predicate).map { UiText(this, it) }
