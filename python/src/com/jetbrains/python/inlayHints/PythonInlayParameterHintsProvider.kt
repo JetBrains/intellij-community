@@ -29,7 +29,7 @@ class PythonInlayParameterHintsProvider : InlayParameterHintsProvider {
     val showForNonLiteralArguments: Option = Option("python.show.hints.for.non-literal.arguments",
                                                     PyBundle.messagePointer(
                                                       "inlay.parameters.python.show.hints.for.non-literal.arguments"),
-                                                    true)
+                                                    false)
   }
 
   private fun getInlayInfoForArgumentList(node: PyArgumentList): List<InlayInfo> {
