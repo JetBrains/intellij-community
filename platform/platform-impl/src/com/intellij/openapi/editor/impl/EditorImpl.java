@@ -4975,8 +4975,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private static final MouseEvent mouseEventStub = new MouseEvent(new Component() {}, 0, 0L, 0, 0, 0, 0, false, 0);
 
     private static EditorImpl getEditor(@NotNull JComponent comp) {
-      EditorComponentImpl editorComponent = (EditorComponentImpl)comp;
-      return editorComponent.getEditor();
+      if (comp instanceof EditorComponentImpl editorComponent) {
+        return editorComponent.getEditor();
+      }
+      return ((EditorGutterComponentImpl)comp).getEditor();
     }
 
     @Override
