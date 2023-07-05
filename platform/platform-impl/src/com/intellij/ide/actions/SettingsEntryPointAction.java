@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -404,16 +404,6 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
     private SettingsPopupListElementRenderer(ListPopupImpl aPopup) {
       super(aPopup);
-    }
-
-    @Override
-    protected void customizeComponent(JList<? extends E> list, E value, boolean isSelected) {
-      super.customizeComponent(list, value, isSelected);
-
-      myTextLabel.setHorizontalTextPosition(SwingConstants.LEFT);
-      myTextLabel.setIconTextGap(JBUI.scale(6));
-      boolean enableNewUi = value instanceof AnActionHolder actionHolder && actionHolder.getAction() instanceof EnableNewUiAction;
-      myTextLabel.setIcon(enableNewUi ? AllIcons.General.Beta : null);
     }
   }
 }
