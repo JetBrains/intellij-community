@@ -81,10 +81,12 @@ class MermaidElementFactory {
     }
 
     fun createMarkdownValue(project: Project, value: String): MermaidMarkdownValue? {
-      val text = """
-        flowchart
-          markdown["`$value`"]
-      """.trimIndent()
+      val text = buildString {
+        appendLine("flowchart")
+        append("markdown[\"`")
+        append(value)
+        appendLine("`\"]")
+      }
       val file = createFile(project, text)
       val elements = SyntaxTraverser.psiTraverser(file).asSequence()
       return elements.filterIsInstance<MermaidMarkdownValue>().firstOrNull()

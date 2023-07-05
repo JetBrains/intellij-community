@@ -9,7 +9,11 @@ import com.intellij.psi.util.parentOfType
 import java.io.File
 
 class MarkdownElementManipulatorTest : MermaidBaseTestCase("psi") {
-  private val newContent = "*Markdown*"
+  private val newContent = """
+    Line 1
+      Line 2
+      Line 3
+  """.trimIndent()
 
   fun `test replace`() {
     val testName = getTestName(true)
