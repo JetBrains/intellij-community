@@ -63,5 +63,34 @@ class X {
     }
   }
 
+  void dd6(String str) {
+    switch (str) {
+      case String i when i.length() == 2 -> System.out.println(2);
+      case String i -> System.out.println(2);
+    }
+  }
+
+  void dd7(String str) {
+    switch (str) {
+      case String i -> System.out.println(2);
+      case <error descr="Label is dominated by a preceding case label 'String i'">String i when i.length() == 2</error> -> System.out.println(2);
+    }
+  }
+
+  int testC(String str) {
+    switch (str) {
+      case String s when s.isEmpty()==true: return 1;
+      case "": return -1;
+      default: return 0;
+    }
+  }
+
+  int testC2(String str) {
+    switch (str) {
+      case String s: return 1;
+      case <error descr="Label is dominated by a preceding case label 'String s'">""</error>: return -1;
+    }
+  }
+
   native static boolean predicate();
 }

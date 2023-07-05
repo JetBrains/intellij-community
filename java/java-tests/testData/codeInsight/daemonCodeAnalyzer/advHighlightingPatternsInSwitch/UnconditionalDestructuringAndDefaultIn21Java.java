@@ -216,8 +216,8 @@ class Main {
     }
     str = switch (ii) {
       case Integer in when in != null -> "";
-      case <error descr="Label is dominated by a preceding case label 'Integer in when in != null'">1</error> -> ""; 
-        default -> "";
+      case 1 -> "";
+      default -> "";
     };
     switch (d) {
       case Day dd when true:
@@ -235,10 +235,10 @@ class Main {
 
     // If the type of the selector expression is an enum type E
     String str;
-    switch (d) {
+    switch (<error descr="'switch' statement does not cover all possible input values">d</error>) {
       case Day dd when dd != null:
         System.out.println("ok");
-      case <error descr="Label is dominated by a preceding case label 'Day dd when dd != null'">MONDAY</error>: 
+      case MONDAY:
         System.out.println("mon");
     }
     switch (<error descr="'switch' statement does not cover all possible input values">d</error>) {

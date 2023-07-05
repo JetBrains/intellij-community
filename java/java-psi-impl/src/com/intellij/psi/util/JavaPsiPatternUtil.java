@@ -4,6 +4,7 @@ package com.intellij.psi.util;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -331,10 +332,14 @@ public final class JavaPsiPatternUtil {
 
   /**
    * 14.11.1 Switch Blocks
+   * @param overWhom - type of constant
    */
   @Contract(value = "_,null -> false", pure = true)
-  public static boolean dominates(@NotNull PsiCaseLabelElement who, @Nullable PsiType overWhom) {
+  public static boolean dominatesOverConstant(@NotNull PsiCaseLabelElement who, @Nullable PsiType overWhom) {
     if (overWhom == null) return false;
+    if (PsiUtil.getLanguageLevel(who) != LanguageLevel.JDK_20_PREVIEW){
+      who = findUnconditionalPattern(who);
+    }
     PsiType whoType = TypeConversionUtil.erasure(getPatternType(who));
     if (whoType == null) return false;
     PsiType overWhomType = null;

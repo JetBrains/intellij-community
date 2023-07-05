@@ -35,7 +35,7 @@ class Dominance {
     switch (integer) {
       case Integer i when i > 0 -> {
       }
-      case <error descr="Label is dominated by a preceding case label 'Integer i when i > 0'">1</error> -> {
+      case 1 -> {
       } 
       default -> {
       }

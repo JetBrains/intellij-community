@@ -701,12 +701,11 @@ public class SwitchBlockHighlightingModel {
         for (int j = i + 1; j < switchLabels.size(); j++) {
           PsiElement next = switchLabels.get(j);
           if (!(next instanceof PsiCaseLabelElement nextElement)) continue;
-          if (PsiUtil.getLanguageLevel(current).isAtLeast(LanguageLevel.JDK_20_PREVIEW) &&
-              !JavaPsiPatternUtil.isUnconditionalForType(nextElement, mySelectorType) &&
+          if (!JavaPsiPatternUtil.isUnconditionalForType(nextElement, mySelectorType) &&
               ((!(next instanceof PsiExpression expression) || ExpressionUtils.isNullLiteral(expression)) &&
                current instanceof PsiKeyword &&
                PsiKeyword.DEFAULT.equals(current.getText()) || isInCaseNullDefaultLabel(current))) {
-            // JEP 432
+            // JEP 440-441
             // A 'default' label dominates a case label with a case pattern,
             // and it also dominates a case label with a null case constant.
             // A 'case null, default' label dominates all other switch labels.
@@ -716,15 +715,9 @@ public class SwitchBlockHighlightingModel {
             if (isConstantLabelElement(nextElement)) {
               PsiExpression constExpr = ObjectUtils.tryCast(nextElement, PsiExpression.class);
               assert constExpr != null;
-              if ((PsiUtil.getLanguageLevel(constExpr).isAtLeast(LanguageLevel.JDK_20_PREVIEW) ||
-                   JavaPsiPatternUtil.isUnconditionalForType(currentElement, mySelectorType)) &&
-                  JavaPsiPatternUtil.dominates(currentElement, constExpr.getType())) {
+              if (JavaPsiPatternUtil.dominatesOverConstant(currentElement, constExpr.getType())) {
                 result.put(nextElement, current);
               }
-            }
-            else if (isNullType(nextElement) && JavaPsiPatternUtil.isUnconditionalForType(currentElement, mySelectorType)
-                     && PsiUtil.getLanguageLevel(nextElement).isLessThan(LanguageLevel.JDK_20_PREVIEW)) {
-              result.put(nextElement, current);
             }
             else if (JavaPsiPatternUtil.dominates(currentElement, nextElement)) {
               result.put(nextElement, current);
