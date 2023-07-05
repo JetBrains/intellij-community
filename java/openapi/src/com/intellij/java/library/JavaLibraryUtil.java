@@ -234,17 +234,14 @@ public final class JavaLibraryUtil {
     orderEnumerator.recursively()
       .forEachLibrary(library -> {
         MavenCoordinates coordinates = getMavenCoordinates(library);
-        if (!collectFiles) {
-          if (coordinates != null) {
-            allMavenCoords.add(coordinates.getGroupId() + ":" + coordinates.getArtifactId());
-          }
-          return true;
+        if (coordinates != null) {
+          allMavenCoords.add(coordinates.getGroupId() + ":" + coordinates.getArtifactId());
         }
 
-        if (library instanceof LibraryEx) {
+        if (collectFiles && library instanceof LibraryEx) {
           LibraryProperties<?> libraryProperties = ((LibraryEx)library).getProperties();
           if (libraryProperties == null || libraryProperties instanceof RepositoryLibraryProperties) {
-            collectFiles(library, coordinates, allMavenCoords, jarLibrariesIndex);
+            collectFiles(library, coordinates, jarLibrariesIndex);
           }
         }
 
@@ -256,13 +253,9 @@ public final class JavaLibraryUtil {
 
   private static void collectFiles(@NotNull Library library,
                                    @Nullable MavenCoordinates coordinates,
-                                   @NotNull Set<String> allMavenCoords,
                                    @NotNull Map<String, String> jarLibrariesIndex) {
     VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
-    if (coordinates != null && libraryFiles.length <= 1) {
-      allMavenCoords.add(coordinates.getGroupId() + ":" + coordinates.getArtifactId());
-    }
-    else {
+    if (coordinates == null || libraryFiles.length > 1) {
       JarFileSystem jarFileSystem = JarFileSystem.getInstance();
 
       for (VirtualFile libraryFile : libraryFiles) {
