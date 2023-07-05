@@ -283,6 +283,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     myNavigator.setShowIgnored(false);
     waitForMavenUtilRunnablesComplete();
     assertTrue(getRootNodes().get(0).isVisible());
+    waitForPluginNodesUpdated();
     var childNodeNamesAfter = Arrays.stream(getRootNodes().get(0).getChildren()).map(node -> node.getName()).collect(Collectors.toSet());
     assertEquals(Set.of("Lifecycle", "Plugins"), childNodeNamesAfter);
   }
