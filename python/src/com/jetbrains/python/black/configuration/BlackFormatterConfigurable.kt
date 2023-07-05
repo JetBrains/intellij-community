@@ -13,6 +13,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
@@ -130,14 +131,14 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
           .applyToComponent { icon = AllIcons.General.Warning }
           .component
         installButton = button(PyBundle.message("black.install.button.label")) {
-          runBlockingModal(project, PyBundle.message("black.installing.modal.title")) {
+          runWithModalProgressBlocking(project, PyBundle.message("black.installing.modal.title")) {
             withContext(Dispatchers.EDT) {
               if (selectedSdk != null) {
                 val errorDescription = installBlackFormatter(selectedSdk!!)
                 if (errorDescription == null) {
                   isBlackFormatterPackageInstalled = true
-                  enableOnReformatCheckBox.isSelected = true
                   updateUiState()
+                  enableOnReformatCheckBox.isSelected = true
                 }
                 else {
                   PyPackagesNotificationPanel
