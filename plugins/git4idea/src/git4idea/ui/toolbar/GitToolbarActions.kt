@@ -6,7 +6,6 @@ import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
 import git4idea.branch.GitBranchIncomingOutgoingManager
@@ -88,6 +87,5 @@ class GitToolbarUpdateProjectAction : CommonUpdateProjectAction(), TooltipDescri
 object GitToolbarActions {
   internal fun isEnabledAndVisible(): Boolean {
     return Registry.`is`("vcs.new.ui.main.toolbar.actions")
-           && Experiments.getInstance().isFeatureEnabled("git4idea.new.ui.main.toolbar.actions")
   }
 }
