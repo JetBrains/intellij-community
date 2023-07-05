@@ -54,7 +54,8 @@ internal class LightEditFrameWrapper(
       return runBlockingModalWithRawProgressReporter(project, "") {
         withContext(Dispatchers.EDT) {
           val wrapper = allocateLightEditFrame(project) { frame ->
-            LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrameProducer(frameInfo).create(), closeHandler = closeHandler)
+            LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrameProducer(frameInfo).create(),
+                                  closeHandler = closeHandler)
           } as LightEditFrameWrapper
           (FileEditorManager.getInstance(project) as LightEditFileEditorManagerImpl).internalInit()
           wrapper
@@ -199,7 +200,8 @@ internal class LightEditFrameWrapper(
                                         parentDisposable: Disposable) : IdeRootPane(frame = frame,
                                                                                     parentDisposable = parentDisposable,
                                                                                     loadingState = null), LightEditCompatible {
-    override val isLightEdit: Boolean get() = true
+    override val isLightEdit: Boolean
+      get() = true
 
     override fun createCenterComponent(frame: JFrame, parentDisposable: Disposable): Component {
       val panel = LightEditPanel(LightEditUtil.requireProject())
@@ -214,8 +216,12 @@ internal class LightEditFrameWrapper(
     override val mainMenuActionGroup: ActionGroup
       get() = LightEditMainMenuHelper.getMainMenuActionGroup()
 
+    @Suppress("DEPRECATION")
     override fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
-      return object : IdeStatusBarImpl(disposable = frameHelper, frameHelper = frameHelper, addToolWindowWidget = false) {
+      return object : IdeStatusBarImpl(disposable = frameHelper,
+                                       frameHelper = frameHelper,
+                                       addToolWindowWidget = false,
+                                       coroutineScope = project.coroutineScope) {
         override fun updateUI() {
           setUI(LightEditStatusBarUI())
         }

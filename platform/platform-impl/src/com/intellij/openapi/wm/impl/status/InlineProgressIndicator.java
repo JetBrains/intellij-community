@@ -142,12 +142,10 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     cancel();
   }
 
-  protected void updateProgress() {
-    queueProgressUpdate();
-  }
-
-  protected void updateAndRepaint() {
-    if (isDisposed()) return;
+  protected final void updateAndRepaint() {
+    if (isDisposed()) {
+      return;
+    }
 
     updateProgressNow();
 
@@ -243,13 +241,9 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     updateAndRepaint();
   }
 
-  protected void queueRunningUpdate(@NotNull Runnable update) {
-    update.run();
-  }
-
   @Override
   protected void onProgressChange() {
-    updateProgress();
+    queueProgressUpdate();
   }
 
   public @NotNull JComponent getComponent() {

@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:OptIn(FlowPreview::class)
 
 package com.intellij.openapi.wm.impl.status
 
@@ -17,6 +18,10 @@ import com.intellij.internal.statistic.service.fus.collectors.ProgressResumed
 import com.intellij.notification.ActionCenter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.fileEditor.impl.MergingUpdateChannel
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.impl.ProgressSuspender.SuspenderListener
@@ -44,27 +49,34 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.JBIterable
+import com.intellij.util.flow.throttle
 import com.intellij.util.ui.*
 import com.intellij.util.ui.StartupUiUtil.getCenterPoint
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
 import it.unimi.dsi.fastutil.ints.IntArrays
 import it.unimi.dsi.fastutil.ints.IntComparator
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.ActionListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.lang.Runnable
 import java.lang.ref.WeakReference
 import javax.swing.*
 import javax.swing.event.HyperlinkListener
 import kotlin.math.max
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
-class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatusBarImpl) : CustomStatusBarWidget, UISettingsListener {
+class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatusBarImpl,
+                                                private val coroutineScope: CoroutineScope) : CustomStatusBarWidget, UISettingsListener {
   companion object {
     @JvmField
     @ApiStatus.Internal
@@ -93,30 +105,54 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
   private val originals = ArrayList<ProgressIndicatorEx>()
   private val infos = ArrayList<TaskInfo>()
   private val inlineToOriginal = HashMap<InlineProgressIndicator, ProgressIndicatorEx>()
-  private val originalToInlines = HashMap<ProgressIndicatorEx?, MutableSet<MyInlineProgressIndicator>>()
-  private val updateQueue = MergingUpdateQueue("Progress indicator", 50, true, MergingUpdateQueue.ANY_COMPONENT)
-  private val queryAlarm = Alarm()
+  private val originalToInlines = HashMap<ProgressIndicatorEx, MutableSet<MyInlineProgressIndicator>>()
   private var shouldClosePopupAndOnProcessFinish = false
   private var currentRequestor: String? = null
   private var disposed = false
   private var lastShownBalloon: WeakReference<Balloon>? = null
   private val dirtyIndicators = ReferenceOpenHashSet<InlineProgressIndicator>()
 
-  private val updateIndicators: Update = object : Update("UpdateIndicators", false, 1) {
-    override fun run() {
-      var indicators: List<InlineProgressIndicator>
-      synchronized(dirtyIndicators) {
-        indicators = ArrayList(dirtyIndicators)
-        dirtyIndicators.clear()
-      }
-      for (indicator in indicators) {
-        indicator.updateAndRepaint()
+  private val runQueryRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
+  private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  @Suppress("RemoveExplicitTypeArguments")
+  private val removeProgressRequests = MergingUpdateChannel<MyInlineProgressIndicator>(delay = 50.milliseconds) { toUpdate ->
+    withContext(Dispatchers.EDT) {
+      for (indicator in toUpdate) {
+        removeProgress(indicator)
       }
     }
   }
 
   init {
     runOnProgressRelatedChange(runnable = { updateProgressIcon() }, parentDisposable = this, powerSaveMode = true)
+
+    coroutineScope.launch {
+      runQueryRequests
+        .debounce(2.seconds)
+        .collectLatest {
+          runQuery()
+        }
+    }
+    coroutineScope.launch(ModalityState.any().asContextElement()) {
+      updateRequests
+        .throttle(50)
+        .collect {
+          var indicators: List<InlineProgressIndicator>
+          synchronized(dirtyIndicators) {
+            indicators = ArrayList(dirtyIndicators)
+            dirtyIndicators.clear()
+          }
+          withContext(Dispatchers.EDT) {
+            for (indicator in indicators) {
+              indicator.updateAndRepaint()
+            }
+          }
+        }
+    }
+    coroutineScope.launch(ModalityState.any().asContextElement()) {
+      removeProgressRequests.start()
+    }
   }
 
   private fun runOnProgressRelatedChange(runnable: () -> Unit, parentDisposable: Disposable, powerSaveMode: Boolean) {
@@ -226,7 +262,9 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
         removeProgress(compact)
         return
       }
-      runQuery()
+      coroutineScope.launch {
+        runQuery()
+      }
     }
   }
 
@@ -253,7 +291,9 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
         return
       }
       mainPanel.removeProgress(progress, last)
-      runQuery()
+      coroutineScope.launch {
+        runQuery()
+      }
     }
     Disposer.dispose(progress)
     if (progress.isCompact) {
@@ -263,7 +303,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
   }
 
   private fun removeFromMaps(progress: MyInlineProgressIndicator): ProgressIndicatorEx? {
-    val original = inlineToOriginal[progress]
+    val original = inlineToOriginal.get(progress)
     inlineToOriginal.remove(progress)
     synchronized(dirtyIndicators) { dirtyIndicators.remove(progress) }
     var set = originalToInlines.get(original)
@@ -688,8 +728,8 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       addStateDelegate(object : AbstractProgressIndicatorExBase() {
         override fun cancel() {
           super.cancel()
-          updateProgress()
-        }
+          queueProgressUpdate()
+ }
       })
       @Suppress("LeakingThis")
       runOnProgressRelatedChange(runnable = { queueProgressUpdate() }, parentDisposable = this, powerSaveMode = canCheckPowerSaveMode())
@@ -799,8 +839,8 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
 
     override fun stop() {
       super.stop()
-      updateProgress()
-    }
+      queueProgressUpdate()
+ }
 
     override fun isFinished(): Boolean {
       val info = info
@@ -809,7 +849,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
 
     override fun finish(task: TaskInfo) {
       super.finish(task)
-      queueRunningUpdate(Runnable { removeProgress(this) })
+      removeProgressRequests.queue(this)
     }
 
     override fun dispose() {
@@ -823,15 +863,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
 
     override fun queueProgressUpdate() {
       synchronized(dirtyIndicators) { dirtyIndicators.add(this) }
-      updateQueue.queue(updateIndicators)
-    }
-
-    override fun queueRunningUpdate(update: Runnable) {
-      updateQueue.queue(object : Update(Any(), false, 0) {
-        override fun run() {
-          ApplicationManager.getApplication().invokeLater(update)
-        }
-      })
+      check(updateRequests.tryEmit(Unit))
     }
 
     override fun updateProgressNow() {
@@ -849,21 +881,24 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     }
   }
 
-  private fun runQuery() {
-    if (rootPane == null) return
-    val indicators = currentInlineIndicators
-    if (indicators.isEmpty()) return
-    for (each in indicators) {
-      each.updateProgress()
+  private suspend fun runQuery() {
+    val indicators = synchronized(originals) { inlineToOriginal.keys.toList() }
+    if (indicators.isEmpty()) {
+      return
     }
-    queryAlarm.cancelAllRequests()
-    queryAlarm.addRequest(Runnable { runQuery() }, 2000)
-  }
 
-  private val currentInlineIndicators: Set<InlineProgressIndicator>
-    get() {
-      synchronized(originals) { return inlineToOriginal.keys }
+    for (each in indicators) {
+      if (each is MyInlineProgressIndicator) {
+        (each as InlineProgressIndicator).queueProgressUpdate()
+      }
+      else {
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          each.queueProgressUpdate()
+        }
+      }
     }
+    check(runQueryRequests.tryEmit(Unit))
+  }
 
   private class InlineLayout : AbstractLayoutManager() {
     override fun preferredLayoutSize(parent: Container): Dimension {

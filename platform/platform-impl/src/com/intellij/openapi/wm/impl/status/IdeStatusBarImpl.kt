@@ -74,6 +74,7 @@ private val MIN_ICON_HEIGHT = JBUI.scale(18 + 1 + 1)
 
 open class IdeStatusBarImpl internal constructor(
   private val disposable: Disposable,
+  private val coroutineScope: CoroutineScope,
   private val frameHelper: ProjectFrameHelper,
   addToolWindowWidget: Boolean,
 ) : JComponent(), Accessible, StatusBarEx, DataProvider {
@@ -129,7 +130,10 @@ open class IdeStatusBarImpl internal constructor(
 
   override fun createChild(disposable: Disposable, frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar {
     EDT.assertIsEdt()
-    val bar = IdeStatusBarImpl(disposable = disposable, frameHelper = frameHelper, addToolWindowWidget = false)
+    val bar = IdeStatusBarImpl(disposable = disposable,
+                               frameHelper = frameHelper,
+                               addToolWindowWidget = false,
+                               coroutineScope = coroutineScope.childScope())
     bar.editorProvider = editorProvider
     bar.isVisible = isVisible
     children.add(bar)
@@ -191,7 +195,7 @@ open class IdeStatusBarImpl internal constructor(
       return it
     }
 
-    val infoAndProgressPanel = InfoAndProgressPanel(this)
+    val infoAndProgressPanel = InfoAndProgressPanel(statusBar = this, coroutineScope = coroutineScope.childScope())
     ClientProperty.put(infoAndProgressPanel.component, WIDGET_ID, infoAndProgressPanel.ID())
     centerPanel.add(infoAndProgressPanel.component)
     widgetMap.put(infoAndProgressPanel.ID(), WidgetBean(widget = infoAndProgressPanel,
