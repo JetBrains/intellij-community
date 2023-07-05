@@ -106,7 +106,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     }
 
     val gitRepository = GitBranchUtil.guessWidgetRepository(project, e.dataContext)
-    val state = getState(project, gitRepository)
+    val state = getWidgetState(project, gitRepository)
 
     e.presentation.putClientProperty(projectKey, project)
     if (gitRepository != null && gitRepository != e.presentation.getClientProperty(repositoryKey)) {
@@ -186,28 +186,28 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     }
 
     fun getPlaceholder(project: Project): @NlsSafe String? = PropertiesComponent.getInstance(project).getValue(GIT_WIDGET_PLACEHOLDER_KEY)
+
+    fun getWidgetState(project: Project, gitRepository: GitRepository?): GitWidgetState {
+      if (gitRepository != null) {
+        return GitWidgetState.Repo(gitRepository)
+      }
+
+      val allVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
+
+      return when {
+        allVcss.isEmpty() -> GitWidgetState.NoVcs
+        allVcss.any { it.keyInstanceMethod != GitVcs.getKey() } -> GitWidgetState.OtherVcs
+        else -> GitWidgetState.NoVcs
+      }
+    }
   }
 
-  private sealed class GitWidgetState {
+  sealed class GitWidgetState {
     object NoVcs : GitWidgetState()
 
     class Repo(val repository: GitRepository) : GitWidgetState()
 
     object OtherVcs : GitWidgetState()
-  }
-
-  private fun getState(project: Project, gitRepository: GitRepository?): GitWidgetState {
-    if (gitRepository != null) {
-      return GitWidgetState.Repo(gitRepository)
-    }
-
-    val allVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
-
-    return when {
-      allVcss.isEmpty() -> GitWidgetState.NoVcs
-      allVcss.any { it.keyInstanceMethod != GitVcs.getKey() } -> GitWidgetState.OtherVcs
-      else -> GitWidgetState.NoVcs
-    }
   }
 }
 

@@ -22,6 +22,10 @@
   </dependencies>
   <depends optional="true" config-file="git-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
+  <content>
+    <module name="intellij.vcs.git/newUiOnboarding"/>
+  </content>
+
   <actions>
     <action id="Git.Init" class="git4idea.actions.GitInit">
       <add-to-group group-id="Vcs.Import"/>
