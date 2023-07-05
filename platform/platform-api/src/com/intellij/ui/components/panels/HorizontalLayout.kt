@@ -1,253 +1,210 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.components.panels;
+package com.intellij.ui.components.panels
 
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBValue;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBValue
+import java.awt.*
+import javax.swing.SwingConstants
+import kotlin.math.abs
+import kotlin.math.max
 
 /**
  * This class is intended to lay out added components horizontally.
- * It allows to add them into the LEFT, CENTER, or RIGHT group, which are aligned separately.
- * Every group can contain any amount of components. The specified gap is added between components,
+ * It allows adding them into the LEFT, CENTER, or RIGHT group, which are aligned separately.
+ * Every group can contain any number of components. The specified gap is added between components,
  * and the double gap is added between groups of components. The gap will be scaled automatically.
- * <p><b>NB!: this class must be modified together with the {@code VerticalLayout} class accordingly</b></p>
  *
- * For simpler cases without groups {@code ListLayout} should be better
+ * **NB!: this class must be modified together with the `VerticalLayout` class accordingly**
+ *
+ * For simpler cases without groups `ListLayout` should be better.
  *
  * @see VerticalLayout
  * @see ListLayout
  */
-public final class HorizontalLayout implements LayoutManager2 {
-  public static final int FILL = -1;
-  public static final String LEFT = "LEFT";
-  public static final String RIGHT = "RIGHT";
-  public static final String CENTER = "CENTER";
-
-  private final ArrayList<Component> myLeft = new ArrayList<>();
-  private final ArrayList<Component> myRight = new ArrayList<>();
-  private final ArrayList<Component> myCenter = new ArrayList<>();
-  private final int myAlignment;
-  private final JBValue myGap;
-
-  /**
-   * Creates a layout with the specified gap.
-   * All components will have preferred widths,
-   * but their heights will be set according to the container.
-   * The gap will be scaled automatically.
-   *
-   * @param gap horizontal gap between components, without DPI scaling
-   */
-  public HorizontalLayout(int gap) {
-    this(gap, FILL);
-  }
+class HorizontalLayout(private val gap: JBValue, private val alignment: Int = 0) : LayoutManager2 {
+  private val leftGroup = ArrayList<Component>()
+  private val rightGroup = ArrayList<Component>()
+  private val centerGroup = ArrayList<Component>()
 
   /**
    * Creates a layout with the specified gap and vertical alignment.
-   * All components will have preferred sizes.
+   * All components will have preferred sizes, but their heights will be set according to the container (when alignment is set to `FILL`).
    * The gap will be scaled automatically.
    *
    * @param gap       horizontal gap between components, without DPI scaling
    * @param alignment vertical alignment for components
-   * @see SwingConstants#TOP
-   * @see SwingConstants#BOTTOM
-   * @see SwingConstants#CENTER
+   *
+   * @see SwingConstants.TOP
+   * @see SwingConstants.BOTTOM
+   * @see SwingConstants.CENTER
    */
-  public HorizontalLayout(int gap, int alignment) {
-    this(new JBValue.Float(Math.max(0, gap)), alignment);
-  }
+  @JvmOverloads
+  constructor(gap: Int, alignment: Int = FILL) : this(gap = JBValue.Float(max(0.0, gap.toDouble()).toFloat()), alignment = alignment)
 
-  public HorizontalLayout(@NotNull JBValue gap, int alignment) {
-    myGap = gap;
-    switch (alignment) {
-      case FILL, SwingConstants.TOP, SwingConstants.BOTTOM, SwingConstants.CENTER -> myAlignment = alignment;
-      default -> throw new IllegalArgumentException("unsupported alignment: " + alignment);
+  init {
+    check(alignment == FILL ||
+          alignment == SwingConstants.TOP || alignment == SwingConstants.BOTTOM || alignment == SwingConstants.CENTER) {
+      "unsupported alignment: $alignment"
     }
   }
 
-  @Override
-  public void addLayoutComponent(Component component, Object constraints) {
-    if ((constraints == null) || (constraints instanceof String)) {
-      addLayoutComponent((String)constraints, component);
+  companion object {
+    const val FILL: Int = -1
+    const val LEFT: String = "LEFT"
+    const val RIGHT: String = "RIGHT"
+    const val CENTER: String = "CENTER"
+  }
+
+  fun components(): Sequence<Component> = sequenceOf(leftGroup, centerGroup, rightGroup).flatten()
+
+  override fun addLayoutComponent(component: Component, constraints: Any?) {
+    if (constraints == null || constraints is String) {
+      addLayoutComponent(constraints as String, component)
     }
     else {
-      throw new IllegalArgumentException("unsupported constraints: " + constraints);
+      throw IllegalArgumentException("unsupported constraints: $constraints")
     }
   }
 
-  @Override
-  public Dimension maximumLayoutSize(Container target) {
-    return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
+  override fun maximumLayoutSize(target: Container): Dimension = Dimension(Int.MAX_VALUE, Int.MAX_VALUE)
+
+  override fun getLayoutAlignmentX(target: Container): Float = .5f
+
+  override fun getLayoutAlignmentY(target: Container): Float = .5f
+
+  override fun invalidateLayout(target: Container) {
   }
 
-  @Override
-  public float getLayoutAlignmentX(Container target) {
-    return .5f;
-  }
-
-  @Override
-  public float getLayoutAlignmentY(Container target) {
-    return .5f;
-  }
-
-  @Override
-  public void invalidateLayout(Container target) {
-  }
-
-  @Override
-  public void addLayoutComponent(String name, Component component) {
-    synchronized (component.getTreeLock()) {
-      if (name == null || LEFT.equalsIgnoreCase(name)) {
-        myLeft.add(component);
-      }
-      else if (CENTER.equalsIgnoreCase(name)) {
-        myCenter.add(component);
-      }
-      else if (RIGHT.equalsIgnoreCase(name)) {
-        myRight.add(component);
-      }
-      else {
-        throw new IllegalArgumentException("unsupported name: " + name);
+  override fun addLayoutComponent(name: String?, component: Component) {
+    synchronized(component.treeLock) {
+      when {
+        name == null || LEFT.equals(name, ignoreCase = true) -> leftGroup.add(component)
+        CENTER.equals(name, ignoreCase = true) -> centerGroup.add(component)
+        RIGHT.equals(name, ignoreCase = true) -> rightGroup.add(component)
+        else -> throw IllegalArgumentException("unsupported name: $name")
       }
     }
   }
 
-  @Override
-  public void removeLayoutComponent(Component component) {
-    myLeft.remove(component);
-    myRight.remove(component);
-    myCenter.remove(component);
+  override fun removeLayoutComponent(component: Component) {
+    leftGroup.remove(component)
+    rightGroup.remove(component)
+    centerGroup.remove(component)
   }
 
-  @Override
-  public Dimension preferredLayoutSize(Container container) {
-    return getPreferredSize(container, true);
-  }
+  override fun preferredLayoutSize(container: Container): Dimension = getPreferredSize(container = container, aligned = true)
 
-  @Override
-  public Dimension minimumLayoutSize(Container container) {
-    return getPreferredSize(container, false);
-  }
+  override fun minimumLayoutSize(container: Container): Dimension = getPreferredSize(container = container, aligned = false)
 
-  @Override
-  public void layoutContainer(Container container) {
-    int gap = myGap.get();
-    synchronized (container.getTreeLock()) {
-      Dimension left = getPreferredSize(myLeft);
-      Dimension right = getPreferredSize(myRight);
-      Dimension center = getPreferredSize(myCenter);
-
-      Insets insets = container.getInsets();
-      int width = container.getWidth() - insets.left - insets.right;
-      int height = container.getHeight() - insets.top - insets.bottom;
-
-      int leftX = 0;
+  override fun layoutContainer(container: Container) {
+    val gap = gap.get()
+    synchronized(container.treeLock) {
+      val left = getPreferredSize(leftGroup)
+      val right = getPreferredSize(rightGroup)
+      val center = getPreferredSize(centerGroup)
+      val insets = container.insets
+      val width = container.width - insets.left - insets.right
+      val height = container.height - insets.top - insets.bottom
+      var leftX = 0
       if (left != null) {
-        leftX = gap + layout(myLeft, 0, height, insets);
+        leftX = gap + layout(leftGroup, 0, height, insets)
       }
-      int rightX = width;
+      var rightX = width
       if (right != null) {
-        rightX -= right.width;
+        rightX -= right.width
       }
       if (rightX < leftX) {
-        rightX = leftX;
+        rightX = leftX
       }
       if (center != null) {
-        int centerX = (width - center.width) / 2;
+        var centerX = (width - center.width) / 2
         if (centerX > leftX) {
-          int centerRightX = centerX + center.width + gap + gap;
+          val centerRightX = centerX + center.width + gap + gap
           if (centerRightX > rightX) {
-            centerX = rightX - center.width - gap - gap;
+            centerX = rightX - center.width - gap - gap
           }
         }
         if (centerX < leftX) {
-          centerX = leftX;
+          centerX = leftX
         }
-        centerX = gap + layout(myCenter, centerX, height, insets);
+        centerX = gap + layout(centerGroup, centerX, height, insets)
         if (rightX < centerX) {
-          rightX = centerX;
+          rightX = centerX
         }
       }
       if (right != null) {
-        layout(myRight, rightX, height, insets);
+        layout(rightGroup, rightX, height, insets)
       }
     }
   }
 
-  private int layout(List<? extends Component> list, int x, int height, Insets insets) {
-    int gap = myGap.get();
-    for (Component component : list) {
-      if (component.isVisible()) {
-        Dimension size = LayoutUtil.getPreferredSize(component);
-        int y = 0;
-        if (myAlignment == FILL) {
-          size.height = height;
+  private fun layout(list: List<Component>, x: Int, height: Int, insets: Insets): Int {
+    @Suppress("NAME_SHADOWING")
+    var x = x
+    val gap = gap.get()
+    for (component in list) {
+      if (component.isVisible) {
+        val size = LayoutUtil.getPreferredSize(component)
+        var y = 0
+        if (alignment == FILL) {
+          size.height = height
         }
-        else if (myAlignment != SwingConstants.TOP) {
-          y = height - size.height;
-          if (myAlignment == SwingConstants.CENTER) {
-            y /= 2;
+        else if (alignment != SwingConstants.TOP) {
+          y = height - size.height
+          if (alignment == SwingConstants.CENTER) {
+            y /= 2
           }
         }
-        component.setBounds(x + insets.left, y + insets.top, size.width, size.height);
-        x += size.width + gap;
+        component.setBounds(x + insets.left, y + insets.top, size.width, size.height)
+        x += size.width + gap
       }
     }
-    return x;
+    return x
   }
 
-  private static Dimension join(Dimension result, int gap, Dimension size) {
-    if (size == null) {
-      return result;
-    }
-    if (result == null) {
-      return new Dimension(size);
-    }
-    result.width += gap + size.width;
-    if (result.height < size.height) {
-      result.height = size.height;
-    }
-    return result;
-  }
-
-  private Dimension getPreferredSize(List<? extends Component> list) {
-    int gap = myGap.get();
-    Dimension result = null;
-    for (Component component : list) {
-      if (component.isVisible()) {
-        result = join(result, gap, LayoutUtil.getPreferredSize(component));
+  private fun getPreferredSize(list: List<Component>): Dimension? {
+    val gap = gap.get()
+    var result: Dimension? = null
+    for (component in list) {
+      if (component.isVisible) {
+        result = joinDimension(result, gap, LayoutUtil.getPreferredSize(component))
       }
     }
-    return result;
+    return result
   }
 
-  private Dimension getPreferredSize(Container container, boolean aligned) {
-    int gap2 = 2 * myGap.get();
-    synchronized (container.getTreeLock()) {
-      Dimension left = getPreferredSize(myLeft);
-      Dimension right = getPreferredSize(myRight);
-      Dimension center = getPreferredSize(myCenter);
-      Dimension result = join(join(join(null, gap2, left), gap2, center), gap2, right);
+  private fun getPreferredSize(container: Container, aligned: Boolean): Dimension {
+    val gap2 = 2 * gap.get()
+    synchronized(container.treeLock) {
+      val left = getPreferredSize(leftGroup)
+      val right = getPreferredSize(rightGroup)
+      val center = getPreferredSize(centerGroup)
+      var result = joinDimension(joinDimension(joinDimension(null, gap2, left), gap2, center), gap2, right)
       if (result == null) {
-        result = new Dimension();
+        result = Dimension()
       }
       else if (aligned && center != null) {
-        int leftWidth = left == null ? 0 : left.width;
-        int rightWidth = right == null ? 0 : right.width;
-        result.width += Math.abs(leftWidth - rightWidth);
+        val leftWidth = left?.width ?: 0
+        val rightWidth = right?.width ?: 0
+        result.width += abs(leftWidth - rightWidth)
       }
-      JBInsets.addTo(result, container.getInsets());
-      return result;
+      JBInsets.addTo(result, container.insets)
+      return result
     }
   }
+}
 
-  @NotNull
-  public List<? extends Component> getComponents() {
-    return ContainerUtil.concat(myLeft, myCenter, myRight);
+private fun joinDimension(result: Dimension?, gap: Int, size: Dimension?): Dimension? {
+  if (size == null) {
+    return result
   }
+  if (result == null) {
+    return Dimension(size)
+  }
+
+  result.width += gap + size.width
+  if (result.height < size.height) {
+    result.height = size.height
+  }
+  return result
 }
