@@ -3,6 +3,7 @@ package com.intellij.ide.newUiOnboarding
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.UIUtil
 import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.serialization.SerialName
@@ -11,6 +12,8 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Dimension
+import java.awt.Point
+import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 object NewUiOnboardingUtil {
@@ -33,6 +36,12 @@ object NewUiOnboardingUtil {
       it is T && it.isVisible && it.isShowing && predicate(it)
     }
     return component as? T
+  }
+
+  fun convertPointToFrame(project: Project, source: Component, point: Point): RelativePoint? {
+    val frame = WindowManager.getInstance().getFrame(project) ?: return null
+    val framePoint = SwingUtilities.convertPoint(source, point, frame)
+    return RelativePoint(frame, framePoint)
   }
 
   /**

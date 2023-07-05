@@ -28,7 +28,8 @@ internal class NewUiOnboardingService(private val project: Project, private val 
   }
 
   private fun getDefaultStepsOrder(): List<String> {
-    return listOf("projectWidget")
+    return listOf("projectWidget",
+                  "runWidget")
   }
 
   companion object {
