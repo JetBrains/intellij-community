@@ -97,7 +97,7 @@ public final class FSRecordsImpl {
   };
 
 
-  private final @NotNull PersistentFSConnection connection;
+  public final @NotNull PersistentFSConnection connection;
   private final @NotNull PersistentFSContentAccessor contentAccessor;
   private final @NotNull PersistentFSAttributeAccessor attributeAccessor;
   private final @NotNull PersistentFSTreeAccessor treeAccessor;
@@ -520,6 +520,8 @@ public final class FSRecordsImpl {
    * Obtain fresh children and try to apply `childrenConvertor` to the children of `parentId`.
    * If everything is still valid (i.e. no one changed the list in the meantime), commit.
    * Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
+   * <p>
+   * TODO actually everything related to this method is kinda of guru code. Please, don't touch it, people are bad in parallel programming.
    */
   @NotNull ListResult update(@NotNull VirtualFile parent,
                              int parentId,
@@ -546,9 +548,9 @@ public final class FSRecordsImpl {
           LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + toSave);
         }
         checkNotDisposed();
-        connection.markRecordAsModified(parentId);
         updateSymlinksForNewChildren(parent, children, toSave);
         treeAccessor.doSaveChildren(parentId, toSave);
+        connection.markRecordAsModified(parentId);
       }
       return toSave;
     }
