@@ -60,7 +60,15 @@ object ToolWindowManagerTestHelper {
       isNewUi = isNewUi,
       taskProducer = {
         runBlocking { computeToolWindowBeans(project) }.map {
-          if (it.id == id) it.copy(shouldBeAvailable = false, contentFactory = { _, _ -> /* empty to avoid any UI tasks */ }) else it
+          if (it.id == id) {
+            it.copy(shouldBeAvailable = false, contentFactory = object : ToolWindowFactory {
+              override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+              }
+            })
+          }
+          else {
+            it
+          }
         }
       },
       layoutCustomizer = {
@@ -105,7 +113,7 @@ fun testDefaultLayout(isNewUi: Boolean, project: Project) {
 
   val todoInfo = manager.getEntry("TODO")!!.readOnlyWindowInfo
   // order allocation logic is the same for old and new ui, but by default not all tool windows are shown in a new UI,
-  // so, button for T O D O is not created by default, therefore order is not set
+  //  so the button for T O D O is not created by default, therefore, order is not set
   assertThat(todoInfo.order).let { if (isNewUi) it.isEqualTo(-1) else it.isNotEqualTo(-1) }
   assertThat(manager.getEntry("Project")!!.readOnlyWindowInfo.order).isNotEqualTo(-1)
 }

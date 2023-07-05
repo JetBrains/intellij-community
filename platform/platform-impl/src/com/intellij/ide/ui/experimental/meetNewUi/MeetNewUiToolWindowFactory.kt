@@ -14,7 +14,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ExperimentalUI
 
 private class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
-  override fun isApplicable(project: Project): Boolean {
+  override suspend fun isApplicableAsync(project: Project): Boolean {
     return ExperimentalUI.isNewUI() && Registry.`is`("ide.experimental.ui.meetNewUi")
   }
 

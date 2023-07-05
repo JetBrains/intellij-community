@@ -18,7 +18,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.ContentFactory
-
+import javax.swing.Icon
 
 /**
  * Creates a toolwindow with feature usage statistics event log
@@ -46,9 +46,10 @@ private class StatisticsEventLogToolWindowFactory : ToolWindowFactory, DumbAware
     })
   }
 
-  override fun getIcon() = PlatformStatisticsDevkitIcons.StatisticsEventLog
+  override val icon: Icon
+    get() =  PlatformStatisticsDevkitIcons.StatisticsEventLog
 
-  override fun isApplicable(project: Project) = StatisticsRecorderUtil.isAnyTestModeEnabled()
+  override suspend fun isApplicableAsync(project: Project) = StatisticsRecorderUtil.isAnyTestModeEnabled()
 }
 
 private fun createNewSessionActionGroup(project: Project): NonEmptyActionGroup {

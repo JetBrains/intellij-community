@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm
 
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -15,6 +16,15 @@ import javax.swing.Icon
  * See [Tool Windows](https://www.jetbrains.org/intellij/sdk/docs/user_interface_components/tool_windows.html) in SDK Docs.
  */
 interface ToolWindowFactory {
+  suspend fun isApplicableAsync(project: Project): Boolean {
+    return blockingContext {
+      @Suppress("DEPRECATION")
+      isApplicable(project)
+    }
+  }
+
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Use isApplicableAsync")
   fun isApplicable(project: Project): Boolean = true
 
   fun createToolWindowContent(project: Project, toolWindow: ToolWindow)
@@ -36,11 +46,11 @@ interface ToolWindowFactory {
   val isDoNotActivateOnStart: Boolean
     get() = false
 
+  /**
+   * Return custom anchor or null to use anchor defined in Tool Window Registration or customized by user.
+   */
   @get:ApiStatus.Internal
   val anchor: ToolWindowAnchor?
-    /**
-     * Return custom anchor or null to use anchor defined in Tool Window Registration or customized by user.
-     */
     get() = null
 
   @get:ApiStatus.Internal

@@ -19,7 +19,6 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -64,7 +63,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
 
   fun scheduleSetLayout(newLayout: DesktopLayout) {
     if (!isInitialized) {
-      // will be executed once project is loaded
+      // will be executed once a project is loaded
       pendingLayout.set(newLayout)
       return
     }
@@ -197,8 +196,8 @@ private suspend fun addExtraTasks(tasks: List<RegisterToolWindowTask>,
 
   val result = tasks.toMutableList()
   // FacetDependentToolWindowManager - strictly speaking, computeExtraToolWindowBeans should be executed not in EDT, but for now it is not safe because:
-  // 1. read action is required to read facet list (might cause a deadlock)
-  // 2. delay between collection and adding ProjectWideFacetListener (should we introduce a new method in RegisterToolWindowTaskProvider to add listeners?)
+  // 1. read action is required to read a facet list (might cause a deadlock)
+  // 2. delay between a collection and adding ProjectWideFacetListener (should we introduce a new method in RegisterToolWindowTaskProvider to add listeners?)
   for (adapter in ep.sortedAdapters) {
     val pluginDescriptor = adapter.pluginDescriptor
     if (pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
@@ -244,7 +243,7 @@ internal fun getToolWindowAnchor(factory: ToolWindowFactory?, bean: ToolWindowEP
 
 private suspend fun beanToTask(project: Project, bean: ToolWindowEP, plugin: PluginDescriptor = bean.pluginDescriptor): RegisterToolWindowTask? {
   val factory = bean.getToolWindowFactory(plugin)
-  return if (blockingContext { factory.isApplicable(project) }) beanToTask(project, bean, plugin, factory) else null
+  return if (factory.isApplicableAsync(project)) beanToTask(project, bean, plugin, factory) else null
 }
 
 private fun beanToTask(project: Project,

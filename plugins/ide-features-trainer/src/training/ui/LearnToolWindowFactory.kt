@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui
 
 import com.intellij.diagnostic.runActivity
@@ -22,12 +22,13 @@ internal class LearnToolWindowFactory : ToolWindowFactory, DumbAware {
     toolWindow.isShowStripeButton = findLanguageSupport(project) != null
   }
 
-  override fun getAnchor(): ToolWindowAnchor? {
-    // calling LangManager can slow down start-up - measure it
-    runActivity("learn tool window anchor setting") {
-      return LangManager.getInstance().getLangSupportBean()?.getLearnToolWindowAnchor()
+  override val anchor: ToolWindowAnchor?
+    get() {
+      // calling LangManager can slow down start-up - measure it
+      runActivity("learn tool window anchor setting") {
+        return LangManager.getInstance().getLangSupportBean()?.getLearnToolWindowAnchor()
+      }
     }
-  }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val currentBuildStr = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
