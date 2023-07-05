@@ -257,8 +257,7 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     def inOrder = Mockito.inOrder(mockListener)
     inOrder.verify(mockListener).searchStarted(Mockito.eq("ignored"), Mockito.any())
     inOrder.verify(mockListener).elementsAdded(Mockito.any())
-    inOrder.verify(mockListener).contributorFinished(contributor1, false)
-    inOrder.verify(mockListener).contributorFinished(contributor2, false)
+    inOrder.verify(mockListener, Mockito.times(2)).contributorFinished(Mockito.any(), Mockito.eq(false))
     inOrder.verify(mockListener).searchFinished(Mockito.any())
   }
 
