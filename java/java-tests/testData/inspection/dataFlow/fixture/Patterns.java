@@ -15,7 +15,7 @@ class Test {
         a = -1;
         break;
       }
-      case default: {
+      default: {
         a = 2;
         break;
       }
@@ -35,7 +35,7 @@ class Test {
         a = 1;
         break;
       }
-      case default: {
+      default: {
         a = 2;
         break;
       }
@@ -50,7 +50,7 @@ class Test {
     return switch(FSD) {
       case <warning descr="Switch label 'String s when s.length() <= 3 && (s.length() > 1 || s.length() > 10)' is the only reachable in the whole switch">String s when <warning descr="Condition 's.length() <= 3 && (s.length() > 1 || s.length() > 10)' is always 'true'"><warning descr="Condition 's.length() <= 3' is always 'true'">s.length() <= 3</warning> && (<warning descr="Condition 's.length() > 1 || s.length() > 10' is always 'true' when reached"><warning descr="Condition 's.length() > 1' is always 'true' when reached">s.length() > 1</warning> || s.length() > 10</warning>)</warning></warning> -> 1;
       case String s when Math.random() > 0.5 -> 2;
-      case default -> 3;
+      default -> 3;
     };
   }
 
@@ -66,7 +66,7 @@ class Test {
     switch (FSD) {
       case <warning descr="Switch label 'String s when s.length() > 2 && s.length() < 3' is unreachable">String s when <warning descr="Condition 's.length() > 2 && s.length() < 3' is always 'false'"><warning descr="Condition 's.length() > 2' is always 'true'">s.length() > 2</warning> && <warning descr="Condition 's.length() < 3' is always 'false' when reached">s.length() < 3</warning></warning></warning> -> System.out.println(1);
       case <warning descr="Switch label 'String s when s.isEmpty()' is unreachable">String s when <warning descr="Result of 's.isEmpty()' is always 'false'">s.isEmpty()</warning></warning> -> <error descr="Not a statement">2;</error>
-      case default -> System.out.println(3);
+      default -> System.out.println(3);
     };
   }
 
@@ -81,7 +81,7 @@ class Test {
     String s = "abc";
     switch (s) {
       case <error descr="'switch' has both an unconditional pattern and a default label">Object o</error> -> System.out.println("total");
-      case <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> System.out.println("default");
+      <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> System.out.println("default");
     }
   }
 
@@ -90,7 +90,7 @@ class Test {
     switch (s) {
       case <warning descr="Switch label '\"\"' is unreachable">""</warning> -> System.out.println("abc");
       case <error descr="'switch' has both an unconditional pattern and a default label">Object o</error> -> System.out.println("total");
-      case <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> System.out.println("default");
+      <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> System.out.println("default");
     }
   }
 

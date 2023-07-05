@@ -47,6 +47,9 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   public void testIllegalFallthroughIn20Java() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
   }
+  public void testIllegalFallthroughIn21Java() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+  }
 
   public void testUnconditionalDestructuringAndDefaultIn21Java() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);

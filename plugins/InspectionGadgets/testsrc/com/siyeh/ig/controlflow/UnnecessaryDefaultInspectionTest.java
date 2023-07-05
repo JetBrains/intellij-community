@@ -107,26 +107,6 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
                   "}");
   }
 
-  public void testCaseDefaultWithEnumElements() {
-    doTest("class X {" +
-           "  void x(E e) {" +
-           "    switch (e) {" +
-           "      case A, /*'default' branch is unnecessary*/default/*_*//**/, B:" +
-           "        break;" +
-           "    }" +
-           "  }" +
-           "}");
-    checkQuickFix("Remove 'default' branch",
-                  "class X {" +
-                  "  void x(E e) {" +
-                  "    switch (e) {" +
-                  "      case A, B:" +
-                  "        break;" +
-                  "    }" +
-                  "  }" +
-                  "}");
-  }
-
   public void testCaseDefaultInSealedSwitch() {
     doTest("class X {" +
            "  void x(I i) {" +
@@ -153,34 +133,6 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
                   "      case C2 c1:" +
                   "        break;\n" +
                   "}" +
-                  "  }" +
-                  "}");
-  }
-
-  public void testCaseDefaultWithPattern() {
-    doTest("class X {" +
-           "  void x(I i) {" +
-           "    switch (i) {" +
-           "      case /*'default' branch is unnecessary*/default/*_*//**/, <error descr=\"Illegal fall-through to a pattern\">I ii when Math.random() > 0.5</error>:" +
-           "        break;" +
-           "      case C1 c1:" +
-           "        break;" +
-           "      case C2 c2:" +
-           "        break;" +
-           "    }" +
-           "  }" +
-           "}");
-    checkQuickFix("Remove 'default' branch",
-                  "class X {" +
-                  "  void x(I i) {" +
-                  "    switch (i) {" +
-                  "      case I ii when Math.random() > 0.5:" +
-                  "        break;" +
-                  "      case C1 c1:" +
-                  "        break;" +
-                  "      case C2 c2:" +
-                  "        break;" +
-                  "    }" +
                   "  }" +
                   "}");
   }

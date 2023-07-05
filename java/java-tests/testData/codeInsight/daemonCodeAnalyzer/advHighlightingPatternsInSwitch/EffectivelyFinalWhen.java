@@ -44,7 +44,7 @@ class Test {
     switch (o) {
       case Integer i when (switch (o) {
         case Integer ii when ii != mode -> 2;
-        case default -> 1;
+        default -> 1;
       }) == mode -> System.out.println();
       default -> {}
     }

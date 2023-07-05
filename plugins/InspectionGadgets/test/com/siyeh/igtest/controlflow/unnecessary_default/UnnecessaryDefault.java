@@ -162,7 +162,7 @@ public class UnnecessaryDefault{
         switch (e) {
           case foo, bar, baz:
             break;
-          case /**test**/ <warning descr="'default' branch is unnecessary">default</warning> /**test**/:
+          /**test**/ <warning descr="'default' branch is unnecessary">default</warning> /**test**/:
             break;
         }
     }
@@ -182,7 +182,7 @@ public class UnnecessaryDefault{
             break;
           case C2 c2:
             break;
-          case /**test**/ <warning descr="'default' branch is unnecessary">default</warning> /**test**/:
+          /**test**/ <warning descr="'default' branch is unnecessary">default</warning> /**test**/:
             break;
         }
     }
@@ -204,7 +204,7 @@ public class UnnecessaryDefault{
             break;
           case C4 c4:
             break;
-          case default:
+          default:
             break;
         }
     }

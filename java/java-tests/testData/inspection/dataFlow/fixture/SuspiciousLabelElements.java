@@ -29,7 +29,7 @@ public class DuplicateLabels {
         break;
       case <error descr="Label is dominated by a preceding case label 'String ss when true'">String ss</error>:
         break;
-      case default:
+      default:
         break;
     }
   }

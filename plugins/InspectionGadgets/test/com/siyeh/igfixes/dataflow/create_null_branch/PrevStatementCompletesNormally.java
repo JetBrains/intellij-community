@@ -5,7 +5,7 @@ class Test {
     switch ((<caret>i)) {
       case 1:
         System.out.println();
-      case default:
+      default:
         break;
     }
   }

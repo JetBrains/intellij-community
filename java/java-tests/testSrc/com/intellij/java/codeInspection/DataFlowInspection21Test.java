@@ -6,6 +6,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

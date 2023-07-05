@@ -97,7 +97,7 @@ class Test {
         break;
       case <warning descr="Switch label 'Object o when !new ArrayList<String>().isEmpty()' is unreachable">Object o when <warning descr="Condition '!new ArrayList<String>().isEmpty()' is always 'false'">!new ArrayList<String>().isEmpty()</warning></warning>:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -205,7 +205,7 @@ class Test {
     return switch (<warning descr="Unboxing of 'createNullValue()' may produce 'NullPointerException'">createNullValue()</warning>) {
       case 1 -> 1;
       case Object o when Math.random() > 0.5 -> 2;
-      case default -> 3;
+      default -> 3;
     };
   }
 
