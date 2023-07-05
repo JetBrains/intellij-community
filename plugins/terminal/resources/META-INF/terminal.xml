@@ -45,6 +45,10 @@
                        id="terminal" order="first"/>
     <completion.contributor language="Shell Script" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCompletionContributor"
                             order="first"/>
+    <weigher key="completion"
+             id="terminalCommandSpec"
+             order="before stats"
+             implementationClass="org.jetbrains.plugins.terminal.exp.completion.CommandSpecCompletionWeigher"/>
     <applicationService serviceInterface="org.jetbrains.plugins.terminal.exp.completion.CommandSpecManager"
                         serviceImplementation="org.jetbrains.plugins.terminal.exp.completion.IJCommandSpecManager"/>
 

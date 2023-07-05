@@ -83,7 +83,7 @@ class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>()
     return names.map { name ->
       val cursorOffset = insertValue?.indexOf("{cursor}")
       val realInsertValue = insertValue?.replace("{cursor}", "")
-      LookupElementBuilder.create(realInsertValue ?: name)
+      val element = LookupElementBuilder.create(this, realInsertValue ?: name)
         .withPresentableText(displayName ?: name)
         .withTypeText(description)
         .withInsertHandler { context, item ->
@@ -100,6 +100,7 @@ class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>()
             AutoPopupController.getInstance(context.project).scheduleAutoPopup(editor)
           }
         }
+      PrioritizedLookupElement.withPriority(element, priority / 100.0)
     }
   }
 }

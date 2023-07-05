@@ -108,11 +108,8 @@ internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: S
     val suggestions = mutableListOf<ShellArgumentSuggestion>()
     suggestions.addAll(arg.suggestions.map { ShellArgumentSuggestion(it, arg) })
 
-    val templates = mutableSetOf<String>()
-    templates.addAll(arg.templates)
-    templates.addAll(arg.generators.flatMap { it.templates })
-    val suggestAllFiles = templates.contains("filepaths")
-    val suggestFolders = templates.contains("folders")
+    val suggestAllFiles = arg.isFilePath()
+    val suggestFolders = arg.isFolder()
     if (suggestAllFiles || suggestFolders) {
       val fileSuggestions = getFileSuggestions(arg, nextNodeText, onlyDirectories = suggestFolders && !suggestAllFiles)
       suggestions.addAll(fileSuggestions)
@@ -134,5 +131,15 @@ internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: S
       // add an empty choice to be able to handle the case when the folder is chosen
       .let { if (basePath != ".") it.plus(ShellArgumentSuggestion(ShellSuggestion(names = listOf("")), arg)) else it }
       .toList()
+  }
+
+  companion object {
+    fun ShellArgument.isFilePath(): Boolean = isWithTemplate("filepaths")
+
+    fun ShellArgument.isFolder(): Boolean = isWithTemplate("folders")
+
+    private fun ShellArgument.isWithTemplate(template: String): Boolean {
+      return templates.contains(template) || generators.any { it.templates.contains(template) }
+    }
   }
 }
