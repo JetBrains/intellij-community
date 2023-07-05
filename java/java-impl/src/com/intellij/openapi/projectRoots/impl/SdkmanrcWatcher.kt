@@ -213,6 +213,7 @@ class SdkmanrcWatcher : ProjectActivity {
   override suspend fun execute(project: Project) {
     project.service<SdkmanrcWatcherService>().apply {
       registerListener(project)
+      configureSdkFromSdkmanrc()
     }
   }
 }
