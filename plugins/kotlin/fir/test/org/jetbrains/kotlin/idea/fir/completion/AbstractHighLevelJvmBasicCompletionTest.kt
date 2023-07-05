@@ -20,6 +20,7 @@ abstract class AbstractHighLevelJvmBasicCompletionTest : AbstractJvmBasicComplet
     override fun fileName(): String = firFileName(super.fileName(), testDataDirectory)
 
     override fun executeTest(test: () -> Unit) {
+        project.invalidateCaches() // TODO: drop this after KTIJ-26142
         IgnoreTests.runTestIfEnabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON) {
             super.executeTest(test)
             IgnoreTests.cleanUpIdenticalFirTestFile(dataFile())
