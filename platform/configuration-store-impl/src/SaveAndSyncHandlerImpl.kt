@@ -59,12 +59,18 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
   init {
     coroutineScope.launch {
-      launch(CoroutineName("refresh requests flow processing")) {
+      launch(CoroutineName("refresh requests flow processing") + ModalityState.nonModal().asContextElement()) {
         // not collectLatest - wait for previous execution
         refreshRequests
           .debounce(300.milliseconds)
           .collect {
-            doScheduledRefresh()
+            withContext(Dispatchers.EDT) {
+              blockingContext {
+                eventPublisher.beforeRefresh()
+                refreshOpenFiles()
+                maybeRefresh(ModalityState.nonModal())
+              }
+            }
           }
       }
       launch(CoroutineName("save requests flow processing")) {
@@ -299,16 +305,6 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
     check(refreshRequests.tryEmit(Unit))
   }
 
-  private suspend fun doScheduledRefresh() {
-    withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-      blockingContext {
-        eventPublisher.beforeRefresh()
-        refreshOpenFiles()
-        maybeRefresh(ModalityState.nonModal())
-      }
-    }
-  }
-
   override fun maybeRefresh(modalityState: ModalityState) {
     if (blockSyncOnFrameActivationCount.get() != 0 || !GeneralSettings.getInstance().isSyncOnFrameActivation) {
       LOG.debug {
@@ -338,7 +334,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
       .toList()
 
     if (files.isNotEmpty()) {
-      // refresh open files synchronously, so it doesn't wait for potentially longish refresh request in the queue to finish
+      // refresh open files synchronously, so it doesn't wait for a potentially longish refresh request in the queue to finish
       RefreshQueue.getInstance().refresh(false, false, null, files)
     }
   }
