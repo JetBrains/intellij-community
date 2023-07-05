@@ -1355,18 +1355,18 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   }
 
   static class InspectionPerformanceCollector extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("inspection.performance", 1);
+    private static final EventLogGroup GROUP = new EventLogGroup("inspection.performance", 2);
 
     static final LongEventField TOTAL_DURATION = new LongEventField("total_duration_ms");
     static final LongEventField BUILD_REFERENCE_GRAPH_DURATION = new LongEventField("build_reference_graph_duration_ms");
     static final IntEventField NUMBER_OF_FILES = new IntEventField("number_of_files");
     static final IntEventField NUMBER_OF_INSPECTIONS = new IntEventField("number_of_inspections");
 
-    static final VarargEventId GLOBAL_INSPECTION_PERFORMANCE = GROUP.registerVarargEvent("global.inspection.performance",
-                                                                                         TOTAL_DURATION,
-                                                                                         BUILD_REFERENCE_GRAPH_DURATION,
-                                                                                         NUMBER_OF_FILES,
-                                                                                         NUMBER_OF_INSPECTIONS);
+    static final VarargEventId GLOBAL_INSPECTION_FINISHED = GROUP.registerVarargEvent("global.inspection.finished",
+                                                                                      TOTAL_DURATION,
+                                                                                      BUILD_REFERENCE_GRAPH_DURATION,
+                                                                                      NUMBER_OF_FILES,
+                                                                                      NUMBER_OF_INSPECTIONS);
 
     @Override
     public EventLogGroup getGroup() {
@@ -1374,10 +1374,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
 
     static void logPerformance(long refGraphDuration, long globalInspectionsDuration, int fileCount, int inspectionCount) {
-      GLOBAL_INSPECTION_PERFORMANCE.log(TOTAL_DURATION.with(globalInspectionsDuration),
-                                        BUILD_REFERENCE_GRAPH_DURATION.with(refGraphDuration),
-                                        NUMBER_OF_FILES.with(fileCount),
-                                        NUMBER_OF_INSPECTIONS.with(inspectionCount));
+      GLOBAL_INSPECTION_FINISHED.log(TOTAL_DURATION.with(globalInspectionsDuration),
+                                     BUILD_REFERENCE_GRAPH_DURATION.with(refGraphDuration),
+                                     NUMBER_OF_FILES.with(fileCount),
+                                     NUMBER_OF_INSPECTIONS.with(inspectionCount));
     }
   }
 }
