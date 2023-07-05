@@ -15,7 +15,8 @@ class CodeVisionFusCollector: CounterUsagesCollector() {
     val CODE_VISION_FINISHED = GROUP.registerEvent(
       "finished",
       EventFields.DurationMs,
-      EventFields.Class("providerClass")
+      EventFields.Class("providerClass"),
+      EventFields.Language
     )
 
     val ANNOTATION_LOADED = GROUP.registerEvent("vcsAnnotationLoaded", EventFields.DurationMs)

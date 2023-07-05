@@ -76,7 +76,7 @@ class CodeVisionPass(
                 val duration = measureTimeMillis {
                   results = provider.computeForEditor(editor, file)
                 }
-                CodeVisionFusCollector.CODE_VISION_FINISHED.log(file.project, duration, provider::class.java)
+                CodeVisionFusCollector.CODE_VISION_FINISHED.log(file.project, duration, provider::class.java, file.language)
                 providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results,
                                                                                                         modificationTracker.modificationCount)
               }
