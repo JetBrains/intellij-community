@@ -2518,6 +2518,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myDragOnGutterSelectionStartLine = -1;
     }
 
+    if (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA &&
+        NewUI.isEnabled() && EditorUtil.isBreakPointsOnLineNumbers() &&
+        getMouseSelectionState() != MOUSE_SELECTION_STATE_LINE_SELECTED) {
+      //IDEA-305975
+      selectLineAtCaret(true);
+      getGutterComponentEx().putClientProperty("active.line.number", null); //clear hovered breakpoint
+    }
+
     boolean columnSelectionDragEvent = isColumnSelectionDragEvent(e);
     boolean toggleCaretEvent = isToggleCaretEvent(e);
     boolean addRectangularSelectionEvent = isAddRectangularSelectionEvent(e);
