@@ -92,7 +92,7 @@ sealed class K2MoveDescriptor {
 
         val searchReferences: Boolean get() = KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES
 
-        val deleteEmptySourceFiles: Boolean get() = KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES
+        val deleteEmptySourceFiles: Boolean get() = KotlinCommonRefactoringSettings.getInstance().MOVE_DELETE_EMPTY_SOURCE_FILES
 
         override val settings: Array<Array<Setting>> = arrayOf(
             arrayOf(Setting.SEARCH_FOR_TEXT, Setting.SEARCH_IN_COMMENTS),
