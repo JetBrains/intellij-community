@@ -3,6 +3,7 @@ package org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.CaretVisualAttributes
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.CaretEvent
@@ -73,6 +74,11 @@ class NotebookEditorModeListenerAdapter(private val editor: Editor) : NotebookEd
     val modeWasChanged = currentEditorMode != mode
 
     currentEditorMode = mode
+
+    if (editor.isDisposed) {
+      thisLogger().warn("Cannot change notebook mode, Editor is disposed already")
+      return
+    }
 
     editor.apply {
       (markupModel as MarkupModelEx).apply {
