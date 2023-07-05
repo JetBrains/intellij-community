@@ -106,13 +106,15 @@ internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: S
 
   private fun getArgumentSuggestions(arg: ShellArgument, nextNodeText: String): List<ShellArgumentSuggestion> {
     val suggestions = mutableListOf<ShellArgumentSuggestion>()
-    suggestions.addAll(arg.suggestions.map { ShellArgumentSuggestion(it, arg) })
 
     val suggestAllFiles = arg.isFilePath()
     val suggestFolders = arg.isFolder()
     if (suggestAllFiles || suggestFolders) {
       val fileSuggestions = getFileSuggestions(arg, nextNodeText, onlyDirectories = suggestFolders && !suggestAllFiles)
       suggestions.addAll(fileSuggestions)
+    }
+    if (!suggestAllFiles && !suggestFolders || !nextNodeText.contains('/')) {
+      suggestions.addAll(arg.suggestions.map { ShellArgumentSuggestion(it, arg) })
     }
     return suggestions
   }

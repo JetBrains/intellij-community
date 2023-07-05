@@ -3,7 +3,10 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.containers.TreeTraversal
-import org.jetbrains.plugins.terminal.exp.completion.*
+import org.jetbrains.plugins.terminal.exp.completion.CommandPartNode
+import org.jetbrains.plugins.terminal.exp.completion.CommandTreeBuilder
+import org.jetbrains.plugins.terminal.exp.completion.CommandTreeSuggestionsProvider
+import org.jetbrains.plugins.terminal.exp.completion.SubcommandNode
 import org.jetbrains.plugins.terminal.exp.util.FakeCommandSpecManager
 import org.jetbrains.plugins.terminal.exp.util.FakeShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.util.commandSpec
@@ -15,6 +18,7 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class CommandSpecSuggestionsTest {
   private val commandName = "command"
+  private var filePathSuggestions: List<String> = emptyList()
 
   private val spec = commandSpec(commandName) {
     option("-a", "--asd")
@@ -144,11 +148,18 @@ class CommandSpecSuggestionsTest {
         suggestions("end")
       }
     }
+
+    subcommand("cd") {
+      argument("dir") {
+        templates("folders")
+        suggestions("-", "~")
+      }
+    }
   }
 
   @Test
   fun `main command`() {
-    doTest(expected = listOf("sub", "excl", "reqSub", "manyArgs", "optPrecedeArgs", "variadic", "variadic2",
+    doTest(expected = listOf("sub", "excl", "reqSub", "manyArgs", "optPrecedeArgs", "variadic", "variadic2", "cd",
                              "-a", "--asd", "--bcde", "--argum", "abc"))
   }
 
@@ -252,14 +263,30 @@ class CommandSpecSuggestionsTest {
     doTest("variadic2", "---", "var", expected = listOf("var"))
   }
 
-  private fun doTest(vararg arguments: String, expected: List<String>) {
-    val suggestionsProvider = CommandTreeSuggestionsProvider(FakeShellRuntimeDataProvider())
+  @Test
+  fun `suggest hardcoded suggestions with files`() {
+    mockFilePathsSuggestions("file.txt", "dir/", "folder/")
+    doTest("cd", expected = listOf("dir/", "folder/", "-", "~", "--bcde"))
+  }
+
+  @Test
+  fun `do not suggest hardcoded suggestions with files if some directory already typed`() {
+    mockFilePathsSuggestions("file.txt", "dir/", "folder/")
+    doTest("cd", typedPrefix = "someDir/", expected = listOf("dir/", "folder/"))
+  }
+
+  private fun doTest(vararg arguments: String, typedPrefix: String = "", expected: List<String>) {
+    val suggestionsProvider = CommandTreeSuggestionsProvider(FakeShellRuntimeDataProvider(filePathSuggestions))
     val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, FakeCommandSpecManager(),
                                                             commandName, spec, arguments.asList())
     val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(rootNode as CommandPartNode<*>) { node -> node.children }
     val lastNode = allChildren.last() ?: rootNode
-    val actual = suggestionsProvider.getSuggestionsOfNext(lastNode, "").flatMap { it.names }
+    val actual = suggestionsProvider.getSuggestionsOfNext(lastNode, typedPrefix).flatMap { it.names }.filter { it.isNotEmpty() }
 
     assertSameElements(actual, expected)
+  }
+
+  private fun mockFilePathsSuggestions(vararg files: String) {
+    filePathSuggestions = files.asList()
   }
 }
