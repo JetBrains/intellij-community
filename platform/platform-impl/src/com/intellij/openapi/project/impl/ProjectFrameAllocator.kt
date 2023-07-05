@@ -58,8 +58,7 @@ import javax.swing.JFrame
 import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 
-private typealias FrameAllocatorTask = suspend CoroutineScope.(saveTemplateJob: Job?,
-                                                               projectInitObserver: ProjectInitObserver?) -> Unit
+private typealias FrameAllocatorTask = suspend (saveTemplateJob: Job?, projectInitObserver: ProjectInitObserver?) -> Unit
 
 internal sealed interface ProjectInitObserver {
   fun beforeInitRawProject(project: Project): Job
@@ -160,14 +159,14 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
                             deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>) {
     coroutineScope {
       val loadingScope = this
-      val projectInitObserver = FrameAllocatorProjectInitObserver(coroutineScope = this,
+      val projectInitObserver = FrameAllocatorProjectInitObserver(coroutineScope = loadingScope,
                                                                   deferredProjectFrameHelper = deferredProjectFrameHelper)
 
       val rawProjectDeferred = projectInitObserver.rawProjectDeferred
-      val isLoadingEditorsUnderLoadingProgress = async(CoroutineName("project frame creating")) {
+      async(CoroutineName("project frame creating")) {
         createFrameManager(loadingScope = loadingScope,
                            rawProjectDeferred = rawProjectDeferred,
-                           deferredProjectFrameHelper = deferredProjectFrameHelper).selfie != null
+                           deferredProjectFrameHelper = deferredProjectFrameHelper)
       }
 
       val startOfWaitingForReadyFrame = AtomicLong(-1)
@@ -194,16 +193,12 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
 
       task(scheduleSaveTemplate(options), projectInitObserver)
       startOfWaitingForReadyFrame.set(System.nanoTime())
-
-      if (isLoadingEditorsUnderLoadingProgress.await()) {
-        reopeningEditorJob.join()
-      }
     }
   }
 
   private suspend fun createFrameManager(loadingScope: CoroutineScope,
                                          rawProjectDeferred: CompletableDeferred<Project>,
-                                         deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>): FrameLoadingState {
+                                         deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>) {
     val frame = options.frame
                 ?: (ApplicationManager.getApplication().serviceIfCreated<WindowManager>() as? WindowManagerImpl)?.removeAndGetRootFrame()
 
@@ -231,7 +226,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
           frameHelper.setInitBounds(getFrameInfo()?.bounds)
         }
       }
-      return loadingState
+      return
     }
 
     val preAllocated = getAndUnsetSplashProjectFrame() as IdeFrameImpl?
@@ -243,7 +238,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
         frameHelper
       }
       completeFrameAndCloseOnCancel(frameHelper, deferredProjectFrameHelper) {}
-      return loadingState
+      return
     }
 
     val frameInfo = getFrameInfo()
@@ -263,7 +258,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
         frameHelper.init()
       }
     }
-    return loadingState
+    return
   }
 
   private suspend inline fun completeFrameAndCloseOnCancel(frameHelper: ProjectFrameHelper,
