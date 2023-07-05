@@ -639,9 +639,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       if (isDisposed()) return;
       myAutoscrollFeedback = true;
 
-      Navigatable navigatable = CommonDataKeys.NAVIGATABLE.getData(DataManager.getInstance().getDataContext(getTree()));
-      if (myFileEditor != null && navigatable != null && navigatable.canNavigateToSource()) {
-        navigatable.navigate(false);
+      if (myFileEditor != null) {
+        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(getTree()), false);
       }
     }
   }
