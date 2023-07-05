@@ -11,10 +11,8 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,6 +20,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
+import static java.lang.invoke.MethodHandles.byteBufferViewVarHandle;
+import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.file.StandardOpenOption.*;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -37,7 +37,7 @@ public class PersistentFSStoragesBenchmarks {
   //@Param
   public static final int RECORDS_COUNT = 1 << 22;
   //@Param
-  public static final int RECORD_SIZE_IN_BYTES = PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES;
+  public static final int RECORD_SIZE_IN_BYTES = PersistentFSRecordsLockFreeOverMMappedFile.RECORD_SIZE_IN_BYTES;
   public static final StorageLockContext CONTEXT = new StorageLockContext(true, true, true);
 
   @State(Scope.Thread)
@@ -52,13 +52,13 @@ public class PersistentFSStoragesBenchmarks {
     public int nextSequential() {
       cursor++;
       if (cursor >= RECORDS_COUNT) {
-        cursor = 0;
+        cursor = 1;
       }
       return cursor;
     }
 
     public int nextRandom() {
-      return ThreadLocalRandom.current().nextInt(RECORDS_COUNT);
+      return ThreadLocalRandom.current().nextInt(1, RECORDS_COUNT);
     }
   }
 
@@ -81,7 +81,7 @@ public class PersistentFSStoragesBenchmarks {
     public final int recordSize = RECORD_SIZE_IN_BYTES;
     public final int recordSizeInInts = recordSize / Integer.BYTES;
     public final ByteBuffer buffer = ByteBuffer.allocate(recordSize * RECORDS_COUNT)
-      .order(ByteOrder.nativeOrder());
+      .order(nativeOrder());
   }
 
   @State(Scope.Benchmark)
@@ -89,7 +89,7 @@ public class PersistentFSStoragesBenchmarks {
     public final int recordSize = RECORD_SIZE_IN_BYTES;
     public final int recordSizeInInts = recordSize / Integer.BYTES;
     public final ByteBuffer buffer = ByteBuffer.allocateDirect(recordSize * RECORDS_COUNT)
-      .order(ByteOrder.nativeOrder());
+      .order(nativeOrder());
   }
 
   @State(Scope.Benchmark)
@@ -121,7 +121,7 @@ public class PersistentFSStoragesBenchmarks {
 
       try (FileChannel channel = FileChannel.open(file, WRITE, READ, CREATE)) {
         buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, recordSize * RECORDS_COUNT)
-          .order(ByteOrder.nativeOrder());
+          .order(nativeOrder());
       }
     }
   }
@@ -299,7 +299,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     private static final VarHandle BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE =
-      MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.nativeOrder());
+      byteBufferViewVarHandle(int[].class, nativeOrder());
 
     @Benchmark
     public int byteBuffer_RandomVolatileRead_ViaVarHandle(final IterationState it,
@@ -483,8 +483,8 @@ public class PersistentFSStoragesBenchmarks {
       }
     }
 
-    private static final VarHandle BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE =
-      MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.nativeOrder());
+    private static final VarHandle BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE = byteBufferViewVarHandle(int[].class, nativeOrder())
+      .withInvokeExactBehavior();
 
     @Benchmark
     public void byteBuffer_RandomVolatileWrite_ViaVarHandle(final IterationState it,
@@ -494,7 +494,23 @@ public class PersistentFSStoragesBenchmarks {
       final ByteBuffer buffer = state.buffer;
       final int offset = recordSizeInBytes * it.nextRandom();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
-        BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE.setVolatile(buffer, offset + recordField * Integer.BYTES, recordField);
+        int value = recordField;
+        BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE.setVolatile(buffer, offset + recordField * Integer.BYTES, value);
+      }
+    }
+
+    @Benchmark
+    public void byteBufferMemoryMapped_RandomCASWrite_ViaVarHandle(final IterationState it,
+                                                                   final MappedByteBufferState state) throws IOException {
+      final int recordSizeInInts = state.recordSizeInInts;
+      final ByteBuffer mmappedBuffer = state.buffer;
+
+      //RC: Somehow on m1 CAS is 2x faster than volatile!
+      final int offset = RECORD_SIZE_IN_BYTES * it.nextRandom();
+      for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
+        int oldValue = (int)BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE.getVolatile(mmappedBuffer, offset + recordField * Integer.BYTES);
+        int newValue = recordField;
+        BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE.compareAndSet(mmappedBuffer, offset + recordField * Integer.BYTES, oldValue, newValue);
       }
     }
 
@@ -582,9 +598,14 @@ public class PersistentFSStoragesBenchmarks {
 
   public static void main(String[] args) throws RunnerException {
     final Options opt = new OptionsBuilder()
+      .jvmArgs(//to enable 'new' API:
+               "-Dvfs.lock-free-impl.enable=true",
+               "-Dvfs.lock-free-impl.fraction-direct-memory-to-utilize=0.5"
+      )
       .mode(Mode.SampleTime)
-      .include(PersistentFSStoragesBenchmarks.class.getSimpleName() + ".*AccessTest.*Volatile.*")
-      .threads(7)
+      //.include(PersistentFSStoragesBenchmarks.class.getSimpleName() + ".*AccessTest.*Volatile.*")
+      .include(PersistentFSStoragesBenchmarks.class.getSimpleName() + ".*AccessTest.*byteBufferMemoryMapped.*")
+      .threads(4)
       .build();
 
     new Runner(opt).run();

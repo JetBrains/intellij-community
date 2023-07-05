@@ -85,6 +85,7 @@ public class IndexStampAccessBenchmark {
   }
 
   //FIXME RC: EDT is not stopped, hence JMH can't terminate forked JVM.
+  //          Move it to FSRecordsContext instead of ApplicationContext
 
 
   public static void main(final String[] args) throws RunnerException {

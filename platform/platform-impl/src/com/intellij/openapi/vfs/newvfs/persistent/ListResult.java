@@ -32,7 +32,7 @@ final class ListResult {
     this.children = children;
     myParentId = parentId;
     Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode() && !ApplicationManagerEx.isInStressTest() || app.isInternal()) {
+    if (app != null && (app.isUnitTestMode() && !ApplicationManagerEx.isInStressTest() || app.isInternal())) {
       assertSortedById(children);
     }
   }
@@ -46,7 +46,7 @@ final class ListResult {
     }
   }
 
-  @Contract(pure=true)
+  @Contract(pure = true)
   @NotNull ListResult insert(@NotNull ChildInfo child) {
     List<ChildInfo> newChildren = new ArrayList<>(children.size() + 1);
     int id = child.getId();
@@ -58,18 +58,18 @@ final class ListResult {
     }
     else {
       int toInsert = -i - 1;
-      for (int j=0; j<toInsert; j++) {
+      for (int j = 0; j < toInsert; j++) {
         newChildren.add(children.get(j));
       }
       newChildren.add(child);
-      for (int j=toInsert; j<children.size(); j++) {
+      for (int j = toInsert; j < children.size(); j++) {
         newChildren.add(children.get(j));
       }
     }
     return new ListResult(modStamp, newChildren, myParentId);
   }
 
-  @Contract(pure=true)
+  @Contract(pure = true)
   @NotNull ListResult remove(@NotNull ChildInfo child) {
     List<ChildInfo> newChildren = new ArrayList<>(children.size() + 1);
     int id = child.getId();
@@ -92,7 +92,7 @@ final class ListResult {
   // Returns entries from this list plus `otherList';
   // in case of a name clash uses ID from the corresponding this list entry and a name from the `otherList` entry
   // (to avoid duplicating ids: preserve old id but supply new name).
-  @Contract(pure=true)
+  @Contract(pure = true)
   @NotNull ListResult merge(@NotNull List<? extends ChildInfo> newChildren, boolean isCaseSensitive) {
     ListResult newList = new ListResult(newChildren, myParentId);  // assume the list is sorted
     if (children.isEmpty()) return newList;
@@ -104,7 +104,8 @@ final class ListResult {
     // these maps will contain just a couple of entries absent from each other, not thousands.
 
     int size = Math.max(oldChildren.size(), newChildren.size());
-    Object2IntMap<CharSequence> nameToIndex = new Object2IntOpenCustomHashMap<>(size, FastUtilHashingStrategies.getCharSequenceStrategy(isCaseSensitive));
+    Object2IntMap<CharSequence> nameToIndex =
+      new Object2IntOpenCustomHashMap<>(size, FastUtilHashingStrategies.getCharSequenceStrategy(isCaseSensitive));
     // distinguish between absence and the 0th index
     nameToIndex.defaultReturnValue(-1);
     boolean needToSortResult = false;
@@ -167,7 +168,7 @@ final class ListResult {
     return new ListResult(modStamp, newRes, myParentId);
   }
 
-  @Contract(pure=true)
+  @Contract(pure = true)
   @NotNull ListResult subtract(@NotNull List<? extends ChildInfo> list) {
     List<ChildInfo> newChildren = new ArrayList<>(children.size() + list.size());  // assume the list is sorted
     int index1 = 0;
@@ -189,7 +190,7 @@ final class ListResult {
         index2++;
       }
     }
-    for (int i=index1; i<children.size(); i++) {
+    for (int i = index1; i < children.size(); i++) {
       newChildren.add(children.get(i));
     }
     return new ListResult(modStamp, newChildren, myParentId);
