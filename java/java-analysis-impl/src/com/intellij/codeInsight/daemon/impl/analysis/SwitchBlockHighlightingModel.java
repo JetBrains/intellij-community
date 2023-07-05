@@ -310,9 +310,22 @@ public class SwitchBlockHighlightingModel {
     for (Map.Entry<Object, Collection<PsiElement>> entry : values.entrySet()) {
       if (entry.getValue().size() <= 1) continue;
       Object duplicateKey = entry.getKey();
+      MultiMap<PsiEnumConstant, PsiReferenceExpression> referencesByEnums = new MultiMap<>();
       for (PsiElement duplicateElement : entry.getValue()) {
+        if (duplicateElement instanceof PsiReferenceExpression referenceExpression &&
+            referenceExpression.resolve() instanceof PsiEnumConstant enumConstant) {
+          referencesByEnums.putValue(enumConstant, referenceExpression);
+          continue;
+        }
         HighlightInfo.Builder info = createDuplicateInfo(duplicateKey, duplicateElement);
         results.add(info.create());
+      }
+      for (Map.Entry<PsiEnumConstant, Collection<PsiReferenceExpression>> references : referencesByEnums.entrySet()) {
+        if (references.getValue().size() <= 1) continue;
+        for (PsiReferenceExpression referenceToEnum : references.getValue()) {
+          HighlightInfo.Builder info = createDuplicateInfo(duplicateKey, referenceToEnum);
+          results.add(info.create());
+        }
       }
     }
   }
