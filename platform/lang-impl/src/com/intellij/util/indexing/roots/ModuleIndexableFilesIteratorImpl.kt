@@ -38,6 +38,7 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
   }
 
   private val roots = rootHolder?.roots?.let { selectRootVirtualFiles(it) }
+  private val nonRecursiveRoots = rootHolder?.nonRecursiveRoots?.toList()
 
 
   companion object {
@@ -116,7 +117,7 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
     return IndexingBundle.message("indexable.files.provider.scanning.module.name", module.name)
   }
 
-  override fun getOrigin(): ModuleRootOrigin = ModuleRootOriginImpl(module, roots)
+  override fun getOrigin(): ModuleRootOrigin = ModuleRootOriginImpl(module, roots, nonRecursiveRoots)
 
   override fun iterateFiles(
     project: Project,
@@ -131,7 +132,13 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
       return index.iterateContent(fileIterator, fileFilter)
     }
     else {
-      return roots.all { root -> index.iterateContentUnderDirectory(root, fileIterator, fileFilter) }
+      val recursiveResult = roots.all { root -> index.iterateContentUnderDirectory(root, fileIterator, fileFilter) }
+      if (!recursiveResult) {
+        return false
+      }
+      return nonRecursiveRoots?.all { root ->
+        if (runReadAction { index.isInContent(root) } && fileFilter.accept(root)) fileIterator.processFile(root) else true
+      } ?: true
     }
   }
 

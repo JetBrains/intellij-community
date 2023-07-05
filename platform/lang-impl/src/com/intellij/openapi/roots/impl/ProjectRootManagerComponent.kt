@@ -362,11 +362,19 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
       rootFiles.forEach { recursivePaths.add(it.path) }
     }
 
-    builder.forEachModuleContentEntitiesRoots { roots -> register(roots.roots, "module content roots") }
-    builder.forEachContentEntitiesRoots { roots -> register(roots.roots, "content roots") }
+    builder.forEachModuleContentEntitiesRoots { roots ->
+      register(roots.roots, "module content roots");
+      register(roots.nonRecursiveRoots, "module non-recursive content roots")
+    }
+    builder.forEachContentEntitiesRoots { roots ->
+      register(roots.roots, "content roots")
+      register(roots.nonRecursiveRoots, "non-recursive content roots")
+    }
     builder.forEachExternalEntitiesRoots { roots ->
       register(roots.roots, "external roots")
       register(roots.sourceRoots, "external source roots")
+      register(roots.nonRecursiveRoots, "non-recursive external roots")
+      register(roots.nonRecursiveSourceRoots, "non-recursive external source roots")
     }
   }
 

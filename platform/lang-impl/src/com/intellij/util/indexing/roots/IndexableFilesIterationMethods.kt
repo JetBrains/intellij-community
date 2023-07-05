@@ -35,25 +35,40 @@ object IndexableFilesIterationMethods {
     }
   }
 
-  fun iterateRoots(
-    project: Project,
-    rootsHolder: IndexingSourceRootHolder,
-    contentIterator: ContentIterator,
-    fileFilter: VirtualFileFilter,
-    excludeNonProjectRoots: Boolean = true
+  private fun iterateRootsNonRecursively(project: Project,
+                                         roots: Iterable<VirtualFile>,
+                                         contentIterator: ContentIterator,
+                                         fileFilter: VirtualFileFilter,
+                                         excludeNonProjectRoots: Boolean): Boolean {
+    val projectFileIndex = ProjectFileIndex.getInstance(project)
+    val rootsSet = roots.toSet()
+    for (root in roots) {
+      if (fileFilter.accept(root) && shouldIndexFile(root, projectFileIndex, rootsSet, excludeNonProjectRoots)) {
+        if (!contentIterator.processFile(root)) return false
+      }
+    }
+    return true
+  }
+
+  fun iterateRoots(project: Project,
+                   roots: IndexingRootHolder,
+                   contentIterator: ContentIterator,
+                   fileFilter: VirtualFileFilter,
+                   excludeNonProjectRoots: Boolean = true
+  ): Boolean {
+    val recursiveResult = iterateRoots(project, roots.roots, contentIterator, fileFilter, excludeNonProjectRoots)
+    if (!recursiveResult) return false
+    return iterateRootsNonRecursively(project, roots.nonRecursiveRoots, contentIterator, fileFilter, excludeNonProjectRoots)
+  }
+
+  fun iterateRoots(project: Project,
+                   rootsHolder: IndexingSourceRootHolder,
+                   contentIterator: ContentIterator,
+                   fileFilter: VirtualFileFilter,
+                   excludeNonProjectRoots: Boolean = true
   ): Boolean {
     val roots = rootsHolder.roots + rootsHolder.sourceRoots
     return iterateRoots(project, roots, contentIterator, fileFilter, excludeNonProjectRoots)
-  }
-
-  fun iterateRoots(
-    project: Project,
-    roots: IndexingRootHolder,
-    contentIterator: ContentIterator,
-    fileFilter: VirtualFileFilter,
-    excludeNonProjectRoots: Boolean = true
-  ): Boolean {
-    return iterateRoots(project, roots.roots, contentIterator, fileFilter, excludeNonProjectRoots)
   }
 
   @JvmOverloads

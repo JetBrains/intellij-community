@@ -25,10 +25,10 @@ import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forLi
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forModuleAwareCustomizedContentEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forModuleRootsFileBased
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-import com.intellij.util.indexing.roots.origin.MutableIndexingRootHolder
-import com.intellij.util.indexing.roots.origin.MutableIndexingSourceRootHolder
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder
 import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
+import com.intellij.util.indexing.roots.origin.MutableIndexingRootHolder
+import com.intellij.util.indexing.roots.origin.MutableIndexingSourceRootHolder
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
@@ -395,44 +395,57 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
     }
   }
 
-  fun registerFileSet(root: VirtualFile, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
+  fun registerFileSet(root: VirtualFile,
+                      kind: WorkspaceFileKind,
+                      entity: WorkspaceEntity,
+                      customData: WorkspaceFileSetData?,
+                      recursive: Boolean) {
     val entityReference = entity.createReference<E>()
     fillCustomizationValues(entity, entityReference)
+
+    fun <K> addRoot(map: MutableMap<K, MutableIndexingRootHolder>, key: K) {
+      val holder = map.getOrPut(key) { MutableIndexingRootHolder() }
+      (if (recursive) holder.roots else holder.nonRecursiveRoots).add(root)
+    }
+
+    fun <K> addRoot(map: MutableMap<K, MutableIndexingSourceRootHolder>, key: K, sourceRoot: Boolean) {
+      val holder = map.getOrPut(key) { MutableIndexingSourceRootHolder() }
+      if (sourceRoot) {
+        (if (recursive) holder.sourceRoots else holder.nonRecursiveSourceRoots).add(root)
+      }
+      else {
+        (if (recursive) holder.roots else holder.nonRecursiveRoots).add(root)
+      }
+    }
 
     if (customData is ModuleRelatedRootData) {
       if (!ignoreModuleRoots) {
         if (contributor is CustomizingIndexingContributor<E, *>) {
           customizedModuleContentEntities.putValue(customData.module, entityReference)
-          customizedModuleContentRoots.getOrPut(entityReference) { MutableIndexingRootHolder() }.roots.add(root)
+          addRoot(customizedModuleContentRoots, entityReference)
         }
         else {
-          moduleContents.getOrPut(customData.module) { return@getOrPut MutableIndexingRootHolder() }.roots.add(root)
+          addRoot(moduleContents, customData.module)
         }
       }
     }
     else if (kind.isContent) {
-      contentRoots.getOrPut(entityReference) { MutableIndexingRootHolder() }.roots.add(root)
+      addRoot(contentRoots, entityReference)
     }
-    else if (kind === WorkspaceFileKind.EXTERNAL) {
-      if (contributor is LibraryRootFileIndexContributor) {
-        libraryRoots.getOrPut(entity as LibraryEntity) { MutableIndexingSourceRootHolder() }.roots.add(root)
-      }
-      else {
-        externalRoots.getOrPut(entityReference) { MutableIndexingSourceRootHolder() }.roots.add(root)
-      }
+    else if (contributor is LibraryRootFileIndexContributor) {
+      addRoot(libraryRoots, entity as LibraryEntity, kind === WorkspaceFileKind.EXTERNAL_SOURCE)
     }
     else {
-      if (contributor is LibraryRootFileIndexContributor) {
-        libraryRoots.getOrPut(entity as LibraryEntity) { MutableIndexingSourceRootHolder() }.sourceRoots.add(root)
-      }
-      else {
-        externalRoots.getOrPut(entityReference) { MutableIndexingSourceRootHolder() }.sourceRoots.add(root)
-      }
+      addRoot(externalRoots, entityReference, kind === WorkspaceFileKind.EXTERNAL_SOURCE)
     }
   }
 
-  fun registerFileSet(root: VirtualFileUrl, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
-    root.virtualFile?.let { registerFileSet(it, kind, entity, customData) }
+  fun registerFileSet(root: VirtualFileUrl,
+                      kind: WorkspaceFileKind,
+                      entity: WorkspaceEntity,
+                      customData: WorkspaceFileSetData?,
+                      recursive: Boolean) {
+    root.virtualFile?.let { registerFileSet(it, kind, entity, customData, recursive) }
   }
 
   fun registerExcludedRoot(root: VirtualFile) {
@@ -460,15 +473,14 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
 
 private class MyWorkspaceFileSetRegistrar<E : WorkspaceEntity>(contributor: WorkspaceFileIndexContributor<E>,
                                                                ignoreModuleRoots: Boolean) : WorkspaceFileSetRegistrar {
-  //todo[lene] inline
   val rootData: RootData<E> = RootData(contributor, ignoreModuleRoots)
 
   override fun registerFileSet(root: VirtualFileUrl, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
-    rootData.registerFileSet(root, kind, entity, customData)
+    rootData.registerFileSet(root, kind, entity, customData, true)
   }
 
   override fun registerFileSet(root: VirtualFile, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
-    rootData.registerFileSet(root, kind, entity, customData)
+    rootData.registerFileSet(root, kind, entity, customData, true)
   }
 
   override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, entity: WorkspaceEntity) {
@@ -499,7 +511,7 @@ private class MyWorkspaceFileSetRegistrar<E : WorkspaceEntity>(contributor: Work
                                            kind: WorkspaceFileKind,
                                            entity: WorkspaceEntity,
                                            customData: WorkspaceFileSetData?) {
-    rootData.registerFileSet(file, kind, entity, customData)
+    rootData.registerFileSet(file, kind, entity, customData, false)
   }
 }
 
