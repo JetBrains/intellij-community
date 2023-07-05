@@ -9,13 +9,10 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.childScope
 import com.intellij.util.containers.CollectionFactory
 import git4idea.changes.GitBranchComparisonResult
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.firstNote
@@ -137,27 +134,31 @@ private fun createUnresolvedDiscussionsPositionsFlow(mergeRequest: GitLabMergeRe
     val discussionsCache = ConcurrentHashMap<String, GitLabNotePosition>()
     val draftNotesCache = ConcurrentHashMap<String, GitLabNotePosition>()
     mergeRequest.discussions.collectLatest { discussions ->
-      discussionsCache.clear()
-      discussions.forEach { disc ->
-        launchNow {
-          val positionFlow = disc.firstNote.filterNotNull().flatMapLatest { it.position }
-          combine(disc.resolved, positionFlow) { resolved, position ->
-            if (resolved) null else position
-          }.collectLatest {
-            if (it != null) discussionsCache[disc.id] = it else discussionsCache.remove(disc.id)
-            send(discussionsCache.values.toList() + draftNotesCache.values.toList())
+      coroutineScope {
+        discussionsCache.clear()
+        discussions.forEach { disc ->
+          launchNow {
+            val positionFlow = disc.firstNote.filterNotNull().flatMapLatest { it.position }
+            combine(disc.resolved, positionFlow) { resolved, position ->
+              if (resolved) null else position
+            }.collectLatest {
+              if (it != null) discussionsCache[disc.id] = it else discussionsCache.remove(disc.id)
+              send(discussionsCache.values.toList() + draftNotesCache.values.toList())
+            }
           }
         }
       }
     }
 
     mergeRequest.draftNotes.collectLatest { notes ->
-      draftNotesCache.clear()
-      notes.forEach { note ->
-        launchNow {
-          note.position.collectLatest {
-            if (it != null) draftNotesCache[note.id] = it else draftNotesCache.remove(note.id)
-            send(discussionsCache.values.toList() + draftNotesCache.values.toList())
+      coroutineScope {
+        draftNotesCache.clear()
+        notes.forEach { note ->
+          launchNow {
+            note.position.collectLatest {
+              if (it != null) draftNotesCache[note.id] = it else draftNotesCache.remove(note.id)
+              send(discussionsCache.values.toList() + draftNotesCache.values.toList())
+            }
           }
         }
       }

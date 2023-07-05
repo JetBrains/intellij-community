@@ -102,30 +102,32 @@ internal class GitLabReviewTabComponentFactory(
         val changesVm = detailsVm.changesVm
         val changeListVms = changesVm.changeListVm.mapNotNull { it.getOrNull() }
 
-        launchNow {
-          changeListVms.flatMapLatest {
-            it.changesSelection
-          }.filterNotNull().collectLatest {
-            diffBridge.setChanges(it)
-          }
-        }
-
-        launchNow {
-          diffBridge.displayedChanges.mapNotNull {
-            (it as? ChangesSelection.Precise)?.selectedChange
-          }.collect {
-            changesVm.selectChange(it)
-          }
-        }
-
-        launchNow {
-          changeListVms.collectLatest {
-            it.showDiffRequests.collectLatest {
-              ctx.filesController.openDiff(reviewId, true)
+        coroutineScope {
+          launchNow {
+            changeListVms.flatMapLatest {
+              it.changesSelection
+            }.filterNotNull().collectLatest {
+              diffBridge.setChanges(it)
             }
           }
+
+          launchNow {
+            diffBridge.displayedChanges.mapNotNull {
+              (it as? ChangesSelection.Precise)?.selectedChange
+            }.collect {
+              changesVm.selectChange(it)
+            }
+          }
+
+          launchNow {
+            changeListVms.collectLatest {
+              it.showDiffRequests.collectLatest {
+                ctx.filesController.openDiff(reviewId, true)
+              }
+            }
+          }
+          awaitCancellation()
         }
-        awaitCancellation()
       }
     }
 
