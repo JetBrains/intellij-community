@@ -63,7 +63,7 @@ class PythonInlayParameterHintsProvider : InlayParameterHintsProvider {
           return info
         }
         if (argument !is PyKeywordArgument) {
-          if (argument is PyLiteralExpression || showForNonLiteralArguments.isEnabled()) {
+          if (argument.isLiteralArgument() || showForNonLiteralArguments.isEnabled()) {
             info.add(InlayInfo("${parameter.name}", argument.textOffset))
           }
         }
@@ -127,6 +127,12 @@ class PythonInlayParameterHintsProvider : InlayParameterHintsProvider {
     }
     return null
   }
+
+  private fun PyExpression.isLiteralArgument() =
+    this is PyLiteralExpression ||
+    this is PyListLiteralExpression ||
+    this is PyDictLiteralExpression ||
+    (this is PyParenthesizedExpression && this.children.first() is PyTupleExpression)
 
   private fun String.toQNameForBuiltins(): String {
     val components = mutableListOf("builtins")

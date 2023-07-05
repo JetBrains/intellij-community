@@ -150,6 +150,19 @@ class PyInlayParameterHintsTest : PyTestCase() {
     """.trimIndent())
   }
 
+  fun testHintsShownForLiteralCollectionArguments() {
+    doTestWithOptions("""
+      def foo(a, b, c, d):
+          pass
+
+      a = 1
+
+      foo(a, <hint text="b:"/>[1, 2], <hint text="c:"/>(3, 4), <hint text="d:"/>{"5": 5, "6": 6})
+    """.trimIndent(),
+    PythonInlayParameterHintsProvider.showForNonLiteralArguments,
+    enabled = false)
+  }
+
   private fun doTest(text: String) {
     enableAllHints()
     myFixture.configureByText(PythonFileType.INSTANCE, text)
