@@ -1,10 +1,12 @@
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.content.Content
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import java.util.concurrent.atomic.AtomicReference
 
 interface ProblemsViewTab {
   @NlsContexts.TabTitle
@@ -28,12 +30,30 @@ interface ProblemsViewTab {
 }
 
 @ApiStatus.Internal
-object ProblemsViewTabUsages {
-  fun logTabShown(project: Project, tabName: String, problemsCount: Int) {
-    ProblemsViewStatsCollector.logTabShown(project, tabName, 0)
+abstract class ProblemsViewTabWithMetrics : SimpleToolWindowPanel(false), ProblemsViewTab {
+  abstract val project: Project
+  abstract val usagesTabId: String
+  abstract val shownProblemsCount: Int
+
+  private val shownTime: AtomicReference<Long> = AtomicReference()
+
+  override fun selectionChangedTo(selected: Boolean) {
+    super.selectionChangedTo(selected)
+    visibilityChangedTo(selected)
   }
 
-  fun logTabHidden(project: Project, tabName: String, problemsCount: Int, durationNano: Long) {
-    ProblemsViewStatsCollector.logTabHidden(project, tabName, 0, durationNano)
+  override fun visibilityChangedTo(visible: Boolean) {
+    super.visibilityChangedTo(visible)
+
+    if (visible) {
+      shownTime.set(System.nanoTime())
+      ProblemsViewStatsCollector.tabShown(this)
+    }
+    else {
+      val durationNano = shownTime.getAndSet(null)
+      if (durationNano != null) {
+        ProblemsViewStatsCollector.tabHidden(this, System.nanoTime() - durationNano)
+      }
+    }
   }
 }
