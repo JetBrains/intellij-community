@@ -352,6 +352,35 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals(UastCallKind.CONSTRUCTOR_CALL, uCallExpression.kind)
     }
 
+    // Regression test from KT-59564
+    fun checkExpressionTypeOfForEach(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                // !LANGUAGE: +RangeUntilOperator
+                @file:OptIn(ExperimentalStdlibApi::class)
+                fun test(a: Int, b: Int) {
+                  for (i in a..<b step 1) {
+                       println(i)
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitForEachExpression(node: UForEachExpression): Boolean {
+                when (val exp = node.iteratedValue.skipParenthesizedExprDown()) {
+                    is UBinaryExpression -> {
+                        TestCase.assertEquals("kotlin.ranges.IntProgression", exp.getExpressionType()?.canonicalText)
+                        TestCase.assertEquals("kotlin.ranges.IntRange", exp.leftOperand.getExpressionType()?.canonicalText)
+                    }
+                }
+
+                return super.visitForEachExpression(node)
+            }
+        })
+    }
+
     // Regression test from KTIJ-23503
     fun checkExpressionTypeFromIncorrectObject(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
