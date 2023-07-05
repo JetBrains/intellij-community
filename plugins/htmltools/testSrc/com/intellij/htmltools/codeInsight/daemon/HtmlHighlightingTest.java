@@ -855,18 +855,12 @@ public class HtmlHighlightingTest extends BasePlatformTestCase {
 
   public void testCustomTagHighlighting() {
     HtmlUnknownTagInspection inspection = new HtmlUnknownTagInspection();
-    String before = inspection.getAdditionalEntries();
-    inspection.updateAdditionalEntries("custom-tag,custom2-tag");
-    try {
-      myFixture.enableInspections(inspection);
+    inspection.updateAdditionalEntries("custom-tag,custom2-TAG", getTestRootDisposable());
+    myFixture.enableInspections(inspection);
 
-      HighlightTestInfo info = myFixture.testFile(getTestName(false) + ".html");
-      info.checkSymbolNames();
-      info.test();
-    }
-    finally {
-      inspection.updateAdditionalEntries(before);
-    }
+    HighlightTestInfo info = myFixture.testFile(getTestName(false) + ".html");
+    info.checkSymbolNames();
+    info.test();
   }
 
   private void doTestWebLinks(boolean startTestingLocalServer) throws Exception {

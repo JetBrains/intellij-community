@@ -63,9 +63,11 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
     })
   }
 
-  private fun getCustomNames() = (HtmlUtil.getEntitiesString(file, XmlEntitiesInspection.TAG_SHORT_NAME)
-                             ?.let { StringUtil.split(it, ",").toSet() }
-                           ?: emptySet())
+  private fun getCustomNames() =
+    HtmlUtil.getEntitiesString(file, XmlEntitiesInspection.TAG_SHORT_NAME)
+      ?.splitToSequence(',')
+      ?.mapTo(HashSet()) { StringUtil.toLowerCase(it) }
+    ?: emptySet()
 
   private fun applyHighlighting(node: ASTNode, elementType: IElementType) {
     if (node !is LeafElement) return
@@ -119,7 +121,8 @@ fun isCustomTag(file: PsiFile, tag: XmlTag): Boolean {
   return isHtmlLikeFile(file) && !isHtmlTagName(descriptor, tag)
 }
 
-private fun isHtmlLikeFile(file: PsiFile) = file.viewProvider.allFiles.any { it is HtmlCompatibleFile } || HtmlUtil.supportsXmlTypedHandlers(file)
+private fun isHtmlLikeFile(file: PsiFile) = file.viewProvider.allFiles.any { it is HtmlCompatibleFile } || HtmlUtil.supportsXmlTypedHandlers(
+  file)
 
 private fun isHtmlTagName(descriptor: XmlElementDescriptor, tag: XmlTag): Boolean {
   if (descriptor is HtmlElementDescriptorImpl) return true

@@ -338,12 +338,8 @@ public class HtmlCompletionTest extends BasePlatformTestCase {
 
   public void testAdditionalHtmlTagsInsertedByCompletion() throws Exception {
     final HtmlUnknownTagInspection inspection = new HtmlUnknownTagInspection();
-    String additionalEntries = inspection.getAdditionalEntries();
-    if (additionalEntries.length() > 0) {
-      additionalEntries += ",";
-    }
 
-    inspection.updateAdditionalEntries(additionalEntries + "zzz");
+    inspection.updateAdditionalEntries("zZz", getTestRootDisposable());
 
     doTestWithHtmlInspectionEnabled("", inspection);
     doTestWithHtmlInspectionEnabled("2", inspection);
@@ -351,12 +347,8 @@ public class HtmlCompletionTest extends BasePlatformTestCase {
 
   public void testAdditionalHtmlAttributesInsertedByCompletion() throws Exception {
     final HtmlUnknownAttributeInspection inspection = new HtmlUnknownAttributeInspection();
-    String additionalEntries = inspection.getAdditionalEntries();
-    if (additionalEntries.length() > 0) {
-      additionalEntries += ",";
-    }
 
-    inspection.updateAdditionalEntries(additionalEntries + "zzz");
+    inspection.updateAdditionalEntries("zZz", getTestRootDisposable());
 
     doTestWithHtmlInspectionEnabled("2", inspection);
     doTestWithHtmlInspectionEnabled("", inspection);
