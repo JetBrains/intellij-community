@@ -47,6 +47,7 @@ import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Contract;
@@ -474,6 +475,7 @@ public final class HighlightMethodUtil {
             registerMethodCallIntentions(builder, methodCall, list, resolveHelper);
             registerMethodReturnFixAction(builder, candidateInfo, methodCall);
             registerTargetTypeFixesBasedOnApplicabilityInference(methodCall, candidateInfo, resolvedMethod, builder);
+            registerImplementsExtendsFix(builder, methodCall, resolvedMethod);
             holder.add(builder.create());
             return;
           }
@@ -516,6 +518,30 @@ public final class HighlightMethodUtil {
     }
     if (builder != null) {
       holder.add(builder.create());
+    }
+  }
+
+  private static void registerImplementsExtendsFix(@NotNull HighlightInfo.Builder builder, @NotNull PsiMethodCallExpression methodCall, 
+                                                   @NotNull PsiMethod resolvedMethod) {
+    if (!JavaPsiConstructorUtil.isSuperConstructorCall(methodCall)) return;
+    if (!resolvedMethod.isConstructor() || !resolvedMethod.getParameterList().isEmpty()) return;
+    PsiClass psiClass = resolvedMethod.getContainingClass();
+    if (psiClass == null || !CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) return;
+    PsiClass containingClass = ClassUtils.getContainingClass(methodCall);
+    if (containingClass == null) return;
+    PsiReferenceList extendsList = containingClass.getExtendsList();
+    if (extendsList != null && extendsList.getReferenceElements().length > 0) return;
+    PsiReferenceList implementsList = containingClass.getImplementsList();
+    if (implementsList == null) return;
+    for (PsiClassType type : implementsList.getReferencedTypes()) {
+      PsiClass superInterface = type.resolve();
+      if (superInterface != null && !superInterface.isInterface()) {
+        for (PsiMethod constructor : superInterface.getConstructors()) {
+          if (!constructor.getParameterList().isEmpty()) {
+            builder.registerFix(QUICK_FIX_FACTORY.createChangeExtendsToImplementsFix(containingClass, type), null, null, null, null);
+          }
+        }
+      }
     }
   }
 
