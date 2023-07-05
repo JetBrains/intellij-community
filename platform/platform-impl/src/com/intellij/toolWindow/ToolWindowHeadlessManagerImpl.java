@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
@@ -131,11 +130,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   @Override
   public void setMaximized(@NotNull ToolWindow window, boolean maximized) {
-  }
-
-  @Override
-  public void initToolWindow(@NotNull ToolWindowEP bean) {
-    doRegisterToolWindow(bean.id);
   }
 
   @Override
@@ -668,6 +662,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public @NotNull ContentFactory getFactory() {
-      return ApplicationManager.getApplication().getService(ContentFactory.class);
+      return ContentFactory.getInstance();
     }
   }}

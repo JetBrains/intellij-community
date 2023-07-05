@@ -15,7 +15,6 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ext.LibraryDependentToolWindow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -104,13 +103,13 @@ private suspend fun checkToolWindowStatuses(project: Project, extensionId: Strin
   }
 }
 
-private fun applyWindowsState(state: LibraryWindowsState) {
-  val toolWindowManager = ToolWindowManagerEx.getInstanceEx(state.project)
+private suspend fun applyWindowsState(state: LibraryWindowsState) {
+  val toolWindowManager = ToolWindowManager.getInstance(state.project) as ToolWindowManagerImpl
   for (libraryToolWindow in state.extensions) {
     var toolWindow = toolWindowManager.getToolWindow(libraryToolWindow.id)
     if (state.existing.contains(libraryToolWindow)) {
       if (toolWindow == null) {
-        toolWindowManager.initToolWindow(libraryToolWindow)
+        toolWindowManager.initToolWindow(libraryToolWindow, libraryToolWindow.pluginDescriptor)
         if (!libraryToolWindow.showOnStripeByDefault) {
           toolWindow = toolWindowManager.getToolWindow(libraryToolWindow.id)
           if (toolWindow != null) {

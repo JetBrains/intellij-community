@@ -30,6 +30,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -40,6 +41,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
@@ -528,19 +530,21 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   @Deprecated("Use {{@link #registerToolWindow(RegisterToolWindowTask)}}")
-  override fun initToolWindow(bean: ToolWindowEP) {
+  fun initToolWindow(bean: ToolWindowEP) {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    initToolWindow(bean, bean.pluginDescriptor)
+    runWithModalProgressBlocking(project, "") {
+      initToolWindow(bean, bean.pluginDescriptor)
+    }
   }
 
-  internal fun initToolWindow(bean: ToolWindowEP, plugin: PluginDescriptor) {
+  internal suspend fun initToolWindow(bean: ToolWindowEP, plugin: PluginDescriptor) {
     val condition = bean.getCondition(plugin)
     if (condition != null && !condition.value(project)) {
       return
     }
 
     val factory = bean.getToolWindowFactory(bean.pluginDescriptor)
-    if (!factory.isApplicable(project)) {
+    if (!factory.isApplicableAsync(project)) {
       return
     }
 
@@ -1154,7 +1158,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     fireStateChanged(ToolWindowManagerEventType.UnregisterToolWindow, toolWindow)
   }
 
-  internal fun doUnregisterToolWindow(id: String) {
+  private fun doUnregisterToolWindow(id: String) {
     LOG.debug { "unregisterToolWindow($id)" }
 
     ApplicationManager.getApplication().assertIsDispatchThread()
@@ -2231,6 +2235,22 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     if (violations.isNotEmpty()) {
       LOG.error("Invariants failed: \n${violations.joinToString("\n")}\n${if (id == null) "" else "id: $id"}")
     }
+  }
+
+  // This method cannot be inlined because of magic Kotlin compilation bug: it 'captured' "list" local value and cause class-loader leak
+  // See IDEA-CR-61904
+  internal fun registerEpListeners() {
+    ToolWindowEP.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<ToolWindowEP> {
+      override fun extensionAdded(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
+        coroutineScope.launch {
+          initToolWindow(extension, pluginDescriptor)
+        }
+      }
+
+      override fun extensionRemoved(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
+        doUnregisterToolWindow(extension.id)
+      }
+    }, project)
   }
 }
 

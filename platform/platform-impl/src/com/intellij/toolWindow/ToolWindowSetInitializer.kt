@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
@@ -147,7 +146,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       }, suffix = " (secondary)")
     }
 
-    registerEpListeners(manager)
+    manager.registerEpListeners()
   }
 
   private suspend fun postEntryProcessing(entries: List<ToolWindowEntry>, suffix: String = "") {
@@ -221,20 +220,6 @@ private suspend fun addExtraTasks(tasks: List<RegisterToolWindowTask>,
     }
   }
   return result
-}
-
-// This method cannot be inlined because of magic Kotlin compilation bug: it 'captured' "list" local value and cause class-loader leak
-// See IDEA-CR-61904
-private fun registerEpListeners(manager: ToolWindowManagerImpl) {
-  ToolWindowEP.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<ToolWindowEP> {
-    override fun extensionAdded(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
-      manager.initToolWindow(extension, pluginDescriptor)
-    }
-
-    override fun extensionRemoved(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
-      manager.doUnregisterToolWindow(extension.id)
-    }
-  }, manager.project)
 }
 
 internal fun getToolWindowAnchor(factory: ToolWindowFactory?, bean: ToolWindowEP): ToolWindowAnchor {

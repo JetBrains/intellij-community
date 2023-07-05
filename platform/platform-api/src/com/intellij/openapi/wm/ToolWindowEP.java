@@ -68,7 +68,7 @@ public class ToolWindowEP implements PluginAware {
   public String factoryClass;
 
   /**
-   * @deprecated Implement {@link ToolWindowFactory#isApplicable(Project)} instead.
+   * @deprecated Implement {@link ToolWindowFactory#isApplicableAsync} instead.
    */
   @Attribute
   @Deprecated
