@@ -10,6 +10,7 @@
   <extensions defaultExtensionNs="com.intellij.ide.newUiOnboarding">
     <step key="projectWidget" implementationClass="com.intellij.ide.newUiOnboarding.steps.ProjectWidgetStep"/>
     <step key="runWidget" implementationClass="com.intellij.ide.newUiOnboarding.steps.RunWidgetStep"/>
+    <step key="toolWindowLayouts" implementationClass="com.intellij.ide.newUiOnboarding.steps.ToolWindowLayoutsStep"/>
   </extensions>
 
   <actions resource-bundle="messages.NewUiOnboardingBundle">
