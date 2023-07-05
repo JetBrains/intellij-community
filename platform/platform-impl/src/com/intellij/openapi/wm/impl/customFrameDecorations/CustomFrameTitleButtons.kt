@@ -181,11 +181,11 @@ private class TitleButtonsPanel : JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)) {
   }
 
   private fun JComponent.setScaledPreferredSize() {
-    val size = CurrentTheme.TitlePane.buttonPreferredSize().clone() as Dimension
+    val size = CurrentTheme.TitlePane.buttonPreferredSize(UISettings.defFontScale).clone() as Dimension
     if (isCompactMode) {
       size.height = JBUIScale.scale(30)
     }
-    preferredSize = Dimension((size.width * UISettings.defFontScale).toInt(), (size.height * UISettings.defFontScale).toInt())
+    preferredSize = Dimension(size.width, size.height)
   }
 
   override fun updateUI() {
