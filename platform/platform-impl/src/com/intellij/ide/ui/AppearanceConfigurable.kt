@@ -328,10 +328,10 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                   })
           }
           if (SystemInfo.isMac && MacCustomAppIcon.available()) {
-            yield {
+            yield( {
               checkBox(message("checkbox.ide.mac.app.icon")).comment(message("ide.restart.required.comment"))
                 .bindSelected({ MacCustomAppIcon.isCustom() }, { MacCustomAppIcon.setCustom(it) })
-            }
+            })
           }
         }
         val rightColumnControls = sequence<Row.() -> Unit> {

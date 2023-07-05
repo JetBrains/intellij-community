@@ -32,6 +32,9 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    */
   public abstract @NotNull String getApplicationSvgIconUrl();
 
+
+  public abstract @Nullable String getApplicationCustomIcon();
+
   /**
    * Returns a path to an SVG file,
    * containing a variant of {@link #getApplicationSvgIconUrl() the product icon} which is suitable for 16x16 images.

@@ -63,6 +63,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySmallSvgEapIconUrl;
   private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.svg";
   private String myWelcomeScreenLogoUrl;
+  private String myCustomAppIcon;
 
   private Calendar myBuildDate;
   private Calendar myMajorReleaseBuildDate;
@@ -159,6 +160,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
           }
           mySvgIconUrl = child.getAttributeValue("svg");
           mySmallSvgIconUrl = child.getAttributeValue("svg-small");
+          myCustomAppIcon = child.getAttributeValue("custom");
         }
         break;
 
@@ -467,6 +469,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public @NotNull String getApplicationSvgIconUrl() {
     return isEAP() && mySvgEapIconUrl != null ? mySvgEapIconUrl : mySvgIconUrl;
+  }
+
+  @Override
+  public @Nullable String getApplicationCustomIcon() {
+    return myCustomAppIcon;
   }
 
   @Override
