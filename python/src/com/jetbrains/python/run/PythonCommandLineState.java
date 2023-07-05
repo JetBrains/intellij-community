@@ -861,7 +861,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
         addIfNeeded(realFile, pathList);
       }
     }
-    else {
+    else if (file.isDirectory()) {
       addIfNeeded(file, pathList);
     }
   }
