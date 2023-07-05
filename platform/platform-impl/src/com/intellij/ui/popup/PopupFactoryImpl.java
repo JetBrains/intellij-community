@@ -706,6 +706,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private @NlsActions.ActionText String myText;
     private final int myMaxIconWidth;
     private final int myMaxIconHeight;
+    private boolean myIsKeepPopupOpen;
 
     public InlineActionItem(AnAction action, int maxIconWidth, int maxIconHeight) {
       myAction = action;
@@ -725,11 +726,14 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
       if (icon == null) icon = selectedIcon != null ? selectedIcon : EmptyIcon.create(myMaxIconWidth, myMaxIconHeight);
       boolean disableIcon = Boolean.TRUE.equals(presentation.getClientProperty(DISABLE_ICON_IN_LIST));
+      myIsKeepPopupOpen = myIsKeepPopupOpen || presentation.isMultiChoice() || myAction instanceof KeepingPopupOpenAction;
 
       myIcon = disableIcon ? null : icon;
       mySelectedIcon = selectedIcon;
       myText = presentation.getText();
     }
+
+    public boolean isKeepPopupOpen() { return myIsKeepPopupOpen; }
 
     @Override
     public @NotNull AnAction getAction() {
