@@ -313,7 +313,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     }
 
     runCatching {
-      Disposer.dispose(releasedFrameHelper)
+      releasedFrameHelper.dispose()
     }.getOrLogException(LOG)
   }
 

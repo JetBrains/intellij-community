@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
@@ -62,6 +63,7 @@ import com.jetbrains.WindowDecorations
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.FlowCollector
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import java.awt.*
 import java.awt.event.MouseMotionAdapter
 import javax.accessibility.AccessibleContext
@@ -80,7 +82,6 @@ internal val isFloatingMenuBarSupported: Boolean
 @Suppress("LeakingThis")
 @ApiStatus.Internal
 open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
-                                            parentDisposable: Disposable,
                                             loadingState: FrameLoadingState?) : JRootPane(), UISettingsListener {
   private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -237,6 +238,9 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     setGlassPane(glassPane)
     glassPaneInitialized = true
 
+    val parentDisposable = Disposer.newDisposable()
+    coroutineScope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(parentDisposable) }
+
     if (hideNativeLinuxTitle) {
       WindowResizeListenerEx(glassPane, frame, JBUI.insets(4), null).apply {
         install(parentDisposable)
@@ -328,6 +332,23 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     }
   }
 
+  internal fun createDecorator(): IdeFrameDecorator? {
+    val disposable = Disposer.newDisposable()
+    coroutineScope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
+    return IdeFrameDecorator.decorate(frame, rootPane.glassPane as IdeGlassPane, disposable)
+  }
+
+  @Suppress("unused")
+  internal val isCoroutineScopeCancelled: Boolean
+    get() = !coroutineScope.isActive
+
+  @Obsolete
+  internal fun createDisposable(): Disposable {
+    val disposable = Disposer.newDisposable()
+    coroutineScope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
+    return disposable
+  }
+
   /**
    * @return not-null action group or null to use [IdeActions.GROUP_MAIN_MENU] action group
    */
@@ -345,7 +366,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       toolWindowButtonManager = ToolWindowPaneOldButtonManager(paneId)
     }
     toolWindowPane = ToolWindowPane(frame = frame,
-                                    parentDisposable = parentDisposable,
+                                    coroutineScope = coroutineScope,
                                     paneId = paneId,
                                     buttonManager = toolWindowButtonManager)
     return toolWindowPane!!
@@ -502,8 +523,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   }
 
   protected open fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
-    return IdeStatusBarImpl(disposable = frameHelper,
-                            frameHelper = frameHelper,
+    return IdeStatusBarImpl(frameHelper = frameHelper,
                             addToolWindowWidget = !ExperimentalUI.isNewUI() && !GeneralSettings.getInstance().isSupportScreenReaders,
                             coroutineScope = coroutineScope.childScope())
   }

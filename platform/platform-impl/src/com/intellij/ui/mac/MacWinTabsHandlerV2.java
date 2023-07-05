@@ -171,7 +171,7 @@ public final class MacWinTabsHandlerV2 extends MacWinTabsHandler {
     else {
       for (IdeFrame _helper : helpers) {
         ProjectFrameHelper helper = (ProjectFrameHelper)_helper;
-        if (Disposer.isDisposed(helper)) {
+        if (helper.rootPane.isCoroutineScopeCancelled$intellij_platform_ide_impl()) {
           continue;
         }
 
@@ -187,8 +187,7 @@ public final class MacWinTabsHandlerV2 extends MacWinTabsHandler {
   private static void createTabBarsForFrame(@NotNull IdeFrameImpl frame,
                                             @NotNull ProjectFrameHelper helper,
                                             IdeFrameImpl @NotNull [] tabFrames) {
-    Disposable disposable = Disposer.newDisposable(helper, "");
-    WindowTabsComponent tabs = new WindowTabsComponent(frame, helper.getProject(), disposable);
+    WindowTabsComponent tabs = new WindowTabsComponent(frame, helper.getProject(), helper.rootPane.createDisposable$intellij_platform_ide_impl());
 
     JPanel parentComponent = getTabsContainer(frame);
     parentComponent.add(tabs);

@@ -73,7 +73,6 @@ private val WIDGET_ID = Key.create<String>("STATUS_BAR_WIDGET_ID")
 private val MIN_ICON_HEIGHT = JBUI.scale(18 + 1 + 1)
 
 open class IdeStatusBarImpl internal constructor(
-  private val disposable: Disposable,
   private val coroutineScope: CoroutineScope,
   private val frameHelper: ProjectFrameHelper,
   addToolWindowWidget: Boolean,
@@ -130,10 +129,7 @@ open class IdeStatusBarImpl internal constructor(
 
   override fun createChild(disposable: Disposable, frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar {
     EDT.assertIsEdt()
-    val bar = IdeStatusBarImpl(disposable = disposable,
-                               frameHelper = frameHelper,
-                               addToolWindowWidget = false,
-                               coroutineScope = coroutineScope.childScope())
+    val bar = IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false, coroutineScope = coroutineScope.childScope())
     bar.editorProvider = editorProvider
     bar.isVisible = isVisible
     children.add(bar)
@@ -149,7 +145,11 @@ open class IdeStatusBarImpl internal constructor(
   override val component: JComponent?
     get() = this
 
+  private val disposable = Disposer.newDisposable()
+
   init {
+    coroutineScope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
+
     layout = BorderLayout()
     isOpaque = true
     border = (if (ExperimentalUI.isNewUI()) {
@@ -172,6 +172,9 @@ open class IdeStatusBarImpl internal constructor(
     registerCloneTasks()
 
     if (addToolWindowWidget) {
+      val disposable = Disposer.newDisposable()
+      coroutineScope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
+
       val toolWindowWidget = ToolWindowsWidget(disposable, this)
       val toolWindowWidgetComponent = wrapCustomStatusBarWidget(toolWindowWidget)
       widgetMap.put(toolWindowWidget.ID(), WidgetBean(widget = toolWindowWidget,
@@ -187,7 +190,7 @@ open class IdeStatusBarImpl internal constructor(
 
     enableEvents(AWTEvent.MOUSE_EVENT_MASK)
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK)
-    IdeEventQueue.getInstance().addDispatcher({ e -> if (e is MouseEvent) dispatchMouseEvent(e) else false }, disposable)
+    IdeEventQueue.getInstance().addDispatcher({ e -> if (e is MouseEvent) dispatchMouseEvent(e) else false }, coroutineScope)
   }
 
   private fun createInfoAndProgressPanel(): InfoAndProgressPanel {
@@ -196,14 +199,7 @@ open class IdeStatusBarImpl internal constructor(
     }
 
     val infoAndProgressPanel = InfoAndProgressPanel(statusBar = this, coroutineScope = coroutineScope.childScope())
-    ClientProperty.put(infoAndProgressPanel.component, WIDGET_ID, infoAndProgressPanel.ID())
     centerPanel.add(infoAndProgressPanel.component)
-    widgetMap.put(infoAndProgressPanel.ID(), WidgetBean(widget = infoAndProgressPanel,
-                                                        position = Position.CENTER,
-                                                        component = infoAndProgressPanel.component,
-                                                        order = LoadingOrder.ANY))
-    Disposer.register(disposable, infoAndProgressPanel)
-
     this.infoAndProgressPanel = infoAndProgressPanel
     return infoAndProgressPanel
   }
@@ -742,7 +738,7 @@ open class IdeStatusBarImpl internal constructor(
       .collectCloneableProjects()
       .map { it.cloneableProject }
       .forEach { addProgress(indicator = it.progressIndicator, info = it.cloneTaskInfo) }
-    ApplicationManager.getApplication().messageBus.connect(disposable)
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope)
       .subscribe(CloneableProjectsService.TOPIC, object : CloneProjectListener {
         override fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) {
           addProgress(progressIndicator, taskInfo)
@@ -969,16 +965,16 @@ internal fun adaptV2Widget(id: String,
                            presentationFactory: (CoroutineScope) -> WidgetPresentation): StatusBarWidget {
   return object : StatusBarWidget, CustomStatusBarWidget {
     @Suppress("DEPRECATION")
-    private val scope = dataContext.project.coroutineScope.childScope()
+    private val coroutineScope = dataContext.project.coroutineScope.childScope()
 
     override fun ID(): String = id
 
     override fun getComponent(): JComponent {
-      return createComponentByWidgetPresentation(presentation = presentationFactory(scope), project = dataContext.project, scope = scope)
+      return createComponentByWidgetPresentation(presentation = presentationFactory(coroutineScope), project = dataContext.project, scope = coroutineScope)
     }
 
     override fun dispose() {
-      scope.cancel()
+      coroutineScope.cancel()
     }
   }
 }

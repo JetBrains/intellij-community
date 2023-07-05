@@ -7,11 +7,11 @@ import com.intellij.ide.RemoteDesktopService
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ThreeComponentsSplitter
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getRegistere
 import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.JBUIScale
@@ -38,6 +39,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -60,7 +62,7 @@ private val LOG = logger<ToolWindowPane>()
  */
 class ToolWindowPane internal constructor(
   frame: JFrame,
-  parentDisposable: Disposable,
+  coroutineScope: CoroutineScope,
   val paneId: String,
   @field:JvmField internal val buttonManager: ToolWindowButtonManager,
 ) : JLayeredPane(), UISettingsListener {
@@ -99,6 +101,8 @@ class ToolWindowPane internal constructor(
   private var leftHorizontalSplit: Boolean
   private var rightHorizontalSplit: Boolean
 
+  private val disposable = Disposer.newDisposable()
+
   init {
     isOpaque = false
     this.frame = frame
@@ -106,17 +110,17 @@ class ToolWindowPane internal constructor(
     name = paneId
 
     // splitters
-    verticalSplitter = ThreeComponentsSplitter(true, parentDisposable)
+    verticalSplitter = ThreeComponentsSplitter(true)
     val registryValue = Registry.get("ide.mainSplitter.min.size")
     registryValue.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
         updateInnerMinSize(value)
       }
-    }, parentDisposable)
+    }, disposable)
     verticalSplitter.dividerWidth = 0
     verticalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"))
     verticalSplitter.background = JBColor.GRAY
-    horizontalSplitter = ThreeComponentsSplitter(false, parentDisposable)
+    horizontalSplitter = ThreeComponentsSplitter(false)
     horizontalSplitter.dividerWidth = 0
     horizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"))
     horizontalSplitter.background = JBColor.GRAY
@@ -140,12 +144,20 @@ class ToolWindowPane internal constructor(
     buttonManager.addToToolWindowPane(this)
     add(layeredPane, DEFAULT_LAYER, -1)
     focusTraversalPolicy = LayoutFocusTraversalPolicy()
-    ToolWindowDragHelper(parentDisposable, this).start()
+    ToolWindowDragHelper(disposable, this).start()
     if (Registry.`is`("ide.allow.split.and.reorder.in.tool.window")) {
-      ToolWindowInnerDragHelper(parentDisposable, this).start()
+      ToolWindowInnerDragHelper(disposable, this).start()
     }
     val app = ApplicationManager.getApplication()
-    app.messageBus.connect(parentDisposable).subscribe(LafManagerListener.TOPIC, LafManagerListener { isLookAndFeelUpdated = true })
+    app.messageBus.connect(coroutineScope).subscribe(LafManagerListener.TOPIC, LafManagerListener { isLookAndFeelUpdated = true })
+  }
+
+  override fun removeNotify() {
+    super.removeNotify()
+
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      Disposer.dispose(disposable)
+    }
   }
 
   private fun updateInnerMinSize(value: RegistryValue) {

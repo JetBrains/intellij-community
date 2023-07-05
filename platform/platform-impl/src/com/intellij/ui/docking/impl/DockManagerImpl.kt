@@ -44,12 +44,17 @@ import com.intellij.ui.components.panels.VerticalBox
 import com.intellij.ui.docking.*
 import com.intellij.ui.docking.DockContainer.ContentResponse
 import com.intellij.util.IconUtil
+import com.intellij.util.childScope
 import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import org.jdom.Element
 import org.jetbrains.annotations.Contract
 import java.awt.*
@@ -459,6 +464,8 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
                                  private var container: DockContainer,
                                  isDialog: Boolean,
                                  val supportReopen: Boolean) : FrameWrapper(project, dimensionKey ?: "dock-window-$id", isDialog) {
+    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
     var northPanelAvailable = false
     private val northPanel = VerticalBox()
     private val northExtensions = LinkedHashMap<String, JComponent>()
@@ -528,7 +535,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
         buttonManager = ToolWindowPaneOldButtonManager(paneId)
       }
       val containerComponent = container.containerComponent
-      toolWindowPane = ToolWindowPane(frame = frame, parentDisposable = this, paneId = paneId, buttonManager = buttonManager)
+      toolWindowPane = ToolWindowPane(frame = frame, coroutineScope = coroutineScope.childScope(), paneId = paneId, buttonManager = buttonManager)
       val toolWindowManagerImpl = ToolWindowManager.getInstance(project) as ToolWindowManagerImpl
       toolWindowManagerImpl.addToolWindowPane(toolWindowPane!!, this)
 
@@ -631,6 +638,8 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
         Disposer.dispose((container as Disposable))
       }
       northExtensions.clear()
+
+      coroutineScope.cancel()
     }
 
     override fun createJFrame(parent: IdeFrame): JFrame {

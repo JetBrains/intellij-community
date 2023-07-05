@@ -22,8 +22,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider {
-  private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter(false, true, this);
+public final class GridImpl extends Wrapper implements Grid, Disposable, DataProvider {
+  private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter(false, true);
   private final Splitter mySplitter = new Splitter(true);
 
   private final Map<PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new EnumMap<>(PlaceInGrid.class);

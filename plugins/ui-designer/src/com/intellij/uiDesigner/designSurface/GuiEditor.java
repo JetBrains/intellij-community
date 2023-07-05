@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -170,7 +170,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   private final DocumentListener myDocumentListener;
   private final CardLayout myCardLayout = new CardLayout();
   private final Disposable myContentSplitterDisposable = Disposer.newDisposable();
-  private final ThreeComponentsSplitter myContentSplitter = new ThreeComponentsSplitter(myContentSplitterDisposable);
+  private final ThreeComponentsSplitter myContentSplitter = new ThreeComponentsSplitter();
   private final JPanel myCardPanel = new JPanel(myCardLayout);
 
   @NonNls private static final String CARD_VALID = "valid";

@@ -16,7 +16,6 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.service.fus.collectors.ProgressPaused
 import com.intellij.internal.statistic.service.fus.collectors.ProgressResumed
 import com.intellij.notification.ActionCenter
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -38,9 +37,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
-import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.reference.SoftReference
 import com.intellij.ui.*
@@ -76,7 +73,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatusBarImpl,
-                                                private val coroutineScope: CoroutineScope) : CustomStatusBarWidget, UISettingsListener {
+                                                private val coroutineScope: CoroutineScope) : UISettingsListener {
   companion object {
     @JvmField
     @ApiStatus.Internal
@@ -98,9 +95,9 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
   private var popup: ProcessPopup? = null
   private val balloon = ProcessBalloon(3)
 
-  private val mainPanelLazy = lazy(LazyThreadSafetyMode.NONE) { InfoAndProgressPanelImpl() }
-  private val mainPanel: InfoAndProgressPanelImpl
-    get() = mainPanelLazy.value
+  private val mainPanel: InfoAndProgressPanelImpl = InfoAndProgressPanelImpl(this)
+  internal val component: JPanel
+    get() = mainPanel
 
   private val originals = ArrayList<ProgressIndicatorEx>()
   private val infos = ArrayList<TaskInfo>()
@@ -125,7 +122,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
   }
 
   init {
-    runOnProgressRelatedChange(runnable = { updateProgressIcon() }, parentDisposable = this, powerSaveMode = true)
+    runOnProgressRelatedChange(runnable = { updateProgressIcon() }, coroutineScope = coroutineScope, powerSaveMode = true)
 
     coroutineScope.launch {
       runQueryRequests
@@ -155,13 +152,13 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     }
   }
 
-  private fun runOnProgressRelatedChange(runnable: () -> Unit, parentDisposable: Disposable, powerSaveMode: Boolean) {
+  private fun runOnProgressRelatedChange(runnable: () -> Unit, coroutineScope: CoroutineScope, powerSaveMode: Boolean) {
     synchronized(originals) {
       if (disposed) {
         return
       }
 
-      val connection = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable)
+      val connection = ApplicationManager.getApplication().getMessageBus().connect(coroutineScope)
       if (powerSaveMode) {
         connection.subscribe(PowerSaveMode.TOPIC, PowerSaveMode.Listener { EdtInvocationManager.invokeLaterIfNeeded(runnable) })
       }
@@ -186,16 +183,12 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     }
   }
 
-  override fun ID(): String = "InfoAndProgress"
-
-  override fun getPresentation(): StatusBarWidget.WidgetPresentation? = null
-
   @ApiStatus.Experimental
   fun setCentralComponent(component: JComponent?) {
     mainPanel.setCentralComponent(component)
   }
 
-  override fun dispose() {
+  fun dispose() {
     setRefreshHidden()
     synchronized(originals) {
       restoreEmptyStatus()
@@ -209,8 +202,6 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     mainPanel.dispose()
     infos.clear()
   }
-
-  override fun getComponent(): JComponent = mainPanel
 
   val backgroundProcesses: List<Pair<TaskInfo, ProgressIndicatorEx>>
     get() {
@@ -475,7 +466,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
   }
 
   private fun updateProgressIcon() {
-    val progressIcon = if (mainPanelLazy.isInitialized()) mainPanelLazy.value.inlinePanel.progressIcon else return
+    val progressIcon = mainPanel.inlinePanel.progressIcon
     if (originals.isEmpty() ||
         PowerSaveMode.isEnabled() ||
         originals.asSequence().mapNotNull { ProgressSuspender.getSuspender(it) }.all { it.isSuspended }) {
@@ -505,11 +496,11 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     mainPanel.uiSettingsChanged(uiSettings)
   }
 
-  private inner class InfoAndProgressPanelImpl : JBPanel<JBPanel<*>?>(), UISettingsListener {
+  private class InfoAndProgressPanelImpl(private val host: InfoAndProgressPanel) : JBPanel<JBPanel<*>?>(), UISettingsListener {
     val refreshIcon: JLabel = JLabel(AnimatedIcon.FS())
     val statusPanel: StatusPanel = StatusPanel()
     private val refreshAndInfoPanel = JPanel()
-    val inlinePanel: InlineProgressPanel = InlineProgressPanel(this@InfoAndProgressPanel)
+    val inlinePanel: InlineProgressPanel = InlineProgressPanel(host)
     private var centralComponent: JComponent? = null
     // see also: `VfsRefreshIndicatorWidgetFactory#myAvailable`
     var showNavBar: Boolean
@@ -600,12 +591,12 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       if (last) {
         updateNavBarAutoscrollToSelectedLimit(AutoscrollLimit.UNLIMITED)
         inlinePanel.updateState(null)
-        if (shouldClosePopupAndOnProcessFinish) {
-          hideProcessPopup()
+        if (host.shouldClosePopupAndOnProcessFinish) {
+          host.hideProcessPopup()
         }
       }
       else if (inlinePanel.indicator != null && inlinePanel.indicator!!.info === progress.info) {
-        setInlineProgressByWeight()
+        host.setInlineProgressByWeight()
       }
       else {
         inlinePanel.updateState()
@@ -732,7 +723,9 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
  }
       })
       @Suppress("LeakingThis")
-      runOnProgressRelatedChange(runnable = { queueProgressUpdate() }, parentDisposable = this, powerSaveMode = canCheckPowerSaveMode())
+      runOnProgressRelatedChange(runnable = ::queueProgressUpdate,
+                                 coroutineScope = coroutineScope,
+                                 powerSaveMode = canCheckPowerSaveMode())
     }
 
     override fun createCompactTextAndProgress(component: JPanel) {
@@ -833,8 +826,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
 
     protected val suspender: ProgressSuspender?
       get() {
-        val original = original
-        return if (original == null) null else ProgressSuspender.getSuspender(original)
+        return ProgressSuspender.getSuspender(original ?: return null)
       }
 
     override fun stop() {
@@ -977,7 +969,11 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       progressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
       progressIcon.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border())
       progressIcon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"))
-      Disposer.register(host, progressIcon)
+
+      host.coroutineScope.coroutineContext.job.invokeOnCompletion {
+        Disposer.dispose(progressIcon)
+      }
+
       setLayout(object : AbstractLayoutManager() {
         override fun preferredLayoutSize(parent: Container): Dimension {
           val result = Dimension()

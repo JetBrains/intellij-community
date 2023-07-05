@@ -140,9 +140,7 @@ internal class LightEditFrameWrapper(
   val lightEditPanel: LightEditPanel
     get() = editPanel!!
 
-  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
-    return LightEditRootPane(frame = frame, parentDisposable = this)
-  }
+  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane = LightEditRootPane(frame = frame)
 
   override suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
     val editorManager = LightEditService.getInstance().editorManager
@@ -196,10 +194,7 @@ internal class LightEditFrameWrapper(
     super.dispose()
   }
 
-  private inner class LightEditRootPane(frame: IdeFrameImpl,
-                                        parentDisposable: Disposable) : IdeRootPane(frame = frame,
-                                                                                    parentDisposable = parentDisposable,
-                                                                                    loadingState = null), LightEditCompatible {
+  private inner class LightEditRootPane(frame: IdeFrameImpl) : IdeRootPane(frame = frame, loadingState = null), LightEditCompatible {
     override val isLightEdit: Boolean
       get() = true
 
@@ -218,10 +213,7 @@ internal class LightEditFrameWrapper(
 
     @Suppress("DEPRECATION")
     override fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
-      return object : IdeStatusBarImpl(disposable = frameHelper,
-                                       frameHelper = frameHelper,
-                                       addToolWindowWidget = false,
-                                       coroutineScope = project.coroutineScope) {
+      return object : IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false, coroutineScope = project.coroutineScope) {
         override fun updateUI() {
           setUI(LightEditStatusBarUI())
         }

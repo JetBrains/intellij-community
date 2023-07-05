@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.intellij.ide.RecentProjectsManagerBase;
@@ -177,7 +177,7 @@ public class MacWinTabsHandler {
 
       for (int i = 0; i < frames.length; i++) {
         ProjectFrameHelper helper = (ProjectFrameHelper)frames[i];
-        if (Disposer.isDisposed(helper)) {
+        if (helper.rootPane.isCoroutineScopeCancelled$intellij_platform_ide_impl()) {
           visibleAndHeights[i] = 0;
           continue;
         }
