@@ -113,6 +113,15 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
               """.trimMargin())
             }
           }
+          assertNode("test wrapped assertion exception") {
+            // Wrapped assertion exceptions isn't recognized by Gradle and IDE comparison extractors.
+            assertTestConsoleContains("""
+              |java.lang.AssertionError: additional message
+            """.trimMargin())
+            assertTestConsoleContains("""
+              |org.opentest4j.AssertionFailedError: assertion message ==> expected: <expected text> but was: <actual text>
+            """.trimMargin())
+          }
         }
       }
     }
@@ -351,6 +360,15 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
               |<Click to see difference>
               |
               |java.lang.AssertionError: assertion message expected same:<string> was not:<string>
+            """.trimMargin())
+          }
+          assertNode("test_wrapped_assertion_exception") {
+            // Wrapped assertion exceptions isn't recognized by Gradle and IDE comparison extractors.
+            assertTestConsoleContains("""
+              |java.lang.AssertionError: additional message
+            """.trimMargin())
+            assertTestConsoleContains("""
+              |org.junit.ComparisonFailure: assertion message expected:<[expected] text> but was:<[actual] text>
             """.trimMargin())
           }
         }
@@ -952,6 +970,15 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       |        () -> Assertions.assertEquals("expected text 3", "actual text 3", "assertion message 3")
       |    );
       |  }
+      |  
+      |  @Test
+      |  public void test_wrapped_assertion_exception() {
+      |    try {
+      |      Assertions.assertEquals("expected text", "actual text", "assertion message");
+      |    } catch (AssertionError error) {
+      |      throw new AssertionError("additional message", error);
+      |    }
+      |  }
       |}
     """.trimMargin()
 
@@ -1194,6 +1221,15 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       |      }
       |    };
       |    Assert.assertSame("assertion message", expected, actual);
+      |  }
+      |  
+      |  @Test
+      |  public void test_wrapped_assertion_exception() {
+      |    try {
+      |      Assert.assertEquals("assertion message", "expected text", "actual text");
+      |    } catch (AssertionError error) {
+      |      throw new AssertionError("additional message", error);
+      |    }
       |  }
       |}
     """.trimMargin()

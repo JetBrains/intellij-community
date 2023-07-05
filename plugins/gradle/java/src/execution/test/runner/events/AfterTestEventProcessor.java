@@ -25,7 +25,7 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionCo
 
 public class AfterTestEventProcessor extends AbstractTestEventProcessor {
 
-  private static final Logger LOG = Logger.getInstance(AfterTestEventProcessor.class);
+  private static final Logger LOG = Logger.getInstance("com.intellij.openapi.externalSystem.event-processing");
 
   public AfterTestEventProcessor(GradleTestsExecutionConsole executionConsole) {
     super(executionConsole);
@@ -94,7 +94,7 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
       getExecutionConsole().getEventPublisher().onTestFinished(testProxy);
     }
     else {
-      LOG.error("Undefined test result: " + testResult.getClass().getName());
+      LOG.warn("Undefined test result: " + testResult.getClass().getName());
       getResultsViewer().onTestFinished(testProxy);
       getExecutionConsole().getEventPublisher().onTestFinished(testProxy);
     }
@@ -105,7 +105,7 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
       processTestFailureResult(testProxy, testFailure);
     }
     else {
-      LOG.error("Undefined test failure type: " + failure.getClass().getName());
+      LOG.warn("Undefined test failure type: " + failure.getClass().getName());
       var message = ObjectUtils.doIfNotNull(failure, it -> it.getMessage());
       var description = ObjectUtils.doIfNotNull(failure, it -> it.getDescription());
       testProxy.setTestFailed(message, description, true);
