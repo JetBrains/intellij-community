@@ -13,6 +13,9 @@ dependencies {
   implementation("org.jetbrains:annotations:23.1.0")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
   implementation(devNpm("terser-webpack-plugin", "5.3.6"))
+  implementation(devNpm("css-loader", "6.8.1"))
+  implementation(devNpm("style-loader", "3.3.3"))
+  implementation(npm("@fortawesome/fontawesome-free", "6.4.0"))
 }
 
 kotlin {

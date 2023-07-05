@@ -22,3 +22,14 @@ config.optimization.minimizer.push(new TerserPlugin({
         keep_fnames: true
     }
 }));
+
+if (!config.module) {
+    config.module = {};
+}
+if (!config.module.rules) {
+    config.module.rules = [];
+}
+config.module.rules.push({
+    test: /\.css$/i,
+    use: ["style-loader", "css-loader"],
+});
