@@ -162,8 +162,8 @@ class ToolWindowPane internal constructor(
 
   private fun updateInnerMinSize(value: RegistryValue) {
     val minSize = max(0, min(100, value.asInteger()))
-    verticalSplitter.setMinSize(JBUIScale.scale(minSize))
-    horizontalSplitter.setMinSize(JBUIScale.scale(minSize))
+    verticalSplitter.minSize = JBUIScale.scale(minSize)
+    horizontalSplitter.minSize = JBUIScale.scale(minSize)
   }
 
   override fun doLayout() {

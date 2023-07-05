@@ -1,990 +1,867 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.ui;
+@file:Suppress("FunctionName")
 
-import static com.intellij.util.ui.FocusUtil.findFocusableComponentIn;
-import static com.intellij.util.ui.FocusUtil.getDefaultComponentInPanel;
-import static com.intellij.util.ui.FocusUtil.getMostRecentComponent;
+package com.intellij.openapi.ui
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Weighted;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeGlassPane;
-import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.UIBundle;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.MathUtil;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import java.awt.AWTEvent;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Window;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.Arrays;
-import java.util.List;
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.LayoutFocusTraversalPolicy;
-import javax.swing.SwingUtilities;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Weighted
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeGlassPane
+import com.intellij.openapi.wm.IdeGlassPaneUtil
+import com.intellij.ui.ClickListener
+import com.intellij.ui.ComponentUtil
+import com.intellij.ui.ScreenUtil
+import com.intellij.ui.UIBundle
+import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.EventDispatcher
+import com.intellij.util.ui.*
+import java.awt.*
+import java.awt.event.ComponentEvent
+import java.awt.event.ComponentListener
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.util.function.Predicate
+import javax.swing.*
+import kotlin.math.max
 
-public class ThreeComponentsSplitter extends JPanel implements Disposable {
-  private static final Icon SplitGlueV = EmptyIcon.create(17, 6);
+open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean = false,
+                                                             onePixelDividers: Boolean = false) : JPanel(), Disposable {
+  private var isLookAndFeelUpdated = false
 
-  private boolean isLookAndFeelUpdated = false;
-
-  private int myDividerWidth;
   /**
-   *                        /------/
-   *                        |  1   |
+   * /------/
+   * |  1   |
    * This is vertical split |------|
-   *                        |  2   |
-   *                        /------/
+   * |  2   |
+   * /------/
    *
-   *                          /-------/
-   *                          |   |   |
+   * /-------/
+   * |   |   |
    * This is horizontal split | 1 | 2 |
-   *                          |   |   |
-   *                          /-------/
+   * |   |   |
+   * /-------/
    */
-  private boolean verticalSplit;
-  private boolean honorMinimumSize = false;
+  private var verticalSplit = false
+  private var isHonorMinimumSize: Boolean = false
+  private val firstDivider: Divider?
+  private val lastDivider: Divider
+  private var dividerDispatcher: EventDispatcher<ComponentListener>? = null
 
-  private final Divider firstDivider;
-  private final Divider lastDivider;
-  private EventDispatcher<ComponentListener> dividerDispatcher;
+  var firstComponent: JComponent? = null
+    /**
+     * Sets component which is located as the "first" split area. The method doesn't validate and
+     * repaint the splitter if there is one already.
+     *
+     */
+    set(component) {
+      if (field === component) {
+        return
+      }
+      if (field != null) {
+        remove(field)
+      }
+      field = component
+      doAddComponent(component)
+    }
 
-  @Nullable private JComponent firstComponent;
-  @Nullable private JComponent innerComponent;
-  @Nullable private JComponent lastComponent;
+  var innerComponent: JComponent? = null
+    /**
+     * Sets component which is located as the "inner" splitted area. The method doesn't validate and
+     * repaint the splitter.
+     */
+    set(component) {
+      if (field === component) {
+        return
+      }
+      if (field != null) {
+        remove(field)
+      }
+      field = component
+      doAddComponent(component)
+    }
 
-  private int myFirstSize = 0;
-  private int myLastSize = 0;
-  private int myMinSize = 0;
+  var lastComponent: JComponent? = null
+    /**
+     * Sets component which is located as the "second" split area. The method doesn't validate and
+     * repaint the splitter.
+     */
+    set(component) {
+      if (field === component) {
+        return
+      }
+      if (field != null) {
+        remove(field)
+      }
+      field = component
+      doAddComponent(component)
+    }
 
-  private boolean showDividerControls;
-  private int dividerZone;
+  private var showDividerControls = false
+  private var dividerZone = 0
 
-  private final class MyFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
-    @Override
-    @SuppressWarnings("Duplicates")
-    public Component getComponentAfter(Container aContainer, Component aComponent) {
-      Component comp;
+  private inner class MyFocusTraversalPolicy : LayoutFocusTraversalPolicy() {
+    override fun getComponentAfter(aContainer: Container, aComponent: Component): Component {
+      val comp: Component
       if (SwingUtilities.isDescendingFrom(aComponent, firstComponent)) {
-        Component next = nextVisible(firstComponent);
-        comp = (next != null) ? findChildToFocus(next) : aComponent;
+        val next = nextVisible(firstComponent)
+        comp = if (next != null) findChildToFocus(next) else aComponent
       }
       else if (SwingUtilities.isDescendingFrom(aComponent, innerComponent)) {
-        Component next = nextVisible(innerComponent);
-        comp = (next != null) ? findChildToFocus(next) : aComponent;
+        val next = nextVisible(innerComponent)
+        comp = if (next != null) findChildToFocus(next) else aComponent
       }
       else {
-        Component next = nextVisible(lastComponent);
-        comp = (next != null) ? findChildToFocus(next) : aComponent;
+        val next = nextVisible(lastComponent)
+        comp = if (next != null) findChildToFocus(next) else aComponent
       }
-      if (comp == aComponent) {
+      return if (comp === aComponent) {
         // if focus is stuck on the component let it go further
-        return super.getComponentAfter(aContainer, aComponent);
+        super.getComponentAfter(aContainer, aComponent)
       }
-      return comp;
+      else comp
     }
 
-    @Override
-    @SuppressWarnings("Duplicates")
-    public Component getComponentBefore(Container aContainer, Component aComponent) {
-      Component comp;
+    override fun getComponentBefore(aContainer: Container, aComponent: Component): Component {
+      val component: Component
       if (SwingUtilities.isDescendingFrom(aComponent, innerComponent)) {
-        Component prev = prevVisible(innerComponent);
-        comp = (prev != null) ? findChildToFocus(prev) : aComponent;
+        val prev = prevVisible(innerComponent)
+        component = if (prev != null) findChildToFocus(prev) else aComponent
       }
       else if (SwingUtilities.isDescendingFrom(aComponent, lastComponent)) {
-        Component prev = prevVisible(lastComponent);
-        comp = (prev != null) ? findChildToFocus(prev) : aComponent;
+        val prev = prevVisible(lastComponent)
+        component = if (prev != null) findChildToFocus(prev) else aComponent
       }
       else {
-        Component prev = prevVisible(firstComponent);
-        comp = (prev != null) ? findChildToFocus(prev) : aComponent;
+        val prev = prevVisible(firstComponent)
+        component = if (prev != null) findChildToFocus(prev) else aComponent
       }
-      if (comp == aComponent) {
+      return if (component === aComponent) {
         // if focus is stuck on the component let it go further
-        return super.getComponentBefore(aContainer, aComponent);
+        super.getComponentBefore(aContainer, aComponent)
       }
-      return comp;
+      else component
     }
 
-    private Component nextVisible(Component comp) {
-      if (comp == firstComponent) return innerVisible() ? innerComponent : lastVisible() ? lastComponent : null;
-      if (comp == innerComponent) return lastVisible() ? lastComponent : firstVisible() ? firstComponent : null;
-      if (comp == lastComponent) return firstVisible() ? firstComponent : innerVisible() ? innerComponent : null;
-      return null;
+    private fun nextVisible(component: Component?): Component? {
+      if (component === firstComponent) {
+        return if (innerVisible()) innerComponent else if (lastVisible()) lastComponent else null
+      }
+      if (component === innerComponent) {
+        return if (lastVisible()) lastComponent else if (firstVisible()) firstComponent else null
+      }
+      return if (component === lastComponent) if (firstVisible()) firstComponent else if (innerVisible()) innerComponent else null else null
     }
 
-    private Component prevVisible(Component comp) {
-      if (comp == firstComponent) return lastVisible() ? lastComponent : innerVisible() ? innerComponent : null;
-      if (comp == innerComponent) return firstVisible() ? firstComponent : lastVisible() ? lastComponent : null;
-      if (comp == lastComponent) return innerVisible() ? innerComponent : firstVisible() ? firstComponent : null;
-      return null;
+    private fun prevVisible(component: Component?): Component? {
+      if (component === firstComponent) {
+        return if (lastVisible()) lastComponent else if (innerVisible()) innerComponent else null
+      }
+      if (component === innerComponent) {
+        return if (firstVisible()) firstComponent else if (lastVisible()) lastComponent else null
+      }
+      return if (component === lastComponent) if (innerVisible()) innerComponent else if (firstVisible()) firstComponent else null else null
     }
 
-    @Override
-    public Component getFirstComponent(Container aContainer) {
-      if (firstVisible()) return findChildToFocus(firstComponent);
-      Component next = nextVisible(firstComponent);
-      return next != null ? findChildToFocus(next) : null;
+    override fun getFirstComponent(aContainer: Container): Component? {
+      if (firstVisible()) {
+        return findChildToFocus(firstComponent)
+      }
+      return findChildToFocus(nextVisible(firstComponent) ?: return null)
     }
 
-    @Override
-    public Component getLastComponent(Container aContainer) {
-      if (lastVisible()) return findChildToFocus(lastComponent);
-      Component prev = prevVisible(lastComponent);
-      return prev != null ? findChildToFocus(prev) : null;
+    override fun getLastComponent(aContainer: Container): Component? {
+      if (lastVisible()) {
+        return findChildToFocus(lastComponent)
+      }
+      return findChildToFocus(prevVisible(lastComponent) ?: return null)
     }
 
-    private boolean myReentrantLock = false;
-    @Override
-    public Component getDefaultComponent(Container aContainer) {
-      if (myReentrantLock) return null;
+    private var reentrantLock = false
+
+    override fun getDefaultComponent(aContainer: Container): Component? {
+      if (reentrantLock) {
+        return null
+      }
+
       try {
-        myReentrantLock = true;
-        if (innerVisible()) return findChildToFocus(innerComponent);
-        Component next = nextVisible(lastComponent);
-        return next != null ? findChildToFocus(next) : null;
+        reentrantLock = true
+        if (innerVisible()) {
+          return findChildToFocus(innerComponent)
+        }
+        else {
+          return findChildToFocus(nextVisible(lastComponent) ?: return null)
+        }
       }
       finally {
-        myReentrantLock = false;
+        reentrantLock = false
       }
     }
 
-    Component findChildToFocus (Component component) {
-      Window ancestor = SwingUtilities.getWindowAncestor(ThreeComponentsSplitter.this);
+    fun findChildToFocus(component: Component?): Component {
+      val ancestor = SwingUtilities.getWindowAncestor(this@ThreeComponentsSplitter)
       // Step 1 : We should take into account cases with detached toolwindows and editors
       //       - find the recent focus owner for the window of the splitter and
       //         make sure that the most recently focused component is inside the
       //         passed component. By the way, the recent focused component is supposed to be focusable
-
-      Component mostRecentFocusOwner = getMostRecentComponent(component, ancestor);
-      if (mostRecentFocusOwner != null) {
-        return mostRecentFocusOwner;
+      FocusUtil.getMostRecentComponent(component, ancestor)?.let {
+        return it
       }
 
       // Step 2 : If the best candidate to focus is a panel, usually it does not
       //          have focus representation for showing the focused state
       //          Let's ask the focus traversal policy what is the best candidate
-
-      Component defaultComponentInPanel = getDefaultComponentInPanel(component);
-      if (defaultComponentInPanel != null) {
-        return defaultComponentInPanel;
-      }
+      val defaultComponentInPanel = FocusUtil.getDefaultComponentInPanel(component)
+      return defaultComponentInPanel ?: FocusUtil.findFocusableComponentIn(component, null)
 
       //Step 3 : Return the component, but find the first focusable component first
-      return findFocusableComponentIn(component, null);
     }
   }
+
+  @Deprecated("Use {@link #ThreeComponentsSplitter()}")
+  constructor(@Suppress("UNUSED_PARAMETER") parentDisposable: Disposable) : this(false)
+
+  var dividerWidth: Int = if (onePixelDividers) 1 else 7
+    set(width) {
+      if (width < 0) {
+        throw IllegalArgumentException("Wrong divider width: $width")
+      }
+      if (field != width) {
+        field = width
+        doLayout()
+        repaint()
+      }
+    }
 
   /**
    * Creates horizontal split with proportion equals to .5f
    */
-  public ThreeComponentsSplitter() {
-    this(false);
+  init {
+    verticalSplit = vertical
+    showDividerControls = false
+    @Suppress("LeakingThis")
+    firstDivider = Divider(splitter = this, isFirst = true, isOnePixel = onePixelDividers)
+    @Suppress("LeakingThis")
+    lastDivider = Divider(splitter = this, isFirst = false, isOnePixel = onePixelDividers)
+    @Suppress("LeakingThis")
+    setFocusCycleRoot(true)
+    @Suppress("LeakingThis")
+    setFocusTraversalPolicy(MyFocusTraversalPolicy())
+    @Suppress("LeakingThis")
+    setOpaque(false)
+    @Suppress("LeakingThis")
+    add(firstDivider)
+    @Suppress("LeakingThis")
+    add(lastDivider)
   }
 
-  /**
-   * @deprecated Use {@link #ThreeComponentsSplitter()}
-   */
-  @Deprecated
-  public ThreeComponentsSplitter(@SuppressWarnings("unused") @NotNull Disposable parentDisposable) {
-    this(false);
-  }
-
-  public ThreeComponentsSplitter(boolean vertical) {
-    this(vertical, false);
-  }
-
-  public ThreeComponentsSplitter(boolean vertical, boolean onePixelDividers) {
-    verticalSplit = vertical;
-    showDividerControls = false;
-    firstDivider = new Divider(this, true, onePixelDividers);
-    lastDivider = new Divider(this, false, onePixelDividers);
-    myDividerWidth = onePixelDividers ? 1 : 7;
-
-    setFocusCycleRoot(true);
-    setFocusTraversalPolicy(new MyFocusTraversalPolicy());
-    setOpaque(false);
-    add(firstDivider);
-    add(lastDivider);
-  }
-
-  @Override
-  public void updateUI() {
-    super.updateUI();
+  override fun updateUI() {
+    super.updateUI()
 
     // if null, it means that `updateUI` is called as a part of init
     if (firstDivider != null) {
-      isLookAndFeelUpdated = true;
+      isLookAndFeelUpdated = true
     }
   }
 
-  public void setShowDividerControls(boolean showDividerControls) {
-    this.showDividerControls = showDividerControls;
-    setOrientation(verticalSplit);
+  fun setShowDividerControls(showDividerControls: Boolean) {
+    this.showDividerControls = showDividerControls
+    orientation = verticalSplit
   }
 
-  public void setDividerMouseZoneSize(int size) {
-    dividerZone = JBUIScale.scale(size);
+  fun setDividerMouseZoneSize(size: Int) {
+    dividerZone = scale(size)
   }
 
-  public boolean isHonorMinimumSize() {
-    return honorMinimumSize;
+  fun setHonorComponentsMinimumSize(honorMinimumSize: Boolean) {
+    isHonorMinimumSize = honorMinimumSize
   }
 
-  public void setHonorComponentsMinimumSize(boolean honorMinimumSize) {
-    this.honorMinimumSize = honorMinimumSize;
+  override fun isVisible(): Boolean = super.isVisible() && (firstVisible() || innerVisible() || lastVisible())
+
+  protected fun lastVisible(): Boolean = !Splitter.isNull(lastComponent) && lastComponent!!.isVisible
+
+  private fun innerVisible(): Boolean = !Splitter.isNull(innerComponent) && innerComponent!!.isVisible
+
+  protected fun firstVisible(): Boolean = !Splitter.isNull(firstComponent) && firstComponent!!.isVisible
+
+  private fun visibleDividersCount(): Int {
+    var count = 0
+    if (firstDividerVisible()) {
+      count++
+    }
+    if (lastDividerVisible()) {
+      count++
+    }
+    return count
   }
 
-  @Override
-  public boolean isVisible() {
-    return super.isVisible() && (firstVisible() || innerVisible() || lastVisible());
+  private fun firstDividerVisible(): Boolean {
+    return firstVisible() && innerVisible() || firstVisible() && lastVisible() && !innerVisible()
   }
 
-  protected boolean lastVisible() {
-    return !Splitter.isNull(lastComponent) && lastComponent.isVisible();
-  }
+  private fun lastDividerVisible(): Boolean = innerVisible() && lastVisible()
 
-  private boolean innerVisible() {
-    return !Splitter.isNull(innerComponent) && innerComponent.isVisible();
-  }
-
-  protected boolean firstVisible() {
-    return !Splitter.isNull(firstComponent) && firstComponent.isVisible();
-  }
-
-  private int visibleDividersCount() {
-    int count = 0;
-    if (firstDividerVisible()) count++;
-    if (lastDividerVisible()) count++;
-    return count;
-  }
-
-  private boolean firstDividerVisible() {
-    return firstVisible() && innerVisible() || firstVisible() && lastVisible() && !innerVisible();
-  }
-
-  private boolean lastDividerVisible() {
-    return innerVisible() && lastVisible();
-  }
-
-  @Override
-  public Dimension getMinimumSize() {
-    if (isHonorMinimumSize()) {
-      final int dividerWidth = getDividerWidth();
-      final Dimension firstSize = firstComponent != null ? firstComponent.getMinimumSize() : JBUI.emptySize();
-      final Dimension lastSize = lastComponent != null ? lastComponent.getMinimumSize() : JBUI.emptySize();
-      final Dimension innerSize = innerComponent != null ? innerComponent.getMinimumSize() : JBUI.emptySize();
-      if (getOrientation()) {
-        int width = Math.max(firstSize.width, Math.max(lastSize.width, innerSize.width));
-        int height = visibleDividersCount() * dividerWidth;
-        height += firstSize.height;
-        height += lastSize.height;
-        height += innerSize.height;
-        return new Dimension(width, height);
+  override fun getMinimumSize(): Dimension {
+    if (isHonorMinimumSize) {
+      val dividerWidth = dividerWidth
+      val firstSize = firstComponent?.getMinimumSize() ?: JBUI.emptySize()
+      val lastSize = lastComponent?.getMinimumSize() ?: JBUI.emptySize()
+      val innerSize = innerComponent?.getMinimumSize() ?: JBUI.emptySize()
+      if (orientation) {
+        val width = max(firstSize.width.toDouble(), max(lastSize.width.toDouble(), innerSize.width.toDouble())).toInt()
+        var height = visibleDividersCount() * dividerWidth
+        height += firstSize.height
+        height += lastSize.height
+        height += innerSize.height
+        return Dimension(width, height)
       }
       else {
-        int height = Math.max(firstSize.height, Math.max(lastSize.height, innerSize.height));
-        int width = visibleDividersCount() * dividerWidth;
-        width += firstSize.width;
-        width += lastSize.width;
-        width += innerSize.width;
-        return new Dimension(width, height);
+        val height = max(firstSize.height.toDouble(), max(lastSize.height.toDouble(), innerSize.height.toDouble())).toInt()
+        var width = visibleDividersCount() * dividerWidth
+        width += firstSize.width
+        width += lastSize.width
+        width += innerSize.width
+        return Dimension(width, height)
       }
     }
-    return super.getMinimumSize();
+    return super.getMinimumSize()
   }
 
-  @Override
-  public void doLayout() {
-    final int width = getWidth();
-    final int height = getHeight();
-
-    Rectangle firstRect = new Rectangle();
-    Rectangle firstDividerRect = new Rectangle();
-    Rectangle lastDividerRect = new Rectangle();
-    Rectangle lastRect = new Rectangle();
-    Rectangle innerRect = new Rectangle();
-    final int componentSize = getOrientation() ? height : width;
-    int dividerWidth = getDividerWidth();
-    int dividersCount = visibleDividersCount();
-
-    int firstComponentSize;
-    int lastComponentSize;
-    int innerComponentSize;
-    if(componentSize <= dividersCount * dividerWidth) {
-      firstComponentSize = 0;
-      lastComponentSize = 0;
-      innerComponentSize = 0;
-      dividerWidth = componentSize;
+  override fun doLayout() {
+    val width = width
+    val height = height
+    val firstRect = Rectangle()
+    val firstDividerRect = Rectangle()
+    val lastDividerRect = Rectangle()
+    val lastRect = Rectangle()
+    val innerRect = Rectangle()
+    val componentSize = if (orientation) height else width
+    var dividerWidth = dividerWidth
+    val dividersCount = visibleDividersCount()
+    var firstComponentSize: Int
+    var lastComponentSize: Int
+    var innerComponentSize: Int
+    if (componentSize <= dividersCount * dividerWidth) {
+      firstComponentSize = 0
+      lastComponentSize = 0
+      innerComponentSize = 0
+      dividerWidth = componentSize
     }
     else {
-      firstComponentSize = getFirstSize();
-      lastComponentSize = getLastSize();
-      int sizeLack = firstComponentSize + lastComponentSize - (componentSize - dividersCount * dividerWidth - myMinSize);
+      firstComponentSize = firstSize
+      lastComponentSize = lastSize
+      val sizeLack = firstComponentSize + lastComponentSize - (componentSize - dividersCount * dividerWidth - minSize)
       if (sizeLack > 0) {
         // Lacking size. Reduce first & last component's size, inner -> MIN_SIZE
-        double firstSizeRatio = (double)firstComponentSize / (firstComponentSize + lastComponentSize);
+        val firstSizeRatio = firstComponentSize.toDouble() / (firstComponentSize + lastComponentSize)
         if (firstComponentSize > 0) {
-          firstComponentSize -= (int)(sizeLack * firstSizeRatio);
-          firstComponentSize = Math.max(myMinSize, firstComponentSize);
+          firstComponentSize -= (sizeLack * firstSizeRatio).toInt()
+          firstComponentSize = max(minSize.toDouble(), firstComponentSize.toDouble()).toInt()
         }
         if (lastComponentSize > 0) {
-          lastComponentSize -= (int)(sizeLack * (1 - firstSizeRatio));
-          lastComponentSize = Math.max(myMinSize, lastComponentSize);
+          lastComponentSize -= (sizeLack * (1 - firstSizeRatio)).toInt()
+          lastComponentSize = max(minSize.toDouble(), lastComponentSize.toDouble()).toInt()
         }
-        innerComponentSize = getMinSize(innerComponent);
+        innerComponentSize = getMinSize(innerComponent)
       }
       else {
-        innerComponentSize = Math.max(getMinSize(innerComponent), componentSize - dividersCount * dividerWidth - getFirstSize() - getLastSize());
+        innerComponentSize = max(getMinSize(innerComponent).toDouble(),
+                                 (componentSize - dividersCount * dividerWidth - firstSize - lastSize).toDouble()).toInt()
       }
-
       if (!innerVisible()) {
-        lastComponentSize += innerComponentSize;
-        innerComponentSize = 0;
+        lastComponentSize += innerComponentSize
+        innerComponentSize = 0
         if (!lastVisible()) {
-          firstComponentSize = componentSize;
+          firstComponentSize = componentSize
         }
       }
     }
-
-    int space = firstComponentSize;
-    if (getOrientation()) {
-      firstRect.setBounds(0, 0, width, firstComponentSize);
+    var space = firstComponentSize
+    if (orientation) {
+      firstRect.setBounds(0, 0, width, firstComponentSize)
       if (firstDividerVisible()) {
-        firstDividerRect.setBounds(0, space, width, dividerWidth);
-        space += dividerWidth;
+        firstDividerRect.setBounds(0, space, width, dividerWidth)
+        space += dividerWidth
       }
-
-      innerRect.setBounds(0, space, width, innerComponentSize);
-      space += innerComponentSize;
-
+      innerRect.setBounds(0, space, width, innerComponentSize)
+      space += innerComponentSize
       if (lastDividerVisible()) {
-        lastDividerRect.setBounds(0, space, width, dividerWidth);
-        space += dividerWidth;
+        lastDividerRect.setBounds(0, space, width, dividerWidth)
+        space += dividerWidth
       }
-
-      lastRect.setBounds(0, space, width, lastComponentSize);
+      lastRect.setBounds(0, space, width, lastComponentSize)
     }
     else {
-      firstRect.setBounds(0, 0, firstComponentSize, height);
-
+      firstRect.setBounds(0, 0, firstComponentSize, height)
       if (firstDividerVisible()) {
-        firstDividerRect.setBounds(space, 0, dividerWidth, height);
-        space += dividerWidth;
+        firstDividerRect.setBounds(space, 0, dividerWidth, height)
+        space += dividerWidth
       }
-
-      innerRect.setBounds(space, 0, innerComponentSize, height);
-      space += innerComponentSize;
-
+      innerRect.setBounds(space, 0, innerComponentSize, height)
+      space += innerComponentSize
       if (lastDividerVisible()) {
-        lastDividerRect.setBounds(space, 0, dividerWidth, height);
-        space += dividerWidth;
+        lastDividerRect.setBounds(space, 0, dividerWidth, height)
+        space += dividerWidth
       }
-
-      lastRect.setBounds(space, 0, lastComponentSize, height);
+      lastRect.setBounds(space, 0, lastComponentSize, height)
     }
-
-    firstDivider.setVisible(firstDividerVisible());
-    firstDivider.setBounds(firstDividerRect);
-    firstDivider.doLayout();
-
-    lastDivider.setVisible(lastDividerVisible());
-    lastDivider.setBounds(lastDividerRect);
-    lastDivider.doLayout();
-
-    validateIfNeeded(firstComponent, firstRect);
-    validateIfNeeded(innerComponent, innerRect);
-    validateIfNeeded(lastComponent, lastRect);
+    firstDivider!!.isVisible = firstDividerVisible()
+    firstDivider.bounds = firstDividerRect
+    firstDivider.doLayout()
+    lastDivider.isVisible = lastDividerVisible()
+    lastDivider.bounds = lastDividerRect
+    lastDivider.doLayout()
+    validateIfNeeded(firstComponent, firstRect)
+    validateIfNeeded(innerComponent, innerRect)
+    validateIfNeeded(lastComponent, lastRect)
   }
 
-  private static void validateIfNeeded(final JComponent c, final Rectangle rect) {
-    if (!Splitter.isNull(c)) {
-      if (!c.getBounds().equals(rect)) {
-        c.setBounds(rect);
-        c.revalidate();
+  /**
+   * @return `true` if splitter has vertical orientation, `false` otherwise
+   */
+  var orientation: Boolean
+    get() = verticalSplit
+    set(verticalSplit) {
+      this.verticalSplit = verticalSplit
+      firstDivider!!.setOrientation(verticalSplit)
+      lastDivider.setOrientation(verticalSplit)
+      doLayout()
+      repaint()
+    }
+
+  private fun doAddComponent(component: JComponent?) {
+    if (component == null) {
+      return
+    }
+
+    if (isLookAndFeelUpdated) {
+      updateComponentTreeUI(component)
+      isLookAndFeelUpdated = false
+    }
+    add(component)
+    component.invalidate()
+  }
+
+  var minSize: Int = 0
+    set(minSize) {
+      field = max(0.0, minSize.toDouble()).toInt()
+      doLayout()
+      repaint()
+    }
+
+  var firstSize: Int = 0
+    get() = if (firstVisible()) field else 0
+    set(size) {
+      val oldSize = field
+      field = max(getMinSize(true).toDouble(), size.toDouble()).toInt()
+      if (firstVisible() && oldSize != field) {
+        doLayout()
+        repaint()
       }
+    }
+
+  var lastSize: Int = 0
+    get() = if (lastVisible()) field else 0
+    set(size) {
+      val oldSize = field
+      field = max(getMinSize(false).toDouble(), size.toDouble()).toInt()
+      if (lastVisible() && oldSize != field) {
+        doLayout()
+        repaint()
+      }
+    }
+
+  fun getMinSize(first: Boolean): Int {
+    return getMinSize(if (first) firstComponent else lastComponent)
+  }
+
+  fun getMaxSize(first: Boolean): Int {
+    val size = if (orientation) height else width
+    return size - (if (first) lastSize else firstSize) - minSize
+  }
+
+  private fun getMinSize(component: JComponent?): Int {
+    if (isHonorMinimumSize && component != null && component.isVisible) {
+      return if (orientation) component.getMinimumSize().height else component.getMinimumSize().width
     }
     else {
-      Splitter.hideNull(c);
+      return minSize
     }
   }
 
-
-  public int getDividerWidth() {
-    return myDividerWidth;
-  }
-
-  public void setDividerWidth(int width) {
-    if (width < 0) {
-      throw new IllegalArgumentException("Wrong divider width: " + width);
-    }
-    if (myDividerWidth != width) {
-      myDividerWidth = width;
-      doLayout();
-      repaint();
-    }
-  }
-
-  /**
-   * @return {@code true} if splitter has vertical orientation, {@code false} otherwise
-   */
-  public boolean getOrientation() {
-    return verticalSplit;
-  }
-
-  /**
-   * @param verticalSplit {@code true} means that splitter will have vertical split
-   */
-  public void setOrientation(boolean verticalSplit) {
-    this.verticalSplit = verticalSplit;
-    firstDivider.setOrientation(verticalSplit);
-    lastDivider.setOrientation(verticalSplit);
-    doLayout();
-    repaint();
-  }
-
-  @Nullable
-  public JComponent getFirstComponent() {
-    return firstComponent;
-  }
-
-  /**
-   * Sets component which is located as the "first" split area. The method doesn't validate and
-   * repaint the splitter if there is one already.
-   *
-   */
-  public void setFirstComponent(@Nullable JComponent component) {
-    if (firstComponent == component) {
-      return;
-    }
-
-    if (firstComponent != null) {
-      remove(firstComponent);
-    }
-    firstComponent = component;
-    doAddComponent(component);
-  }
-
-  @Nullable
-  public JComponent getLastComponent() {
-    return lastComponent;
-  }
-
-  /**
-   * Sets component which is located as the "second" split area. The method doesn't validate and
-   * repaint the splitter.
-   */
-  public void setLastComponent(@Nullable JComponent component) {
-    if (lastComponent == component) {
-      return;
-    }
-
-    if (lastComponent != null) {
-      remove(lastComponent);
-    }
-    lastComponent = component;
-    doAddComponent(component);
-  }
-
-  @Nullable
-  public JComponent getInnerComponent() {
-    return innerComponent;
-  }
-
-  private static void updateComponentTreeUI(@Nullable JComponent rootComponent) {
-    for (Component component : UIUtil.uiTraverser(rootComponent).postOrderDfsTraversal()) {
-      if (component instanceof JComponent) {
-        ((JComponent)component).updateUI();
-      }
-    }
-  }
-
-  /**
-   * Sets component which is located as the "inner" splitted area. The method doesn't validate and
-   * repaint the splitter.
-   */
-  public void setInnerComponent(@Nullable JComponent component) {
-    if (innerComponent == component) {
-      return;
-    }
-
-    if (innerComponent != null) {
-      remove(innerComponent);
-    }
-    innerComponent = component;
-    doAddComponent(component);
-  }
-
-  private void doAddComponent(@Nullable JComponent component) {
-    if (component != null) {
-      if (isLookAndFeelUpdated) {
-        updateComponentTreeUI(component);
-        isLookAndFeelUpdated = false;
-      }
-      add(component);
-      component.invalidate();
-    }
-  }
-
-  public void setMinSize(int minSize) {
-    myMinSize = Math.max(0, minSize);
-    doLayout();
-    repaint();
-  }
-
-
-  public void setFirstSize(final int size) {
-    int oldSize = myFirstSize;
-    myFirstSize = Math.max(getMinSize(true), size);
-    if (firstVisible() && oldSize != myFirstSize) {
-      doLayout();
-      repaint();
-    }
-  }
-
-  public void setLastSize(final int size) {
-    int oldSize = myLastSize;
-    myLastSize = Math.max(getMinSize(false), size);
-    if (lastVisible() && oldSize != myLastSize) {
-      doLayout();
-      repaint();
-    }
-  }
-
-  public int getFirstSize() {
-    return firstVisible() ? myFirstSize : 0;
-  }
-
-  public int getLastSize() {
-    return lastVisible() ? myLastSize : 0;
-  }
-
-  public int getMinSize(boolean first) {
-    return getMinSize(first ? firstComponent : lastComponent);
-  }
-
-  public int getMaxSize(boolean first) {
-    final int size = getOrientation() ? this.getHeight() : this.getWidth();
-    return size - (first? myLastSize: myFirstSize) - myMinSize;
-  }
-
-  private int getMinSize(JComponent component) {
-    if (isHonorMinimumSize() && component != null && component.isVisible()) {
-      return getOrientation() ? component.getMinimumSize().height : component.getMinimumSize().width;
-    }
-    return myMinSize;
-  }
-
-  public void addDividerResizeListener(@NotNull ComponentListener listener) {
+  fun addDividerResizeListener(listener: ComponentListener) {
     if (dividerDispatcher == null) {
-      dividerDispatcher = EventDispatcher.create(ComponentListener.class);
+      dividerDispatcher = EventDispatcher.create(ComponentListener::class.java)
     }
-    dividerDispatcher.addListener(listener);
+    dividerDispatcher!!.addListener(listener)
   }
 
-  private static class Divider extends JPanel {
-    private final boolean myIsOnePixel;
-    private final ThreeComponentsSplitter splitter;
-    private boolean myDragging;
-    private Point myPoint;
-    private final boolean myIsFirst;
+  private class Divider(private val splitter: ThreeComponentsSplitter,
+                        private val isFirst: Boolean,
+                        private val isOnePixel: Boolean) : JPanel(GridBagLayout()) {
+    private var isDragging = false
+    private var point: Point? = null
+    private var glassPane: IdeGlassPane? = null
+    private var glassPaneDisposable: Disposable? = null
+    private val listener = MyMouseAdapter(this)
 
-    private IdeGlassPane glassPane;
-    private Disposable glassPaneDisposable;
+    fun getTargetEvent(e: MouseEvent): MouseEvent = SwingUtilities.convertMouseEvent(e.component, e, this)
 
-    private final MouseAdapter listener = new MyMouseAdapter(this);
+    private var wasPressedOnMe = false
 
-    private MouseEvent getTargetEvent(@NotNull MouseEvent e) {
-      return SwingUtilities.convertMouseEvent(e.getComponent(), e, this);
+    init {
+      setFocusable(false)
+      enableEvents(AWTEvent.MOUSE_EVENT_MASK or AWTEvent.MOUSE_MOTION_EVENT_MASK)
+      setOrientation(splitter.verticalSplit)
     }
 
-    private boolean myWasPressedOnMe;
-
-    Divider(final ThreeComponentsSplitter splitter, boolean isFirst, boolean isOnePixel) {
-      super(new GridBagLayout());
-      myIsOnePixel = isOnePixel;
-      setFocusable(false);
-      enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
-      myIsFirst = isFirst;
-      setOrientation(splitter.verticalSplit);
-      this.splitter = splitter;
-    }
-
-    @Override
-    public void addNotify() {
-      super.addNotify();
-
+    override fun addNotify() {
+      super.addNotify()
       if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-        initGlassPane();
+        initGlassPane()
       }
     }
 
-    @Override
-    public void removeNotify() {
-      super.removeNotify();
-
+    override fun removeNotify() {
+      super.removeNotify()
       if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-        releaseGlassPane();
+        releaseGlassPane()
       }
     }
 
-    @Override
-    public Color getBackground() {
-      return myIsOnePixel ? UIUtil.CONTRAST_BORDER_COLOR : super.getBackground();
-    }
+    override fun getBackground(): Color? = if (isOnePixel) UIUtil.CONTRAST_BORDER_COLOR else super.getBackground()
 
-    private boolean isInside(Point p) {
-      if (!isVisible()) return false;
-      Window window = ComponentUtil.getWindow(this);
+    private fun isInside(p: Point): Boolean {
+      if (!isVisible) {
+        return false
+      }
+
+      val window = ComponentUtil.getWindow(this)
       if (window != null) {
-        Point point = SwingUtilities.convertPoint(this, p, window);
-        Component component = UIUtil.getDeepestComponentAt(window, point.x, point.y);
-        List<Component> components = Arrays.asList(splitter.firstComponent, splitter.firstDivider, splitter.innerComponent,
-                                                   splitter.lastDivider, splitter.lastComponent);
-        if (ComponentUtil.findParentByCondition(component, c -> c != null && components.contains(c)) == null) {
-          return false;
+        val point = SwingUtilities.convertPoint(this, p, window)
+        val component = UIUtil.getDeepestComponentAt(window, point.x, point.y)
+        val components = listOf<Component?>(splitter.firstComponent, splitter.firstDivider, splitter.innerComponent,
+                                            splitter.lastDivider, splitter.lastComponent)
+        if (ComponentUtil.findParentByCondition(component, Predicate { it != null && components.contains(it) }) == null) {
+          return false
         }
       }
-
-      int dndOff = myIsOnePixel ? JBUIScale.scale(Registry.intValue("ide.splitter.mouseZone")) / 2 : 0;
+      val dndOff = if (isOnePixel) scale(Registry.intValue("ide.splitter.mouseZone")) / 2 else 0
       if (splitter.verticalSplit) {
-        if (p.x >= 0 && p.x < getWidth()) {
-          if (getHeight() > 0) {
-            return p.y >= -dndOff && p.y < getHeight() + dndOff;
+        if (p.x >= 0 && p.x < width) {
+          return if (height > 0) {
+            p.y >= -dndOff && p.y < height + dndOff
           }
           else {
-            return p.y >= -splitter.dividerZone / 2 && p.y <= splitter.dividerZone / 2;
+            p.y >= -splitter.dividerZone / 2 && p.y <= splitter.dividerZone / 2
           }
         }
       }
       else {
-        if (p.y >= 0 && p.y < getHeight()) {
-          if (getWidth() > 0) {
-            return p.x >= -dndOff && p.x < getWidth() + dndOff;
+        if (p.y >= 0 && p.y < height) {
+          return if (width > 0) {
+            p.x >= -dndOff && p.x < width + dndOff
           }
           else {
-            return p.x >= -splitter.dividerZone / 2 && p.x <= splitter.dividerZone / 2;
+            p.x >= -splitter.dividerZone / 2 && p.x <= splitter.dividerZone / 2
           }
         }
       }
-
-      return false;
+      return false
     }
 
-    private void initGlassPane() {
-      IdeGlassPane glassPane = IdeGlassPaneUtil.find(this);
-      if (glassPane == this.glassPane) {
-        return;
+    private fun initGlassPane() {
+      val glassPane = IdeGlassPaneUtil.find(this)
+      if (glassPane === this.glassPane) {
+        return
       }
 
-      releaseGlassPane();
-
-      this.glassPane = glassPane;
-      glassPaneDisposable = Disposer.newDisposable();
-      glassPane.addMouseMotionPreprocessor(listener, glassPaneDisposable);
-      glassPane.addMousePreprocessor(listener, glassPaneDisposable);
+      releaseGlassPane()
+      this.glassPane = glassPane
+      glassPaneDisposable = Disposer.newDisposable()
+      glassPane.addMouseMotionPreprocessor(listener, glassPaneDisposable!!)
+      glassPane.addMousePreprocessor(listener, glassPaneDisposable!!)
     }
 
-    private void releaseGlassPane() {
+    private fun releaseGlassPane() {
       if (glassPaneDisposable != null) {
-        Disposer.dispose(glassPaneDisposable);
-        glassPaneDisposable = null;
-        glassPane = null;
+        Disposer.dispose(glassPaneDisposable!!)
+        glassPaneDisposable = null
+        glassPane = null
       }
     }
 
-    private void setOrientation(boolean isVerticalSplit) {
-      removeAll();
-
+    fun setOrientation(isVerticalSplit: Boolean) {
+      removeAll()
       if (!splitter.showDividerControls) {
-        return;
+        return
       }
-
-      int xMask = isVerticalSplit ? 1 : 0;
-      int yMask = isVerticalSplit ? 0 : 1;
-
-      Icon glueIcon = isVerticalSplit ? SplitGlueV : AllIcons.General.ArrowSplitCenterH;
-      int glueFill = isVerticalSplit ? GridBagConstraints.VERTICAL : GridBagConstraints.HORIZONTAL;
-      add(new JLabel(glueIcon),
-          new GridBagConstraints(0, 0, 1, 1, 0, 0, isVerticalSplit ? GridBagConstraints.EAST : GridBagConstraints.NORTH, glueFill, JBInsets.emptyInsets(), 0, 0));
-      JLabel splitDownlabel = new JLabel(isVerticalSplit ? AllIcons.General.ArrowDown : AllIcons.General.ArrowRight);
-      splitDownlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      splitDownlabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.down.tooltip.text") : UIBundle
-        .message("splitter.right.tooltip.text"));
-      new ClickListener() {
-        @Override
-        public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+      val xMask = if (isVerticalSplit) 1 else 0
+      val yMask = if (isVerticalSplit) 0 else 1
+      val glueIcon = if (isVerticalSplit) SplitGlueV else AllIcons.General.ArrowSplitCenterH
+      val glueFill = if (isVerticalSplit) GridBagConstraints.VERTICAL else GridBagConstraints.HORIZONTAL
+      add(JLabel(glueIcon),
+          GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, if (isVerticalSplit) GridBagConstraints.EAST else GridBagConstraints.NORTH, glueFill,
+                             JBInsets.emptyInsets(), 0, 0))
+      val splitDownlabel = JLabel(if (isVerticalSplit) AllIcons.General.ArrowDown else AllIcons.General.ArrowRight)
+      splitDownlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+      splitDownlabel.setToolTipText(if (isVerticalSplit) UIBundle.message("splitter.down.tooltip.text")
+                                    else UIBundle
+        .message("splitter.right.tooltip.text"))
+      object : ClickListener() {
+        override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
           if (splitter.innerComponent != null) {
-            final int income = splitter.verticalSplit ? splitter.innerComponent.getHeight() : splitter.innerComponent.getWidth();
-            if (myIsFirst) {
-              splitter.setFirstSize(splitter.myFirstSize + income);
+            val income = if (splitter.verticalSplit) splitter.innerComponent!!.height else splitter.innerComponent!!.width
+            if (isFirst) {
+              splitter.firstSize = splitter.firstSize + income
             }
             else {
-              splitter.setLastSize(splitter.myLastSize + income);
+              splitter.lastSize = splitter.lastSize + income
             }
           }
-          return true;
+          return true
         }
-      }.installOn(splitDownlabel);
-
+      }.installOn(splitDownlabel)
       add(splitDownlabel,
-          new GridBagConstraints(isVerticalSplit ? 1 : 0,
-                                 isVerticalSplit ? 0 : 5,
-                                 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
+          GridBagConstraints(if (isVerticalSplit) 1 else 0,
+                             if (isVerticalSplit) 0 else 5,
+                             1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0))
       //
-      add(new JLabel(glueIcon),
-          new GridBagConstraints(2 * xMask, 2 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill, JBInsets.emptyInsets(), 0, 0));
-      JLabel splitCenterlabel = new JLabel(isVerticalSplit ? AllIcons.General.ArrowSplitCenterV : AllIcons.General.ArrowSplitCenterH);
-      splitCenterlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      splitCenterlabel.setToolTipText(UIBundle.message("splitter.center.tooltip.text"));
-      new ClickListener() {
-        @Override
-        public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-          center();
-          return true;
+      add(JLabel(glueIcon),
+          GridBagConstraints(2 * xMask, 2 * yMask, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, glueFill, JBInsets.emptyInsets(), 0, 0))
+      val splitCenterlabel = JLabel(if (isVerticalSplit) AllIcons.General.ArrowSplitCenterV else AllIcons.General.ArrowSplitCenterH)
+      splitCenterlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+      splitCenterlabel.setToolTipText(UIBundle.message("splitter.center.tooltip.text"))
+      object : ClickListener() {
+        override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
+          center()
+          return true
         }
-      }.installOn(splitCenterlabel);
+      }.installOn(splitCenterlabel)
       add(splitCenterlabel,
-          new GridBagConstraints(3 * xMask, 3 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
-      add(new JLabel(glueIcon),
-          new GridBagConstraints(4 * xMask, 4 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill, JBInsets.emptyInsets(), 0, 0));
+          GridBagConstraints(3 * xMask, 3 * yMask, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                             JBInsets.emptyInsets(), 0, 0))
+      add(JLabel(glueIcon),
+          GridBagConstraints(4 * xMask, 4 * yMask, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, glueFill, JBInsets.emptyInsets(), 0, 0))
       //
-      JLabel splitUpLabel = new JLabel(isVerticalSplit ? AllIcons.General.ArrowUp : AllIcons.General.ArrowLeft);
-      splitUpLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      splitUpLabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.up.tooltip.text") : UIBundle
-        .message("splitter.left.tooltip.text"));
-      new ClickListener() {
-        @Override
-        public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+      val splitUpLabel = JLabel(if (isVerticalSplit) AllIcons.General.ArrowUp else AllIcons.General.ArrowLeft)
+      splitUpLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+      splitUpLabel.setToolTipText(if (isVerticalSplit) UIBundle.message("splitter.up.tooltip.text")
+                                  else UIBundle
+        .message("splitter.left.tooltip.text"))
+      object : ClickListener() {
+        override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
           if (splitter.innerComponent != null) {
-            final int income = splitter.verticalSplit ? splitter.innerComponent.getHeight() : splitter.innerComponent.getWidth();
-            if (myIsFirst) {
-              splitter.setFirstSize(splitter.myFirstSize + income);
+            val income = if (splitter.verticalSplit) splitter.innerComponent!!.height else splitter.innerComponent!!.width
+            if (isFirst) {
+              splitter.firstSize = splitter.firstSize + income
             }
             else {
-              splitter.setLastSize(splitter.myLastSize + income);
+              splitter.lastSize = splitter.lastSize + income
             }
           }
-          return true;
+          return true
         }
-      }.installOn(splitUpLabel);
-
+      }.installOn(splitUpLabel)
       add(splitUpLabel,
-          new GridBagConstraints(isVerticalSplit ? 5 : 0,
-                                 isVerticalSplit ? 0 : 1,
-                                 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
-      add(new JLabel(glueIcon),
-          new GridBagConstraints(6 * xMask, 6 * yMask, 1, 1, 0, 0,
-                                 isVerticalSplit ? GridBagConstraints.WEST : GridBagConstraints.SOUTH, glueFill, JBInsets.emptyInsets(), 0, 0));
+          GridBagConstraints(if (isVerticalSplit) 5 else 0,
+                             if (isVerticalSplit) 0 else 1,
+                             1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0))
+      add(JLabel(glueIcon),
+          GridBagConstraints(6 * xMask, 6 * yMask, 1, 1, 0.0, 0.0,
+                             if (isVerticalSplit) GridBagConstraints.WEST else GridBagConstraints.SOUTH, glueFill, JBInsets.emptyInsets(),
+                             0, 0))
     }
 
-    private void center() {
+    private fun center() {
       if (splitter.innerComponent != null) {
-        final int total = splitter.myFirstSize + (splitter.verticalSplit
-                                                  ? splitter.innerComponent.getHeight() : splitter.innerComponent.getWidth());
-        if (myIsFirst) {
-          splitter.setFirstSize(total / 2);
+        val total = splitter.firstSize + if (splitter.verticalSplit) splitter.innerComponent!!.height else splitter.innerComponent!!.width
+        if (isFirst) {
+          splitter.firstSize = total / 2
         }
         else {
-          splitter.setLastSize(total / 2);
+          splitter.lastSize = total / 2
         }
       }
     }
 
-    @Override
-    protected void processMouseMotionEvent(MouseEvent e) {
-      super.processMouseMotionEvent(e);
-
+    public override fun processMouseMotionEvent(e: MouseEvent) {
+      super.processMouseMotionEvent(e)
       if (!isShowing()) {
-        return;
+        return
       }
 
-      if (MouseEvent.MOUSE_DRAGGED == e.getID() && myWasPressedOnMe) {
-        myDragging = true;
-        setCursor(getResizeCursor());
-
+      if (MouseEvent.MOUSE_DRAGGED == e.id && wasPressedOnMe) {
+        isDragging = true
+        setCursor(resizeCursor)
         if (glassPane != null) {
-          glassPane.setCursor(getResizeCursor(), listener);
+          glassPane!!.setCursor(resizeCursor, listener)
         }
-
-        myPoint = SwingUtilities.convertPoint(this, e.getPoint(), splitter);
-        final int size = splitter.getOrientation() ? splitter.getHeight() : splitter.getWidth();
-        if (splitter.getOrientation()) {
+        point = SwingUtilities.convertPoint(this, e.getPoint(), splitter)
+        val size = if (splitter.orientation) splitter.height else splitter.width
+        if (splitter.orientation) {
           if (size > 0 || splitter.dividerZone > 0) {
-            if (myIsFirst) {
-              splitter.setFirstSize(clamp(myPoint.y, size, splitter.firstComponent, splitter.getLastSize()));
+            if (isFirst) {
+              splitter.firstSize = clamp(point!!.y, size, splitter.firstComponent, splitter.lastSize)
             }
             else {
-              splitter.setLastSize(clamp(size - myPoint.y - splitter.getDividerWidth(), size, splitter.lastComponent, splitter.getFirstSize()));
+              splitter.lastSize = clamp(size - point!!.y - splitter.dividerWidth, size, splitter.lastComponent, splitter.firstSize)
             }
           }
         }
         else {
           if (size > 0 || splitter.dividerZone > 0) {
-            if (myIsFirst) {
-              splitter.setFirstSize(clamp(myPoint.x, size, splitter.firstComponent, splitter.getLastSize()));
+            if (isFirst) {
+              splitter.firstSize = clamp(point!!.x, size, splitter.firstComponent, splitter.lastSize)
             }
             else {
-              splitter.setLastSize(clamp(size - myPoint.x - splitter.getDividerWidth(), size, splitter.lastComponent, splitter.getFirstSize()));
+              splitter.lastSize = clamp(size - point!!.x - splitter.dividerWidth, size, splitter.lastComponent, splitter.firstSize)
             }
           }
         }
-        splitter.doLayout();
+        splitter.doLayout()
       }
-      else if (MouseEvent.MOUSE_MOVED == e.getID()) {
+      else if (MouseEvent.MOUSE_MOVED == e.id) {
         if (glassPane != null) {
           if (isInside(e.getPoint())) {
-            glassPane.setCursor(getResizeCursor(), listener);
-            e.consume();
+            glassPane!!.setCursor(resizeCursor, listener)
+            e.consume()
           }
           else {
-            glassPane.setCursor(null, listener);
+            glassPane!!.setCursor(null, listener)
           }
         }
       }
-
-      if (myWasPressedOnMe) {
-        e.consume();
+      if (wasPressedOnMe) {
+        e.consume()
       }
     }
 
-    private int clamp(int pos, int size, JComponent component, int componentSize) {
-      int minSize = splitter.getMinSize(component);
-      int maxSize = size - componentSize - splitter.getMinSize(splitter.innerComponent) - splitter.getDividerWidth() * splitter.visibleDividersCount();
-      return minSize <= maxSize ? MathUtil.clamp(pos, minSize, maxSize) : pos;
+    private fun clamp(pos: Int, size: Int, component: JComponent?, componentSize: Int): Int {
+      val minSize = splitter.getMinSize(component)
+      val maxSize = size - componentSize -
+                    splitter.getMinSize(splitter.innerComponent) - splitter.dividerWidth * splitter.visibleDividersCount()
+      return if (minSize <= maxSize) pos.coerceIn(minSize, maxSize) else pos
     }
 
-    @Override
-    protected void processMouseEvent(MouseEvent e) {
-      super.processMouseEvent(e);
+    public override fun processMouseEvent(e: MouseEvent) {
+      super.processMouseEvent(e)
       if (!isShowing()) {
-        return;
+        return
       }
-      switch (e.getID()) {
-        case MouseEvent.MOUSE_ENTERED -> setCursor(getResizeCursor());
-        case MouseEvent.MOUSE_EXITED -> {
-          if (!myDragging) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+
+      when (e.id) {
+        MouseEvent.MOUSE_ENTERED -> setCursor(resizeCursor)
+        MouseEvent.MOUSE_EXITED -> {
+          if (!isDragging) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR))
           }
         }
-        case MouseEvent.MOUSE_PRESSED -> {
+        MouseEvent.MOUSE_PRESSED -> {
           if (isInside(e.getPoint())) {
-            myWasPressedOnMe = true;
+            wasPressedOnMe = true
             if (glassPane != null) {
-              glassPane.setCursor(getResizeCursor(), listener);
+              glassPane!!.setCursor(resizeCursor, listener)
             }
-            e.consume();
+            e.consume()
           }
           else {
-            myWasPressedOnMe = false;
+            wasPressedOnMe = false
           }
         }
-        case MouseEvent.MOUSE_RELEASED -> {
-          if (myWasPressedOnMe) {
-            e.consume();
+        MouseEvent.MOUSE_RELEASED -> {
+          if (wasPressedOnMe) {
+            e.consume()
           }
           if (isInside(e.getPoint()) && glassPane != null) {
-            glassPane.setCursor(getResizeCursor(), listener);
+            glassPane!!.setCursor(resizeCursor, listener)
           }
-          if (myDragging && splitter.dividerDispatcher != null) {
-            splitter.dividerDispatcher.getMulticaster().componentResized(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
+          if (isDragging && splitter.dividerDispatcher != null) {
+            splitter.dividerDispatcher!!.getMulticaster().componentResized(ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED))
           }
-          myWasPressedOnMe = false;
-          myDragging = false;
-          myPoint = null;
+          wasPressedOnMe = false
+          isDragging = false
+          point = null
         }
-        case MouseEvent.MOUSE_CLICKED -> {
-          if (e.getClickCount() == 2) {
-            center();
+        MouseEvent.MOUSE_CLICKED -> {
+          if (e.clickCount == 2) {
+            center()
           }
         }
       }
     }
-    private Cursor getResizeCursor() {
-      return splitter.getOrientation()
-             ? Cursor.getPredefinedCursor(myIsFirst ? Cursor.S_RESIZE_CURSOR : Cursor.N_RESIZE_CURSOR)
-             : Cursor.getPredefinedCursor(myIsFirst ? Cursor.W_RESIZE_CURSOR : Cursor.E_RESIZE_CURSOR);
-    }
+
+    private val resizeCursor: Cursor
+      get() {
+        if (splitter.orientation) {
+          return Cursor.getPredefinedCursor(if (isFirst) Cursor.S_RESIZE_CURSOR else Cursor.N_RESIZE_CURSOR)
+        }
+        else {
+          return Cursor.getPredefinedCursor(if (isFirst) Cursor.W_RESIZE_CURSOR else Cursor.E_RESIZE_CURSOR)
+        }
+      }
   }
 
-  private static final class MyMouseAdapter extends MouseAdapter implements Weighted {
-    private final Divider divider;
-
-    MyMouseAdapter(Divider divider) {
-      this.divider = divider;
+  private class MyMouseAdapter(private val divider: Divider) : MouseAdapter(), Weighted {
+    override fun mousePressed(e: MouseEvent) {
+      _processMouseEvent(e)
     }
 
-    @Override
-    public void mousePressed(MouseEvent e) {
-      _processMouseEvent(e);
+    override fun mouseReleased(e: MouseEvent) {
+      _processMouseEvent(e)
     }
 
-    @Override
-    public void mouseReleased(MouseEvent e) {
-      _processMouseEvent(e);
+    override fun mouseMoved(e: MouseEvent) {
+      _processMouseMotionEvent(e)
     }
 
-    @Override
-    public void mouseMoved(MouseEvent e) {
-      _processMouseMotionEvent(e);
+    override fun mouseDragged(e: MouseEvent) {
+      _processMouseMotionEvent(e)
     }
 
-    @Override
-    public void mouseDragged(MouseEvent e) {
-      _processMouseMotionEvent(e);
-    }
+    override fun getWeight(): Double = 1.0
 
-    @Override
-    public double getWeight() {
-      return 1;
-    }
-
-    private void _processMouseMotionEvent(MouseEvent e) {
-      MouseEvent event = divider.getTargetEvent(e);
-      divider.processMouseMotionEvent(event);
-      if (event.isConsumed()) {
-        e.consume();
+    private fun _processMouseMotionEvent(e: MouseEvent) {
+      val event = divider.getTargetEvent(e)
+      divider.processMouseMotionEvent(event)
+      if (event.isConsumed) {
+        e.consume()
       }
     }
 
-    private void _processMouseEvent(MouseEvent e) {
-      MouseEvent event = divider.getTargetEvent(e);
-      divider.processMouseEvent(event);
-      if (event.isConsumed()) {
-        e.consume();
+    private fun _processMouseEvent(e: MouseEvent) {
+      val event = divider.getTargetEvent(e)
+      divider.processMouseEvent(event)
+      if (event.isConsumed) {
+        e.consume()
       }
     }
   }
 
   // backward compatibility
-  @Override
-  public void dispose() {
+  override fun dispose() {}
+}
+
+private val SplitGlueV = EmptyIcon.create(17, 6)
+
+private fun validateIfNeeded(c: JComponent?, rect: Rectangle) {
+  if (c != null && !Splitter.isNull(c)) {
+    if (c.bounds != rect) {
+      c.bounds = rect
+      c.revalidate()
+    }
+  }
+  else {
+    Splitter.hideNull(c)
+  }
+}
+
+private fun updateComponentTreeUI(rootComponent: JComponent?) {
+  for (component in UIUtil.uiTraverser(rootComponent).postOrderDfsTraversal()) {
+    if (component is JComponent) {
+      component.updateUI()
+    }
   }
 }
