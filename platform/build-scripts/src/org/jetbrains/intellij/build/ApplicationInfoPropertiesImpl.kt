@@ -32,10 +32,6 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
   override val fullVersionFormat: String
   override val isEAP: Boolean
   override val versionSuffix: String?
-  /**
-   * The first number from 'minor' part of the version. This property is temporary added because some products specify composite number (like '1.3')
-   * in 'minor version' attribute instead of using 'micro version' (i.e. set minor='1' micro='3').
-   */
   override val minorVersionMainPart: String
   override val shortProductName: String
   override lateinit var productCode: String
