@@ -10,6 +10,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.refactoring.inline.PyInlineLocalHandler;
 import org.jetbrains.annotations.NotNull;
@@ -98,21 +99,47 @@ public class PyInlineLocalTest extends PyTestCase {
   }
 
   // PY-12409
-  public void testResultExceedsRightMargin() {
+  public void testResultExceedsRightMarginWithBackslash() {
     final CodeStyleSettings settings = getCodeStyleSettings();
     final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
 
     final int oldRightMargin = settings.getRightMargin(PythonLanguage.getInstance());
     final boolean oldWrapLongLines = commonSettings.WRAP_LONG_LINES;
 
+    boolean initialValue = PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER;
+
     settings.setRightMargin(PythonLanguage.getInstance(), 80);
     commonSettings.WRAP_LONG_LINES = true;
     try {
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = false;
       doTest();
     }
     finally {
       commonSettings.WRAP_LONG_LINES = oldWrapLongLines;
       settings.setRightMargin(PythonLanguage.getInstance(), oldRightMargin);
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = initialValue;
+    }
+  }
+
+  public void testResultExceedsRightMarginWithParenthesizeOnEnter() {
+    final CodeStyleSettings settings = getCodeStyleSettings();
+    final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
+
+    final int oldRightMargin = settings.getRightMargin(PythonLanguage.getInstance());
+    final boolean oldWrapLongLines = commonSettings.WRAP_LONG_LINES;
+
+    boolean initialValue = PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER;
+
+    settings.setRightMargin(PythonLanguage.getInstance(), 80);
+    commonSettings.WRAP_LONG_LINES = true;
+    try {
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = true;
+      doTest();
+    }
+    finally {
+      commonSettings.WRAP_LONG_LINES = oldWrapLongLines;
+      settings.setRightMargin(PythonLanguage.getInstance(), oldRightMargin);
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = initialValue;
     }
   }
 
