@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Ref;
@@ -12,6 +13,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
+
+import static com.intellij.testFramework.UITestUtil.replaceIdeEventQueueSafely;
+import static com.intellij.testFramework.UITestUtil.setupEventQueue;
 
 public final class EdtTestUtil {
   @kotlin.Deprecated(message = "Use Kotlin runInEdtAndGet { ... } instead")  // this warning is only visible in Kotlin files
@@ -28,16 +32,21 @@ public final class EdtTestUtil {
   @TestOnly
   public static <T extends Throwable> void runInEdtAndWait(@NotNull ThrowableRunnable<T> runnable) throws T {
     Application app = ApplicationManager.getApplication();
-    if (app == null ? EDT.isCurrentThreadEdt() : app.isDispatchThread()) {
-      // reduce stack trace
-      runnable.run();
+    if (app != null && app.isDispatchThread()) {
+      app.runWriteIntentReadAction(() -> { runnable.run(); return null; });
+      return;
+    }
+    else if (EDT.isCurrentThreadEdt()) {
+      setupEventQueue();
+      IdeEventQueue.getInstance().getRwLockHolder().runWriteIntentReadAction(() -> { runnable.run(); return null; });
       return;
     }
 
     Ref<T> exception = new Ref<>();
     Runnable r = () -> {
       try {
-        runnable.run();
+        setupEventQueue();
+        IdeEventQueue.getInstance().getRwLockHolder().runWriteIntentReadAction(() -> { runnable.run(); return null; });
       }
       catch (Throwable e) {
         //noinspection unchecked
