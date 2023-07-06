@@ -92,11 +92,28 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
       return
     }
 
+    val changedSchemesCopy: LinkedHashMap<SchemeChangeApplicator<*, *>, MutableSet<SchemeChangeEvent<*, *>>>
+    synchronized(changedSchemes) {
+      changedSchemesCopy = LinkedHashMap(changedSchemes)
+      changedSchemes.clear()
+    }
+
+    val changedStoragesCopy: LinkedHashMap<ComponentStoreImpl, MutableSet<StateStorage>>
+    synchronized(changedStorages) {
+      changedStoragesCopy = LinkedHashMap(changedStorages)
+      changedStorages.clear()
+    }
+
+    if (changedSchemesCopy.isEmpty() && changedStoragesCopy.isEmpty()
+        && !JpsProjectModelSynchronizer.getInstance(project).needToReloadProjectEntities()) {
+      return
+    }
+
     val publisher = project.messageBus.syncPublisher(BatchUpdateListener.TOPIC)
     publisher.onBatchUpdateStarted()
     try {
       // reload schemes first because project file can refer to scheme (e.g. inspection profile)
-      for ((tracker, files) in changedSchemes) {
+      for ((tracker, files) in changedSchemesCopy) {
         runCatching {
           SlowOperations.knownIssue("IDEA-307617, EA-680581").use {
             @Suppress("UNCHECKED_CAST")
@@ -105,7 +122,7 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
         }.getOrLogException(LOG)
       }
 
-      for ((store, storages) in changedStorages) {
+      for ((store, storages) in changedStoragesCopy) {
         if ((store.storageManager as? StateStorageManagerImpl)?.componentManager?.isDisposed == true) {
           continue
         }
