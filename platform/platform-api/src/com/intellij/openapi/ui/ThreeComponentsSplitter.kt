@@ -27,7 +27,7 @@ import javax.swing.*
 import kotlin.math.max
 
 open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean = false,
-                                                             onePixelDividers: Boolean = false) : JPanel(), Disposable {
+                                                             onePixelDividers: Boolean = false) : JPanel() {
   private var isLookAndFeelUpdated = false
 
   /**
@@ -68,8 +68,8 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
 
   var innerComponent: JComponent? = null
     /**
-     * Sets component which is located as the "inner" splitted area. The method doesn't validate and
-     * repaint the splitter.
+     * Sets component which is located as the "inner" split area.
+     * The method doesn't validate and repaint the splitter.
      */
     set(component) {
       if (field === component) {
@@ -839,9 +839,6 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
       }
     }
   }
-
-  // backward compatibility
-  override fun dispose() {}
 }
 
 private val SplitGlueV = EmptyIcon.create(17, 6)
