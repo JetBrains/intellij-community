@@ -53,6 +53,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   private val iconsMap: Map<Int, Icon>
 
   private var image: Icon? = null
+  private var withImageBorder: Boolean = false
 
   @Nls
   private var header: String = ""
@@ -92,9 +93,10 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   /**
    * Add optional image above the header or description
    */
-  fun withImage(image: Icon): GotItComponentBuilder {
+  fun withImage(image: Icon, withBorder: Boolean = true): GotItComponentBuilder {
     val arcRatio = JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get().toDouble() / min(image.iconWidth, image.iconHeight)
     this.image = RoundedIcon(image, arcRatio, false)
+    withImageBorder = withBorder
     return this
   }
 
@@ -331,7 +333,13 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 
     image?.let {
       val adjusted = adjustIcon(it, useContrastColors)
-      panel.add(JLabel(adjusted),
+      val imageLabel = JLabel(adjusted)
+      if (withImageBorder) {
+        imageLabel.border = RoundedLineBorder(JBUI.CurrentTheme.GotItTooltip.imageBorderColor(useContrastColors),
+                                              JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get(),
+                                              1)
+      }
+      panel.add(imageLabel,
                 gc.nextLine().next()
                   .anchor(GridBagConstraints.LINE_START)
                   .coverLine()
