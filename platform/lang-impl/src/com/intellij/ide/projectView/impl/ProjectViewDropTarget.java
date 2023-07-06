@@ -44,11 +44,11 @@ import static com.intellij.util.ui.tree.TreeUtil.getLastUserObject;
  * @author Anna
  * @author Konstantin Bulenkov
  */
-abstract class ProjectViewDropTarget implements DnDNativeTarget {
+public abstract class ProjectViewDropTarget implements DnDNativeTarget {
   private final JTree myTree;
   private final Project myProject;
 
-  ProjectViewDropTarget(JTree tree, Project project) {
+  public ProjectViewDropTarget(JTree tree, Project project) {
     myTree = tree;
     myProject = project;
   }
@@ -153,12 +153,20 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
     DnDAction action = event.getAction();
     if (action == null) return null;
     int id = action.getActionId();
-    if (id == DnDConstants.ACTION_COPY) return new CopyDropHandler();
+    if (id == DnDConstants.ACTION_COPY) return createCopyHandler();
     if (id != DnDConstants.ACTION_COPY_OR_MOVE && id != DnDConstants.ACTION_MOVE) return null;
+    return createMoveHandler();
+  }
+
+  public DropHandler createCopyHandler() {
+    return new CopyDropHandler();
+  }
+
+  public DropHandler createMoveHandler() {
     return new MoveDropHandler();
   }
 
-  private interface DropHandler {
+  public interface DropHandler {
     boolean isValidSource(TreePath @NotNull [] sources, @NotNull TreePath target);
 
     boolean isValidTarget(TreePath @NotNull [] sources, @NotNull TreePath target);
@@ -169,14 +177,16 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     void doDrop(TreePath @NotNull [] sources, @NotNull TreePath target);
 
+    void doDrop(@NotNull DropContext context);
+
     void doDropFiles(List<? extends File> files, @NotNull TreePath target);
   }
 
   @Nullable
-  abstract PsiElement getPsiElement(@NotNull TreePath path);
+  protected abstract PsiElement getPsiElement(@NotNull TreePath path);
 
   @Nullable
-  abstract Module getModule(@NotNull PsiElement element);
+  protected abstract Module getModule(@NotNull PsiElement element);
 
   abstract class MoveCopyDropHandler implements DropHandler {
     @Override
@@ -242,6 +252,11 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
           .finishOnUiThread(ModalityState.defaultModalityState(), context -> doDrop(context, false))
           .submit(AppExecutorUtil.getAppExecutorService());
       }
+    }
+
+    @Override
+    public void doDrop(@NotNull DropContext dropContext) {
+      doDrop(dropContext, false);
     }
 
     private void doDrop(@NotNull DropContext dropContext, boolean externalDrop) {
@@ -336,7 +351,8 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
         .submit(AppExecutorUtil.getAppExecutorService());
     }
 
-    private void doDrop(@NotNull DropContext context) {
+    @Override
+    public void doDrop(@NotNull DropContext context) {
       final PsiElement targetElement = context.targetElement();
       final PsiElement @Nullable [] sources = context.sourceElements();
       if (targetElement == null || sources == null) return;
@@ -382,6 +398,5 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
     }
   }
 
-  private record DropContext(PsiElement @Nullable [] sourceElements, @Nullable PsiElement targetElement, @Nullable Module targetModule) { }
-
+  public record DropContext(PsiElement @Nullable [] sourceElements, @Nullable PsiElement targetElement, @Nullable Module targetModule) { }
 }
