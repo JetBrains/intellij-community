@@ -725,11 +725,80 @@
       "bottomLeft1Color": "#00000009",
       "bottomRight0Color": "#00000000",
       "bottomRight1Color": "#00000009"
-    }
+    },
+
+    "WelcomeScreen.Projects.actions.selectionBackground": "#326FC1",
+    "WelcomeScreen.Projects.actions.background": "#3C5C86",
+
+    "RecentProject": {
+      "Color1": {
+        "MainToolbarGradientStart": "#654B40",
+        "Avatar": {
+          "Start": "#E08855",
+          "End": "#E9806F"
+        }
+      },
+      "Color2": {
+        "MainToolbarGradientStart": "#534C33",
+        "Avatar": {
+          "Start": "#B08B14",
+          "End": "#BB7F19"
+        }
+      },
+      "Color3": {
+        "MainToolbarGradientStart": "#455038",
+        "Avatar": {
+          "Start": "#A1A359",
+          "End": "#87AA59"
+        }
+      },
+      "Color4": {
+        "MainToolbarGradientStart": "#31515F",
+        "Avatar": {
+          "Start": "#3B92B8",
+          "End": "#6183EC"
+        }
+      },
+      "Color5": {
+        "MainToolbarGradientStart": "#344C7D",
+        "Avatar": {
+          "Start": "#3574F0",
+          "End": "#7A64F0"
+        }
+      },
+      "Color6": {
+        "MainToolbarGradientStart": "#5D354A",
+        "Avatar": {
+          "Start": "#C84D8F",
+          "End": "#A956CF"
+        }
+      },
+      "Color7": {
+        "MainToolbarGradientStart": "#4F3E65",
+        "Avatar": {
+          "Start": "#955AE0",
+          "End": "#A84DE0"
+        }
+      },
+      "Color8": {
+        "MainToolbarGradientStart": "#1D4744",
+        "Avatar": {
+          "Start": "#24A394",
+          "End": "#279CCD"
+        }
+      },
+      "Color9": {
+        "MainToolbarGradientStart": "#3E5540",
+        "Avatar": {
+          "Start": "#5FAD65",
+          "End": "#3D968B"
+        }
+      }
+    },
+
+    "MainToolbar.Dropdown.transparentHoverBackground": "#FFFFFF1A"
   },
 
-  "WelcomeScreen.Projects.actions.selectionBackground": "#326FC1",
-  "WelcomeScreen.Projects.actions.background": "#3C5C86",
 
   "iconColorsOnSelection": {
     "#5e5e5e": "#5778ad",
