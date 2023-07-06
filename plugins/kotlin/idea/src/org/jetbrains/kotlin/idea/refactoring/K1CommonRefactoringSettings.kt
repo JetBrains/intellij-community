@@ -50,4 +50,7 @@ internal class K1CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
 
     override var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean
             by delegateTo { it::INTRODUCE_SPECIFY_TYPE_EXPLICITLY }
+
+    override var renameVariables: Boolean
+        by delegateTo { it::renameVariables }
 }

@@ -27,6 +27,7 @@ interface KotlinCommonRefactoringSettings {
     var MOVE_MPP_DECLARATIONS: Boolean
     var INTRODUCE_DECLARE_WITH_VAR: Boolean
     var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean
+    var renameVariables: Boolean
 
     companion object {
         @JvmStatic
