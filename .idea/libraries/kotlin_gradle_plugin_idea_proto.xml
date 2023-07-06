@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="kotlin-gradle-plugin-idea-proto" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-idea-proto:1.8.20-dev-5742" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-idea-proto:1.8.20-dev-5742">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.8.20-dev-5742/kotlin-gradle-plugin-idea-proto-1.8.20-dev-5742.jar">
+          <sha256sum>911f4da2a752a559acf63d96ea2d1a3bdf5e5a175c4fecc69d79cca2d303c62d</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.8.20-dev-5742/kotlin-gradle-plugin-idea-proto-1.8.20-dev-5742.jar!/" />
     </CLASSES>

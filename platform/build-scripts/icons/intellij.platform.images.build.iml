@@ -32,7 +32,13 @@
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="module-library">
       <library name="pngencoder" type="repository">
-        <properties maven-id="com.pngencoder:pngencoder:0.14.0" />
+        <properties maven-id="com.pngencoder:pngencoder:0.14.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/pngencoder/pngencoder/0.14.0/pngencoder-0.14.0.jar">
+              <sha256sum>79bf02e8f49833dc3433ae1554999dd375075e5ab13447fc1e558857b51baecc</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/com/pngencoder/pngencoder/0.14.0/pngencoder-0.14.0.jar!/" />
         </CLASSES>

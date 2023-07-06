@@ -85,7 +85,13 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module-library">
       <library name="byte-buddy-agent" type="repository">
-        <properties include-transitive-deps="false" maven-id="net.bytebuddy:byte-buddy-agent:1.14.0" />
+        <properties include-transitive-deps="false" maven-id="net.bytebuddy:byte-buddy-agent:1.14.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.0/byte-buddy-agent-1.14.0.jar">
+              <sha256sum>4b23cda64beade8b78ec80fd321e017a0cc2413e4d73f323d8e617222a0e5d2c</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.0/byte-buddy-agent-1.14.0.jar!/" />
         </CLASSES>

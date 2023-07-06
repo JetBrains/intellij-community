@@ -1,6 +1,42 @@
 <component name="libraryTable">
   <library name="opentelemetry" type="repository">
-    <properties maven-id="io.opentelemetry:opentelemetry-sdk:1.26.0" />
+    <properties maven-id="io.opentelemetry:opentelemetry-sdk:1.26.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk/1.26.0/opentelemetry-sdk-1.26.0.jar">
+          <sha256sum>039640fdc6fd01fdd44312c1677b96366d465e2ca1424be08da0a7bf48e96a8d</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.26.0/opentelemetry-api-1.26.0.jar">
+          <sha256sum>000bd01ca7d67cb6542f0db8677f281d23ad87521b2afe7320484b54e1b7899b</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.26.0/opentelemetry-context-1.26.0.jar">
+          <sha256sum>9d9888fcfc405efd32aa28ed9eb156d6afbbe21772fff87b215b60ff37e30454</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-common/1.26.0/opentelemetry-sdk-common-1.26.0.jar">
+          <sha256sum>04207cb8d82e01a42386ebe967c53d789eb01ee17e9756c17fdc6460ce502efc</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-semconv/1.26.0-alpha/opentelemetry-semconv-1.26.0-alpha.jar">
+          <sha256sum>b57721963af36e72f10d7f882bb247b775f8d182777cfe8b1907b40282ff47eb</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-trace/1.26.0/opentelemetry-sdk-trace-1.26.0.jar">
+          <sha256sum>70a518c0f54e416964aaaa0a20f26ce038729fc7300c6e9aabba0a360c9f889d</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-metrics/1.26.0/opentelemetry-sdk-metrics-1.26.0.jar">
+          <sha256sum>95c0db72d3856553fddc1a313c326ac0b13e284d85660029fc7bc5ba39e5d362</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-incubator/1.26.0-alpha/opentelemetry-extension-incubator-1.26.0-alpha.jar">
+          <sha256sum>59ddecd684fd8e009050dc29b5a6d115f49bbcb1270f3076dcf56f378617e91d</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-logs/1.26.0-alpha/opentelemetry-sdk-logs-1.26.0-alpha.jar">
+          <sha256sum>52e0e4d7c8bff90846dc16f77c1a6ab09615234e4291f1597e1da869f4b35dda</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api-logs/1.26.0-alpha/opentelemetry-api-logs-1.26.0-alpha.jar">
+          <sha256sum>2561627dac2620e4ac6c3db01d1324d9db3aac1e089ba3186f4563cda2322f1d</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api-events/1.26.0-alpha/opentelemetry-api-events-1.26.0-alpha.jar">
+          <sha256sum>f3e6a91a45fd872471a6f42441b924c196b83f475b759c14eea702da0911a79c</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk/1.26.0/opentelemetry-sdk-1.26.0.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.26.0/opentelemetry-api-1.26.0.jar!/" />

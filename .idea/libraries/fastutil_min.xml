@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="fastutil-min" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil:8.5.11-18" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil:8.5.11-18">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.11-18/intellij-deps-fastutil-8.5.11-18.jar">
+          <sha256sum>1d36e528b8fa8e878ec4bf28e7c6acc374a89336b96e9bed7ebf735b1787febd</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <ANNOTATIONS>
       <root url="file://$PROJECT_DIR$/lib/annotations/fastutil" />
     </ANNOTATIONS>

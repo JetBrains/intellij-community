@@ -1,6 +1,29 @@
 <component name="libraryTable">
   <library name="netty-codec-http" type="repository">
     <properties maven-id="io.netty:netty-codec-http2:4.1.91.Final">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-http2/4.1.91.Final/netty-codec-http2-4.1.91.Final.jar">
+          <sha256sum>5f29d77c208427a382f3da16f7a98c6fd57e7f4158fa6b172d54abde647ff58f</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.1.91.Final/netty-transport-4.1.91.Final.jar">
+          <sha256sum>9cb5f94745be48c56bce3f3e3729188b62470a3f810ab215d59d567695b2fe10</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.1.91.Final/netty-resolver-4.1.91.Final.jar">
+          <sha256sum>a6b8bacead85b88c0f423a017760eb0b796e0645ec37770f805158af357f6933</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.1.91.Final/netty-codec-4.1.91.Final.jar">
+          <sha256sum>df923f67bbafa986448506fa0c4f456397f6a18be86101c8d75128ff6bb43878</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.1.91.Final/netty-handler-4.1.91.Final.jar">
+          <sha256sum>4ef5e6c419736ec2e24c9d2d29679a53eb6299d56b48e2b28def16d66810dd50</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-unix-common/4.1.91.Final/netty-transport-native-unix-common-4.1.91.Final.jar">
+          <sha256sum>9a58ffe8807d25969cde351f2b8e6ea9f15c06c93ce263a9d75bff2d7866573c</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.1.91.Final/netty-codec-http-4.1.91.Final.jar">
+          <sha256sum>e1806a0df6e5cdda968ebe34496b8287e100d29e0e3b6c6b8b9c3d462b16162a</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="io.netty:netty-common" />
         <dependency maven-id="io.netty:netty-buffer" />

@@ -1,6 +1,20 @@
 <component name="libraryTable">
   <library name="JUnit5Suites" type="repository">
     <properties maven-id="org.junit.platform:junit-platform-suite:1.9.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite/1.9.1/junit-platform-suite-1.9.1.jar">
+          <sha256sum>a21d4de7695ecabaff20b21a641d8f1e35bb2f3e57e752fd94f2209d87f06228</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-api/1.9.1/junit-platform-suite-api-1.9.1.jar">
+          <sha256sum>f49e2a8983a52e2e5566a16828d634a02592ab8bf51d23c5c091214bc15e57b4</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-engine/1.9.1/junit-platform-suite-engine-1.9.1.jar">
+          <sha256sum>e7b7ee49332764acaa64f88cfe4c624e4d69b15d04cacbf98103ed91d027e06c</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-commons/1.9.1/junit-platform-suite-commons-1.9.1.jar">
+          <sha256sum>8279775f6a9b075e394a888b8ab1226307c86fb925b4414270be9518cf07377c</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="org.junit.platform:junit-platform-commons" />
         <dependency maven-id="org.apiguardian:apiguardian-api" />

@@ -1,6 +1,182 @@
 <component name="libraryTable">
   <library name="flexmark" type="repository">
     <properties maven-id="com.vladsch.flexmark:flexmark-all:0.64.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-all/0.64.0/flexmark-all-0.64.0.jar">
+          <sha256sum>6211a32328f27888527c4bfe7809ae9a56cb56008a6173459cee9a91bbad3139</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark/0.64.0/flexmark-0.64.0.jar">
+          <sha256sum>2eaaa51313ee2f5dce1e04ddbf793496b790a8e5ffb9841d7f52a8520eb6b753</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-abbreviation/0.64.0/flexmark-ext-abbreviation-0.64.0.jar">
+          <sha256sum>00a3a6b59343f71c04b0771a596684f970ad4b6b264875e68d60128fccaebb71</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util/0.64.0/flexmark-util-0.64.0.jar">
+          <sha256sum>29cb23d79b9099f6714377db8c7a3f0ca99cb6c73ec51549692072b6cf0c310b</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-admonition/0.64.0/flexmark-ext-admonition-0.64.0.jar">
+          <sha256sum>2faf1daeee5f083080861360ec713da200827ba4e8a3a75d4986e25742a74a34</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-anchorlink/0.64.0/flexmark-ext-anchorlink-0.64.0.jar">
+          <sha256sum>e8f949d6328c4aa6cb2682f4f41c18cc6ae46d9b9c793e6db1b6db68e136dfdc</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-aside/0.64.0/flexmark-ext-aside-0.64.0.jar">
+          <sha256sum>30196af44231431e129292f51ff1a2871149eef834cc5bdddd5886e0b4c838ad</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-attributes/0.64.0/flexmark-ext-attributes-0.64.0.jar">
+          <sha256sum>768dd44a59df0823d61e2d824403c83ccb85625519ffaa0acb07371f3cbb18cd</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-autolink/0.64.0/flexmark-ext-autolink-0.64.0.jar">
+          <sha256sum>9f6e086420030922367bebaeef109bc6814ccdfff032a123a385c882a74a061e</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/nibor/autolink/autolink/0.6.0/autolink-0.6.0.jar">
+          <sha256sum>a80be030f6386f18111cad9161c0b6983157352a1b59a59e6002172f0d321c04</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-definition/0.64.0/flexmark-ext-definition-0.64.0.jar">
+          <sha256sum>977629f9065b9a6d84c4cb065f206740cb4be9c112aa9ce369ba5e9103d99391</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-emoji/0.64.0/flexmark-ext-emoji-0.64.0.jar">
+          <sha256sum>40bb90895ce19ceef5b1d9d4402c252cf44a1707454d9e617060ac3d81316702</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-enumerated-reference/0.64.0/flexmark-ext-enumerated-reference-0.64.0.jar">
+          <sha256sum>1c25bdccea3f3bcb5f263cdb97e5b471e54d2d5c8130bf3d5daee221b3b52861</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-escaped-character/0.64.0/flexmark-ext-escaped-character-0.64.0.jar">
+          <sha256sum>3ebdc04e6af19c0a98a4347817fb55d25dd9cec77a280e1aea59efdbce29921d</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-footnotes/0.64.0/flexmark-ext-footnotes-0.64.0.jar">
+          <sha256sum>5308e869da67621d8b2252c192498d545c9c17427ef45603606248fb77744c71</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-issues/0.64.0/flexmark-ext-gfm-issues-0.64.0.jar">
+          <sha256sum>7b2a6a4570966b9b651565b57c309f690144d93cb48eb03f02aacd58700dd92b</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-strikethrough/0.64.0/flexmark-ext-gfm-strikethrough-0.64.0.jar">
+          <sha256sum>503a073ab4b1dbd2576497a597eb51f1361902fb7b294c605e898485ab91db2c</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-tasklist/0.64.0/flexmark-ext-gfm-tasklist-0.64.0.jar">
+          <sha256sum>eb469f3b48b4f1b4cbfa127410d9c55120ca761eaa675a03210c6052b9bdcb99</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gfm-users/0.64.0/flexmark-ext-gfm-users-0.64.0.jar">
+          <sha256sum>43c52ebaf42d1852ced4605c5e8d53e1cdf5bc4a03753816aaebea0b23346fdf</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-gitlab/0.64.0/flexmark-ext-gitlab-0.64.0.jar">
+          <sha256sum>d608dffefafd1c4cdb9cc7cba07be462f72e22c9b0fedc96fd578a42f1fc4e90</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-jekyll-front-matter/0.64.0/flexmark-ext-jekyll-front-matter-0.64.0.jar">
+          <sha256sum>9205baa5c0851e6a4784aa20ea29aa75c1942c0e1b2448c5925a3769e0c3ad93</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-jekyll-tag/0.64.0/flexmark-ext-jekyll-tag-0.64.0.jar">
+          <sha256sum>79209b1ca5cf7b1a9b9940aec061046f957ee661d72b89e2480aaec253cf7e60</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-media-tags/0.64.0/flexmark-ext-media-tags-0.64.0.jar">
+          <sha256sum>81d563c08d793b10fa72f3001d97a4d8c9d474b17441e496f65e15e969c6faa4</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-resizable-image/0.64.0/flexmark-ext-resizable-image-0.64.0.jar">
+          <sha256sum>85f569f477b98fd1fbb0c0b5705c7bc4e2ca0434a0a92a7ccd6ec8b2617456af</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-macros/0.64.0/flexmark-ext-macros-0.64.0.jar">
+          <sha256sum>89b482f01fe4c05237d510117c69228c43e8896d1dd4d2fbea148eae04fe6713</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-ins/0.64.0/flexmark-ext-ins-0.64.0.jar">
+          <sha256sum>357eff83842e0a38f64c3c9b3d07d10f88539d7360cfaccd922d5a6a8cbb3e4b</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-xwiki-macros/0.64.0/flexmark-ext-xwiki-macros-0.64.0.jar">
+          <sha256sum>f602762ea5e695b624020c76b97be077932a324ec88babf01fd19b966dd0a750</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-superscript/0.64.0/flexmark-ext-superscript-0.64.0.jar">
+          <sha256sum>66422167fd4651d11f79aee9ec4e42da89822d817e4574cfd2d333b6fb32833e</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-tables/0.64.0/flexmark-ext-tables-0.64.0.jar">
+          <sha256sum>44ebd9975b9a9f6ca3639385012bfd0a25a7e44e81db7d72ceb0023c658cb013</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-toc/0.64.0/flexmark-ext-toc-0.64.0.jar">
+          <sha256sum>7510fb997d81002e953d70579129fd3f492acbd5ea36b6363a29d1a2e26c12eb</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-typographic/0.64.0/flexmark-ext-typographic-0.64.0.jar">
+          <sha256sum>49cd84ea5e07944e895951053272dd67c69a6f10af4a2a77fffea85b0b9289ea</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-wikilink/0.64.0/flexmark-ext-wikilink-0.64.0.jar">
+          <sha256sum>6bd7d9d9d6e47f8a1df4b805afb0d0204fa68ec776d349c8d7b5f062a617e6f0</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-yaml-front-matter/0.64.0/flexmark-ext-yaml-front-matter-0.64.0.jar">
+          <sha256sum>c34a9c0b128c75af842c31f92ba1750f355f3319505f36c428515192d9bc7a74</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-youtube-embedded/0.64.0/flexmark-ext-youtube-embedded-0.64.0.jar">
+          <sha256sum>a66d48a36afd5679cf722445f318cac25bd1ae67d74f5604473f83210f89386e</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-html2md-converter/0.64.0/flexmark-html2md-converter-0.64.0.jar">
+          <sha256sum>8daa944ae51847913a5ed0e9746fa3c8dfa11379039a91b3f6bbc35f31b36114</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-jira-converter/0.64.0/flexmark-jira-converter-0.64.0.jar">
+          <sha256sum>324edeb333d711e3b82a0975164eb35c5ab1f1f8bf084c0c4ed68d51a70402bb</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-pdf-converter/0.64.0/flexmark-pdf-converter-0.64.0.jar">
+          <sha256sum>6b486b6a78717e768b3df56e91df30a7f9257f74366fd870afb204f3bc0970ac</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-core/1.0.10/openhtmltopdf-core-1.0.10.jar">
+          <sha256sum>3e6fd2250d833d500b7cd48b7a896700d0c33bd9f77a219e820493b01566eda3</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-pdfbox/1.0.10/openhtmltopdf-pdfbox-1.0.10.jar">
+          <sha256sum>7de90df1b3ecf84e6f0daf808d724c11142007a2f22bff1936479bf17251d31a</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/pdfbox/pdfbox/2.0.24/pdfbox-2.0.24.jar">
+          <sha256sum>3c2c0553ec0e7533c490b4c952e1af113621de5275af6e380e11d0d9a0a4f3d6</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/pdfbox/fontbox/2.0.24/fontbox-2.0.24.jar">
+          <sha256sum>2e8c0a569a90b04734fbc0c805d77f4ec03f98c11f5705055ccd7718c1953d68</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/pdfbox/xmpbox/2.0.24/xmpbox-2.0.24.jar">
+          <sha256sum>27383df2285b9e228c39f2c755adeebbef774793d33c4f20f0dc99e9ebaaf673</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/de/rototor/pdfbox/graphics2d/0.32/graphics2d-0.32.jar">
+          <sha256sum>37f8f387395f96c214ac44f7475c7a2e1f832dfc1de289a3610e0ffbf728f679</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-rtl-support/1.0.10/openhtmltopdf-rtl-support-1.0.10.jar">
+          <sha256sum>5675c0b56d613b15446f9d0922d89781af48f05331326a87bdb3d1775c703215</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-jsoup-dom-converter/1.0.0/openhtmltopdf-jsoup-dom-converter-1.0.0.jar">
+          <sha256sum>eb7ba2f2d6a59479ae3f04e3b844c9efe5c7a5fb55579602b70232fcd351287b</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-profile-pegdown/0.64.0/flexmark-profile-pegdown-0.64.0.jar">
+          <sha256sum>cbeca04fd93dec035ff4b85deffa976a0a1f25b5c374ad482750b2b8682f211b</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-ast/0.64.0/flexmark-util-ast-0.64.0.jar">
+          <sha256sum>d7ca1d1f027457a5fecd0b4e0dd360d888f4b335bed809c1046fa75466ae96dc</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-builder/0.64.0/flexmark-util-builder-0.64.0.jar">
+          <sha256sum>2218cd239254472e73e98fc3f4ee82880419409816bbb5857956da7cc8ea70fe</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-collection/0.64.0/flexmark-util-collection-0.64.0.jar">
+          <sha256sum>5f68e6da2785071000c9be8e1ea6968f306d8e1457370cc060e9ff7974e5f89f</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-data/0.64.0/flexmark-util-data-0.64.0.jar">
+          <sha256sum>40613e94469e43d91d3a853f4c63f97e3e1be891cd64bed6e2a7f6338e7f6024</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-dependency/0.64.0/flexmark-util-dependency-0.64.0.jar">
+          <sha256sum>94abc1de6ae49473c9397ead4344f55daaed39b3081943451178b789e5eb5650</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-format/0.64.0/flexmark-util-format-0.64.0.jar">
+          <sha256sum>a4cd2efe840a133fe408a2bfabc92a21d84402d9af9e829e052a745102e8f28c</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-html/0.64.0/flexmark-util-html-0.64.0.jar">
+          <sha256sum>ae188a5588e18b37256bbaa1b314731ffc07d691704124458465193081da53d7</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-misc/0.64.0/flexmark-util-misc-0.64.0.jar">
+          <sha256sum>166fffb18e34b4ae80a1893aad10e1f7bed37a17a93abcef3d2e4177cd666e38</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-options/0.64.0/flexmark-util-options-0.64.0.jar">
+          <sha256sum>64966403e3b865c7936eb63e7815a19a726b854e45b8173a8a13f7d01bb81b1d</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-sequence/0.64.0/flexmark-util-sequence-0.64.0.jar">
+          <sha256sum>55d942bf79d27c1d351c6f54872c734153ccc8952a5dd5256b7cc716c9af875c</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-visitor/0.64.0/flexmark-util-visitor-0.64.0.jar">
+          <sha256sum>cb6256b9565a89ed08648547657b0c9b9f28bf37c25c545e431ede10fb5cda35</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-youtrack-converter/0.64.0/flexmark-youtrack-converter-0.64.0.jar">
+          <sha256sum>30ef9467bc9f9dd30b1f5cd9da5989aaf25f32a7bb1ab4ae3d944d391a2a1f9b</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />
         <dependency maven-id="org.jsoup:jsoup" />

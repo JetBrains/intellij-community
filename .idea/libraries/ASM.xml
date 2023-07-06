@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="ASM" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:asm-all:9.5" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:asm-all:9.5">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/asm-all/9.5/asm-all-9.5.jar">
+          <sha256sum>a1b68c71e5c72ff41fefea29f8d1c2499f2e31278acf8e312249df349b263fbe</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/asm-all/9.5/asm-all-9.5.jar!/" />
     </CLASSES>

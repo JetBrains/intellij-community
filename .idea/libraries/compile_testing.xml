@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="compile-testing" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.google.testing.compile:compile-testing:0.16" />
+    <properties include-transitive-deps="false" maven-id="com.google.testing.compile:compile-testing:0.16">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/testing/compile/compile-testing/0.16/compile-testing-0.16.jar">
+          <sha256sum>55746fa706fb051a53f61d205eb66ee31e33ed1936d92b323c7001df18ad3acb</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/google/testing/compile/compile-testing/0.16/compile-testing-0.16.jar!/" />
     </CLASSES>

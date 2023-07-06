@@ -1,6 +1,14 @@
 <component name="libraryTable">
   <library name="JUnit5Launcher" type="repository">
     <properties maven-id="org.junit.platform:junit-platform-launcher:1.9.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.9.1/junit-platform-launcher-1.9.1.jar">
+          <sha256sum>5fb50ef56168358892e1bd0a080e2e5bb74dc882b2ecc2a9bad0eadb5a6a449e</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.9.1/junit-platform-engine-1.9.1.jar">
+          <sha256sum>f59c3a67087f2b9bbb17a9c06dd416697989b2c53b38843874ebbbbcb0afc23f</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="org.apiguardian:apiguardian-api" />
         <dependency maven-id="org.opentest4j:opentest4j" />

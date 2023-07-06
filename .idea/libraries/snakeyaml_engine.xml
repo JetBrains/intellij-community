@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="snakeyaml-engine" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.snakeyaml:snakeyaml-engine:2.6" />
+    <properties include-transitive-deps="false" maven-id="org.snakeyaml:snakeyaml-engine:2.6">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.6/snakeyaml-engine-2.6.jar">
+          <sha256sum>2652199af40c9aa2f1782400d2dfbbf4e5226208c4e05ddd4059c3d6d9cd1505</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.6/snakeyaml-engine-2.6.jar!/" />
     </CLASSES>

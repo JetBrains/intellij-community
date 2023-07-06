@@ -23,6 +23,17 @@
     <orderEntry type="module-library" scope="TEST">
       <library name="com.willowtreeapps.assertk:assertk-jvm" type="repository">
         <properties maven-id="com.willowtreeapps.assertk:assertk-jvm:0.23">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/willowtreeapps/assertk/assertk-jvm/0.23/assertk-jvm-0.23.jar">
+              <sha256sum>424e8f9f9452fa2029ed54f664917b848745e488faaad5eebdb51174683f1db8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/willowtreeapps/opentest4k/opentest4k-jvm/1.2.1/opentest4k-jvm-1.2.1.jar">
+              <sha256sum>fab15bbc792057f3762867574b3bb7c993b1ee4f9e82b1c79471891c9b3a7055</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar">
+              <sha256sum>58812de60898d976fb81ef3b62da05c6604c18fd4a249f5044282479fc286af2</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />

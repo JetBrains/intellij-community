@@ -1,6 +1,15 @@
 <component name="libraryTable">
   <library name="joni" type="repository">
-    <properties maven-id="org.jruby.joni:joni:2.1.48" />
+    <properties maven-id="org.jruby.joni:joni:2.1.48">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.1.48/joni-2.1.48.jar">
+          <sha256sum>41cb16ce177877aae3d98aa2024486973702b66306024c683d89819ee978a529</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.58/jcodings-1.0.58.jar">
+          <sha256sum>e2f85def67d6848a7a41c648248645689e3990d17ab8f253ab2fd7e69407df67</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.1.48/joni-2.1.48.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.58/jcodings-1.0.58.jar!/" />

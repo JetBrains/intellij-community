@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="lucene-queryparser" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-queryparser:9.6.0" />
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-queryparser:9.6.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/9.6.0/lucene-queryparser-9.6.0.jar">
+          <sha256sum>83f4c46f9e5ac7ec3a9aad5fdb05d336c0c4f520528d28a676b65d57508b87f3</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/9.6.0/lucene-queryparser-9.6.0.jar!/" />
     </CLASSES>

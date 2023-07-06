@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="icu4j" type="repository">
-    <properties maven-id="com.ibm.icu:icu4j:73.1" />
+    <properties maven-id="com.ibm.icu:icu4j:73.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/73.1/icu4j-73.1.jar">
+          <sha256sum>e51fda26a50667aa6e5e7c752301203867dc36bbf82cb9f8f1008aded3798a5e</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <ANNOTATIONS>
       <root url="file://$PROJECT_DIR$/lib/annotations/icu4j" />
     </ANNOTATIONS>

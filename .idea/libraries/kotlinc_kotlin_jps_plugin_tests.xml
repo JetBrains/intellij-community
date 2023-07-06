@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-jps-plugin-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-tests-for-ide:1.8.21-release-380" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-tests-for-ide:1.8.21-release-380">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.8.21-release-380/kotlin-jps-plugin-tests-for-ide-1.8.21-release-380.jar">
+          <sha256sum>e30ddef4e4c3d1d21088cf5722befb8745a3da84ef794fc9f998f069b3897881</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.8.21-release-380/kotlin-jps-plugin-tests-for-ide-1.8.21-release-380.jar!/" />
     </CLASSES>

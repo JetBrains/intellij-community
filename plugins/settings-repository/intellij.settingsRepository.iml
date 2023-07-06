@@ -13,6 +13,14 @@
     <orderEntry type="module-library" exported="">
       <library name="jetbrains.intellij.deps.eclipse.jgit" type="repository">
         <properties maven-id="org.jetbrains.intellij.deps:org.eclipse.jgit:6.5.0.202303070854-r-custom-4">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.5.0.202303070854-r-custom-4/org.eclipse.jgit-6.5.0.202303070854-r-custom-4.jar">
+              <sha256sum>d9b12a3323f6447a7ca8de3d781166224f11c3505fe43dc0a9dfb1f33eb3cf04</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.1.13/JavaEWAH-1.1.13.jar">
+              <sha256sum>4c0fda2b1d317750d7ea324e36c70b2bc48310c0aaae67b98df0915d696d7111</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.slf4j:slf4j-api" />
           </exclude>
@@ -38,7 +46,13 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module-library" exported="">
       <library name="JSch" type="repository">
-        <properties maven-id="com.jcraft:jsch:0.1.55" />
+        <properties maven-id="com.jcraft:jsch:0.1.55">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jcraft/jsch/0.1.55/jsch-0.1.55.jar">
+              <sha256sum>d492b15a6d2ea3f1cc39c422c953c40c12289073dbe8360d98c0f6f9ec74fc44</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/com/jcraft/jsch/0.1.55/jsch-0.1.55.jar!/" />
         </CLASSES>

@@ -1,6 +1,14 @@
 <component name="libraryTable">
   <library name="jackson-databind" type="repository">
     <properties maven-id="com.fasterxml.jackson.core:jackson-databind:2.15.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.15.0/jackson-databind-2.15.0.jar">
+          <sha256sum>00c5a5d5ae71ac8e8d5b8da606841e2251c806355939cb5d51c4cdc6b644a0dc</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.15.0/jackson-annotations-2.15.0.jar">
+          <sha256sum>91adcd3dcf5fd9a16499934e7536a23d456692a0093e3d4fd52f138c3936348c</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="com.fasterxml.jackson.core:jackson-core" />
       </exclude>

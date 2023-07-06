@@ -11,7 +11,13 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module-library">
       <library name="clikt" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.github.ajalt:clikt:2.2.0" />
+        <properties include-transitive-deps="false" maven-id="com.github.ajalt:clikt:2.2.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/2.2.0/clikt-2.2.0.jar">
+              <sha256sum>beb3136d06764ec8ce0810a8fd6c8b7b49d04287d1deef3a07c016e43a458d33</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/2.2.0/clikt-2.2.0.jar!/" />
         </CLASSES>

@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="intellij-coverage" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:intellij-coverage-agent:1.0.723" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:intellij-coverage-agent:1.0.723">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.723/intellij-coverage-agent-1.0.723.jar">
+          <sha256sum>1aed2e845e76dc04612ffd45aa68ff21ca1131a1ae6ebe0957ef0d22c449a300</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.723/intellij-coverage-agent-1.0.723.jar!/" />
     </CLASSES>

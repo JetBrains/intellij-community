@@ -20,7 +20,13 @@
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="module-library">
       <library name="opentest4j" type="repository">
-        <properties maven-id="org.opentest4j:opentest4j:1.2.0" />
+        <properties maven-id="org.opentest4j:opentest4j:1.2.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar">
+              <sha256sum>58812de60898d976fb81ef3b62da05c6604c18fd4a249f5044282479fc286af2</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar!/" />
         </CLASSES>

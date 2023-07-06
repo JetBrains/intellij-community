@@ -1,6 +1,17 @@
 <component name="libraryTable">
   <library name="SSHJ" type="repository">
     <properties maven-id="com.hierynomus:sshj:0.35.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/hierynomus/sshj/0.35.0/sshj-0.35.0.jar">
+          <sha256sum>d3b3d71f3e834c7e52d022036c2e96c2b21c8ec7baa20270965c4d59e2e4d86e</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/hierynomus/asn-one/0.6.0/asn-one-0.6.0.jar">
+          <sha256sum>e4f70fd92849b52240048b8ebace0c9a17d3bb7b9c882b3c7778cec3458495f5</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/net/i2p/crypto/eddsa/0.3.0/eddsa-0.3.0.jar">
+          <sha256sum>4dda1120db856640dbec04140ed23242215a075fe127bdefa0dcfa29fb31267d</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="org.slf4j:slf4j-api" />
         <dependency maven-id="org.bouncycastle:bcprov-jdk15on" />

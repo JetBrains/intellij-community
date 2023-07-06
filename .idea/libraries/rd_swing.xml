@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="rd-swing" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-swing:2023.2.2" />
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-swing:2023.2.2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2023.2.2/rd-swing-2023.2.2.jar">
+          <sha256sum>5175eb67912c5d4676cf1f92183b1efcc2eb1859f24e4ed260ea9ae24d8049d2</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2023.2.2/rd-swing-2023.2.2.jar!/" />
     </CLASSES>

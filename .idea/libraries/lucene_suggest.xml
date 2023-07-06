@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="lucene-suggest" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-suggest:9.6.0" />
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-suggest:9.6.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/9.6.0/lucene-suggest-9.6.0.jar">
+          <sha256sum>0ddf5f5b0cf06af1bc5f8ab9c8fc404b6d0006d369eadb15745ad78bb24b38c4</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/9.6.0/lucene-suggest-9.6.0.jar!/" />
     </CLASSES>

@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="kotlin-tooling-core" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-tooling-core:1.8.20-dev-5742" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-tooling-core:1.8.20-dev-5742">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1.8.20-dev-5742/kotlin-tooling-core-1.8.20-dev-5742.jar">
+          <sha256sum>7a412677e73a59588cdad4cb9c7f8e3bb70bae5db66933b4b3f3ece0071b4cad</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1.8.20-dev-5742/kotlin-tooling-core-1.8.20-dev-5742.jar!/" />
     </CLASSES>

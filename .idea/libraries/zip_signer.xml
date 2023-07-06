@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="zip-signer" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains:marketplace-zip-signer:0.1.8" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains:marketplace-zip-signer:0.1.8">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/marketplace-zip-signer/0.1.8/marketplace-zip-signer-0.1.8.jar">
+          <sha256sum>826d4d3e21b6584dd9a74f12ef35a2285fe9514fa0093618944666c0a3db194a</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/marketplace-zip-signer/0.1.8/marketplace-zip-signer-0.1.8.jar!/" />
     </CLASSES>

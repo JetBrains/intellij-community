@@ -1,6 +1,15 @@
 <component name="libraryTable">
   <library name="miglayout-swing" type="repository">
-    <properties maven-id="com.miglayout:miglayout-swing:11.0" />
+    <properties maven-id="com.miglayout:miglayout-swing:11.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/11.0/miglayout-swing-11.0.jar">
+          <sha256sum>7aa9da079e0ed628a3672f8ddd1b6b05a5a3ec27639f82370956748943989ba6</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/miglayout/miglayout-core/11.0/miglayout-core-11.0.jar">
+          <sha256sum>812b9c8a8f326098a43eb9550229dd31100c49f81680eecdf6649da423f0be9f</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <ANNOTATIONS>
       <root url="file://$PROJECT_DIR$/lib/annotations/migLayout" />
     </ANNOTATIONS>

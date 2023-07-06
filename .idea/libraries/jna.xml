@@ -1,6 +1,15 @@
 <component name="libraryTable">
   <library name="jna" type="repository">
-    <properties maven-id="net.java.dev.jna:jna-platform:5.12.1" />
+    <properties maven-id="net.java.dev.jna:jna-platform:5.12.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.12.1/jna-platform-5.12.1.jar">
+          <sha256sum>8ce969116cac95bd61b07a8d5e07174b352e63301473caac72c395e3c08488d2</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar">
+          <sha256sum>91a814ac4f40d60dee91d842e1a8ad874c62197984403d0e3c30d39e55cf53b3</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <ANNOTATIONS>
       <root url="file://$PROJECT_DIR$/lib/annotations/jna" />
     </ANNOTATIONS>

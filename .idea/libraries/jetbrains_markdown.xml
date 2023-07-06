@@ -1,6 +1,11 @@
 <component name="libraryTable">
   <library name="jetbrains.markdown" type="repository">
     <properties maven-id="org.jetbrains:markdown-jvm:0.4.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.4.0/markdown-jvm-0.4.0.jar">
+          <sha256sum>b2e2430c91c0815d45e52dfd4d1e392d00cde9270cbb3ba865e5ba1b99c9899e</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />

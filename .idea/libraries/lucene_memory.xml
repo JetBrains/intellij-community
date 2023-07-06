@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="lucene-memory" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-memory:9.6.0" />
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-memory:9.6.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/9.6.0/lucene-memory-9.6.0.jar">
+          <sha256sum>99fd1e7c06867d2f21e2c86143f774df2009222f76e7379902e87577584e63a7</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/9.6.0/lucene-memory-9.6.0.jar!/" />
     </CLASSES>
