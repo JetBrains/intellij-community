@@ -8,8 +8,9 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.CheckboxAction
+import com.intellij.openapi.project.DumbAware
 
-class UseProjectColorsCheckboxAction : CheckboxAction(IdeBundle.message("checkbox.use.solution.colours.in.toolbar")) {
+class UseProjectColorsCheckboxAction : CheckboxAction(IdeBundle.message("checkbox.use.solution.colours.in.toolbar")), DumbAware {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = ProjectWindowCustomizerService.getInstance().isAvailable()

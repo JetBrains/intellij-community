@@ -2,14 +2,14 @@
 package com.intellij.ide.ui.customization
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 
 abstract class ToolbarAddQuickActionsAction(protected val actionIds: List<String>,
                                             private val rootGroupID: String,
-                                            private val insertStrategy: ToolbarQuickActionInsertStrategy): AnAction() {
+                                            private val insertStrategy: ToolbarQuickActionInsertStrategy) : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val schema = CustomActionsSchema(null)
     schema.copyFrom(CustomActionsSchema.getInstance())
@@ -26,7 +26,7 @@ abstract class ToolbarAddQuickActionsAction(protected val actionIds: List<String
 
   override fun update(e: AnActionEvent) {
     val schema = CustomActionsSchema.getInstance()
-    e.presentation.isEnabledAndVisible = actionIds.none { id -> groupContainsAction(rootGroupID, id, schema)}
+    e.presentation.isEnabledAndVisible = actionIds.none { id -> groupContainsAction(rootGroupID, id, schema) }
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
