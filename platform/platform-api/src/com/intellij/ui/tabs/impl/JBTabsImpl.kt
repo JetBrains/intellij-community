@@ -176,6 +176,7 @@ open class JBTabsImpl(private var project: Project?,
     private set
   var isSideComponentBefore: Boolean = true
     private set
+
   @JvmField
   internal val separatorWidth: Int = JBUI.scale(1)
   private var dataProvider: DataProvider? = null
@@ -196,6 +197,7 @@ open class JBTabsImpl(private var project: Project?,
   private var hideTabs = false
   private var isRequestFocusOnLastFocusedComponent = false
   private var listenerAdded = false
+
   @JvmField
   internal val attractions: MutableSet<TabInfo> = HashSet()
 
@@ -215,6 +217,7 @@ open class JBTabsImpl(private var project: Project?,
   var addNavigationGroup: Boolean = true
   private var activeTabFillIn: Color? = null
   private var tabLabelActionsAutoHide = false
+
   @Suppress("DEPRECATION")
   private val tabActionsAutoHideListener = TabActionsAutoHideListener()
   private var tabActionsAutoHideListenerDisposable = Disposer.newDisposable()
@@ -1175,14 +1178,18 @@ open class JBTabsImpl(private var project: Project?,
         visibleInfos.add(index, info)
       }
     }
+
     resetTabsCache()
-    updateText(info)
-    updateIcon(info)
+
+    label.setText(info.coloredText)
+    label.toolTipText = info.tooltipText
+    label.setIcon(info.icon)
+    label.setTabActions(info.tabLabelActions)
+
     updateSideComponent(info)
-    updateTabActions(info)
     add(label)
     adjust(info)
-    updateAll(false)
+    updateAll(forcedRelayout = false)
     if (info.isHidden) {
       updateHiding()
     }
@@ -1192,7 +1199,7 @@ open class JBTabsImpl(private var project: Project?,
         fireSelectionChanged(null, info)
       }
     }
-    revalidateAndRepaint(false)
+    revalidateAndRepaint(layoutNow = false)
     return info
   }
 
@@ -1834,7 +1841,7 @@ open class JBTabsImpl(private var project: Project?,
           else {
             width - lastLayoutPass!!.headerRectangle.width
           }
-          divider.setBounds (location, 0, 1, height)
+          divider.setBounds(location, 0, 1, height)
         }
       }
       else if (effectiveLayout is MultiRowLayout) {
@@ -2325,6 +2332,7 @@ open class JBTabsImpl(private var project: Project?,
   private class Max {
     @JvmField
     val label = Dimension()
+
     @JvmField
     val toolbar = Dimension()
   }
