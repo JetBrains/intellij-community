@@ -235,7 +235,8 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                         val sibling = PsiTreeUtil.skipSiblingsBackward(expression, PsiWhiteSpace::class.java)
                         if (sibling == property) {
                             expression.parent.deleteChildRange(property.nextSibling, expression)
-                        } else {
+                        }
+                        else {
                             expression.delete()
                         }
                     }
@@ -290,32 +291,13 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         KtPsiUtil.isAssignment(it) && (it as KtBinaryExpression).left == this
     }
 
+    @OptIn(KtAllowAnalysisOnEdt::class)
     private fun KtExpression.shouldReplaceOccurrence(container: PsiElement?): Boolean {
         val effectiveParent = (parent as? KtScriptInitializer)?.parent ?: parent
-        return isUsedAsExpression(this) || container != effectiveParent
-    }
-
-    private fun isUsedAsExpression(element: KtExpression): Boolean {
-        val parent = element.parent
-        return if (parent is KtBlockExpression) {
-            parent.lastBlockStatementOrThis() == element && parentIsUsedAsExpression(parent.parent)
-        } else {
-            parentIsUsedAsExpression(parent)
-        }
-    }
-
-    @OptIn(KtAllowAnalysisOnEdt::class)
-    private fun isUsedAsExpression(parent: PsiElement?): Boolean = allowAnalysisOnEdt {
-        analyze(parent as KtExpression) {
-            parent.isUsedAsExpression()
-        }
-    }
-
-    private fun parentIsUsedAsExpression(element: PsiElement): Boolean {
-        return when (val parent = element.parent) {
-            is KtLoopExpression, is KtFile -> false
-            is KtIfExpression, is KtWhenExpression -> isUsedAsExpression(parent)
-            else -> true
+        return container != effectiveParent || allowAnalysisOnEdt {
+            analyze(this) {
+                isUsedAsExpression()
+            }
         }
     }
 
