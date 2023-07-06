@@ -119,7 +119,9 @@ private suspend fun onSuccess(project: Project?, threadId: Int, eventData: Any?,
   withContext(Dispatchers.EDT) {
     val text = StringBuilder()
     IdeErrorsDialog.appendSubmissionInformation(reportInfo, text)
-    text.append('.').append("<br/>").append(DiagnosticBundle.message("error.report.gratitude"))
+    text
+      .append('.').append(" It will be available after some time.")
+      .append("<br/>").append(DiagnosticBundle.message("error.report.gratitude"))
     val content = XmlStringUtil.wrapInHtml(text)
     val title = DiagnosticBundle.message("error.report.submitted")
     NotificationGroupManager.getInstance().getNotificationGroup("Error Report")
