@@ -289,7 +289,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
     override val jsonPattern: NamePatternRoot? get() = null
 
     override fun createPointer(): Pointer<Static> =
-      object : WebTypesJsonContributionWrapperPointer<Static>(this) {
+      object : WebTypesJsonContributionAdapterPointer<Static>(this) {
         override fun dereference(): Static? =
           rootScope.dereference()?.let {
             Static(contribution, jsonContext, cacheHolder, it, namespace, kind)
@@ -316,7 +316,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
       "$kind/${jsonPattern?.wrap("", jsonOrigin)?.getStaticPrefixes()?.toSet() ?: "[]"}... <pattern>"
 
     override fun createPointer(): Pointer<Pattern> =
-      object : WebTypesJsonContributionWrapperPointer<Pattern>(this) {
+      object : WebTypesJsonContributionAdapterPointer<Pattern>(this) {
 
         override fun dereference(): Pattern? =
           rootScope.dereference()?.let {
@@ -346,7 +346,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
     override val jsonPattern: NamePatternRoot? get() = null
 
     override fun createPointer(): Pointer<LegacyVueDirective> =
-      object : WebTypesJsonContributionWrapperPointer<LegacyVueDirective>(this) {
+      object : WebTypesJsonContributionAdapterPointer<LegacyVueDirective>(this) {
 
         override fun dereference(): LegacyVueDirective? =
           rootScope.dereference()?.let {
@@ -381,7 +381,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
               ?: (contribution as HtmlElement).convertToComponentContribution().also { _contributionForQuery = it }
 
     override fun createPointer(): Pointer<LegacyVueComponent> =
-      object : WebTypesJsonContributionWrapperPointer<LegacyVueComponent>(this) {
+      object : WebTypesJsonContributionAdapterPointer<LegacyVueComponent>(this) {
 
         override fun dereference(): LegacyVueComponent? =
           rootScope.dereference()?.let {
@@ -458,7 +458,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
     }
   }
 
-  private abstract class WebTypesJsonContributionWrapperPointer<T : WebTypesJsonContributionAdapter>(wrapper: T) : Pointer<T> {
+  private abstract class WebTypesJsonContributionAdapterPointer<T : WebTypesJsonContributionAdapter>(wrapper: T) : Pointer<T> {
 
     val contribution = wrapper.contribution
     val jsonContext = wrapper.jsonOrigin

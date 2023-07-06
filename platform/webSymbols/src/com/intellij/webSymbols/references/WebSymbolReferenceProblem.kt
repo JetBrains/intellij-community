@@ -12,6 +12,7 @@ data class WebSymbolReferenceProblem(
 
   enum class ProblemKind {
     DeprecatedSymbol,
+    ObsoleteSymbol,
     UnknownSymbol,
     MissingRequiredPart,
     DuplicatedPart
