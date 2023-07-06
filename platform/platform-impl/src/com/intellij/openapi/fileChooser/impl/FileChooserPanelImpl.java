@@ -242,13 +242,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         if (myPath.isPopupVisible()) {
           myPath.setPopupVisible(false);
         }
-        var path = typedPath();
-        if (path != null) {
-          load(path, null, Set.of());
-        }
-        else if (((String)myPath.getEditor().getItem()).isBlank()) {
-          load(null, null, Set.of());
-        }
+        load(typedPath(), null, Set.of());
       }
     });
   }
