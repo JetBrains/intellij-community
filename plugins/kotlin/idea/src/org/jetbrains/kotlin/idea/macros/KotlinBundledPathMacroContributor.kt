@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.ConcurrentHashMap
@@ -34,14 +35,12 @@ private class KotlinBundledPathMacroContributor : ProjectWidePathMacroContributo
                     else -> error("projectFilePath should be either misc.xml or *.ipr file")
                 }
             }
-            .takeIf { it.exists() }
         val cached = cachedPaths[projectFilePath] ?: Pair("", NOT_CACHED_YET_FILE_TIME)
-        val lastModified = iprOrKotlincXml?.lastModified() ?: FILE_DOESNT_EXIST_FILE_TIME
+        val lastModified = iprOrKotlincXml.lastModifiedOrNull() ?: FILE_DOESNT_EXIST_FILE_TIME
         val path = if (cached.second >= lastModified) {
             cached.first
         } else {
-            val newPath = iprOrKotlincXml
-                ?.let { KotlinJpsPluginSettings.readFromKotlincXmlOrIpr(it)?.version }
+            val newPath = KotlinJpsPluginSettings.readFromKotlincXmlOrIpr(iprOrKotlincXml)?.version
                 ?.let { KotlinArtifactsDownloader.getUnpackedKotlinDistPath(it).canonicalPath }
                 ?: KotlinPluginLayout.kotlinc.canonicalPath
             val newPair = Pair(newPath, lastModified)
@@ -54,6 +53,13 @@ private class KotlinBundledPathMacroContributor : ProjectWidePathMacroContributo
         }
         return mapOf(KOTLIN_BUNDLED to path)
     }
+
+    private fun Path.lastModifiedOrNull(): FileTime? =
+        try {
+            lastModified()
+        } catch (ex: IOException) {
+            null
+        }
 
     override fun projectClosed(project: Project) {
         val projectFilePath = project.projectFilePath ?: return
