@@ -118,20 +118,6 @@ suspend fun <T>  withModalProgressContext(
   action: suspend ProgressCoroutineScope.() -> T
 ): T = withModalProgressContext(title, canBeCancelled, true, project, Lifetime.Eternal, action)
 
-@Deprecated("Use withModalProgress")
-suspend fun <T>  withModalProgressContext2(
-  @Nls(capitalization = Nls.Capitalization.Title) title: String,
-  canBeCancelled: Boolean = true,
-  isIndeterminate: Boolean = true,
-  project: Project? = null,
-  lifetime: Lifetime = Lifetime.Eternal,
-  action: suspend ProgressCoroutineScope.() -> T
-): T {
-  //return withModalProgressContextBridge(title, canBeCancelled, isIndeterminate, project, lifetime, action);
-  val context = CoroutineProgressContext.createModal(lifetime, title, canBeCancelled, isIndeterminate, project)
-  return doRunUnderProgress(context, action)
-}
-
 @Deprecated("Use withBackgroundProgress")
 suspend fun <T> withBackgroundProgressContext(
   @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
