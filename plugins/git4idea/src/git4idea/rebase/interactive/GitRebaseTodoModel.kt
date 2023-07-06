@@ -290,9 +290,9 @@ internal class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element
     }
   }
 
-  sealed class Type(val command: GitRebaseEntry.Action) {
-    sealed class NonUnite(command: GitRebaseEntry.Action) : Type(command) {
-      sealed class KeepCommit(command: GitRebaseEntry.Action) : NonUnite(command) {
+  sealed class Type(val command: GitRebaseEntry.KnownAction) {
+    sealed class NonUnite(command: GitRebaseEntry.KnownAction) : Type(command) {
+      sealed class KeepCommit(command: GitRebaseEntry.KnownAction) : NonUnite(command) {
         object Pick : KeepCommit(GitRebaseEntry.Action.PICK)
         object Edit : KeepCommit(GitRebaseEntry.Action.EDIT)
         class Reword(val newMessage: String) : KeepCommit(GitRebaseEntry.Action.REWORD)

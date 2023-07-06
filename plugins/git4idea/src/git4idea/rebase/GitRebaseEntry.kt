@@ -13,18 +13,23 @@ internal open class GitRebaseEntry(val action: Action, val commit: String, val s
 
   sealed class Action(val command: String,
                       private val nameKey: @PropertyKey(resourceBundle = GitBundle.BUNDLE) String) {
-    object PICK : Action("pick", "rebase.entry.action.name.pick")
-    object EDIT : Action("edit", "rebase.entry.action.name.edit")
-    object DROP : Action("drop", "rebase.entry.action.name.drop")
-    object REWORD : Action("reword", "rebase.entry.action.name.reword")
-    object SQUASH : Action("squash", "rebase.entry.action.name.squash")
-    object FIXUP : Action("fixup", "rebase.entry.action.name.fixup")
+    object PICK : KnownAction("pick", "rebase.entry.action.name.pick")
+    object EDIT : KnownAction("edit", "rebase.entry.action.name.edit")
+    object DROP : KnownAction("drop", "rebase.entry.action.name.drop")
+    object REWORD : KnownAction("reword", "rebase.entry.action.name.reword")
+    object SQUASH : KnownAction("squash", "rebase.entry.action.name.squash")
+    object FIXUP : KnownAction("fixup", "rebase.entry.action.name.fixup")
+
     class Other(command: String) : Action(command, "rebase.entry.action.name.unknown")
 
-    val mnemonic: Int get() = KeyEvent.getExtendedKeyCodeForChar(command.first().code)
     val visibleName: Supplier<@NlsContexts.Button String> get() = GitBundle.messagePointer(nameKey)
 
     override fun toString(): String = command
+  }
+
+  sealed class KnownAction(command: String,
+                           nameKey: @PropertyKey(resourceBundle = "messages.GitBundle") String) : Action(command, nameKey) {
+    val mnemonic: Int get() = KeyEvent.getExtendedKeyCodeForChar(command.first().code)
   }
 
   companion object {
