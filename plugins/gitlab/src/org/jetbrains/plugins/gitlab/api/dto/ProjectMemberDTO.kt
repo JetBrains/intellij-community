@@ -5,6 +5,5 @@ import com.intellij.collaboration.api.dto.GraphQLFragment
 
 @GraphQLFragment("/graphql/fragment/projectMember.graphql")
 data class ProjectMemberDTO(
-  val createdBy: GitLabUserDTO,
   val project: GitLabProjectDTO
 )
