@@ -33,12 +33,13 @@ class KotlinExprTypePredicate(
                 node is KtExpression -> {
                     // because `getKtType` will return void for enum references we resolve and build type from the resolved class when
                     // possible.
-                    val symbol = node.mainReference?.resolveToSymbol() ?: return false
+                    val symbol = node.mainReference?.resolveToSymbol()
                     if (symbol is KtNamedClassOrObjectSymbol) {
                         symbol.buildSelfClassType()
                     } else {
                         node.getKtType()
                     }
+
                 }
                 node is KtStringTemplateEntry && node !is KtSimpleNameStringTemplateEntry -> null
                 node is KtSimpleNameStringTemplateEntry -> node.expression?.getKtType()
