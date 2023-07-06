@@ -31,6 +31,7 @@ internal class NewUiOnboardingService(private val project: Project, private val 
     return listOf("projectWidget",
                   "gitWidget",
                   "runWidget",
+                  "codeWithMe",
                   "toolWindowLayouts",
                   "moreToolWindows",
                   "navigationBar")
