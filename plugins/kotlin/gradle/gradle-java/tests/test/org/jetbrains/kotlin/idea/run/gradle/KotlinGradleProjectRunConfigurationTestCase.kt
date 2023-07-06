@@ -12,7 +12,8 @@ import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertEquals
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleTestFixtureBuilderProvider
 
-abstract class AbstractGradleProjectRunConfigurationTestCase : GradleProjectTestCase() {
+abstract class KotlinGradleProjectRunConfigurationTestCase : GradleProjectTestCase() {
+
     open fun isFirPlugin(): Boolean = false
 
     override fun setUp() {
@@ -25,8 +26,7 @@ abstract class AbstractGradleProjectRunConfigurationTestCase : GradleProjectTest
     @AllGradleVersionsSource
     fun testInternalTest(gradleVersion: GradleVersion) {
         test(gradleVersion, GradleTestFixtureBuilderProvider.KOTLIN_PROJECT) {
-            val testFileRelativePath = "src/test/kotlin/org/example/TestCase.kt"
-            val testFileText = """
+            val file = writeText("src/test/kotlin/org/example/TestCase.kt", """
                 |package org.example
                 |
                 |import org.junit.jupiter.api.Test
@@ -35,11 +35,8 @@ abstract class AbstractGradleProjectRunConfigurationTestCase : GradleProjectTest
                 |    @Test
                 |    internal fun test() = Unit
                 |}
-            """.trimMargin()
-
-            writeText(testFileRelativePath, testFileText)
+            """.trimMargin())
             runReadAction {
-                val file = gradleFixture.fileFixture.root.findFileByRelativePath(testFileRelativePath)!!
                 val methodConfiguration = getConfiguration(file, project, "test")
                 assertEquals("TestCase.test\$kotlin_plugin_project", methodConfiguration.configuration.name)
             }
