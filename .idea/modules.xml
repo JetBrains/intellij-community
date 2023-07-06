@@ -996,6 +996,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.testFramework.iml" filepath="$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.tests.iml" filepath="$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/warmup/intellij.platform.warmup.iml" filepath="$PROJECT_DIR$/platform/warmup/intellij.platform.warmup.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/warmup/performanceTesting/intellij.platform.warmup.performanceTesting.iml" filepath="$PROJECT_DIR$/platform/warmup/performanceTesting/intellij.platform.warmup.performanceTesting.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/webSymbols/intellij.platform.webSymbols.iml" filepath="$PROJECT_DIR$/platform/webSymbols/intellij.platform.webSymbols.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/workspace/jps/intellij.platform.workspace.jps.iml" filepath="$PROJECT_DIR$/platform/workspace/jps/intellij.platform.workspace.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/workspace/jps/tests/intellij.platform.workspace.jps.tests.iml" filepath="$PROJECT_DIR$/platform/workspace/jps/tests/intellij.platform.workspace.jps.tests.iml" />
