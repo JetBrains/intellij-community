@@ -12,7 +12,7 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.psi.KtClass
 
 class AutomaticInheritorRenamer(klass: KtClass, newName: String) : AutomaticRenamer() {
@@ -37,9 +37,9 @@ class AutomaticInheritorRenamer(klass: KtClass, newName: String) : AutomaticRena
 class AutomaticInheritorRenamerFactory : AutomaticRenamerFactory {
     override fun isApplicable(element: PsiElement) = element is KtClass
     override fun getOptionName() = RefactoringBundle.message("rename.inheritors")
-    override fun isEnabled() = KotlinRefactoringSettings.instance.renameInheritors
+    override fun isEnabled() = KotlinCommonRefactoringSettings.getInstance().renameInheritors
     override fun setEnabled(enabled: Boolean) {
-        KotlinRefactoringSettings.instance.renameInheritors = enabled
+        KotlinCommonRefactoringSettings.getInstance().renameInheritors = enabled
     }
 
     override fun createRenamer(element: PsiElement, newName: String, usages: Collection<UsageInfo>): AutomaticRenamer {

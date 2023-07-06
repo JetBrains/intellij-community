@@ -29,6 +29,7 @@ interface KotlinCommonRefactoringSettings {
     var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean
     var renameVariables: Boolean
     var renameParameterInHierarchy: Boolean
+    var renameInheritors: Boolean
 
     companion object {
         @JvmStatic
