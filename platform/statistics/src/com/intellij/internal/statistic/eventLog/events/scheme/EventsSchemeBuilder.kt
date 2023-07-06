@@ -25,8 +25,8 @@ object EventsSchemeBuilder {
 
   private fun fieldSchema(field: EventField<*>, fieldName: String, eventName: String, groupId: String): Set<FieldDescriptor> {
     if (field.name.contains(".")) {
-      throw IllegalStateException("Field name should not contains dots, because dots are used to express hierarchy. " +
-                                  "Group=$groupId, event=$eventName, field=${field.name}")
+      throw IllegalMetadataSchemeStateException("Field name should not contains dots, because dots are used to express hierarchy. " +
+                                                "Group=$groupId, event=$eventName, field=${field.name}")
     }
 
     return when (field) {
@@ -65,7 +65,7 @@ object EventsSchemeBuilder {
 
   private fun validateRegexp(regexp: String) {
     if (regexp == ".*") {
-      throw IllegalStateException("Regexp should be more strict to prevent accidentally reporting sensitive data.")
+      throw IllegalMetadataSchemeStateException("Regexp should be more strict to prevent accidentally reporting sensitive data.")
     }
     Pattern.compile(regexp)
   }
@@ -134,8 +134,8 @@ object EventsSchemeBuilder {
       if (recorder != null && group.recorder != recorder) continue
       val existingGroup = result[group.id]
       if (existingGroup != null && group.version != existingGroup.version) {
-        throw IllegalStateException("If group is reused in multiple collectors classes (e.g Project and Application collector), " +
-                                    "it should have the same version (group=${group.id})")
+        throw IllegalMetadataSchemeStateException("If group is reused in multiple collectors classes (e.g Project and Application collector), " +
+                                                  "it should have the same version (group=${group.id})")
       }
       val existingScheme = existingGroup?.schema ?: HashSet()
       val eventsDescriptors = existingScheme + group.events.groupBy { it.eventId }
@@ -171,7 +171,7 @@ object EventsSchemeBuilder {
   private fun defineDataType(values: List<FieldDescriptor>, name: String, eventName: String, groupId: String): FieldDataType {
     val dataType = values.first().dataType
     return if (values.any { it.dataType != dataType })
-      throw IllegalStateException("Field couldn't have multiple types (group=$groupId, event=$eventName, field=$name)")
+      throw IllegalMetadataSchemeStateException("Field couldn't have multiple types (group=$groupId, event=$eventName, field=$name)")
     else {
       dataType
     }
@@ -180,3 +180,5 @@ object EventsSchemeBuilder {
   data class FeatureUsageCollectorInfo(val collector: FeatureUsagesCollector,
                                        val pluginId: String)
 }
+
+internal class IllegalMetadataSchemeStateException(message: String) : IllegalStateException(message)

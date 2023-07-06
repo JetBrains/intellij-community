@@ -42,7 +42,15 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
       }
     }
 
-    val groups = EventsSchemeBuilder.buildEventsScheme(null, pluginId, getPluginsToSkipSchemeGeneration())
+    val groups: List<GroupDescriptor>
+    try {
+      groups = EventsSchemeBuilder.buildEventsScheme(null, pluginId, getPluginsToSkipSchemeGeneration())
+    }
+    catch (e: IllegalMetadataSchemeStateException) {
+      LOG.error(e)
+      if (errorsFile != null) FileUtil.writeToFile(File(errorsFile), e.toString())
+      exitProcess(0)
+    }
     val errors = EventSchemeValidator.validateEventScheme(groups)
     val errorsList = errors.values.flatten()
     if (errorsList.isNotEmpty()) {
