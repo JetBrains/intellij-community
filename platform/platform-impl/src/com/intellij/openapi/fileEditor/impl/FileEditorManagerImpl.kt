@@ -44,6 +44,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorComposite.Companion.retrofit
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters.Companion.isOpenedInBulk
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileTypes.FileTypeEvent
@@ -1075,7 +1076,7 @@ open class FileEditorManagerImpl(
     }
 
     val editorsWithProviders = composite!!.allEditorsWithProviders
-    window.setComposite(composite, options)
+    window.addComposite(composite, options)
     for (editorWithProvider in editorsWithProviders) {
       restoreEditorState(file = file,
                          editorWithProvider = editorWithProvider,
@@ -1528,7 +1529,8 @@ open class FileEditorManagerImpl(
   }
 
   @RequiresEdt
-  final override fun getEditors(file: VirtualFile): Array<FileEditor> = getComposite(file)?.allEditors?.toTypedArray() ?: FileEditor.EMPTY_ARRAY
+  final override fun getEditors(file: VirtualFile): Array<FileEditor> = getComposite(file)?.allEditors?.toTypedArray()
+                                                                        ?: FileEditor.EMPTY_ARRAY
 
   final override fun getEditorList(file: VirtualFile): List<FileEditor> = getComposite(file)?.allEditors ?: emptyList()
 
@@ -2131,7 +2133,6 @@ open class FileEditorManagerImpl(
     newEditor: Boolean,
   ): FileEditorComposite {
     val editorsWithProviders = composite.allEditorsWithProviders
-    window.setComposite(composite, options)
     for (editorWithProvider in editorsWithProviders) {
       restoreEditorState(file = file,
                          editorWithProvider = editorWithProvider,
@@ -2151,14 +2152,18 @@ open class FileEditorManagerImpl(
       composite.setSelectedEditor(provider.editorTypeId)
     }
 
+    window.addComposite(composite, options)
+
     // notify editors about selection changes
     val splitters = window.owner
-    splitters.setCurrentWindow(window = window, requestFocus = false)
+
+    if (!isOpenedInBulk(file)) {
+      splitters.setCurrentWindowAndComposite(window = window)
+      addSelectionRecord(file, window)
+      composite.selectedEditor?.selectNotify()
+    }
 
     splitters.afterFileOpen(file)
-    addSelectionRecord(file, window)
-    val selectedEditor = composite.selectedEditor
-    selectedEditor?.selectNotify()
 
     if (newEditor) {
       openFileSetModificationCount.increment()
@@ -2173,6 +2178,7 @@ open class FileEditorManagerImpl(
 
     // transfer focus into editor
     if (options.requestFocus && !ApplicationManager.getApplication().isUnitTestMode) {
+      val selectedEditor = composite.selectedEditor
       if (selectedEditor is TextEditor) {
         runWhenLoaded(selectedEditor.editor) {
           // while the editor was loading asynchronously, the user switched to another editor - don't steal focus

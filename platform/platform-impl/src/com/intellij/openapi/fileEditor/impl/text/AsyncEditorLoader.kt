@@ -6,7 +6,6 @@ import com.intellij.diagnostic.subtask
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -27,13 +26,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.GridBagConstraints
-import java.awt.event.HierarchyEvent
-import java.awt.event.HierarchyListener
 import java.util.*
-import javax.swing.JComponent
-import javax.swing.JLayeredPane
-import javax.swing.JPanel
+import javax.swing.event.ChangeEvent
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration.Companion.milliseconds
@@ -103,8 +97,6 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     // but an async editor load is performed in the background, out of the `openEditorImpl` call
     val modality = ModalityState.any().asContextElement()
 
-    val coverComponent = addCoverComponent(editor = editor, textEditor = textEditor)
-
     val editorComponent = textEditor.component
     val indicatorJob = loadingDecorator.startLoading(scope = coroutineScope + modality, addUi = editorComponent::addLoadingDecoratorUi)
 
@@ -121,7 +113,7 @@ class AsyncEditorLoader internal constructor(private val project: Project,
       configureHighlighterJob.join()
       loadingDecorator.stopLoading(scope = this, indicatorJob = indicatorJob)
       withContext(Dispatchers.EDT) {
-        loaded(continuation = continuation, editor = editor, editorComponent = editorComponent, coverComponent)
+        loaded(continuation = continuation, editor = editor)
       }
       EditorNotifications.getInstance(project).updateNotifications(textEditor.file)
     }
@@ -147,7 +139,7 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     }
   }
 
-  private fun loaded(continuation: Runnable?, editor: EditorEx, editorComponent: TextEditorComponent, coverComponent: JComponent) {
+  private fun loaded(continuation: Runnable?, editor: EditorEx) {
     editor.putUserData(ASYNC_LOADER, null)
 
     runCatching {
@@ -167,8 +159,6 @@ class AsyncEditorLoader internal constructor(private val project: Project,
       }
     }
     finally {
-      editorComponent.remove(coverComponent)
-
       editor.scrollingModel.enableAnimation()
     }
   }
@@ -195,68 +185,40 @@ class AsyncEditorLoader internal constructor(private val project: Project,
 private class DelayedScrollState(@JvmField val relativeCaretPosition: Int, @JvmField val exactState: Boolean)
 
 private fun restoreCaretPosition(editor: EditorEx, delayedScrollState: DelayedScrollState, coroutineScope: CoroutineScope) {
-  fun scrollWhenReady() {
-    fun isReady(): Boolean {
-      val extentSize = editor.scrollPane.viewport.extentSize
-      return extentSize.width != 0 && extentSize.height != 0
-    }
-
-    fun doScroll() {
-      scrollToCaret(editor = editor,
-                    exactState = delayedScrollState.exactState,
-                    relativeCaretPosition = delayedScrollState.relativeCaretPosition)
-    }
-
-    if (isReady()) {
-      doScroll()
-    }
-    else {
-      coroutineScope.launch(ModalityState.any().asContextElement()) {
-        var done = false
-        var attemptCount = 0
-        while (!done) {
-          attemptCount++
-          done = withContext(Dispatchers.EDT) {
-            if (isReady()) {
-              doScroll()
-              true
-            }
-            else if (attemptCount > 3) {
-              thisLogger().warn("Cannot wait for a ready scroll pane, scroll now")
-              doScroll()
-              true
-            }
-            else {
-              false
-            }
-          }
-        }
-      }
-    }
+  fun doScroll() {
+    scrollToCaret(editor = editor,
+                  exactState = delayedScrollState.exactState,
+                  relativeCaretPosition = delayedScrollState.relativeCaretPosition)
   }
 
-  val component = editor.contentComponent
-  if (component.isShowing) {
-    scrollWhenReady()
+  val viewport = editor.scrollPane.viewport
+
+  fun isReady(): Boolean {
+    val extentSize = viewport.extentSize
+    return extentSize.width != 0 && extentSize.height != 0
+  }
+
+  if (isReady()) {
+    doScroll()
   }
   else {
     var listenerHandle: DisposableHandle? = null
-    val listener = object : HierarchyListener {
-      override fun hierarchyChanged(event: HierarchyEvent) {
-        if (event.changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong() <= 0) {
+    val listener = object : javax.swing.event.ChangeListener {
+      override fun stateChanged(e: ChangeEvent) {
+        if (!isReady()) {
           return
         }
 
-        component.removeHierarchyListener(this)
+        viewport.removeChangeListener(this)
         listenerHandle?.dispose()
 
-        scrollWhenReady()
+        doScroll()
       }
     }
     listenerHandle = coroutineScope.coroutineContext.job.invokeOnCompletion {
-      component.removeHierarchyListener(listener)
+      viewport.removeChangeListener(listener)
     }
-    component.addHierarchyListener(listener)
+    viewport.addChangeListener(listener)
   }
 }
 
@@ -266,18 +228,4 @@ private suspend fun configureHighlighter(highlighterDeferred: Deferred<EditorHig
     editor.settings.setLanguageSupplier { getDocumentLanguage(editor) }
     editor.highlighter = highlighter
   }
-}
-
-private fun addCoverComponent(editor: EditorEx, textEditor: TextEditorImpl): JPanel {
-  val coverComponent = JPanel()
-  coverComponent.background = editor.backgroundColor
-  JLayeredPane.putLayer(coverComponent, JLayeredPane.DRAG_LAYER - 1)
-  textEditor.component.__add(coverComponent, GridBagConstraints().also {
-    it.gridx = 0
-    it.gridy = 0
-    it.weightx = 1.0
-    it.weighty = 1.0
-    it.fill = GridBagConstraints.BOTH
-  })
-  return coverComponent
 }

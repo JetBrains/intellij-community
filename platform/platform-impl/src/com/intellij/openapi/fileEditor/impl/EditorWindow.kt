@@ -280,14 +280,14 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
               ReplaceWith("setComposite(editor, FileEditorOpenOptions().withRequestFocus(focusEditor))",
                           "com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions"))
   fun setEditor(@Suppress("DEPRECATION") editor: EditorWithProviderComposite, focusEditor: Boolean) {
-    setComposite(editor, FileEditorOpenOptions(requestFocus = focusEditor))
+    addComposite(editor, FileEditorOpenOptions(requestFocus = focusEditor))
   }
 
   internal fun setComposite(composite: EditorComposite, focusEditor: Boolean) {
-    setComposite(composite, FileEditorOpenOptions(requestFocus = focusEditor, usePreviewTab = composite.isPreview))
+    addComposite(composite, FileEditorOpenOptions(requestFocus = focusEditor, usePreviewTab = composite.isPreview))
   }
 
-  internal fun setComposite(composite: EditorComposite, options: FileEditorOpenOptions) {
+  internal fun addComposite(composite: EditorComposite, options: FileEditorOpenOptions) {
     val isNewEditor = findCompositeIndex(composite) == -1
     val isPreviewMode = (isNewEditor || composite.isPreview) && shouldReservePreview(composite.file, options, owner.manager.project)
     val wasPinned = composite.isPinned
@@ -335,6 +335,13 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     if (options.selectAsCurrent) {
       setSelectedComposite(composite, options.requestFocus)
     }
+    updateTabsVisibility()
+    owner.validate()
+  }
+
+  internal fun selectOpenedCompositeOnStartup(composite: EditorComposite) {
+    composite.selectedEditor?.selectNotify()
+    setSelectedComposite(composite = composite, focusEditor = true)
     updateTabsVisibility()
     owner.validate()
   }
@@ -501,8 +508,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     UIUtil.toFront(ComponentUtil.getWindow(tabbedPane.component))
   }
 
-  fun updateTabsVisibility(settings: UISettings = UISettings.getInstance()) {
-    tabbedPane.tabs.presentation.isHideTabs = (owner.isFloating && this.tabCount == 1 && shouldHideTabs(selectedComposite)) ||
+  internal fun updateTabsVisibility(settings: UISettings = UISettings.getInstance()) {
+    tabbedPane.tabs.presentation.isHideTabs = (owner.isFloating && tabCount == 1 && shouldHideTabs(selectedComposite)) ||
                                               settings.editorTabPlacement == UISettings.TABS_NONE ||
                                               (settings.presentationMode && !Registry.`is`("ide.editor.tabs.visible.in.presentation.mode"))
   }
@@ -749,7 +756,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
   private fun processSiblingComposite(composite: EditorComposite, openOptions: FileEditorOpenOptions) {
     if (tabCount < UISettings.getInstance().state.editorTabLimit && getComposite(composite.file) == null) {
-      setComposite(composite, openOptions)
+      addComposite(composite, openOptions)
     }
     else {
       manager.disposeComposite(composite)
@@ -816,7 +823,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   internal fun findCompositeIndex(composite: EditorComposite): Int {
     for (i in 0 until tabCount) {
       val compositeAt = getCompositeAt(i)
-      if (compositeAt == composite) {
+      if (compositeAt === composite) {
         return i
       }
     }
@@ -866,7 +873,10 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     val alreadyClosedFile = if (selectedFile != null && shouldCloseSelected(selectedFile, fileToIgnore)) {
       defaultCloseFile(selectedFile, transferFocus)
       selectedFile
-    } else null
+    }
+    else {
+      null
+    }
 
     // close all preview tabs
     for (file in getComposites().filter { it.isPreview }.map { it.file }.filter { it != fileToIgnore }.distinct().toList()) {
@@ -874,8 +884,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     }
 
     val limit = tabLimit
-    fun isUnderLimit(): Boolean =
-      tabbedPane.tabCount <= limit || tabbedPane.tabCount == 0 || !isAnyTabClosable(fileToIgnore)
+    fun isUnderLimit(): Boolean = tabbedPane.tabCount <= limit || tabbedPane.tabCount == 0 || !isAnyTabClosable(fileToIgnore)
 
     if (isUnderLimit()) {
       return

@@ -16,6 +16,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -29,7 +30,6 @@ import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.OnePixelDivider
@@ -224,15 +224,9 @@ open class EditorsSplitters internal constructor(
 
     val panel = getComponent(0) as JPanel
     if (panel.componentCount != 0) {
-      try {
+      runCatching {
         element.addContent(writePanel(panel.getComponent(0)))
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
+      }.getOrLogException(LOG)
     }
   }
 
@@ -355,7 +349,7 @@ open class EditorsSplitters internal constructor(
     }
   }
 
-  private fun setCurrentWindowAndComposite(window: EditorWindow?) {
+  internal fun setCurrentWindowAndComposite(window: EditorWindow?) {
     currentWindowFlow.value = window
     currentCompositeFlow.value = window?.selectedComposite
   }
@@ -1016,10 +1010,11 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         val window = windowDeferred.await()
         fileEditorManager.addSelectionRecord(focusedFile, window)
         splitters.coroutineScope.launch(Dispatchers.EDT) {
-          window.getComposite(focusedFile)?.let {
+          window.getComposite(focusedFile)?.let { composite ->
             focusedFile.putUserData(OPENED_IN_BULK, true)
             try {
-              window.setComposite(composite = it, options = FileEditorOpenOptions(requestFocus = true, usePreviewTab = it.isPreview))
+              window.selectOpenedCompositeOnStartup(composite = composite)
+              splitters.setCurrentWindowAndComposite(window = window)
             }
             finally {
               focusedFile.putUserData(OPENED_IN_BULK, null)
