@@ -151,7 +151,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var dateColumn = new MyColumnInfo(UIBundle.message("file.chooser.column.date"), 20, Comparator.comparing(item -> item.lastUpdated)) {
       @Override
       public String valueOf(FsItem item) {
-        return DateFormatUtil.formatBetweenDates(item.lastUpdated, System.currentTimeMillis());
+        return DateFormatUtil.formatPrettyDateTime(item.lastUpdated);
       }
     };
     myModel = new ListTableModel<>(nameColumn, sizeColumn, dateColumn);
