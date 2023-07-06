@@ -68,21 +68,19 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
     initializeFacetBridgeTimeMs.addElapsedTimeMs(start)
   }
 
-  init {
-    if (!project.isDefault) {
-      project.messageBus.connect(coroutineScope).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChange) {
-          WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetBridgeContributor ->
-            processBeforeChangeEvents(event, facetBridgeContributor)
-          }
-        }
+  class WorkspaceModelListener(project: Project) : WorkspaceModelChangeListener {
+    private val facetEntityChangeListener = getInstance(project)
 
-        override fun changed(event: VersionedStorageChange) {
-          WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetBridgeContributor ->
-            processChangeEvents(event, facetBridgeContributor)
-          }
-        }
-      })
+    override fun beforeChanged(event: VersionedStorageChange) {
+      WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetBridgeContributor ->
+        facetEntityChangeListener.processBeforeChangeEvents(event, facetBridgeContributor)
+      }
+    }
+
+    override fun changed(event: VersionedStorageChange) {
+      WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetBridgeContributor ->
+        facetEntityChangeListener.processChangeEvents(event, facetBridgeContributor)
+      }
     }
   }
 

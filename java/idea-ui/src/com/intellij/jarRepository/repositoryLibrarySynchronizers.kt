@@ -58,7 +58,15 @@ internal class GlobalChangedRepositoryLibrarySynchronizer(private val queue: Lib
 
 internal class ChangedRepositoryLibrarySynchronizer(private val project: Project,
                                                     private val queue: LibrarySynchronizationQueue) : WorkspaceModelChangeListener {
+  /**
+   * This is a flag indicating that the [beforeChanged] method was called. Due to the fact that we subscribe using the code, this
+   *   may lead to IDEA-324532.
+   * With this flag we skip the "after" event if the before event wasn't called.
+   */
+  private var beforeCalled = false
+
   override fun beforeChanged(event: VersionedStorageChange) {
+    beforeCalled = true
     for (change in event.getChanges(LibraryEntity::class.java)) {
       val removed = change as? EntityChange.Removed ?: continue
       val library = findLibrary(removed.entity.symbolicId, event.storageBefore)
@@ -82,6 +90,8 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
   }
 
   override fun changed(event: VersionedStorageChange) {
+    if (!beforeCalled) return
+    beforeCalled = false
     var libraryReloadRequested = false
 
     for (change in event.getChanges(LibraryEntity::class.java)) {

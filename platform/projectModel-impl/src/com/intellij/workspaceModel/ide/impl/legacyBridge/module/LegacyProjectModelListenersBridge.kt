@@ -33,9 +33,17 @@ internal class LegacyProjectModelListenersBridge(
   private val moduleModificationTracker: SimpleModificationTracker,                                              
   private val moduleRootListenerBridge: ModuleRootListenerBridge
 ) : WorkspaceModelChangeListener {
-  
+
+  /**
+   * This is a flag indicating that the [beforeChanged] method was called. Due to the fact that we subscribe using the code, this
+   *   may lead to IDEA-324532.
+   * With this flag we skip the "after" event if the before event wasn't called.
+   */
+  private var beforeCalled = false
+
   override fun beforeChanged(event: VersionedStorageChange) {
     LOG.trace { "Get before changed event" }
+    beforeCalled = true
     moduleRootListenerBridge.fireBeforeRootsChanged(project, event)
     val moduleMap = event.storageBefore.moduleMap
     for (change in event.getChanges(ModuleEntity::class.java)) {
@@ -50,6 +58,8 @@ internal class LegacyProjectModelListenersBridge(
   }
 
   override fun changed(event: VersionedStorageChange) {
+    if (!beforeCalled) return
+    beforeCalled = false
     LOG.trace { "Get changed event" }
     val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
     val changes = event.getChanges(ModuleEntity::class.java)

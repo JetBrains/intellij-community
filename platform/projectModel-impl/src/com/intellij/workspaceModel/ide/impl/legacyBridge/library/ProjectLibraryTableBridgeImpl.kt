@@ -68,7 +68,15 @@ class ProjectLibraryTableBridgeImpl(
 
   init {
     project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object  : WorkspaceModelChangeListener {
+      /**
+       * This is a flag indicating that the [beforeChanged] method was called. Due to the fact that we subscribe using the code, this
+       *   may lead to IDEA-324532.
+       * With this flag we skip the "after" event if the before event wasn't called.
+       */
+      private var beforeCalled = false
+
       override fun beforeChanged(event: VersionedStorageChange) {
+        beforeCalled = true
         val libraryChanges = event.getChanges(LibraryEntity::class.java)
         val removeChanges = libraryChanges.filterProjectLibraryChanges().filterIsInstance<EntityChange.Removed<LibraryEntity>>()
         if (removeChanges.isEmpty()) return
@@ -83,6 +91,8 @@ class ProjectLibraryTableBridgeImpl(
       }
 
       override fun changed(event: VersionedStorageChange) {
+        if (!beforeCalled) return
+        beforeCalled = false
         val changes = event.getChanges(LibraryEntity::class.java).filterProjectLibraryChanges()
           .orderToRemoveReplaceAdd() // Since the listener is not deprecated, it will be better to keep the order of events as remove -> replace -> add
         if (changes.isEmpty()) return
