@@ -12,7 +12,8 @@
       "background": "Grey13",
       "foreground": "Grey1",
       "selectionForeground": "Grey1",
-      "selectionBackground": "Blue11"
+      "selectionBackground": "Blue11",
+      "transparentSelectionBackground": "#0000001A"
     },
 
     "MainWindow.Tab" : {
