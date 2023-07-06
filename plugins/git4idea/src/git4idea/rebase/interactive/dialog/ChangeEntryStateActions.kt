@@ -16,7 +16,6 @@ import git4idea.rebase.GitRebaseEntryWithDetails
 import git4idea.rebase.interactive.GitRebaseTodoModel
 import git4idea.rebase.interactive.convertToEntries
 import java.awt.event.InputEvent
-import java.awt.event.KeyEvent
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JButton
@@ -61,7 +60,7 @@ internal abstract class ChangeEntryStateSimpleAction(
 
   init {
     val keyStroke = KeyStroke.getKeyStroke(
-      KeyEvent.getExtendedKeyCodeForChar(action.mnemonic),
+      action.mnemonic,
       InputEvent.ALT_MASK
     )
     val shortcuts = additionalShortcuts + KeyboardShortcut(keyStroke, null)

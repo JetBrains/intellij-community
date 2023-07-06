@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.PropertyKey
+import java.awt.event.KeyEvent
 import java.util.function.Supplier
 
 internal open class GitRebaseEntry(val action: Action, val commit: String, val subject: String) {
@@ -20,7 +21,7 @@ internal open class GitRebaseEntry(val action: Action, val commit: String, val s
     object FIXUP : Action("fixup", "rebase.entry.action.name.fixup")
     class Other(command: String) : Action(command, "rebase.entry.action.name.unknown")
 
-    val mnemonic: Int get() = command.capitalize().first().code
+    val mnemonic: Int get() = KeyEvent.getExtendedKeyCodeForChar(command.first().code)
     val visibleName: Supplier<@NlsContexts.Button String> get() = GitBundle.messagePointer(nameKey)
 
     override fun toString(): String = command
