@@ -1,4 +1,4 @@
-package com.intellij.driver.command
+package com.intellij.driver.model.command
 
 interface MarshallableCommand {
   fun storeToString(): String

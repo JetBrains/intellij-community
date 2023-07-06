@@ -1,4 +1,4 @@
-package com.intellij.driver.command
+package com.intellij.driver.model.command
 
 /**
  * One or more commands, that will be "played" in sequence by IDE
