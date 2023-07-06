@@ -64,7 +64,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     browseUsingPath(url, browserPath, project = project)
   }
 
-  protected open fun openOrBrowse(_url: String, browse: Boolean, project: Project? = null) {
+  protected open fun openOrBrowse(@Suppress("LocalVariableName") _url: String, browse: Boolean, project: Project? = null) {
     SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.EXEC)
     val url = signUrl(_url.trim { it <= ' ' })
     LOG.debug { "opening [$url]" }
