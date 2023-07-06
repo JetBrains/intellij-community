@@ -34,9 +34,9 @@ class AndroidStudioBuilder(home: BuildDependenciesCommunityRoot) {
     BuildTasks.create(buildContext).compileProjectAndTests(listOf("jps-builders"))
   }
 
-  fun buildDistributions() {
+  suspend fun buildDistributions() {
     val tasks = BuildTasks.create(buildContext)
-    tasks.buildDistributionsBlocking()
+    tasks.buildDistributions()
     tasks.buildFullUpdaterJar()
   }
 }
