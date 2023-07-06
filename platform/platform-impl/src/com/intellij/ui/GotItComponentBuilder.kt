@@ -25,6 +25,8 @@ import com.intellij.ui.GotItComponentBuilder.Companion.MAX_LINES_COUNT
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
@@ -54,6 +56,8 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 
   private var image: Icon? = null
   private var withImageBorder: Boolean = false
+  private var htmlText: String? = null
+  private var htmlPageSize: Dimension? = null
 
   @Nls
   private var header: String = ""
@@ -94,8 +98,21 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    * Add optional image above the header or description
    */
   fun withImage(image: Icon, withBorder: Boolean = true): GotItComponentBuilder {
+    if (htmlText != null) {
+      error("Image and browser page can not be showed both at once. Choose one of them.")
+    }
     val arcRatio = JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get().toDouble() / min(image.iconWidth, image.iconHeight)
     this.image = RoundedIcon(image, arcRatio, false)
+    withImageBorder = withBorder
+    return this
+  }
+
+  fun withBrowserPage(htmlText: String, size: Dimension, withBorder: Boolean = true): GotItComponentBuilder {
+    if (image != null) {
+      error("Image and browser page can not be showed both at once. Choose one of them.")
+    }
+    this.htmlText = htmlText
+    this.htmlPageSize = size
     withImageBorder = withBorder
     return this
   }
@@ -331,15 +348,42 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     val left = if (icon != null || stepText != null) JBUI.CurrentTheme.GotItTooltip.ICON_INSET.get() else 0
     val column = if (icon != null || stepText != null) 1 else 0
 
-    image?.let {
-      val adjusted = adjustIcon(it, useContrastColors)
-      val imageLabel = JLabel(adjusted)
-      if (withImageBorder) {
-        imageLabel.border = RoundedLineBorder(JBUI.CurrentTheme.GotItTooltip.imageBorderColor(useContrastColors),
-                                              JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get(),
-                                              1)
+    if (image != null || htmlText != null) {
+      val component = if (htmlText != null) {
+        val browser = JBCefBrowser.createBuilder().setMouseWheelEventEnable(false).build()
+        browser.loadHTML(htmlText!!)
+
+        val arcSize = JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get()
+        val borderSize = if (withImageBorder) 1 else 0
+        val wrapper = object : Wrapper(browser.component) {
+          /** JCEF component is painting the whole background rect with no regard to opaque property. It breaks rounded borders.
+           *  So, it is a hack to allow painting only in the clipped rect.
+           */
+          override fun paintChildren(g: Graphics) {
+            val rect = RoundRectangle2D.Double(borderSize.toDouble(), borderSize.toDouble(),
+                                               width.toDouble() - 2 * borderSize, height.toDouble() - 2 * borderSize,
+                                               arcSize.toDouble(), arcSize.toDouble())
+            (g as Graphics2D).clip(rect)
+            super.paintChildren(g)
+          }
+        }
+        wrapper.also {
+          UIUtil.setNotOpaqueRecursively(it)
+          val definedSize = htmlPageSize!!
+          val adjustedSize = Dimension(definedSize.width + 2 * borderSize, definedSize.height + 2 * borderSize)
+          it.minimumSize = adjustedSize
+          it.preferredSize = adjustedSize
+        }
       }
-      panel.add(imageLabel,
+      else JLabel(adjustIcon(image!!, useContrastColors))
+
+      if (withImageBorder) {
+        component.border = RoundedLineBorder(JBUI.CurrentTheme.GotItTooltip.imageBorderColor(useContrastColors),
+                                             JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get(),
+                                             1)
+      }
+
+      panel.add(component,
                 gc.nextLine().next()
                   .anchor(GridBagConstraints.LINE_START)
                   .coverLine()
@@ -383,14 +427,14 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     }
 
     if (icon == null && stepText == null || header.isNotEmpty()) gc.nextLine()
-    val textWidth = image?.let { img ->
-      img.iconWidth - (iconOrStepLabel?.let { it.preferredSize.width + left } ?: 0)
+    val textWidth = (image?.iconWidth ?: htmlPageSize?.width)?.let { width ->
+      width - (iconOrStepLabel?.let { it.preferredSize.width + left } ?: 0)
     } ?: maxWidth
     val description = LimitedWidthEditorPane(builder,
                                              textWidth,
                                              useContrastColors,
                                              // allow to extend width only if there is no image and maxWidth was not changed by developer
-                                             allowWidthExtending = image == null && maxWidth == MAX_WIDTH,
+                                             allowWidthExtending = image == null && htmlText == null && maxWidth == MAX_WIDTH,
                                              iconsMap)
     descriptionConsumer(description)
     panel.add(description,

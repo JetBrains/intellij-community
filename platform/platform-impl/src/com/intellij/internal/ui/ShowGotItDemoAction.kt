@@ -2,15 +2,19 @@
 package com.intellij.internal.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.Balloon.Position
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.GotItComponentBuilder
@@ -22,8 +26,12 @@ import com.intellij.ui.layout.not
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
+import java.io.File
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import javax.swing.ComboBoxModel
@@ -54,9 +62,13 @@ class ShowGotItDemoAction : DumbAwareAction() {
       and <b>Stop</b> <icon src="AllIcons.Actions.Suspend"/>.""".trimIndent()
     private var addInlineLinks: Boolean = true
 
+    private var showImageOrLottie: Boolean = false
     private var showImage: Boolean = true
     private var imageWidth: Int = JBUI.scale(248)
     private var imageHeight: Int = JBUI.scale(132)
+    private var showLottieAnimation: Boolean = false
+    private var lottieJsonPath: String = PropertiesComponent.getInstance().getValue(LAST_OPENED_LOTTIE_FILE, "")
+    private var withImageBorder: Boolean = true
 
     private var showIconOrStep: Boolean = true
     private var showIcon: Boolean = true
@@ -118,17 +130,38 @@ class ShowGotItDemoAction : DumbAwareAction() {
           .enabledIf(checkbox.selected)
           .align(AlignX.FILL)
       }
+
+      lateinit var imageOrLottieCheckbox: Cell<JBCheckBox>
       row {
-        val checkbox = checkBox("Image").bindSelected(::showImage)
-        intTextField(IntRange(JBUI.scale(100), JBUI.scale(500)))
-          .label("Width:")
-          .bindIntText(::imageWidth)
-          .enabledIf(checkbox.selected)
-        intTextField(IntRange(JBUI.scale(50), JBUI.scale(300)))
-          .label("Height:")
-          .bindIntText(::imageHeight)
-          .enabledIf(checkbox.selected)
+        imageOrLottieCheckbox = checkBox("Image or Lottie animation:").bindSelected(::showImageOrLottie)
       }
+      buttonsGroup(indent = true) {
+        row {
+          checkBox("With border")
+            .bindSelected(::withImageBorder)
+            .enabledIf(imageOrLottieCheckbox.selected)
+        }
+        row {
+          val button = radioButton("Image").bindSelected(::showImage)
+          intTextField(IntRange(JBUI.scale(100), JBUI.scale(500)))
+            .label("Width:")
+            .bindIntText(::imageWidth)
+            .enabledIf(button.selected)
+          intTextField(IntRange(JBUI.scale(50), JBUI.scale(300)))
+            .label("Height:")
+            .bindIntText(::imageHeight)
+            .enabledIf(button.selected)
+        }
+        row {
+          val button = radioButton("Lottie").bindSelected(::showLottieAnimation)
+          textFieldWithBrowseButton(
+            project = project,
+            fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("json")
+          ).bindText(::lottieJsonPath)
+            .align(AlignX.FILL)
+            .enabledIf(button.selected)
+        }
+      }.enabledIf(imageOrLottieCheckbox.selected)
 
       lateinit var iconOrStepCheckbox: Cell<JBCheckBox>
       row {
@@ -219,7 +252,13 @@ class ShowGotItDemoAction : DumbAwareAction() {
       }
 
       val gotItBuilder = GotItComponentBuilder(textSupplier)
-      if (showImage) gotItBuilder.withImage(image)
+      if (showImageOrLottie && showImage) gotItBuilder.withImage(image, withImageBorder)
+      if (showImageOrLottie && showLottieAnimation && lottieJsonPath.isNotEmpty()) {
+        val lottieJson = File(lottieJsonPath).readText()
+        val htmlPage = createLottieAnimationPage(lottieJson)
+        gotItBuilder.withBrowserPage(htmlPage.htmlText, htmlPage.size, withImageBorder)
+        PropertiesComponent.getInstance().setValue(LAST_OPENED_LOTTIE_FILE, lottieJsonPath)
+      }
       if (showIconOrStep && showIcon) gotItBuilder.withIcon(icon)
       if (showIconOrStep && showStepNumber) gotItBuilder.withStepNumber(stepText)
       if (showHeader) gotItBuilder.withHeader(headerText)
@@ -266,6 +305,71 @@ class ShowGotItDemoAction : DumbAwareAction() {
           }
         }
       }
+    }
+
+    private fun createLottieAnimationPage(lottieJson: String): LottiePageData {
+      val head = HtmlBuilder().append(
+        HtmlChunk.tag("style").addRaw("""
+          body {
+              background-color: black;
+              margin: 0;
+              height: 100%;
+              overflow: hidden;
+          }
+          #lottie {
+              background-color: black;
+              width: 100%;
+              height: 100%;
+              display: block;
+              overflow: hidden;
+              transform: translate3d(0,0,0);
+              text-align: center;
+              opacity: 1;
+          }
+          """.trimIndent())
+      ).wrapWith(HtmlChunk.head())
+
+      val body = HtmlBuilder()
+        .append(HtmlChunk.tag("script")
+                  .attr("src", "https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.14/lottie_light.min.js")
+                  .attr("integrity", "sha512-oquI7otdlqWnBjPa+cwKQo10s3Bsle+P3zqFgwrfR+DFNKXdv6zYKcqvy/U923mampnzlw1nimkURrvftrQmSA==")
+                  .attr("crossorigin", "anonymous")
+                  .attr("referrerpolicy", "no-referrer").addRaw(""))
+        .append(HtmlChunk.div().attr("id", "lottie").addRaw(""))
+        .append(HtmlChunk.tag("script").addRaw("""
+           const animationData = $lottieJson;
+           const params = {
+               container: document.getElementById('lottie'),
+               renderer: 'svg',
+               loop: true,
+               autoplay: true,
+               animationData: animationData
+           };
+           lottie.loadAnimation(params);
+           """.trimIndent()))
+        .wrapWith(HtmlChunk.body())
+
+      val htmlText = HtmlBuilder()
+        .append(head)
+        .append(body)
+        .wrapWith(HtmlChunk.html())
+        .toString()
+
+      val json = Json { ignoreUnknownKeys = true }
+      val size = json.decodeFromString<LottieImageSize>(lottieJson)
+      return LottiePageData(htmlText, Dimension(size.width, size.height))
+    }
+
+    private data class LottiePageData(val htmlText: String, val size: Dimension)
+
+    @Serializable
+    private data class LottieImageSize(
+      @SerialName("w") val width: Int,
+      @SerialName("h") val height: Int
+    )
+
+    companion object {
+      private const val LAST_OPENED_LOTTIE_FILE = "LAST_OPENED_LOTTIE_FILE"
     }
   }
 }
