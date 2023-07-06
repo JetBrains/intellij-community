@@ -38,13 +38,13 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     private val EXTRA_PLUGINS = listOf(
       // Android Studio: package CIDR plugins. This list is based on what we have been shipping in Android Studio
       // and the structure of CIDR plugins.
-      "intellij.c.clangd",
-      "intellij.c.clangdBridge",
+      "intellij.c.clangd.plugin",
+      "intellij.c.clangdBridge.plugin",
       "intellij.c.plugin",
       "intellij.cidr.debugger.plugin",
       "intellij.cidr.base.plugin",
-      "intellij.cidr.clangConfig",
-      "intellij.cidr.clangFormat",
+      "intellij.cidr.clangConfig.plugin",
+      "intellij.cidr.clangFormat.plugin",
     )
 
     private val EXCLUDED_PLUGINS = listOf(
@@ -150,10 +150,18 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
         spec.withModule("intellij.c.testing", spec.mainJarName)
         spec.withModule("intellij.cidr.modulemap.language", spec.mainJarName)
       },
-      PluginLayout.plugin("intellij.c.clangd"),
-      PluginLayout.plugin("intellij.c.clangdBridge"),
-      PluginLayout.plugin("intellij.cidr.clangConfig"),
-      PluginLayout.plugin("intellij.cidr.clangFormat"),
+      plugin("intellij.c.clangd.plugin") { spec ->
+        spec.withModule("intellij.c.clangd")
+      },
+      plugin("intellij.c.clangdBridge.plugin") { spec ->
+        spec.withModule("intellij.c.clangdBridge")
+      },
+      plugin("intellij.cidr.clangConfig.plugin") { spec ->
+        spec.withModule("intellij.cidr.clangConfig")
+      },
+      plugin("intellij.cidr.clangFormat.plugin") { spec ->
+        spec.withModule("intellij.cidr.clangFormat")
+      },
     ))
   }
 
@@ -172,10 +180,10 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       .includeAll()
       .copyToDir(Path.of(targetDirectory, "bin/helpers"))
 
-    // Android Studio: copy CIDR license to CIRR plugins
+    // Copy CIDR license to CIDR plugins.
     FileSet(context.paths.communityHomeDir)
       .include("CIDR_LICENSE.txt")
-      .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/lib/LICENSE.txt"))
+      .copyToDir(Path.of(targetDirectory, "plugins/c-clangd-plugin/lib/LICENSE.txt"))
     FileSet(context.paths.communityHomeDir)
       .include("CIDR_LICENSE.txt")
       .copyToDir(Path.of(targetDirectory, "plugins/c-plugin/lib/LICENSE.txt"))
@@ -209,7 +217,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: Path) {
         FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/win/x64"))
           .includeAll()
-          .copyToDir(targetDirectory.resolve("plugins/c-clangd/bin/clang/win/x64"))
+          .copyToDir(targetDirectory.resolve("plugins/c-clangd-plugin/bin/clang/win/x64"))
 
         GameTools(context, OsFamily.WINDOWS, JvmArchitecture.x64).copyAdditionalFiles(targetDirectory.resolve("bin"))
       }
@@ -230,7 +238,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       override fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
         FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/linux/x64"))
           .includeAll()
-          .copyToDir(targetDir.resolve("plugins/c-clangd/bin/clang/linux/x64"))
+          .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/bin/clang/linux/x64"))
 
         GameTools(context, OsFamily.LINUX, arch).copyAdditionalFiles(targetDir.resolve("bin"))
       }
@@ -257,7 +265,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: Path, arch: JvmArchitecture) {
       FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/mac"))
         .includeAll()
-        .copyToDir(targetDirectory.resolve("plugins/c-clangd/bin/clang/mac"))
+        .copyToDir(targetDirectory.resolve("plugins/c-clangd-plugin/bin/clang/mac"))
     }
   }
 
