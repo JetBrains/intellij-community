@@ -177,13 +177,6 @@ public final class VcsRootProblemNotifier {
     }
   }
 
-  private boolean isUnderOrAboveProjectDir(@NotNull VcsDirectoryMapping mapping) {
-    String projectDir = Objects.requireNonNull(myProject.getBasePath());
-    return mapping.isDefaultMapping() ||
-           FileUtil.isAncestor(projectDir, mapping.getDirectory(), false) ||
-           FileUtil.isAncestor(mapping.getDirectory(), projectDir, false);
-  }
-
   private boolean isIgnoredOrExcludedPath(@NotNull VcsDirectoryMapping mapping) {
     if (mapping.isDefaultMapping()) return false;
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
@@ -303,7 +296,6 @@ public final class VcsRootProblemNotifier {
     return filter(errors, error -> {
       VcsDirectoryMapping mapping = error.getMapping();
       return error.getType() == UNREGISTERED_ROOT &&
-             isUnderOrAboveProjectDir(mapping) &&
              !isIgnoredOrExcludedPath(mapping) &&
              !isExplicitlyIgnoredPath(mapping) &&
              !conflictsWithExistingMapping(mapping);
