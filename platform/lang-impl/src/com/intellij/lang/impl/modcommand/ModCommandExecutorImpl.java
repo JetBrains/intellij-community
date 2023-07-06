@@ -19,6 +19,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.modcommand.*;
 import com.intellij.modcommand.ModCommandAction.ActionContext;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -166,6 +167,10 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (editor == null || !editor.getVirtualFile().equals(file)) return false;
     PsiElement nameIdentifier = element.getNameIdentifier();
     if (nameIdentifier == null) return false;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      int offset = nameIdentifier.getTextRange().getEndOffset();
+      return executeNavigate(project, new ModNavigate(file, offset, offset, offset));
+    }
     SmartPsiElementPointer<PsiNameIdentifierOwner> pointer = SmartPointerManager.createPointer(element);
     record RenameData(Collection<PsiReference> references, PsiElement scope, PsiNameIdentifierOwner nameOwner) {
       static RenameData create(SmartPsiElementPointer<? extends PsiNameIdentifierOwner> pointer) {

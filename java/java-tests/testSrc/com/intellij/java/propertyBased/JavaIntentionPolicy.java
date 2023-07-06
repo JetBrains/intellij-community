@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -116,7 +116,8 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                       intentionText.matches("Remove '.*' from '.*' throws list") ||
                                       intentionText.matches(JavaAnalysisBundle.message("inspection.redundant.type.remove.quickfix")) ||
                                       intentionText.matches("Remove .+ suppression") ||
-                                      familyName.equals("Fix typo");
+                                      familyName.equals("Fix typo") ||
+                                      familyName.equals("Reformat the whole file"); // may update @noinspection lines
     return !isCommentChangingAction;
   }
 
@@ -171,7 +172,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
   @Override
   protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
     return // if((a && b)) -- extract "a" doesn't work, seems legit, remove parentheses first
-      familyName.equals("Extract If Condition") ||
+      familyName.equals("Extract 'if' condition") ||
       // Cutting the message at different points is possible like
       // "Simplify 'foo || bar || baz || ...' to false" and "Simplify 'foo || (bar) || baz ...' to false"
       familyName.equals("Simplify boolean expression") ||
