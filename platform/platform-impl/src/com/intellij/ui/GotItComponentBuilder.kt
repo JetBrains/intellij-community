@@ -4,6 +4,7 @@ package com.intellij.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.Shortcut
@@ -70,6 +71,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   private var buttonLabel: String = IdeBundle.message("got.it.button.name")
   private var buttonAction: () -> Unit = {}
   private var requestFocus: Boolean = false
+  private var useContrastButton: Boolean = false
 
   @Nls
   private var secondaryButtonText: String? = null
@@ -204,6 +206,15 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    */
   fun withButtonLabel(@Nls label: String): GotItComponentBuilder {
     this.buttonLabel = label
+    return this
+  }
+
+  /**
+   * Set whether to use contrast (Blue) color for GotIt button.
+   * Note, that [withContrastColors] takes precedence over this setting.
+   */
+  fun withContrastButton(contrastButton: Boolean): GotItComponentBuilder {
+    useContrastButton = contrastButton
     return this
   }
 
@@ -392,6 +403,10 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
         if (useContrastColors) {
           putClientProperty("gotItButton.contrast", true)
           foreground = JBUI.CurrentTheme.GotItTooltip.buttonForegroundContrast()
+        }
+        else if (useContrastButton) {
+          // make the button bright blue as the default button
+          ClientProperty.put(this, DarculaButtonUI.DEFAULT_STYLE_KEY, true)
         }
       }
       buttonConsumer(button)
