@@ -14,6 +14,7 @@ import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.documentation.mdn.MdnDocumentationKt.getHtmlMdnDocumentation;
+import static com.intellij.webSymbols.WebSymbolApiStatus.isDeprecatedOrObsolete;
 
 public class HtmlDeprecatedAttributeInspection extends HtmlLocalInspectionTool {
 
@@ -32,7 +33,7 @@ public class HtmlDeprecatedAttributeInspection extends HtmlLocalInspectionTool {
                     StringUtil.toLowerCase(attribute.getName());
       MdnSymbolDocumentation documentation = getHtmlMdnDocumentation(attribute, null);
       boolean deprecatedInHtml5 = "align".equals(name)
-                                  || (documentation != null && documentation.isDeprecated());
+                                  || (documentation != null && isDeprecatedOrObsolete(documentation.getApiStatus()));
       if (!deprecatedInHtml5) {
         return;
       }

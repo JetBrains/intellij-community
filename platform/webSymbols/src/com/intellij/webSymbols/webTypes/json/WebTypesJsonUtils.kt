@@ -491,7 +491,9 @@ private fun parseWebTypesPath(path: List<String>, context: WebSymbol?): List<Web
 
 @Suppress("HardCodedStringLiteral")
 internal fun BaseContribution.toApiStatus(origin: WebTypesJsonOrigin): WebSymbolApiStatus =
-  deprecated?.value?.takeIf { it != false }
+  obsolete?.value?.takeIf { it != false }
+    ?.let { msg -> WebSymbolApiStatus.Obsolete((msg as? String)?.let { origin.renderDescription(it) }, obsoleteSince) }
+  ?: deprecated?.value?.takeIf { it != false }
     ?.let { msg -> WebSymbolApiStatus.Deprecated((msg as? String)?.let { origin.renderDescription(it) }, deprecatedSince) }
   ?: experimental?.value?.takeIf { it != false }
     ?.let { msg -> WebSymbolApiStatus.Experimental((msg as? String)?.let { origin.renderDescription(it) }, since) }

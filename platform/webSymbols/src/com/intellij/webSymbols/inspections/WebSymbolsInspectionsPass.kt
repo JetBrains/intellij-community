@@ -185,6 +185,7 @@ internal class WebSymbolsInspectionsPass(private val file: PsiFile, document: Do
       get() =
         when (this) {
           ProblemKind.DeprecatedSymbol -> HighlightSeverity.WEAK_WARNING
+          ProblemKind.ObsoleteSymbol -> HighlightSeverity.WARNING
           ProblemKind.UnknownSymbol -> HighlightSeverity.WARNING
           ProblemKind.MissingRequiredPart -> HighlightSeverity.WARNING
           ProblemKind.DuplicatedPart -> HighlightSeverity.WARNING
@@ -198,6 +199,9 @@ internal class WebSymbolsInspectionsPass(private val file: PsiFile, document: Do
         ProblemKind.DeprecatedSymbol -> return WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.message") +
                                                " " +
                                                WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.explanation")
+        ProblemKind.ObsoleteSymbol -> return WebSymbolsBundle.message("web.inspection.message.obsolete.symbol.message") +
+                                             " " +
+                                             WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.explanation")
         ProblemKind.UnknownSymbol -> "web.inspection.message.segment.unrecognized-identifier"
         ProblemKind.MissingRequiredPart -> "web.inspection.message.segment.missing"
         ProblemKind.DuplicatedPart -> "web.inspection.message.segment.duplicated"

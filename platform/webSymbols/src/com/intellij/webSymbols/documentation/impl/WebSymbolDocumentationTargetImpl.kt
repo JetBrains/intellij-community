@@ -112,6 +112,10 @@ internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol,
               sections[WebSymbolsBundle.message("mdn.documentation.section.status.Deprecated")] = status.message ?: ""
               status.since?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.status.DeprecatedSince")] = it }
             }
+            is WebSymbolApiStatus.Obsolete -> {
+              sections[WebSymbolsBundle.message("mdn.documentation.section.status.Obsolete")] = status.message ?: ""
+              status.since?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.status.ObsoleteSince")] = it }
+            }
             is WebSymbolApiStatus.Experimental -> {
               sections[WebSymbolsBundle.message("mdn.documentation.section.status.Experimental")] = status.message ?: ""
               status.since?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.status.Since")] = it }

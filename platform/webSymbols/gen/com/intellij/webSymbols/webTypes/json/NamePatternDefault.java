@@ -43,11 +43,11 @@ public class NamePatternDefault
     @JsonPropertyDescription("A reference to an element in Web-Types model.")
     private Reference delegate;
     /**
-     * Specifies whether the symbol is deprecated. Value can be a boolean or a string message with explanation and migration information.
+     * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
      * 
      */
     @JsonProperty("deprecated")
-    @JsonPropertyDescription("Specifies whether the symbol is deprecated. Value can be a boolean or a string message with explanation and migration information.")
+    @JsonPropertyDescription("Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.")
     private Deprecated deprecated = null;
     @JsonProperty("priority")
     private com.intellij.webSymbols.webTypes.json.BaseContribution.Priority priority;
@@ -130,7 +130,7 @@ public class NamePatternDefault
     }
 
     /**
-     * Specifies whether the symbol is deprecated. Value can be a boolean or a string message with explanation and migration information.
+     * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
      * 
      */
     @JsonProperty("deprecated")
@@ -139,7 +139,7 @@ public class NamePatternDefault
     }
 
     /**
-     * Specifies whether the symbol is deprecated. Value can be a boolean or a string message with explanation and migration information.
+     * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
      * 
      */
     @JsonProperty("deprecated")

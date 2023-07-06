@@ -111,6 +111,9 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       is WebSymbolApiStatus.Deprecated -> append("deprecated")
         .applyIf(apiStatus.since != null) { append(" in ").append(apiStatus.since) }
         .applyIf(apiStatus.message != null) { append(" (").append(apiStatus.message).append(")") }
+      is WebSymbolApiStatus.Obsolete -> append("obsolete")
+        .applyIf(apiStatus.since != null) { append(" in ").append(apiStatus.since) }
+        .applyIf(apiStatus.message != null) { append(" (").append(apiStatus.message).append(")") }
       is WebSymbolApiStatus.Experimental -> append("experimental")
         .applyIf(apiStatus.since != null) { append(" since ").append(apiStatus.since) }
         .applyIf(apiStatus.message != null) { append(" (").append(apiStatus.message).append(")") }

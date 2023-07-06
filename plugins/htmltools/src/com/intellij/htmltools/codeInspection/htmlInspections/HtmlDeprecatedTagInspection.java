@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.documentation.mdn.MdnDocumentationKt.getHtmlMdnDocumentation;
+import static com.intellij.webSymbols.WebSymbolApiStatus.isDeprecatedOrObsolete;
 
 public class HtmlDeprecatedTagInspection extends HtmlLocalInspectionTool {
   @NonNls private static final Set<String> ourHtmlReplaceableTags;
@@ -91,7 +92,7 @@ public class HtmlDeprecatedTagInspection extends HtmlLocalInspectionTool {
       }
 
       MdnSymbolDocumentation documentation = getHtmlMdnDocumentation(tag, null);
-      boolean deprecatedInHtml5 = documentation != null && documentation.isDeprecated();
+      boolean deprecatedInHtml5 = documentation != null && isDeprecatedOrObsolete(documentation.getApiStatus());
       boolean inHtml5 = HtmlUtil.isHtml5Context(tag);
       if (!inHtml5 && !deprecatedInHtml5 && !HtmlUtil.hasNonHtml5Doctype(tag)) {
         fixes = ArrayUtil.append(fixes, new SwitchToHtml5Action());

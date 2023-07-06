@@ -129,9 +129,10 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
 
   /**
    * Documents API status of the symbol. It is one of the sub-interfaces of [WebSymbolApiStatus]:
-   * [WebSymbolApiStatus.Stable], [WebSymbolApiStatus.Experimental] or [WebSymbolApiStatus.Deprecated].
+   * [WebSymbolApiStatus.Stable], [WebSymbolApiStatus.Experimental], [WebSymbolApiStatus.Deprecated]
+   * or [WebSymbolApiStatus.Obsolete].
    *
-   * Deprecated symbols are appropriately highlighted in the code editor, code completion and
+   * Deprecated and obsolete symbols are appropriately highlighted in the code editor, code completion and
    * quick documentation.
    */
   val apiStatus: WebSymbolApiStatus
