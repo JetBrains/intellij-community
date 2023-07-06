@@ -18,6 +18,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.util.Java11Shim;
@@ -939,9 +940,9 @@ public final class PluginManagerCore {
   }
 
   public static @NotNull @Nls String getPluginNameAndVendor(@NotNull IdeaPluginDescriptor descriptor) {
-    String vendor = descriptor.getVendor();
-    return vendor != null ? CoreBundle.message("plugin.name.and.vendor", descriptor.getName(), vendor)
-                          : CoreBundle.message("plugin.name.and.unknown.vendor", descriptor.getName());
+    String vendor = StringUtil.defaultIfEmpty(descriptor.getVendor(), descriptor.getOrganization());
+    return StringUtil.isNotEmpty(vendor) ? CoreBundle.message("plugin.name.and.vendor", descriptor.getName(), vendor)
+                                         : CoreBundle.message("plugin.name.and.unknown.vendor", descriptor.getName());
   }
 
   private static @Nls Supplier<String> message(@PropertyKey(resourceBundle = CoreBundle.BUNDLE) String key, Object... params) {
