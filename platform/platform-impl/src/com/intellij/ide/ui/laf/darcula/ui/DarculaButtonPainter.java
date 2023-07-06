@@ -110,7 +110,7 @@ public class DarculaButtonPainter implements Border, UIResource {
         return borderColor;
       }
       else if (isGotItButton(button)) {
-        return new GradientPaint(0, 0, getGotItBorderColorStart(button), 0, r.height, getGotItBorderColorEnd(button));
+        return new GradientPaint(0, 0, getGotItBorderColorStart(b), 0, r.height, getGotItBorderColorEnd(b));
       }
       else if (hasFocus) {
         return JBUI.CurrentTheme.Button.focusBorderColor(defButton);
@@ -147,7 +147,10 @@ public class DarculaButtonPainter implements Border, UIResource {
     return false;
   }
 
-  private static Color getGotItBorderColorStart(Component c) {
+  private static Color getGotItBorderColorStart(JComponent c) {
+    if (isDefaultButton(c)) {
+      return JBUI.CurrentTheme.Button.buttonOutlineColorStart(true);
+    }
     if (isContrastGotIt(c)) {
       return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrast();
     }
@@ -155,7 +158,10 @@ public class DarculaButtonPainter implements Border, UIResource {
                               JBUI.CurrentTheme.Button.buttonOutlineColorStart(false));
   }
 
-  private static Color getGotItBorderColorEnd(Component c) {
+  private static Color getGotItBorderColorEnd(JComponent c) {
+    if (isDefaultButton(c)) {
+      return JBUI.CurrentTheme.Button.buttonOutlineColorEnd(true);
+    }
     if (isContrastGotIt(c)) {
       return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrast();
     }

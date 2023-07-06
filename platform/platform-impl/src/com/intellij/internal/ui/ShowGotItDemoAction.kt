@@ -78,6 +78,7 @@ class ShowGotItDemoAction : DumbAwareAction() {
     private var secondaryButtonText: String = "Skip All"
 
     private var useContrastColors: Boolean = false
+    private var useContrastButton: Boolean = false
 
     private val positionsModel: ComboBoxModel<Position> = DefaultComboBoxModel(Balloon.Position.values())
     private val position: Position
@@ -99,6 +100,11 @@ class ShowGotItDemoAction : DumbAwareAction() {
       lateinit var contrastColorsCheckbox: Cell<JBCheckBox>
       row {
         contrastColorsCheckbox = checkBox("Use contrast colors").bindSelected(::useContrastColors)
+      }
+      row {
+        checkBox("Use contrast button")
+          .bindSelected(::useContrastButton)
+          .enabledIf(contrastColorsCheckbox.selected.not())
       }
       row {
         checkBox("Add inline links to text")
@@ -229,6 +235,7 @@ class ShowGotItDemoAction : DumbAwareAction() {
       }
 
       gotItBuilder.withContrastColors(useContrastColors)
+        .withContrastButton(useContrastButton)
 
       val randomId = Random(System.currentTimeMillis()).nextBytes(32).toString(StandardCharsets.UTF_8)
       val gotIt = GotItTooltip(randomId, gotItBuilder, Disposer.newDisposable())
