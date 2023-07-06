@@ -176,7 +176,8 @@ private inline fun <T : Any> catchingExceptionsAsync(computable: () -> T?): T? {
   }
 }
 
-private inline fun <T : Any> catchingExceptions(computable: () -> T?): T? {
+// not `inline` to ensure that this function is not used for a `suspend` task
+private fun <T : Any> catchingExceptions(computable: () -> T?): T? {
   try {
     return computable()
   }
@@ -186,7 +187,7 @@ private inline fun <T : Any> catchingExceptions(computable: () -> T?): T? {
   catch (e: ProcessCanceledException) {
     // will throw if actually canceled
     ProgressManager.checkCanceled()
-    // otherwise, this PCE is manual -> threat it like any other exception
+    // otherwise, this PCE is manual -> treat it like any other exception
     LOG.warn("Exception during editor loading", RuntimeException(e))
   }
   catch (e: Throwable) {
