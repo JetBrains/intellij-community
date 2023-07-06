@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,8 +30,19 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
   @Override
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements)
     throws IncorrectOperationException {
-    PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+    try {
+      return doSurround(project, container, statements);
+    }
+    catch (IncorrectOperationException e) {
+      Messages.showErrorDialog(project, JavaBundle.message("surround.with.try.catch.incorrect.template.message"),
+                               JavaBundle.message("surround.with.try.catch.incorrect.template.title"));
+      return null;
+    }
+  }
+
+  @Nullable
+  public TextRange doSurround(Project project, PsiElement container, PsiElement[] statements) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, true);
@@ -76,15 +88,7 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
         }
       }
       String name = new VariableNameGenerator(tryBlock, VariableKind.PARAMETER).byName("e", "ex", "exc").byType(exception).generate(false);
-      PsiCatchSection catchSection;
-      try {
-        catchSection = factory.createCatchSection(exception, name, tryBlock);
-      }
-      catch (IncorrectOperationException e) {
-        Messages.showErrorDialog(project, JavaBundle.message("surround.with.try.catch.incorrect.template.message"),
-                                 JavaBundle.message("surround.with.try.catch.incorrect.template.title"));
-        return null;
-      }
+      PsiCatchSection catchSection = factory.createCatchSection(exception, name, tryBlock);
       catchSection = (PsiCatchSection)catchSections[i].replace(catchSection);
       codeStyleManager.shortenClassReferences(catchSection);
     }

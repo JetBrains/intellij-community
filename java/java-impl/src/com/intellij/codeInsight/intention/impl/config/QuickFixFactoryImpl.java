@@ -221,7 +221,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createSurroundWithTryCatchFix(@NotNull PsiElement element) {
-    return new SurroundWithTryCatchFix(element);
+    return new SurroundWithTryCatchFix(element).asIntention();
   }
 
   @NotNull
@@ -381,7 +381,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createSurroundWithArrayFix(@Nullable PsiCall methodCall, @Nullable PsiExpression expression) {
-    return new SurroundWithArrayFix(methodCall, expression);
+    return new SurroundWithArrayFix(methodCall, expression).asIntention();
   }
 
   @NotNull
