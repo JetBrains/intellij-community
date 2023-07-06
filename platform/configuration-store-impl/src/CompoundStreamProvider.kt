@@ -37,4 +37,10 @@ class CompoundStreamProvider : StreamProvider {
   }
 
   override fun delete(fileSpec: String, roamingType: RoamingType) = providers.any { it.delete(fileSpec, roamingType) }
+
+  override fun deleteIfObsolete(fileSpec: String, roamingType: RoamingType) {
+    providers.forEach { 
+      it.deleteIfObsolete(fileSpec, roamingType)
+    }
+  }
 }

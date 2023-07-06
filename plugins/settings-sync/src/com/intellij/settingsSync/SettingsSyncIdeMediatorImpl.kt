@@ -21,7 +21,6 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
-import com.intellij.util.SystemProperties
 import com.intellij.util.io.*
 import java.io.InputStream
 import java.nio.file.FileVisitResult
@@ -37,7 +36,6 @@ import kotlin.concurrent.withLock
 import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.io.path.pathString
-import kotlin.random.Random
 
 internal class SettingsSyncIdeMediatorImpl(private val componentStore: ComponentStoreImpl,
                                            private val rootConfig: Path,
@@ -63,7 +61,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   }
 
   override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
-    return true
+    return roamingType != RoamingType.DISABLED
   }
 
   override fun applyToIde(snapshot: SettingsSnapshot) {
@@ -165,6 +163,8 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   }
 
   override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
+    if (!isApplicable(fileSpec, roamingType)) return false
+    
     val path = appConfig.resolve(fileSpec)
     val adjustedSpec = getFileRelativeToRootConfig(fileSpec)
     return readUnderLock(adjustedSpec) {
@@ -212,7 +212,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   }
 
   override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-    if (roamingType == RoamingType.DISABLED) {
+    if (!isApplicable(fileSpec, roamingType)) {
       return false
     }
 
