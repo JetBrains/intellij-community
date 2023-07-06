@@ -10,11 +10,7 @@ import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfTypeSafe
-import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -22,56 +18,58 @@ import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.utils.yieldIfNotNull
 
 class KtSymbolFromIndexProvider private constructor(private val project: Project, private val scope: GlobalSearchScope) {
     context(KtAnalysisSession)
     fun getKotlinClassesByName(
         name: Name,
-        psiFilter: (KtClassOrObject) -> Boolean = { true },
-    ): Sequence<KtNamedClassOrObjectSymbol> {
+        psiFilter: (KtClassLikeDeclaration) -> Boolean = { true },
+    ): Sequence<KtClassLikeSymbol> {
         val isCommon = useSiteModule.platform.isCommon()
-        val values = KotlinClassShortNameIndex.getAllElements(
-            name.asString(),
-            project,
-            scope
-        ) {
-            (isCommon || !it.isExpectDeclaration()) && psiFilter(it)
-        }
-        return sequence {
-            for (value in values) {
-                value.getNamedClassOrObjectSymbol()?.let { yield(it) }
-            }
-            yieldAll(
-                getResolveExtensionScopeWithTopLevelDeclarations().getClassifierSymbols(name).filterIsInstance<KtNamedClassOrObjectSymbol>()
-            )
-        }
+
+        val valueFilter: (KtClassLikeDeclaration) -> Boolean = { (isCommon || !it.isExpectDeclaration()) && psiFilter(it) }
+        val resolveExtensionScope = getResolveExtensionScopeWithTopLevelDeclarations()
+
+        return getClassLikeSymbols(
+            classDeclarations = KotlinClassShortNameIndex.getAllElements(name.asString(), project, scope, valueFilter),
+            typeAliasDeclarations = KotlinTypeAliasShortNameIndex.getAllElements(name.asString(), project, scope, valueFilter),
+            declarationsFromExtension = resolveExtensionScope.getClassifierSymbols(name).filterIsInstance<KtClassLikeSymbol>(),
+        )
     }
 
     context(KtAnalysisSession)
     fun getKotlinClassesByNameFilter(
         nameFilter: (Name) -> Boolean,
-        psiFilter: (KtClassOrObject) -> Boolean = { true },
-    ): Sequence<KtNamedClassOrObjectSymbol> {
+        psiFilter: (KtClassLikeDeclaration) -> Boolean = { true },
+    ): Sequence<KtClassLikeSymbol> {
         val isCommon = useSiteModule.platform.isCommon()
-        val values = KotlinFullClassNameIndex.getAllElements(
-            project,
-            scope,
-            keyFilter = { nameFilter(getShortName(it)) },
-            valueFilter = { (isCommon || !it.isExpectDeclaration()) && psiFilter(it) }
+
+        val keyFilter: (String) -> Boolean = { nameFilter(getShortName(it)) }
+        val valueFilter: (KtClassLikeDeclaration) -> Boolean = { (isCommon || !it.isExpectDeclaration()) && psiFilter(it) }
+        val resolveExtensionScope = getResolveExtensionScopeWithTopLevelDeclarations()
+
+        return getClassLikeSymbols(
+            classDeclarations = KotlinFullClassNameIndex.getAllElements(project, scope, keyFilter, valueFilter),
+            typeAliasDeclarations = KotlinTypeAliasShortNameIndex.getAllElements(project, scope, keyFilter, valueFilter),
+            declarationsFromExtension = resolveExtensionScope.getClassifierSymbols(nameFilter).filterIsInstance<KtClassLikeSymbol>(),
         )
-        return sequence {
-            for (ktClassOrObject in values) {
-                ktClassOrObject.getNamedClassOrObjectSymbol()?.let { yield(it) }
-            }
-            yieldAll(
-                getResolveExtensionScopeWithTopLevelDeclarations().getClassifierSymbols(nameFilter).filterIsInstance<KtNamedClassOrObjectSymbol>()
-            )
+    }
+
+    context(KtAnalysisSession)
+    private fun getClassLikeSymbols(
+        classDeclarations: List<KtClassOrObject>,
+        typeAliasDeclarations: List<KtTypeAlias>,
+        declarationsFromExtension: Sequence<KtClassLikeSymbol>
+    ): Sequence<KtClassLikeSymbol> = sequence {
+        for (ktClassOrObject in classDeclarations) {
+            yieldIfNotNull(ktClassOrObject.getNamedClassOrObjectSymbol())
         }
+        for (typeAlias in typeAliasDeclarations) {
+            yield(typeAlias.getTypeAliasSymbol())
+        }
+        yieldAll(declarationsFromExtension)
     }
 
     context(KtAnalysisSession)
@@ -130,7 +128,7 @@ class KtSymbolFromIndexProvider private constructor(private val project: Project
 
         return sequence {
             for (callableDeclaration in values) {
-                callableDeclaration.getSymbolOfTypeSafe<KtCallableSymbol>()?.let { yield(it) }
+                yieldIfNotNull(callableDeclaration.getSymbolOfTypeSafe<KtCallableSymbol>())
             }
             yieldAll(
                 getResolveExtensionScopeWithTopLevelDeclarations().getCallableSymbols(name)
@@ -174,7 +172,7 @@ class KtSymbolFromIndexProvider private constructor(private val project: Project
 
         return sequence {
             for (callableDeclaration in values) {
-                callableDeclaration.getSymbolOfTypeSafe<KtCallableSymbol>()?.let { yield(it) }
+                yieldIfNotNull(callableDeclaration.getSymbolOfTypeSafe<KtCallableSymbol>())
             }
             yieldAll(
                 getResolveExtensionScopeWithTopLevelDeclarations().getCallableSymbols(nameFilter).filter { !it.isExtension }
@@ -197,10 +195,10 @@ class KtSymbolFromIndexProvider private constructor(private val project: Project
 
         return sequence {
             for (extension in values) {
-                extension.getSymbolOfTypeSafe<KtCallableSymbol>()?.let { yield(it) }
+                yieldIfNotNull(extension.getSymbolOfTypeSafe<KtCallableSymbol>())
             }
-            val extensionScope = getResolveExtensionScopeWithTopLevelDeclarations()
-            yieldAll(extensionScope.getCallableSymbols(name).filterExtensionsByReceiverTypes(receiverTypes))
+            val resolveExtensionScope = getResolveExtensionScopeWithTopLevelDeclarations()
+            yieldAll(resolveExtensionScope.getCallableSymbols(name).filterExtensionsByReceiverTypes(receiverTypes))
         }
     }
 
@@ -223,10 +221,10 @@ class KtSymbolFromIndexProvider private constructor(private val project: Project
 
         return sequence {
             for (extension in values) {
-                extension.getSymbolOfTypeSafe<KtCallableSymbol>()?.let { yield(it) }
+                yieldIfNotNull(extension.getSymbolOfTypeSafe<KtCallableSymbol>())
             }
-            val extensionScope = getResolveExtensionScopeWithTopLevelDeclarations()
-            yieldAll(extensionScope.getCallableSymbols(nameFilter).filterExtensionsByReceiverTypes(receiverTypes))
+            val resolveExtensionScope = getResolveExtensionScopeWithTopLevelDeclarations()
+            yieldAll(resolveExtensionScope.getCallableSymbols(nameFilter).filterExtensionsByReceiverTypes(receiverTypes))
         }
     }
 

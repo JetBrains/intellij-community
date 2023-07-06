@@ -338,7 +338,7 @@ class ImportQuickFix(
             val firFile = element.containingKtFile.getFileSymbol()
 
             val isVisible: (KtSymbol) -> Boolean =
-                { it !is KtSymbolWithVisibility || isVisible(it, firFile, null, element) }
+                { it !is KtSymbolWithVisibility || isVisible(it, firFile, receiverExpression = null, element) }
 
             val candidateSymbols = buildList {
                 addAll(collectCallableCandidates(indexProvider, element, unresolvedName, isVisible))
@@ -358,8 +358,8 @@ class ImportQuickFix(
             val firFile = element.containingKtFile.getFileSymbol()
             val unresolvedName = element.typeName ?: return null
 
-            val isVisible: (KtNamedClassOrObjectSymbol) -> Boolean =
-                { isVisible(it, firFile, null, element) }
+            val isVisible: (KtClassLikeSymbol) -> Boolean =
+                { it is KtSymbolWithVisibility && isVisible(it, firFile, receiverExpression = null, element) }
 
             return createImportFix(element, collectTypesCandidates(indexProvider, unresolvedName, isVisible))
         }
@@ -399,8 +399,8 @@ class ImportQuickFix(
         private fun collectTypesCandidates(
             indexProvider: KtSymbolFromIndexProvider,
             unresolvedName: Name,
-            isVisible: (KtNamedClassOrObjectSymbol) -> Boolean
-        ): List<KtNamedClassOrObjectSymbol> {
+            isVisible: (KtClassLikeSymbol) -> Boolean
+        ): List<KtClassLikeSymbol> {
             val classesCandidates =
                 indexProvider.getKotlinClassesByName(unresolvedName) { it.canBeImported() } +
                         indexProvider.getJavaClassesByName(unresolvedName) { it.canBeImported() }
@@ -424,8 +424,8 @@ private fun KtDeclaration.canBeImported(): Boolean {
     return when (this) {
         is KtProperty -> isTopLevel || containingClassOrObject is KtObjectDeclaration
         is KtNamedFunction -> isTopLevel || containingClassOrObject is KtObjectDeclaration
-        is KtClassOrObject ->
-            getClassId() != null && parentsOfType<KtClassOrObject>(withSelf = true).none { it.hasModifier(KtTokens.INNER_KEYWORD) }
+        is KtClassLikeDeclaration ->
+            getClassId() != null && parentsOfType<KtClassLikeDeclaration>(withSelf = true).none { it.hasModifier(KtTokens.INNER_KEYWORD) }
 
         else -> false
     }
