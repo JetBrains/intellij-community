@@ -45,7 +45,7 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
    */
   private var verticalSplit = false
   private var isHonorMinimumSize: Boolean = false
-  private val firstDivider: Divider?
+  private val firstDivider: Divider
   private val lastDivider: Divider
   private var dividerDispatcher: EventDispatcher<ComponentListener>? = null
 
@@ -260,6 +260,7 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
     super.updateUI()
 
     // if null, it means that `updateUI` is called as a part of init
+    @Suppress("SENSELESS_COMPARISON")
     if (firstDivider != null) {
       isLookAndFeelUpdated = true
     }
@@ -407,7 +408,7 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
       }
       lastRect.setBounds(space, 0, lastComponentSize, height)
     }
-    firstDivider!!.isVisible = firstDividerVisible()
+    firstDivider.isVisible = firstDividerVisible()
     firstDivider.bounds = firstDividerRect
     firstDivider.doLayout()
     lastDivider.isVisible = lastDividerVisible()
@@ -425,7 +426,7 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
     get() = verticalSplit
     set(verticalSplit) {
       this.verticalSplit = verticalSplit
-      firstDivider!!.setOrientation(verticalSplit)
+      firstDivider.setOrientation(verticalSplit)
       lastDivider.setOrientation(verticalSplit)
       doLayout()
       repaint()
@@ -498,14 +499,52 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
     dividerDispatcher!!.addListener(listener)
   }
 
+  private var glassPane: IdeGlassPane? = null
+  private var glassPaneDisposable: Disposable? = null
+
+  override fun addNotify() {
+    super.addNotify()
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      initGlassPane()
+    }
+  }
+
+  override fun removeNotify() {
+    super.removeNotify()
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      releaseGlassPane()
+    }
+  }
+
+  private fun initGlassPane() {
+    val glassPane = IdeGlassPaneUtil.find(this)
+    if (glassPane === this.glassPane) {
+      return
+    }
+
+    releaseGlassPane()
+    this.glassPane = glassPane
+    val glassPaneDisposable = Disposer.newDisposable()
+    this.glassPaneDisposable = glassPaneDisposable
+
+    val listener = MyMouseAdapter(listOf(firstDivider, lastDivider))
+    glassPane.addMouseMotionPreprocessor(listener, glassPaneDisposable)
+    glassPane.addMousePreprocessor(listener, glassPaneDisposable)
+  }
+
+  private fun releaseGlassPane() {
+    if (glassPaneDisposable != null) {
+      Disposer.dispose(glassPaneDisposable!!)
+      glassPaneDisposable = null
+      glassPane = null
+    }
+  }
+
   private class Divider(private val splitter: ThreeComponentsSplitter,
                         private val isFirst: Boolean,
                         private val isOnePixel: Boolean) : JPanel(GridBagLayout()) {
     private var isDragging = false
     private var point: Point? = null
-    private var glassPane: IdeGlassPane? = null
-    private var glassPaneDisposable: Disposable? = null
-    private val listener = MyMouseAdapter(this)
 
     fun getTargetEvent(e: MouseEvent): MouseEvent = SwingUtilities.convertMouseEvent(e.component, e, this)
 
@@ -515,20 +554,6 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
       setFocusable(false)
       enableEvents(AWTEvent.MOUSE_EVENT_MASK or AWTEvent.MOUSE_MOTION_EVENT_MASK)
       setOrientation(splitter.verticalSplit)
-    }
-
-    override fun addNotify() {
-      super.addNotify()
-      if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-        initGlassPane()
-      }
-    }
-
-    override fun removeNotify() {
-      super.removeNotify()
-      if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-        releaseGlassPane()
-      }
     }
 
     override fun getBackground(): Color? = if (isOnePixel) UIUtil.CONTRAST_BORDER_COLOR else super.getBackground()
@@ -570,27 +595,6 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
         }
       }
       return false
-    }
-
-    private fun initGlassPane() {
-      val glassPane = IdeGlassPaneUtil.find(this)
-      if (glassPane === this.glassPane) {
-        return
-      }
-
-      releaseGlassPane()
-      this.glassPane = glassPane
-      glassPaneDisposable = Disposer.newDisposable()
-      glassPane.addMouseMotionPreprocessor(listener, glassPaneDisposable!!)
-      glassPane.addMousePreprocessor(listener, glassPaneDisposable!!)
-    }
-
-    private fun releaseGlassPane() {
-      if (glassPaneDisposable != null) {
-        Disposer.dispose(glassPaneDisposable!!)
-        glassPaneDisposable = null
-        glassPane = null
-      }
     }
 
     fun setOrientation(isVerticalSplit: Boolean) {
@@ -693,12 +697,11 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
         return
       }
 
+      val glassPane = splitter.glassPane
       if (MouseEvent.MOUSE_DRAGGED == e.id && wasPressedOnMe) {
         isDragging = true
         setCursor(resizeCursor)
-        if (glassPane != null) {
-          glassPane!!.setCursor(resizeCursor, listener)
-        }
+        glassPane?.setCursor(resizeCursor, this)
         point = SwingUtilities.convertPoint(this, e.getPoint(), splitter)
         val size = if (splitter.orientation) splitter.height else splitter.width
         if (splitter.orientation) {
@@ -726,11 +729,11 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
       else if (MouseEvent.MOUSE_MOVED == e.id) {
         if (glassPane != null) {
           if (isInside(e.getPoint())) {
-            glassPane!!.setCursor(resizeCursor, listener)
+            glassPane.setCursor(resizeCursor, this)
             e.consume()
           }
           else {
-            glassPane!!.setCursor(null, listener)
+            glassPane.setCursor(null, this)
           }
         }
       }
@@ -752,6 +755,7 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
         return
       }
 
+      val glassPane = splitter.glassPane
       when (e.id) {
         MouseEvent.MOUSE_ENTERED -> setCursor(resizeCursor)
         MouseEvent.MOUSE_EXITED -> {
@@ -762,9 +766,7 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
         MouseEvent.MOUSE_PRESSED -> {
           if (isInside(e.getPoint())) {
             wasPressedOnMe = true
-            if (glassPane != null) {
-              glassPane!!.setCursor(resizeCursor, listener)
-            }
+            glassPane?.setCursor(resizeCursor, this)
             e.consume()
           }
           else {
@@ -776,7 +778,7 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
             e.consume()
           }
           if (isInside(e.getPoint()) && glassPane != null) {
-            glassPane!!.setCursor(resizeCursor, listener)
+            glassPane.setCursor(resizeCursor, this)
           }
           if (isDragging && splitter.dividerDispatcher != null) {
             splitter.dividerDispatcher!!.getMulticaster().componentResized(ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED))
@@ -804,38 +806,42 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
       }
   }
 
-  private class MyMouseAdapter(private val divider: Divider) : MouseAdapter(), Weighted {
+  private class MyMouseAdapter(private val dividers: List<Divider>) : MouseAdapter(), Weighted {
     override fun mousePressed(e: MouseEvent) {
-      _processMouseEvent(e)
+      processMouseEvent(e)
     }
 
     override fun mouseReleased(e: MouseEvent) {
-      _processMouseEvent(e)
+      processMouseEvent(e)
     }
 
     override fun mouseMoved(e: MouseEvent) {
-      _processMouseMotionEvent(e)
+      processMouseMotionEvent(e)
     }
 
     override fun mouseDragged(e: MouseEvent) {
-      _processMouseMotionEvent(e)
+      processMouseMotionEvent(e)
     }
 
     override fun getWeight(): Double = 1.0
 
-    private fun _processMouseMotionEvent(e: MouseEvent) {
-      val event = divider.getTargetEvent(e)
-      divider.processMouseMotionEvent(event)
-      if (event.isConsumed) {
-        e.consume()
+    private fun processMouseMotionEvent(e: MouseEvent) {
+      for (divider in dividers) {
+        val event = divider.getTargetEvent(e)
+        divider.processMouseMotionEvent(event)
+        if (event.isConsumed) {
+          break
+        }
       }
     }
 
-    private fun _processMouseEvent(e: MouseEvent) {
-      val event = divider.getTargetEvent(e)
-      divider.processMouseEvent(event)
-      if (event.isConsumed) {
-        e.consume()
+    private fun processMouseEvent(e: MouseEvent) {
+      for (divider in dividers) {
+        val event = divider.getTargetEvent(e)
+        divider.processMouseEvent(event)
+        if (event.isConsumed) {
+          break
+        }
       }
     }
   }
