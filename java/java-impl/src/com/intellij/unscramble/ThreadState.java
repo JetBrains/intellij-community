@@ -26,7 +26,7 @@ public class ThreadState {
 
   @Nullable
   private ThreadOperation myOperation;
-  private boolean myKnownJDKThread;
+  private Boolean myKnownJDKThread;
   private int myStackDepth;
 
   public ThreadState(final String name, final String state) {
@@ -49,7 +49,6 @@ public class ThreadState {
   public void setStackTrace(@NotNull String stackTrace, boolean isEmpty) {
     myStackTrace = stackTrace;
     myEmptyStackTrace = isEmpty;
-    myKnownJDKThread = ThreadDumpParser.isKnownJdkThread(stackTrace);
     myStackDepth = StringUtil.countNewLines(myStackTrace);
   }
 
@@ -58,6 +57,9 @@ public class ThreadState {
   }
 
   public boolean isKnownJDKThread() {
+    if (myKnownJDKThread == null) {
+      myKnownJDKThread = ThreadDumpParser.isKnownJdkThread(myStackTrace);
+    }
     return myKnownJDKThread;
   }
 
@@ -188,7 +190,7 @@ public class ThreadState {
       String[] lines = stackTrace.split("\n");
       for (int i = 0; i < lines.length; i++) {
         String line = lines[i];
-        if (i == 0 && skipFirstLine) continue;//first line has unique details
+        if (i == 0 && skipFirstLine) continue; // the first line has unique details
         line = line.replaceAll("<0x.+>\\s", "<merged>");
         builder.append(line).append("\n");
       }
