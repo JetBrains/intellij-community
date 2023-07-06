@@ -52,12 +52,7 @@ internal object GHPRDetailsComponentFactory {
       add(CodeReviewDetailsCommitsComponentFactory.create(scope, commitsVm) { commit: GHCommit ->
         createCommitsPopupPresenter(commit, securityService.ghostUser)
       })
-      add(CodeReviewDetailsBranchComponentFactory.create(
-        scope, branchesVm,
-        checkoutAction = ActionManager.getInstance().getAction("Github.PullRequest.Branch.Checkout.Remote"),
-        dataContext = SimpleDataContext.builder()
-          .add(GHPRActionKeys.REVIEW_BRANCH_VM, branchesVm)
-          .build()))
+      add(CodeReviewDetailsBranchComponentFactory.create(scope, branchesVm))
     }
     val statusChecks = GHPRStatusChecksComponentFactory.create(scope, project, reviewStatusVm, reviewFlowVm, securityService,
                                                                avatarIconsProvider)

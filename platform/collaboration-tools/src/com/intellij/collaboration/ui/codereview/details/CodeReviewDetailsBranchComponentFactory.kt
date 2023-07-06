@@ -3,18 +3,14 @@ package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.codereview.action.CodeReviewCheckoutRemoteBranchAction
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.PopupItemPresentation
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.showAndAwaitListSubmission
+import com.intellij.collaboration.ui.codereview.list.search.showAndAwait
 import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.collaboration.ui.util.bindIconIn
 import com.intellij.collaboration.ui.util.bindTextIn
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.ExperimentalUI
@@ -36,9 +32,7 @@ import javax.swing.ListCellRenderer
 object CodeReviewDetailsBranchComponentFactory {
   fun create(
     scope: CoroutineScope,
-    branchesVm: CodeReviewBranchesViewModel,
-    checkoutAction: AnAction,
-    dataContext: DataContext
+    branchesVm: CodeReviewBranchesViewModel
   ): JComponent {
     val sourceBranch = JBLabel(DvcsImplIcons.BranchLabel).apply {
       border = JBUI.Borders.empty(1, 2, 1, 4)
@@ -56,7 +50,13 @@ object CodeReviewDetailsBranchComponentFactory {
 
       scope.launchNow {
         branchesVm.showBranchesRequests.collectLatest { (source, target) ->
-          runActionIfSelected(checkoutAction, dataContext, source, target, this@apply)
+          val point = RelativePoint.getSouthWestOf(this@apply)
+          JBPopupFactory.getInstance().createPopupChooserBuilder(listOf(CHECKOUT_ACTION_MARKER))
+            .setRenderer(popupActionsRenderer(source))
+            .setAdText(CollaborationToolsBundle.message("review.details.branch.checkout.remote.ad.label", target, source))
+            .createPopup()
+            .showAndAwait(point)
+          branchesVm.fetchAndCheckoutRemoteBranch()
         }
       }
     }
@@ -73,34 +73,17 @@ object CodeReviewDetailsBranchComponentFactory {
 
     return roundedSourceBranch
   }
+}
 
-  private fun popupActionsRenderer(sourceBranch: String): ListCellRenderer<AnAction> {
-    return ChooserPopupUtil.createSimpleItemRenderer { anAction ->
-      when (anAction) {
-        is CodeReviewCheckoutRemoteBranchAction -> PopupItemPresentation.Simple(
-          CollaborationToolsBundle.message("review.details.branch.checkout.remote", sourceBranch)
-        )
-        else -> PopupItemPresentation.ToString(anAction)
-      }
+private fun popupActionsRenderer(sourceBranch: String): ListCellRenderer<Any> {
+  return ChooserPopupUtil.createSimpleItemRenderer { item ->
+    when (item) {
+      CHECKOUT_ACTION_MARKER -> PopupItemPresentation.Simple(
+        CollaborationToolsBundle.message("review.details.branch.checkout.remote", sourceBranch)
+      )
+      else -> PopupItemPresentation.ToString(item)
     }
   }
-
-  private suspend fun runActionIfSelected(
-    checkoutAction: AnAction,
-    dataContext: DataContext,
-    sourceBranch: String,
-    targetBranch: String,
-    parentComponent: JComponent
-  ) {
-    val point = RelativePoint.getSouthWestOf(parentComponent)
-    val selectedAction = JBPopupFactory.getInstance().createPopupChooserBuilder(listOf(checkoutAction))
-      .setRenderer(popupActionsRenderer(sourceBranch))
-      .setAdText(CollaborationToolsBundle.message("review.details.branch.checkout.remote.ad.label", targetBranch, sourceBranch))
-      .createPopup()
-      .showAndAwaitListSubmission<AnAction>(point)
-
-    if (selectedAction == null) return
-    val anActionEvent = AnActionEvent.createFromAnAction(selectedAction, null, "Review.Details.Branch.Checkout", dataContext)
-    selectedAction.actionPerformed(anActionEvent)
-  }
 }
+
+private val CHECKOUT_ACTION_MARKER = Any()
