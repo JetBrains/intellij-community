@@ -121,14 +121,6 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
 
   fun getOrCreateSdk(): Sdk? = selectedPanel?.getOrCreateSdk()
 
-  /**
-   * This method is executed after clicking "Finish" button on the last step of the wizard.
-   *
-   * The provided target [configuration] is expected to be saved within the newly created Python SDK.
-   */
-  fun getOrCreateSdk(configuration: TargetEnvironmentConfiguration): Sdk? =
-    (selectedPanel as? PyAddTargetBasedSdkView)?.getOrCreateSdk(configuration)
-
   private fun createCardSplitter(panels: List<PyAddSdkView>, initiallySelectedPanel: PyAddSdkView): Splitter {
     this.panels = panels
     return Splitter(false, 0.25f).apply {

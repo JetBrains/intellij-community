@@ -96,7 +96,7 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContext
       try {
         model.commit()
 
-        customTool = customToolPanel.createCustomTool(model.subject)
+        customTool = customToolPanel.createCustomTool()
       }
       catch (err: ExecutionExceptionWithAttachments) {
         LOG.error("Failed to create a target", err)

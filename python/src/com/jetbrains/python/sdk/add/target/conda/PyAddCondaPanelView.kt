@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.add.target.conda
 
 import com.intellij.execution.target.TargetBrowserHints
-import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -11,6 +10,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.progress.progressSink
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
+import com.intellij.openapi.progress.runWithModalProgressBlocking
+import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
@@ -20,8 +21,8 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.extendWithTargetSpecificFields
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction
 import com.jetbrains.python.sdk.add.PyAddSdkStateListener
+import com.jetbrains.python.sdk.add.PyAddSdkView
 import com.jetbrains.python.sdk.add.target.TargetPanelExtension
-import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkView
 import com.jetbrains.python.sdk.add.target.addBrowseFolderListener
 import icons.PythonIcons
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +35,7 @@ import javax.swing.JOptionPane.ERROR_MESSAGE
 /**
  * View for adding conda interpreter backed by [model]
  */
-class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTargetBasedSdkView, Disposable {
+class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddSdkView, Disposable {
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.conda.environment")
 
   override val icon: Icon = PythonIcons.Python.Anaconda
@@ -121,19 +122,20 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
   override fun validateAll(): List<ValidationInfo> =
     panel.validateAll() + (model.getValidationError()?.let { listOf(ValidationInfo(it)) } ?: emptyList())
 
-  override fun getOrCreateSdk(): Sdk? = getOrCreateSdk(targetEnvironmentConfiguration = null)
-
-  override fun getOrCreateSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? =
-    runBlockingModalWithRawProgressReporter(model.project, PyBundle.message("python.add.sdk.panel.wait")) {
-      if (targetEnvironmentConfiguration != null) targetPanelExtension?.apply(targetEnvironmentConfiguration)
-      model.onCondaCreateSdkClicked((Dispatchers.EDT + ModalityState.any().asContextElement()), progressSink,
-                                    targetEnvironmentConfiguration).onFailure {
-        logger<PyAddCondaPanelModel>().warn(it)
-        showError(
-          PyBundle.message("python.sdk.conda.cant.create.title"),
-          PyBundle.message("python.sdk.conda.cant.create.body", it.localizedMessage))
-      }.getOrNull()
+  override fun getOrCreateSdk(): Sdk? {
+    return runWithModalProgressBlocking(model.project, PyBundle.message("python.add.sdk.panel.wait")) {
+      withRawProgressReporter {
+        targetPanelExtension?.applyToTargetConfiguration()
+        model.onCondaCreateSdkClicked((Dispatchers.EDT + ModalityState.any().asContextElement()), progressSink,
+                                      model.targetConfiguration).onFailure {
+          logger<PyAddCondaPanelModel>().warn(it)
+          showError(
+            PyBundle.message("python.sdk.conda.cant.create.title"),
+            PyBundle.message("python.sdk.conda.cant.create.body", it.localizedMessage))
+        }.getOrNull()
+      }
     }
+  }
 
   override fun dispose() = Unit
 }

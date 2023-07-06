@@ -176,14 +176,12 @@ class PyAddVirtualEnvPanel(project: Project?,
     }
   }
 
-  override fun getOrCreateSdk(): Sdk? = getOrCreateSdk(targetEnvironmentConfiguration = null)
-
-  override fun getOrCreateSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? {
+  override fun getOrCreateSdk(): Sdk? {
     // applies components' states for bound properties (e.g. selected radio button to `isCreateNewVirtualenv` field)
     contentPanel.apply()
 
     // TODO [targets] Refactor this workaround
-    applyOptionalTargetSpecificFields(targetEnvironmentConfiguration)
+    targetPanelExtension?.applyToTargetConfiguration()
 
     if (isCreateNewVirtualenv) return createNewVirtualenvSdk(targetEnvironmentConfiguration)
 
@@ -269,10 +267,6 @@ class PyAddVirtualEnvPanel(project: Project?,
       val homePath = selectedSdk.homePath!!
       return createSdkForTarget(project, targetEnvironmentConfiguration, homePath, existingSdks, targetPanelExtension)
     }
-  }
-
-  private fun applyOptionalTargetSpecificFields(targetConfiguration: TargetEnvironmentConfiguration?) {
-    if (targetConfiguration != null) targetPanelExtension?.apply(targetConfiguration)
   }
 
   companion object {

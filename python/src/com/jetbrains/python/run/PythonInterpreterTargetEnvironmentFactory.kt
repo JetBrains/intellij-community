@@ -129,7 +129,7 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
     fun Panel.extendWithTargetSpecificFields(project: Project?, configuration: TargetEnvironmentConfiguration?): TargetPanelExtension? =
       if (configuration != null && project != null && !project.isDefault) {
         findPanelExtension(project, configuration)?.also { panelExtension ->
-          panelExtension.extendDialogPanelWithOptionalFields(this, configuration)
+          panelExtension.extendDialogPanelWithOptionalFields(this)
         }
       }
       else null
