@@ -13,7 +13,7 @@ import java.util.List;
 
 public class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTestCase {
   private static final String[] COMMON_VARIANTS = {"case", "default"};
-  private static final String[] COMMON_OBJECT_VARIANTS = ArrayUtil.mergeArrays(COMMON_VARIANTS, "case null", "case default");
+  private static final String[] COMMON_OBJECT_VARIANTS = ArrayUtil.mergeArrays(COMMON_VARIANTS, "case null", "case null, default");
 
   @Override
   protected String getBasePath() {

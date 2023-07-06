@@ -467,7 +467,7 @@ public class JavaKeywordCompletion {
 
     final TailType caseRuleTail = TailTypes.forSwitchLabel(switchBlock);
     addKeyword(createCaseRule(PsiKeyword.NULL, caseRuleTail));
-    addKeyword(createCaseRule(PsiKeyword.DEFAULT, caseRuleTail));
+    addKeyword(createCaseRule(PsiKeyword.NULL +", " + PsiKeyword.DEFAULT, caseRuleTail));
 
     addSealedHierarchyCases(selectorType);
   }
