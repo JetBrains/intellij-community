@@ -44,7 +44,7 @@ import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM
 public class VcsLogManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogManager.class);
 
-  private final @NotNull Project myProject;
+  protected final @NotNull Project myProject;
   private final @NotNull VcsLogTabsProperties myUiProperties;
   private final @Nullable PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> myRecreateMainLogHandler;
 

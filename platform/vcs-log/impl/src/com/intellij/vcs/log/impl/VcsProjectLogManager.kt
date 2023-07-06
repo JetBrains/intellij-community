@@ -13,11 +13,13 @@ class VcsProjectLogManager(project: Project, uiProperties: VcsLogProjectTabsProp
   val tabsManager = VcsLogTabsManager(project, uiProperties, this)
 
   internal fun createUi() {
+    getVcsLogContentProvider(myProject)?.addMainUi(this)
     tabsManager.createTabs()
   }
 
   override fun disposeUi() {
     tabsManager.disposeTabs()
+    getVcsLogContentProvider(myProject)?.disposeMainUi()
     super.disposeUi()
   }
 }

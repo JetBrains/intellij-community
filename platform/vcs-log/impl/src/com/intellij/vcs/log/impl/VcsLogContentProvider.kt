@@ -43,10 +43,6 @@ class VcsLogContentProvider(project: Project) : ChangesViewContentProvider {
   private var logCreationCallback: SettableFuture<MainVcsLogUi>? = null
 
   init {
-    project.messageBus.connect(projectLog.coroutineScope).subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, object : ProjectLogListener {
-      override fun logCreated(manager: VcsLogManager) = addMainUi(manager)
-      override fun logDisposed(manager: VcsLogManager) = disposeMainUi()
-    })
     projectLog.logManager?.let { addMainUi(it) }
   }
 
@@ -70,7 +66,7 @@ class VcsLogContentProvider(project: Project) : ChangesViewContentProvider {
   }
 
   @RequiresEdt
-  private fun addMainUi(logManager: VcsLogManager) {
+  internal fun addMainUi(logManager: VcsLogManager) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (ui == null) {
       ui = logManager.createLogUi(MAIN_LOG_ID, VcsLogTabLocation.TOOL_WINDOW, false)
@@ -95,7 +91,7 @@ class VcsLogContentProvider(project: Project) : ChangesViewContentProvider {
   }
 
   @RequiresEdt
-  private fun disposeMainUi() {
+  internal fun disposeMainUi() {
     ApplicationManager.getApplication().assertIsDispatchThread()
 
     container.removeAll()
