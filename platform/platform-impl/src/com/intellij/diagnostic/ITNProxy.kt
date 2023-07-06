@@ -5,10 +5,12 @@ import com.intellij.diagnostic.Developer.Companion.NULL
 import com.intellij.errorreport.error.InternalEAPException
 import com.intellij.errorreport.error.NoSuchEAPUserException
 import com.intellij.errorreport.error.UpdateAvailableException
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -42,11 +44,14 @@ internal object ITNProxy {
   internal val cs: CoroutineScope = ApplicationManager.getApplication().coroutineScope + SupervisorJob() +
                                     Dispatchers.IO.limitedParallelism(2) + CoroutineName("ITNProxy call")
 
+  internal const val EA_PLUGIN_ID = "com.intellij.sisyphus"
+
   private const val DEFAULT_USER = "idea_anonymous"
   private const val DEFAULT_PASS = "guest"
   private const val DEVELOPERS_LIST_URL = "https://ea-report.jetbrains.com/developer/list"
   private const val NEW_THREAD_POST_URL = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr"
-  private const val NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/"
+  private const val OLD_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/"
+  private const val NEW_THREAD_VIEW_URL = "https://jb-web.exa.aws.intellij.net/report/"
 
   private val TEMPLATE: Map<String, String?> by lazy {
     val template: MutableMap<String, String?> = LinkedHashMap()
@@ -109,7 +114,14 @@ internal object ITNProxy {
     return postNewThread(loginAdjusted, passwordAdjusted, error)
   }
 
-  fun getBrowseUrl(threadId: Int): String = NEW_THREAD_VIEW_URL + threadId
+  fun getBrowseUrl(threadId: Int): String {
+    val isEAPluginInstalled = PluginManagerCore.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID))
+    if (isEAPluginInstalled) {
+      return NEW_THREAD_VIEW_URL + threadId
+    } else {
+      return OLD_THREAD_VIEW_URL + threadId
+    }
+  }
 
   private val ourSslContext: SSLContext by lazy { initContext() }
 

@@ -76,7 +76,7 @@ open class IdeErrorsDialog internal constructor(private val myMessagePool: Messa
   DialogWrapper(myProject, true), MessagePoolListener, DataProvider {
 
   private val myAssigneeVisible: Boolean = (ApplicationManager.getApplication().isInternal || PluginManagerCore.isPluginInstalled(
-    PluginId.getId(EA_PLUGIN_ID))) && Registry.`is`("ea.enable.developers.list", true)
+    PluginId.getId(ITNProxy.EA_PLUGIN_ID))) && Registry.`is`("ea.enable.developers.list", true)
   private val myAcceptedNotices: MutableSet<String>
   private val myMessageClusters: MutableList<MessageCluster> = ArrayList() // exceptions with the same stacktrace
   private var myIndex: Int
@@ -892,7 +892,6 @@ open class IdeErrorsDialog internal constructor(private val myMessagePool: Messa
     private const val ACCEPTED_NOTICES_KEY = "exception.accepted.notices"
     private const val ACCEPTED_NOTICES_SEPARATOR = ":"
     private const val DISABLE_PLUGIN_URL = "#disable"
-    private const val EA_PLUGIN_ID = "com.intellij.sisyphus"
     private const val LAST_OK_ACTION = "IdeErrorsDialog.LAST_OK_ACTION"
 
     @JvmField
