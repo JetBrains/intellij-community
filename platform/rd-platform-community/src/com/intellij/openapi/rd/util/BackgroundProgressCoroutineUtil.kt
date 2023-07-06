@@ -410,6 +410,7 @@ private class BridgeIndicatorEx(val coroutineContext: CoroutineContext) : Abstra
   }
 
   override fun setFraction(fraction: Double) {
+    isIndeterminate = false
     reporter.fraction(fraction)
     super.setFraction(fraction)
   }
