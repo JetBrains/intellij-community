@@ -144,7 +144,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
             resetHoldState()
           }
         },
-        delay = SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 650),
+        delay = SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 300),
         parentDisposable = (project as ProjectEx).earlyDisposable
       )
       if (state.noStateLoaded) {
