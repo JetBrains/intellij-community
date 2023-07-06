@@ -1,0 +1,17 @@
+PsiJavaFile:StringTemplate5.java
+  PsiTemplateExpression
+    PsiReferenceExpression:STR
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:STR('STR')
+    PsiJavaToken:DOT('.')
+    PsiTemplate
+      PsiLiteralExpression:"\{
+        PsiJavaToken:STRING_TEMPLATE_BEGIN('"\{')
+      PsiWhiteSpace(' ')
+      PsiLiteralExpression:"""
+!"""
+        PsiJavaToken:TEXT_BLOCK_LITERAL('"""\n!"""')
+      PsiWhiteSpace(' ')
+      PsiLiteralExpression:}"
+        PsiJavaToken:STRING_TEMPLATE_END('}"')

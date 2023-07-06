@@ -1,0 +1,18 @@
+PsiJavaFile:TextBlockTemplate5.java
+  PsiTemplateExpression
+    PsiReferenceExpression:STR
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:STR('STR')
+    PsiJavaToken:DOT('.')
+    PsiTemplate
+      PsiLiteralExpression:"""
+\{
+        PsiJavaToken:TEXT_BLOCK_TEMPLATE_BEGIN('"""\n\{')
+      PsiWhiteSpace(' ')
+      PsiLiteralExpression:"""
+!"""
+        PsiJavaToken:TEXT_BLOCK_LITERAL('"""\n!"""')
+      PsiWhiteSpace(' ')
+      PsiLiteralExpression:}"""
+        PsiJavaToken:TEXT_BLOCK_TEMPLATE_END('}"""')

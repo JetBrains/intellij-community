@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.psi.tree.IElementType;
@@ -18,6 +18,13 @@ public interface JavaTokenType extends TokenType {
   IElementType CHARACTER_LITERAL = new IJavaElementType("CHARACTER_LITERAL");
   IElementType STRING_LITERAL = new IJavaElementType("STRING_LITERAL");
   IElementType TEXT_BLOCK_LITERAL = new IJavaElementType("TEXT_BLOCK_LITERAL");
+
+  IElementType STRING_TEMPLATE_BEGIN = new IJavaElementType("STRING_TEMPLATE_BEGIN");
+  IElementType STRING_TEMPLATE_MID = new IJavaElementType("STRING_TEMPLATE_MID");
+  IElementType STRING_TEMPLATE_END = new IJavaElementType("STRING_TEMPLATE_END");
+  IElementType TEXT_BLOCK_TEMPLATE_BEGIN = new IJavaElementType("TEXT_BLOCK_TEMPLATE_BEGIN");
+  IElementType TEXT_BLOCK_TEMPLATE_MID = new IJavaElementType("TEXT_BLOCK_TEMPLATE_MID");
+  IElementType TEXT_BLOCK_TEMPLATE_END = new IJavaElementType("TEXT_BLOCK_TEMPLATE_END");
 
   IElementType TRUE_KEYWORD = new IKeywordElementType("TRUE_KEYWORD");
   IElementType FALSE_KEYWORD = new IKeywordElementType("FALSE_KEYWORD");

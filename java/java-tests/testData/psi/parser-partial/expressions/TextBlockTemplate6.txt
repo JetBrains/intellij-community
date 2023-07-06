@@ -1,0 +1,9 @@
+PsiJavaFile:TextBlockTemplate6.java
+  PsiTemplate
+    PsiLiteralExpression:"""
+\{
+      PsiJavaToken:TEXT_BLOCK_TEMPLATE_BEGIN('"""\n\{')
+    PsiExpression(empty)
+      <empty list>
+    PsiLiteralExpression:}"""
+      PsiJavaToken:TEXT_BLOCK_TEMPLATE_END('}"""')

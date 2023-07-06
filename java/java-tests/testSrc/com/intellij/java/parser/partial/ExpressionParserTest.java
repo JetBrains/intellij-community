@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.parser.partial;
 
 import com.intellij.java.parser.JavaParsingTestCase;
@@ -161,6 +161,23 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testYieldAsExpr1() { doParserTest("yield++"); }
   public void testYieldAsExpr2() { doParserTest("yield += 2"); }
   public void testYieldAsExpr3() { doParserTest("yield ? 10 : 20"); }
+
+  public void testStringTemplate1() { doParserTest("STR.\"\""); }
+  public void testStringTemplate2() { doParserTest("STR.\"\\{}\""); }
+  public void testStringTemplate3() { doParserTest("STR.\"\\{ 1 }\""); }
+  public void testStringTemplate4() { doParserTest("STR.\"\\{ (1) } \\{ \"!\" }\""); }
+  public void testStringTemplate5() { doParserTest("STR.\"\\{ \"\"\"\n!\"\"\" }\""); }
+  public void testStringTemplate6() { doParserTest("\"\\{}\""); }
+  public void testStringTemplate7() { doParserTest("STR.\"\\{}\".length()"); }
+  public void testStringTemplate8() { doParserTest("STR.\"\\{"); }
+  public void testTextBlockTemplate1() { doParserTest("STR.\"\"\"\n\"\"\""); }
+  public void testTextBlockTemplate2() { doParserTest("STR.\"\"\"\n\\{}\"\"\""); }
+  public void testTextBlockTemplate3() { doParserTest("STR.\"\"\"\n\\{ 1 }\"\"\""); }
+  public void testTextBlockTemplate4() { doParserTest("STR.\"\"\"\n\\{ (1) } \\{ \"!\" }\"\"\""); }
+  public void testTextBlockTemplate5() { doParserTest("STR.\"\"\"\n\\{ \"\"\"\n!\"\"\" }\"\"\""); }
+  public void testTextBlockTemplate6() { doParserTest("\"\"\"\n\\{}\"\"\""); }
+  public void testTextBlockTemplate7() { doParserTest("STR.\"\"\"\n\\{}\"\"\".length()"); }
+  public void testTextBlockTemplate8() { doParserTest("STR.\"\"\"\\{"); }
 
   private void doParserTest(String text) {
     doParserTest(text, builder -> JavaParser.INSTANCE.getExpressionParser().parse(builder));
