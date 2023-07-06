@@ -26,7 +26,7 @@ public abstract class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
 
   @Override
   public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
-    return CreateSwitchBranchesUtil.getActionName(myNames);
+    return CreateSwitchBranchesUtil.getActionName(myNames.stream().sorted().toList());
   }
 
   @Override
