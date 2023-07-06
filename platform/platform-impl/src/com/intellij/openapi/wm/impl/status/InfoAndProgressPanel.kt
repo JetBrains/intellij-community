@@ -37,7 +37,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.reference.SoftReference
 import com.intellij.ui.*
@@ -150,6 +149,11 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     coroutineScope.launch(ModalityState.any().asContextElement()) {
       removeProgressRequests.start()
     }
+
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      // it is important to dispose indicators (Disposer.dispose(indicator))
+      dispose()
+    }
   }
 
   private fun runOnProgressRelatedChange(runnable: () -> Unit, coroutineScope: CoroutineScope, powerSaveMode: Boolean) {
@@ -188,19 +192,16 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     mainPanel.setCentralComponent(component)
   }
 
-  fun dispose() {
-    setRefreshHidden()
+  private fun dispose() {
     synchronized(originals) {
-      restoreEmptyStatus()
       for (indicator in inlineToOriginal.keys) {
         Disposer.dispose(indicator)
       }
       inlineToOriginal.clear()
       originalToInlines.clear()
       disposed = true
+      infos.clear()
     }
-    mainPanel.dispose()
-    infos.clear()
   }
 
   val backgroundProcesses: List<Pair<TaskInfo, ProgressIndicatorEx>>
@@ -377,15 +378,12 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
         mainPanel.refreshIcon.setToolTipText(tooltip)
       }
       else {
-        val statusBar = ComponentUtil.getParentOfType(StatusBar::class.java, mainPanel)
-        if (statusBar != null) {
-          VfsRefreshIndicatorWidgetFactory.start(statusBar, tooltip!!)
-        }
+        VfsRefreshIndicatorWidgetFactory.start(statusBar, tooltip!!)
       }
     })
   }
 
-  fun setRefreshHidden() {
+  internal fun setRefreshHidden() {
     mainPanel.setRefreshHidden()
   }
 
@@ -477,10 +475,6 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     }
   }
 
-  private fun restoreEmptyStatus() {
-    mainPanel.restoreEmptyStatus()
-  }
-
   var isProcessWindowOpen: Boolean
     get() = popup != null && popup!!.isShowing
     set(open) {
@@ -529,19 +523,24 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       if (showNavBar == this.showNavBar) {
         return
       }
+
       this.showNavBar = showNavBar
       val layout = refreshAndInfoPanel.layout as BorderLayout
       var c = layout.getLayoutComponent(BorderLayout.CENTER)
-      if (c != null) refreshAndInfoPanel.remove(c)
+      if (c != null) {
+        refreshAndInfoPanel.remove(c)
+      }
       c = layout.getLayoutComponent(BorderLayout.WEST)
-      if (c != null) refreshAndInfoPanel.remove(c)
-      if (this.showNavBar) {
+      if (c != null) {
+        refreshAndInfoPanel.remove(c)
+      }
+      if (showNavBar) {
         val centralComponent = centralComponent
         if (centralComponent != null) {
-          ApplicationManager.getApplication().invokeLater(Runnable {
+          host.coroutineScope.launch(Dispatchers.EDT) {
             refreshAndInfoPanel.add(centralComponent, BorderLayout.CENTER)
             centralComponent.updateUI()
-          })
+          }
         }
       }
       else {
@@ -553,22 +552,17 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     }
 
     fun setRefreshHidden() {
-      if (!showNavBar) {
-        refreshIcon.isVisible = false
+      if (showNavBar) {
+        VfsRefreshIndicatorWidgetFactory.stop(host.statusBar)
       }
       else {
-        val statusBar = UIUtil.getParentOfType(
-          StatusBar::class.java, this)
-        if (statusBar != null) {
-          VfsRefreshIndicatorWidgetFactory.stop(statusBar)
-        }
+        refreshIcon.isVisible = false
       }
     }
 
     fun setCentralComponent(component: JComponent?) {
       if (showNavBar) {
-        val layout = refreshAndInfoPanel.layout as BorderLayout
-        val c = layout.getLayoutComponent(BorderLayout.CENTER)
+        val c = (refreshAndInfoPanel.layout as BorderLayout).getLayoutComponent(BorderLayout.CENTER)
         if (c != null) {
           refreshAndInfoPanel.remove(c)
           centralComponent = null
@@ -615,16 +609,12 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       inlinePanel.updateState(showPopup)
     }
 
-    fun restoreEmptyStatus() {
-      removeAll()
-      setLayout(BorderLayout())
-      add(refreshAndInfoPanel, BorderLayout.CENTER)
-      refreshAndInfoPanel.revalidate()
-      refreshAndInfoPanel.repaint()
-    }
+    override fun removeNotify() {
+      super.removeNotify()
 
-    fun dispose() {
-      GuiUtils.removePotentiallyLeakingReferences(refreshIcon)
+      if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+        GuiUtils.removePotentiallyLeakingReferences(refreshIcon)
+      }
     }
   }
 

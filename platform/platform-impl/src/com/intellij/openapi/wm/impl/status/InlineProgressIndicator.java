@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -39,7 +38,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   protected final JPanel component;
 
   private final boolean myCompact;
-  private TaskInfo myInfo;
+  private final TaskInfo myInfo;
 
   private final TextPanel myProcessName;
   private boolean myDisposed;
@@ -318,16 +317,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
   @Override
   public void dispose() {
-    if (myDisposed) return;
-
     myDisposed = true;
-
-    component.removeAll();
-
-    UIUtil.disposeProgress(progress);
-    GuiUtils.removePotentiallyLeakingReferences(component);
-    GuiUtils.removePotentiallyLeakingReferences(progress);
-    myInfo = null;
   }
 
   private boolean isDisposed() {
