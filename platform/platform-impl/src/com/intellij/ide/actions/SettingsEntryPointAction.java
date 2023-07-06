@@ -15,7 +15,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
@@ -25,8 +28,6 @@ import com.intellij.ui.AnActionButton;
 import com.intellij.ui.BadgeIconSupplier;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IconManager;
-import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -58,7 +59,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   public void actionPerformed(@NotNull AnActionEvent e) {
     resetActionIcon();
 
-    ListPopup popup = createMainPopup(e.getDataContext(), e.getInputEvent().getComponent());
+    ListPopup popup = createMainPopup(e.getDataContext());
     PopupUtil.showForActionButtonEvent(popup, e);
   }
 
@@ -81,7 +82,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   @NotNull
-  private static ListPopup createMainPopup(@NotNull DataContext context, Component component) {
+  private static ListPopup createMainPopup(@NotNull DataContext context) {
     List<AnAction> appActions = new ArrayList<>();
     List<AnAction> pluginActions = new ArrayList<>();
 
@@ -135,18 +136,8 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
       }
     }
 
-    Project project = CommonDataKeys.PROJECT.getData(context);
-    if (project == null) {
-      return JBPopupFactory.getInstance()
-        .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
-    }
-
-    ListPopupStep<?> step = JBPopupFactory.getInstance().createActionsStep(
-      group, context, null, false, true, null, component, true, 0, false);
     return JBPopupFactory.getInstance()
-      .createListPopup(project, step, renderer -> {
-        return new SettingsPopupListElementRenderer<>(((PopupListElementRenderer<?>) renderer).getPopup());
-      });
+      .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
   }
 
   private static boolean ourShowPlatformUpdateIcon;
@@ -348,7 +339,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
         myStatusBar.updateWidget(WIDGET_ID);
 
         Component component = event.getComponent();
-        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component), component);
+        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component));
         popup.addListener(new JBPopupListener() {
           @Override
           public void beforeShown(@NotNull LightweightWindowEvent event) {
@@ -397,13 +388,6 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
     public void markAsRead() {
       myNewAction = false;
-    }
-  }
-
-  private static class SettingsPopupListElementRenderer<E> extends PopupListElementRenderer<E> {
-
-    private SettingsPopupListElementRenderer(ListPopupImpl aPopup) {
-      super(aPopup);
     }
   }
 }
