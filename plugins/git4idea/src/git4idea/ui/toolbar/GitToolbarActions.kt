@@ -12,6 +12,7 @@ import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 
+@Suppress("ComponentNotRegistered")
 class GitToolbarPushAction : VcsPushAction(), TooltipDescriptionProvider {
   init {
     ActionManager.getInstance().getAction("Vcs.Push")?.let(::copyFrom)
@@ -48,6 +49,7 @@ class GitToolbarPushAction : VcsPushAction(), TooltipDescriptionProvider {
   }
 }
 
+@Suppress("ComponentNotRegistered")
 class GitToolbarUpdateProjectAction : CommonUpdateProjectAction(), TooltipDescriptionProvider {
   init {
     ActionManager.getInstance().getAction("Vcs.UpdateProject")?.let(::copyFrom)
