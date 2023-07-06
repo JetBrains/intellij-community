@@ -105,9 +105,11 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
       val recentItem = SoftReference.dereference(recentItemRef.get())
       val newItem = if (recentItem != null && recentItem.usage.merge(usage)) {
         // recompute merged presentation
+        recentItem.usage.updateCachedPresentation()
         recentItem.withPresentation(usagePresentation(project, scope, recentItem.usage))
       }
       else {
+        usage.updateCachedPresentation()
         SearchEverywhereItem(usage, usagePresentation(project, scope, usage)).also {
           if (!consumer.process(FoundItemDescriptor(it, 0))) return@findUsages false
         }

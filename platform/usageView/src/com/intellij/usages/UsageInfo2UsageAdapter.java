@@ -30,8 +30,10 @@ import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.rules.*;
 import com.intellij.util.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,6 +47,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
                                                RenameableUsage, DataProvider, UsagePresentation {
   public static final NotNullFunction<UsageInfo, Usage> CONVERTER = UsageInfo2UsageAdapter::new;
   private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = Comparator.comparingInt(UsageInfo::getNavigationOffset);
+  @SuppressWarnings("StaticNonFinalField")
+  public static boolean ourAutomaticallyCalculatePresentationInTests = true;
 
   private final @NotNull UsageInfo myUsageInfo;
   private @NotNull Object myMergedUsageInfos; // contains all merged infos, including myUsageInfo. Either UsageInfo or UsageInfo[]
@@ -110,7 +114,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     myOffsetToCompareUsages = data.offsetToCompareUsages;
     myModificationStamp = getCurrentModificationStamp();
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && ourAutomaticallyCalculatePresentationInTests) {
       updateCachedPresentation();
     }
   }
@@ -641,5 +645,18 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   @Override
   public @Nullable Class<? extends PsiReference> getReferenceClass() {
     return myUsageInfo.getReferenceClass();
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public static void disableAutomaticPresentationCalculationInTests(Runnable block) {
+    boolean old = ourAutomaticallyCalculatePresentationInTests;
+    ourAutomaticallyCalculatePresentationInTests = false;
+    try {
+      block.run();
+    }
+    finally {
+      ourAutomaticallyCalculatePresentationInTests = old;
+    }
   }
 }
