@@ -7,7 +7,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection
-import com.intellij.psi.PsiModifier
+import com.intellij.psi.util.AccessModifier
 import com.intellij.testFramework.JavaInspectionTestCase
 
 abstract class SameParameterValueInspectionTestBase(private val isLocal: Boolean) : JavaInspectionTestCase() {
@@ -16,7 +16,7 @@ abstract class SameParameterValueInspectionTestBase(private val isLocal: Boolean
   private fun getTestDir(): String = "sameParameterValue/" + getTestName(true)
 
   private val inspection: InspectionProfileEntry = SameParameterValueInspection().let {
-    it.highestModifier = PsiModifier.PUBLIC
+    it.highestModifier = AccessModifier.PUBLIC
     if (isLocal) it.sharedLocalInspectionTool!! else it
   }
 

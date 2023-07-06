@@ -12,8 +12,8 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.util.VisibilityUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -23,10 +23,8 @@ import java.util.Objects;
 
 public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   public boolean IGNORE_BUILDER_PATTERN;
-  @PsiModifier.ModifierConstant
-  public static final String DEFAULT_HIGHEST_MODIFIER = PsiModifier.PUBLIC;
-  @PsiModifier.ModifierConstant
-  public String highestModifier = DEFAULT_HIGHEST_MODIFIER;
+  public static final AccessModifier DEFAULT_HIGHEST_MODIFIER = AccessModifier.PUBLIC;
+  public @NotNull AccessModifier highestModifier = DEFAULT_HIGHEST_MODIFIER;
 
   @Override
   public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
@@ -35,7 +33,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
                                                            @NotNull GlobalInspectionContext globalContext,
                                                            @NotNull ProblemDescriptionsProcessor processor) {
     if (refEntity instanceof RefMethod refMethod) {
-      if (VisibilityUtil.compare(refMethod.getAccessModifier(), highestModifier) < 0 ||
+      if (Objects.requireNonNull(AccessModifier.fromPsiModifier(refMethod.getAccessModifier())).compareTo(highestModifier) < 0 ||
           refMethod.isConstructor() ||
           !refMethod.getSuperMethods().isEmpty() ||
           refMethod.getInReferences().isEmpty() ||
@@ -58,7 +56,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    if (IGNORE_BUILDER_PATTERN || !Objects.equals(highestModifier, DEFAULT_HIGHEST_MODIFIER)) {
+    if (IGNORE_BUILDER_PATTERN || highestModifier != DEFAULT_HIGHEST_MODIFIER) {
       super.writeSettings(node);
     }
   }

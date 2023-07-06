@@ -4,7 +4,7 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.AccessModifier;
 import com.intellij.testFramework.JavaInspectionTestCase;
 
 public class SameParameterValueLocalTest extends JavaInspectionTestCase {
@@ -31,8 +31,8 @@ public class SameParameterValueLocalTest extends JavaInspectionTestCase {
   }
 
   public void testMethodWithSuper() {
-    String previous = myGlobalTool.highestModifier;
-    myGlobalTool.highestModifier = PsiModifier.PUBLIC;
+    AccessModifier previous = myGlobalTool.highestModifier;
+    myGlobalTool.highestModifier = AccessModifier.PUBLIC;
     try {
       doTest(getGlobalTestDir(), myTool);
     } finally {
