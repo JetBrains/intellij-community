@@ -223,6 +223,7 @@ class PersistentFSTreeAccessor {
             final int name = DataInputOutputUtil.readINT(input) + prevNameId;
             final int id = DataInputOutputUtil.readINT(input) + prevId;
             if (name == rootNameId) {
+              checkChildIdValid(SUPER_ROOT_ID, id, i, connection.getRecords().maxAllocatedID());
               return id;
             }
 
