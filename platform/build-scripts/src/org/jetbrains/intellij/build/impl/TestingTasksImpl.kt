@@ -1,11 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.TestCaseLoader
-import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
@@ -13,6 +9,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +39,8 @@ import java.util.regex.Pattern
 import java.util.stream.Stream
 
 internal class TestingTasksImpl(private val context: CompilationContext, private val options: TestingOptions) : TestingTasks {
+  private val NO_TESTS_ERROR = 42
+
   private fun loadRunConfigurations(name: String): List<JUnitRunConfigurationProperties> {
     return try {
       val projectHome = context.paths.projectHome
@@ -495,7 +495,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
     if (options.isEnableCausalProfiling) {
       val causalProfilingOptions = CausalProfilingOptions.IMPL
-      systemProperties.put("intellij.build.test.patterns", causalProfilingOptions.testClass.replace(".", "\\."))
+      systemProperties["intellij.build.test.patterns"] = causalProfilingOptions.testClass.replace(".", "\\.")
       jvmArgs.addAll(buildCausalProfilingAgentJvmArg(causalProfilingOptions))
     }
 
@@ -590,7 +590,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
           val exitCode3 = runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, null, testClasspath, qName, null)
           noTests = exitCode3 == NO_TESTS_ERROR
         }
-        noTestsInAllClasses = noTestsInAllClasses && java.lang.Boolean.TRUE == noTests
+        noTestsInAllClasses = noTestsInAllClasses && noTests
       }
       catch (e: Throwable) {
         throw RuntimeException("Failed to process ${qName}", e)
@@ -639,7 +639,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                         methodName = null)
       }
       if (exitCode5 == NO_TESTS_ERROR && exitCode3 == NO_TESTS_ERROR &&
-          // bucket may be empty for run configurations with too few tests due to imperfect tests balancing
+          // a bucket might be empty for run configurations with too few tests due to imperfect tests balancing
           numberOfBuckets < 2) {
         throw RuntimeException("No tests were found in the configuration")
       }
@@ -782,5 +782,3 @@ private fun publishTestDiscovery(messages: BuildMessages, file: String?) {
   }
   messages.buildStatus("With Discovery, {build.status.text}")
 }
-
-private const val NO_TESTS_ERROR = 42

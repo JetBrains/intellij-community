@@ -12,6 +12,7 @@ PUSHD %IDE_BIN_DIR%
 SET "IDE_BIN_DIR=%CD%"
 POPD
 FOR /F "delims=" %%i in ("%IDE_BIN_DIR%\..") DO SET "IDE_HOME=%%~fi"
+
 :: ---------------------------------------------------------------------
 :: Locate a JRE installation directory which will be used to run the IDE.
 :: Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ..\jbr, JDK_HOME, JAVA_HOME.
