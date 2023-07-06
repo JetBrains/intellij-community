@@ -979,7 +979,7 @@ public class SSBasedInspectionSerializationTest extends LightJavaCodeInsightFixt
           <searchConfiguration name="foo.search" text="..." recursive="false" caseInsensitive="false" type="JAVA" />
         </inspection_tool>
         <inspection_tool class="e3a3ba52-b4e2-3010-a5de-4e1ff9d4f37b" enabled="true" level="WARNING" enabled_by_default="true">
-          <scope name="Tests" level="WARNING" enabled="false" />
+          <scope name="Tests" level="WARNING" enabled="true" />
         </inspection_tool>
       </profile>""";
     var wrapper = new LocalInspectionToolWrapper(new SSBasedInspection());
