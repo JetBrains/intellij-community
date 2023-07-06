@@ -1,3 +1,5 @@
+import java.util.Optional;
+
 record PrimitiveAndSealed(int x, I y) {}
 record NormalAndSealed(Integer x, I y) {}
 
@@ -242,6 +244,37 @@ class Basic {
       case Pair<? extends I>(C fst, D snd) -> {}
       case Pair<? extends I>(I fst, C snd) -> {}
       case Pair<? extends I>(D fst, I snd) -> {}
+    }
+  }
+
+  sealed interface Parent {}
+  record AAA() implements Parent {}
+  record BBB() implements Parent {}
+
+  void test(Optional<? extends Parent> optional) {
+    switch (optional.get()) {
+      case AAA a -> {}
+      case BBB b -> {}
+    }
+  }
+
+
+  class CCCC{}
+  public <T extends CCCC & Comparable<T>> void test(T c) {
+    switch (c) {
+      case Comparable t -> System.out.println(13);
+    }
+  }
+
+
+  interface II1{}
+  sealed interface II2{}
+  non-sealed class Cl1 implements II2{}
+  public <T extends II1 & II2> void test(T c) {
+    switch (c) {
+      case Cl1 t:
+        System.out.println(21);
+        ;
     }
   }
 }

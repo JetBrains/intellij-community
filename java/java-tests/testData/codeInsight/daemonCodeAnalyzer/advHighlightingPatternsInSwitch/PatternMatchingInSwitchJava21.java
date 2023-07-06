@@ -145,16 +145,16 @@ class Main {
     };
 
     switch (ii) {
-      case Object obj, <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>:
+      case <error descr="'switch' has both an unconditional pattern and a default label">Object obj</error>:
         System.out.println("int");
         break;
-      default:
+      <error descr="'switch' has both an unconditional pattern and a default label">default</error>:
         System.out.println("def");
         break;
     }
     str = switch (ii) {
-      case Object obj, <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error> -> "int";
-      default -> "def";
+      case <error descr="'switch' has both an unconditional pattern and a default label">Object obj</error> -> "int";
+      <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> "def";
     };
 
     switch (ii) {
