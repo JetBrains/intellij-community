@@ -127,7 +127,8 @@ sealed class ClientSessionsManager<T : ClientSession> {
   }
 }
 
-open class ClientAppSessionsManager(@Suppress("NonDefaultConstructor") app: Application) : ClientSessionsManager<ClientAppSession>() {
+@Suppress("NonDefaultConstructor")
+open class ClientAppSessionsManager(app: Application) : ClientSessionsManager<ClientAppSession>() {
   init {
     if (app is ApplicationImpl) {
       @Suppress("LeakingThis")
