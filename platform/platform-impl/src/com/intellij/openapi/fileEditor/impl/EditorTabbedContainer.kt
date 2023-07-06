@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -296,21 +297,24 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
       }
     }
 
-    val closeTab = CloseTab(component = component, file = file, editorWindow = window, parentDisposable = parentDisposable)
-    val dataContext = DataManager.getInstance().getDataContext(component)
-    val editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup") as DefaultActionGroup
-    val group = DefaultActionGroup()
-    val event = AnActionEvent.createFromDataContext("EditorTabActionGroup", null, dataContext)
-    for (action in editorActionGroup.getChildren(event)) {
-      if (action is ActionGroup) {
-        group.addAll(*action.getChildren(event))
+    coroutineScope.launch(Dispatchers.EDT) {
+      val closeTab = CloseTab(component = component, file = file, editorWindow = window, parentDisposable = parentDisposable)
+      val dataContext = DataManager.getInstance().getDataContext(component)
+      val actionManager = serviceAsync<ActionManager>()
+      val editorActionGroup = actionManager.getAction("EditorTabActionGroup") as DefaultActionGroup
+      val group = DefaultActionGroup()
+      val event = AnActionEvent.createFromDataContext("EditorTabActionGroup", null, dataContext)
+      for (action in editorActionGroup.getChildren(event, actionManager)) {
+        if (action is ActionGroup) {
+          group.addAll(*action.getChildren(event, actionManager))
+        }
+        else {
+          group.addAction(action)
+        }
       }
-      else {
-        group.addAction(action!!)
-      }
+      group.addAction(closeTab, Constraints.LAST)
+      tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB)
     }
-    group.addAction(closeTab, Constraints.LAST)
-    tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB)
     tab.setTabPaneActions(composite.selectedEditor!!.tabActions)
     editorTabs.addTabSilently(tab, indexToInsert)
   }
