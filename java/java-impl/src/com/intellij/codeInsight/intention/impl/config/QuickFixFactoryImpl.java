@@ -588,7 +588,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createDeferFinalAssignmentFix(@NotNull PsiVariable variable, @NotNull PsiReferenceExpression expression) {
-    return new DeferFinalAssignmentFix(variable, expression);
+    return new DeferFinalAssignmentFix(variable, expression).asIntention();
   }
 
   @NotNull
