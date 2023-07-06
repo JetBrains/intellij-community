@@ -121,6 +121,7 @@
       "codeBackground": "Grey14",
       "codeBorderColor": "Grey8",
       "linkForeground": "Blue2",
+      "imageBorderColor": "Grey11",
       "Button": {
         "foreground": "Grey3",
         "startBackground": "Grey11",
