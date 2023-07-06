@@ -30,6 +30,7 @@ interface KotlinCommonRefactoringSettings {
     var renameVariables: Boolean
     var renameParameterInHierarchy: Boolean
     var renameInheritors: Boolean
+    var renameOverloads: Boolean
 
     companion object {
         @JvmStatic

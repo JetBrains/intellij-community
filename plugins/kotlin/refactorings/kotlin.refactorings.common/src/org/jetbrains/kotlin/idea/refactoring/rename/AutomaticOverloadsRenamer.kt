@@ -8,21 +8,18 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.naming.AutomaticRenamer
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.usageView.UsageInfo
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.scopes.KtScope
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
-import org.jetbrains.kotlin.idea.util.expectedDescriptor
-import org.jetbrains.kotlin.idea.util.getAllAccessibleFunctions
-import org.jetbrains.kotlin.idea.util.getResolutionScope
-import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.UserDataProperty
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.source.getPsi
 
 class AutomaticOverloadsRenamer(function: KtNamedFunction, newName: String) : AutomaticRenamer() {
     companion object {
@@ -33,8 +30,7 @@ class AutomaticOverloadsRenamer(function: KtNamedFunction, newName: String) : Au
 
     init {
         val filter = function.elementFilter
-        function.getOverloads().mapNotNullTo(myElements) {
-            val candidate = it.source.getPsi() as? KtNamedFunction ?: return@mapNotNullTo null
+        function.getOverloads().mapNotNullTo(myElements) { candidate ->
             if (filter != null && !filter(candidate)) return@mapNotNullTo null
             if (candidate != function) candidate else null
         }
@@ -47,23 +43,27 @@ class AutomaticOverloadsRenamer(function: KtNamedFunction, newName: String) : Au
     override fun isSelectedByDefault(): Boolean = true
 }
 
-private fun KtNamedFunction.getOverloads(): Collection<FunctionDescriptor> {
+private fun KtNamedFunction.getOverloads(): Collection<KtNamedFunction> {
     val name = nameAsName ?: return emptyList()
-    val resolutionFacade = getResolutionFacade()
-    val descriptor = this.unsafeResolveToDescriptor() as FunctionDescriptor
-    val context = resolutionFacade.analyze(this, BodyResolveMode.FULL)
-    val scope = getResolutionScope(context, resolutionFacade)
-    val extensionReceiverClass = descriptor.extensionReceiverParameter?.type?.constructor?.declarationDescriptor as? ClassDescriptor
-
-    if (descriptor.isActual && descriptor.expectedDescriptor() != null) return emptyList()
-
-    val result = LinkedHashSet<FunctionDescriptor>()
-    result += scope.getAllAccessibleFunctions(name)
-    if (extensionReceiverClass != null) {
-        result += extensionReceiverClass.unsubstitutedMemberScope.getContributedFunctions(name, NoLookupLocation.FROM_IDE)
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    allowAnalysisOnEdt {
+        analyze(this) {
+            val symbol = getSymbol() as? KtFunctionSymbol  ?: return emptyList()
+            if (symbol.isActual() && symbol.getExpectForActual() != null) return emptyList()
+            val result = LinkedHashSet<KtNamedFunction>()
+            buildList<KtScope> {
+                add(containingKtFile.getFileSymbol().getFileScope())
+                addIfNotNull(getPackageSymbolIfPackageExists(containingKtFile.packageFqName)?.getPackageScope())
+                addIfNotNull((symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.getDeclaredMemberScope())
+                addIfNotNull(symbol.receiverParameter?.type?.expandedClassSymbol?.getDeclaredMemberScope())
+            }.forEach { scope ->
+                scope.getCallableSymbols(name).mapNotNullTo(result) {
+                    it.psi as? KtNamedFunction
+                }
+            }
+            return result
+        }
     }
-
-    return result
 }
 
 class AutomaticOverloadsRenamerFactory : AutomaticRenamerFactory {
@@ -75,10 +75,10 @@ class AutomaticOverloadsRenamerFactory : AutomaticRenamerFactory {
 
     override fun getOptionName() = JavaRefactoringBundle.message("rename.overloads")
 
-    override fun isEnabled() = KotlinRefactoringSettings.instance.renameOverloads
+    override fun isEnabled() = KotlinCommonRefactoringSettings.getInstance().renameOverloads
 
     override fun setEnabled(enabled: Boolean) {
-        KotlinRefactoringSettings.instance.renameOverloads = enabled
+        KotlinCommonRefactoringSettings.getInstance().renameOverloads = enabled
     }
 
     override fun createRenamer(element: PsiElement, newName: String, usages: Collection<UsageInfo>) =

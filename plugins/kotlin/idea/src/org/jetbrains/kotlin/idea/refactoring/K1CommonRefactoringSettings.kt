@@ -59,4 +59,7 @@ internal class K1CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
 
     override var renameInheritors: Boolean
             by delegateTo { it::renameInheritors }
+
+    override var renameOverloads: Boolean
+            by delegateTo { it::renameOverloads }
 }

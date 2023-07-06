@@ -20,6 +20,7 @@ class KotlinFirRefactoringsSettings : PersistentStateComponent<KotlinFirRefactor
     var renameVariables: Boolean = true
     var renameParameterInHierarchy: Boolean = true
     var renameInheritors: Boolean = true
+    var renameOverloads: Boolean = true
 
     var MOVE_PREVIEW_USAGES: Boolean = true
     var MOVE_SEARCH_IN_COMMENTS: Boolean = true
