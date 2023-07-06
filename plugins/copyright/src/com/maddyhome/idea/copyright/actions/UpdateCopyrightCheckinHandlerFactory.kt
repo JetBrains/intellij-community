@@ -2,7 +2,7 @@
 package com.maddyhome.idea.copyright.actions
 
 import com.intellij.copyright.CopyrightBundle
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
@@ -37,9 +37,10 @@ private class UpdateCopyrightCheckinHandler(val project: Project) : CheckinHandl
   override fun isEnabled(): Boolean = settings.UPDATE_COPYRIGHT
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
+    val files = commitInfo.committedVirtualFiles
     withContext(Dispatchers.Default) {
+      val psiFiles = readAction { getPsiFiles(files) }
       coroutineToIndicator {
-        val psiFiles = runReadAction { getPsiFiles(commitInfo.committedVirtualFiles) }
         UpdateCopyrightProcessor(project, null, psiFiles, false).run()
       }
     }
