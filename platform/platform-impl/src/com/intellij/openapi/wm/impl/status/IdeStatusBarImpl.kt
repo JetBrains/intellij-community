@@ -442,20 +442,13 @@ open class IdeStatusBarImpl internal constructor(
   override fun getInfo(): @NlsContexts.StatusBarText String? = info
 
   override fun addProgress(indicator: ProgressIndicatorEx, info: TaskInfo) {
-    notifyProgressAdded(indicator, info)
+    check(progressFlow.tryEmit(ProgressSetChangeEvent(newProgress = Triple(first = info, second = indicator, third = ClientId.current),
+                                                      existingProgresses = infoAndProgressPanel?.backgroundProcesses ?: emptyList())))
     createInfoAndProgressPanel().addProgress(indicator, info)
   }
 
-  private fun notifyProgressAdded(indicator: ProgressIndicatorEx, info: TaskInfo) {
-    EDT.assertIsEdt()
-    check(progressFlow.tryEmit(ProgressSetChangeEvent(newProgress = Triple(first = info, second = indicator, third = ClientId.current),
-                                                      existingProgresses = infoAndProgressPanel?.backgroundProcesses ?: emptyList())))
-  }
-
-  @ApiStatus.Internal
-  fun notifyProgressRemoved() {
-    EDT.assertIsEdt()
-    check(progressFlow.tryEmit(ProgressSetChangeEvent(null, infoAndProgressPanel?.backgroundProcesses ?: emptyList())))
+  internal fun notifyProgressRemoved(backgroundProcesses: List<Pair<TaskInfo, ProgressIndicatorEx>>) {
+    check(progressFlow.tryEmit(ProgressSetChangeEvent(newProgress = null, existingProgresses = backgroundProcesses)))
   }
 
   /**

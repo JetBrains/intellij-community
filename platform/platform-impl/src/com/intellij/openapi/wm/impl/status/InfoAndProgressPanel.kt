@@ -94,7 +94,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
   private var popup: ProcessPopup? = null
   private val balloon = ProcessBalloon(3)
 
-  private val mainPanel: InfoAndProgressPanelImpl = InfoAndProgressPanelImpl(this)
+  private val mainPanel = InfoAndProgressPanelImpl(this)
   internal val component: JPanel
     get() = mainPanel
 
@@ -290,7 +290,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     Disposer.dispose(progress)
     if (progress.isCompact) {
       balloon.removeIndicator(rootPane, progress)
-      statusBar.notifyProgressRemoved()
+      statusBar.notifyProgressRemoved(backgroundProcesses)
     }
   }
 
@@ -735,8 +735,8 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       return if (suspender != null && suspender.isSuspended) suspender.suspendedText else text
     }
 
-    override fun createEastButtons(): Sequence<ProgressButton> {
-      return sequenceOf(createSuspendButton()) + super.createEastButtons()
+    override fun createEastButtons(): List<ProgressButton> {
+      return listOf(createSuspendButton()) + super.createEastButtons()
     }
 
     protected fun updateCancelButton(suspend: InplaceButton, cancel: InplaceButton) {

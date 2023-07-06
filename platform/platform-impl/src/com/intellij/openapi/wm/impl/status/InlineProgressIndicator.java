@@ -17,8 +17,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
-import kotlin.sequences.Sequence;
-import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,70 +24,70 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Iterator;
+import java.util.List;
 
 public class InlineProgressIndicator extends ProgressIndicatorBase implements Disposable {
   protected final TextPanel text;
-  protected final TextPanel myText2;
-  private final @NotNull Sequence<ProgressButton> eastButtons;
+  protected final TextPanel text2;
+  private final @NotNull List<ProgressButton> eastButtons;
 
   protected final @NotNull JProgressBar progress;
 
   protected final JPanel component;
 
-  private final boolean myCompact;
-  private final TaskInfo myInfo;
+  private final boolean isCompact;
+  private final TaskInfo info;
 
-  private final TextPanel myProcessName;
-  private boolean myDisposed;
+  private final TextPanel processName;
+  private boolean isDisposed;
 
   public InlineProgressIndicator(boolean compact, @NotNull TaskInfo processInfo) {
-    myCompact = compact;
-    myInfo = processInfo;
+    isCompact = compact;
+    info = processInfo;
 
     progress = new JProgressBar(SwingConstants.HORIZONTAL);
     progress.setOpaque(false);
     UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, progress);
 
     text = new TextPanel();
-    myText2 = new TextPanel();
-    myProcessName = new TextPanel();
+    text2 = new TextPanel();
+    processName = new TextPanel();
     eastButtons = createEastButtons();
     component = createComponent();
   }
 
   protected @NotNull JPanel createComponent() {
-    MyComponent component = new MyComponent(myCompact, myProcessName);
-    if (myCompact) {
+    MyComponent component = new MyComponent(isCompact, processName);
+    if (isCompact) {
       component.setLayout(new BorderLayout(2, 0));
       createCompactTextAndProgress(component);
-      component.add(createButtonPanel(ContainerUtil.map(eastButtons.iterator(), b -> b.button)), BorderLayout.EAST);
-      component.setToolTipText(myInfo.getTitle() + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"));
+      component.add(createButtonPanel(ContainerUtil.map(eastButtons, b -> b.button)), BorderLayout.EAST);
+      component.setToolTipText(info.getTitle() + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"));
     }
     else {
       component.setLayout(new BorderLayout());
-      myProcessName.setText(myInfo.getTitle());
-      component.add(myProcessName, BorderLayout.NORTH);
-      myProcessName.setForeground(UIUtil.getPanelBackground().brighter().brighter());
-      myProcessName.setBorder(JBUI.Borders.empty(2));
+      processName.setText(info.getTitle());
+      component.add(processName, BorderLayout.NORTH);
+      processName.setForeground(UIUtil.getPanelBackground().brighter().brighter());
+      processName.setBorder(JBUI.Borders.empty(2));
 
       final NonOpaquePanel content = new NonOpaquePanel(new BorderLayout());
-      content.setBorder(JBUI.Borders.empty(2, 2, 2, myInfo.isCancellable() ? 2 : 4));
+      content.setBorder(JBUI.Borders.empty(2, 2, 2, info.isCancellable() ? 2 : 4));
       component.add(content, BorderLayout.CENTER);
 
-      content.add(createButtonPanel(ContainerUtil.map(eastButtons.iterator(), b -> withBorder(b.button))), BorderLayout.EAST);
+      content.add(createButtonPanel(ContainerUtil.map(eastButtons, b -> withBorder(b.button))), BorderLayout.EAST);
       content.add(text, BorderLayout.NORTH);
       content.add(progress, BorderLayout.CENTER);
-      content.add(myText2, BorderLayout.SOUTH);
+      content.add(text2, BorderLayout.SOUTH);
 
       component.setBorder(JBUI.Borders.empty(2));
     }
     UIUtil.uiTraverser(component).forEach(o -> ((JComponent)o).setOpaque(false));
 
-    if (!myCompact) {
-      myProcessName.recomputeSize();
+    if (!isCompact) {
+      processName.recomputeSize();
       text.recomputeSize();
-      myText2.recomputeSize();
+      text2.recomputeSize();
     }
     return component;
   }
@@ -121,18 +119,18 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     return wrapper;
   }
 
-  protected @NotNull Sequence<ProgressButton> createEastButtons() {
-    return SequencesKt.sequenceOf(createCancelButton());
+  protected @NotNull List<ProgressButton> createEastButtons() {
+    return List.of(createCancelButton());
   }
 
   protected final @NotNull ProgressButton createCancelButton() {
     InplaceButton cancelButton = new InplaceButton(
-      new IconButton(myInfo.getCancelTooltipText(),
-                     myCompact ? AllIcons.Process.StopSmall : AllIcons.Process.Stop,
-                     myCompact ? AllIcons.Process.StopSmallHovered : AllIcons.Process.StopHovered),
+      new IconButton(info.getCancelTooltipText(),
+                     isCompact ? AllIcons.Process.StopSmall : AllIcons.Process.Stop,
+                     isCompact ? AllIcons.Process.StopSmallHovered : AllIcons.Process.StopHovered),
       __ -> cancelRequest()).setFillBg(false);
 
-    cancelButton.setVisible(myInfo.isCancellable());
+    cancelButton.setVisible(info.isCancellable());
 
     return new ProgressButton(cancelButton, () -> cancelButton.setPainting(!isStopping()));
   }
@@ -169,16 +167,16 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     setTextValue(text != null ? text : "");
     setText2Value(text2 != null ? text2 : "");
 
-    if (myCompact && StringUtil.isEmpty(getTextValue())) {
-      setTextValue(myInfo.getTitle());
+    if (isCompact && StringUtil.isEmpty(getTextValue())) {
+      setTextValue(info.getTitle());
     }
 
     if (isStopping()) {
-      if (myCompact) {
+      if (isCompact) {
         setTextValue(IdeBundle.message("progress.text.stopping", getTextValue()));
       }
       else {
-        setProcessNameValue(IdeBundle.message("progress.text.stopping", myInfo.getTitle()));
+        setProcessNameValue(IdeBundle.message("progress.text.stopping", info.getTitle()));
         setTextEnabled(false);
         setText2Enabled(false);
       }
@@ -190,9 +188,8 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       progress.setEnabled(true);
     }
 
-    Iterator<ProgressButton> iterator = eastButtons.iterator();
-    while (iterator.hasNext()) {
-      iterator.next().updateAction.run();
+    for (ProgressButton button : eastButtons) {
+      button.updateAction.run();
     }
   }
 
@@ -209,19 +206,19 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   }
 
   protected @Nullable String getText2Value() {
-    return myText2.getText();
+    return text2.getText();
   }
 
   protected void setText2Value(@NlsContexts.ProgressDetails @NotNull String text) {
-    myText2.setText(text);
+    text2.setText(text);
   }
 
   protected void setText2Enabled(boolean value) {
-    myText2.setEnabled(value);
+    text2.setEnabled(value);
   }
 
   protected void setProcessNameValue(@NlsContexts.ProgressTitle @NotNull String text) {
-    myProcessName.setText(text);
+    processName.setText(text);
   }
 
   protected boolean isPaintingIndeterminate() {
@@ -250,19 +247,19 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   }
 
   boolean isCompact() {
-    return myCompact;
+    return isCompact;
   }
 
   TaskInfo getInfo() {
-    return myInfo;
+    return info;
   }
 
   private final class MyComponent extends JPanel {
-    private final boolean myCompact;
+    private final boolean isCompact;
     private final JComponent myProcessName;
 
     private MyComponent(final boolean compact, @NotNull JComponent processName) {
-      myCompact = compact;
+      isCompact = compact;
       myProcessName = processName;
       addMouseListener(new MouseAdapter() {
         @Override
@@ -276,18 +273,18 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
     @Override
     protected void paintComponent(final Graphics g) {
-      if (myCompact) {
+      if (isCompact) {
         super.paintComponent(g);
         return;
       }
 
-      final GraphicsConfig c = GraphicsUtil.setupAAPainting(g);
+      GraphicsConfig c = GraphicsUtil.setupAAPainting(g);
       UISettings.setupAntialiasing(g);
 
       int arc = 8;
       Color bg = getBackground();
-      final Rectangle bounds = myProcessName.getBounds();
-      final Rectangle label = SwingUtilities.convertRectangle(myProcessName.getParent(), bounds, this);
+      Rectangle bounds = myProcessName.getBounds();
+      Rectangle label = SwingUtilities.convertRectangle(myProcessName.getParent(), bounds, this);
 
       g.setColor(UIUtil.getPanelBackground());
       g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
@@ -317,11 +314,11 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
   @Override
   public void dispose() {
-    myDisposed = true;
+    isDisposed = true;
   }
 
   private boolean isDisposed() {
-    return myDisposed;
+    return isDisposed;
   }
 
   static final class ProgressButton {

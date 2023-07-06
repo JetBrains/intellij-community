@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -52,14 +52,14 @@ internal class InlineCommitChecksProgressIndicator(isOnlyRunCommitChecks: Boolea
       border = emptyTop(5)
 
       add(text)
-      add(myText2)
+      add(text2)
     }
 
     component.add(progress, BorderLayout.CENTER)
     component.add(detailsPanel, BorderLayout.SOUTH)
 
     text.recomputeSize()
-    myText2.recomputeSize()
+    text2.recomputeSize()
   }
 
   override fun setTextValue(text: String) {
@@ -93,10 +93,10 @@ internal class PopupCommitChecksProgressIndicator(private val original: Progress
   override fun createCompactTextAndProgress(component: JPanel) {
     component.add(text, BorderLayout.NORTH)
     component.add(progress, BorderLayout.CENTER)
-    component.add(myText2, BorderLayout.SOUTH)
+    component.add(text2, BorderLayout.SOUTH)
 
     text.recomputeSize()
-    myText2.recomputeSize()
+    text2.recomputeSize()
   }
 
   override fun cancelRequest() = original.cancel()
