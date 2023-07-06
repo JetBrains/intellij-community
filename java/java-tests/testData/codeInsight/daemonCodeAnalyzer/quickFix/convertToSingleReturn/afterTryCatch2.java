@@ -6,7 +6,8 @@ class Test {
         try {
             res = Integer.parseInt(s);
             finished = true;
-        } catch (NumberFormatException ex) {
+        }
+        catch(NumberFormatException ex) {
             boolean result = s.isEmpty();
             if (result) {
                 res = -1;

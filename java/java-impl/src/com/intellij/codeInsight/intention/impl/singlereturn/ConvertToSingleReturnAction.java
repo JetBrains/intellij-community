@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -32,16 +31,13 @@ public class ConvertToSingleReturnAction extends PsiUpdateModCommandAction<PsiPa
   protected void invoke(@NotNull ActionContext context, @NotNull PsiParameterListOwner element, @NotNull ModPsiUpdater updater) {
     if (!(element.getBody() instanceof PsiCodeBlock block)) return;
     Project project = context.project();
-    PsiCodeBlock replacement = generateBody(project, block, new EmptyProgressIndicator());
-    if (replacement == null) return;
-    CodeStyleManager.getInstance(project).reformat(block.replace(replacement));
+    generateBody(project, block, new EmptyProgressIndicator());
   }
 
-  @Nullable
-  private static PsiCodeBlock generateBody(@NotNull Project project, PsiCodeBlock block, ProgressIndicator indicator) {
+  private static void generateBody(@NotNull Project project, PsiCodeBlock block, ProgressIndicator indicator) {
     indicator.setIndeterminate(false);
     PsiType returnType = PsiTypesUtil.getMethodReturnType(block);
-    if (returnType == null) return null;
+    if (returnType == null) return;
 
     List<PsiReturnStatement> returns = Arrays.asList(PsiUtil.findReturnStatements(block));
     indicator.checkCanceled();
@@ -49,16 +45,13 @@ public class ConvertToSingleReturnAction extends PsiUpdateModCommandAction<PsiPa
     FinishMarker marker = FinishMarker.defineFinishMarker(block, returnType, returns);
     indicator.checkCanceled();
     indicator.setFraction(0.2);
-    PsiCodeBlock copy = (PsiCodeBlock)block.copy();
     indicator.checkCanceled();
     indicator.setFraction(0.3);
-    PsiLocalVariable variable = convertReturns(project, copy, returnType, marker, returns.size(), indicator);
+    PsiLocalVariable variable = convertReturns(project, block, returnType, marker, returns.size(), indicator);
     if (variable != null) {
-      PsiJavaToken end = Objects.requireNonNull(copy.getRBrace());
-      copy.addBefore(JavaPsiFacade.getElementFactory(project).createStatementFromText("return " + variable.getName() + ";", copy), end);
+      PsiJavaToken end = Objects.requireNonNull(block.getRBrace());
+      block.addBefore(JavaPsiFacade.getElementFactory(project).createStatementFromText("return " + variable.getName() + ";", block), end);
     }
-
-    return copy;
   }
 
   public static PsiLocalVariable convertReturns(@NotNull Project project,
@@ -77,6 +70,9 @@ public class ConvertToSingleReturnAction extends PsiUpdateModCommandAction<PsiPa
       PsiReturnStatement returnStatement = getNonTerminalReturn(block);
       if (returnStatement == null) break;
       ReturnReplacementContext.replaceSingleReturn(project, block, exitContext, returnStatement);
+      if (i > count) {
+        throw new IllegalStateException("Unable to convert to a single return form");
+      }
     }
     indicator.setFraction(0.9);
     PsiLocalVariable resultVariable = exitContext.declareVariables();
@@ -106,6 +102,11 @@ public class ConvertToSingleReturnAction extends PsiUpdateModCommandAction<PsiPa
           myReturnStatement = statement;
           stopWalking();
         }
+      }
+
+      @Override
+      public void visitErrorElement(@NotNull PsiErrorElement element) {
+        stopWalking();
       }
 
       @Override

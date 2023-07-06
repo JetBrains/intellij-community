@@ -4,7 +4,8 @@ class Test {
         int result;
         try {
             result = Integer.parseInt(s);
-        } catch (NumberFormatException ex) {
+        }
+        catch(NumberFormatException ex) {
             result = -1;
         }
         return result;

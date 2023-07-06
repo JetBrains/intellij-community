@@ -3,7 +3,7 @@ class Test {
     boolean hasEmptyString(List<String> list) {
         boolean result = false;
         for (String s : list) {
-            if (s.isEmpty()) {
+            if(s.isEmpty()) {
                 result = true;
                 break;
             }

@@ -9,10 +9,10 @@ class Test {
             result = get("foo");
         } else {
             String s = data[0];
-            int i = 0;
+            int i=0;
             if (data.length > 2) {
                 if (data[2] != null) {
-                    if (data[2].isEmpty()) {
+                    if(data[2].isEmpty()) {
                         finished = true;
                     }
                 }
