@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,7 +125,7 @@ public class VarargParameterInspection extends BaseInspection {
       if (annotation != null) {
         annotation.delete();
       }
-      typeElement.replace(newTypeElement);
+      new CommentTracker().replaceAndRestoreComments(typeElement, newTypeElement);
     }
 
     public static void modifyCall(String arrayTypeText, int indexOfFirstVarargArgument, @NotNull PsiElement reference) {
@@ -151,11 +152,17 @@ public class VarargParameterInspection extends BaseInspection {
       final Project project = reference.getProject();
       final PsiExpression arrayExpression =
         JavaPsiFacade.getElementFactory(project).createExpressionFromText(builder.toString(), reference);
+      CommentTracker ct = new CommentTracker();
       if (arguments.length > indexOfFirstVarargArgument) {
-        final PsiExpression firstArgument = arguments[indexOfFirstVarargArgument];
-        argumentList.deleteChildRange(firstArgument, arguments[arguments.length - 1]);
+        PsiExpression firstArgument = arguments[indexOfFirstVarargArgument];
+        PsiExpression lastArgument = arguments[arguments.length - 1];
+        for (PsiElement e = firstArgument; e != lastArgument; e = e.getNextSibling()) {
+          ct.grabComments(e);
+        }
+        argumentList.deleteChildRange(firstArgument, lastArgument);
       }
       argumentList.add(arrayExpression);
+      ct.insertCommentsBefore(call);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(argumentList);
       CodeStyleManager.getInstance(project).reformat(argumentList);
     }
