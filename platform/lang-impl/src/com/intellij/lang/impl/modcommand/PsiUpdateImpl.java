@@ -422,7 +422,7 @@ final class PsiUpdateImpl {
 
     @Override
     public void documentChanged(@NotNull DocumentEvent event) {
-      myCaretOffset = updateOffset(event, myCaretOffset);
+      myCaretOffset = updateOffset(event, myCaretOffset, myCaretOffset == mySelection.getStartOffset() && mySelection.getLength() > 0);
       mySelection = updateRange(event, mySelection);
       myHighlightInfos.replaceAll(info -> info.withRange(updateRange(event, info.range())));
       if (myRenameSymbol != null) {
@@ -431,17 +431,21 @@ final class PsiUpdateImpl {
     }
 
     private static @NotNull TextRange updateRange(@NotNull DocumentEvent event, @NotNull TextRange range) {
-      int newStart = updateOffset(event, range.getStartOffset());
-      int newEnd = updateOffset(event, range.getEndOffset());
+      if (range.isEmpty()) {
+        int newPos = updateOffset(event, range.getEndOffset(), false);
+        return newPos == range.getEndOffset() ? range : TextRange.from(newPos, 0);
+      }
+      int newStart = updateOffset(event, range.getStartOffset(), true);
+      int newEnd = updateOffset(event, range.getEndOffset(), false);
       if (range.getStartOffset() == newStart && range.getEndOffset() == newEnd) return range;
       return TextRange.create(newStart, newEnd);
     }
 
-    private static int updateOffset(DocumentEvent event, int pos) {
+    private static int updateOffset(DocumentEvent event, int pos, boolean leanRight) {
       int offset = event.getOffset();
       int oldLength = event.getOldLength();
       int newLength = event.getNewLength();
-      if (pos <= offset) return pos;
+      if (pos < offset || (pos == offset && (!leanRight || oldLength > 0))) return pos;
       if (pos >= offset + oldLength) return pos + newLength - oldLength;
       return offset + newLength;
     }
