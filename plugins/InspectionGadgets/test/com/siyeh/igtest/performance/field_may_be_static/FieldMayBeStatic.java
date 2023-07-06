@@ -75,3 +75,24 @@ class ThisExpression {
 
   static class Sub extends ThisExpression {}
 }
+class IdentitySensitive {
+  static final class Lock {}
+  
+  private final Lock LOCK1 = new Lock();
+  private final Lock <warning descr="Field 'LOCK2' may be 'static'">LOCK2</warning> = new Lock();
+  private final Lock SENTINEL = new Lock();
+  private final Lock <warning descr="Field 'SENTINEL2' may be 'static'">SENTINEL2</warning> = new Lock();
+  
+  void test() {
+    synchronized (LOCK1) {}
+  }
+  
+  void test2() {
+    System.out.println(LOCK2);
+  }
+  
+  void test3(Object obj) {
+    if (obj == SENTINEL) {}
+    if (SENTINEL2 == null) {}
+  }
+}

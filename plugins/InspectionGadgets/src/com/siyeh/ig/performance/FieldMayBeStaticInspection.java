@@ -28,11 +28,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
 
@@ -102,7 +105,25 @@ public class FieldMayBeStaticInspection extends BaseInspection {
       if (!canBeStatic(initializer)) {
         return;
       }
+      if (isIdentitySensitive(field)) {
+        return;
+      }
       registerFieldError(field);
+    }
+
+    private static boolean isIdentitySensitive(@NotNull PsiField field) {
+      if (field.getType() instanceof PsiPrimitiveType) return false;
+      List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(field, field.getContainingFile());
+      for (PsiReferenceExpression ref : refs) {
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(ref.getParent());
+        if (parent instanceof PsiSynchronizedStatement) return true;
+        if (parent instanceof PsiBinaryExpression binOp &&
+            (binOp.getOperationTokenType() == JavaTokenType.EQEQ || binOp.getOperationTokenType() == JavaTokenType.NE) &&
+            ExpressionUtils.getValueComparedWithNull(binOp) == null) {
+          return true;
+        }
+      }
+      return false;
     }
 
     private static boolean canBeStatic(PsiExpression initializer) {
