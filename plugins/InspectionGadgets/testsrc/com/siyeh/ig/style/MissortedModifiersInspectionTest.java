@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -23,16 +23,10 @@ public class MissortedModifiersInspectionTest extends LightJavaInspectionTestCas
   }
 
   public void testIgnoreAnnotations() {
-    final MissortedModifiersInspection inspection = new MissortedModifiersInspection();
-    inspection.m_requireAnnotationsFirst = false;
-    myFixture.enableInspections(inspection);
     doTest();
   }
 
   public void testTypeUseWithType() {
-    final MissortedModifiersInspection inspection = new MissortedModifiersInspection();
-    inspection.typeUseWithType = true;
-    myFixture.enableInspections(inspection);
     doTestQuickFix();
   }
 
@@ -64,6 +58,13 @@ public class MissortedModifiersInspectionTest extends LightJavaInspectionTestCas
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new MissortedModifiersInspection();
+    MissortedModifiersInspection inspection = new MissortedModifiersInspection();
+    if (getTestName(false).contains("TypeUseWithType")) {
+      inspection.typeUseWithType = true;
+    }
+    else if (getTestName(false).contains("IgnoreAnnotations")) {
+      inspection.m_requireAnnotationsFirst = false;
+    }
+    return inspection;
   }
 }

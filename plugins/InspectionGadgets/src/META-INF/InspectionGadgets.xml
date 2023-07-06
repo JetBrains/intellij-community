@@ -2273,8 +2273,9 @@
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.style.EscapedSpaceInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="MissortedModifiers" bundle="messages.InspectionGadgetsBundle" key="missorted.modifiers.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false" cleanupTool="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.style.MissortedModifiersInspection"/>
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
+                     enabledByDefault="true" level="INFORMATION" cleanupTool="true"
+                     implementationClass="com.siyeh.ig.style.MissortedModifiersInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="MultipleVariablesInDeclaration" shortName="MultipleVariablesInDeclaration" bundle="messages.InspectionGadgetsBundle"
                      key="multiple.declaration.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
