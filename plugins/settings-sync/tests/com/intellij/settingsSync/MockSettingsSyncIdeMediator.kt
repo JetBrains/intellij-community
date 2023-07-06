@@ -13,7 +13,7 @@ internal class MockSettingsSyncIdeMediator : SettingsSyncIdeMediator {
 
   private var exceptionToThrowOnApply: Exception? = null
 
-  override fun applyToIde(snapshot: SettingsSnapshot) {
+  override fun applyToIde(snapshot: SettingsSnapshot, settings: SettingsSyncState?) {
     if (exceptionToThrowOnApply != null) {
       throw exceptionToThrowOnApply!!
     }

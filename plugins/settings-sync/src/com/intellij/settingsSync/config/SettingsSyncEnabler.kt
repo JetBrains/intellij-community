@@ -34,7 +34,7 @@ internal class SettingsSyncEnabler {
   }
 
 
-  fun getSettingsFromServer() {
+  fun getSettingsFromServer(syncSettings: SettingsSyncState? = null) {
     eventDispatcher.multicaster.updateFromServerStarted()
     val settingsSyncControls = SettingsSyncMain.getInstance().controls
     object : Task.Modal(null, SettingsSyncBundle.message("enable.sync.get.from.server.progress"), false) {
@@ -44,7 +44,7 @@ internal class SettingsSyncEnabler {
         val result = settingsSyncControls.remoteCommunicator.receiveUpdates()
         updateResult = result
         if (result is UpdateResult.Success) {
-          val cloudEvent = SyncSettingsEvent.CloudChange(result.settingsSnapshot, result.serverVersionId)
+          val cloudEvent = SyncSettingsEvent.CloudChange(result.settingsSnapshot, result.serverVersionId, syncSettings)
           settingsSyncControls.bridge.initialize(SettingsSyncBridge.InitMode.TakeFromServer(cloudEvent))
         }
       }
@@ -58,7 +58,7 @@ internal class SettingsSyncEnabler {
 
   fun pushSettingsToServer() {
     val settingsSyncControls = SettingsSyncMain.getInstance().controls
-    object: Task.Modal(null, SettingsSyncBundle.message("enable.sync.push.to.server.progress"), false) {
+    object : Task.Modal(null, SettingsSyncBundle.message("enable.sync.push.to.server.progress"), false) {
       override fun run(indicator: ProgressIndicator) {
         // todo initialization must be modal but pushing to server can be made later
         settingsSyncControls.bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)

@@ -102,7 +102,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings
 
     val masterPosition = settingsLog.forceWriteToMaster(cloudEvent.snapshot, "Remote changes to initialize settings by data from cloud")
-    pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
+    pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition, cloudEvent.syncSettings)
 
     // normally we set cloud position only after successful push to cloud, but in this case we already take all settings from the cloud,
     // so no push is needed, and we know the cloud settings state.
@@ -127,7 +127,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
           SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = updateResult.serverVersionId
           SettingsSyncSettings.getInstance().syncEnabled = true
-          pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
+          pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition, null)
         }
         is UpdateResult.FileDeletedFromServer -> {
           SettingsSyncSettings.getInstance().syncEnabled = false
@@ -144,7 +144,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
           settingsLog.setCloudPosition(masterPosition)
 
           SettingsSyncSettings.getInstance().syncEnabled = true
-          pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
+          pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition, null)
           migration.migrateCategoriesSyncStatus(appConfigPath, SettingsSyncSettings.getInstance())
           saveIdeSettings()
         }
@@ -333,7 +333,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     }
 
     if (newIdePosition != masterPosition) { // master has advanced further that ide => the ide needs to be updated
-      pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
+      pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition, null)
     }
 
     if (newCloudPosition != masterPosition || pushRequestMode == MUST_PUSH || pushRequestMode == FORCE_PUSH) {
@@ -399,8 +399,8 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     }
   }
 
-  private fun pushToIde(settingsSnapshot: SettingsSnapshot, targetPosition: SettingsLog.Position) {
-    ideMediator.applyToIde(settingsSnapshot)
+  private fun pushToIde(settingsSnapshot: SettingsSnapshot, targetPosition: SettingsLog.Position, syncSettings: SettingsSyncState?) {
+    ideMediator.applyToIde(settingsSnapshot, syncSettings)
     settingsLog.setIdePosition(targetPosition)
     LOG.info("Applied settings to the IDE.")
   }

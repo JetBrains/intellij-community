@@ -52,7 +52,7 @@ internal abstract class SettingsSyncTestBase {
     configDir = mainDir.resolve("rootconfig").createDirectories()
 
     SettingsSyncLocalSettings.getInstance().state.reset()
-    SettingsSyncSettings.getInstance().state.reset()
+    SettingsSyncSettings.getInstance().state = SettingsSyncSettings.State()
 
     remoteCommunicator = if (isTestingAgainstRealCloudServer()) {
       TestRemoteCommunicator()

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.io.*
+import org.jdom.Element
 import java.io.InputStream
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -64,11 +65,17 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     return roamingType != RoamingType.DISABLED
   }
 
-  override fun applyToIde(snapshot: SettingsSnapshot) {
+  override fun applyToIde(snapshot: SettingsSnapshot, settings: SettingsSyncState?) {
     // 1. update SettingsSyncSettings first to apply changes in categories
     val settingsSyncFileState = snapshot.fileStates.find { it.file == "$OPTIONS_DIRECTORY/${SettingsSyncSettings.FILE_SPEC}" }
-    if (settingsSyncFileState != null) {
-      writeStatesToAppConfig(listOf(settingsSyncFileState))
+    if (settings != null) {
+      LOG.info("applying sync settings from SettingsSyncState")
+      SettingsSyncSettings.getInstance().applyFromState(settings)
+    }
+    else {
+      if (settingsSyncFileState != null) {
+        writeStatesToAppConfig(listOf(settingsSyncFileState))
+      }
     }
 
     // 2. update plugins
@@ -283,10 +290,9 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
 
     invokeAndWaitIfNeeded {
       reloadComponents(changedFileSpecs, deletedFileSpecs)
-      if (Registry.getInstance().isRestartNeeded){
+      if (Registry.getInstance().isRestartNeeded) {
         SettingsSyncEvents.getInstance().fireRestartRequired("registry", SettingsSyncBundle.message("sync.registry.update.message"))
       }
-
     }
   }
 

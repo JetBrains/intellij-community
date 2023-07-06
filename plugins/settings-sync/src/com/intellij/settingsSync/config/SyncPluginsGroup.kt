@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nls
 
 internal const val BUNDLED_PLUGINS_ID = "bundled"
 
-internal class SettingsSyncPluginsGroup : SettingsSyncSubcategoryGroup {
+internal class SyncPluginsGroup : SyncSubcategoryGroup {
   private val storedDescriptors = HashMap<String, SettingsSyncSubcategoryDescriptor>()
 
   override fun getDescriptors(): List<SettingsSyncSubcategoryDescriptor> {

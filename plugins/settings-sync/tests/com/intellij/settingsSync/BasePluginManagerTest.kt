@@ -13,14 +13,11 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.test.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
-import kotlin.coroutines.CoroutineContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @TestApplication
@@ -76,7 +73,7 @@ abstract class BasePluginManagerTest {
   @BeforeEach
   fun setUp() {
     SettingsSyncSettings.getInstance().syncEnabled = true
-    SettingsSyncSettings.getInstance().loadState(SettingsSyncSettings.SettingsSyncSettingsState())
+    SettingsSyncSettings.getInstance().loadState(SettingsSyncSettings.State())
     testPluginManager = TestPluginManager()
     ApplicationManager.getApplication().replaceService(PluginManagerProxy::class.java, testPluginManager, testRootDisposable)
     testScheduler = TestCoroutineScheduler()
