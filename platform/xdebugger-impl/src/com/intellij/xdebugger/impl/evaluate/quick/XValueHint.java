@@ -14,9 +14,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
@@ -67,8 +65,6 @@ public class XValueHint extends AbstractValueHint {
   private final PsiElement myElement;
   private final XSourcePosition myExpressionPosition;
   private Disposable myDisposable;
-
-  private static final Key<XValueHint> HINT_KEY = Key.create("allows only one value hint per editor");
 
   public XValueHint(@NotNull Project project,
                     @NotNull Editor editor,
@@ -128,25 +124,8 @@ public class XValueHint extends AbstractValueHint {
   }
 
   @Override
-  protected boolean showHint(final JComponent component) {
-    boolean result = super.showHint(component);
-    if (result) {
-      XValueHint prev = getEditor().getUserData(HINT_KEY);
-      if (prev != null) {
-        prev.hideHint();
-      }
-      getEditor().putUserData(HINT_KEY, this);
-    }
-    return result;
-  }
-
-  @Override
   protected void onHintHidden() {
     super.onHintHidden();
-    XValueHint prev = getEditor().getUserData(HINT_KEY);
-    if (prev == this) {
-      getEditor().putUserData(HINT_KEY, null);
-    }
     disposeVisibleHint();
   }
 

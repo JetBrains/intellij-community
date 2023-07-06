@@ -60,6 +60,7 @@ import java.util.function.Function;
 
 public abstract class AbstractValueHint {
   private static final Logger LOG = Logger.getInstance(AbstractValueHint.class);
+  private static final Key<AbstractValueHint> HINT_KEY = Key.create("allows only one value hint per editor");
 
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
     @Override
@@ -82,7 +83,7 @@ public abstract class AbstractValueHint {
   private LightweightHint myCurrentHint;
   private JBPopup myCurrentPopup;
 
-  private boolean myHintHidden;
+  private volatile boolean myHintHidden;
   private TextRange myCurrentRange;
   private Runnable myHideRunnable;
 
@@ -230,6 +231,14 @@ public abstract class AbstractValueHint {
     }
   }
 
+  private void setCurrentEditorHint() {
+    AbstractValueHint prev = getEditor().getUserData(HINT_KEY);
+    if (prev != null) {
+      prev.hideHint();
+    }
+    getEditor().putUserData(HINT_KEY, this);
+  }
+
   protected boolean showHint(final JComponent component) {
     myInsideShow = true;
     try {
@@ -281,6 +290,7 @@ public abstract class AbstractValueHint {
         createHighlighter();
       }
       setHighlighterAttributes();
+      setCurrentEditorHint();
     }
     finally {
       myInsideShow = false;
@@ -294,6 +304,9 @@ public abstract class AbstractValueHint {
 
   protected void onHintHidden() {
     disposeHighlighter();
+    if (getEditor().getUserData(HINT_KEY) == this) {
+      getEditor().putUserData(HINT_KEY, null);
+    }
   }
 
   protected boolean isHintHidden() {
@@ -434,6 +447,7 @@ public abstract class AbstractValueHint {
             onHintHidden();
           }
         });
+        setCurrentEditorHint();
       }
     }
     finally {
