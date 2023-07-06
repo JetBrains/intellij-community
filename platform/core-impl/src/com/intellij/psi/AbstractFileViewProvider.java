@@ -60,7 +60,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   private final boolean myPhysical;
   private volatile Content myContent;
   private volatile Reference<Document> myDocument;
-  private final PsiLock myPsiLock = new PsiLock();
+  @SuppressWarnings("FieldMayBeStatic") private final PsiLock myPsiLock = new PsiLock();
 
   protected AbstractFileViewProvider(@NotNull PsiManager manager,
                                      @NotNull VirtualFile virtualFile,

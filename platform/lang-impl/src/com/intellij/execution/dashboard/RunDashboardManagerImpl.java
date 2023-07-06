@@ -352,8 +352,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
   private void moveAddedContent(Condition<? super RunnerAndConfigurationSettings> condition) {
     RunContentManagerImpl runContentManager = (RunContentManagerImpl)RunContentManager.getInstance(myProject);
-    List<RunContentDescriptor> descriptors =
-      ((ExecutionManagerImpl)ExecutionManager.getInstance(myProject)).getRunningDescriptors(condition);
+    List<RunContentDescriptor> descriptors = ExecutionManager.getInstance(myProject).getRunningDescriptors(condition);
     for (RunContentDescriptor descriptor : descriptors) {
       Content content = descriptor.getAttachedContent();
       if (content == null) continue;

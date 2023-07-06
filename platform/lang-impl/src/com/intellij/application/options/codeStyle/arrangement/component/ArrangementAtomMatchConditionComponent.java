@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -439,7 +439,8 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
 
   private static class NameBorderStrategy implements BorderStrategy {
 
-    @NotNull private final BasicStroke myStroke = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 1, new float[]{5, 5}, 0);
+    @NotNull private static final BasicStroke
+      STROKE = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 1, new float[]{5, 5}, 0);
 
     @Override
     public RoundedLineBorder create() {
@@ -448,7 +449,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
 
     @Override
     public void setup(@NotNull Graphics2D g) {
-      g.setStroke(myStroke);
+      g.setStroke(STROKE);
     }
   }
 }

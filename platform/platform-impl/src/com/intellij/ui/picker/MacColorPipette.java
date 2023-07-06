@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.picker;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +32,7 @@ public class MacColorPipette extends ColorPipetteBase {
   private static final int SIZE = PIXELS * ZOOM;
   private static final int DIALOG_SIZE = SIZE + 20;
 
-  @SuppressWarnings("UseJBColor") private final Color myTransparentColor = new Color(0, 0, 0, 1);
+  @SuppressWarnings("UseJBColor") private static final Color TRANSPARENT_COLOR = new Color(0, 0, 0, 1);
 
   public MacColorPipette(@NotNull ColorPicker picker, @NotNull ColorListener listener) {
     super(picker, listener);
@@ -110,7 +110,7 @@ public class MacColorPipette extends ColorPipetteBase {
       };
       pickerDialog.add(label);
       pickerDialog.setSize(DIALOG_SIZE, DIALOG_SIZE);
-      pickerDialog.setBackground(myTransparentColor);
+      pickerDialog.setBackground(TRANSPARENT_COLOR);
 
       BufferedImage emptyImage = UIUtil.createImage(pickerDialog, 1, 1, Transparency.TRANSLUCENT);
       pickerDialog.setCursor(myParent.getToolkit().createCustomCursor(emptyImage, new Point(0, 0), "ColorPicker"));
