@@ -8,6 +8,7 @@ public class OptionsPanelInfo {
   public String type;
   public String text;
   public String description;
+  public Object value;
 
   public List<OptionsPanelInfo> children = null;
 

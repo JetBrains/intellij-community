@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.intellij.codeInspection.InspectionEP;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.codeInspection.options.*;
@@ -107,11 +108,12 @@ public final class InspectopediaExtractor implements ApplicationStarter {
 
         List<OptionsPanelInfo> panelInfo = null;
         try {
-          final OptPane panel = wrapper.getTool().getOptionsPane();
+          InspectionProfileEntry tool = wrapper.getTool();
+          final OptPane panel = tool.getOptionsPane();
 
           if (!panel.equals(OptPane.EMPTY)) {
             LOG.info("Saving options panel for " + wrapper.getShortName());
-            panelInfo = retrievePanelStructure(panel);
+            panelInfo = retrievePanelStructure(panel, tool.getOptionController());
           }
         }
         catch (Throwable t) {
@@ -203,17 +205,23 @@ public final class InspectopediaExtractor implements ApplicationStarter {
     }
   }
 
-  private static @NotNull List<@NotNull OptionsPanelInfo> retrievePanelStructure(final @NotNull OptPane pane) {
+  private static @NotNull List<@NotNull OptionsPanelInfo> retrievePanelStructure(final @NotNull OptPane pane,
+                                                                                 @NotNull OptionController controller) {
     List<OptionsPanelInfo> children = new ArrayList<>();
     for (OptRegularComponent component : pane.components()) {
-      children.add(retrievePanelStructure(component));
+      children.add(retrievePanelStructure(component, controller));
     }
     return children;
   }
 
-  private static @NotNull OptionsPanelInfo retrievePanelStructure(@NotNull OptComponent component) {
+  private static @NotNull OptionsPanelInfo retrievePanelStructure(@NotNull OptComponent component, @NotNull OptionController controller) {
     final OptionsPanelInfo result = new OptionsPanelInfo();
     result.type = component.getClass().getSimpleName();
+    result.value = component instanceof OptControl control ? controller.getOption(control.bindId()) : null;
+    if (component instanceof OptDropdown dropdown && result.value != null) {
+      OptDropdown.Option option = dropdown.findOption(result.value);
+      result.value = option == null ? null : option.label().label();
+    }
     LocMessage text = getMyText(component);
     result.text = text == null ? null : text.label();
     if (component instanceof OptDescribedComponent describedComponent) {
@@ -222,7 +230,7 @@ public final class InspectopediaExtractor implements ApplicationStarter {
     }
     List<OptionsPanelInfo> children = new ArrayList<>();
     for (OptComponent child : component.children()) {
-      children.add(retrievePanelStructure(child));
+      children.add(retrievePanelStructure(child, controller));
     }
     if (!children.isEmpty()) {
       result.children = children;
