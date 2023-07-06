@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.action
 
-import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.openapi.actionSystem.DataKey
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesController
@@ -17,8 +16,4 @@ internal object GitLabMergeRequestsActionKeys {
   @JvmStatic
   val REVIEW_LIST_VM: DataKey<GitLabMergeRequestsListViewModel> =
     DataKey.create("org.jetbrains.plugins.gitlab.mergerequests.review.list.viewmodel")
-
-  @JvmStatic
-  val REVIEW_BRANCH_VM: DataKey<CodeReviewBranchesViewModel> =
-    DataKey.create("org.jetbrains.plugins.gitlab.mergerequests.review.branch.viewmodel")
 }
