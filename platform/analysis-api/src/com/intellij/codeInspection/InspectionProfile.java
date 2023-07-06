@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -17,13 +16,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface InspectionProfile extends Comparable {
-  @NotNull
-  @NlsSafe
-  String getName();
+public interface InspectionProfile extends Comparable<Object> {
+  String DEFAULT_PROFILE_NAME = "Default";
 
-  @NotNull
-  HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey, PsiElement element);
+  @NotNull @NlsSafe String getName();
+
+  @NotNull HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey, PsiElement element);
 
   /**
    * If you need to modify tool's settings, please use {@link #modifyToolSettings}
@@ -31,16 +29,15 @@ public interface InspectionProfile extends Comparable {
    * @return {@link InspectionToolWrapper}
    * @see #getUnwrappedTool(String, PsiElement)
    */
-  InspectionToolWrapper getInspectionTool(@NotNull String shortName, @Nullable PsiElement element);
+  @Nullable InspectionToolWrapper<?, ?> getInspectionTool(@NotNull String shortName, @Nullable PsiElement element);
 
-  @Nullable
-  InspectionToolWrapper getInspectionTool(@NotNull String shortName, Project project);
-
-  /** Returns (unwrapped) inspection */
-  InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element);
+  @Nullable InspectionToolWrapper<?, ?> getInspectionTool(@NotNull String shortName, Project project);
 
   /** Returns (unwrapped) inspection */
-  <T extends InspectionProfileEntry> T getUnwrappedTool(@NotNull Key<T> shortNameKey, @NotNull PsiElement element);
+  @Nullable InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element);
+
+  /** Returns (unwrapped) inspection */
+  <T extends InspectionProfileEntry> @Nullable T getUnwrappedTool(@NotNull Key<T> shortNameKey, @NotNull PsiElement element);
 
   /**
    * Allows a plugin to modify the settings of the inspection tool with the specified ID programmatically, without going through
@@ -50,8 +47,7 @@ public interface InspectionProfile extends Comparable {
    * @param psiElement the element for which the settings should be changed.
    * @param toolConsumer the callback that receives the tool.
    */
-  <T extends InspectionProfileEntry>
-  void modifyToolSettings(@NotNull Key<T> shortNameKey, @NotNull PsiElement psiElement, @NotNull Consumer<? super T> toolConsumer);
+  <T extends InspectionProfileEntry> void modifyToolSettings(@NotNull Key<T> shortNameKey, @NotNull PsiElement psiElement, @NotNull Consumer<? super T> toolConsumer);
 
   /**
    * @param element context element
@@ -69,9 +65,14 @@ public interface InspectionProfile extends Comparable {
    * @return editor attributes if they are different from attributes of chosen severity, {@code null} otherwise
    */
   default @Nullable TextAttributesKey getEditorAttributes(@NotNull String shortName, @Nullable PsiElement element) {
-    final InspectionToolWrapper<?, ?> tool = getInspectionTool(shortName, element);
-    String attributesKey = tool.getDefaultEditorAttributes();
-    return attributesKey != null ? TextAttributesKey.find(attributesKey) : null;
+    var tool = getInspectionTool(shortName, element);
+    if (tool != null) {
+      var key = tool.getDefaultEditorAttributes();
+      if (key != null) {
+        return TextAttributesKey.find(key);
+      }
+    }
+    return null;
   }
 
   boolean isExecutable(@Nullable Project project);
@@ -81,12 +82,9 @@ public interface InspectionProfile extends Comparable {
    *
    * @return tool short name when inspection profile corresponds to synthetic profile for single inspection run
    */
-  @Nullable
-  String getSingleTool();
+  @Nullable String getSingleTool();
 
-  @NotNull
-  String getDisplayName();
+  @NotNull String getDisplayName();
 
-  @NotNull
-  List<Tools> getAllEnabledInspectionTools(Project project);
+  @NotNull List<Tools> getAllEnabledInspectionTools(Project project);
 }

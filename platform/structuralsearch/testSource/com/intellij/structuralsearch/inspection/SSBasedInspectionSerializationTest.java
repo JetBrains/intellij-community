@@ -2,7 +2,6 @@
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionProfileKt;
 import com.intellij.codeInspection.ex.InspectionToolsSupplier;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -984,14 +983,14 @@ public class SSBasedInspectionSerializationTest extends LightJavaCodeInsightFixt
       </profile>""";
     var wrapper = new LocalInspectionToolWrapper(new SSBasedInspection());
     var supplier = new InspectionToolsSupplier.Simple(List.of(wrapper));
-    var profile = new InspectionProfileImpl("foo.profile", supplier, InspectionProfileKt.getBASE_PROFILE());
+    var profile = new InspectionProfileImpl("foo.profile", supplier, InspectionProfileImpl.BASE_PROFILE.get());
     profile.readExternal(JDOMUtil.load(profileXml));
     profile.initInspectionTools(getProject());
     profile.profileChanged();
     assertEquals(profileXml, JDOMUtil.write(profile.writeScheme()));
   }
 
-  private static void doTest(String xml) throws Exception {
+  private static void doTest(@SuppressWarnings("SameParameterValue") String xml) throws Exception {
     assertEquals(xml, writeSettings(readSettings(xml)));
   }
 

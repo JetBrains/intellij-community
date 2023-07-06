@@ -24,17 +24,17 @@ import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 
-private const val VERSION = "1.0"
 const val PROJECT_DEFAULT_PROFILE_NAME: String = "Project Default"
+const val PROFILE_DIR: String = "inspectionProfiles"
+const val PROFILES_SETTINGS: String = "profiles_settings.xml"
+
+private const val VERSION = "1.0"
 
 private val defaultSchemeDigest = hashElement(JDOMUtil.load("""<component name="InspectionProjectProfileManager">
   <profile version="1.0">
     <option name="myName" value="Project Default" />
   </profile>
 </component>"""))
-
-const val PROFILE_DIR: String = "inspectionProfiles"
-const val PROFILES_SETTINGS: String = "profiles_settings.xml"
 
 private val LOG = logger<ProjectInspectionProfileManager>()
 
@@ -45,47 +45,46 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
                                                                                   Disposable {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): ProjectInspectionProfileManager {
-      return InspectionProjectProfileManager.getInstance(project) as ProjectInspectionProfileManager
-    }
+    fun getInstance(project: Project): ProjectInspectionProfileManager =
+      InspectionProjectProfileManager.getInstance(project) as ProjectInspectionProfileManager
   }
 
   private var state = ProjectInspectionProfileManagerState()
 
   private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("profile")
 
-  override val schemeManager: SchemeManager<InspectionProfileImpl> = SchemeManagerFactory.getInstance(project).create(PROFILE_DIR, object : InspectionProfileProcessor() {
-    override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
-                              name: String,
-                              attributeProvider: (String) -> String?,
-                              isBundled: Boolean): InspectionProfileImpl {
-      val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager, dataHolder)
-      profile.isProjectLevel = true
-      return profile
-    }
-
-    override fun isSchemeFile(name: CharSequence) = name != PROFILES_SETTINGS
-
-    override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: Long): Boolean {
-      return scheme.name == PROJECT_DEFAULT_PROFILE_NAME && digest == defaultSchemeDigest
-    }
-
-    override fun onSchemeDeleted(scheme: InspectionProfileImpl) {
-      schemeRemoved(scheme)
-    }
-
-    override fun onSchemeAdded(scheme: InspectionProfileImpl) {
-      if (scheme.wasInitialized()) {
-        fireProfileChanged(scheme)
+  override val schemeManager: SchemeManager<InspectionProfileImpl> =
+    SchemeManagerFactory.getInstance(project).create(PROFILE_DIR, object : InspectionProfileProcessor() {
+      override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
+                                name: String,
+                                attributeProvider: (String) -> String?,
+                                isBundled: Boolean): InspectionProfileImpl {
+        val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager, dataHolder)
+        profile.isProjectLevel = true
+        return profile
       }
-    }
 
-    override fun onCurrentSchemeSwitched(oldScheme: InspectionProfileImpl?,
-                                         newScheme: InspectionProfileImpl?,
-                                         processChangeSynchronously: Boolean) {
-      project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profileActivated(oldScheme, newScheme)
-    }
-  }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
+      override fun isSchemeFile(name: CharSequence): Boolean = name != PROFILES_SETTINGS
+
+      override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: Long): Boolean =
+        scheme.name == PROJECT_DEFAULT_PROFILE_NAME && digest == defaultSchemeDigest
+
+      override fun onSchemeDeleted(scheme: InspectionProfileImpl) {
+        schemeRemoved(scheme)
+      }
+
+      override fun onSchemeAdded(scheme: InspectionProfileImpl) {
+        if (scheme.wasInitialized()) {
+          fireProfileChanged(scheme)
+        }
+      }
+
+      override fun onCurrentSchemeSwitched(oldScheme: InspectionProfileImpl?,
+                                           newScheme: InspectionProfileImpl?,
+                                           processChangeSynchronously: Boolean) {
+        project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profileActivated(oldScheme, newScheme)
+      }
+    }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
 
   override fun initializeComponent() {
     val app = ApplicationManager.getApplication()
@@ -128,9 +127,8 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
     }
   }
 
-  override fun getStateModificationCount(): Long {
-    return state.modificationCount + severityRegistrar.modificationCount + (schemeManagerIprProvider?.modificationCount ?: 0)
-  }
+  override fun getStateModificationCount(): Long =
+    state.modificationCount + severityRegistrar.modificationCount + (schemeManagerIprProvider?.modificationCount ?: 0)
 
   @TestOnly
   fun forceLoadSchemes() {
@@ -254,10 +252,8 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
   }
 
   @Synchronized
-  override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? {
-    val profile = schemeManager.findSchemeByName(name)
-    return profile ?: InspectionProfileManager.getInstance().getProfile(name, returnRootProfileIfNamedIsAbsent)
-  }
+  override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? =
+    schemeManager.findSchemeByName(name) ?: InspectionProfileManager.getInstance().getProfile(name, returnRootProfileIfNamedIsAbsent)
 
   fun fireProfileChanged() {
     fireProfileChanged(currentProfile)
