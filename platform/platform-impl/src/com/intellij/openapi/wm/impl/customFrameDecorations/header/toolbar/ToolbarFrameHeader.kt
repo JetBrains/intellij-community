@@ -199,6 +199,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     updateToolbar()
+    repaint()
   }
 
   override fun updateUI() {
