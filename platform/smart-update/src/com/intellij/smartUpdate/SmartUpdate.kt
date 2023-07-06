@@ -86,7 +86,7 @@ class SmartUpdate(val project: Project, private val coroutineScope: CoroutineSco
   }
 }
 
-class SmartUpdateAction: DumbAwareAction(SmartUpdateBundle.message("action.smart.update.text")) {
+internal class SmartUpdateAction: DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = getEventProject(e)!!
     if (SmartUpdateDialog(project).showAndGet()) {
