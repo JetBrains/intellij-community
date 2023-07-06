@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.test.events.gradle
 
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest

@@ -6,7 +6,7 @@ import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.testFramework.findReferenceByText
 import com.intellij.testFramework.utils.vfs.getPsiFile
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
+import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
@@ -14,7 +14,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 
-class KotlinGradleBuildNavigationTest: GradleCodeInsightTestCase() {
+class KotlinGradleBuildNavigationTest : KotlinGradleCodeInsightTestCase() {
 
     @ParameterizedTest
     @BaseGradleVersionSource
