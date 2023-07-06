@@ -8,11 +8,9 @@ import org.jetbrains.annotations.PropertyKey
 import java.util.function.Supplier
 
 internal open class GitRebaseEntry(val action: Action, val commit: String, val subject: String) {
-  constructor(action: String, commit: String, subject: String) : this(Action.fromString(action), commit, subject)
-
   override fun toString() = "$action $commit $subject"
 
-  sealed class Action(private val command: String,
+  sealed class Action(val command: String,
                       private val nameKey: @PropertyKey(resourceBundle = GitBundle.BUNDLE) String) {
     object PICK : Action("pick", "rebase.entry.action.name.pick")
     object EDIT : Action("edit", "rebase.entry.action.name.edit")
@@ -26,13 +24,13 @@ internal open class GitRebaseEntry(val action: Action, val commit: String, val s
     val visibleName: Supplier<@NlsContexts.Button String> get() = GitBundle.messagePointer(nameKey)
 
     override fun toString(): String = command
+  }
 
-    companion object {
-      private val KNOWN_ACTIONS: List<Action> by lazy {
-        listOf(PICK, EDIT, DROP, SQUASH, REWORD, FIXUP)
-      }
-
-      fun fromString(action: String): Action = KNOWN_ACTIONS.find { it.command == action } ?: Other(action)
+  companion object {
+    @JvmStatic
+    fun parseAction(action: String): Action {
+      val knownActions = listOf(Action.PICK, Action.EDIT, Action.DROP, Action.REWORD, Action.SQUASH, Action.FIXUP)
+      return knownActions.find { it.command == action } ?: Action.Other(action)
     }
   }
 }
