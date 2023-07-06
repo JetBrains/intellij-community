@@ -54,4 +54,6 @@ internal class K2CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
             by delegateTo { it::INTRODUCE_SPECIFY_TYPE_EXPLICITLY }
     override var renameVariables: Boolean
             by delegateTo { it::renameVariables }
+    override var renameParameterInHierarchy: Boolean
+      by delegateTo { it::renameParameterInHierarchy }
 }

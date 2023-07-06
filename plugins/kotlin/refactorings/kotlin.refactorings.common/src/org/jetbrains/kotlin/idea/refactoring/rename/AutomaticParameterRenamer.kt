@@ -11,7 +11,7 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
@@ -55,10 +55,10 @@ class AutomaticParameterRenamerFactory : AutomaticRenamerFactory {
 
     override fun getOptionName() = RefactoringBundle.message("rename.parameters.hierarchy")
 
-    override fun isEnabled() = KotlinRefactoringSettings.instance.renameParameterInHierarchy
+    override fun isEnabled() = KotlinCommonRefactoringSettings.getInstance().renameParameterInHierarchy
 
     override fun setEnabled(enabled: Boolean) {
-        KotlinRefactoringSettings.instance.renameParameterInHierarchy = enabled
+        KotlinCommonRefactoringSettings.getInstance().renameParameterInHierarchy = enabled
     }
 
     override fun createRenamer(element: PsiElement, newName: String, usages: Collection<UsageInfo>): AutomaticRenamer {
