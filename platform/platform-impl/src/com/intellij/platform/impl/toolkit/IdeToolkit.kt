@@ -1,10 +1,10 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.impl.toolkit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import sun.awt.LightweightFrame
 import sun.awt.SunToolkit
@@ -21,9 +21,7 @@ import java.util.*
 class IdeToolkit : SunToolkit() {
   companion object {
     @JvmStatic
-    private val logger = logger<IdeToolkit>()
-    val instance: IdeToolkit
-      get() = getDefaultToolkit() as IdeToolkit
+    fun getInstance(): IdeToolkit = getDefaultToolkit() as IdeToolkit
 
     private fun clientInstance(): ClientToolkit = service()
 
@@ -47,7 +45,7 @@ class IdeToolkit : SunToolkit() {
     return super.prepareImage(img, w, h, o)
   }
 
-  override fun createDesktopPeer(target: Desktop): IdeDesktopPeer = IdeDesktopPeer()
+  override fun createDesktopPeer(target: Desktop): DesktopPeer = IdeDesktopPeer()
   override fun getMouseInfoPeer(): IdeMouseInfoPeer = IdeMouseInfoPeer
   override fun getKeyboardFocusManagerPeer(): IdeKeyboardFocusManagerPeer = IdeKeyboardFocusManagerPeer
 
@@ -58,6 +56,7 @@ class IdeToolkit : SunToolkit() {
   override fun createFileDialog(target: FileDialog): FileDialogPeer {
     error("Not implemented")
   }
+
   override fun createButton(target: Button): ButtonPeer {
     error("Not implemented")
   }
