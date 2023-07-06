@@ -12,6 +12,8 @@ public class TestCaseWithNoTestMethodsInspectionTest extends LightJavaInspection
 
   public void testTestCaseWithNoTestMethods() { doTest(); }
 
+  public void testTestCaseWithTestMethods() { doTest(); }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

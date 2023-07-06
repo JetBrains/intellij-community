@@ -232,7 +232,7 @@ public final class JUnitUtil {
   }
 
   public static boolean isJUnit3TestClass(final PsiClass clazz) {
-    return hasSinglePublicConstructor(clazz) &&
+    return hasNonPrivateConstructor(clazz) &&
            PsiClassUtil.isRunnableClass(clazz, true, false) &&
            isTestCaseInheritor(clazz);
   }
@@ -269,7 +269,7 @@ public final class JUnitUtil {
       }
     }
 
-    if (!hasSinglePublicConstructor(psiClass)) return false;
+    if (!hasNonPrivateConstructor(psiClass)) return false;
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
 
     for (final PsiMethod method : psiClass.getAllMethods()) {
@@ -288,20 +288,15 @@ public final class JUnitUtil {
     return topLevelClass;
   }
 
-  private static boolean hasSinglePublicConstructor(PsiClass psiClass) {
+  private static boolean hasNonPrivateConstructor(PsiClass psiClass) {
     PsiMethod[] constructors = psiClass.getConstructors();
     if (constructors.length > 0) {
-      int publicConstructors = 0;
-      boolean noArgsConstructorFound = false;
       for (PsiMethod constructor : constructors) {
-        if (constructor.getModifierList().hasModifierProperty(PsiModifier.PUBLIC)) {
-          publicConstructors++;
-          if (constructor.getParameters().length == 0) {
-            noArgsConstructorFound = true;
-          }
+        if (!constructor.getModifierList().hasModifierProperty(PsiModifier.PRIVATE)) {
+          return true;
         }
       }
-      if (publicConstructors != 1 || !noArgsConstructorFound) return false;
+      return false;
     }
     return true;
   }
