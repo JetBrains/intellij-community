@@ -1,0 +1,26 @@
+PsiJavaFile:TextBlockTemplate4.java
+  PsiTemplateExpression
+    PsiReferenceExpression:STR
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:STR('STR')
+    PsiJavaToken:DOT('.')
+    PsiTemplate
+      PsiLiteralExpression:"""
+\{
+        PsiJavaToken:TEXT_BLOCK_TEMPLATE_BEGIN('"""\n\{')
+      PsiWhiteSpace(' ')
+      PsiParenthesizedExpression:(1)
+        PsiJavaToken:LPARENTH('(')
+        PsiLiteralExpression:1
+          PsiJavaToken:INTEGER_LITERAL('1')
+        PsiJavaToken:RPARENTH(')')
+      PsiWhiteSpace(' ')
+      PsiLiteralExpression:} \{
+        PsiJavaToken:TEXT_BLOCK_TEMPLATE_MID('} \{')
+      PsiWhiteSpace(' ')
+      PsiLiteralExpression:"!"
+        PsiJavaToken:STRING_LITERAL('"!"')
+      PsiWhiteSpace(' ')
+      PsiLiteralExpression:}"""
+        PsiJavaToken:TEXT_BLOCK_TEMPLATE_END('}"""')

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -26,6 +26,9 @@ public class PsiLiteralExpressionImpl
   implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost {
 
   private static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(ElementType.INTEGER_LITERALS, ElementType.REAL_LITERALS);
+  public static final @NotNull TokenSet FRAGMENTS =
+    TokenSet.create(JavaTokenType.STRING_TEMPLATE_BEGIN, JavaTokenType.STRING_TEMPLATE_MID, JavaTokenType.STRING_TEMPLATE_END,
+                    JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN, JavaTokenType.TEXT_BLOCK_TEMPLATE_MID, JavaTokenType.TEXT_BLOCK_TEMPLATE_END);
 
   public PsiLiteralExpressionImpl(@NotNull PsiLiteralStub stub) {
     super(stub, JavaStubElementTypes.LITERAL_EXPRESSION);
@@ -74,6 +77,11 @@ public class PsiLiteralExpressionImpl
   @Override
   public boolean isTextBlock() {
     return getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL;
+  }
+
+  @Override
+  public boolean isFragment() {
+    return FRAGMENTS.contains(getLiteralElementType());
   }
 
   public IElementType getLiteralElementType() {

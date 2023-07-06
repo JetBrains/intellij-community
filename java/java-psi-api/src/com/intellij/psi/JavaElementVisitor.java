@@ -432,6 +432,14 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitStatement(statement);
   }
 
+  public void visitTemplate(@NotNull PsiTemplate expression) {
+    visitExpression(expression);
+  }
+
+  public void visitTemplateExpression(@NotNull PsiTemplateExpression expression) {
+    visitExpression(expression);
+  }
+
   public void visitThisExpression(@NotNull PsiThisExpression expression) {
     visitExpression(expression);
   }

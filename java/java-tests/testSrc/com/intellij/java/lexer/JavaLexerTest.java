@@ -256,6 +256,83 @@ public class JavaLexerTest extends LexerTestCase {
     doTest("\"\"\"\n \\u005C\"\"\"\n \"\"\"", "TEXT_BLOCK_LITERAL ('\"\"\"\\n \\u005C\"\"\"\\n \"\"\"')"); // unicode escaped backslash '\'
   }
 
+  public void testStringTemplates() {
+    doTest("\"\\{}\"", "STRING_TEMPLATE_BEGIN ('\"\\{')\nSTRING_TEMPLATE_END ('}\"')");
+    doTest("\"\"\"\n\\{}\"\"\"", "TEXT_BLOCK_TEMPLATE_BEGIN ('\"\"\"\\n\\{')\nTEXT_BLOCK_TEMPLATE_END ('}\"\"\"')");
+    doTest("\"\\{123}\"", "STRING_TEMPLATE_BEGIN ('\"\\{')\nINTEGER_LITERAL ('123')\nSTRING_TEMPLATE_END ('}\"')");
+    doTest("\"\"\"\n\\{123}\"\"\"", "TEXT_BLOCK_TEMPLATE_BEGIN ('\"\"\"\\n\\{')\nINTEGER_LITERAL ('123')\nTEXT_BLOCK_TEMPLATE_END ('}\"\"\"')");
+    doTest("\"\\{new int[][] {{}}}\"", """
+      STRING_TEMPLATE_BEGIN ('"\\{')
+      NEW_KEYWORD ('new')
+      WHITE_SPACE (' ')
+      INT_KEYWORD ('int')
+      LBRACKET ('[')
+      RBRACKET (']')
+      LBRACKET ('[')
+      RBRACKET (']')
+      WHITE_SPACE (' ')
+      LBRACE ('{')
+      LBRACE ('{')
+      RBRACE ('}')
+      RBRACE ('}')
+      STRING_TEMPLATE_END ('}"')
+      """);
+    doTest("\"\"\"\n\\{new int[][] {{}}}\"\"\"", """
+      TEXT_BLOCK_TEMPLATE_BEGIN ('""\"\\n\\{')
+      NEW_KEYWORD ('new')
+      WHITE_SPACE (' ')
+      INT_KEYWORD ('int')
+      LBRACKET ('[')
+      RBRACKET (']')
+      LBRACKET ('[')
+      RBRACKET (']')
+      WHITE_SPACE (' ')
+      LBRACE ('{')
+      LBRACE ('{')
+      RBRACE ('}')
+      RBRACE ('}')
+      TEXT_BLOCK_TEMPLATE_END ('}""\"')
+      """);
+    doTest("\"\\{x} + \\{y} = \\{x + y}\"", """
+      STRING_TEMPLATE_BEGIN ('"\\{')
+      IDENTIFIER ('x')
+      STRING_TEMPLATE_MID ('} + \\{')
+      IDENTIFIER ('y')
+      STRING_TEMPLATE_MID ('} = \\{')
+      IDENTIFIER ('x')
+      WHITE_SPACE (' ')
+      PLUS ('+')
+      WHITE_SPACE (' ')
+      IDENTIFIER ('y')
+      STRING_TEMPLATE_END ('}"')""");
+    doTest("\"\"\"\n\\{x} +\n \\{y} = \\{x + y}\"\"\"", """
+      TEXT_BLOCK_TEMPLATE_BEGIN ('""\"\\n\\{')
+      IDENTIFIER ('x')
+      TEXT_BLOCK_TEMPLATE_MID ('} +\\n \\{')
+      IDENTIFIER ('y')
+      TEXT_BLOCK_TEMPLATE_MID ('} = \\{')
+      IDENTIFIER ('x')
+      WHITE_SPACE (' ')
+      PLUS ('+')
+      WHITE_SPACE (' ')
+      IDENTIFIER ('y')
+      TEXT_BLOCK_TEMPLATE_END ('}""\"')""");
+    doTest("\"\\{}\" }\"", """
+      STRING_TEMPLATE_BEGIN ('"\\{')
+      STRING_TEMPLATE_END ('}"')
+      WHITE_SPACE (' ')
+      RBRACE ('}')
+      STRING_LITERAL ('"')""");
+    doTest("\"\\{\"hello\"}\" ", "STRING_TEMPLATE_BEGIN ('\"\\{')\nSTRING_LITERAL ('\"hello\"')\nSTRING_TEMPLATE_END ('}\"')\nWHITE_SPACE (' ')");
+    doTest("\"\"\"\n        \\{\"\"\"\n!\"\"\" }\"\"\"  ", """
+      TEXT_BLOCK_TEMPLATE_BEGIN ('""\"\\n        \\{')
+      TEXT_BLOCK_LITERAL ('""\"\\n!""\"')
+      WHITE_SPACE (' ')
+      TEXT_BLOCK_TEMPLATE_END ('}""\"')
+      WHITE_SPACE ('  ')""");
+    //doTest("\"\\{fruit[0]}, \\{STR.\"\\{fruit[1]}, \\{fruit[2]}\"}\"","");
+  }
+
   public void testStringLiterals() {
     doTest("\"", "STRING_LITERAL ('\"')");
     doTest("\" ", "STRING_LITERAL ('\" ')");
@@ -346,7 +423,7 @@ public class JavaLexerTest extends LexerTestCase {
 
   @Override
   protected Lexer createLexer() {
-    return JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
+    return JavaParserDefinition.createLexer(LanguageLevel.JDK_21_PREVIEW);
   }
 
   @Override

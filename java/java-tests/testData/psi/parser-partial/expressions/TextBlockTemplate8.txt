@@ -1,0 +1,12 @@
+PsiJavaFile:TextBlockTemplate8.java
+  PsiTemplateExpression
+    PsiReferenceExpression:STR
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:STR('STR')
+    PsiJavaToken:DOT('.')
+    PsiTemplate
+      PsiLiteralExpression:"""\{
+        PsiJavaToken:TEXT_BLOCK_TEMPLATE_BEGIN('"""\{')
+      PsiErrorElement:Template fragment expected
+        <empty list>
