@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -53,6 +54,7 @@ internal val WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED = WebSymbolsFrameworkExtension<
   "com.intellij.javascript.web.context")
 
 internal fun findWebSymbolsContext(kind: ContextKind, location: PsiElement): ContextName? {
+  ProgressManager.checkCanceled()
   if (!location.isValid) {
     return null
   }
