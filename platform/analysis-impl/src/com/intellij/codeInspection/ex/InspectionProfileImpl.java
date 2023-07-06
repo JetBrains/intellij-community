@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -980,11 +980,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     protected boolean areSettingsMerged(@NotNull Map<String, Element> settings, @NotNull Element element) {
       // returns true when settings are default, so defaults will not be saved in profile
       boolean enabled = myWrapper.isEnabledByDefault();
-      //noinspection SSBasedInspection
-      return myWrapper.getDefaultLevel().toString().equals(element.getAttributeValue("level")) &&
-             Boolean.parseBoolean(element.getAttributeValue("enabled")) == enabled &&
+      return Boolean.parseBoolean(element.getAttributeValue("enabled")) == enabled &&
              Boolean.parseBoolean(element.getAttributeValue("enabled_by_default")) == enabled &&
-             element.getChildren("scope").stream().allMatch(e -> Boolean.parseBoolean(e.getAttributeValue("enabled")) == enabled);
+             myWrapper.getDefaultLevel().toString().equals(element.getAttributeValue("level")) &&
+             element.getChildren("scope").isEmpty();
     }
   }
 }
