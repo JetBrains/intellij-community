@@ -942,8 +942,14 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
       var focusedFile: VirtualFile? = null
       val fileEditorManager = splitters.manager
       val fileDocumentManager = serviceAsync<FileDocumentManager>()
-      for (i in fileEntries.indices) {
-        val fileEntry = fileEntries.get(i)
+
+      fun weight(item: EditorSplitterStateLeaf.FileEntry) = (if (item.currentInTab) 1 else 0)
+
+      // open the selected tab first
+      val sorted = fileEntries.withIndex().sortedWith(Comparator { o1, o2 ->
+        weight(o2.value) - weight(o1.value)
+      })
+      for ((index, fileEntry) in sorted) {
         val fileName = fileEntry.history.getAttributeValue(HistoryEntry.FILE_ATTR)
         val activity = StartUpMeasurer.startActivity(PathUtilRt.getFileName(fileName), ActivityCategory.REOPENING_EDITOR)
         val entry = HistoryEntry.createLight(fileEditorManager.project, fileEntry.history)
@@ -974,7 +980,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
                                                 options = FileEditorOpenOptions(
                                                   selectAsCurrent = false,
                                                   pin = fileEntry.pinned,
-                                                  index = i,
+                                                  index = index,
                                                   usePreviewTab = entry.isPreview,
                                                 ),
                                                 newProviders = newProviders.await())
@@ -999,7 +1005,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
       }
 
       if (focusedFile == null) {
-        val manager = ToolWindowManager.getInstance(splitters.manager.project)
+        val manager = splitters.manager.project.serviceAsync<ToolWindowManager>()
         manager.invokeLater {
           if (manager.activeToolWindowId == null) {
             manager.getToolWindow(ToolWindowId.PROJECT_VIEW)?.activate(null)

@@ -55,6 +55,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.update.lazyUiDisposable
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -1162,8 +1163,28 @@ open class JBTabsImpl(private var project: Project?,
   }
 
   private fun addTab(info: TabInfo, index: Int, isDropTarget: Boolean, fireEvents: Boolean): TabInfo {
-    if (!isDropTarget && tabs.contains(info)) {
+    if (addTabWithoutUpdating(isDropTarget = isDropTarget, info = info, index = index)) {
       return tabs.get(tabs.indexOf(info))
+    }
+
+    updateAll(forcedRelayout = false)
+    if (info.isHidden) {
+      updateHiding()
+    }
+    if (!isDropTarget && fireEvents) {
+      if (tabCount == 1) {
+        fireBeforeSelectionChanged(null, info)
+        fireSelectionChanged(null, info)
+      }
+    }
+    revalidateAndRepaint(layoutNow = false)
+    return info
+  }
+
+  @Internal
+  fun addTabWithoutUpdating(info: TabInfo, index: Int, isDropTarget: Boolean): Boolean {
+    if (!isDropTarget && tabs.contains(info)) {
+      return true
     }
 
     info.changeSupport.addPropertyChangeListener(this)
@@ -1189,18 +1210,7 @@ open class JBTabsImpl(private var project: Project?,
     updateSideComponent(info)
     add(label)
     adjust(info)
-    updateAll(forcedRelayout = false)
-    if (info.isHidden) {
-      updateHiding()
-    }
-    if (!isDropTarget && fireEvents) {
-      if (tabCount == 1) {
-        fireBeforeSelectionChanged(null, info)
-        fireSelectionChanged(null, info)
-      }
-    }
-    revalidateAndRepaint(layoutNow = false)
-    return info
+    return false
   }
 
   protected open fun createTabLabel(info: TabInfo): TabLabel = TabLabel(this, info)
@@ -1213,12 +1223,10 @@ open class JBTabsImpl(private var project: Project?,
     get() = popupGroupSupplier?.invoke()
 
   override fun setPopupGroup(popupGroup: ActionGroup, place: String, addNavigationGroup: Boolean): JBTabs {
-    return setPopupGroup({ popupGroup }, place, addNavigationGroup)
+    return setPopupGroup(popupGroup = { popupGroup }, place = place, addNavigationGroup = addNavigationGroup)
   }
 
-  override fun setPopupGroup(popupGroup: Supplier<out ActionGroup>,
-                             place: String,
-                             addNavigationGroup: Boolean): JBTabs {
+  override fun setPopupGroup(popupGroup: Supplier<out ActionGroup>, place: String, addNavigationGroup: Boolean): JBTabs {
     popupGroupSupplier = popupGroup::get
     popupPlace = place
     this.addNavigationGroup = addNavigationGroup
@@ -1586,15 +1594,9 @@ open class JBTabsImpl(private var project: Project?,
 
   override fun getSelectedInfo(): TabInfo? {
     return when {
-      oldSelection != null -> {
-        oldSelection
-      }
-      mySelectedInfo == null -> {
-        if (visibleInfos.isEmpty()) null else visibleInfos[0]
-      }
-      visibleInfos.contains(mySelectedInfo) -> {
-        mySelectedInfo
-      }
+      oldSelection != null -> oldSelection
+      mySelectedInfo == null -> if (visibleInfos.isEmpty()) null else visibleInfos[0]
+      visibleInfos.contains(mySelectedInfo) -> mySelectedInfo
       else -> {
         setSelectedInfo(null)
         null
@@ -3142,7 +3144,6 @@ private fun sortTabsAlphabetically(tabs: MutableList<TabInfo>) {
 /**
  * AccessibleContext implementation for a single tab page.
  *
- *
  * A tab page has a label as the display zone, name, description, etc.
  * A tab page exposes a child component only if it corresponds to the
  * selected tab in the tab pane. Inactive tabs don't have a child
@@ -3160,6 +3161,7 @@ private class AccessibleTabPage(private val parent: JBTabsImpl,
 
   private val tabIndex: Int
     get() = parent.getIndexOf(tabInfo)
+
   private val tabLabel: TabLabel?
     get() = parent.infoToLabel.get(tabInfo)
 

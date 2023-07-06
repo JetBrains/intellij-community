@@ -316,7 +316,12 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
       tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB)
     }
     tab.setTabPaneActions(composite.selectedEditor!!.tabActions)
-    editorTabs.addTabSilently(tab, indexToInsert)
+    if (EditorsSplitters.isOpenedInBulk(file)) {
+      editorTabs.addTabWithoutUpdating(info = tab, index = indexToInsert, isDropTarget = false)
+    }
+    else {
+      editorTabs.addTabSilently(tab, indexToInsert)
+    }
   }
 
   val isEmptyVisible: Boolean

@@ -290,7 +290,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   internal fun addComposite(composite: EditorComposite, options: FileEditorOpenOptions) {
     val isNewEditor = findCompositeIndex(composite) == -1
     val isPreviewMode = (isNewEditor || composite.isPreview) && shouldReservePreview(composite.file, options, owner.manager.project)
-    val wasPinned = composite.isPinned
     composite.isPreview = isPreviewMode
     if (isNewEditor) {
       var indexToInsert = options.index
@@ -320,23 +319,29 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
         if (initialPinned != null) {
           composite.isPinned = initialPinned
         }
-        else if (wasPinned) {
+        else if (composite.isPinned) {
           composite.isPinned = true
         }
       }
       file.putUserData(DRAG_START_LOCATION_HASH_KEY, null)
       file.putUserData(DRAG_START_INDEX_KEY, null)
       file.putUserData(DRAG_START_PINNED_KEY, null)
-      trimToSize(fileToIgnore = file, transferFocus = false)
+
+      if (!EditorsSplitters.isOpenedInBulk(composite.file)) {
+        trimToSize(fileToIgnore = file, transferFocus = false)
+      }
+
       owner.updateFileIcon(file)
-      owner.updateFileColorAsync(file)
     }
+
     owner.updateFileColorAsync(composite.file)
-    if (options.selectAsCurrent) {
-      setSelectedComposite(composite, options.requestFocus)
+    if (!EditorsSplitters.isOpenedInBulk(composite.file)) {
+      if (options.selectAsCurrent) {
+        setSelectedComposite(composite, options.requestFocus)
+      }
+      updateTabsVisibility()
+      owner.validate()
     }
-    updateTabsVisibility()
-    owner.validate()
   }
 
   internal fun selectOpenedCompositeOnStartup(composite: EditorComposite) {
@@ -525,12 +530,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   }
 
   fun dispose() {
-    try {
-      owner.removeWindow(this)
-    }
-    finally {
-      coroutineScope.cancel()
-    }
+    coroutineScope.cancel()
+    owner.removeWindow(this)
   }
 
   fun hasClosedTabs(): Boolean = !removedTabs.empty()
