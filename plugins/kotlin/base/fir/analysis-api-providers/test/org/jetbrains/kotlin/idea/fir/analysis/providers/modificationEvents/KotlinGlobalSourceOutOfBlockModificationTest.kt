@@ -77,17 +77,18 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
         disposeTrackers(tracker)
     }
 
-    fun `test that global source out-of-block modification occurs after deleting a script file`() {
-        val scriptA = createScript("a")
-
-        val tracker = createTracker()
-
-        delete(scriptA.virtualFile)
-
-        tracker.assertModified("the project after a script file is deleted", expectedEventCount = 2)
-
-        disposeTrackers(tracker)
-    }
+    // TODO (marco): This test can be enabled once IDEA-324516 is fixed.
+    //fun `test that global source out-of-block modification occurs after deleting a script file`() {
+    //    val scriptA = createScript("a")
+    //
+    //    val tracker = createTracker()
+    //
+    //    delete(scriptA.virtualFile)
+    //
+    //    tracker.assertModified("the project after a script file is deleted", expectedEventCount = 2)
+    //
+    //    disposeTrackers(tracker)
+    //}
 
     fun `test that global source out-of-block modification occurs after moving a not-under-content-root file to a non-source module content root`() {
         val fileA = createNotUnderContentRootFile("a")
