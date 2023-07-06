@@ -17,7 +17,10 @@ interface EntityTypesResolver {
 }
 
 sealed class SerializationResult {
-  object Success : SerializationResult()
+  /**
+   * [size] is the size in bytes
+   */
+  class Success(val size: Long) : SerializationResult()
   class Fail<T>(val info: T) : SerializationResult()
 }
 

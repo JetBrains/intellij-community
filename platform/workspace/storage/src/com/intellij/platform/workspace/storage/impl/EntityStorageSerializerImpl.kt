@@ -377,7 +377,7 @@ class EntityStorageSerializerImpl(
       kryo.writeObject(output, storage.indexes.entitySourceIndex)
       kryo.writeObject(output, storage.indexes.symbolicIdIndex)
 
-      SerializationResult.Success
+      SerializationResult.Success(output.total())
     }
     catch (e: Exception) {
       output.reset()
