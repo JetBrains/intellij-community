@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.ModalityHelper;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.AnchoredPoint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
@@ -546,7 +547,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     boolean isAlignmentUsed = ExperimentalUI.isNewUI() && Registry.is("ide.popup.align.by.content") && useAlignment
                               && isComponentSupportsAlignment(aComponent);
     var point = isAlignmentUsed ? pointUnderneathOfAlignedHorizontally(aComponent) : defaultPointUnderneathOf(aComponent);
-    show(new RelativePoint(aComponent, point));
+    show(point);
   }
 
   private boolean isComponentSupportsAlignment(Component c) {
@@ -560,15 +561,15 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   @NotNull
-  private static Point defaultPointUnderneathOf(@NotNull Component aComponent) {
-    return new Point(JBUIScale.scale(2), aComponent.getHeight());
+  private static RelativePoint defaultPointUnderneathOf(@NotNull Component aComponent) {
+    Point offset = new Point(JBUIScale.scale(2), 0);
+    return new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM_LEFT, aComponent, offset);
   }
 
-  private static @NotNull Point pointUnderneathOfAlignedHorizontally(@NotNull Component comp) {
+  private static @NotNull RelativePoint pointUnderneathOfAlignedHorizontally(@NotNull Component comp) {
     if (!(comp instanceof JComponent jcomp)) return defaultPointUnderneathOf(comp);
-    var result = new Point(calcHorizontalAlignment(jcomp), comp.getHeight());
-    fitXToComponentScreen(result, comp);
-    return result;
+    Point offset = new Point(calcHorizontalAlignment(jcomp), 0);
+    return new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM_LEFT, comp, offset);
   }
 
   private static int calcHorizontalAlignment(JComponent jcomp) {
@@ -584,16 +585,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     return res;
   }
 
-  private static void fitXToComponentScreen(@NotNull Point point, @NotNull Component comp) {
+  private static void fitXToComponentScreen(@NotNull Point screenPoint, @NotNull Component comp) {
     var componentScreen = ScreenUtil.getScreenRectangle(comp);
-    SwingUtilities.convertPointToScreen(point, comp);
-    if (point.x < componentScreen.x) {
-      point.x = componentScreen.x;
+    if (screenPoint.x < componentScreen.x) {
+      screenPoint.x = componentScreen.x;
     }
-    if (point.x > componentScreen.x + componentScreen.width) {
-      point.x = componentScreen.x + componentScreen.width;
+    if (screenPoint.x > componentScreen.x + componentScreen.width) {
+      screenPoint.x = componentScreen.x + componentScreen.width;
     }
-    SwingUtilities.convertPointFromScreen(point, comp);
   }
 
   @Override
@@ -601,6 +600,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (UiInterceptors.tryIntercept(this, aPoint)) return;
     HelpTooltip.setMasterPopup(aPoint.getOriginalComponent(), this);
     Point screenPoint = aPoint.getScreenPoint();
+    fitXToComponentScreen(screenPoint, aPoint.getComponent());
 
     stretchContentToOwnerIfNecessary(aPoint.getOriginalComponent());
     show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
