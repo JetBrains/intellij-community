@@ -255,7 +255,7 @@ class DiffBuilderTest {
   }
 
   @RepeatedTest(10)
-  fun `remove parent in both difs with dependency`() {
+  fun `remove parent in both diffs with dependency`() {
     val source = createEmptyBuilder()
     val parent = source addEntity XParentEntity("parent", MySource)
 
