@@ -17,6 +17,8 @@ package com.jetbrains.env.ut;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.env.ProcessWithConsoleRunner;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.PyUnitTestConfiguration;
@@ -24,6 +26,7 @@ import com.jetbrains.python.testing.PyUnitTestFactory;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -38,6 +41,9 @@ public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnitTes
    */
   public static final String TEST_PATTERN_PREFIX = "pattern:";
 
+  // Needs for correct exit code handling if all tests were skipped
+  private boolean isPython312OrGreater = false;
+
   public PyUnitTestProcessRunner(@NotNull final String scriptName, final int timesToRerunFailedTests) {
     super(new PyUnitTestFactory(PythonTestConfigurationType.getInstance()),
           PyUnitTestConfiguration.class, scriptName, timesToRerunFailedTests);
@@ -47,17 +53,31 @@ public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnitTes
   protected void configurationCreatedAndWillLaunch(@NotNull PyUnitTestConfiguration configuration) throws IOException {
     super.configurationCreatedAndWillLaunch(configuration);
     final Sdk sdk = configuration.getSdk();
-    if (sdk == null ||  PythonSdkFlavor.getFlavor(sdk) instanceof CPythonSdkFlavor) {
+    if (sdk == null || PythonSdkFlavor.getFlavor(sdk) instanceof CPythonSdkFlavor) {
       // -Werror checks we do not use deprecated API in runners, but only works for cpython (not iron nor jython)
       // and we can't use it for pytest/nose, since it is not our responsibility to check them for deprecation api usage
       // while unit is part of stdlib and does not use deprecated api, so only runners are checked
       configuration.setInterpreterOptions("-Werror");
     }
 
+    isPython312OrGreater = isPython312OrGreater(sdk);
     if (myScriptName.startsWith(TEST_PATTERN_PREFIX)) {
       configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
       configuration.getTarget().setTarget(".");
       configuration.setPattern(myScriptName.substring(TEST_PATTERN_PREFIX.length()));
     }
+  }
+
+  @Override
+  protected int getExitCodeForSkippedTests() {
+    return isPython312OrGreater ? 5 : 0;
+  }
+
+  private static boolean isPython312OrGreater(@Nullable Sdk sdk) {
+    if (sdk != null) {
+      LanguageLevel languageLevel = PySdkUtil.getLanguageLevelForSdk(sdk);
+      return languageLevel.getMajorVersion() == 3 && languageLevel.getMinorVersion() >= 12;
+    }
+    return false;
   }
 }
