@@ -115,7 +115,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     // The points are screen points from the event, which is in the same coordinate system as the dragSourcePane
     val point = pressedScreenPoint.location.also { SwingUtilities.convertPointFromScreen(it, dragSourcePane) }
     val component = getComponentFromDragSourcePane(RelativePoint(dragSourcePane, point))
-    if (component is StripeButton || component is SquareStripeButton || component is MoreSquareStripeButton) {
+    if (component is StripeButton || component is AbstractSquareStripeButton) {
       return super.getDragStartDeadzone(pressedScreenPoint, draggedScreenPoint)
     }
     return JBUI.scale(Registry.intValue("ide.new.tool.window.start.drag.deadzone", 7, 0, 100))
@@ -575,6 +575,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     return when (clickedComponent) {
       is StripeButton -> clickedComponent.toolWindow
       is SquareStripeButton -> clickedComponent.toolWindow
+      is ToolWindowProvider -> clickedComponent.toolWindow
       else -> null
     }
   }
@@ -783,5 +784,9 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         repaint()
       }
     }
+  }
+
+  interface ToolWindowProvider {
+    val toolWindow: ToolWindowImpl?
   }
 }
