@@ -13,12 +13,12 @@ internal open class GitRebaseEntry(val action: Action, val commit: String, val s
 
   sealed class Action(val command: String,
                       private val nameKey: @PropertyKey(resourceBundle = GitBundle.BUNDLE) String) {
-    object PICK : KnownAction("pick", "rebase.entry.action.name.pick")
-    object EDIT : KnownAction("edit", "rebase.entry.action.name.edit")
-    object DROP : KnownAction("drop", "rebase.entry.action.name.drop")
-    object REWORD : KnownAction("reword", "rebase.entry.action.name.reword")
-    object SQUASH : KnownAction("squash", "rebase.entry.action.name.squash")
-    object FIXUP : KnownAction("fixup", "rebase.entry.action.name.fixup")
+    object PICK : KnownAction("pick", "p", nameKey = "rebase.entry.action.name.pick")
+    object EDIT : KnownAction("edit", "e", nameKey = "rebase.entry.action.name.edit")
+    object DROP : KnownAction("drop", "d", nameKey = "rebase.entry.action.name.drop")
+    object REWORD : KnownAction("reword", "r", nameKey = "rebase.entry.action.name.reword")
+    object SQUASH : KnownAction("squash", "s", nameKey = "rebase.entry.action.name.squash")
+    object FIXUP : KnownAction("fixup", "f", nameKey = "rebase.entry.action.name.fixup")
 
     class Other(command: String) : Action(command, "rebase.entry.action.name.unknown")
 
@@ -28,6 +28,7 @@ internal open class GitRebaseEntry(val action: Action, val commit: String, val s
   }
 
   sealed class KnownAction(command: String,
+                           vararg val synonyms: String,
                            nameKey: @PropertyKey(resourceBundle = "messages.GitBundle") String) : Action(command, nameKey) {
     val mnemonic: Int get() = KeyEvent.getExtendedKeyCodeForChar(command.first().code)
   }
@@ -36,7 +37,7 @@ internal open class GitRebaseEntry(val action: Action, val commit: String, val s
     @JvmStatic
     fun parseAction(action: String): Action {
       val knownActions = listOf(Action.PICK, Action.EDIT, Action.DROP, Action.REWORD, Action.SQUASH, Action.FIXUP)
-      return knownActions.find { it.command == action } ?: Action.Other(action)
+      return knownActions.find { it.command == action || it.synonyms.contains(action) } ?: Action.Other(action)
     }
   }
 }
