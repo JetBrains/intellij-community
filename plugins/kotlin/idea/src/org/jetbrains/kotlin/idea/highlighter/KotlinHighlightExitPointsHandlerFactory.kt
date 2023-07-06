@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Consumer
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -23,33 +24,33 @@ import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
-    companion object {
-        private fun getOnReturnOrThrowUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
-            val returnOrThrow = when (val parent = target.parent) {
-                is KtReturnExpression, is KtThrowExpression -> parent
-                is KtLabelReferenceExpression ->
-                    PsiTreeUtil.getParentOfType(
-                        target, KtReturnExpression::class.java, KtThrowExpression::class.java, KtFunction::class.java
-                    )?.takeUnless { it is KtFunction }
-                else -> null
-            } as? KtExpression ?: return null
-            return OnExitUsagesHandler(editor, file, returnOrThrow)
+    private fun getOnReturnOrThrowUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
+        val returnOrThrow = when (val parent = target.parent) {
+            is KtReturnExpression, is KtThrowExpression -> parent
+            is KtLabelReferenceExpression ->
+                PsiTreeUtil.getParentOfType(
+                    target, KtReturnExpression::class.java, KtThrowExpression::class.java, KtFunction::class.java
+                )?.takeUnless { it is KtFunction }
+            else -> null
+        } as? KtExpression ?: return null
+        return OnExitUsagesHandler(editor, file, returnOrThrow)
+    }
+
+    private fun getOnLambdaCallUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
+        if (target !is LeafPsiElement
+            || target.elementType !is KtToken // do not trigger loading of KtTokens in Java
+            || target.elementType != KtTokens.IDENTIFIER) {
+            return null
         }
 
-        private fun getOnLambdaCallUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
-            if (target !is LeafPsiElement || target.elementType != KtTokens.IDENTIFIER) {
-                return null
-            }
+        val refExpr = target.parent as? KtNameReferenceExpression ?: return null
+        val call = refExpr.parent as? KtCallExpression ?: return null
+        if (call.calleeExpression != refExpr) return null
 
-            val refExpr = target.parent as? KtNameReferenceExpression ?: return null
-            val call = refExpr.parent as? KtCallExpression ?: return null
-            if (call.calleeExpression != refExpr) return null
+        val lambda = call.lambdaArguments.singleOrNull() ?: return null
+        val literal = lambda.getLambdaExpression()?.functionLiteral ?: return null
 
-            val lambda = call.lambdaArguments.singleOrNull() ?: return null
-            val literal = lambda.getLambdaExpression()?.functionLiteral ?: return null
-
-            return OnExitUsagesHandler(editor, file, literal, highlightReferences = true)
-        }
+        return OnExitUsagesHandler(editor, file, literal, highlightReferences = true)
     }
 
     override fun createHighlightUsagesHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {

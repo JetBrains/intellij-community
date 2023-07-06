@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.Consumer
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameter
+import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -17,7 +18,12 @@ import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 
 class KotlinHighlightImplicitItHandlerFactory : HighlightUsagesHandlerFactoryBase() {
     override fun createHighlightUsagesHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
-        if (!(target is LeafPsiElement && target.elementType == KtTokens.IDENTIFIER)) return null
+        if (target !is LeafPsiElement
+            || target.elementType !is KtToken // do not trigger loading of KtTokens in Java
+            || target.elementType != KtTokens.IDENTIFIER) {
+            return null
+        }
+
         val refExpr = target.parent as? KtNameReferenceExpression ?: return null
         val lambda = refExpr.getFunctionLiteralByImplicitLambdaParameter() ?: return null
         return object : HighlightUsagesHandlerBase<KtNameReferenceExpression>(editor, file) {
