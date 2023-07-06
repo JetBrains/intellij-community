@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.compiler.JavacQuirksInspectionVisitor;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -594,7 +595,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     return typeElement != null && !typeElement.isInferredType() && PsiTypesUtil.hasTypeAnnotation(typeElement.getType());
   }
 
-  private static class ReplaceWithMethodRefFix implements LocalQuickFix {
+  private static class ReplaceWithMethodRefFix extends PsiUpdateModCommandQuickFix {
     private final boolean mySafeQualifier;
 
     ReplaceWithMethodRefFix(boolean mayChangeSemantics) {
@@ -615,10 +616,9 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiLambdaExpression) {
-        MethodReferenceCandidate methodReferenceCandidate = extractMethodReferenceCandidateExpression(((PsiLambdaExpression)element).getBody());
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (element instanceof PsiLambdaExpression lambda) {
+        MethodReferenceCandidate methodReferenceCandidate = extractMethodReferenceCandidateExpression(lambda.getBody());
         if (methodReferenceCandidate == null) return;
         element = methodReferenceCandidate.myExpression;
       }

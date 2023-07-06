@@ -1,8 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix
 import com.intellij.java.JavaBundle
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -41,13 +45,13 @@ class ReplaceWithJavadocInspection : LocalInspectionTool() {
     }
   }
 
-  class ReplaceWithJavadocFix : LocalQuickFix {
+  class ReplaceWithJavadocFix : PsiUpdateModCommandQuickFix() {
     override fun getFamilyName(): String {
       return JavaBundle.message("inspection.replace.with.javadoc")
     }
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val element = descriptor.psiElement as? PsiComment ?: return
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+      if (element !is PsiComment) return
       val method = element.parent ?: return
 
       val child = method.firstChild as? PsiComment ?: return
