@@ -2,9 +2,14 @@ package com.intellij.mermaid.lang.intention
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.json.psi.JsonElementVisitor
+import com.intellij.json.psi.JsonObject
+import com.intellij.json.psi.JsonProperty
+import com.intellij.json.psi.JsonStringLiteral
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.mermaid.MermaidBundle
 import com.intellij.mermaid.lang.psi.*
 import com.intellij.mermaid.lang.psi.MermaidElementFactory.Companion.createBranchStatement
@@ -14,13 +19,20 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.siblings
+import com.intellij.refactoring.suggested.startOffset
 
 
 class GitGraphAnnotator : Annotator {
-  private val MAIN = "main"
+  private var mainBranchName = "main"
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     when (element) {
+      is MermaidDirectiveValue -> {
+        val injectedLanguageManager = InjectedLanguageManager.getInstance(element.project)
+        val injectedElement = injectedLanguageManager.findInjectedElementAt(element.containingFile, element.startOffset) ?: return
+        val directiveObject = injectedElement.parent as? JsonObject ?: return
+        collectMainBranchName(directiveObject)
+      }
       is MermaidMergeStatement -> {
         annotateUnresolvedBranch(element, holder)
         annotateConflictingCommitId(element, holder)
@@ -33,10 +45,28 @@ class GitGraphAnnotator : Annotator {
     }
   }
 
+  private fun collectMainBranchName(directive: JsonObject) {
+    directive.accept(object: JsonElementVisitor() {
+      override fun visitElement(element: PsiElement) {
+        super.visitElement(element)
+        element.acceptChildren(this)
+      }
+
+      override fun visitProperty(o: JsonProperty) {
+        if (o.name == "mainBranchName") {
+          val literal = o.value as? JsonStringLiteral ?: return
+          mainBranchName = literal.value
+        } else {
+          super.visitProperty(o)
+        }
+      }
+    })
+  }
+
   private fun annotateUnresolvedBranch(element: MermaidGitGraphBranchIdentifierHolder, holder: AnnotationHolder) {
     val identifier = element.identifier()
 
-    if (identifier.textMatches(MAIN)) return
+    if (identifier.textMatches(mainBranchName)) return
 
     val parent = element.parent ?: return
 
@@ -156,7 +186,7 @@ class GitGraphAnnotator : Annotator {
   private fun annotateConflictingBranch(element: MermaidBranchStatement, holder: AnnotationHolder) {
     val identifier = element.identifier()
 
-    if (identifier.textMatches(MAIN)) {
+    if (identifier.textMatches(mainBranchName)) {
       addConflictingBranchAnnotation(holder, identifier.textRange)
     }
 
