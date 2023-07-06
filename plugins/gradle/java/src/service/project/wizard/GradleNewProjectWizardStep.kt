@@ -87,10 +87,10 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   private val gradleHomeProperty = propertyGraph.lazyProperty { suggestGradleHome() }
   private val updateDefaultProjectSettingsProperty = propertyGraph.lazyProperty { true }
 
-  private var distributionType by distributionTypeProperty
+  protected var distributionType by distributionTypeProperty
   protected var gradleVersion by gradleVersionProperty
   private var autoSelectGradleVersion by autoSelectGradleVersionProperty
-  private var gradleHome by gradleHomeProperty
+  protected var gradleHome by gradleHomeProperty
   private var updateDefaultProjectSettings by updateDefaultProjectSettingsProperty
 
   init {

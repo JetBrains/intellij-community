@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmModuleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.inContextOfModuleConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemSettings
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repository
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
@@ -55,7 +56,8 @@ class IdeaJpsWizardService(
         reader: Reader,
         path: Path,
         modulesIrs: List<ModuleIR>,
-        buildSystem: BuildSystemType
+        buildSystem: BuildSystemType,
+        buildSystemSettings: BuildSystemSettings?
     ): TaskResult<Unit> {
         KotlinSdkType.setUpIfNeeded()
         val projectImporter = ProjectImporter(project, modulesModel, path, modulesIrs)

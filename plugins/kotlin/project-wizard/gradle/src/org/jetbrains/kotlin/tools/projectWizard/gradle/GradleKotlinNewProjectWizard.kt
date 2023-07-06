@@ -45,6 +45,9 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
         private val addSampleCode by addSampleCodeProperty
 
+        internal val isLocalGradle
+            get() = distributionType == DistributionTypeItem.LOCAL
+
         private fun setupSampleCodeUI(builder: Panel) {
             builder.row {
                 checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
@@ -92,8 +95,6 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             )
         }
 
-        override val distributionTypes: List<DistributionTypeItem> = listOf(DistributionTypeItem.WRAPPER)
-
         override fun setupAdvancedSettingsUI(builder: Panel) {
             setupGradleDistributionUI(builder)
             setupGroupIdUI(builder)
@@ -114,15 +115,18 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                 artifactId = artifactId,
                 version = version,
                 addSampleCode = addSampleCode,
-                gradleVersion = gradleVersion
+                gradleVersion = gradleVersion,
+                gradleHome = gradleHome.takeIf { distributionType == DistributionTypeItem.LOCAL }
             )
         }
     }
 
-    private class AssetsStep(parent: Step) : AssetsNewProjectWizardStep(parent) {
+    private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
 
         override fun setupAssets(project: Project) {
-            addAssets(StandardAssetsProvider().getGradlewAssets())
+            if (!parent.isLocalGradle) {
+                addAssets(StandardAssetsProvider().getGradlewAssets())
+            }
             if (context.isCreatingNewProject) {
                 addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
             }

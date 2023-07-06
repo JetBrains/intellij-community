@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ConsoleApplicat
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import java.util.*
 
 class KotlinNewProjectWizard : LanguageNewProjectWizard {
@@ -45,7 +46,8 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             artifactId: String? = projectName,
             version: String? = "1.0-SNAPSHOT",
             addSampleCode: Boolean = true,
-            gradleVersion: String? = null
+            gradleVersion: String? = null,
+            gradleHome: String? = null
         ) {
             NewProjectWizardModuleBuilder()
                 .apply {
@@ -55,9 +57,15 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
                         StructurePlugin.name.reference.setValue(projectName)
                         StructurePlugin.projectPath.reference.setValue(projectPath.asPath())
 
-                        gradleVersion?.let {
+                        // If a local gradle installation was selected, we want to use the local gradle installation's
+                        // version so that the wizard knows what kind of build scripts to generate
+                        val actualGradleVersion = if (gradleHome != null) {
+                            GradleInstallationManager.getGradleVersion(gradleHome) ?: gradleVersion
+                        } else gradleVersion
+                        actualGradleVersion?.let {
                             GradlePlugin.gradleVersion.reference.setValue(Version.fromString(it))
                         }
+                        GradlePlugin.gradleHome.reference.setValue(gradleHome ?: "")
 
                         projectGroupId?.let { StructurePlugin.groupId.reference.setValue(it) }
                         artifactId?.let { StructurePlugin.artifactId.reference.setValue(it) }
