@@ -57,6 +57,12 @@ interface StreamProvider {
    * `true` if provider is fully responsible and local sources must be not used.
    */
   fun delete(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT): Boolean
+
+  /**
+   * Check whether the file shouldn't be stored anymore and delete it if it shouldn't.
+   */
+  fun deleteIfObsolete(fileSpec: String, roamingType: RoamingType) {
+  }
 }
 
 @TestOnly
