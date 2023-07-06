@@ -14,7 +14,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 
-class GradleBuildNavigationTest: GradleCodeInsightTestCase() {
+class KotlinGradleBuildNavigationTest: GradleCodeInsightTestCase() {
 
     @ParameterizedTest
     @BaseGradleVersionSource
