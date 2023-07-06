@@ -409,6 +409,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     assert parentId >= 0 : parentId; // 0 means there's no parent
     //RC: why we reject the changes in those 2 cases -- what is special with loaded children or
     //    same-name?
+    //    Maybe: we call it from findRoot() always, even if the root was already existed in
+    //    persistence, but  we don't want to really overwrite root fields every time -- so
+    //    we skip it here by comparing names?
     if (!name.isEmpty()) {
       if (Comparing.equal(name, FSRecords.getNameSequence(id), cs)) return -1; // TODO: Handle root attributes change.
     }

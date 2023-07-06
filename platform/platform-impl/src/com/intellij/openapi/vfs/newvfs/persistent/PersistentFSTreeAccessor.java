@@ -204,52 +204,54 @@ class PersistentFSTreeAccessor {
       PersistentFSConnection connection = this.connection;
 
       //TODO RC: with non-strict names enumerator it is possible rootNameId==NULL_ID here -> what will happens?
-      int rootNameId = connection.getNames().tryEnumerate(rootUrl);
+      int rootUrlId = connection.getNames().tryEnumerate(rootUrl);
 
-      int[] names = ArrayUtilRt.EMPTY_INT_ARRAY;
-      int[] ids = ArrayUtilRt.EMPTY_INT_ARRAY;
+      int[] rootUrls = ArrayUtilRt.EMPTY_INT_ARRAY;
+      int[] rootIds = ArrayUtilRt.EMPTY_INT_ARRAY;
       try (final DataInputStream input = myAttributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
         if (input != null) {
-          final int count = DataInputOutputUtil.readINT(input);
-          if (count < 0) {
-            throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: roots count(=" + count + ") must be >=0");
+          final int rootsCount = DataInputOutputUtil.readINT(input);
+          if (rootsCount < 0) {
+            throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: roots count(=" + rootsCount + ") must be >=0");
           }
-          names = ArrayUtil.newIntArray(count);
-          ids = ArrayUtil.newIntArray(count);
-          int prevId = 0;
-          int prevNameId = 0;
+          rootUrls = ArrayUtil.newIntArray(rootsCount);
+          rootIds = ArrayUtil.newIntArray(rootsCount);
+          int prevRootId = 0;
+          int prevUrlId = 0;
 
-          for (int i = 0; i < count; i++) {
-            final int name = DataInputOutputUtil.readINT(input) + prevNameId;
-            final int id = DataInputOutputUtil.readINT(input) + prevId;
-            if (name == rootNameId) {
-              checkChildIdValid(SUPER_ROOT_ID, id, i, connection.getRecords().maxAllocatedID());
-              return id;
+          for (int i = 0; i < rootsCount; i++) {
+            int urlId = DataInputOutputUtil.readINT(input) + prevUrlId;
+            int rootId = DataInputOutputUtil.readINT(input) + prevRootId;
+            if (urlId == rootUrlId) {
+              checkChildIdValid(SUPER_ROOT_ID, rootId, i, connection.getRecords().maxAllocatedID());
+              return rootId;
             }
 
-            prevNameId = names[i] = name;
-            prevId = ids[i] = id;
+            prevUrlId = rootUrls[i] = urlId;
+            prevRootId = rootIds[i] = rootId;
           }
         }
       }
 
       connection.markDirty();
-      rootNameId = connection.getNames().enumerate(rootUrl);
+      rootUrlId = connection.getNames().enumerate(rootUrl);
 
       try (DataOutputStream output = myAttributeAccessor.writeAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
         final int newRootFileId = FSRecords.createRecord();
 
-        final int index = Arrays.binarySearch(ids, newRootFileId);
+        final int index = Arrays.binarySearch(rootIds, newRootFileId);
         if (index >= 0) {
           throw new AssertionError("Newly allocated newRootFileId(=" + newRootFileId + ") already exists in root record: " +
-                                   "ids (=" + Arrays.toString(ids) + "), names(=" + Arrays.toString(names) + "), " +
-                                   "rootUrl(=" + rootUrl + "), rootUrlId(=" + rootNameId + ")");
+                                   "rootIds(=" + Arrays.toString(rootIds) + "), rootUrls(=" + Arrays.toString(rootUrls) + "), " +
+                                   "rootUrl(=" + rootUrl + "), rootUrlId(=" + rootUrlId + ")");
         }
-        ids = ArrayUtil.insert(ids, -index - 1, newRootFileId);
-        names = ArrayUtil.insert(names, -index - 1, rootNameId);
+        rootIds = ArrayUtil.insert(rootIds, -index - 1, newRootFileId);
+        rootUrls = ArrayUtil.insert(rootUrls, -index - 1, rootUrlId);
 
-        saveNameIdSequenceWithDeltas(names, ids, output);
-        //FIXME RC: assign myFSConnection.records[newRootFileId].nameId = rootNameId
+        saveNameIdSequenceWithDeltas(rootUrls, rootIds, output);
+        //RC: we should assign connection.records.setNameId(newRootFileId, root_Name_Id), but we don't
+        //    have rootNameId here -- we have only rootUrlId. Actually, rootNameId is assigned to the root
+        //    in a PersistentFSImpl.findRoot() method
         return newRootFileId;
       }
     }
@@ -390,12 +392,13 @@ class PersistentFSTreeAccessor {
                                           final int childId,
                                           final int childNo,
                                           final int maxAllocatedID) throws CorruptedException {
-    if (childId < FSRecords.NULL_FILE_ID || maxAllocatedID < childId) {
-      //RC: generally we throw IndexOutOfBoundsException for id out of bounds -- because this is just invalid
+    if (childId < SUPER_ROOT_ID || maxAllocatedID < childId) {
+      //RC: generally we throw IndexOutOfBoundsException for id out of bounds -- because this is just an invalid
       // argument, i.e. 'error on caller side'. But if VFS guts are the source of invalid id -- e.g. CHILDREN
       // -- it is not a caller error, but VFS corruption:
       throw new CorruptedException(
-        "file[" + parentId + "].child[" + childNo + "][#" + childId + "] is out of allocated id range (0.." + maxAllocatedID + "] " +
+        "file[" + parentId + "].child[" + childNo + "][#" + childId + "] is out of valid/allocated id range" +
+        " (" + SUPER_ROOT_ID + ".." + maxAllocatedID + "] " +
         "-> VFS is corrupted (was IDE forcibly terminated?)");
     }
   }
