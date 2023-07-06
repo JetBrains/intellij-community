@@ -398,7 +398,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       public @NotNull List<EventPair<?>> getEventData() {
         List<EventPair<?>> eventData = new ArrayList<>();
         PsiElement target = handler.getPsiElement();
-        eventData.add(UsageViewStatisticsCollector.TARGET_ELEMENT_DATA.with(UsageViewStatisticsCollector.calculateElementData(target)));
+        final ObjectEventData targetElementData = UsageViewStatisticsCollector.calculateElementData(target);
+        if (targetElementData != null) {
+          eventData.add(UsageViewStatisticsCollector.TARGET_ELEMENT_DATA.with(targetElementData));
+        }
         eventData.add(UsageViewStatisticsCollector.NUMBER_OF_TARGETS.with(primaryElements.length + secondaryElements.length));
         return eventData;
       }
