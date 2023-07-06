@@ -4,6 +4,7 @@ package com.siyeh.ig.fixes.controlflow;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.ig.LightJavaInspectionTestCase;
@@ -14,6 +15,11 @@ public class CreateMissingEnumSwitchBranchesFixTest extends LightQuickFixParamet
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new EnumSwitchStatementWhichMissesCasesInspection[]{new EnumSwitchStatementWhichMissesCasesInspection()};
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_21;
   }
 
   @Override

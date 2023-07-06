@@ -69,7 +69,14 @@ public final class CreateSwitchBranchesUtil {
     final PsiCodeBlock body = switchBlock.getBody();
     final PsiExpression switchExpression = switchBlock.getExpression();
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(switchExpression != null ? switchExpression.getType() : null);
-    boolean isPatternsGenerated = selectorClass != null && !selectorClass.isEnum() && selectorClass.hasModifierProperty(PsiModifier.SEALED);
+    boolean hasSealedClass = selectorClass != null &&
+                             (selectorClass.hasModifierProperty(PsiModifier.SEALED) ||
+                              (selectorClass instanceof PsiTypeParameter typeParameter &&
+                               ContainerUtil.exists(typeParameter.getExtendsListTypes(), extType -> {
+                                 PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(extType);
+                                 return psiClass != null && psiClass.hasModifierProperty(PsiModifier.SEALED);
+                               })));
+    boolean isPatternsGenerated = selectorClass != null && !selectorClass.isEnum() && hasSealedClass;
     if (body == null) {
       // replace entire switch statement if no code block is present
       @NonNls final StringBuilder newStatementText = new StringBuilder();
