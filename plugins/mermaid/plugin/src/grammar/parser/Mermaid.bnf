@@ -292,7 +292,6 @@ classDiagramStatement ::= directionStatement
   | memberStatement
   | annotationStatement
   | classDiagramNoteStatement
-  | directive
   | classDiagramClickStatement
   | accStatement
 
@@ -541,7 +540,6 @@ gitGraphStatement ::= commitStatement
   | cherryPickStatement
   | branchStatement
   | checkoutStatement
-  | directive
   | accStatement
 
 gitGraphBranchIdentifier ::= identifier | DOUBLE_QUOTE quotedBranchIdentifier DOUBLE_QUOTE
@@ -717,7 +715,6 @@ c4Statement ::= PERSON c4Attributes
   | UPDATE_LAYOUT_CONFIG c4Attributes
   | titleStatement
   | directionStatement
-  | directive
   | accStatement
 
 c4Attributes ::= OPEN_ROUND c4AttributesRec CLOSE_ROUND
@@ -745,6 +742,7 @@ private mindmapLine ::= mindmapStatement [EOL] | EOL
 mindmapStatement ::= mindmapNodeStatement
   | iconStatement
   | mindmapClassStatement
+  | directive
 
 mindmapNodeStatement ::= mindmapNodeId [mindmapNodeDescr]
 mindmapNodeId ::= (ID | COLON)+ {

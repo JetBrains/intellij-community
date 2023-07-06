@@ -20,4 +20,6 @@ class SequenceTest : MermaidParserTestCase("sequence") {
   fun `test box`() = doTest(true)
 
   fun `test par_over`() = doTest(true)
+
+  fun `test directives`() = doTest(true)
 }

@@ -191,4 +191,17 @@ class SequenceTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test directives`() {
+    val content = """
+    %%{init: { "theme": "forest"}}%%
+    sequenceDiagram
+      %%{init: { "theme": "forest"}}%%
+      Alice->>John: Hello John, how are you?
+      %%{init: { "theme": "forest"}}%%
+      John-->>Alice: Great!
+      Alice-)John: See you later!
+    """.trimIndent()
+    doTest(content)
+  }
 }
