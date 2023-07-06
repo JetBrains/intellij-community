@@ -277,4 +277,21 @@ class Basic {
         ;
     }
   }
+
+
+  sealed interface J permits En, FC {
+  }
+
+  enum En implements J {A, B}
+
+  final class FC implements J {
+  }
+
+  static int testExhaustive2(J ji) {
+    return switch (ji) {
+      case FC c -> 42;
+      case En.A -> 0;
+      case En.B -> 0;
+    };
+  }
 }

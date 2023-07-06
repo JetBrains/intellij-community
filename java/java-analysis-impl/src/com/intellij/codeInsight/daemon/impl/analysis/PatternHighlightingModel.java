@@ -239,9 +239,8 @@ final class PatternHighlightingModel {
     if (ContainerUtil.exists(checkedExhaustivePatterns, pattern -> JavaPsiPatternUtil.isUnconditionalForType(pattern, typeToCheck, true))) {
       return RecordExhaustivenessResult.createExhaustiveResult(); // exhaustive even without not-exhaustive-subgroup
     }
-    LinkedHashMap<PsiClass, PsiPattern> patternClasses = SwitchBlockHighlightingModel.findPatternClasses(checkedExhaustivePatterns);
-    Set<PsiClass> missedClasses = SwitchBlockHighlightingModel.findMissedClasses(typeToCheck, patternClasses);
-    if (missedClasses.isEmpty() && !patternClasses.isEmpty()) {
+    Set<PsiClass> missedClasses = SwitchBlockHighlightingModel.findMissedClassesForSealed(typeToCheck, checkedExhaustivePatterns);
+    if (missedClasses.isEmpty() && !checkedExhaustivePatterns.isEmpty()) {
       return RecordExhaustivenessResult.createExhaustiveResult(); //exhaustive even without not-exhaustive-subgroup
     }
     //if one of them is unconditional, return any of them
