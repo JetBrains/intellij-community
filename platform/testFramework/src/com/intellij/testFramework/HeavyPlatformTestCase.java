@@ -217,35 +217,42 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
     initApplication();
 
-    WriteIntentReadAction.run((ThrowableRunnable<? extends Exception>)() -> {
-      projectTracker = ((TestProjectManager)ProjectManager.getInstance()).startTracking();
+    if (runInDispatchThread()) {
+      WriteIntentReadAction.run((ThrowableRunnable<Exception>)this::lateSetUp);
+    }
+    else {
+      lateSetUp();
+    }
+  }
 
-      if (myOldSdks == null) { // some bastard's overridden initApplication completely
-        myOldSdks = new SdkLeakTracker();
-      }
+  private void lateSetUp() throws Exception {
+    projectTracker = ((TestProjectManager)ProjectManager.getInstance()).startTracking();
 
-      setUpProject();
-      myEditorListenerTracker = new EditorListenerTracker();
-      myThreadTracker = new ThreadTracker();
+    if (myOldSdks == null) { // some bastard's overridden initApplication completely
+      myOldSdks = new SdkLeakTracker();
+    }
 
-      boolean isTrackCodeStyleChanges = !(isStressTest() ||
-                                          ApplicationManager.getApplication() == null ||
-                                          ApplicationManager.getApplication() instanceof MockApplication);
+    setUpProject();
+    myEditorListenerTracker = new EditorListenerTracker();
+    myThreadTracker = new ThreadTracker();
 
-      myCodeStyleSettingsTracker = isTrackCodeStyleChanges ? new CodeStyleSettingsTracker(() -> CodeStyle.getDefaultSettings()) : null;
-      ourTestCase = this;
-      if (myProject != null) {
-        CodeStyle.setTemporarySettings(myProject, CodeStyle.createTestSettings());
-        InjectedLanguageManagerImpl.pushInjectors(myProject);
-        ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
-      }
+    boolean isTrackCodeStyleChanges = !(isStressTest() ||
+                                        ApplicationManager.getApplication() == null ||
+                                        ApplicationManager.getApplication() instanceof MockApplication);
 
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        EDT.dispatchAllInvocationEvents();
-      }
-      myVirtualFilePointerTracker = new VirtualFilePointerTracker();
-      myLibraryTableTracker = new LibraryTableTracker();
-    });
+    myCodeStyleSettingsTracker = isTrackCodeStyleChanges ? new CodeStyleSettingsTracker(() -> CodeStyle.getDefaultSettings()) : null;
+    ourTestCase = this;
+    if (myProject != null) {
+      CodeStyle.setTemporarySettings(myProject, CodeStyle.createTestSettings());
+      InjectedLanguageManagerImpl.pushInjectors(myProject);
+      ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
+    }
+
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      EDT.dispatchAllInvocationEvents();
+    }
+    myVirtualFilePointerTracker = new VirtualFilePointerTracker();
+    myLibraryTableTracker = new LibraryTableTracker();
   }
 
   public final Project getProject() {
