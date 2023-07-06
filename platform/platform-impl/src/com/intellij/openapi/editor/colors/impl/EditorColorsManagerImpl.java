@@ -66,10 +66,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import kotlin.jvm.functions.Function1;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
@@ -277,6 +274,29 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     }
   }
 
+  @TestOnly
+  public @Nullable EditorColorsScheme loadBundledScheme(@NotNull String themeName) {
+    assert ApplicationManager.getApplication().isUnitTestMode() : "Test-only method";
+    for (UIThemeBasedLookAndFeelInfo laf : UiThemeProviderListManager.getInstance().getLaFs()) {
+      UITheme theme = laf.getTheme();
+      if (themeName.equals(theme.getName())) {
+        String scheme = theme.getEditorScheme();
+        if (scheme != null) {
+          EditorColorsScheme bundledScheme = mySchemeManager.loadBundledScheme(scheme, theme, null);
+          initEditableBundledSchemesCopies();
+          return bundledScheme;
+        }
+      }
+    }
+    return null;
+  }
+
+  @TestOnly
+  public void removeScheme(@NotNull EditorColorsScheme scheme) {
+    assert ApplicationManager.getApplication().isUnitTestMode() : "Test-only method";
+    mySchemeManager.removeScheme(scheme);
+  }
+
   private void loadSchemesFromThemes() {
     if (isUnitTestOrHeadlessMode()) {
       return;
@@ -313,8 +333,10 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       }
       catch (InvalidDataException e) {
         brokenSchemesList.add(scheme);
+        String name = scheme.getName();
+        if (name.startsWith(Scheme.EDITABLE_COPY_PREFIX)) name = StringUtil.trimStart(name, Scheme.EDITABLE_COPY_PREFIX);
         String message = IdeBundle
-          .message("notification.content.color.scheme", scheme.getName(),
+          .message("notification.content.color.scheme", name,
                    e.getMessage());
         Notifications.Bus.notify(
           new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("notification.title.incompatible.color.scheme"), message, NotificationType.ERROR));
@@ -338,6 +360,11 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       editableCopy = (AbstractColorsScheme)initialScheme.clone();
       editableCopy.setName(editableCopyName);
       mySchemeManager.addScheme(editableCopy);
+    }
+    else {
+      if (initialScheme instanceof BundledScheme) {
+        editableCopy.copyMissingAttributes(initialScheme);
+      }
     }
     editableCopy.setCanBeDeleted(false);
   }
