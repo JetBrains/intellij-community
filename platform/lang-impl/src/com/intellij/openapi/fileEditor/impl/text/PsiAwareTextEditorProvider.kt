@@ -4,19 +4,27 @@ package com.intellij.openapi.fileEditor.impl.text
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl.Companion.createAsyncEditorLoader
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
@@ -38,11 +46,39 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
     val factory = EditorFactory.getInstance() as EditorFactoryImpl
     val highlighter = asyncLoader.createHighlighterAsync(document, file)
+    val foldingState = if (project.isDefault) null else asyncLoader.coroutineScope.async(CoroutineName("buildInitialFoldings")) {
+      val codeFoldingManager = project.serviceAsync<CodeFoldingManager>()
+      readAction {
+        if (PsiDocumentManager.getInstance(project).isCommitted(document)) {
+          catchingExceptions {
+            blockingContextToIndicator {
+              codeFoldingManager.buildInitialFoldings(document)
+            }
+          }
+        }
+        else {
+          null
+        }
+      }
+    }
+
+    val tasks: List<suspend (EditorEx) -> Unit> = listOf(
+      { editor -> configureHighlighter(highlighter, editor) },
+      { editor ->
+        val state = foldingState?.await()
+        if (state != null) {
+          withContext(Dispatchers.EDT) {
+            state.setToEditor(editor)
+          }
+        }
+      }
+    )
+
     return object : AsyncFileEditorProvider.Builder() {
       override fun build(): FileEditor {
         val editor = factory.createMainEditor(document, project, file)
         val textEditor = PsiAwareTextEditorImpl(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
-        asyncLoader.start(textEditor = textEditor, highlighterDeferred = highlighter)
+        asyncLoader.start(textEditor = textEditor, tasks = tasks)
         return textEditor
       }
     }

@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.rootTask
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.lang.Language
@@ -28,6 +30,7 @@ import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import javax.swing.JComponent
+import kotlin.coroutines.EmptyCoroutineContext
 
 private val TRANSIENT_EDITOR_STATE_KEY = Key.create<TransientEditorState>("transientState")
 
@@ -46,8 +49,9 @@ open class TextEditorImpl @Internal constructor(@JvmField protected val project:
                                          file = file,
                                          editor = editor,
                                          asyncLoader = createAsyncEditorLoader(provider, project)) {
+    val highlighter = asyncLoader.createHighlighterAsync(editor.document, file)
     @Suppress("LeakingThis")
-    asyncLoader.start(textEditor = this, highlighterDeferred = asyncLoader.createHighlighterAsync(editor.document, file))
+    asyncLoader.start(textEditor = this, tasks = listOf { configureHighlighter(highlighter, it) })
   }
 
   init {
@@ -70,9 +74,12 @@ open class TextEditorImpl @Internal constructor(@JvmField protected val project:
   // don't pollute global scope
   companion object {
     fun createAsyncEditorLoader(provider: TextEditorProvider, project: Project): AsyncEditorLoader {
-      return AsyncEditorLoader(project = project,
-                               provider = provider,
-                               coroutineScope = project.service<AsyncEditorLoaderService>().coroutineScope.childScope(supervisor = false))
+      val context = if (StartUpMeasurer.isEnabled()) rootTask() else EmptyCoroutineContext
+      return AsyncEditorLoader(
+        project = project,
+        provider = provider,
+        coroutineScope = project.service<AsyncEditorLoaderService>().coroutineScope.childScope(supervisor = false, context = context),
+      )
     }
 
     @Internal

@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.CompositeDataProvider
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
@@ -26,12 +27,10 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import java.util.concurrent.CancellationException
@@ -58,10 +57,8 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
 
   override suspend fun loadEditorInBackground(): Runnable {
     val editor = editor
-    val document = editor.document
 
     class State {
-      var foldingState: CodeFoldingState? = null
       var focusZones: List<Segment>? = null
       var items: DocRenderPassFactory.Items? = null
       var buffer: HintsBuffer? = null
@@ -70,16 +67,8 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
     }
     val state = State()
 
-    val psiManager = PsiManager.getInstance(project)
+    val psiManager = project.serviceAsync<PsiManager>()
     readAction {
-      if (!project.isDefault && PsiDocumentManager.getInstance(project).isCommitted(document)) {
-        state.foldingState = catchingExceptions {
-          blockingContextToIndicator {
-            CodeFoldingManager.getInstance(project).buildInitialFoldings(document)
-          }
-        }
-      }
-
       val psiFile = psiManager.findFile(file)
       state.psiFile = psiFile
       state.focusZones = catchingExceptions { FocusModePassFactory.calcFocusZones(psiFile) }
@@ -96,7 +85,6 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
     }
 
     return Runnable {
-      state.foldingState?.setToEditor(editor)
       state.focusZones?.let { focusZones ->
         FocusModePassFactory.setToEditor(focusZones, editor)
         if (editor is EditorImpl) {
@@ -177,7 +165,7 @@ private inline fun <T : Any> catchingExceptionsAsync(computable: () -> T?): T? {
 }
 
 // not `inline` to ensure that this function is not used for a `suspend` task
-private fun <T : Any> catchingExceptions(computable: () -> T?): T? {
+internal fun <T : Any> catchingExceptions(computable: () -> T?): T? {
   try {
     return computable()
   }

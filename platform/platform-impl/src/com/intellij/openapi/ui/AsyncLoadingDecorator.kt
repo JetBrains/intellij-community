@@ -37,9 +37,7 @@ internal class AsyncLoadingDecorator(private val startDelay: Duration) {
     }
   }
 
-  fun stopLoading(scope: CoroutineScope, indicatorJob: Job) {
-    // no need to join - executed in EDT
-    indicatorJob.cancel()
+  fun stopLoading(scope: CoroutineScope) {
     scope.launch(Dispatchers.EDT) {
       val loadingLayer = loadingLayer ?: return@launch
       try {
