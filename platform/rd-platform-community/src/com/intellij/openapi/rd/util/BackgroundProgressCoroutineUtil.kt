@@ -350,12 +350,14 @@ private class ProgressCoroutineScopeBridge private constructor(coroutineContext:
   }
 
   private val job = launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
-    withRawProgressReporter {
-      bridgeIndicator.reporter = rawProgressReporter!!
-      initializationTask.complete(Unit)
-      awaitCancellationAndInvoke {
-        if (needToCancel.get())
-          bridgeIndicator.cancel()
+    indeterminateStep {
+      withRawProgressReporter {
+        bridgeIndicator.reporter = rawProgressReporter!!
+        initializationTask.complete(Unit)
+        awaitCancellationAndInvoke {
+          if (needToCancel.get())
+            bridgeIndicator.cancel()
+        }
       }
     }
   }
