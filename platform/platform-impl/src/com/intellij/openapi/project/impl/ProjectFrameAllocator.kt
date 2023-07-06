@@ -362,12 +362,11 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
       return@coroutineScope
     }
 
-    val component = subtask(StartUpMeasurer.Activities.EDITOR_RESTORING) {
+    subtask("editor restoring") {
       editorComponent.createEditors(state = editorState)
     }
 
     subtask("editor reopening post-processing", Dispatchers.EDT) {
-      editorComponent.add(component, BorderLayout.CENTER)
       for (window in editorComponent.getWindows()) {
         // clear empty splitters
         if (window.tabCount == 0) {

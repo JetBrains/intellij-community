@@ -166,7 +166,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
   /**
    * A composite in a context.
-   * For example, if a context menu is shown currently for some tab, composite for which a menu is invoked will be returned
+   * For example, if a context menu is shown currently for some tab, the composite for which a menu is invoked will be returned
    */
   fun getContextComposite(): EditorComposite? {
     return (tabbedPane.tabs.targetInfo?.component as? EditorWindowTopComponent)?.composite
@@ -250,7 +250,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       }
     }
 
-    // Even if above/below adjacent editor is shifted a bit to the right from the left edge of the current editor,
+    // Even if the above/below adjacent editor is shifted a bit to the right from the left edge of the current editor,
     // still try to choose an editor that is visually above/below - shifted nor more than a quarter of editor width.
     val x = point.x + panel.width / 4
     // Splitter has width of one pixel - we need to step at least 2 pixels to be over an adjacent editor
@@ -621,7 +621,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       }
       else -> throw IllegalStateException("Unknown container: $parent")
     }
-    @Suppress("SSBasedInspection")
     dispose()
   }
 
@@ -654,7 +653,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       return fileIndex + 1
     }
 
-    // by default, select the previous neighbour
+    // by default, select the previous neighbor
     return if (fileIndex > 0) fileIndex - 1 else -1
   }
 
@@ -1112,7 +1111,7 @@ private class MySplitPainter(
       })
     val switchShortcuts = IdeBundle.message("split.with.chooser.switch.tab", getShortcut("SplitChooser.NextWindow"))
 
-    // Adjust default width to an info text
+    // Adjust the default width to an info text
     val font = StartupUiUtil.labelFont
     val fontMetrics = g.getFontMetrics(font)
     val openShortcutsWidth = fontMetrics.stringWidth(openShortcuts)

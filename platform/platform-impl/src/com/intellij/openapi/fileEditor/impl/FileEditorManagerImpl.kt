@@ -8,7 +8,10 @@ import com.intellij.ProjectTopics
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.subtask
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.SplitAction
@@ -123,7 +126,7 @@ private val LOG = logger<FileEditorManagerImpl>()
 open class FileEditorManagerImpl(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
-) : FileEditorManagerEx(), PersistentStateComponent<Element?>, Disposable {
+) : FileEditorManagerEx(), PersistentStateComponent<Element>, Disposable {
   private val dumbModeFinishedScope = coroutineScope.childScope()
 
   enum class OpenMode {
@@ -1624,7 +1627,7 @@ open class FileEditorManagerImpl(
   }
 
   override fun loadState(state: Element) {
-    this.state.set(EditorSplitterState(state))
+    this.state.set(EditorSplitterState(state).takeIf { it.leaf != null || it.splitters != null })
   }
 
   open fun getComposite(editor: FileEditor): EditorComposite? {

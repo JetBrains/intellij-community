@@ -14,6 +14,7 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.client.ClientSessionsManager
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.CodeInsightColors
@@ -31,6 +32,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
+import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
@@ -282,10 +284,11 @@ open class EditorsSplitters internal constructor(
 
   @Internal
   suspend fun restoreEditors(state: EditorSplitterState) {
-    val component = UiBuilder(this).process(state = state, context = if (componentCount > 0) getComponent(0) as JPanel else null)
     withContext(Dispatchers.EDT) {
       removeAll()
-      add(component, BorderLayout.CENTER)
+    }
+    UiBuilder(this).process(state = state) { add(it, BorderLayout.CENTER) }
+    withContext(Dispatchers.EDT) {
       validate()
 
       for (window in windows) {
@@ -301,9 +304,9 @@ open class EditorsSplitters internal constructor(
   }
 
   @Internal
-  suspend fun createEditors(state: EditorSplitterState): JComponent {
+  suspend fun createEditors(state: EditorSplitterState) {
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
-    return UiBuilder(this).process(state = state, context = null)
+    UiBuilder(this).process(state = state) { add(it, BorderLayout.CENTER) }
   }
 
   fun addSelectedEditorsTo(result: MutableCollection<FileEditor>) {
@@ -820,27 +823,27 @@ private class MyTransferHandler(private val splitters: EditorsSplitters) : Trans
 }
 
 @Internal
-class EditorSplitterState(element: Element) {
-  @JvmField
-  val first: Element?
-
-  @JvmField
-  val second: Element?
-
-  @JvmField
-  val firstSplitter: EditorSplitterState?
-
-  @JvmField
-  val secondSplitter: EditorSplitterState?
-
-  @JvmField
-  val files: List<FileEntry>
-
+class EditorSplitterStateSplitter(
+  @JvmField val firstSplitter: EditorSplitterState,
+  @JvmField val secondSplitter: EditorSplitterState,
+  splitterElement: Element,
+) {
   @JvmField
   val isVertical: Boolean
 
   @JvmField
   val proportion: Float
+
+  init {
+    isVertical = splitterElement.getAttributeValue("split-orientation") == "vertical"
+    proportion = splitterElement.getAttributeValue("split-proportion")?.toFloat() ?: 0.5f
+  }
+}
+
+@Internal
+class EditorSplitterStateLeaf(element: Element) {
+  @JvmField
+  val files: List<FileEntry>
 
   @JvmField
   val tabSizeLimit: Int
@@ -852,75 +855,99 @@ class EditorSplitterState(element: Element) {
   )
 
   init {
-    val splitterElement = element.getChild("splitter")
-    first = splitterElement?.getChild("split-first")
-    second = splitterElement?.getChild("split-second")
-
-    firstSplitter = first?.let { EditorSplitterState(it) }
-    secondSplitter = second?.let { EditorSplitterState(it) }
-
-    isVertical = splitterElement?.getAttributeValue("split-orientation") == "vertical"
-    proportion = splitterElement?.getAttributeValue("split-proportion")?.toFloat() ?: 0.5f
-
-    val leaf = element.getChild("leaf")
-    files = (leaf?.getChildren("file")?.map {
+    files = (element.getChildren("file")?.map {
       FileEntry(
         pinned = it.getAttributeBooleanValue(PINNED),
         currentInTab = it.getAttributeValue(CURRENT_IN_TAB, "true").toBoolean(),
         history = it.getChild(HistoryEntry.TAG),
       )
     }) ?: emptyList()
-    tabSizeLimit = leaf?.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString())?.toIntOrNull() ?: -1
+    tabSizeLimit = element.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString())?.toIntOrNull() ?: -1
+  }
+}
+
+@Internal
+class EditorSplitterState(element: Element) {
+  @JvmField
+  val splitters: EditorSplitterStateSplitter?
+  val leaf: EditorSplitterStateLeaf?
+
+  init {
+    val splitterElement = element.getChild("splitter")
+    val first = splitterElement?.getChild("split-first")
+    val second = splitterElement?.getChild("split-second")
+
+    if (first == null || second == null) {
+      splitters = null
+      leaf = element.getChild("leaf")?.let { EditorSplitterStateLeaf(it) }
+    }
+    else {
+      splitters = EditorSplitterStateSplitter(firstSplitter = EditorSplitterState(first),
+                                              secondSplitter = EditorSplitterState(second),
+                                              splitterElement = splitterElement)
+      leaf = null
+    }
   }
 }
 
 private class UiBuilder(private val splitters: EditorsSplitters) {
-  suspend fun process(state: EditorSplitterState, context: JPanel?): JPanel {
-    if (state.firstSplitter != null && state.secondSplitter != null) {
-      return processSplitter(state, context)
-    }
-
-    val files = state.files
-    val trimmedFiles: List<EditorSplitterState.FileEntry>
-    var toRemove = files.size - EditorWindow.tabLimit
-    if (toRemove <= 0) {
-      trimmedFiles = files
-    }
-    else {
-      trimmedFiles = ArrayList(files.size)
-      // trim to EDITOR_TAB_LIMIT, ignoring CLOSE_NON_MODIFIED_FILES_FIRST policy
-      for (fileElement in files) {
-        if (toRemove <= 0 || fileElement.pinned) {
-          trimmedFiles.add(fileElement)
-        }
-        else {
-          toRemove--
+  suspend fun process(state: EditorSplitterState, addChild: (child: JPanel) -> Unit) {
+    val splitState = state.splitters
+    if (splitState == null) {
+      val leaf = state.leaf
+      val files = leaf?.files ?: emptyList()
+      val trimmedFiles: List<EditorSplitterStateLeaf.FileEntry>
+      var toRemove = files.size - EditorWindow.tabLimit
+      if (toRemove <= 0) {
+        trimmedFiles = files
+      }
+      else {
+        trimmedFiles = ArrayList(files.size)
+        // trim to EDITOR_TAB_LIMIT, ignoring CLOSE_NON_MODIFIED_FILES_FIRST policy
+        for (fileElement in files) {
+          if (toRemove <= 0 || fileElement.pinned) {
+            trimmedFiles.add(fileElement)
+          }
+          else {
+            toRemove--
+          }
         }
       }
+      processFiles(fileEntries = trimmedFiles, tabSizeLimit = leaf?.tabSizeLimit ?: Int.MAX_VALUE, addChild = addChild)
     }
-    return processFiles(fileEntries = trimmedFiles, tabSizeLimit = state.tabSizeLimit, context = context)
+    else {
+      val splitter = withContext(Dispatchers.EDT) {
+        val splitter = createSplitter(orientation = splitState.isVertical,
+                                      proportion = splitState.proportion,
+                                      minProp = 0.1f,
+                                      maxProp = 0.9f)
+        splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, true)
+        addChild(splitter)
+        splitter
+      }
+
+      process(state = splitState.firstSplitter, addChild = { splitter.firstComponent = it })
+      process(state = splitState.secondSplitter, addChild = { splitter.secondComponent = it })
+    }
   }
 
-  private suspend fun processFiles(fileEntries: List<EditorSplitterState.FileEntry>, tabSizeLimit: Int, context: JPanel?): JPanel {
-    return coroutineScope {
+  private suspend fun processFiles(fileEntries: List<EditorSplitterStateLeaf.FileEntry>,
+                                   tabSizeLimit: Int,
+                                   addChild: (child: JPanel) -> Unit) {
+    coroutineScope {
       val windowDeferred = async(Dispatchers.EDT) {
-        var editorWindow = context?.let(splitters::findWindowWith)
-        if (editorWindow == null) {
-          editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
-          editorWindow.panel.isFocusable = false
-        }
-        else if (splitters.currentWindow == null) {
-          splitters.setCurrentWindow(window = editorWindow, requestFocus = false)
-        }
+        val editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
+        editorWindow.panel.isFocusable = false
         if (tabSizeLimit != 1) {
           editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)
         }
+        addChild(editorWindow.panel)
         editorWindow
       }
 
       var focusedFile: VirtualFile? = null
       val fileEditorManager = splitters.manager
-      val fileDocumentManager = FileDocumentManager.getInstance()
+      val fileDocumentManager = serviceAsync<FileDocumentManager>()
       for (i in fileEntries.indices) {
         val fileEntry = fileEntries.get(i)
         val fileName = fileEntry.history.getAttributeValue(HistoryEntry.FILE_ATTR)
@@ -977,7 +1004,6 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         activity.end()
       }
 
-      val window = windowDeferred.await()
       if (focusedFile == null) {
         val manager = ToolWindowManager.getInstance(splitters.manager.project)
         manager.invokeLater {
@@ -987,6 +1013,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         }
       }
       else {
+        val window = windowDeferred.await()
         fileEditorManager.addSelectionRecord(focusedFile, window)
         splitters.coroutineScope.launch(Dispatchers.EDT) {
           window.getComposite(focusedFile)?.let {
@@ -1000,47 +1027,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
           }
         }
       }
-      window.panel
     }
-  }
-
-  suspend fun processSplitter(state: EditorSplitterState, context: JPanel?): JPanel {
-    if (context == null) {
-      val firstComponent = process(state = state.firstSplitter!!, context = null)
-      val secondComponent = process(state = state.secondSplitter!!, context = null)
-      return withContext(Dispatchers.EDT) {
-        val splitter = createSplitter(orientation = state.isVertical,
-                                      proportion = state.proportion,
-                                      minProp = 0.1f,
-                                      maxProp = 0.9f)
-        splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, true)
-        splitter.firstComponent = firstComponent
-        splitter.secondComponent = secondComponent
-
-        val panel = JPanel(BorderLayout())
-        panel.isFocusable = false
-        panel.isOpaque = false
-        panel.add(splitter, BorderLayout.CENTER)
-        panel
-      }
-    }
-
-    var firstComponent: JPanel
-    var secondComponent: JPanel
-    withContext(Dispatchers.EDT) {
-      val component = context.getComponent(0)
-      if (component is Splitter) {
-        firstComponent = component.firstComponent as JPanel
-        secondComponent = component.secondComponent as JPanel
-      }
-      else {
-        firstComponent = context
-        secondComponent = context
-      }
-    }
-    process(state = state.firstSplitter!!, context = firstComponent)
-    process(state = state.secondSplitter!!, context = secondComponent)
-    return context
   }
 }
 
@@ -1117,14 +1104,18 @@ private fun getSplittersForProject(activeWindow: Window?, project: Project?): Ed
 private fun getLastFocusedSplittersForProject(activeWindow: Window?, project: Project?): EditorsSplitters? {
   val fileEditorManager = (if (project == null || project.isDisposed) null else FileEditorManagerEx.getInstanceEx(project))
                           ?: return null
-  return (fileEditorManager as? FileEditorManagerImpl)?.getLastFocusedSplitters()
-         ?: getSplittersForProject(activeWindow, project)
+  return (fileEditorManager as? FileEditorManagerImpl)?.getLastFocusedSplitters() ?: getSplittersForProject(activeWindow, project)
 }
 
-internal fun createSplitter(orientation: Boolean, proportion: Float, minProp: Float, maxProp: Float): OnePixelSplitter {
-  return object : OnePixelSplitter(orientation, proportion, minProp, maxProp) {
+internal fun createSplitter(orientation: Boolean, proportion: Float, minProp: Float, maxProp: Float): Splitter {
+  return object : Splitter(orientation, proportion, minProp, maxProp) {
+    init {
+      setDividerWidth(1)
+      setFocusable(false)
+    }
+
     override fun createDivider(): Divider {
-      val divider = super.createDivider()
+      val divider = OnePixelDivider(isVertical, this)
       divider.background = JBColor.namedColor("EditorPane.splitBorder", JBColor.border())
       return divider
     }

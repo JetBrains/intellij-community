@@ -30,7 +30,6 @@ public final class StartUpMeasurer {
     public static final String CREATE_COMPONENTS_SUFFIX = "component creation";
 
     public static final String PROJECT_DUMB_POST_START_UP_ACTIVITIES = "project post-startup dumb-aware activities";
-    public static final String EDITOR_RESTORING = "editor restoring";
     public static final String EDITOR_RESTORING_TILL_PAINT = "editor restoring till paint";
   }
 
