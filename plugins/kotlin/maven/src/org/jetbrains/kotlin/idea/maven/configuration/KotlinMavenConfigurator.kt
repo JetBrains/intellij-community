@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersi
 import org.jetbrains.kotlin.idea.maven.*
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 
 abstract class KotlinMavenConfigurator
 protected constructor(
@@ -101,6 +102,7 @@ protected constructor(
 
         dialog.show()
         if (!dialog.isOK) return
+        KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project)
 
         WriteCommandAction.runWriteCommandAction(project) {
             val collector = NotificationMessageCollector.create(project)
