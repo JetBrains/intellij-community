@@ -7,6 +7,12 @@ public class NotAnnotationsInDeconstructionType {
     t instanceof <error descr="Annotations are not allowed in deconstruction pattern types">T<@SomeAnnotation String></error>(String s);
   }
 
+  private void test2(T[] t) {
+    if (t instanceof <error descr="Annotations are not allowed in deconstruction pattern types">T @SomeAnnotation []</error>(String s)) {
+      System.out.println();
+    }
+  }
+
   record T<T>(T t) {
   }
 
