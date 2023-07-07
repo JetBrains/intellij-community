@@ -167,7 +167,7 @@ public final class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
       if (rounded) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-        int arc = DarculaUIUtil.COMPONENT_ARC.get();
+        int arc = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().get();
         g2.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, arc, arc);
       }
       else {

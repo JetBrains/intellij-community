@@ -48,6 +48,10 @@ internal class HeaderToolbarButtonLook(
   private val iconSize: () -> Int = { JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSize() }
 ) : IdeaActionButtonLook() {
 
+  override fun getButtonArc(): JBValue {
+    return JBUI.CurrentTheme.MainToolbar.Button.hoverArc()
+  }
+
   override fun getStateBackground(component: JComponent, state: Int): Color? = getHeaderBackgroundColor(component, state)
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}

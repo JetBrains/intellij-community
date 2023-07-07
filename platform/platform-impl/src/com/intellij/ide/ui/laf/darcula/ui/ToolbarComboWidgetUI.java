@@ -202,7 +202,7 @@ public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyC
       }
 
       Color highlightBackground = c.getHighlightBackground();
-      int arc = DarculaUIUtil.COMPONENT_ARC.get();
+      int arc = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().get();
       if (highlightBackground != null) {
         Rectangle highlightRect = c.getVisibleRect();
         g2.setColor(highlightBackground);

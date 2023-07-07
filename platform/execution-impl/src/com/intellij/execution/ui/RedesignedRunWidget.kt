@@ -266,7 +266,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
   }
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
-  override fun getButtonArc(): JBValue = JBValue.Float(6f)
+  override fun getButtonArc(): JBValue = JBUI.CurrentTheme.MainToolbar.Button.hoverArc()
 }
 
 internal const val MINIMAL_POPUP_WIDTH = 270
