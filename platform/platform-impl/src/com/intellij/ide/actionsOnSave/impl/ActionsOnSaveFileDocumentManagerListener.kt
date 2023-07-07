@@ -99,7 +99,7 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
   }
 
   private suspend fun processSavedDocuments() {
-    val documents = documentsToProcess.toArray(Document.EMPTY_ARRAY)
+    val documentsAndModStamps = documentsToProcess.map { it to it.modificationStamp }
     documentsToProcess.clear()
 
     val manager = FileDocumentManager.getInstance()
@@ -112,9 +112,12 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
       val index = ProjectFileIndex.getInstance(project)
       val projectDocuments = withContext(Dispatchers.Default) {
         readAction {
-          documents.filter { document ->
-            val file = manager.getFile(document)
-            file != null && index.isInContent(file)
+          documentsAndModStamps.mapNotNull {
+            val document = it.first
+            val modStamp = it.second
+            if (document.modificationStamp != modStamp) return@mapNotNull null // already edited after save
+            val file = manager.getFile(document) ?: return@mapNotNull null
+            if (index.isInContent(file)) document else null
           }
         }
       }
