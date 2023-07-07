@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.naming.AutomaticRenamer
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.usageView.UsageInfo
-import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -51,13 +50,14 @@ private fun KtNamedFunction.getOverloads(): Collection<KtNamedFunction> {
             val symbol = getSymbol() as? KtFunctionSymbol  ?: return emptyList()
             if (symbol.isActual() && symbol.getExpectForActual() != null) return emptyList()
             val result = LinkedHashSet<KtNamedFunction>()
-            buildList<KtScope> {
-                add(containingKtFile.getFileSymbol().getFileScope())
-                addIfNotNull(getPackageSymbolIfPackageExists(containingKtFile.packageFqName)?.getPackageScope())
-                addIfNotNull((symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.getDeclaredMemberScope())
-                addIfNotNull(symbol.receiverParameter?.type?.expandedClassSymbol?.getDeclaredMemberScope())
-            }.forEach { scope ->
-                scope.getCallableSymbols(name).mapNotNullTo(result) {
+            listOfNotNull<KtScope>(
+                //TODO add scope from current context
+                containingKtFile.getFileSymbol().getFileScope(),
+                getPackageSymbolIfPackageExists(containingKtFile.packageFqName)?.getPackageScope(),
+                (symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.getDeclaredMemberScope(),
+                symbol.receiverParameter?.type?.expandedClassSymbol?.getDeclaredMemberScope()
+            ).flatMapTo(result) { scope ->
+                scope.getCallableSymbols(name).mapNotNull {
                     it.psi as? KtNamedFunction
                 }
             }

@@ -27,9 +27,25 @@ interface KotlinCommonRefactoringSettings {
     var MOVE_MPP_DECLARATIONS: Boolean
     var INTRODUCE_DECLARE_WITH_VAR: Boolean
     var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean
+
+    /**
+     * Indicates whether automatic variable rename based on changed type name is suggested
+     */
     var renameVariables: Boolean
+
+    /**
+     * Indicates whether automatic parameter rename based on changed parameter name in super function is suggested
+     */
     var renameParameterInHierarchy: Boolean
+
+    /**
+     * Indicates whether automatic inheritors rename based on changed super class name is suggested
+     */
     var renameInheritors: Boolean
+
+    /**
+     * Indicates whether automatic functions rename based on changed overloaded function name is suggested
+     */
     var renameOverloads: Boolean
 
     companion object {

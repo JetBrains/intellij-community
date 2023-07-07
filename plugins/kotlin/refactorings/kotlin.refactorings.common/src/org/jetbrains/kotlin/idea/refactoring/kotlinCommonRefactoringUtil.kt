@@ -15,7 +15,7 @@ fun PsiElement.canRefactor(): Boolean {
     !isValid -> false
     this is PsiPackage ->
       directories.any { it.canRefactor() }
-    this is KtElement || this is PsiMember && language == JavaLanguage.INSTANCE || this is PsiDirectory ->
+    this is KtElement || (this is PsiMember && language == JavaLanguage.INSTANCE) || this is PsiDirectory ->
       RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this)
     else -> false
   }
