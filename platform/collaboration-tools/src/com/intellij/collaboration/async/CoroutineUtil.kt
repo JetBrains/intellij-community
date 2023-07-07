@@ -156,7 +156,7 @@ fun <ID : Any, T, R> Flow<Iterable<T>>.associateBy(sourceIdentifier: (T) -> ID,
                                                    destroy: suspend R.() -> Unit,
                                                    update: (suspend R.(T) -> Unit)? = null,
                                                    customHashingStrategy: HashingStrategy<ID>? = null)
-  : Flow<Map<ID, R>> = associateIndexedBy(sourceIdentifier, { cs, item -> mapper(cs, item) }, destroy, update, customHashingStrategy)
+  : Flow<Map<ID, R>> = associateIndexedBy(sourceIdentifier, { cs, item, -> mapper(cs, item) }, destroy, update, customHashingStrategy)
 
 fun <ID : Any, T, R> Flow<Iterable<T>>.associateIndexedBy(
   sourceIdentifier: (T) -> ID,

@@ -51,6 +51,9 @@ internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewMod
   val submittableReview: SharedFlow<SubmittableReview?>
   var submitReviewInputHandler: (suspend (GitLabMergeRequestSubmitReviewViewModel) -> Unit)?
 
+  //TODO: extract reviewers update VM
+  val potentialReviewers: Flow<Result<List<GitLabUserDTO>>>
+
   /**
    * Request the start of a submission process
    */
@@ -79,9 +82,6 @@ internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewMod
   fun removeReviewer(reviewer: GitLabUserDTO)
 
   fun reviewerRereview()
-
-  //TODO: extract reviewers update VM
-  suspend fun getPotentialReviewers(): List<GitLabUserDTO>
 }
 
 private val LOG = logger<GitLabMergeRequestReviewFlowViewModel>()
@@ -140,6 +140,8 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   override val submittableReview: SharedFlow<SubmittableReview?> = mergeRequest.getSubmittableReview(currentUser).modelFlow(scope, LOG)
   override var submitReviewInputHandler: (suspend (GitLabMergeRequestSubmitReviewViewModel) -> Unit)? = null
+
+  override val potentialReviewers: Flow<Result<List<GitLabUserDTO>>> = projectData.members
 
   override fun submitReview() {
     scope.launch {
@@ -258,8 +260,6 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
       }
     }
   }
-
-  override suspend fun getPotentialReviewers(): List<GitLabUserDTO> = projectData.getMembers()
 
   companion object {
     fun GitLabReviewerDTO.MergeRequestInteraction?.toReviewState(): ReviewState {

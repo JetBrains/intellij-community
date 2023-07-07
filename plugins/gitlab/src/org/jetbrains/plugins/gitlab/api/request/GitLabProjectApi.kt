@@ -7,18 +7,17 @@ import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.graphql.loadResponse
 import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.page.ApiPageUtil
-import com.intellij.collaboration.api.page.foldToList
 import com.intellij.collaboration.util.resolveRelative
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserRestDTO
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpResponse
 
-suspend fun GitLabApi.GraphQL.loadAllProjectLabels(project: GitLabProjectCoordinates): List<GitLabLabelDTO> =
+fun GitLabApi.GraphQL.createAllProjectLabelsFlow(project: GitLabProjectCoordinates): Flow<List<GitLabLabelDTO>> =
   ApiPageUtil.createGQLPagesFlow { page ->
     val parameters = page.asParameters() + mapOf(
       "fullPath" to project.projectPath.fullPath()
@@ -27,7 +26,7 @@ suspend fun GitLabApi.GraphQL.loadAllProjectLabels(project: GitLabProjectCoordin
     withErrorStats(project.serverPath, GitLabGQLQuery.GET_PROJECT_LABELS) {
       loadResponse<LabelConnection>(request, "project", "labels").body()
     }
-  }.map { it.nodes }.foldToList()
+  }.map { it.nodes }
 
 fun getProjectUsersURI(project: GitLabProjectCoordinates) = project.restApiUri.resolveRelative("users")
 

@@ -3,7 +3,8 @@ package com.intellij.collaboration.ui.codereview.list.search
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.execution.ui.FragmentedSettingsUtil
-import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.ui.popup.util.RoundedCellRenderer
@@ -14,17 +15,22 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.childScope
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 import javax.swing.ListSelectionModel
+
+private val LOG: Logger
+  get() = logger<ChooserPopupUtil>()
 
 object ChooserPopupUtil {
 
@@ -56,20 +62,20 @@ object ChooserPopupUtil {
     return popup.showAndAwaitSubmission(list, point)
   }
 
-  suspend fun <T> showAsyncChooserPopup(point: RelativePoint,
-                                        itemsLoader: suspend () -> List<T>,
-                                        presenter: (T) -> PopupItemPresentation,
-                                        popupConfig: PopupConfig = PopupConfig.DEFAULT): T? =
+  suspend fun <T : Any> showAsyncChooserPopup(point: RelativePoint,
+                                              itemsLoader: Flow<List<T>>,
+                                              presenter: (T) -> PopupItemPresentation,
+                                              popupConfig: PopupConfig = PopupConfig.DEFAULT): T? =
     showAsyncChooserPopup(point, itemsLoader, { presenter(it).shortText }, createSimpleItemRenderer(presenter), popupConfig)
 
-  suspend fun <T> showAsyncChooserPopup(point: RelativePoint,
-                                        itemsLoader: suspend () -> List<T>,
-                                        filteringMapper: (T) -> String,
-                                        renderer: ListCellRenderer<T>,
-                                        popupConfig: PopupConfig = PopupConfig.DEFAULT): T? {
+  suspend fun <T : Any> showAsyncChooserPopup(point: RelativePoint,
+                                              itemsLoader: Flow<List<T>>,
+                                              filteringMapper: (T) -> String,
+                                              renderer: ListCellRenderer<T>,
+                                              popupConfig: PopupConfig = PopupConfig.DEFAULT): T? = coroutineScope {
     val listModel = CollectionListModel<T>()
     val list = createList(listModel, renderer)
-    val loadingListener = ListLoadingListener(listModel, itemsLoader, list)
+    val loadingListener = ListLoadingListener(this, listModel, itemsLoader, list)
 
     @Suppress("UNCHECKED_CAST")
     val popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
@@ -83,7 +89,7 @@ object ChooserPopupUtil {
     configureSearchField(popup, popupConfig)
 
     PopupUtil.setPopupToggleComponent(popup, point.component)
-    return popup.showAndAwaitSubmission(list, point)
+    popup.showAndAwaitSubmission(list, point)
   }
 
 
@@ -133,41 +139,37 @@ object ChooserPopupUtil {
       background = JBUI.CurrentTheme.Popup.BACKGROUND
     }
 
-  private class ListLoadingListener<T>(private val listModel: CollectionListModel<T>,
-                                       private val itemsLoader: suspend () -> List<T>,
-                                       private val list: JBList<T>) : JBPopupListener {
-
-    private var scope: CoroutineScope? = null
+  private class ListLoadingListener<T : Any>(private val parentScope: CoroutineScope,
+                                             private val listModel: CollectionListModel<T>,
+                                             private val items: Flow<List<T>>,
+                                             private val list: JList<T>) : JBPopupListener {
+    private var cs: CoroutineScope? = null
 
     override fun beforeShown(event: LightweightWindowEvent) {
-      scope = MainScope().apply {
-        launch {
-          with(list) {
-            startLoading()
-            val items = itemsLoader()
-            listModel.replaceAll(items)
-            finishLoading()
+      val cs = parentScope.childScope()
+      this.cs = cs
+
+      cs.launch {
+        items.collect {
+          try {
+            val selected = list.selectedIndex
+            if (it.size > listModel.size) {
+              val newList = it.subList(listModel.size, it.size)
+              listModel.addAll(listModel.size, newList)
+            }
+            if (selected != -1) {
+              list.selectedIndex = selected
+            }
           }
-          event.asPopup().pack(true, true)
+          catch (e: Exception) {
+            LOG.error(e)
+          }
         }
       }
     }
 
-    private fun JBList<T>.startLoading() {
-      setPaintBusy(true)
-      emptyText.text = ApplicationBundle.message("label.loading.page.please.wait")
-    }
-
-    private fun JBList<T>.finishLoading() {
-      setPaintBusy(false)
-      emptyText.text = UIBundle.message("message.noMatchesFound")
-      if (selectedIndex == -1) {
-        selectedIndex = 0
-      }
-    }
-
     override fun onClosed(event: LightweightWindowEvent) {
-      scope?.cancel()
+      cs?.cancel()
     }
   }
 
