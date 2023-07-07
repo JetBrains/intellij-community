@@ -4,14 +4,18 @@ package com.intellij.psi.stubs;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.model.ModelBranch;
 import com.intellij.model.ModelBranchImpl;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -19,6 +23,7 @@ import com.intellij.util.CachedValueImpl;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
@@ -227,9 +232,6 @@ public abstract class StubIndexEx extends StubIndex {
           throw e;
         }
       }
-      finally {
-        wipeProblematicFileIdsForParticularKeyAndStubIndex(indexKey, key);
-      }
       return true;
     }
     catch (Throwable t) {
@@ -237,6 +239,7 @@ public abstract class StubIndexEx extends StubIndex {
       throw t;
     }
     finally {
+      tryFixIndexesForProblemFiles(indexKey, key, project);
       //Not using try-with-resources because in case of exceptions are thrown, .close() needs to be called _after_ catch,
       //  so .lookupFailed() is invoked on a not-yet-closed trace -- but TWR does the opposite: first close resources, then
       //  do all catch/finally blocks
@@ -270,20 +273,30 @@ public abstract class StubIndexEx extends StubIndex {
 
   // Self repair for IDEA-181227, caused by (yet) unknown file event processing problem in indices
   // FileBasedIndex.requestReindex doesn't handle the situation properly because update requires old data that was lost
-  private <Key> void wipeProblematicFileIdsForParticularKeyAndStubIndex(@NotNull StubIndexKey<Key, ?> indexKey,
-                                                                        @NotNull Key key) {
+  private <Key> void tryFixIndexesForProblemFiles(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull Key key, @NotNull Project project) {
     Set<VirtualFile> filesWithProblems = myStubProcessingHelper.takeAccumulatedFilesWithIndexProblems();
 
     if (filesWithProblems != null) {
-      getLogger().info("data for " + indexKey.getName() + " will be wiped for a some files because of internal stub processing error");
+      List<String> fileNames = ContainerUtil.map(filesWithProblems, f -> f.getName());
+      String fileNamesStr = StringUtil.first(StringUtil.join(fileNames, ","), 300, true);
+      getLogger().info("Data for " + fileNamesStr + " will be re-indexes because of internal stub processing error. Recomputing index request");
+
+      // clear possibly inconsistent key
       ((FileBasedIndexEx)FileBasedIndex.getInstance()).runCleanupAction(() -> {
+        UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> index = getStubUpdatingIndex();
+
+        for (VirtualFile file : filesWithProblems) {
+          int fileId = FileBasedIndex.getFileId(file);
+          index.mapInputAndPrepareUpdate(fileId, null).compute();
+        }
+
         Lock writeLock = getIndex(indexKey).getLock().writeLock();
-        boolean locked = writeLock.tryLock();
-        if (!locked) return; // nested indices invocation, can not cleanup without deadlock
+        writeLock.lock();
         try {
           for (VirtualFile file : filesWithProblems) {
+            int fileId = FileBasedIndex.getFileId(file);
             updateIndex(indexKey,
-                        FileBasedIndex.getFileId(file),
+                        fileId,
                         Collections.singleton(key),
                         Collections.emptySet());
           }
@@ -291,7 +304,21 @@ public abstract class StubIndexEx extends StubIndex {
         finally {
           writeLock.unlock();
         }
+
+        index.cleanupMemoryStorage();
       });
+
+      // schedule indexes to rebuild
+      for (VirtualFile file: filesWithProblems) {
+        FileBasedIndex.getInstance().requestReindex(file);
+      }
+
+      // drop caches
+      ApplicationManager.getApplication().invokeLater(() -> WriteAction.run(() -> {
+        PsiManager psiManager = PsiManager.getInstance(project);
+        psiManager.dropPsiCaches();
+        psiManager.dropResolveCaches();
+      }), project.getDisposed());
     }
   }
 

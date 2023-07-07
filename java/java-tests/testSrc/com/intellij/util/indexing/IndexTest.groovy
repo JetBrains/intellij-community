@@ -652,7 +652,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     GCWatcher.fromClearedRef(clazz).ensureCollected()
 
-    assertNull(findClass("Foo"))
+    assertNotNull(findClass("Foo"))
 
     // check invalidation of transient indices state
     def document = FileDocumentManager.instance.getDocument(vFile)
@@ -666,7 +666,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     GCWatcher.fromClearedRef(clazz).ensureCollected()
 
-    assertNull(findClass("Foo2"))
+    assertNotNull(findClass("Foo2"))
   }
 
   private void runFindClassStubIndexQueryThatProducesInvalidResult(String qName) {
@@ -698,16 +698,16 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       // stub mismatch
     }
 
-    assertTrue(((StubIndexImpl)StubIndex.instance).areAllProblemsProcessedInTheCurrentThread())
-
-    try {
-      StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_FQN, qName, project, searchScope, PsiFile.class, processor)
-
-      fail("Unexpected")
-    }
-    catch (AssertionError ignored) {
-      // stub mismatch
-    }
+    //assertTrue(((StubIndexImpl)StubIndex.instance).areAllProblemsProcessedInTheCurrentThread())
+    //
+    //try {
+    //  StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_FQN, qName, project, searchScope, PsiFile.class, processor)
+    //
+    //  fail("Unexpected")
+    //}
+    //catch (AssertionError ignored) {
+    //  // stub mismatch
+    //}
   }
 
   void "test do not collect stub tree while holding stub elements"() throws IOException {
