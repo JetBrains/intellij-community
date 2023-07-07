@@ -340,21 +340,21 @@
     "Notification.Shadow": {
       "borderInsets": "5,5,5,5",
       "top0Color": "#00000000",
-      "top1Color": "#00000020",
+      "top1Color": "#00000010",
       "bottom0Color": "#00000000",
-      "bottom1Color": "#00000020",
+      "bottom1Color": "#00000010",
       "left0Color": "#00000000",
-      "left1Color": "#00000020",
+      "left1Color": "#00000010",
       "right0Color": "#00000000",
-      "right1Color": "#00000020",
+      "right1Color": "#00000010",
       "topLeft0Color": "#00000000",
-      "topLeft1Color": "#00000020",
+      "topLeft1Color": "#00000010",
       "topRight0Color": "#00000000",
-      "topRight1Color": "#00000020",
+      "topRight1Color": "#00000010",
       "bottomLeft0Color": "#00000000",
-      "bottomLeft1Color": "#00000020",
+      "bottomLeft1Color": "#00000010",
       "bottomRight0Color": "#00000000",
-      "bottomRight1Color": "#00000020"
+      "bottomRight1Color": "#00000010"
     },
 
     "Notification": {

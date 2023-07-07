@@ -193,12 +193,19 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
     val javaShadow = ShadowJava2DPainter.enabled()
     val shadowVerticalOffset = if (javaShadow) 0 else JBUI.scale(8)
     var verticalOffset = if (javaShadow) 0 else JBUI.scale(2)
+    var startX = startX
     var y = startY
 
     if (javaShadow) {
-      val bottomOffset = JBUI.scale(10) - ShadowJava2DPainter.getInsets("Notification").bottom
+      val startOffset = JBUI.scale(10)
+      val insets = ShadowJava2DPainter.getInsets("Notification")
+      val rightOffset = startOffset - insets.right
+      val bottomOffset = startOffset - insets.bottom
       if (bottomOffset > 0) {
         y -= bottomOffset
+      }
+      if (rightOffset > 0) {
+        startX -= rightOffset
       }
     }
 
