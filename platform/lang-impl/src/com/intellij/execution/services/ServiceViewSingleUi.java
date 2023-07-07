@@ -55,7 +55,9 @@ class ServiceViewSingleUi implements ServiceViewUi {
     if (component.getParent() == myMainPanel) return;
 
     myMainPanel.setContent(component);
-    myMainPanel.getToolbar().setVisible(ServiceViewActionProvider.isActionToolBarRequired(component));
+    if (ServiceViewUIUtils.isNewServicesUIEnabled()) {
+      myMainPanel.getToolbar().setVisible(ServiceViewActionProvider.isActionToolBarRequired(component));
+    }
   }
 
   @Override
