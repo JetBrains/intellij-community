@@ -26,7 +26,7 @@ class GHPROpenPullRequestAction : DumbAwareAction(GithubBundle.messagePointer("p
     val selection = e.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
     val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
 
-    val pullRequest = selection ?: dataProvider!!.id
+    val pullRequest = selection?.prId ?: dataProvider!!.id
 
     controller.viewPullRequest(pullRequest)
     controller.openPullRequestTimeline(pullRequest, false)

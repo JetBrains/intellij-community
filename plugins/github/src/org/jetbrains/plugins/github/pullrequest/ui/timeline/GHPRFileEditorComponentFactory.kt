@@ -247,7 +247,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                                          currentUser: GHUser)
     : GHPRTimelineItemComponentFactory {
 
-    val selectInToolWindowHelper = GHPRSelectInToolWindowHelper(project, detailsModel.value)
+    val selectInToolWindowHelper = GHPRSelectInToolWindowHelper(project, detailsModel.value.prId)
     return GHPRTimelineItemComponentFactory(
       project,
       detailsDataProvider,

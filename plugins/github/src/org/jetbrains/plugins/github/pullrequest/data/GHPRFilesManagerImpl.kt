@@ -35,7 +35,7 @@ internal class GHPRFilesManagerImpl(private val project: Project,
   }
 
   override fun createOrGetDiffFile(pullRequest: GHPRIdentifier, sourceId: String, combinedDiff: Boolean): DiffVirtualFileBase {
-    return diffFiles.getOrPut(SimpleGHPRIdentifier(pullRequest)) {
+    return diffFiles.getOrPut(pullRequest) {
       if (combinedDiff) {
         GHPRCombinedDiffPreviewVirtualFile(sourceId, id, project, repository, pullRequest)
       }
@@ -46,7 +46,7 @@ internal class GHPRFilesManagerImpl(private val project: Project,
   }
 
   override fun createAndOpenTimelineFile(pullRequest: GHPRIdentifier, requestFocus: Boolean) {
-    files.getOrPut(SimpleGHPRIdentifier(pullRequest)) {
+    files.getOrPut(pullRequest) {
       GHPRTimelineVirtualFile(id, project, repository, pullRequest)
     }.let {
       FileEditorManager.getInstance(project).openFile(it, requestFocus)
@@ -55,7 +55,7 @@ internal class GHPRFilesManagerImpl(private val project: Project,
   }
 
   override fun createAndOpenDiffFile(pullRequest: GHPRIdentifier, requestFocus: Boolean) {
-    diffFiles.getOrPut(SimpleGHPRIdentifier(pullRequest)) {
+    diffFiles.getOrPut(pullRequest) {
       GHPRDiffVirtualFile(id, project, repository, pullRequest)
     }.let {
       DiffEditorTabFilesManager.getInstance(project).showDiffFile(it, requestFocus)
@@ -64,7 +64,7 @@ internal class GHPRFilesManagerImpl(private val project: Project,
   }
 
   override fun createAndOpenDiffPreviewFile(pullRequest: GHPRIdentifier, sourceId: String, requestFocus: Boolean): DiffVirtualFileBase {
-    return diffFiles.getOrPut(SimpleGHPRIdentifier(pullRequest)) {
+    return diffFiles.getOrPut(pullRequest) {
       GHPRCombinedDiffPreviewVirtualFile(sourceId, id, project, repository, pullRequest)
     }.also {
       DiffEditorTabFilesManager.getInstance(project).showDiffFile(it, requestFocus)
@@ -86,12 +86,12 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     }
   }
 
-  override fun findTimelineFile(pullRequest: GHPRIdentifier): GHPRTimelineVirtualFile? = files[SimpleGHPRIdentifier(pullRequest)]
+  override fun findTimelineFile(pullRequest: GHPRIdentifier): GHPRTimelineVirtualFile? = files[pullRequest]
 
-  override fun findDiffFile(pullRequest: GHPRIdentifier): DiffVirtualFileBase? = diffFiles[SimpleGHPRIdentifier(pullRequest)]
+  override fun findDiffFile(pullRequest: GHPRIdentifier): DiffVirtualFileBase? = diffFiles[pullRequest]
 
   override fun updateTimelineFilePresentation(details: GHPullRequestShort) {
-    findTimelineFile(details)?.let {
+    findTimelineFile(details.prId)?.let {
       FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(it)
     }
   }

@@ -6,14 +6,17 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.plugins.github.api.data.*
+import org.jetbrains.plugins.github.api.data.GHActor
+import org.jetbrains.plugins.github.api.data.GHLabel
+import org.jetbrains.plugins.github.api.data.GHNode
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import java.util.*
 
 @GraphQLFragment("/graphql/fragment/pullRequestInfoShort.graphql")
 open class GHPullRequestShort(id: String,
                               val url: String,
-                              override val number: Long,
+                              val number: Long,
                               @NlsSafe val title: String,
                               val state: GHPullRequestState,
                               val isDraft: Boolean,
@@ -25,7 +28,9 @@ open class GHPullRequestShort(id: String,
                               @JsonProperty("reviewThreads") reviewThreads: GraphQLNodesDTO<ReviewThreadDetails>,
                               val mergeable: GHPullRequestMergeableState,
                               val viewerCanUpdate: Boolean,
-                              val viewerDidAuthor: Boolean) : GHNode(id), GHPRIdentifier {
+                              val viewerDidAuthor: Boolean) : GHNode(id) {
+
+  val prId = GHPRIdentifier(id, number)
 
   @JsonIgnore
   val assignees = assignees.nodes

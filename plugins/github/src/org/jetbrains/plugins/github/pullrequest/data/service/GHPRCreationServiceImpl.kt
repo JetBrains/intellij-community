@@ -8,6 +8,7 @@ import com.intellij.util.text.nullize
 import git4idea.GitRemoteBranch
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -46,7 +47,7 @@ class GHPRCreationServiceImpl(private val progressManager: ProgressManager,
   override fun findPullRequest(progressIndicator: ProgressIndicator,
                                baseBranch: GitRemoteBranch,
                                headRepo: GHGitRepositoryMapping,
-                               headBranch: GitRemoteBranch): GHPRIdentifier? {
+                               headBranch: GitRemoteBranch): GHPullRequest? {
     progressIndicator.text = GithubBundle.message("pull.request.existing.process.title")
     return requestExecutor.execute(progressIndicator,
                                    GHGQLRequests.PullRequest.findByBranches(baseRepo.repository,

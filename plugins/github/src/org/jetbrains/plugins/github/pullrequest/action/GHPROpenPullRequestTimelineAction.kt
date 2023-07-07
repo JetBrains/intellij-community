@@ -29,7 +29,7 @@ class GHPROpenPullRequestTimelineAction
     val selection = e.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
     val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
 
-    val pullRequest = selection ?: dataProvider!!.id
+    val pullRequest = selection?.prId ?: dataProvider!!.id
 
     controller.openPullRequestTimeline(pullRequest, true)
   }
