@@ -650,12 +650,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       }
       return size
     }
-
-    const val MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY: String = "ide.win.frame.decoration"
-
-    @JvmStatic
-    val mergeMainMenuWithWindowTitleOverrideValue: Boolean? = System.getProperty(MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY)?.toBoolean()
-    val isMergeMainMenuWithWindowTitleOverridden: Boolean = mergeMainMenuWithWindowTitleOverrideValue != null
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")

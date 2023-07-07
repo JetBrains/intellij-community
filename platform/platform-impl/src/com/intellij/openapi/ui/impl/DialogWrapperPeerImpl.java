@@ -662,7 +662,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     @Override
     public void addNotify() {
-      if (IdeFrameDecorator.isCustomDecorationActive()) {
+      if (IdeFrameDecorator.Companion.isCustomDecorationActive()) {
         CustomHeader.Companion.enableCustomHeader(this);
       }
       super.addNotify();
@@ -1012,7 +1012,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   @Override
   public void setContentPane(JComponent content) {
-    myDialog.setContentPane(IdeFrameDecorator.isCustomDecorationActive() && !isHeadlessEnv()
+    myDialog.setContentPane(IdeFrameDecorator.Companion.isCustomDecorationActive() && !isHeadlessEnv()
                                 ? CustomFrameDialogContent.Companion.getCustomContentHolder(getWindow(), content, false)
                                 : content);
   }

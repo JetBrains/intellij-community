@@ -3,10 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.UISettings.Companion.mergeMainMenuWithWindowTitleOverrideValue
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl
@@ -16,32 +13,35 @@ import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.mac.MacMainFrameDecorator
-import com.intellij.util.awaitCancellationAndInvoke
 import com.jetbrains.JBR
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.withContext
 import java.awt.EventQueue
 import java.awt.Frame
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import java.lang.Runnable
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JRootPane
-import javax.swing.SwingUtilities
 
 private val LOG: Logger
   get() = logger<IdeFrameDecorator>()
 
-abstract class IdeFrameDecorator protected constructor(protected @JvmField val frame: IdeFrameImpl) {
+private val isCustomDecorationActiveCache = AtomicReference<Boolean>()
+
+private val defaultCustomDecorationState: Boolean
+  get() = SystemInfoRt.isWindows && mergeMainMenuWithWindowTitleOverrideValue != false
+
+internal abstract class IdeFrameDecorator protected constructor(@JvmField protected val frame: IdeFrameImpl) {
   companion object {
-    const val FULL_SCREEN = "ide.frame.full.screen"
+    internal const val FULL_SCREEN = "ide.frame.full.screen"
 
     fun decorate(frame: IdeFrameImpl, glassPane: IdeGlassPane, coroutineScope: CoroutineScope): IdeFrameDecorator? {
       try {
         return when {
-          SystemInfoRt.isMac -> MacMainFrameDecorator(frame, glassPane, parentDisposable)
+          SystemInfoRt.isMac -> MacMainFrameDecorator(frame, glassPane, coroutineScope)
           SystemInfoRt.isWindows -> WinMainFrameDecorator(frame)
           SystemInfoRt.isXWindow && X11UiUtil.isFullScreenSupported() -> EWMHFrameDecorator(frame, coroutineScope)
           else -> null
@@ -56,10 +56,8 @@ abstract class IdeFrameDecorator protected constructor(protected @JvmField val f
       return null
     }
 
-    val isCustomDecorationAvailable: Boolean
+    internal val isCustomDecorationAvailable: Boolean
       get() = (SystemInfoRt.isMac || SystemInfo.isWin8OrNewer) && JBR.isWindowDecorationsSupported()
-
-    private val isCustomDecorationActiveCache = AtomicReference<Boolean>()
 
     fun isCustomDecorationActive(): Boolean {
       if (!LoadingState.COMPONENTS_REGISTERED.isOccurred) {
@@ -76,16 +74,12 @@ abstract class IdeFrameDecorator protected constructor(protected @JvmField val f
         if (!isCustomDecorationAvailable) {
           return@updateAndGet false
         }
-        val override = mergeMainMenuWithWindowTitleOverrideValue
-        if (override != null) {
-          return@updateAndGet override
+        mergeMainMenuWithWindowTitleOverrideValue?.let {
+          return@updateAndGet it
         }
         UISettings.getInstance().mergeMainMenuWithWindowTitle
       }
     }
-
-    private val defaultCustomDecorationState: Boolean
-      get() = SystemInfoRt.isWindows && mergeMainMenuWithWindowTitleOverrideValue != false
   }
 
   abstract val isInFullScreen: Boolean
@@ -103,7 +97,7 @@ abstract class IdeFrameDecorator protected constructor(protected @JvmField val f
   /**
    * Returns applied state or rejected promise if it cannot be applied.
    */
-  abstract fun toggleFullScreen(state: Boolean): Deferred<Boolean?>
+  abstract suspend fun toggleFullScreen(state: Boolean): Boolean?
 
   protected fun notifyFrameComponents(state: Boolean) {
     frame.rootPane.putClientProperty(FULL_SCREEN, state)
@@ -111,10 +105,6 @@ abstract class IdeFrameDecorator protected constructor(protected @JvmField val f
   }
 
   open fun appClosing() {}
-
-  init {
-    this.frame = frame
-  }
 }
 
 // AWT-based decorator
@@ -122,9 +112,8 @@ private class WinMainFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(fra
   override val isInFullScreen: Boolean
     get() = ClientProperty.isTrue(frame, FULL_SCREEN)
 
-  override fun toggleFullScreen(state: Boolean): CompletableFuture<Boolean?> {
-    val promise = CompletableFuture<Boolean?>()
-    SwingUtilities.invokeLater(Runnable {
+  override suspend fun toggleFullScreen(state: Boolean): Boolean? {
+    return withContext(RawSwingDispatcher) {
       val bounds = frame.bounds
       val extendedState = frame.extendedState
       val rootPane = frame.rootPane
@@ -136,9 +125,9 @@ private class WinMainFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(fra
       }
       val device = ScreenUtil.getScreenDevice(bounds)
       if (device == null) {
-        promise.complete(null)
-        return@Runnable
+        return@withContext null
       }
+
       val toFocus = frame.mostRecentFocusOwner
       val defaultBounds = device.defaultConfiguration.bounds
       if (state) {
@@ -149,7 +138,7 @@ private class WinMainFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(fra
       }
       try {
         frame.togglingFullScreenInProgress = true
-        rootPane.putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, java.lang.Boolean.TRUE)
+        rootPane.putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, true)
         frame.dispose()
         frame.isUndecorated = state
       }
@@ -158,9 +147,8 @@ private class WinMainFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(fra
           frame.bounds = defaultBounds
         }
         else {
-          val o = frame.normalBounds
-          if (o != null) {
-            frame.bounds = o
+          frame.normalBounds?.let {
+            frame.bounds = it
           }
         }
         frame.isVisible = true
@@ -177,10 +165,9 @@ private class WinMainFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(fra
           toFocus.requestFocusInWindow()
         }
       }
-      EventQueue.invokeLater(Runnable { frame.togglingFullScreenInProgress = false })
-      promise.complete(state)
-    })
-    return promise
+      EventQueue.invokeLater { frame.togglingFullScreenInProgress = false }
+      state
+    }
   }
 }
 
@@ -221,23 +208,19 @@ private class EWMHFrameDecorator(frame: IdeFrameImpl, coroutineScope: CoroutineS
     }
   }
 
-  override fun toggleFullScreen(state: Boolean): Deferred<Boolean?> {
+  override suspend fun toggleFullScreen(state: Boolean): Boolean {
     requestedState = state
     X11UiUtil.toggleFullScreenMode(frame)
     val menuBar = frame.jMenuBar
     if (menuBar is IdeMenuBar) {
       menuBar.onToggleFullScreen(state)
     }
-    return CompletableDeferred(value = state)
+    return state
   }
 }
 
-private fun executeOnCancelInEdt(coroutineScope: CoroutineScope, task: () -> Unit) {
-  coroutineScope.launch {
-    awaitCancellationAndInvoke {
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        task()
-      }
-    }
-  }
-}
+internal const val MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY: String = "ide.win.frame.decoration"
+
+private val mergeMainMenuWithWindowTitleOverrideValue: Boolean? = System.getProperty(MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY)?.toBoolean()
+internal val isMergeMainMenuWithWindowTitleOverridden: Boolean
+  get() = mergeMainMenuWithWindowTitleOverrideValue != null

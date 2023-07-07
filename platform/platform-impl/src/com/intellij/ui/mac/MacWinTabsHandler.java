@@ -4,12 +4,10 @@ package com.intellij.ui.mac;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.jdkEx.JdkEx;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -27,12 +25,16 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
+import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Method;
+
+import static com.intellij.openapi.wm.impl.IdeGlassPaneImplKt.executeOnCancelInEdt;
 
 /**
  * @author Alexander Lobas
@@ -80,22 +82,20 @@ public class MacWinTabsHandler {
     return ExperimentalUI.isNewUI() && Registry.is("ide.mac.os.wintabs.version2", true);
   }
 
-  public MacWinTabsHandler(@NotNull IdeFrameImpl frame, @NotNull Disposable parentDisposable) {
+  public MacWinTabsHandler(@NotNull IdeFrameImpl frame, @NotNull CoroutineScope coroutineScope) {
     myFrame = frame;
-    myFrameAllowed = initFrame(frame, parentDisposable);
+    myFrameAllowed = initFrame(frame, coroutineScope);
   }
 
-  protected boolean initFrame(@NotNull IdeFrameImpl frame, @NotNull Disposable parentDisposable) {
+  protected boolean initFrame(@NotNull IdeFrameImpl frame, @NotNull CoroutineScope coroutineScope) {
     boolean allowed = isAllowedFrame(frame) && JdkEx.setTabbingMode(frame, getWindowId(), () -> updateTabBars(null));
 
     if (allowed) {
       Foundation.invoke("NSWindow", "setAllowsAutomaticWindowTabbing:", true);
 
-      Disposer.register(parentDisposable, new Disposable() { // don't convert to lambda
-        @Override
-        public void dispose() {
-          updateTabBars(null);
-        }
+      executeOnCancelInEdt(coroutineScope, () -> {
+        updateTabBars(null);
+        return Unit.INSTANCE;
       });
     }
 

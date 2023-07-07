@@ -42,6 +42,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -673,7 +674,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
     getDockManager().register(new TabsDockContainer(), myParentDisposable);
   }
 
-  static void registerFrameDockContainer(@NotNull IdeFrameImpl frame, Disposable parentDisposable) {
+  static void registerFrameDockContainer(@NotNull IdeFrameImpl frame, @NotNull CoroutineScope coroutineScope) {
     getDockManager().register(new DockContainer() {
       private Disposable myPaintDisposable;
       private AbstractPainter myDropPainter;
@@ -726,7 +727,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
       public boolean isDisposeWhenEmpty() {
         return false;
       }
-    }, parentDisposable);
+    }, coroutineScope);
   }
 
   private class TabsDockContainer implements DockContainer {

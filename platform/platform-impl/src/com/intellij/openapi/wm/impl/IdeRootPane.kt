@@ -63,11 +63,9 @@ import com.jetbrains.WindowDecorations
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.FlowCollector
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Obsolete
 import java.awt.*
 import java.awt.event.MouseMotionAdapter
 import javax.accessibility.AccessibleContext
-import javax.accessibility.AccessibleRole
 import javax.swing.*
 
 private const val EXTENSION_KEY = "extensionKey"
@@ -83,7 +81,8 @@ internal val isFloatingMenuBarSupported: Boolean
 @ApiStatus.Internal
 open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
                                             loadingState: FrameLoadingState?) : JRootPane(), UISettingsListener {
-  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+  @JvmField
+  internal val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
   private var toolbar: JComponent? = null
 
@@ -333,16 +332,14 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   }
 
   internal fun createDecorator(): IdeFrameDecorator? {
-    val disposable = Disposer.newDisposable()
-    coroutineScope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
-    return IdeFrameDecorator.decorate(frame, rootPane.glassPane as IdeGlassPane, disposable)
+    return IdeFrameDecorator.decorate(frame, rootPane.glassPane as IdeGlassPane, coroutineScope.childScope())
   }
 
   @Suppress("unused")
   internal val isCoroutineScopeCancelled: Boolean
     get() = !coroutineScope.isActive
 
-  @Obsolete
+  @ApiStatus.Obsolete
   internal fun createDisposable(): Disposable {
     val disposable = Disposer.newDisposable()
     coroutineScope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
@@ -373,24 +370,19 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   }
 
   override fun getAccessibleContext(): AccessibleContext {
-    if (SystemInfoRt.isMac) {
-      if (accessibleContext == null) {
-        // We need to turn IdeRootPane into an accessible group in order to make notifications announcing working
-        accessibleContext = object : AccessibleJRootPane() {
-          override fun getAccessibleRole(): AccessibleRole {
-            return AccessibilityUtils.GROUPED_ELEMENTS
-          }
-
-          override fun getAccessibleName(): String {
-            return UIBundle.message("root.pane.accessible.group.name")
-          }
-        }
-      }
-      return accessibleContext
-    }
-    else {
+    if (!SystemInfoRt.isMac) {
       return super.getAccessibleContext()
     }
+
+    if (accessibleContext == null) {
+      // We need to turn IdeRootPane into an accessible group in order to make notifications announcing working
+      accessibleContext = object : AccessibleJRootPane() {
+        override fun getAccessibleRole() = AccessibilityUtils.GROUPED_ELEMENTS
+
+        override fun getAccessibleName() = UIBundle.message("root.pane.accessible.group.name")
+      }
+    }
+    return accessibleContext
   }
 
   open fun getToolWindowPane(): ToolWindowPane = toolWindowPane!!

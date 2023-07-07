@@ -10,6 +10,8 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
@@ -25,6 +27,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
 import java.awt.*
@@ -459,6 +462,13 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
     doAddListener(listener, parent)
   }
 
+  override fun addMousePreprocessor(listener: MouseListener, coroutineScope: CoroutineScope) {
+    mouseListeners.add(listener)
+    executeOnCancelInEdt(coroutineScope) { removeListener(listener) }
+    updateSortedList()
+    activateIfNeeded()
+  }
+
   override fun addMouseMotionPreprocessor(listener: MouseMotionListener, parent: Disposable) {
     doAddListener(listener, parent)
   }
@@ -694,4 +704,14 @@ interface FrameLoadingState {
   val finishScopeProvider: () -> CoroutineScope?
 
   val selfie: Image?
+}
+
+internal fun executeOnCancelInEdt(coroutineScope: CoroutineScope, task: () -> Unit) {
+  coroutineScope.launch {
+    awaitCancellationAndInvoke {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        task()
+      }
+    }
+  }
 }

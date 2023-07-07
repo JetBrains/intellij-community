@@ -419,7 +419,7 @@ private class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Action
 }
 
 internal fun isToolbarInHeader(): Boolean {
-  if (IdeFrameDecorator.isCustomDecorationAvailable()) {
+  if (IdeFrameDecorator.isCustomDecorationAvailable) {
     if (SystemInfoRt.isMac) {
       return true
     }

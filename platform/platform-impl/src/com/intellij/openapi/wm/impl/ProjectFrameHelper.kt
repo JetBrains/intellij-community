@@ -33,11 +33,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Rectangle
 import java.awt.Window
@@ -383,7 +379,9 @@ open class ProjectFrameHelper internal constructor(
       return CompletableDeferred(value = Unit)
     }
     else {
-      return frameDecorator.toggleFullScreen(state).asDeferred()
+      return rootPane.coroutineScope.launch {
+        frameDecorator.toggleFullScreen(state)
+      }
     }
   }
 

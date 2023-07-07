@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.openapi.wm.impl.executeOnCancelInEdt
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
@@ -118,6 +119,11 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
   override fun register(container: DockContainer, parentDisposable: Disposable) {
     containers.add(container)
     Disposer.register(parentDisposable) { containers.remove(container) }
+  }
+
+  fun register(container: DockContainer, coroutineScope: CoroutineScope) {
+    containers.add(container)
+    executeOnCancelInEdt(coroutineScope) { containers.remove(container) }
   }
 
   override fun register(id: String, factory: DockContainerFactory, parentDisposable: Disposable) {

@@ -39,6 +39,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY
+import com.intellij.openapi.wm.impl.isMergeMainMenuWithWindowTitleOverridden
 import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
@@ -314,52 +316,52 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       group(message("group.ui.options")) {
         val leftColumnControls = sequence<Row.() -> Unit> {
-          yield({ checkBox(cdShowTreeIndents) })
-          yield({ checkBox(cdUseCompactTreeIndents) })
-          yield({ checkBox(cdEnableMenuMnemonics) })
-          yield({ checkBox(cdEnableControlsMnemonics) })
+          yield { checkBox(cdShowTreeIndents) }
+          yield { checkBox(cdUseCompactTreeIndents) }
+          yield { checkBox(cdEnableMenuMnemonics) }
+          yield { checkBox(cdEnableControlsMnemonics) }
           if ((SystemInfo.isWindows || SystemInfo.isXWindow) && ExperimentalUI.isNewUI()) {
-            yield({
-                    checkBox(cdSeparateMainMenu).apply {
-                      if (SystemInfo.isXWindow) {
-                        comment(message("ide.restart.required.comment"))
-                      }
-                    }
-                  })
+            yield {
+              checkBox(cdSeparateMainMenu).apply {
+                if (SystemInfo.isXWindow) {
+                  comment(message("ide.restart.required.comment"))
+                }
+              }
+            }
           }
           if (SystemInfo.isMac && MacCustomAppIcon.available()) {
-            yield( {
+            yield {
               checkBox(message("checkbox.ide.mac.app.icon")).comment(message("ide.restart.required.comment"))
                 .bindSelected({ MacCustomAppIcon.isCustom() }, { MacCustomAppIcon.setCustom(it) })
-            })
+            }
           }
         }
         val rightColumnControls = sequence<Row.() -> Unit> {
-          yield({
-                  checkBox(cdSmoothScrolling)
-                    .gap(RightGap.SMALL)
-                  contextHelp(message("checkbox.smooth.scrolling.description"))
-                })
-          yield({ checkBox(cdDnDWithAlt) })
-          if (SystemInfoRt.isWindows && IdeFrameDecorator.isCustomDecorationAvailable()
-              || IdeRootPane.hideNativeLinuxTitleAvailable) {
-            yield({
-                    val checkBox = checkBox(cdMergeMainMenuWithWindowTitle)
-                      .gap(RightGap.SMALL)
-                    if (SystemInfoRt.isWindows && UISettings.isMergeMainMenuWithWindowTitleOverridden) {
-                      checkBox.enabled(false)
-                      contextHelp(message("option.is.overridden.by.jvm.property", UISettings.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))
-                    }
-                    if (SystemInfoRt.isXWindow && !(IdeRootPane.jbr5777Workaround() && JBR.isWindowMoveSupported())) {
-                      checkBox.enabled(false)
-                      checkBox.comment(message("checkbox.merge.main.menu.with.window.not.supported.comment"), 30)
-                    } else {
-                      comment(message("ide.restart.required.comment"))
-                    }
-                  })
+          yield {
+            checkBox(cdSmoothScrolling)
+              .gap(RightGap.SMALL)
+            contextHelp(message("checkbox.smooth.scrolling.description"))
           }
-          yield({ checkBox(cdFullPathsInTitleBar) })
-          yield({ checkBox(cdShowMenuIcons) })
+          yield { checkBox(cdDnDWithAlt) }
+          if (SystemInfoRt.isWindows && IdeFrameDecorator.isCustomDecorationAvailable || IdeRootPane.hideNativeLinuxTitleAvailable) {
+            yield {
+              val checkBox = checkBox(cdMergeMainMenuWithWindowTitle)
+                .gap(RightGap.SMALL)
+              if (SystemInfoRt.isWindows && isMergeMainMenuWithWindowTitleOverridden) {
+                checkBox.enabled(false)
+                contextHelp(message("option.is.overridden.by.jvm.property", MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))
+              }
+              if (SystemInfoRt.isXWindow && !(IdeRootPane.jbr5777Workaround() && JBR.isWindowMoveSupported())) {
+                checkBox.enabled(false)
+                checkBox.comment(message("checkbox.merge.main.menu.with.window.not.supported.comment"), 30)
+              }
+              else {
+                comment(message("ide.restart.required.comment"))
+              }
+            }
+          }
+          yield { checkBox(cdFullPathsInTitleBar) }
+          yield { checkBox(cdShowMenuIcons) }
           if (ProjectWindowCustomizerService.getInstance().isAvailable()) {
             yield {
               checkBox(cdDifferentiateProjects)
