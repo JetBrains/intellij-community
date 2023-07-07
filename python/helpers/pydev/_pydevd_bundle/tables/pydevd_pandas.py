@@ -76,7 +76,7 @@ def display_data(table, max_cols, max_colwidth, start, end):
     pd.set_option('display.max_colwidth', _jb_max_colwidth)
 
 
-def get_column_desciptions(table, max_cols, max_colwidth):
+def get_column_descriptions(table, max_cols, max_colwidth):
     # type: (pd.DataFrame, int, int) -> str
     described_df = __get_describe_df(table)
 
