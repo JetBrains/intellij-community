@@ -713,6 +713,9 @@ public class SwitchBlockHighlightingModel {
         if (operand != null) {
           elements.putValue(ConstantExpressionUtil.computeCastTo(operand, mySelectorType), labelElement);
         }
+        if (labelElement instanceof PsiLiteralExpression literalExpression && literalExpression.getType() == PsiTypes.nullType()) {
+          elements.putValue(null, labelElement);
+        }
       }
       else if (JavaPsiPatternUtil.isUnconditionalForType(labelElement, mySelectorType)) {
         elements.putValue(myUnconditionalPattern, labelElement);
