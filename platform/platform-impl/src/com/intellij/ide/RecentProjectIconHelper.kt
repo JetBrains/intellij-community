@@ -81,20 +81,28 @@ internal class RecentProjectIconHelper {
 
     @JvmStatic
     fun generateProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean, size: Int = unscaledProjectIconSize()): Icon {
-      val name = getProjectName(path, RecentProjectsManagerBase.getInstanceEx())
-      var generatedProjectIcon: Icon = AvatarIcon(targetSize = size,
-                                                  arcRatio = 0.3,
-                                                  gradientSeed = name,
-                                                  avatarName = name,
-                                                  palette = ProjectIconPalette).withIconPreScaled(false)
-
-      if (!isProjectValid) {
-        generatedProjectIcon = IconUtil.desaturate(generatedProjectIcon)
-      }
+      val generatedProjectIcon = generateProjectIcon(path, isProjectValid, size, null)
 
       projectIconCache.put(Pair(path, size), ProjectIcon(icon = generatedProjectIcon,
                                              isProjectValid = isProjectValid,
                                              lastUsedProjectIconSize = JBUIScale.scale(size)))
+
+      return generatedProjectIcon
+    }
+
+    fun generateProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean, size: Int = unscaledProjectIconSize(), colorIndex: Int?): Icon {
+      val name = getProjectName(path, RecentProjectsManagerBase.getInstanceEx())
+      val palette = if (colorIndex != null) ChangeProjectIconPalette(colorIndex) else ProjectIconPalette
+
+      var generatedProjectIcon: Icon = AvatarIcon(targetSize = size,
+                                                  arcRatio = 0.3,
+                                                  gradientSeed = name,
+                                                  avatarName = name,
+                                                  palette = palette).withIconPreScaled(false)
+
+      if (!isProjectValid) {
+        generatedProjectIcon = IconUtil.desaturate(generatedProjectIcon)
+      }
 
       return generatedProjectIcon
     }
@@ -272,6 +280,15 @@ private object ProjectIconPalette : ColorPalette {
 
   override fun gradient(seed: String?): Pair<Color, Color> {
     val index = seed?.let { ProjectWindowCustomizerService.getInstance().getOrGenerateAssociatedColorIndex(seed) } ?: 0
+    return gradients[index]
+  }
+}
+
+class ChangeProjectIconPalette(val index: Int) : ColorPalette {
+  override val gradients: Array<Pair<Color, Color>>
+    get() = ProjectIconPalette.gradients
+
+  override fun gradient(seed: String?): Pair<Color, Color> {
     return gradients[index]
   }
 }

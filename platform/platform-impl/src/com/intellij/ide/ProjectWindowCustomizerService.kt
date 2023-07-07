@@ -27,6 +27,7 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.util.*
 import javax.swing.Icon
@@ -39,7 +40,8 @@ private fun getProjectPath(project: Project, recentProjectManager: RecentProject
   }
 }
 
-private fun getProjectNameForIcon(project: Project): String {
+@Internal
+fun getProjectNameForIcon(project: Project): String {
   val recentProjectManager = RecentProjectsManagerBase.getInstanceEx()
   val path = getProjectPath(project, recentProjectManager)
   return RecentProjectIconHelper.getProjectName(path, recentProjectManager)
@@ -181,8 +183,14 @@ class ProjectWindowCustomizerService : Disposable {
     return index
   }
 
-  private fun setAssociatedColorsIndex(projectPath: String, index: Int) {
+  fun setAssociatedColorsIndex(projectPath: String, index: Int) {
     propertiesStorage.setValue(associatedProjectColorKey(projectPath), index, -1)
+  }
+
+  fun clearCustomColorsAndCache(project: Project) {
+    PropertiesComponent.getInstance(project).unsetValue(TOOLBAR_BACKGROUND_KEY)
+    val projectPath = getProjectNameForIcon(project)
+    colorCache.remove(projectPath)
   }
 
   private fun PropertiesComponent.nextColorIndex(colorsCount: Int): Int {

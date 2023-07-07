@@ -1623,9 +1623,12 @@
       <action id="addQuickAction.UndoRedo" class="com.intellij.openapi.wm.impl.headertoolbar.UndoRedoQuickAction" icon="AllIcons.Actions.Undo"/>
     </group>
 
+    <group id="ChangeProjectColorActionGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.ChangeProjectColorActionGroup" searchable="false" popup="true"/>
+
     <group id="ToolbarPopupActions">
       <reference id="MainToolbarQuickActions"/>
       <separator/>
+      <reference id="ChangeProjectColorActionGroup"/>
       <action id="ColoredHeaderAction" class="com.intellij.ide.ui.customization.UseProjectColorsCheckboxAction"/>
       <reference id="WelcomeScreen.ChangeProjectIcon"/>
       <action id="ChangeMainToolbarColor" class="com.intellij.ide.ui.customization.ChangeMainToolbarColorAction"/>
