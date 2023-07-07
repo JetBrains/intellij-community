@@ -709,7 +709,10 @@ public class SwitchBlockHighlightingModel {
             return;
           }
         }
-        elements.putValue(evaluateConstant(labelElement), labelElement);
+        Object operand = evaluateConstant(labelElement);
+        if (operand != null) {
+          elements.putValue(ConstantExpressionUtil.computeCastTo(operand, mySelectorType), labelElement);
+        }
       }
       else if (JavaPsiPatternUtil.isUnconditionalForType(labelElement, mySelectorType)) {
         elements.putValue(myUnconditionalPattern, labelElement);
