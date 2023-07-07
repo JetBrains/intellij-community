@@ -22,10 +22,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
@@ -343,48 +340,65 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
                                               @Nullable final Sdk sdk,
                                               final boolean forceInstallFramework,
                                               @Nullable final Runnable callback) {
+    installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, false, callback);
+  }
+
+  public static void installFrameworkInBackground(@NotNull final Project project,
+                                                  @NotNull final String frameworkName,
+                                                  @NotNull final String requirement,
+                                                  @Nullable final Sdk sdk,
+                                                  final boolean forceInstallFramework,
+                                                  @Nullable final Runnable callback) {
+    installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, true, callback);
+  }
+
+  private static void installFrameworkIfNeeded(@NotNull final Project project,
+                                              @NotNull final String frameworkName,
+                                              @NotNull final String requirement,
+                                              @Nullable final Sdk sdk,
+                                              final boolean forceInstallFramework,
+                                              boolean asBackgroundTask,
+                                              @Nullable final Runnable callback) {
 
     if (sdk == null) {
       reportPackageInstallationFailure(frameworkName, null);
       return;
     }
-    final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
+
     // For remote SDK we are not sure if framework exists or not, so we'll check it anyway
     if (forceInstallFramework || PythonSdkUtil.isRemote(sdk)) {
-      //Modal is used because it is insane to create project when framework is not installed
-      ProgressManager.getInstance().run(new Task.Modal(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
-        @Override
-        public void run(@NotNull final ProgressIndicator indicator) {
 
-          boolean installed = false;
-          if (!forceInstallFramework) {
-            // First check if we need to do it
-            indicator.setText(PyBundle.message("python.install.framework.checking.is.installed", frameworkName));
-            final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
-            installed = PyPsiPackageUtil.findPackage(packages, requirement) != null;
+      if (asBackgroundTask) {
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
+          @Override
+          public void run(@NotNull final ProgressIndicator indicator) {
+            installPackages(frameworkName, forceInstallFramework, indicator, requirement, sdk);
           }
 
-
-          if (!installed) {
-            indicator.setText(PyBundle.message("python.install.framework.installing", frameworkName));
-            try {
-              packageManager.install(requirement);
-              packageManager.refresh();
-            }
-            catch (final ExecutionException e) {
-              reportPackageInstallationFailure(requirement, Pair.create(sdk, e));
+          @Override
+          public void onSuccess() {
+            // Installed / checked successfully, call callback on AWT
+            if (callback != null) {
+              callback.run();
             }
           }
-        }
-
-        @Override
-        public void onSuccess() {
-          // Installed / checked successfully, call callback on AWT
-          if (callback != null) {
-            callback.run();
+        });
+      } else {
+        ProgressManager.getInstance().run(new Task.Modal(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
+          @Override
+          public void run(@NotNull final ProgressIndicator indicator) {
+            installPackages(frameworkName, forceInstallFramework, indicator, requirement, sdk);
           }
-        }
-      });
+
+          @Override
+          public void onSuccess() {
+            // Installed / checked successfully, call callback on AWT
+            if (callback != null) {
+              callback.run();
+            }
+          }
+        });
+      }
     }
     else {
       // No need to install, but still need to call callback on AWT
@@ -416,6 +430,32 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
      */
     PyNoProjectAllowedOnSdkException(@NotNull @DialogMessage final String reason) {
       super(reason);
+    }
+  }
+
+  private static void installPackages(@NotNull final String frameworkName,
+                                      boolean forceInstallFramework,
+                                      @NotNull ProgressIndicator indicator,
+                                      @NotNull final String requirement,
+                                      @NotNull final Sdk sdk) {
+    final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
+    boolean installed = false;
+    if (!forceInstallFramework) {
+      // First check if we need to do it
+      indicator.setText(PyBundle.message("python.install.framework.checking.is.installed", frameworkName));
+      final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
+      installed = PyPsiPackageUtil.findPackage(packages, requirement) != null;
+    }
+
+    if (!installed) {
+      indicator.setText(PyBundle.message("python.install.framework.installing", frameworkName));
+      try {
+        packageManager.install(requirement);
+        packageManager.refresh();
+      }
+      catch (final ExecutionException e) {
+        reportPackageInstallationFailure(requirement, Pair.create(sdk, e));
+      }
     }
   }
 }
