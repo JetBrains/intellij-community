@@ -1945,24 +1945,31 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     mySuppressPainting = suppress;
   }
 
+  private boolean shouldPaint() {
+    return !isReleased && !mySuppressPainting;
+  }
+
+  private void fillPlaceholder(@NotNull Graphics2D g) {
+    Rectangle clip = g.getClipBounds();
+    if (clip == null) {
+      return;
+    }
+    Color bg = isReleased ? getDisposedBackground() : getBackgroundColor();
+    g.setColor(bg);
+    g.fillRect(clip.x, clip.y, clip.width, clip.height);
+  }
+
   void paint(@NotNull Graphics2D g) {
     ReadAction.run(() -> {
-      Rectangle clip = g.getClipBounds();
-
-      if (clip == null) {
-        return;
-      }
-
+      if (g.getClipBounds() == null) return;
       BufferedImage buffer = Registry.is("editor.dumb.mode.available") ? getUserData(BUFFER) : null;
       if (buffer != null) {
         Rectangle rect = getContentComponent().getVisibleRect();
         StartupUiUtil.drawImage(g, buffer, null, rect.x, rect.y);
         return;
       }
-
-      if (isReleased || mySuppressPainting) {
-        g.setColor(getDisposedBackground());
-        g.fillRect(clip.x, clip.y, clip.width, clip.height);
+      if (!shouldPaint()) {
+        fillPlaceholder(g);
         return;
       }
       if (myUpdateCursor && !myPurePaintingMode) {
