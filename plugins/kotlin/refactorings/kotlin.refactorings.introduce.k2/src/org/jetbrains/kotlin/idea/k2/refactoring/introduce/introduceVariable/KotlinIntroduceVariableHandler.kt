@@ -25,7 +25,10 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.suggestNameByName
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -453,15 +456,26 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                 commonContainer = container
             }
 
-            expression.chooseApplicableComponentNamesForVariableDeclaration(replaceOccurrence, editor) { componentFunctions ->
-                val suggestedNames = if (componentFunctions.isNotEmpty()) {
-                    componentFunctions.map { listOf(it) }
-                } else {
-                    listOf(analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-                        with(KotlinNameSuggester()) {
-                            suggestExpressionNames(expression).toList()
-                        }
-                    })
+            expression.chooseApplicableComponentNamesForVariableDeclaration(replaceOccurrence, editor) { componentNames ->
+                val anchor = calculateAnchor(commonParent, commonContainer, listOf(expression))
+                val suggestedNames = allowAnalysisOnEdt {
+                    analyze(expression) {
+                        val nameValidator = KotlinDeclarationNameValidator(
+                            expression,
+                            anchor?.siblings() ?: commonContainer.allChildren,
+                            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+                            this,
+                        )
+                        if (componentNames.isNotEmpty()) {
+                            componentNames.map { componentName -> suggestNameByName(componentName, nameValidator) }
+                        } else {
+                            with(KotlinNameSuggester()) {
+                                suggestExpressionNames(expression)
+                                    .map { name -> suggestNameByName(name, nameValidator) }
+                                    .toList()
+                            }
+                        }.let(::listOf)
+                    }
                 }
 
                 val introduceVariableContext = IntroduceVariableContext(
@@ -470,7 +484,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     commonContainer,
                     commonParent,
                     replaceOccurrence,
-                    componentFunctions
+                    componentNames
                 )
 
                 project.executeCommand(INTRODUCE_VARIABLE, null) {
