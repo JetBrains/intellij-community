@@ -20,12 +20,14 @@ class AvatarIcon(private val targetSize: Int,
                  private val palette: ColorPalette = AvatarPalette) : JBCachingScalableIcon<AvatarIcon>() {
   private var cachedImage: BufferedImage? = null
   private var cachedImageScale: Double? = null
+  private var cachedImageColor: Color? = null
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     g as Graphics2D
     val iconSize = getIconSize()
     val scale = g.transform.scaleX
-    if (scale != cachedImageScale) {
+    val imageColor = palette.gradient(avatarName).first
+    if (scale != cachedImageScale || imageColor != cachedImageColor) {
       cachedImage = null
     }
 
@@ -39,6 +41,7 @@ class AvatarIcon(private val targetSize: Int,
                                           palette = palette)
       this.cachedImage = cachedImage
       cachedImageScale = scale
+      cachedImageColor = palette.gradient(avatarName).first
     }
 
     withTxAndClipAligned(g, x, y, cachedImage.width, cachedImage.height) { gg ->

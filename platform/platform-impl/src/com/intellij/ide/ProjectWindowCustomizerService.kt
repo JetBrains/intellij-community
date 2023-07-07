@@ -20,6 +20,7 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.JBColor
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.util.*
 import javax.swing.Icon
@@ -33,7 +34,8 @@ private fun getProjectPath(project: Project): String {
   }
 }
 
-private fun getProjectNameForIcon(project: Project): String {
+@Internal
+fun getProjectNameForIcon(project: Project): String {
   val path = getProjectPath(project)
   return RecentProjectIconHelper.getProjectName(path)
 }
@@ -159,8 +161,14 @@ class ProjectWindowCustomizerService : Disposable {
     return index
   }
 
-  private fun setAssociatedColorsIndex(projectPath: String, index: Int) {
+  fun setAssociatedColorsIndex(projectPath: String, index: Int) {
     propertiesStorage.setValue(associatedProjectColorKey(projectPath), index, -1)
+  }
+
+  fun clearCustomColorsAndCache(project: Project) {
+    PropertiesComponent.getInstance(project).unsetValue(TOOLBAR_BACKGROUND_KEY)
+    val projectPath = getProjectNameForIcon(project)
+    colorCache.remove(projectPath)
   }
 
   private fun PropertiesComponent.nextColorIndex(colorsCount: Int): Int {
