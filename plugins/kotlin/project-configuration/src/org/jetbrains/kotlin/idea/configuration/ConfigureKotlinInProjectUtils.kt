@@ -466,9 +466,8 @@ fun getKotlinVersionsAndModules(
     for (moduleEntity in configuredModules) {
         val module = moduleEntity.value
         val version = module.getGradleKotlinVersion() ?: continue
-        val modulesForThisVersion = kotlinVersionsAndModules.getOrDefault(version, mutableMapOf())
+        val modulesForThisVersion = kotlinVersionsAndModules.getOrPut(version) { mutableMapOf() }
         modulesForThisVersion[moduleEntity.key] = module
-        kotlinVersionsAndModules[version] = modulesForThisVersion
 
         rootModule?.let {
             if (rootModule.name == moduleEntity.key) {
@@ -519,16 +518,19 @@ fun getModulesTargetingUnsupportedJvmAndTargetsForAllModules(
     for (module in modulesToConfigure) {
         val jvmTarget = getTargetBytecodeVersionFromModule(module, kotlinVersion)
         modulesAndJvmTargets[module.name] = jvmTarget
-        jvmTarget?.removePrefix("1.")?.toIntOrNull()?.let {
-            if (it < 8) {
-                val modulesForThisTarget = jvmModulesTargetingUnsupportedJvm.getOrDefault(jvmTarget, mutableListOf())
-                modulesForThisTarget.add(module.name)
-                jvmModulesTargetingUnsupportedJvm[jvmTarget] = modulesForThisTarget
+        jvmTarget?.let {
+            getJvmTargetNumber(jvmTarget)?.let {
+                if (it < 8) {
+                    val modulesForThisTarget = jvmModulesTargetingUnsupportedJvm.getOrPut(jvmTarget) { mutableListOf() }
+                    modulesForThisTarget.add(module.name)
+                }
             }
         }
     }
     return Pair(jvmModulesTargetingUnsupportedJvm, modulesAndJvmTargets)
 }
+
+fun getJvmTargetNumber(jvmTarget: String) = jvmTarget.removePrefix("1.").toIntOrNull()
 
 fun getTargetBytecodeVersionFromModule(
     module: Module,

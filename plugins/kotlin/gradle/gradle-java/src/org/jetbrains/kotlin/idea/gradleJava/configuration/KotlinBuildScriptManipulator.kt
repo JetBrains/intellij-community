@@ -290,18 +290,15 @@ class KotlinBuildScriptManipulator(
             )
     }
 
-    //todo
     override fun addKotlinToolchain(targetVersionNumber: String) {
         scriptFile.getKotlinBlock()?.addExpressionIfMissing("jvmToolchain($targetVersionNumber)")
     }
 
-    //todo
     override fun addKotlinExtendedDslToolchain(targetVersionNumber: String) {
         scriptFile.getKotlinBlock()?.findOrCreateBlock("jvmToolchain")
             ?.addExpressionIfMissing("(this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of($targetVersionNumber))")
     }
 
-    //todo
     override fun changeKotlinTaskParameter(parameterName: String, parameterValue: String, forTests: Boolean): PsiElement? {
         return scriptFile.changeKotlinTaskParameter(parameterName, parameterValue, forTests)
     }

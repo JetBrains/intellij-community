@@ -127,7 +127,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
      */
     private fun Module.kotlinSupportsJvmTarget(kotlinVersion: IdeKotlinVersion): Boolean {
         val jvmTarget = getTargetBytecodeVersionFromModule(this, kotlinVersion) ?: return false
-        val jvmTargetNum = jvmTarget.removePrefix("1.").toIntOrNull() ?: return false
+        val jvmTargetNum = getJvmTargetNumber(jvmTarget) ?: return false
         return jvmTargetNum >= 8
     }
 
