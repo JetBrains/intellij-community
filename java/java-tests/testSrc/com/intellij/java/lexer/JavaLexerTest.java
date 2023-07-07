@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.lexer;
 
 import com.intellij.lang.java.JavaParserDefinition;
@@ -245,18 +245,20 @@ public class JavaLexerTest extends LexerTestCase {
   public void testTextBlockLiterals() {
     doTest("\"\"\"\n hi there. \"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\\n hi there. \"\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\" ')");
-    doTest("\"\"\".\\\"\"\" " , "TEXT_BLOCK_LITERAL ('\"\"\".\\\"\"\" ')");
-    doTest("\"\"\".\\\\\"\"\" " , "TEXT_BLOCK_LITERAL ('\"\"\".\\\\\"\"\"')\nWHITE_SPACE (' ')");
-    doTest("\"\"\".\\\\\\\"\"\" " , "TEXT_BLOCK_LITERAL ('\"\"\".\\\\\\\"\"\" ')");
+    doTest("\"\"\".\\\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\".\\\"\"\" ')");
+    doTest("\"\"\".\\\\\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\".\\\\\"\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\"\".\\\\\\\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\".\\\\\\\"\"\" ')");
     doTest("\"\"\"\"\"\"+\"\"\"\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\"\"\"')\nPLUS ('+')\nTEXT_BLOCK_LITERAL ('\"\"\"\"\"\"')\nWHITE_SPACE (' ')");
     doTest("\\\"\"\".\"\"\" ", "BAD_CHARACTER ('\\')\nTEXT_BLOCK_LITERAL ('\"\"\".\"\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\"\"\n  \"\\\"\"\"  \"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\\n  \"\\\"\"\"  \"\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\"\"\n  \"\"\\\"\"\"  \"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\\n  \"\"\\\"\"\"  \"\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\"\" \n\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\" \\n\"\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\"\"\n \\u005C\"\"\"\n \"\"\"", "TEXT_BLOCK_LITERAL ('\"\"\"\\n \\u005C\"\"\"\\n \"\"\"')"); // unicode escaped backslash '\'
+
+    doTest("\"\"\"\n\\{}\"\"\"", "TEXT_BLOCK_LITERAL ('\"\"\"\\n\\{}\"\"\"')");
   }
 
-  public void testStringTemplates() {
+  public void testStringTemplatesJDK21_Preview() {
     doTest("\"\\{}\"", "STRING_TEMPLATE_BEGIN ('\"\\{')\nSTRING_TEMPLATE_END ('}\"')");
     doTest("\"\"\"\n\\{}\"\"\"", "TEXT_BLOCK_TEMPLATE_BEGIN ('\"\"\"\\n\\{')\nTEXT_BLOCK_TEMPLATE_END ('}\"\"\"')");
     doTest("\"\\{123}\"", "STRING_TEMPLATE_BEGIN ('\"\\{')\nINTEGER_LITERAL ('123')\nSTRING_TEMPLATE_END ('}\"')");
@@ -352,6 +354,8 @@ public class JavaLexerTest extends LexerTestCase {
 
     // see also com.intellij.java.codeInsight.daemon.LightAdvHighlightingTest#testStringLiterals
     doTest(" \"\\u000a\" ", "WHITE_SPACE (' ')\nSTRING_LITERAL ('\"\\u000a\"')\nWHITE_SPACE (' ')");
+
+    doTest("\"\\{}\"", "STRING_LITERAL ('\"\\{}\"')");
   }
 
   public void testCharLiterals() {
@@ -423,7 +427,10 @@ public class JavaLexerTest extends LexerTestCase {
 
   @Override
   protected Lexer createLexer() {
-    return JavaParserDefinition.createLexer(LanguageLevel.JDK_21_PREVIEW);
+    if (getTestName(false).endsWith("JDK21_Preview")) {
+      return JavaParserDefinition.createLexer(LanguageLevel.JDK_21_PREVIEW);
+    }
+    return JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
   }
 
   @Override
