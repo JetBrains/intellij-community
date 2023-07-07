@@ -3,8 +3,9 @@ package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.InlayActionData
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
+import com.intellij.diagnostic.PluginException
 
-class PresentationEntryBuilder(val state: TinyTree<Any?>) {
+class PresentationEntryBuilder(val state: TinyTree<Any?>, private val providerClass: Class<*>) {
   private val entries = ArrayList<InlayPresentationEntry>()
   private var currentClickArea: InlayMouseArea? = null
   private var parentIndexToSwitch: Byte = -1
@@ -14,8 +15,9 @@ class PresentationEntryBuilder(val state: TinyTree<Any?>) {
   fun buildPresentationEntries(): Array<InlayPresentationEntry> {
     buildSubtreeForIdOnly(0)
     if (entries.isEmpty()) {
-      throw NoPresentableEntriesException()
+      throw PluginException.createByClass("No entries in the tree", RuntimeException(providerClass.canonicalName), providerClass)
     }
+    require(!entries.isEmpty())
     return entries.toTypedArray()
   }
 

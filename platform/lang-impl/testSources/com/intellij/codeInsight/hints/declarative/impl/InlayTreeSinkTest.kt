@@ -10,7 +10,7 @@ class InlayTreeSinkTest : LightPlatformCodeInsightFixture4TestCase() {
   @Test
   fun testAddSinglePresentationWithoutOptions() {
     val providerId = "my.provider"
-    val sink = InlayTreeSinkImpl(providerId, mapOf(), false, false)
+    val sink = InlayTreeSinkImpl(providerId, mapOf(), false, false, Int::class.java)
     val position = InlineInlayPosition(1, false)
     sink.addPresentation(position, hasBackground = false) {
       text("inlay text")
@@ -26,7 +26,7 @@ class InlayTreeSinkTest : LightPlatformCodeInsightFixture4TestCase() {
   @Test
   fun testAddUnderNonExistingOptionThrowsException() {
     val providerId = "my.provider"
-    val sink = InlayTreeSinkImpl(providerId, mapOf(), false, false)
+    val sink = InlayTreeSinkImpl(providerId, mapOf(), false, false, Int::class.java)
     val position = InlineInlayPosition(1, false)
     UsefulTestCase.assertThrows(Throwable::class.java) {
       sink.whenOptionEnabled("random non-existing option") {
@@ -40,7 +40,7 @@ class InlayTreeSinkTest : LightPlatformCodeInsightFixture4TestCase() {
   @Test
   fun testAddUnderExistingDisabledOptionIsNotAdded() {
     val providerId = "my.provider"
-    val sink = InlayTreeSinkImpl(providerId, mapOf("option" to false), false, false)
+    val sink = InlayTreeSinkImpl(providerId, mapOf("option" to false), false, false, Int::class.java)
     val position = InlineInlayPosition(1, false)
     sink.whenOptionEnabled("option") {
       sink.addPresentation(position, hasBackground = false) {
@@ -53,7 +53,7 @@ class InlayTreeSinkTest : LightPlatformCodeInsightFixture4TestCase() {
   @Test
   fun testAddUnderExistingEnabledOptionIsAdded() {
     val providerId = "my.provider"
-    val sink = InlayTreeSinkImpl(providerId, mapOf("option" to true), false, false)
+    val sink = InlayTreeSinkImpl(providerId, mapOf("option" to true), false, false, Int::class.java)
     val position = InlineInlayPosition(1, false)
     sink.whenOptionEnabled("option") {
       sink.addPresentation(position, hasBackground = false) {
@@ -66,7 +66,7 @@ class InlayTreeSinkTest : LightPlatformCodeInsightFixture4TestCase() {
   @Test
   fun testInPreviewDisabled() {
     val providerId = "my.provider"
-    val sink = InlayTreeSinkImpl(providerId, mapOf("option" to true), true, true)
+    val sink = InlayTreeSinkImpl(providerId, mapOf("option" to true), true, true, Int::class.java)
     val position = InlineInlayPosition(1, false)
     sink.addPresentation(position, hasBackground = false) {
       text("inlay text")

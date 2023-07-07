@@ -26,7 +26,8 @@ class InlayPresentationList(
   private var state: TinyTree<Any?>,
   @TestOnly var hasBackground: Boolean,
   @TestOnly var isDisabled: Boolean,
-  var payloads: Map<String, InlayActionPayload>? = null
+  var payloads: Map<String, InlayActionPayload>? = null,
+  private val providerClass: Class<*>
 ) {
   companion object {
     private const val NOT_COMPUTED = -1
@@ -39,7 +40,7 @@ class InlayPresentationList(
     private const val BACKGROUND_ALPHA: Float = 0.55f
   }
 
-  private var entries: Array<InlayPresentationEntry> = PresentationEntryBuilder(state).buildPresentationEntries()
+  private var entries: Array<InlayPresentationEntry> = PresentationEntryBuilder(state, providerClass).buildPresentationEntries()
   private var _partialWidthSums: IntArray? = null
   private var computedWidth: Int = NOT_COMPUTED
   private var size: Float = Float.MAX_VALUE
@@ -88,7 +89,7 @@ class InlayPresentationList(
   fun updateState(state: TinyTree<Any?>, disabled: Boolean, hasBackground: Boolean) {
     updateStateTree(state, this.state, 0, 0)
     this.state = state
-    this.entries = PresentationEntryBuilder(state).buildPresentationEntries()
+    this.entries = PresentationEntryBuilder(state, providerClass).buildPresentationEntries()
     this.computedWidth = NOT_COMPUTED
     this._partialWidthSums = null
     this.isDisabled = disabled

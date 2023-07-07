@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hints.declarative.TinyTreeDebugNode as DebugNode
 class TinyTreeTest : UsefulTestCase() {
   fun testAddToTreeInReverseOrder() {
     val tinyTree = createTree()
+    assertEquals(6, tinyTree.size)
     val debugTree = DebugNode.buildDebugTree(tinyTree)
     val expectedNode = DebugNode(10, "root", mutableListOf(
       DebugNode(20, "left", mutableListOf()),
