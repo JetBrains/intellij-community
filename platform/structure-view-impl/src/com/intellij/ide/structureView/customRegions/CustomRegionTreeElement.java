@@ -115,6 +115,10 @@ public class CustomRegionTreeElement implements StructureViewTreeElement {
     return false;
   }
 
+  public boolean containsOffset(int offset) {
+    return offset >= myStartElement.getTextRange().getStartOffset() && offset <= myEndOffset;
+  }
+
   public CustomRegionTreeElement createNestedRegion(@NotNull PsiElement element) {
     if (mySubRegions == null) mySubRegions = new ArrayList<>();
     CustomRegionTreeElement currSubRegion = new CustomRegionTreeElement(element, myProvider, this);

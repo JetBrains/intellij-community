@@ -24,7 +24,6 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.Action
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
-import com.intellij.internal.statistic.eventLog.events.LongEventField;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
@@ -56,7 +55,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
@@ -373,9 +371,16 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
   }
 
   public @NotNull Promise<TreePath> select(Object element) {
+    int editorOffset;
+    if (myFileEditor instanceof TextEditor textEditor) {
+      editorOffset = textEditor.getEditor().getCaretModel().getOffset();
+    }
+    else {
+      editorOffset = -1;
+    }
     int[] stage = {1, 0}; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
     TreePath[] deepestPath = {null};
-    TreeVisitor visitor = path -> StructureViewComponent.visitPathForElementSelection(path, element, stage, deepestPath);
+    TreeVisitor visitor = path -> StructureViewComponent.visitPathForElementSelection(path, element, editorOffset, stage, deepestPath);
     Function<TreePath, Promise<TreePath>> action = path -> {
       myTree.expandPath(path);
       TreeUtil.selectPath(myTree, path);

@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -430,6 +431,13 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   @NotNull
   private Promise<TreePath> expandSelectFocusInner(Object element, boolean select, boolean requestFocus) {
+    int editorOffset;
+    if (myFileEditor instanceof TextEditor textEditor) {
+      editorOffset = textEditor.getEditor().getCaretModel().getOffset();
+    }
+    else {
+      editorOffset = -1;
+    }
     AsyncPromise<TreePath> result = myCurrentFocusPromise = new AsyncPromise<>();
     int[] stage = {1, 0}; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
     TreePath[] deepestPath = {null};
@@ -445,7 +453,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
           result.setError("rejected");
           return TreeVisitor.Action.INTERRUPT;
         }
-        return visitPathForElementSelection(path, element, stage, deepestPath);
+        return visitPathForElementSelection(path, element, editorOffset, stage, deepestPath);
       }
     };
     Function<TreePath, Promise<TreePath>> action = path -> {
@@ -486,50 +494,55 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   /**
-   *  Visits the specified path and checks whether it's a match for selecting the current editor element.
-   *  <p>
-   *    There's an optimization: if the node is not an ancestor of the one we're looking for,
-   *    its children are skipped. However, some structure views (MarkdownStructureViewModel)
-   *    actually have custom grouping that can group unrelated PSI elements into a common node,
-   *    so a second pass is done if no element was found during the first pass. To indicate the current
-   *    stage, the {@code stage} parameter is passed, containing two values: the first is the current
-   *    stage (1 - first pass, but no skipped children yet; 2 - first pass, and some children were skipped;
-   *    3 - the second pass with optimization disabled), and the second value is used to store the length
-   *    of the longest tree path found so far. The corresponding value is stored into the {@code deepestPath}
-   *    parameter.
-   *  </p>
-   * @param path        the path to visit
-   * @param element     the element to look for
-   * @param stage       the current stage and the length of the longest path found so far
-   * @param deepestPath the longest path found so far
-   * @return INTERRUPT if the matching node is found, SKIP_CHILDREN if the optimization is performed, CONTINUE in other cases
+   * Visits the specified path and checks whether it's a match for selecting the current editor element.
+   * <p>
+   * There's an optimization: if the node is not an ancestor of the one we're looking for,
+   * its children are skipped. However, some structure views (MarkdownStructureViewModel)
+   * actually have custom grouping that can group unrelated PSI elements into a common node,
+   * so a second pass is done if no element was found during the first pass. To indicate the current
+   * stage, the {@code stage} parameter is passed, containing two values: the first is the current
+   * stage (1 - first pass, but no skipped children yet; 2 - first pass, and some children were skipped;
+   * 3 - the second pass with optimization disabled), and the second value is used to store the length
+   * of the longest tree path found so far. The corresponding value is stored into the {@code deepestPath}
+   * parameter.
+   * </p>
+   *
+   * @param path         the path to visit
+   * @param element      the element to look for
+   * @param editorOffset the current editor offset, or -1 if the editor is not a text editor
+   * @param stage        the current stage and the length of the longest path found so far
+   * @param deepestPath  the longest path found so far
+   * @return SKIP_CHILDREN if the optimization is performed, CONTINUE in other cases
    */
   @ApiStatus.Internal
   public static TreeVisitor.@NotNull Action visitPathForElementSelection(
     @NotNull TreePath path,
     Object element,
+    int editorOffset,
     int[] stage,
     TreePath[] deepestPath
   ) {
     Object last = path.getLastPathComponent();
     Object userObject = unwrapNavigatable(last);
     Object value = unwrapValue(last);
-    if (Comparing.equal(value, element) ||
-        userObject instanceof AbstractTreeNode && ((AbstractTreeNode<?>)userObject).canRepresent(element)) {
-      return TreeVisitor.Action.INTERRUPT;
+    // Even if they are equal, or node.canRepresent(element), we still need to go deeper,
+    // because there may be a better match down there that's not a PSI element,
+    // for example, a folding region inside the class represented by the element.
+    boolean isAncestor =
+      Comparing.equal(value, element) ||
+      userObject instanceof AbstractTreeNode<?> node && node.canRepresent(element) ||
+      value instanceof PsiElement valPsi && element instanceof PsiElement elPsi && PsiTreeUtil.isAncestor(valPsi, elPsi, true) ||
+      value instanceof CustomRegionTreeElement region && region.containsOffset(editorOffset);
+    if (isAncestor) {
+      int count = path.getPathCount();
+      if (stage[1] == 0 || stage[1] < count) {
+        stage[1] = count;
+        deepestPath[0] = path;
+      }
     }
-    if (value instanceof PsiElement && element instanceof PsiElement) {
-      if (PsiTreeUtil.isAncestor((PsiElement)value, (PsiElement)element, true)) {
-        int count = path.getPathCount();
-        if (stage[1] == 0 || stage[1] < count) {
-          stage[1] = count;
-          deepestPath[0] = path;
-        }
-      }
-      else if (stage[0] != 3) {
-        stage[0] = 2;
-        return TreeVisitor.Action.SKIP_CHILDREN;
-      }
+    else if (stage[0] != 3) {
+      stage[0] = 2;
+      return TreeVisitor.Action.SKIP_CHILDREN;
     }
     return TreeVisitor.Action.CONTINUE;
   }
