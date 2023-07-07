@@ -69,9 +69,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var hideToolStripes: Boolean
-    get() = state.hideToolStripes
+    get() = state.hideToolStripes || notRoamableOptions.experimentalSingleStripe
     set(value) {
       state.hideToolStripes = value
+      if (!value) notRoamableOptions.experimentalSingleStripe = false
     }
 
   val hideNavigationOnFocusLoss: Boolean

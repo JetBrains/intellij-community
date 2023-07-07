@@ -64,6 +64,12 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
       updateState { it.copy(overrideLafFonts = value) }
     }
 
+  var experimentalSingleStripe: Boolean
+    get() = state.experimentalSingleStripe
+    set(value) {
+      updateState { it.copy(experimentalSingleStripe = value) }
+    }
+
   override fun loadState(state: NotRoamableUiOptions) {
     var fontSize = UISettings.restoreFontSize(state.fontSize, state.fontScale)
     if (fontSize <= 0) {
@@ -170,6 +176,9 @@ data class NotRoamableUiOptions(
   @JvmField
   @OptionTag
   val overrideLafFontsWasMigrated: Boolean = false,
+  @JvmField
+  @OptionTag
+  val experimentalSingleStripe: Boolean = false,
 )
 
 /**

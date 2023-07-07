@@ -4,6 +4,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolWindowsGroup
+import com.intellij.ide.ui.NotRoamableUiSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.ActionUrl
 import com.intellij.ide.ui.customization.CustomActionsListener.Companion.fireSchemaChanged
@@ -60,7 +61,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    val hide = ActionPlaces.isMainMenuOrActionSearch(e.place)
+    val hide = ActionPlaces.isMainMenuOrActionSearch(e.place) || !NotRoamableUiSettings.getInstance().experimentalSingleStripe
     e.presentation.apply {
       isEnabled = isEnabled && !hide
       isVisible = isVisible && !hide
@@ -265,16 +266,18 @@ private class ButtonsStateService: PersistentStateComponent<Element> {
 
 private val buttonState get() = ApplicationManager.getApplication().service<ButtonsStateService>()
 
+
 class EnableStripeGroup : ToggleAction(), DumbAware {
   companion object {
     private val customizedGroup get() = getGroupPath(GROUP_MAIN_TOOLBAR_NEW_UI, GROUP_MAIN_TOOLBAR_CENTER)
 
     fun setSingleStripeEnabled(enabled: Boolean) {
-      updateActionGroup(enabled, customizedGroup ?: return, STRIPE_ACTION_GROUP_ID)
-      UISettings.getInstance().hideToolStripes = enabled
+      if (enabled) updateActionGroup(true, customizedGroup ?: return, STRIPE_ACTION_GROUP_ID)
+      NotRoamableUiSettings.getInstance().experimentalSingleStripe = enabled
     }
 
     fun isSingleStripeEnabled() = customizedGroup?.let { isActionGroupAdded(it, STRIPE_ACTION_GROUP_ID) } == true
+                                  && NotRoamableUiSettings.getInstance().experimentalSingleStripe
 
     @Suppress("SameParameterValue")
     private fun isActionGroupAdded(groupPath: List<String>, actionId: String): Boolean {
