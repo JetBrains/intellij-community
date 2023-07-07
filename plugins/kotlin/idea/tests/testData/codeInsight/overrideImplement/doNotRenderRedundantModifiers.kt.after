@@ -1,0 +1,53 @@
+// FIR_IDENTICAL
+open class A {
+    open lateinit var vLateinit: String
+    open operator fun contains(n: Int): Boolean = true
+    open infix fun fInfix(n: Int) {}
+    protected open external fun fProtected()
+    internal open suspend fun fInternal() {}
+    open fun fOverride() {}
+}
+
+open class B: A() {
+    override fun fOverride() {
+        super.fOverride()
+    }
+}
+
+class C: B() {
+    override fun contains(n: Int): Boolean {
+        return super.contains(n)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return super.equals(other)
+    }
+
+    override fun fInfix(n: Int) {
+        super.fInfix(n)
+    }
+
+    override suspend fun fInternal() {
+        super.fInternal()
+    }
+
+    override fun fOverride() {
+        super.fOverride()
+    }
+
+    override fun fProtected() {
+        super.fProtected()
+    }
+
+    override fun hashCode(): Int {
+        return super.hashCode()
+    }
+
+    override fun toString(): String {
+        return super.toString()
+    }
+
+    override var vLateinit: String
+        get() = super.vLateinit
+        set(value) {}
+}

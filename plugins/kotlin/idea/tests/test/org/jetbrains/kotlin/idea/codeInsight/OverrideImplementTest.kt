@@ -408,4 +408,8 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
     open fun testGenericClass() {
         doMultiImplementFileTest()
     }
+
+    open fun testDoNotRenderRedundantModifiers() {
+        doMultiOverrideFileTest()
+    }
 }

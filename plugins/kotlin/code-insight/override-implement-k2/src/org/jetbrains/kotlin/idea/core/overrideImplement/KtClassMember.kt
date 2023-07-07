@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocCommentOwner
+import com.intellij.psi.tree.TokenSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
@@ -119,7 +120,14 @@ fun KtAnalysisSession.generateMember(
         }
 
         modifiersRenderer = modifiersRenderer.with {
-            keywordsRenderer = keywordsRenderer.with { keywordFilter = KtRendererKeywordFilter.without(KtTokens.OPERATOR_KEYWORD) }
+            keywordsRenderer = keywordsRenderer.with {
+                keywordFilter = KtRendererKeywordFilter.without(
+                    TokenSet.orSet(
+                        KtTokens.VISIBILITY_MODIFIERS,
+                        TokenSet.create(KtTokens.OPERATOR_KEYWORD, KtTokens.INFIX_KEYWORD, KtTokens.LATEINIT_KEYWORD),
+                    )
+                )
+            }
 
             modalityProvider = modalityProvider.onlyIf { s -> s != symbol }
 
