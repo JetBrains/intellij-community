@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -35,7 +35,7 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
      *
      * @param project it's initialized, open, not disposed, and not the default one; no need to double-check in implementations
      */
-    @RequiresWriteLock
+    @RequiresReadLock
     open fun isEnabledForProject(project: Project): Boolean = false
 
     /**
@@ -48,7 +48,7 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
   }
 
   /**
-   * Not empty state of this set means that processing has been scheduled (invokeLater(...)) but bot yet performed.
+   * Not empty state of this set means that processing has been scheduled (invokeLater(...)) but not yet performed.
    */
   private val documentsToProcess = HashSet<Document>()
 
@@ -134,7 +134,7 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
   }
 }
 
-private class CurrentActionListener() : AnActionListener {
+private class CurrentActionListener : AnActionListener {
   override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
     if (action is SaveDocumentAction) {
       service<CurrentActionHolder>().runningSaveDocumentAction = true
