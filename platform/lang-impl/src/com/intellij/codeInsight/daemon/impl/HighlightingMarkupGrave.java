@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
  * to reduce the "opened editor-to-some highlighting shown" perceived interval.
  */
 @Service(Service.Level.PROJECT)
-@State(name = "HighlightingMarkupGrave", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = "HighlightingMarkupGrave", storages = @Storage(StoragePathMacros.CACHE_FILE))
 final class HighlightingMarkupGrave implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(HighlightingMarkupGrave.class);
   private static final Key<Boolean> IS_ZOMBIE = Key.create("IS_ZOMBIE");
