@@ -200,6 +200,11 @@ final class ServiceTreeView extends ServiceView {
       .onError(result::setError)
       .onSuccess(path -> {
         ServiceViewItem item = (ServiceViewItem)path.getLastPathComponent();
+        if (item instanceof ServiceModel.ServiceNode node && node.isLoaded() && !node.isChildrenInitialized()) {
+          // Initialize children on BGT before extract in order correctly determine whether it leaf or not and
+          // use appropriate ServiceViewUi.
+          node.getChildren();
+        }
         AppUIExecutor.onUiThread().expireWith(this).submit(() -> {
           ServiceViewManagerImpl manager = (ServiceViewManagerImpl)ServiceViewManager.getInstance(getProject());
           manager.extract(new ServiceViewDragHelper.ServiceViewDragBean(this, Collections.singletonList(item)));
