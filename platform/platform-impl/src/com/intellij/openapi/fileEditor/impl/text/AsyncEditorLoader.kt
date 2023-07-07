@@ -120,10 +120,7 @@ class AsyncEditorLoader internal constructor(private val project: Project,
         editor.putUserData(ASYNC_LOADER, null)
         editor.scrollingModel.disableAnimation()
         try {
-          delayedScrollState?.let {
-            delayedScrollState = null
-            restoreCaretPosition(editor = editor, delayedScrollState = it, coroutineScope = coroutineScope)
-          }
+          restoreCaretState(editor)
 
           loadingDecorator.stopLoading(scope = this)
 
@@ -143,6 +140,13 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     }
   }
 
+  fun restoreCaretState(editor: EditorEx) {
+    delayedScrollState?.let {
+      delayedScrollState = null
+      restoreCaretPosition(editor = editor, delayedScrollState = it, coroutineScope = coroutineScope)
+    }
+  }
+
   private fun startInTests(tasks: List<suspend (EditorEx) -> Unit>, editor: EditorEx, textEditor: TextEditorImpl) {
     val continuation = runWithModalProgressBlocking(project, "") {
       // required for switch to
@@ -152,13 +156,9 @@ class AsyncEditorLoader internal constructor(private val project: Project,
       }
     }
     editor.putUserData(ASYNC_LOADER, null)
+
     continuation?.run()
-    delayedScrollState?.let {
-      delayedScrollState = null
-      scrollToCaret(editor = editor,
-                    exactState = it.exactState,
-                    relativeCaretPosition = it.relativeCaretPosition)
-    }
+
     while (true) {
       (delayedActions.pollFirst() ?: break).run()
     }

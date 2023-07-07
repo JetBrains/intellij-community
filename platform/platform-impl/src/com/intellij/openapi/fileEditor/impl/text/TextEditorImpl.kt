@@ -51,7 +51,10 @@ open class TextEditorImpl @Internal constructor(@JvmField protected val project:
                                          asyncLoader = createAsyncEditorLoader(provider, project)) {
     val highlighter = asyncLoader.createHighlighterAsync(editor.document, file)
     @Suppress("LeakingThis")
-    asyncLoader.start(textEditor = this, tasks = listOf { configureHighlighter(highlighter, it) })
+    asyncLoader.start(textEditor = this, tasks = listOf(
+      { configureHighlighter(highlighter, it) },
+      { asyncLoader.restoreCaretState(it) },
+    ))
   }
 
   init {

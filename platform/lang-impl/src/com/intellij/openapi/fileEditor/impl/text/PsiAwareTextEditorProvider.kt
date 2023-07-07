@@ -64,6 +64,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
     val tasks: List<suspend (EditorEx) -> Unit> = listOf(
       { editor -> configureHighlighter(highlighter, editor) },
+      { asyncLoader.restoreCaretState(it) },
       { editor ->
         val state = foldingState?.await()
         if (state != null) {
