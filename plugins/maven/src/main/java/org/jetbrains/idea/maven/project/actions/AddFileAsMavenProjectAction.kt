@@ -49,14 +49,12 @@ class AddFileAsMavenProjectAction : MavenAction() {
     return super.isVisible(e) && isAvailable(e)
   }
 
-  companion object {
-    private fun isExistingProjectFile(context: DataContext, file: VirtualFile?): Boolean {
-      val manager = MavenActionUtil.getProjectsManager(context)
-      return file != null && manager != null && manager.findProject(file) != null
-    }
+  private fun isExistingProjectFile(context: DataContext, file: VirtualFile?): Boolean {
+    val manager = MavenActionUtil.getProjectsManager(context)
+    return file != null && manager != null && manager.findProject(file) != null
+  }
 
-    private fun getSelectedFile(context: DataContext): VirtualFile? {
-      return CommonDataKeys.VIRTUAL_FILE.getData(context)
-    }
+  private fun getSelectedFile(context: DataContext): VirtualFile? {
+    return CommonDataKeys.VIRTUAL_FILE.getData(context)
   }
 }
