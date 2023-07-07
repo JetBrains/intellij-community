@@ -1,89 +1,103 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
-import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.asStateFlow
+import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageDialog
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.util.CollectionDelta
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.childScope
+import com.intellij.util.io.await
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.*
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataOperationsListener
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRChangesDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRStateDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStateModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
+import kotlin.coroutines.cancellation.CancellationException
 
 internal class GHPRReviewFlowViewModelImpl(
   parentCs: CoroutineScope,
+  private val project: Project,
   detailsModel: SingleValueModel<GHPullRequest>,
-  private val stateModel: GHPRStateModel,
   private val repositoryDataService: GHPRRepositoryDataService,
   private val securityService: GHPRSecurityService,
   private val avatarIconsProvider: GHAvatarIconsProvider,
   private val dataProvider: GHPRDetailsDataProvider,
+  private val stateData: GHPRStateDataProvider,
+  private val changesData: GHPRChangesDataProvider,
   reviewDataProvider: GHPRReviewDataProvider,
   disposable: Disposable
 ) : GHPRReviewFlowViewModel {
   private val cs = parentCs.childScope()
 
+  private val taskLauncher = SingleCoroutineLauncher(cs)
+
   private val currentUser = securityService.currentUser
   private val ghostUser = securityService.ghostUser
 
-  private val _isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
-  override val isBusy: Flow<Boolean> = _isBusy.asStateFlow()
+  override val isBusy: Flow<Boolean> = taskLauncher.busy
 
   private val detailsState: StateFlow<GHPullRequest> = detailsModel.asStateFlow()
 
-  private val mergeabilityState: MutableStateFlow<GHPRMergeabilityState?> = MutableStateFlow(stateModel.mergeabilityState)
+  // TODO: handle error
+  private val mergeabilityState: StateFlow<GHPRMergeabilityState?> = stateData.mergeabilityState
+    .map { it.getOrNull() }
+    .stateIn(cs, SharingStarted.Eagerly, null)
 
-  override val requestedReviewers: StateFlow<List<GHPullRequestRequestedReviewer>> =
-    detailsState.mapState(cs) { it.reviewRequests.mapNotNull(GHPullRequestReviewRequest::requestedReviewer) }
+  override val requestedReviewers: SharedFlow<List<GHPullRequestRequestedReviewer>> =
+    detailsState.map { it.reviewRequests.mapNotNull(GHPullRequestReviewRequest::requestedReviewer) }
+      .shareIn(cs, SharingStarted.Lazily, 1)
 
-  override val reviewerReviews: StateFlow<Map<GHPullRequestRequestedReviewer, ReviewState>> = detailsState.mapState(cs) { details ->
+  override val reviewerReviews: SharedFlow<Map<GHPullRequestRequestedReviewer, ReviewState>> = detailsState.map { details ->
     val author = details.author
     val reviews = details.reviews
     val reviewers = details.reviewRequests.mapNotNull(GHPullRequestReviewRequest::requestedReviewer)
     getReviewsByReviewers(author, reviews, reviewers)
-  }
+  }.shareIn(cs, SharingStarted.Lazily, 1)
 
-  override val reviewState: Flow<ReviewState> = detailsState.mapState(cs) {
+  override val reviewState: SharedFlow<ReviewState> = detailsState.map {
     when (it.reviewDecision) {
       GHPullRequestReviewDecision.APPROVED -> ReviewState.ACCEPTED
       GHPullRequestReviewDecision.CHANGES_REQUESTED -> ReviewState.WAIT_FOR_UPDATES
       GHPullRequestReviewDecision.REVIEW_REQUIRED -> ReviewState.NEED_REVIEW
       null -> ReviewState.NEED_REVIEW
     }
-  }
+  }.shareIn(cs, SharingStarted.Lazily, 1)
 
-  override val role: Flow<ReviewRole> = detailsState.mapState(cs) { details ->
+  override val role: SharedFlow<ReviewRole> = detailsState.map { details ->
     when {
       details.isAuthor(currentUser) -> ReviewRole.AUTHOR
       details.isReviewer(currentUser) -> ReviewRole.REVIEWER
       else -> ReviewRole.GUEST
     }
-  }
+  }.shareIn(cs, SharingStarted.Lazily, 1)
 
   private val _pendingCommentsState: MutableStateFlow<Int> = MutableStateFlow(0)
   override val pendingComments: Flow<Int> = _pendingCommentsState.asSharedFlow()
 
   override val userCanManageReview: Boolean = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) ||
-                                              stateModel.viewerDidAuthor
+                                              detailsState.value.viewerDidAuthor
 
   override val userCanMergeReview: Boolean = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE) &&
                                              !securityService.isMergeForbiddenForProject()
@@ -100,34 +114,69 @@ internal class GHPRReviewFlowViewModelImpl(
     mergeabilityState?.canBeMerged == true && securityService.isSquashMergeAllowed()
   }
 
-  override fun mergeReview() = stateModel.submitMergeTask()
-
-  override fun rebaseReview() = stateModel.submitRebaseMergeTask()
-
-  override fun squashAndMergeReview() = stateModel.submitSquashMergeTask()
-
-  override fun closeReview() = stateModel.submitCloseTask()
-
-  override fun reopenReview() = stateModel.submitReopenTask()
-
-  override fun postDraftedReview() = stateModel.submitMarkReadyForReviewTask()
-
-  override fun removeReviewer(reviewer: GHPullRequestRequestedReviewer) = stateModel.submitTask {
-    val reviewers = requestedReviewers.value
-    val delta = CollectionDelta(reviewers, reviewers - reviewer)
-    dataProvider.adjustReviewers(EmptyProgressIndicator(), delta)
+  override fun mergeReview() = runAction {
+    val details = detailsState.value
+    val mergeability = mergeabilityState.value ?: return@runAction
+    val dialog = ReviewMergeCommitMessageDialog(project,
+                                                CollaborationToolsBundle.message("dialog.review.merge.commit.title"),
+                                                GithubBundle.message("pull.request.merge.pull.request", details.number),
+                                                details.title)
+    if (!dialog.showAndGet()) {
+      return@runAction
+    }
+    stateData.merge(EmptyProgressIndicator(), splitCommitMessage(dialog.message), mergeability.headRefOid).await()
   }
 
-  override fun requestReview(parentComponent: JComponent) = stateModel.submitTask {
-    val reviewers = requestedReviewers.value + reviewerReviews.value.keys
-    GHUIUtil.showChooserPopup(
+  override fun rebaseReview() = runAction {
+    val mergeability = mergeabilityState.value ?: return@runAction
+    stateData.rebaseMerge(EmptyProgressIndicator(), mergeability.headRefOid).await()
+  }
+
+  override fun squashAndMergeReview() = runAction {
+    val details = detailsState.value
+    val mergeability = mergeabilityState.value ?: return@runAction
+    val commits = changesData.loadCommitsFromApi().await()
+    val body = "* " + StringUtil.join(commits, { it.messageHeadline }, "\n\n* ")
+    val dialog = ReviewMergeCommitMessageDialog(project,
+                                                CollaborationToolsBundle.message("dialog.review.merge.commit.title.with.squash"),
+                                                GithubBundle.message("pull.request.merge.pull.request", details.number),
+                                                body)
+    if (!dialog.showAndGet()) {
+      return@runAction
+    }
+    val message = dialog.message
+    stateData.squashMerge(EmptyProgressIndicator(), splitCommitMessage(message), mergeability.headRefOid).await()
+  }
+
+  override fun closeReview() = runAction {
+    stateData.close(EmptyProgressIndicator()).await()
+  }
+
+  override fun reopenReview() = runAction {
+    stateData.reopen(EmptyProgressIndicator()).await()
+  }
+
+  override fun postDraftedReview() = runAction {
+    stateData.markReadyForReview(EmptyProgressIndicator()).await()
+  }
+
+  override fun removeReviewer(reviewer: GHPullRequestRequestedReviewer) = runAction {
+    val reviewers = requestedReviewers.first()
+    val delta = CollectionDelta(reviewers, reviewers - reviewer)
+    dataProvider.adjustReviewers(EmptyProgressIndicator(), delta).await()
+  }
+
+  override fun requestReview(parentComponent: JComponent) = runAction {
+    val reviewers = requestedReviewers.combine(reviewerReviews) { reviewers, reviews ->
+      reviewers + reviews.keys
+    }.first()
+    val selectedReviewers = GHUIUtil.showChooserPopup(
       parentComponent,
       GHUIUtil.SelectionPresenters.PRReviewers(avatarIconsProvider),
       reviewers,
       loadPotentialReviewers()
-    ).thenAccept { selectedReviewers ->
-      dataProvider.adjustReviewers(EmptyProgressIndicator(), selectedReviewers)
-    }
+    ).await()
+    dataProvider.adjustReviewers(EmptyProgressIndicator(), selectedReviewers).await()
   }
 
   private fun loadPotentialReviewers(): CompletableFuture<List<GHPullRequestRequestedReviewer>> {
@@ -137,27 +186,20 @@ internal class GHPRReviewFlowViewModelImpl(
     }
   }
 
-  override fun reRequestReview() = stateModel.submitTask {
-    val reviewers = requestedReviewers.value
-    val delta = CollectionDelta(reviewers, reviewers + reviewerReviews.value.keys)
-    dataProvider.adjustReviewers(EmptyProgressIndicator(), delta)
+  override fun reRequestReview() = runAction {
+    val delta = requestedReviewers.combine(reviewerReviews) { reviewers, reviews ->
+      CollectionDelta(reviewers, reviewers + reviews.keys)
+    }.first()
+    dataProvider.adjustReviewers(EmptyProgressIndicator(), delta).await()
   }
 
-  override fun setMyselfAsReviewer() = stateModel.submitTask {
-    val reviewers = requestedReviewers.value
+  override fun setMyselfAsReviewer() = runAction {
+    val reviewers = requestedReviewers.first()
     val delta = CollectionDelta(reviewers, reviewers + securityService.currentUser)
-    dataProvider.adjustReviewers(EmptyProgressIndicator(), delta)
+    dataProvider.adjustReviewers(EmptyProgressIndicator(), delta).await()
   }
 
   init {
-    stateModel.addAndInvokeBusyStateChangedListener {
-      _isBusy.value = stateModel.isBusy
-    }
-
-    stateModel.addAndInvokeMergeabilityStateLoadingResultListener {
-      mergeabilityState.value = stateModel.mergeabilityState
-    }
-
     reviewDataProvider.addPendingReviewListener(disposable) {
       reviewDataProvider.loadPendingReview().thenAccept { pendingComments ->
         _pendingCommentsState.value = pendingComments?.commentsCount ?: 0
@@ -195,6 +237,18 @@ internal class GHPRReviewFlowViewModelImpl(
     }
     return result
   }
+
+  private fun runAction(action: suspend () -> Unit) {
+    taskLauncher.launch {
+      try {
+        action()
+      }
+      catch (e: Exception) {
+        if (e is CancellationException) throw e
+        //TODO: handle???
+      }
+    }
+  }
 }
 
 private fun GHPullRequest.isAuthor(user: GHUser): Boolean =
@@ -204,3 +258,13 @@ private fun GHPullRequest.isReviewer(user: GHUser): Boolean =
   reviewRequests.any { it.requestedReviewer?.id == user.id }
   ||
   reviews.any { it.author?.id == user.id }
+
+private fun splitCommitMessage(commitMessage: String): Pair<String, String> {
+  val idx = commitMessage.indexOf("\n\n")
+  return if (idx < 0) "" to commitMessage
+  else {
+    val subject = commitMessage.substring(0, idx)
+    if (subject.contains("\n")) "" to commitMessage
+    else subject to commitMessage.substring(idx + 2)
+  }
+}

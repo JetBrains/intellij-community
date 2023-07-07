@@ -3,15 +3,20 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.asStateFlow
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRStateDataProvider
 
 interface GHPRStatusViewModel : CodeReviewStatusViewModel {
   val viewerDidAuthor: Boolean
@@ -22,43 +27,43 @@ interface GHPRStatusViewModel : CodeReviewStatusViewModel {
   val requiredApprovingReviewsCount: Flow<Int>
 }
 
+private val LOG = logger<GHPRStatusViewModel>()
+
 class GHPRStatusViewModelImpl(
   parentCs: CoroutineScope,
   private val project: Project,
-  stateModel: GHPRStateModel
+  detailsModel: SingleValueModel<GHPullRequest>,
+  stateData: GHPRStateDataProvider
 ) : GHPRStatusViewModel {
   private val cs = parentCs.childScope()
 
-  override val viewerDidAuthor: Boolean = stateModel.viewerDidAuthor
+  private val detailsState = detailsModel.asStateFlow()
 
-  private val _isDraftState: MutableStateFlow<Boolean> = MutableStateFlow(stateModel.isDraft)
-  override val isDraft: Flow<Boolean> = _isDraftState.asSharedFlow()
+  override val viewerDidAuthor: Boolean = detailsState.value.viewerDidAuthor
 
-  private val _mergeabilityState: MutableStateFlow<GHPRMergeabilityState?> = MutableStateFlow(stateModel.mergeabilityState)
-  override val mergeabilityState: Flow<GHPRMergeabilityState?> = _mergeabilityState.asSharedFlow()
+  override val isDraft: Flow<Boolean> = detailsState.map { it.isDraft }
+    .modelFlow(cs, LOG)
 
-  override val hasConflicts: SharedFlow<Boolean> = _mergeabilityState.map { mergeability ->
+  override val mergeabilityState: Flow<GHPRMergeabilityState?> = stateData.mergeabilityState.map { it.getOrNull() }
+    .modelFlow(cs, LOG)
+
+  override val hasConflicts: SharedFlow<Boolean> = mergeabilityState.map { mergeability ->
     mergeability?.hasConflicts ?: false
-  }.modelFlow(cs, thisLogger())
+  }.modelFlow(cs, LOG)
   override val ciJobs: SharedFlow<List<CodeReviewCIJob>> =
-    _mergeabilityState.map { it?.ciJobs ?: emptyList() }.modelFlow(cs, thisLogger())
+    mergeabilityState.map { it?.ciJobs ?: emptyList() }
+      .modelFlow(cs, LOG)
 
-  override val isRestricted: Flow<Boolean> = _mergeabilityState.map { mergeability ->
+  override val isRestricted: Flow<Boolean> = mergeabilityState.map { mergeability ->
     mergeability?.isRestricted ?: false
   }
 
-  override val requiredApprovingReviewsCount: Flow<Int> = _mergeabilityState.map { mergeability ->
+  override val requiredApprovingReviewsCount: Flow<Int> = mergeabilityState.map { mergeability ->
     mergeability?.requiredApprovingReviewsCount ?: 0
   }
 
   private val _showJobsDetailsRequests = MutableSharedFlow<List<CodeReviewCIJob>>()
   override val showJobsDetailsRequests: SharedFlow<List<CodeReviewCIJob>> = _showJobsDetailsRequests
-
-  init {
-    stateModel.addAndInvokeMergeabilityStateLoadingResultListener {
-      _mergeabilityState.value = stateModel.mergeabilityState
-    }
-  }
 
   override fun showJobsDetails() {
     cs.launchNow {
