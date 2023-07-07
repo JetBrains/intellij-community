@@ -1,262 +1,243 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl;
+package com.intellij.openapi.wm.impl
 
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.wm.IdeGlassPane;
-import com.intellij.ui.ClientProperty;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.mac.MacMainFrameDecorator;
-import com.jetbrains.JBR;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettings.Companion.mergeMainMenuWithWindowTitleOverrideValue
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.IdeGlassPane
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ScreenUtil
+import com.intellij.ui.mac.MacMainFrameDecorator
+import com.intellij.util.awaitCancellationAndInvoke
+import com.jetbrains.JBR
+import kotlinx.coroutines.*
+import java.awt.EventQueue
+import java.awt.Frame
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
+import java.lang.Runnable
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicReference
+import javax.swing.JRootPane
+import javax.swing.SwingUtilities
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
+private val LOG: Logger
+  get() = logger<IdeFrameDecorator>()
 
-import static com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isDisableAutoRequestFocus;
-import static com.intellij.openapi.wm.impl.WindowManagerImplKt.IDE_FRAME_EVENT_LOG;
+abstract class IdeFrameDecorator protected constructor(protected @JvmField val frame: IdeFrameImpl) {
+  companion object {
+    const val FULL_SCREEN = "ide.frame.full.screen"
 
-public abstract class IdeFrameDecorator {
-  public static final String FULL_SCREEN = "ide.frame.full.screen";
+    fun decorate(frame: IdeFrameImpl, glassPane: IdeGlassPane, coroutineScope: CoroutineScope): IdeFrameDecorator? {
+      try {
+        return when {
+          SystemInfoRt.isMac -> MacMainFrameDecorator(frame, glassPane, parentDisposable)
+          SystemInfoRt.isWindows -> WinMainFrameDecorator(frame)
+          SystemInfoRt.isXWindow && X11UiUtil.isFullScreenSupported() -> EWMHFrameDecorator(frame, coroutineScope)
+          else -> null
+        }
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.warn("Failed to initialize IdeFrameDecorator", e)
+      }
+      return null
+    }
 
-  protected final IdeFrameImpl frame;
+    val isCustomDecorationAvailable: Boolean
+      get() = (SystemInfoRt.isMac || SystemInfo.isWin8OrNewer) && JBR.isWindowDecorationsSupported()
 
-  protected IdeFrameDecorator(@NotNull IdeFrameImpl frame) {
-    this.frame = frame;
+    private val isCustomDecorationActiveCache = AtomicReference<Boolean>()
+
+    fun isCustomDecorationActive(): Boolean {
+      if (!LoadingState.COMPONENTS_REGISTERED.isOccurred) {
+        // true by default if no settings are available (e.g., during the initial IDE setup wizard) and not overridden (only for Windows)
+        return isCustomDecorationAvailable && defaultCustomDecorationState
+      }
+
+      // Cache the initial value received from settings, because this value doesn't support change in runtime (we can't redraw frame headers
+      // of frames already created, and changing this setting during any frame lifetime will cause weird effects).
+      return isCustomDecorationActiveCache.updateAndGet { cached ->
+        if (cached != null) {
+          return@updateAndGet cached
+        }
+        if (!isCustomDecorationAvailable) {
+          return@updateAndGet false
+        }
+        val override = mergeMainMenuWithWindowTitleOverrideValue
+        if (override != null) {
+          return@updateAndGet override
+        }
+        UISettings.getInstance().mergeMainMenuWithWindowTitle
+      }
+    }
+
+    private val defaultCustomDecorationState: Boolean
+      get() = SystemInfoRt.isWindows && mergeMainMenuWithWindowTitleOverrideValue != false
   }
 
-  public abstract boolean isInFullScreen();
+  abstract val isInFullScreen: Boolean
 
-  public void setStoredFullScreen() {
-    notifyFrameComponents(true);
+  open fun setStoredFullScreen() {
+    notifyFrameComponents(state = true)
   }
 
-  public void setProject() {
+  open fun setProject() {
   }
 
-  public boolean isTabbedWindow() {
-    return false;
-  }
+  open val isTabbedWindow: Boolean
+    get() = false
 
   /**
    * Returns applied state or rejected promise if it cannot be applied.
    */
-  public abstract @NotNull CompletableFuture<@Nullable Boolean> toggleFullScreen(boolean state);
+  abstract fun toggleFullScreen(state: Boolean): Deferred<Boolean?>
 
-  private static final Logger LOG = Logger.getInstance(IdeFrameDecorator.class);
-
-  public static @Nullable IdeFrameDecorator decorate(@NotNull IdeFrameImpl frame,
-                                                     @NotNull IdeGlassPane glassPane,
-                                                     @NotNull Disposable parentDisposable) {
-    try {
-      if (SystemInfoRt.isMac) {
-        return new MacMainFrameDecorator(frame, glassPane, parentDisposable);
-      }
-      else if (SystemInfoRt.isWindows) {
-        return new WinMainFrameDecorator(frame);
-      }
-      else if (SystemInfoRt.isXWindow) {
-        if (X11UiUtil.isFullScreenSupported()) {
-          return new EWMHFrameDecorator(frame, parentDisposable);
-        }
-      }
-    }
-    catch (Throwable t) {
-      LOG.warn("Failed to initialize IdeFrameDecorator. " + t.getMessage(), t);
-    }
-
-    return null;
+  protected fun notifyFrameComponents(state: Boolean) {
+    frame.rootPane.putClientProperty(FULL_SCREEN, state)
+    frame.jMenuBar?.putClientProperty(FULL_SCREEN, state)
   }
 
-  protected void notifyFrameComponents(boolean state) {
-    frame.getRootPane().putClientProperty(FULL_SCREEN, state);
-    JMenuBar menuBar = frame.getJMenuBar();
-    if (menuBar != null) {
-      menuBar.putClientProperty(FULL_SCREEN, state);
-    }
+  open fun appClosing() {}
+
+  init {
+    this.frame = frame
   }
+}
 
-  // AWT-based decorator
-  private static final class WinMainFrameDecorator extends IdeFrameDecorator {
-    private WinMainFrameDecorator(@NotNull IdeFrameImpl frame) {
-      super(frame);
-    }
+// AWT-based decorator
+private class WinMainFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(frame) {
+  override val isInFullScreen: Boolean
+    get() = ClientProperty.isTrue(frame, FULL_SCREEN)
 
-    @Override
-    public boolean isInFullScreen() {
-      return ClientProperty.isTrue(frame, FULL_SCREEN);
-    }
-
-    @Override
-    public @NotNull CompletableFuture<@Nullable Boolean> toggleFullScreen(boolean state) {
-      CompletableFuture<Boolean> promise = new CompletableFuture<>();
-
-      SwingUtilities.invokeLater(() -> {
-        Rectangle bounds = frame.getBounds();
-        int extendedState = frame.getExtendedState();
-        JRootPane rootPane = frame.getRootPane();
-        if (state && extendedState == Frame.NORMAL) {
-          frame.setNormalBounds(bounds);
-          if (IDE_FRAME_EVENT_LOG.isDebugEnabled()) { // avoid unnecessary concatenation
-            IDE_FRAME_EVENT_LOG.debug("Saved normal bounds of the frame before entering full screen: " + frame.getNormalBounds());
-          }
+  override fun toggleFullScreen(state: Boolean): CompletableFuture<Boolean?> {
+    val promise = CompletableFuture<Boolean?>()
+    SwingUtilities.invokeLater(Runnable {
+      val bounds = frame.bounds
+      val extendedState = frame.extendedState
+      val rootPane = frame.rootPane
+      if (state && extendedState == Frame.NORMAL) {
+        frame.normalBounds = bounds
+        if (IDE_FRAME_EVENT_LOG.isDebugEnabled()) { // avoid unnecessary concatenation
+          IDE_FRAME_EVENT_LOG.debug("Saved normal bounds of the frame before entering full screen: " + frame.normalBounds)
         }
-        GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
-        if (device == null) {
-          promise.complete(null);
-          return;
+      }
+      val device = ScreenUtil.getScreenDevice(bounds)
+      if (device == null) {
+        promise.complete(null)
+        return@Runnable
+      }
+      val toFocus = frame.mostRecentFocusOwner
+      val defaultBounds = device.defaultConfiguration.bounds
+      if (state) {
+        frame.screenBounds = defaultBounds
+        if (IDE_FRAME_EVENT_LOG.isDebugEnabled()) { // avoid unnecessary concatenation
+          IDE_FRAME_EVENT_LOG.debug("Saved screen bounds of the frame before entering full screen: " + frame.screenBounds)
         }
-        Component toFocus = frame.getMostRecentFocusOwner();
-        Rectangle defaultBounds = device.getDefaultConfiguration().getBounds();
+      }
+      try {
+        frame.togglingFullScreenInProgress = true
+        rootPane.putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, java.lang.Boolean.TRUE)
+        frame.dispose()
+        frame.isUndecorated = state
+      }
+      finally {
         if (state) {
-          frame.setScreenBounds(defaultBounds);
-          if (IDE_FRAME_EVENT_LOG.isDebugEnabled()) { // avoid unnecessary concatenation
-            IDE_FRAME_EVENT_LOG.debug("Saved screen bounds of the frame before entering full screen: " + frame.getScreenBounds());
+          frame.bounds = defaultBounds
+        }
+        else {
+          val o = frame.normalBounds
+          if (o != null) {
+            frame.bounds = o
           }
         }
-        try {
-          frame.togglingFullScreenInProgress = true;
-          rootPane.putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
-          frame.dispose();
-          frame.setUndecorated(state);
+        frame.isVisible = true
+        rootPane.putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null)
+        if (!state && extendedState and Frame.MAXIMIZED_BOTH != 0) {
+          frame.setExtendedState(extendedState)
         }
-        finally {
-          if (state) {
-            frame.setBounds(defaultBounds);
-          }
-          else {
-            Rectangle o = frame.getNormalBounds();
-            if (o != null) {
-              frame.setBounds(o);
-            }
-          }
-          frame.setVisible(true);
-          rootPane.putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
+        notifyFrameComponents(state)
+        if (toFocus != null && toFocus !is JRootPane) {
+          // Window 'forgets' last focused component on disposal, so we need to restore it explicitly.
+          // Special case is toggling fullscreen mode from a menu.
+          // In this case menu UI moves focus to the root pane before performing the action.
+          // We shouldn't explicitly request focus in this case - menu UI will restore the focus without our help.
+          toFocus.requestFocusInWindow()
+        }
+      }
+      EventQueue.invokeLater(Runnable { frame.togglingFullScreenInProgress = false })
+      promise.complete(state)
+    })
+    return promise
+  }
+}
 
-          if (!state && (extendedState & Frame.MAXIMIZED_BOTH) != 0) {
-            frame.setExtendedState(extendedState);
-          }
-          notifyFrameComponents(state);
+// Extended WM Hints-based decorator
+private class EWMHFrameDecorator(frame: IdeFrameImpl, coroutineScope: CoroutineScope) : IdeFrameDecorator(frame) {
+  private var requestedState: Boolean? = null
 
-          if (toFocus != null && !(toFocus instanceof JRootPane)) {
-            // Window 'forgets' last focused component on disposal, so we need to restore it explicitly.
-            // Special case is toggling fullscreen mode from a menu.
-            // In this case menu UI moves focus to the root pane before performing the action.
-            // We shouldn't explicitly request focus in this case - menu UI will restore the focus without our help.
-            toFocus.requestFocusInWindow();
-          }
+  override val isInFullScreen: Boolean
+    get() = X11UiUtil.isInFullScreenMode(frame)
+
+  init {
+    val frameResizeListener = object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent) {
+        if (requestedState != null) {
+          notifyFrameComponents(requestedState!!)
+          requestedState = null
         }
-        EventQueue.invokeLater(() -> {
-          frame.togglingFullScreenInProgress = false;
-        });
-        promise.complete(state);
-      });
-      return promise;
+      }
+    }
+    frame.addComponentListener(frameResizeListener)
+    executeOnCancelInEdt(coroutineScope) {
+      frame.removeComponentListener(frameResizeListener)
+    }
+
+    if (SystemInfo.isKDE && DialogWrapperPeerImpl.isDisableAutoRequestFocus()) {
+      // KDE sends an unexpected MapNotify event if a window is deiconified.
+      // suppress.focus.stealing fix handles the MapNotify event differently
+      // if the application is not active
+      val listener = object : WindowAdapter() {
+        override fun windowDeiconified(event: WindowEvent) {
+          frame.toFront()
+        }
+      }
+      frame.addWindowListener(listener)
+      executeOnCancelInEdt(coroutineScope) {
+        frame.removeWindowListener(listener)
+      }
     }
   }
 
-  // Extended WM Hints-based decorator
-  private static final class EWMHFrameDecorator extends IdeFrameDecorator {
-    private Boolean myRequestedState = null;
+  override fun toggleFullScreen(state: Boolean): Deferred<Boolean?> {
+    requestedState = state
+    X11UiUtil.toggleFullScreenMode(frame)
+    val menuBar = frame.jMenuBar
+    if (menuBar is IdeMenuBar) {
+      menuBar.onToggleFullScreen(state)
+    }
+    return CompletableDeferred(value = state)
+  }
+}
 
-    private EWMHFrameDecorator(@NotNull IdeFrameImpl frame, @NotNull Disposable parentDisposable) {
-      super(frame);
-
-      frame.addComponentListener(new ComponentAdapter() {
-        @Override
-        public void componentResized(ComponentEvent e) {
-          if (myRequestedState != null) {
-            notifyFrameComponents(myRequestedState);
-            myRequestedState = null;
-          }
-        }
-      });
-
-      if (SystemInfo.isKDE && isDisableAutoRequestFocus()) {
-        // KDE sends an unexpected MapNotify event if a window is deiconified.
-        // suppress.focus.stealing fix handles the MapNotify event differently
-        // if the application is not active
-        WindowAdapter deIconifyListener = new WindowAdapter() {
-          @Override
-          public void windowDeiconified(WindowEvent event) {
-            frame.toFront();
-          }
-        };
-        frame.addWindowListener(deIconifyListener);
-        Disposer.register(parentDisposable, new Disposable() {
-          @Override
-          public void dispose() {
-            frame.removeWindowListener(deIconifyListener);
-          }
-        });
+private fun executeOnCancelInEdt(coroutineScope: CoroutineScope, task: () -> Unit) {
+  coroutineScope.launch {
+    awaitCancellationAndInvoke {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        task()
       }
     }
-
-    @Override
-    public boolean isInFullScreen() {
-      return frame != null && X11UiUtil.isInFullScreenMode(frame);
-    }
-
-    @Override
-    public @NotNull CompletableFuture<@Nullable Boolean> toggleFullScreen(boolean state) {
-      if (frame != null) {
-        myRequestedState = state;
-        X11UiUtil.toggleFullScreenMode(frame);
-
-        if (frame.getJMenuBar() instanceof IdeMenuBar frameMenuBar) {
-          frameMenuBar.onToggleFullScreen(state);
-        }
-      }
-      return CompletableFuture.completedFuture(state);
-    }
-  }
-
-  public void appClosing() {
-  }
-
-  public static boolean isCustomDecorationAvailable() {
-    return (SystemInfoRt.isMac || SystemInfo.isWin8OrNewer) && JBR.isWindowDecorationsSupported();
-  }
-
-  private static final AtomicReference<Boolean> isCustomDecorationActiveCache = new AtomicReference<>();
-
-  public static boolean isCustomDecorationActive() {
-    UISettings settings = UISettings.getInstanceOrNull();
-    if (settings == null) {
-      // true by default if no settings are available (e.g., during the initial IDE setup wizard) and not overridden (only for Windows)
-      return isCustomDecorationAvailable() && getDefaultCustomDecorationState();
-    }
-
-    // Cache the initial value received from settings, because this value doesn't support change in runtime (we can't redraw frame headers
-    // of frames already created, and changing this setting during any frame lifetime will cause weird effects).
-    return isCustomDecorationActiveCache.updateAndGet(cached -> {
-      if (cached != null) {
-        return cached;
-      }
-      if (!isCustomDecorationAvailable()) {
-        return false;
-      }
-      Boolean override = UISettings.getMergeMainMenuWithWindowTitleOverrideValue();
-      if (override != null) {
-        return override;
-      }
-      return settings.getMergeMainMenuWithWindowTitle();
-    });
-  }
-
-  private static boolean getDefaultCustomDecorationState() {
-    return SystemInfoRt.isWindows && !Objects.equals(UISettings.getMergeMainMenuWithWindowTitleOverrideValue(), false);
   }
 }
