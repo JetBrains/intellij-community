@@ -80,6 +80,7 @@ enum class MainToolbarCustomizationType {
 }
 
 private const val TOOLBAR_BACKGROUND_KEY = "PROJECT_TOOLBAR_COLOR"
+private const val PROJECT_CUSTOM_COLOR_KEY = "PROJECT_CUSTOM_COLOR_KEY"
 private const val ASSOCIATED_PROJECT_COLOR_INDEX_KEY = "ASSOCIATED_PROJECT_COLOR_INDEX_KEY"
 private const val LAST_CALCULATED_COLOR_INDEX_KEY = "LAST_CALCULATED_COLOR_INDEX_KEY"
 
@@ -127,10 +128,11 @@ class ProjectWindowCustomizerService : Disposable {
     return project.service<ProjectWindowCustomizerIconCache>().cachedIcon
   }
 
-  fun getGradientProjectColor(project: Project): Color = getProjectColor(project).gradient
-  fun getBackgroundProjectColor(project: Project): Color = getProjectColor(project).background
+  fun getGradientProjectColor(project: Project): Color = getProjectToolbarColor(project).gradient
 
-  private fun getProjectColor(project: Project): ProjectColors {
+  fun getBackgroundProjectColor(project: Project): Color = getProjectToolbarColor(project).background
+
+  private fun getProjectToolbarColor(project: Project): ProjectColors {
     val projectPath = getProjectNameForIcon(project)
     val colorStr = PropertiesComponent.getInstance(project).getValue(TOOLBAR_BACKGROUND_KEY)
     val color = ColorUtil.fromHex(colorStr, null)
@@ -165,8 +167,28 @@ class ProjectWindowCustomizerService : Disposable {
     propertiesStorage.setValue(associatedProjectColorKey(projectPath), index, -1)
   }
 
+  fun setProjectCustomColor(project: Project, color: Color?) {
+    val projectPath = getProjectNameForIcon(project)
+    val key = projectColorKey(projectPath, PROJECT_CUSTOM_COLOR_KEY)
+
+    if (color == null) {
+      propertiesStorage.unsetValue(key)
+      setToolbarColor(null, project)
+    }
+    else {
+      propertiesStorage.setValue(key, ColorUtil.toHex(color))
+      val toolbarColor = ColorUtil.toAlpha(color, 64)
+      setToolbarColor(toolbarColor, project)
+    }
+  }
+
+  fun getProjectCustomColor(projectPath: String): Color? {
+    val colorHex = propertiesStorage.getValue(projectColorKey(projectPath, PROJECT_CUSTOM_COLOR_KEY)) ?: return null
+    return ColorUtil.fromHex(colorHex)
+  }
+
   fun clearCustomColorsAndCache(project: Project) {
-    PropertiesComponent.getInstance(project).unsetValue(TOOLBAR_BACKGROUND_KEY)
+    setProjectCustomColor(project, null)
     val projectPath = getProjectNameForIcon(project)
     colorCache.remove(projectPath)
   }
@@ -180,7 +202,8 @@ class ProjectWindowCustomizerService : Disposable {
 
   private val propertiesStorage: PropertiesComponent get() = PropertiesComponent.getInstance()
 
-  private fun associatedProjectColorKey(projectPath: String) = "${ASSOCIATED_PROJECT_COLOR_INDEX_KEY}_$projectPath"
+  private fun associatedProjectColorKey(projectPath: String) = projectColorKey(projectPath, ASSOCIATED_PROJECT_COLOR_INDEX_KEY)
+  private fun projectColorKey(projectPath: String, key: String) = "${key}_$projectPath"
 
   fun getPaintingType() = when (Registry.get("ide.colorful.toolbar.gradient.type").selectedOption) {
       "Just Icon"                    -> MainToolbarCustomizationType.JUST_ICON
@@ -291,8 +314,11 @@ class ProjectWindowCustomizerService : Disposable {
     return getBackgroundProjectColor(project)
   }
 
-  fun setToolbarColor(background:Color, project: Project) {
-    PropertiesComponent.getInstance(project).setValue(TOOLBAR_BACKGROUND_KEY, ColorUtil.toHex(background))
+  fun setToolbarColor(background:Color?, project: Project) {
+    val storage = PropertiesComponent.getInstance(project)
+
+    if (background == null) storage.unsetValue(TOOLBAR_BACKGROUND_KEY)
+    else storage.setValue(TOOLBAR_BACKGROUND_KEY, ColorUtil.toHex(background))
   }
 
   override fun dispose() {}
