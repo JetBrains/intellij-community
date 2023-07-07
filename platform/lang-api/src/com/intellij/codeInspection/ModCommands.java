@@ -6,11 +6,14 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,6 +73,27 @@ public final class ModCommands {
     }
     VirtualFile file = psiFile.getVirtualFile();
     return new ModNavigate(file, range.getStartOffset(), range.getEndOffset(), range.getStartOffset());
+  }
+
+  /**
+   * @param attributes attributes to use for highlighting 
+   * @param elements elements to highlight
+   * @return a command to highlight the elements, assuming that nothing will be changed in the file
+   */
+  public static @NotNull ModCommand highlight(@NotNull TextAttributesKey attributes, @NotNull PsiElement @NotNull... elements) {
+    if (elements.length == 0) return nop();
+    VirtualFile file = elements[0].getContainingFile().getVirtualFile();
+    var highlights = ContainerUtil.map(
+      elements, e -> new ModHighlight.HighlightInfo(e.getTextRange(), attributes, true));
+    return new ModHighlight(file, highlights);
+  }
+
+  /**
+   * @param elements elements to highlight
+   * @return a command to highlight the elements, assuming that nothing will be changed in the file
+   */
+  public static @NotNull ModCommand highlight(@NotNull PsiElement @NotNull... elements) {
+    return highlight(EditorColors.SEARCH_RESULT_ATTRIBUTES, elements);
   }
 
   /**
