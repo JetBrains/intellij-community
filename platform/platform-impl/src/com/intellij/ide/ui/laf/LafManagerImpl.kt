@@ -390,7 +390,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       orCreateLafDetector
     }
     if (!isFirstSetup && newLaF != oldLaF) {
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, newLaF, true, true)
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, newLaF, true, true, true)
     }
     else {
       myCurrentLaf = newLaF
