@@ -206,14 +206,6 @@ internal class GHPRReviewFlowViewModelImpl(
       }
     }
     reviewDataProvider.resetPendingReview()
-
-    reviewDataProvider.messageBus
-      .connect(parentCs)
-      .subscribe(GHPRDataOperationsListener.TOPIC, object : GHPRDataOperationsListener {
-        override fun onReviewsChanged() {
-          dataProvider.reloadDetails()
-        }
-      })
   }
 
   private fun getReviewsByReviewers(author: GHActor?,

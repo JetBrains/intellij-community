@@ -7,9 +7,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.messages.MessageBus
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReviewDTO
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
@@ -17,7 +15,6 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import java.util.concurrent.CompletableFuture
 
 interface GHPRReviewDataProvider {
-  val messageBus: MessageBus
 
   val submitReviewCommentDocument: Document
 

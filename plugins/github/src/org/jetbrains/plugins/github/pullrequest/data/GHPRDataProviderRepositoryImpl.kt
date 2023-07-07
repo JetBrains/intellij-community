@@ -148,7 +148,11 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
     }
 
     messageBus.connect(stateData).subscribe(GHPRDataOperationsListener.TOPIC, object : GHPRDataOperationsListener {
-      override fun onReviewsChanged() = stateData.reloadMergeabilityState()
+      override fun onReviewsChanged() {
+        stateData.reloadMergeabilityState()
+        // TODO: check if we really need it
+        detailsData.reloadDetails()
+      }
     })
 
     return GHPRDataProviderImpl(

@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture
 class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
                                  private val changesProvider: GHPRChangesDataProvider,
                                  private val pullRequestId: GHPRIdentifier,
-                                 override val messageBus: MessageBus)
+                                 private val messageBus: MessageBus)
   : GHPRReviewDataProvider, Disposable {
 
   override val submitReviewCommentDocument by lazy(LazyThreadSafetyMode.NONE) { EditorFactory.getInstance().createDocument("") }
