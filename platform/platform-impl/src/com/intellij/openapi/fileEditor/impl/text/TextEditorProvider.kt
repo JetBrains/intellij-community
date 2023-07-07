@@ -107,8 +107,8 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     return state
   }
 
-  override fun writeState(@Suppress("LocalVariableName") _state: FileEditorState, project: Project, element: Element) {
-    val state = _state as TextEditorState
+  override fun writeState(state: FileEditorState, project: Project, element: Element) {
+    state as TextEditorState
     if (state.relativeCaretPosition != 0) {
       element.setAttribute(RELATIVE_CARET_POSITION_ATTR, state.relativeCaretPosition.toString())
     }
@@ -187,6 +187,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
       }
       editor.caretModel.setCaretsAndSelections(states, false)
     }
+
     val relativeCaretPosition = state.relativeCaretPosition
     if (AsyncEditorLoader.isEditorLoaded(editor) || ApplicationManager.getApplication().isUnitTestMode) {
       if (ApplicationManager.getApplication().isUnitTestMode) {

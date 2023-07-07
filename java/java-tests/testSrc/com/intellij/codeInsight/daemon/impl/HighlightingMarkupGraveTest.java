@@ -18,14 +18,15 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.CoroutineKt;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCWatcher;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.codeInsight.daemon.impl.HelperKt.openTextEditorForDaemonTest;
+import static com.intellij.openapi.fileEditor.impl.EditorHistoryManagerTestKt.overrideFileEditorManagerImplementation;
 
 public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
   @Override
@@ -56,6 +60,14 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
       }
     }
   }
+
+  @Override
+  protected void setUpProject() throws Exception {
+    overrideFileEditorManagerImplementation(FileEditorManagerImpl.class, getTestRootDisposable());
+
+    super.setUpProject();
+  }
+
   public void testSymbolSeverityHighlightersAreAppliedOnFileReload() {
     HighlightingMarkupGrave.runInEnabled(() -> {
       MyStoppableAnnotator annotator = new MyStoppableAnnotator();
@@ -80,11 +92,13 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
 
         // reload file editor, and check the stored highlighters are reloaded back and applied, before the highlighting (MyStoppableAnnotator in particular) is run
         try {
-          TextEditor textEditor = (TextEditor)ContainerUtil.find(FileEditorManager.getInstance(myProject).openFile(virtualFile), f->f instanceof TextEditor);
+          TextEditor textEditor = openTextEditorForDaemonTest(myProject, virtualFile);
           assertNotNull(textEditor);
           Document document = textEditor.getEditor().getDocument();
           MarkupModel markupModel = DocumentMarkupModel.forDocument(document, getProject(), true);
-          UIUtil.dispatchAllInvocationEvents();
+
+          CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
+
           List<String> symbolHighlighters =
             Arrays.stream(markupModel.getAllHighlighters())
               .filter(h -> h.getTextAttributesKey() != null)
@@ -115,7 +129,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
     myEditor = null;
     TestTimeOut t = TestTimeOut.setTimeout(100 * 2, TimeUnit.MILLISECONDS);
     while (!t.isTimedOut()) {
-      UIUtil.dispatchAllInvocationEvents();
+      CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
       LaterInvocator.purgeExpiredItems();
       LaterInvocator.dispatchPendingFlushes();
       ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getUpdateProgress().clear();
@@ -159,11 +173,12 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
 
         // reload file editor, and check the stored highlighters are reloaded back and applied, before the highlighting (MyStoppableAnnotator in particular) is run
         try {
-          TextEditor textEditor = (TextEditor)ContainerUtil.find(FileEditorManager.getInstance(myProject).openFile(virtualFile), f->f instanceof TextEditor);
+          TextEditor textEditor = openTextEditorForDaemonTest(myProject, virtualFile);
           assertNotNull(textEditor);
           Document document = textEditor.getEditor().getDocument();
           MarkupModel markupModel = DocumentMarkupModel.forDocument(document, getProject(), true);
-          UIUtil.dispatchAllInvocationEvents();
+          CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
+
           RangeHighlighter
             errorHighlighter = ContainerUtil.find(markupModel.getAllHighlighters(), h -> CodeInsightColors.ERRORS_ATTRIBUTES.equals(h.getTextAttributesKey()));
           assertNotNull(errorHighlighter);

@@ -1,7 +1,7 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.ui.CodeVisionView
-import com.intellij.codeInsight.codeVision.ui.model.PlaceholderCodeVisionEntry
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -24,10 +24,10 @@ val editorLensContextKey: Key<EditorCodeVisionContext> = Key<EditorCodeVisionCon
 val codeVisionEntryOnHighlighterKey: Key<CodeVisionEntry> = Key.create("CodeLensEntryOnHighlighter")
 internal val codeVisionEntryMouseEventKey: Key<MouseEvent> = Key.create("CodeVisionEntryMouseEventKey")
 
-val Editor.lensContext: EditorCodeVisionContext?
+// used by Rider
+val Editor.lensContext: EditorCodeVisionContext
   get() = getOrCreateCodeVisionContext(this)
-val Editor.lensContextOrThrow: EditorCodeVisionContext
-  get() = lensContext ?: error("No EditorCodeVisionContext were provided")
+
 val RangeMarker.codeVisionEntryOrThrow: CodeVisionEntry
   get() = getUserData(codeVisionEntryOnHighlighterKey) ?: error("No CodeLensEntry for highlighter $this")
 
@@ -59,6 +59,8 @@ open class EditorCodeVisionContext(
     hasPendingLenses = true
   }
 
+  // used by Rider
+  @Suppress("unused")
   open val hasAnyPendingLenses: Boolean
     get() = hasPendingLenses
 
@@ -138,15 +140,13 @@ open class EditorCodeVisionContext(
   fun hasProviderCodeVision(id: String): Boolean {
     return frontendResults.mapNotNull { it.getUserData(codeVisionEntryOnHighlighterKey) }.any { it.providerId == id }
   }
-
-  open fun hasOnlyPlaceholders(): Boolean {
-    return frontendResults.all { it.getUserData(codeVisionEntryOnHighlighterKey) is PlaceholderCodeVisionEntry }
-  }
 }
 
-private fun getOrCreateCodeVisionContext(editor: Editor): EditorCodeVisionContext? {
+private fun getOrCreateCodeVisionContext(editor: Editor): EditorCodeVisionContext {
   val context = editor.getUserData(editorLensContextKey)
-  if (context != null) return context
+  if (context != null) {
+    return context
+  }
 
   val newContext = editor.project!!.service<CodeVisionContextProvider>().createCodeVisionContext(editor)
   editor.putUserData(editorLensContextKey, newContext)

@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -52,22 +51,12 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
   private static final Key<Boolean> IS_ZOMBIE = Key.create("IS_ZOMBIE");
   @NotNull private final Project myProject;
   private ConcurrentMap<VirtualFile, FileMarkupInfo> cachedMarkup = new ConcurrentHashMap<>();
+
   HighlightingMarkupGrave(@NotNull Project project) {
     myProject = project;
     // check that important TextAttributesKeys are initialized
     assert DefaultLanguageHighlighterColors.INSTANCE_FIELD.getFallbackAttributeKey() != null : DefaultLanguageHighlighterColors.INSTANCE_FIELD;
 
-    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-      @Override
-      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        if (!isEnabled()) return;
-        for (FileEditor fileEditor : FileEditorManager.getInstance(project).getEditors(file)) {
-          if (fileEditor instanceof TextEditor textEditor) {
-            resurrectZombies(textEditor.getEditor(), file);
-          }
-        }
-      }
-    });
     // as soon as highlighting kicks in and displays its own range highlighters, remove ones we applied from the on-disk cache,
     // but only after the highlighting finished, to avoid flicker
     project.getMessageBus().connect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
@@ -108,10 +97,12 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
     }
   }
 
-  private void resurrectZombies(@NotNull Editor editor, @NotNull VirtualFile file) {
+  void resurrectZombies(@NotNull Document document, @NotNull VirtualFile file) {
     FileMarkupInfo markupInfo = cachedMarkup.get(file);
-    if (markupInfo == null) return;
-    Document document = editor.getDocument();
+    if (markupInfo == null) {
+      return;
+    }
+
     if (document.getText().hashCode() != markupInfo.contentHash()) {
       // text changed since the cached markup was saved on-disk
       if (LOG.isDebugEnabled()) {
@@ -119,6 +110,7 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
       }
       return;
     }
+
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
     for (HighlighterState state : markupInfo.highlighters()) {
       if (state.end() > document.getTextLength()) {
@@ -326,6 +318,7 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
   static boolean isEnabled() {
     return Registry.is("cache.higlighting.markup.on.disk");
   }
+
   static void runInEnabled(@NotNull Runnable runnable) {
     boolean wasEnabled = isEnabled();
     Registry.get("cache.higlighting.markup.on.disk").setValue(true);

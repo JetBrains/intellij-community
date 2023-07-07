@@ -5,17 +5,30 @@ import com.intellij.codeHighlighting.*
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl
 import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.fileEditor.impl.text.TextEditorInitializer
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.psi.PsiManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+
+
+private val PSI_MODIFICATION_STAMP: Key<Long> = Key.create("inlay.psi.modification.stamp")
+private val ALWAYS_ENABLED_HINTS_PROVIDERS: Key<Set<SettingsKey<*>>> = Key.create("inlay.hints.always.enabled.providers")
 
 class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar, DumbAware {
   override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
@@ -48,15 +61,6 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
       DaemonCodeAnalyzer.getInstance(project).restart()
     }
 
-    @JvmStatic
-    private val PSI_MODIFICATION_STAMP: Key<Long> = Key.create("inlay.psi.modification.stamp")
-
-    @JvmStatic
-    private val HINTS_DISABLED_FOR_EDITOR: Key<Boolean> = Key.create("inlay.hints.enabled.for.editor")
-
-    @JvmStatic
-    private val ALWAYS_ENABLED_HINTS_PROVIDERS: Key<Set<SettingsKey<*>>> = Key.create("inlay.hints.always.enabled.providers")
-
     fun putCurrentModificationStamp(editor: Editor, file: PsiFile) {
       editor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationStamp(file))
     }
@@ -65,12 +69,6 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
 
     private fun getCurrentModificationStamp(file: PsiFile): Long {
       return file.manager.modificationTracker.modificationCount
-    }
-
-    private fun isProviderAlwaysEnabledForEditor(editor: Editor, providerKey: SettingsKey<*>): Boolean {
-      val alwaysEnabledProviderKeys = editor.getUserData(ALWAYS_ENABLED_HINTS_PROVIDERS)
-      if (alwaysEnabledProviderKeys == null) return false
-      return providerKey in alwaysEnabledProviderKeys
     }
 
     /**
@@ -88,30 +86,53 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
       editor.putUserData(ALWAYS_ENABLED_HINTS_PROVIDERS, keySet)
       forceHintsUpdateOnNextPass()
     }
+  }
+}
 
-    private fun getProviders(element: PsiElement, editor: Editor): List<ProviderWithSettings<*>> {
-      val settings = InlayHintsSettings.instance()
-      val language = element.language
+private fun isProviderAlwaysEnabledForEditor(editor: Editor, providerKey: SettingsKey<*>): Boolean {
+  val alwaysEnabledProviderKeys = editor.getUserData(ALWAYS_ENABLED_HINTS_PROVIDERS) ?: return false
+  return providerKey in alwaysEnabledProviderKeys
+}
 
-      val project = element.project
-      val isDumbMode = DumbService.isDumb(project)
+private fun collectPlaceholders(file: PsiFile, editor: Editor): HintsBuffer? {
+  val collector = getProviders(file, editor).firstNotNullOfOrNull { it.getPlaceholderCollectorFor(file, editor) }
+  return collector?.collectTraversing(editor = editor, file = file, enabled = true)
+}
 
-      return HintUtils.getHintProvidersForLanguage(language)
-        .filter {
-          (!isDumbMode || DumbService.isDumbAware(it.provider)) &&
-          // to avoid cases when old and new code vision UI are shown
-          !(it.provider.group == InlayGroup.CODE_VISION_GROUP && Registry.`is`("editor.codeVision.new")) &&
-          (settings.hintsShouldBeShown(it.provider.key, language) || isProviderAlwaysEnabledForEditor(editor, it.provider.key))
-        }
+private fun getProviders(element: PsiElement, editor: Editor): List<ProviderWithSettings<*>> {
+  val settings = InlayHintsSettings.instance()
+  val language = element.language
+
+  val project = element.project
+  val isDumbMode = DumbService.isDumb(project)
+
+  return HintUtils.getHintProvidersForLanguage(language).filter {
+    (!isDumbMode || DumbService.isDumbAware(it.provider)) &&
+    // to avoid cases when old and new code vision UI are shown
+    !(it.provider.group == InlayGroup.CODE_VISION_GROUP && Registry.`is`("editor.codeVision.new")) &&
+    (settings.hintsShouldBeShown(it.provider.key, language) || isProviderAlwaysEnabledForEditor(editor, it.provider.key))
+  }
+}
+
+private class InlayHintsEditorInitializer : TextEditorInitializer {
+  override suspend fun init(project: Project, file: VirtualFile, document: Document, editorSupplier: suspend () -> EditorEx) {
+    val editor = editorSupplier.invoke()
+
+    var buffer: HintsBuffer? = null
+    var psiFile: PsiFile? = null
+
+    val psiManager = project.serviceAsync<PsiManager>()
+    readActionBlocking {
+      psiFile = psiManager.findFile(file)
+      psiFile?.let {
+        buffer = collectPlaceholders(file = it, editor = editor)
+      }
     }
 
-    internal fun collectPlaceholders(file: PsiFile, editor: Editor): HintsBuffer? {
-      val collector = getProviders(file, editor).firstNotNullOfOrNull { it.getPlaceholderCollectorFor(file, editor) }
-      return collector?.collectTraversing(editor = editor, file = file, enabled = true)
+    withContext(Dispatchers.EDT) {
+      buffer?.let { buffer ->
+        InlayHintsPass.applyCollected(hints = buffer, element = psiFile!!, editor = editor, isPlaceholder = true)
+      }
     }
-
-    @ApiStatus.Internal
-    @RequiresEdt
-    fun applyPlaceholders(file: PsiFile, editor: Editor, hints: HintsBuffer): Unit = InlayHintsPass.applyCollected(hints, file, editor, true)
   }
 }

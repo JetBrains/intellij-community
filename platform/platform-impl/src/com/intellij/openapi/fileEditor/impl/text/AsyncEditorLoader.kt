@@ -2,31 +2,24 @@
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.concurrency.captureThreadContext
-import com.intellij.diagnostic.subtask
-import com.intellij.openapi.application.*
-import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.highlighter.EditorHighlighter
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl.Companion.getDocumentLanguage
 import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.AsyncLoadingDecorator
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.event.ChangeEvent
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -38,7 +31,7 @@ class AsyncEditorLoader internal constructor(private val project: Project,
                                              private val provider: TextEditorProvider,
                                              @JvmField val coroutineScope: CoroutineScope) {
   private val delayedActions = ArrayDeque<Runnable>()
-  private var delayedScrollState: DelayedScrollState? = null
+  private val delayedScrollState = AtomicReference<DelayedScrollState?>()
 
   companion object {
     @JvmStatic
@@ -64,69 +57,35 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     }
   }
 
-  fun createHighlighterAsync(document: Document, file: VirtualFile): Deferred<EditorHighlighter> {
-    return coroutineScope.async {
-      val scheme = EditorColorsManager.getInstance().globalScheme
-      val editorHighlighterFactory = EditorHighlighterFactory.getInstance()
-      readAction {
-        val highlighter = editorHighlighterFactory.createEditorHighlighter(file, scheme, project)
-        highlighter.setText(document.immutableCharSequence)
-        highlighter
-      }
-    }
-  }
-
   // executed in the same EDT task where TextEditorImpl is created
   @Internal
   @RequiresEdt
-  fun start(textEditor: TextEditorImpl, tasks: List<suspend (EditorEx) -> Unit>) {
+  fun start(textEditor: TextEditorImpl, tasks: List<Deferred<*>>) {
     val editor = textEditor.editor
     editor.putUserData(ASYNC_LOADER, this)
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      startInTests(tasks = tasks, editor = editor, textEditor = textEditor)
+      startInTests(tasks = tasks, editor = editor)
       return
-    }
-
-    val continuationDeferred = coroutineScope.async {
-      textEditor.loadEditorInBackground()
-    }
-
-    // `openEditorImpl` uses runWithModalProgressBlocking,
-    // but an async editor load is performed in the background, out of the `openEditorImpl` call
-    val modality = ModalityState.any().asContextElement()
-
-    val taskJob = coroutineScope.async(modality) {
-      for (task in tasks) {
-        async { task(editor) }
-      }
     }
 
     // don't show yet another loading indicator on project open - use 3-second delay
     val loadingDecorator = AsyncLoadingDecorator(
       startDelay = if (EditorsSplitters.isOpenedInBulk(textEditor.file)) 3_000.milliseconds else 300.milliseconds,
     )
-
     val editorComponent = textEditor.component
-    val indicatorJob = loadingDecorator.startLoading(scope = coroutineScope + modality, addUi = editorComponent::addLoadingDecoratorUi)
+    val indicatorJob = loadingDecorator.startLoading(scope = coroutineScope, addUi = editorComponent::addLoadingDecoratorUi)
 
-    coroutineScope.launch(modality) {
-      val continuation = continuationDeferred.await()
+    coroutineScope.launch {
       // await instead of joint to get errors here
-      taskJob.await()
-
+      tasks.awaitAll()
       indicatorJob.cancel()
+
       withContext(Dispatchers.EDT) {
         editor.putUserData(ASYNC_LOADER, null)
         editor.scrollingModel.disableAnimation()
         try {
-          restoreCaretState(editor)
-
           loadingDecorator.stopLoading(scope = this)
-
-          runCatching {
-            continuation?.run()
-          }.getOrLogException(logger<AsyncEditorLoader>())
 
           while (true) {
             (delayedActions.pollFirst() ?: break).run()
@@ -140,24 +99,14 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     }
   }
 
-  fun restoreCaretState(editor: EditorEx) {
-    delayedScrollState?.let {
-      delayedScrollState = null
-      restoreCaretPosition(editor = editor, delayedScrollState = it, coroutineScope = coroutineScope)
-    }
-  }
-
-  private fun startInTests(tasks: List<suspend (EditorEx) -> Unit>, editor: EditorEx, textEditor: TextEditorImpl) {
-    val continuation = runWithModalProgressBlocking(project, "") {
+  private fun startInTests(tasks: List<Deferred<*>>, editor: EditorEx) {
+    runWithModalProgressBlocking(project, "") {
       // required for switch to
       withRawProgressReporter {
-        tasks.map { it(editor) }
-        textEditor.loadEditorInBackground()
+        tasks.awaitAll()
       }
     }
     editor.putUserData(ASYNC_LOADER, null)
-
-    continuation?.run()
 
     while (true) {
       (delayedActions.pollFirst() ?: break).run()
@@ -170,12 +119,16 @@ class AsyncEditorLoader internal constructor(private val project: Project,
   }
 
   @RequiresEdt
-  fun setEditorState(state: TextEditorState, exactState: Boolean, editor: Editor) {
-    if (!isEditorLoaded(editor)) {
-      delayedScrollState = DelayedScrollState(relativeCaretPosition = state.relativeCaretPosition, exactState = exactState)
-    }
-
+  fun setEditorState(state: TextEditorState, exactState: Boolean, editor: EditorEx) {
     provider.setStateImpl(project, editor, state, exactState)
+
+    if (!isEditorLoaded(editor)) {
+      delayedScrollState.set(DelayedScrollState(relativeCaretPosition = state.relativeCaretPosition, exactState = exactState))
+      coroutineScope.launch(Dispatchers.EDT) {
+        val delayedScrollState = delayedScrollState.getAndSet(null) ?: return@launch
+        restoreCaretPosition(editor = editor, delayedScrollState = delayedScrollState, coroutineScope = coroutineScope)
+      }
+    }
   }
 
   internal fun dispose() {
@@ -220,13 +173,5 @@ private fun restoreCaretPosition(editor: EditorEx, delayedScrollState: DelayedSc
       viewport.removeChangeListener(listener)
     }
     viewport.addChangeListener(listener)
-  }
-}
-
-suspend fun configureHighlighter(highlighterDeferred: Deferred<EditorHighlighter>, editor: EditorEx) {
-  val highlighter = highlighterDeferred.await()
-  subtask("editor highlighter set", Dispatchers.EDT) {
-    editor.settings.setLanguageSupplier { getDocumentLanguage(editor) }
-    editor.highlighter = highlighter
   }
 }
