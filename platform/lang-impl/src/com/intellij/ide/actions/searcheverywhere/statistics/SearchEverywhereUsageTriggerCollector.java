@@ -42,7 +42,7 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
                                                             "third.party", "Vcs.Git");
   public static final StringEventField CURRENT_TAB_FIELD = EventFields.String("currentTabId", ourTabs);
 
-  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 9);
+  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 10);
 
   public static final EventId2<String, AnActionEvent> DIALOG_OPEN = GROUP.registerEvent("dialogOpen",
                                                                                         CONTRIBUTOR_ID_FIELD,
@@ -59,6 +59,9 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
                                                                                           EventFields.Language, CURRENT_TAB_FIELD,
                                                                                           SELECTED_ITEM_NUMBER);
   public static final EventId MORE_ITEM_SELECTED = GROUP.registerEvent("moreItemChosen");
+  public static final IntEventField ITEM_NUMBER_BEFORE_MORE = EventFields.Int("itemsNumberBeforeMore");
+  public static final BooleanEventField IS_ONLY_MORE = EventFields.Boolean("isOnlyMore");
+  public static final VarargEventId MORE_ITEM_SHOWN = GROUP.registerVarargEvent("moreItemShown", ITEM_NUMBER_BEFORE_MORE, IS_ONLY_MORE);
   public static final EventId COMMAND_USED = GROUP.registerEvent("commandUsed");
 
   public static final VarargEventId COMMAND_COMPLETED = GROUP.registerVarargEvent("commandCompleted",

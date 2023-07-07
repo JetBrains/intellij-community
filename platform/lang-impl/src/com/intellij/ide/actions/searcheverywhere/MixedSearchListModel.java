@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -118,6 +119,10 @@ class MixedSearchListModel extends SearchListModel {
     }
 
     if (!alreadyHas && hasMore) {
+      SearchEverywhereUsageTriggerCollector.MORE_ITEM_SHOWN.log(
+        SearchEverywhereUsageTriggerCollector.ITEM_NUMBER_BEFORE_MORE.with(listElements.size()),
+        SearchEverywhereUsageTriggerCollector.IS_ONLY_MORE.with(true)
+      );
       listElements.add(new SearchEverywhereFoundElementInfo(MORE_ELEMENT, 0, null));
       lasItemIndex += 1;
       fireIntervalAdded(this, lasItemIndex, lasItemIndex);
