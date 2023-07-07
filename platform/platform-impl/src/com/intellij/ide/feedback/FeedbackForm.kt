@@ -117,7 +117,7 @@ class FeedbackForm(
             .gap(RightGap.SMALL)
             .visibleIf(topicComboBox.selectedValueMatches { it?.id == "ij_bug" })
           text(ApplicationBundle.message("feedback.form.issue")) {
-            ReportProblemAction.submit(project)
+            ReportProblemAction.Handler.submit(project)
           }.visibleIf(topicComboBox.selectedValueMatches { it?.id == "ij_bug" })
         }
       }

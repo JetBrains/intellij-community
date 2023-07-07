@@ -12,7 +12,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 
 open class ReportProblemAction : DumbAwareAction() {
-  companion object {
+  object Handler {
     fun submit(project: Project?) {
       val appInfo = ApplicationInfoEx.getInstanceEx()
       ProgressManager.getInstance().run(object : Task.Backgroundable(project,
@@ -23,6 +23,7 @@ open class ReportProblemAction : DumbAwareAction() {
       })
     }
   }
+
   override fun update(e: AnActionEvent) {
     val info = ApplicationInfoEx.getInstanceEx()
     e.presentation.isEnabledAndVisible = info != null && info.youtrackUrl != null
@@ -31,6 +32,6 @@ open class ReportProblemAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
-    submit(e.project)
+    Handler.submit(e.project)
   }
 }
