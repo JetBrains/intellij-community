@@ -184,7 +184,9 @@ internal class StoreReloadManagerImpl(coroutineScope: CoroutineScope, private va
   }
 
   override fun reloadProject() {
-    changedStorages.clear()
+    synchronized(changedStorages) {
+      changedStorages.clear()
+    }
     doReloadProject(project)
   }
 
