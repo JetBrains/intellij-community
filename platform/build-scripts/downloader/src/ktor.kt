@@ -78,6 +78,14 @@ private val httpSpaceClient = SynchronizedClearableLazy {
     // we have custom error handler
     expectSuccess = false
 
+    install(ContentEncoding) {
+      // Any `Content-Encoding` will drop `Content-Length` header in nginx responses,
+      // yet we rely on that header in `downloadFileToCacheLocation`.
+      // Hence, we override `ContentEncoding` plugin config from `httpClient` with zero weights.
+      deflate(0.0F)
+      gzip(0.0F)
+    }
+
     val token = System.getenv("SPACE_PACKAGE_TOKEN")
     if (!token.isNullOrEmpty()) {
       install(Auth) {
@@ -273,7 +281,7 @@ suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDepende
           val fileSize = Files.size(tempFile)
           check(fileSize == contentLength) {
             "Wrong file length after downloading uri '$url' to '$tempFile': expected length $contentLength " +
-            "from Content-Length header, but got $fileSize on disk"
+            "from ${HttpHeaders.ContentLength} header, but got $fileSize on disk"
           }
           Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
         }
