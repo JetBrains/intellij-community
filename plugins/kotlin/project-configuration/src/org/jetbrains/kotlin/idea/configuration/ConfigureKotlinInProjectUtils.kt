@@ -10,7 +10,7 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.module.ModuleGrouper
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -446,6 +447,14 @@ private const val GROUP_WITH_KOTLIN_VERSION = 2
 typealias ModulesNamesAndFirstSourceRootModules = Map<String, Module>
 typealias KotlinVersionsAndModules = Map<String, ModulesNamesAndFirstSourceRootModules>
 
+fun Module.getGradleKotlinVersion(): String? {
+    return getKotlinCompilerArguments(this)?.pluginClasspaths?.let { pluginsClasspaths ->
+        pluginsClasspaths.firstOrNull { it.contains(ARTIFACT_NAME) }?.let {
+            KOTLIN_STDLIB_VERSION_REGEX.find(it)?.groups?.get(GROUP_WITH_KOTLIN_VERSION)?.value
+        }
+    }
+}
+
 fun getKotlinVersionsAndModules(
     project: Project,
     configurator: KotlinProjectConfigurator
@@ -456,20 +465,14 @@ fun getKotlinVersionsAndModules(
     var rootModuleVersion: String? = null
     for (moduleEntity in configuredModules) {
         val module = moduleEntity.value
-        getKotlinCompilerArguments(module)?.pluginClasspaths?.let { pluginsClasspaths ->
-            pluginsClasspaths.firstOrNull { it.contains(ARTIFACT_NAME) }?.let {
-                val version = KOTLIN_STDLIB_VERSION_REGEX.find(it)?.groups?.get(GROUP_WITH_KOTLIN_VERSION)?.value
-                version?.let {
-                    val modulesForThisVersion = kotlinVersionsAndModules.getOrDefault(version, mutableMapOf())
-                    modulesForThisVersion[moduleEntity.key] = module
-                    kotlinVersionsAndModules[version] = modulesForThisVersion
+        val version = module.getGradleKotlinVersion() ?: continue
+        val modulesForThisVersion = kotlinVersionsAndModules.getOrDefault(version, mutableMapOf())
+        modulesForThisVersion[moduleEntity.key] = module
+        kotlinVersionsAndModules[version] = modulesForThisVersion
 
-                    rootModule?.let {
-                        if (rootModule.name == moduleEntity.key) {
-                            rootModuleVersion = version
-                        }
-                    }
-                }
+        rootModule?.let {
+            if (rootModule.name == moduleEntity.key) {
+                rootModuleVersion = version
             }
         }
     }
@@ -478,7 +481,12 @@ fun getKotlinVersionsAndModules(
 
 fun getRootModule(project: Project): Module? {
     val topLevelBuildScript = project.getTopLevelBuildScriptFile()
-    return topLevelBuildScript?.let { ModuleUtilCore.findModuleForPsiElement(it) }
+    topLevelBuildScript?.module?.let {
+        return it
+    }
+
+    val grouper = ModuleGrouper.instanceFor(project)
+    return grouper.getAllModules().firstOrNull { grouper.getGroupPath(it).isEmpty() }
 }
 
 @NonNls

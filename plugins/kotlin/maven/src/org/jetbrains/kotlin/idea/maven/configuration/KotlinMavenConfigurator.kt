@@ -67,6 +67,10 @@ protected constructor(
         return ConfigureKotlinStatus.CAN_BE_CONFIGURED
     }
 
+    override fun isApplicable(module: Module): Boolean {
+        return module.buildSystemType == BuildSystemType.Maven
+    }
+
     private fun checkKotlinPlugin(module: Module): ConfigureKotlinStatus {
         val psi = findModulePomFile(module) as? XmlFile ?: return ConfigureKotlinStatus.BROKEN
         val pom = PomFile.forFileOrNull(psi) ?: return ConfigureKotlinStatus.NON_APPLICABLE

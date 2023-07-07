@@ -9,12 +9,12 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.config.LanguageFeature
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.buildArgumentString
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
@@ -23,8 +23,8 @@ import org.jetbrains.kotlin.idea.groovy.inspections.DifferentKotlinGradleVersion
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
@@ -217,6 +217,7 @@ class GroovyBuildScriptManipulator(
         )
         return originalText != scriptFile.text
     }
+
 
     override fun changeLanguageFeatureConfiguration(
         feature: LanguageFeature,

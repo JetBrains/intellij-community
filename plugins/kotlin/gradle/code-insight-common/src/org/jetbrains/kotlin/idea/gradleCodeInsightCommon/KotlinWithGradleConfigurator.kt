@@ -6,10 +6,14 @@ import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
@@ -25,6 +29,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
+import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
@@ -41,6 +46,8 @@ import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityStore
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
@@ -78,7 +85,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             .any { it.isFileConfigured(this) }
     }
 
-    protected open fun isApplicable(module: Module): Boolean =
+    override fun isApplicable(module: Module): Boolean =
         module.buildSystemType == BuildSystemType.Gradle
 
     protected open fun getMinimumSupportedVersion() = "1.0.0"
@@ -109,6 +116,85 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         )
         collector.showNotification()
     }
+
+    private fun getAllConfigurableKotlinVersions(): List<IdeKotlinVersion> {
+        return KotlinGradleCompatibilityStore.allKotlinVersions()
+    }
+
+    /**
+     * Currently, returns true if this module has a jvmTarget >= 8.
+     * If a future Kotlin version requires a higher jvmTarget, then it will be required for that [kotlinVersion].
+     */
+    private fun Module.kotlinSupportsJvmTarget(kotlinVersion: IdeKotlinVersion): Boolean {
+        val jvmTarget = getTargetBytecodeVersionFromModule(this, kotlinVersion) ?: return false
+        val jvmTargetNum = jvmTarget.removePrefix("1.").toIntOrNull() ?: return false
+        return jvmTargetNum >= 8
+    }
+
+    private fun Project.isGradleSyncPending(): Boolean {
+        val notificationVisibleProperty =
+            ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(this, ProjectSystemId("GRADLE", "Gradle"))
+        return notificationVisibleProperty.get()
+    }
+
+
+    override fun calculateAutoConfigSettings(module: Module): AutoConfigurationSettings? {
+        val project = module.project
+        val baseModule = module.toModuleGroup().baseModule
+
+        if (!isAutoConfigurationEnabled() || !isApplicable(baseModule)) return null
+        if (project.isGradleSyncPending() || project.isGradleSyncInProgress()) return null
+        if (baseModule.getBuildScriptPsiFile() == null) return null
+
+        val gradleVersion = project.guessProjectDir()?.path?.let {
+            val linkedSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(it)
+            linkedSettings?.resolveGradleVersion()
+        } ?: return null
+
+        val hierarchy = project.buildKotlinModuleHierarchy() ?: return null
+        val moduleNode = hierarchy.getNodeForModule(baseModule) ?: return null
+        if (moduleNode.hasKotlinVersionConflict()) return null
+
+        val forcedKotlinVersion = moduleNode.getForcedKotlinVersion()
+        val allConfigurableKotlinVersions = getAllConfigurableKotlinVersions()
+        if (forcedKotlinVersion != null && !allConfigurableKotlinVersions.contains(forcedKotlinVersion)) {
+            return null
+        }
+
+        val possibleKotlinVersionsToUse = if (forcedKotlinVersion != null) {
+            listOf(forcedKotlinVersion)
+        } else allConfigurableKotlinVersions
+
+        val remainingKotlinVersions = possibleKotlinVersionsToUse.filter {
+            baseModule.kotlinSupportsJvmTarget(it)
+        }.filter {
+            KotlinGradleCompatibilityStore.kotlinVersionSupportsGradle(it, gradleVersion)
+        }
+
+        val maxKotlinVersion = remainingKotlinVersions.maxOrNull() ?: return null
+
+        return AutoConfigurationSettings(baseModule, maxKotlinVersion)
+    }
+
+    override fun runAutoConfig(settings: AutoConfigurationSettings) {
+        val module = settings.module
+        val project = module.project
+        val moduleVersions = getKotlinVersionsAndModules(project, this).first
+        val jvmTargets = getModulesTargetingUnsupportedJvmAndTargetsForAllModules(listOf(module), settings.kotlinVersion).second
+
+        // TODO: Add logic to display the dialog, undo action, etc.
+        val collector = configureSilently(
+            module.project,
+            listOf(module),
+            moduleVersions,
+            settings.kotlinVersion,
+            jvmTargets
+        )
+        collector.showNotification()
+
+        ExternalSystemProjectTracker.getInstance(project).scheduleProjectRefresh()
+    }
+
 
     private fun configureSilently(
         project: Project,

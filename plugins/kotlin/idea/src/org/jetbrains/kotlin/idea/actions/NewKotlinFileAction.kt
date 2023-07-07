@@ -287,14 +287,25 @@ internal fun createKotlinFileFromTemplate(name: String, template: FileTemplate, 
             }
         }
         JavaCreateTemplateInPackageAction.setupJdk(adjustedDir, psiFile)
-        val module = ModuleUtil.findModuleForFile(psiFile)
+        val module = ModuleUtil.findModuleForFile(psiFile) ?: return@computeWithAlternativeResolveEnabled psiFile
+
+        // Old JPS configurator logic
+        // TODO: Unify with other auto-configuration logic
         val configurator = KotlinProjectConfigurator.EP_NAME.extensions.firstOrNull()
-        if (module != null && configurator != null) {
+        if (configurator != null) {
             DumbService.getInstance(module.project).runWhenSmart {
                 if (configurator.getStatus(module.toModuleGroup()) == ConfigureKotlinStatus.CAN_BE_CONFIGURED) {
                     configurator.configure(module.project, emptyList())
                 }
             }
+        }
+
+        // New auto-config logic
+        DumbService.getInstance(module.project).runWhenSmart {
+            val autoConfigurator = KotlinProjectConfigurator.EP_NAME.extensions
+                .firstOrNull { it.canRunAutoConfig() && it.isApplicable(module) } ?: return@runWhenSmart
+            val settings = autoConfigurator.calculateAutoConfigSettings(module) ?: return@runWhenSmart
+            autoConfigurator.runAutoConfig(settings)
         }
         return@computeWithAlternativeResolveEnabled psiFile
     }

@@ -10,9 +10,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.allModules
 import org.jetbrains.kotlin.idea.base.projectStructure.getWholeModuleGroup
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.configuration.addStdlibToJavaModuleInfo
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
-import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTarget
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -40,6 +40,8 @@ class KotlinGradleModuleConfigurator : KotlinWithGradleConfigurator() {
     override fun isApplicable(module: Module): Boolean {
         return super.isApplicable(module) && !module.isAndroidModule()
     }
+
+    override fun canRunAutoConfig(): Boolean = isAutoConfigurationEnabled()
 
     override fun configureModule(
         module: Module,
