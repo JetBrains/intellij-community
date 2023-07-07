@@ -61,8 +61,6 @@ private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : Asyn
     }
   }
 
-  val delegate: ID
-
   init {
     val pool = Foundation.NSAutoreleasePool()
     try {
@@ -78,7 +76,7 @@ private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : Asyn
           Foundation.registerObjcClassPair(delegateClass)
         }
 
-      delegate = Foundation.invoke("NSColorChangesObserver", "new")
+      val delegate = Foundation.invoke("NSColorChangesObserver", "new")
 
       if (useAppearanceApi()) {
         val app = Foundation.invoke("NSApplication", "sharedApplication")
