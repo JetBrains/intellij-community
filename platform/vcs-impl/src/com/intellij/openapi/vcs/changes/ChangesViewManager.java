@@ -69,6 +69,7 @@ import com.intellij.vcs.commit.ChangesViewCommitPanel;
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
 import com.intellij.vcs.commit.CommitModeManager;
 import com.intellij.vcs.commit.PartialCommitChangeNodeDecorator;
+import com.intellij.vcsUtil.VcsUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import org.jetbrains.annotations.CalledInAny;
@@ -974,14 +975,11 @@ public class ChangesViewManager implements ChangesViewEx,
 
     public void selectFile(@Nullable VirtualFile vFile) {
       if (vFile == null) return;
-      Change change = ChangeListManager.getInstance(myProject).getChange(vFile);
-      Object objectToFind = change != null ? change : vFile;
 
-      DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
-      DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, objectToFind);
-      if (node != null) {
-        TreeUtil.selectNode(myView, node);
-      }
+      ChangesBrowserNode<?> node = findNodeForFile(vFile);
+      if (node == null) return;
+
+      TreeUtil.selectNode(myView, node);
     }
 
     public void selectChanges(@NotNull List<? extends Change> changes) {
@@ -1000,17 +998,19 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void refreshChangesViewNode(@NotNull VirtualFile file) {
-      ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-      Object userObject = changeListManager.isUnversioned(file) ? file : changeListManager.getChange(file);
+      ChangesBrowserNode<?> node = findNodeForFile(file);
+      if (node == null) return;
 
-      if (userObject != null) {
-        DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
-        DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, userObject);
+      myView.getModel().nodeChanged(node);
+    }
 
-        if (node != null) {
-          myView.getModel().nodeChanged(node);
-        }
-      }
+    private @Nullable ChangesBrowserNode<?> findNodeForFile(@NotNull VirtualFile file) {
+      FilePath filePath = VcsUtil.getFilePath(file);
+      DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
+      return (ChangesBrowserNode<?>)TreeUtil.findNode(root, node -> {
+        FilePath nodeFilePath = VcsTreeModelData.mapUserObjectToFilePath(node.getUserObject());
+        return Objects.equals(filePath, nodeFilePath);
+      });
     }
 
     private void invokeLater(Runnable runnable) {

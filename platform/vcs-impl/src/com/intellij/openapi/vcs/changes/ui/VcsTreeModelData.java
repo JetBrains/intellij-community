@@ -488,19 +488,22 @@ public abstract class VcsTreeModelData {
   @NotNull
   static JBIterable<FilePath> mapToFilePath(@NotNull VcsTreeModelData data) {
     return data.iterateUserObjects()
-      .map(entry -> {
-        if (entry instanceof Change) {
-          return ChangesUtil.getFilePath((Change)entry);
-        }
-        else if (entry instanceof VirtualFile) {
-          return VcsUtil.getFilePath((VirtualFile)entry);
-        }
-        else if (entry instanceof FilePath) {
-          return ((FilePath)entry);
-        }
-        return null;
-      })
+      .map(VcsTreeModelData::mapUserObjectToFilePath)
       .filterNotNull();
+  }
+
+  @Nullable
+  public static FilePath mapUserObjectToFilePath(@Nullable Object userObject) {
+    if (userObject instanceof Change change) {
+      return ChangesUtil.getFilePath(change);
+    }
+    else if (userObject instanceof VirtualFile file) {
+      return VcsUtil.getFilePath(file);
+    }
+    else if (userObject instanceof FilePath filePath) {
+      return filePath;
+    }
+    return null;
   }
 
   /**
