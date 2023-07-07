@@ -185,46 +185,13 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   }
 
   private fun initMainUi() {
-    val diffAction = ShowBranchDiffAction()
-    diffAction.registerCustomShortcutSet(branchesTreeWithLogPanel, null)
-
-    val deleteAction = DeleteBranchAction()
-    deleteAction.registerCustomShortcutSet(branchesTreeWithLogPanel, null)
+    ShowBranchDiffAction().registerCustomShortcutSet(branchesTreeWithLogPanel, null)
+    DeleteBranchAction().registerCustomShortcutSet(branchesTreeWithLogPanel, null)
 
     createFocusFilterFieldAction(branchesSearchFieldWrapper)
     installPasteAction(filteringTree)
 
-    val toggleFavoriteAction = ToggleFavoriteAction()
-    val fetchAction = FetchAction(this)
-    val showMyBranchesAction = ShowMyBranchesAction(uiController)
-    val newBranchAction = ActionManager.getInstance().getAction("Git.New.Branch.In.Log")
-    val updateSelectedAction = UpdateSelectedBranchAction()
-    val defaultTreeExpander = DefaultTreeExpander(filteringTree.component)
-    val commonActionsManager = CommonActionsManager.getInstance()
-    val expandAllAction = commonActionsManager.createExpandAllHeaderAction(defaultTreeExpander, branchesTreePanel)
-    val collapseAllAction = commonActionsManager.createCollapseAllHeaderAction(defaultTreeExpander, branchesTreePanel)
-    val actionManager = ActionManager.getInstance()
-    val hideBranchesAction = actionManager.getAction("Git.Log.Hide.Branches")
-    val settings = actionManager.getAction("Git.Log.Branches.Settings")
-
-    val group = DefaultActionGroup()
-    group.add(hideBranchesAction)
-    group.add(Separator())
-    group.add(newBranchAction)
-    group.add(updateSelectedAction)
-    group.add(deleteAction)
-    group.add(diffAction)
-    group.add(showMyBranchesAction)
-    group.add(fetchAction)
-    group.add(toggleFavoriteAction)
-    group.add(actionManager.getAction("Git.Log.Branches.Navigate.Log.To.Selected.Branch"))
-    group.add(Separator())
-    group.add(settings)
-    group.add(actionManager.getAction("Git.Log.Branches.Grouping.Settings"))
-    group.add(expandAllAction)
-    group.add(collapseAllAction)
-
-    val toolbar = actionManager.createActionToolbar("Git.Log.Branches", group, false)
+    val toolbar = ActionManager.getInstance().createActionToolbar("Git.Log.Branches", createToolbarGroup(), false)
     toolbar.setTargetComponent(branchesTreePanel)
 
     val branchesButton = ExpandStripeButton(messagePointer("action.Git.Log.Show.Branches.text"), AllIcons.Actions.ArrowExpand)
@@ -244,6 +211,42 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     branchesTreeWithLogPanel.addToLeft(branchesPanelExpandableController.expandControlPanel).addToCenter(branchViewSplitter)
     mainPanel.isFocusCycleRoot = true
     mainPanel.focusTraversalPolicy = BRANCHES_UI_FOCUS_TRAVERSAL_POLICY
+  }
+
+  private fun createToolbarGroup(): DefaultActionGroup {
+    val commonActionsManager = CommonActionsManager.getInstance()
+    val actionManager = ActionManager.getInstance()
+
+    val diffAction = ShowBranchDiffAction()
+    val deleteAction = DeleteBranchAction()
+    val toggleFavoriteAction = ToggleFavoriteAction()
+    val fetchAction = FetchAction(this)
+    val showMyBranchesAction = ShowMyBranchesAction(uiController)
+    val newBranchAction = actionManager.getAction("Git.New.Branch.In.Log")
+    val updateSelectedAction = UpdateSelectedBranchAction()
+    val defaultTreeExpander = DefaultTreeExpander(filteringTree.component)
+    val expandAllAction = commonActionsManager.createExpandAllHeaderAction(defaultTreeExpander, branchesTreePanel)
+    val collapseAllAction = commonActionsManager.createCollapseAllHeaderAction(defaultTreeExpander, branchesTreePanel)
+    val hideBranchesAction = actionManager.getAction("Git.Log.Hide.Branches")
+    val settings = actionManager.getAction("Git.Log.Branches.Settings")
+
+    val group = DefaultActionGroup()
+    group.add(hideBranchesAction)
+    group.add(Separator())
+    group.add(newBranchAction)
+    group.add(updateSelectedAction)
+    group.add(deleteAction)
+    group.add(diffAction)
+    group.add(showMyBranchesAction)
+    group.add(fetchAction)
+    group.add(toggleFavoriteAction)
+    group.add(actionManager.getAction("Git.Log.Branches.Navigate.Log.To.Selected.Branch"))
+    group.add(Separator())
+    group.add(settings)
+    group.add(actionManager.getAction("Git.Log.Branches.Grouping.Settings"))
+    group.add(expandAllAction)
+    group.add(collapseAllAction)
+    return group
   }
 
   fun toggleBranchesPanelVisibility() {
