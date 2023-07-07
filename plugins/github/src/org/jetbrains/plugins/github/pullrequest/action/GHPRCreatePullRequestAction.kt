@@ -14,9 +14,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowController
 import java.util.function.Supplier
 
-class GHPRCreatePullRequestAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.create.show.form.action"),
-                                                    Supplier { null },
-                                                    AllIcons.General.Add) {
+internal class GHPRCreatePullRequestAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.EDT
   }

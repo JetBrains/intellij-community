@@ -2,7 +2,6 @@
 
 package org.jetbrains.plugins.github
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -10,11 +9,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.plugins.github.i18n.GithubBundle
 
-class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.action"),
-                                          GithubBundle.messagePointer("share.action.description"),
-                                          AllIcons.Vcs.Vendors.Github) {
+internal class GithubShareAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
