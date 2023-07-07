@@ -5,9 +5,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
-import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 
 interface GitLabNoteAdminActionsViewModel {
   val busy: Flow<Boolean>

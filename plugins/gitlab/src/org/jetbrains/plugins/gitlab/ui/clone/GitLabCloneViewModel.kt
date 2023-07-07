@@ -25,7 +25,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
 import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneViewModel.UIState
-import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 import java.nio.file.Paths
 
 internal interface GitLabCloneViewModel {

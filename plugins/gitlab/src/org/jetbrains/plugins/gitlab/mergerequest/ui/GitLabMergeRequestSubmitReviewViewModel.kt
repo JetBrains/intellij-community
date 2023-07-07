@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModel.SubmittableReview
-import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 
 internal interface GitLabMergeRequestSubmitReviewViewModel {
   val isBusy: Flow<Boolean>

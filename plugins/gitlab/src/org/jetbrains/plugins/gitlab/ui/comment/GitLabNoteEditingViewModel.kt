@@ -10,7 +10,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 import javax.swing.AbstractAction
 
 interface GitLabNoteEditingViewModel {
