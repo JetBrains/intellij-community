@@ -4,10 +4,10 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.notification.Notification
+import com.intellij.openapi.components.service
+import com.intellij.openapi.util.registry.RegistryUi
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchConfigurable
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Service
@@ -29,9 +29,9 @@ class InvalidTokenNotificationManager {
       )
 
     notification.addAction(NotificationAction.createSimple(
-      SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.open.settings")
+      SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.open.registry")
     ) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(null, SemanticSearchConfigurable::class.java)
+      RegistryUi().show()
       notification.expire()
     })
 
@@ -44,6 +44,8 @@ class InvalidTokenNotificationManager {
   }
 
   companion object {
-    private const val NOTIFICATION_GROUP_ID = "Semantic search notifications"
+    private const val NOTIFICATION_GROUP_ID = "Semantic search"
+
+    fun getInstance() = service<InvalidTokenNotificationManager>()
   }
 }

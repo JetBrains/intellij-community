@@ -5,7 +5,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.util.gotoByName.GotoActionModel
-import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.semantics.utils.RequestResult
 import com.intellij.searchEverywhereMl.semantics.utils.sendRequest
@@ -20,11 +19,13 @@ class ServerSemanticActionsProvider(val model: GotoActionModel) : SemanticAction
   private val URL_BASE = Registry.stringValue("search.everywhere.ml.semantic.actions.server.host")
 
   override fun search(pattern: String): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
+    if (!SemanticSearchSettingsManager.getInstance().getIsEnabledInActionsTab()) return emptyList()
+
     val requestJson: String = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapOf(
       "pattern" to pattern,
       "items_limit" to ITEMS_LIMIT,
       "similarity_threshold" to SIMILARITY_THRESHOLD,
-      "token" to service<SemanticSearchSettingsManager>().getActionsAPIToken()
+      "token" to SemanticSearchSettingsManager.getInstance().getActionsAPIToken()
     ))
 
     val modelResponse: ModelResponse = when (

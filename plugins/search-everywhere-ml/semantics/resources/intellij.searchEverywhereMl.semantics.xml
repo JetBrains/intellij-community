@@ -12,6 +12,14 @@
     <postStartupActivity
       implementation="com.intellij.searchEverywhereMl.semantics.services.ActionSemanticSearchServiceInitializer"/>
 
+    <registryKey defaultValue="false"
+                 description="Use remote server for the Actions tab"
+                 key="search.everywhere.ml.semantic.actions.server.use"/>
+
+    <registryKey defaultValue=""
+                 description="Remote API Key for the Actions tab"
+                 key="search.everywhere.ml.semantic.actions.server.token"/>
+
     <registryKey defaultValue="https://se-semantics.labs.jb.gg/actions/similarity"
                  description="Server host with semantic model for the Actions tab"
                  key="search.everywhere.ml.semantic.actions.server.host"/>
@@ -31,7 +39,7 @@
       bundle="messages.searchEverywhereMlSemanticsBundle"
       key="search.everywhere.ml.semantic.settings.configurable.display.name"/>
 
-    <notificationGroup id="Semantic search notifications" displayType="STICKY_BALLOON"
+    <notificationGroup id="Semantic search" displayType="STICKY_BALLOON"
                        bundle="messages.searchEverywhereMlSemanticsBundle"
                        key="search.everywhere.ml.semantic.notification.group.name"/>
   </extensions>

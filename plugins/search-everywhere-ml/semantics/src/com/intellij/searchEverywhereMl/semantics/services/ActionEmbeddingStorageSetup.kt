@@ -3,7 +3,6 @@ package com.intellij.searchEverywhereMl.semantics.services
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -21,7 +20,7 @@ class ActionEmbeddingStorageSetup(
   override fun run(indicator: ProgressIndicator) {
     if (!hasUnreadyEmbeddings()) return
 
-    val embeddingService = runBlockingCancellable { service<LocalEmbeddingServiceProvider>().getService() } ?: return
+    val embeddingService = runBlockingCancellable { LocalEmbeddingServiceProvider.getInstance().getService() } ?: return
     // Cancel the previous embeddings calculation task if it's not finished
     setupTaskIndicator.getAndSet(indicator)?.cancel()
 

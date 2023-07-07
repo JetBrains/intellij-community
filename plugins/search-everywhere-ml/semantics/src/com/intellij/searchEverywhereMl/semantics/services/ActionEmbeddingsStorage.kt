@@ -39,23 +39,23 @@ class ActionEmbeddingsStorage {
 
   fun prepareForSearch() {
     ApplicationManager.getApplication().executeOnPooledThread {
-      service<LocalArtifactsManager>().tryPrepareArtifacts()
+      LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
       index.loadFromDisk()
-      service<ActionEmbeddingsStorage>().tryGenerateEmbeddings()
+      generateEmbeddingsIfNecessary()
     }
   }
 
   fun tryStopGeneratingEmbeddings() = setupTaskIndicator.getAndSet(null)?.cancel()
 
   /* Thread-safe job for updating embeddings. Consequent call stops the previous execution */
-  private fun tryGenerateEmbeddings() {
+  private fun generateEmbeddingsIfNecessary() {
     val project = ProjectManager.getInstance().openProjects[0]
     ProgressManager.getInstance().run(ActionEmbeddingStorageSetup(project, index, setupTaskIndicator))
   }
 
   fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double? = null): List<ScoredText> {
     if (!checkSearchEnabled()) return emptyList()
-    val localEmbeddingService = runBlockingCancellable { service<LocalEmbeddingServiceProvider>().getService() } ?: return emptyList()
+    val localEmbeddingService = runBlockingCancellable { LocalEmbeddingServiceProvider.getInstance().getService() } ?: return emptyList()
     val computeTask = { runBlockingCancellable { localEmbeddingService.embed(listOf(text)) }.single().normalized() }
     val embedding = ProgressManager.getInstance().runProcess(computeTask, EmptyProgressIndicator())
     return index.findClosest(embedding, topK, similarityThreshold)
@@ -63,7 +63,10 @@ class ActionEmbeddingsStorage {
 
   companion object {
     private const val INDEX_DIR = "actions"
-    private fun checkSearchEnabled() = service<SemanticSearchSettingsManager>().getIsEnabledInActionsTab()
+
+    fun getInstance() = service<ActionEmbeddingsStorage>()
+
+    private fun checkSearchEnabled() = SemanticSearchSettingsManager.getInstance().getIsEnabledInActionsTab()
 
     internal fun shouldIndexAction(action: AnAction?): Boolean {
       return action != null && !(action is ActionGroup && !action.isSearchable) && action.templateText != null
@@ -87,8 +90,8 @@ class ActionSemanticSearchServiceInitializer : ProjectActivity {
   override suspend fun execute(project: Project) {
     // Instantiate service for the first time with state loading if available.
     // Whether the state exists or not, we generate the missing embeddings:
-    if (service<SemanticSearchSettingsManager>().getIsEnabledInActionsTab()) {
-      service<ActionEmbeddingsStorage>().prepareForSearch()
+    if (SemanticSearchSettingsManager.getInstance().getIsEnabledInActionsTab()) {
+      ActionEmbeddingsStorage.getInstance().prepareForSearch()
     }
   }
 }

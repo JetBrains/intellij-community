@@ -22,13 +22,16 @@ class LocalEmbeddingServiceProvider {
     return mutex.withLock {
       var service = localServiceRef?.get()
       if (service == null) {
-        if (!service<LocalArtifactsManager>().checkArtifactsPresent()) {
-          return null
-        }
-        service = LocalEmbeddingServiceLoader().load(service<LocalArtifactsManager>().getCustomRootDataLoader())
+        val artifactsManager = LocalArtifactsManager.getInstance()
+        if (!artifactsManager.checkArtifactsPresent()) return null
+        service = LocalEmbeddingServiceLoader().load(artifactsManager.getCustomRootDataLoader())
         localServiceRef = SoftReference(service)
       }
       service
     }
+  }
+
+  companion object {
+    fun getInstance() = service<LocalEmbeddingServiceProvider>()
   }
 }

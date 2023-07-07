@@ -9,7 +9,6 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -44,7 +43,7 @@ class SemanticActionSearchEverywhereContributor(
     val actionModel = GotoActionModel(project, contextComponent, editor)
     actionModel.buildGroupMappings()
 
-    val settings = service<SemanticSearchSettingsManager>()
+    val settings = SemanticSearchSettingsManager.getInstance()
     semanticActionsProvider = if (settings.getUseRemoteActionsServer()) {
       ServerSemanticActionsProvider(actionModel)
     }

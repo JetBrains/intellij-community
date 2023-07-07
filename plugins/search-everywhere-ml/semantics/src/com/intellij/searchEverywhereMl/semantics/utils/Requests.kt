@@ -1,6 +1,5 @@
 package com.intellij.searchEverywhereMl.semantics.utils
 
-import com.intellij.openapi.components.service
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpRequests.HttpStatusException
 import java.net.HttpURLConnection
@@ -22,7 +21,7 @@ internal fun sendRequest(url: String, requestBody: String): RequestResult {
   }
   catch (e: HttpStatusException) {
     if (e.statusCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-      service<InvalidTokenNotificationManager>().showNotification()
+      InvalidTokenNotificationManager.getInstance().showNotification()
     }
     RequestResult.Error(e.message)
   }

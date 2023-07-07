@@ -1,17 +1,15 @@
 package com.intellij.searchEverywhereMl.semantics.settings
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 
 class SemanticSearchConfigurable : BoundConfigurable(
   SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.settings.configurable.display.name")
 ) {
-  private val settings = service<SemanticSearchSettingsManager>()
+  private val settings = SemanticSearchSettingsManager.getInstance()
 
   override fun createPanel(): DialogPanel {
     return panel {
@@ -19,16 +17,6 @@ class SemanticSearchConfigurable : BoundConfigurable(
         checkBox(
           SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.settings.configurable.actions.enable")
         ).bindSelected(settings::getIsEnabledInActionsTab, settings::setIsEnabledInActionsTab)
-      }
-      indent {
-        row {
-          checkBox(
-            SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.settings.configurable.actions.use.remote")
-          ).bindSelected(settings.state::actionsUseRemoteServer)
-        }
-        row(SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.settings.configurable.actions.remote.apikey.label")) {
-          passwordField().bindText(settings::getActionsAPIToken, settings::setActionsAPIToken)
-        }
       }
     }
   }

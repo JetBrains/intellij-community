@@ -22,9 +22,9 @@ class LocalArtifactsManager {
 
   fun getCustomRootDataLoader() = CustomRootDataLoader(modelArtifactsRoot.toPath())
 
-  fun tryPrepareArtifacts() {
+  fun downloadArtifactsIfNecessary() {
     if (!checkArtifactsPresent()) {
-      prepareArtifacts()
+      downloadArtifacts()
     }
   }
 
@@ -32,10 +32,10 @@ class LocalArtifactsManager {
     return Files.isDirectory(modelArtifactsRoot.toPath()) && modelArtifactsRoot.toPath().listDirectoryEntries().isNotEmpty()
   }
 
-  private fun prepareArtifacts() {
+  private fun downloadArtifacts() {
     Files.createDirectories(root.toPath())
     try {
-      service<DownloadableFileService>().run {
+      DownloadableFileService.getInstance().run {
         createDownloader(
           listOf(createFileDescription(MAVEN_ROOT, ARCHIVE_NAME)),
           SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.models.download.name")
@@ -65,6 +65,8 @@ class LocalArtifactsManager {
     private const val MODEL_ARTIFACTS_DIR = "models"
     private const val ARCHIVE_NAME = "semantic-text-search.jar"
     private const val NOTIFICATION_GROUP_ID = "Semantic search notifications"
+
+    fun getInstance() = service<LocalArtifactsManager>()
 
     private fun showDownloadErrorNotification() {
       NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
