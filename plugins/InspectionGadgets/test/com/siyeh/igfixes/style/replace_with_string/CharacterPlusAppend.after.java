@@ -6,7 +6,7 @@ class CharPlusAppend {
   String s = "samplesamplesamplesamplesamplesamplesamplesamplesamplesamplesamplesamplesamplesample";
 
   public String testStringBuilder() {
-      <caret>String sb = Character.toLowerCase(s.charAt(prefixLen)) +
+      String sb = Charact<caret>er.toLowerCase(s.charAt(prefixLen)) +
               s.substring(prefixLen + 1, totalLen - suffixLen);
     return sb;
   }
