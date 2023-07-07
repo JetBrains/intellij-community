@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
@@ -92,7 +93,7 @@ object GHShareProjectUtil {
         while (true) {
           try {
             return progressManager.runProcessWithProgressSynchronously(ThrowableComputable<Pair<Boolean, Set<String>>, IOException> {
-              val token = runBlocking {
+              val token = runBlockingCancellable {
                 service<GHAccountManager>().findCredentials(account) ?: throw GithubMissingTokenException(account)
               }
               val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(token)
