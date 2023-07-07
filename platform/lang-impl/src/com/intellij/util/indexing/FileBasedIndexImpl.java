@@ -990,12 +990,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                                                                myFileDocumentManager.getFile(document), restrictedFile,
                                                                                GlobalSearchScope.everythingScope(project)));
 
-    if (documentsToProcessForProject.size() != documents.size()) {
-      LOG.warn("Some files were filtered, which may lead to PSI/index inconsistency" +
-               ". documents.size=" + documents.size() +
-               ", documentsToProcessForProject.size=" + documentsToProcessForProject.size());
-    }
-
     if (!documentsToProcessForProject.isEmpty()) {
       UpdateTask<Document> task = myRegisteredIndexes.getUnsavedDataUpdateTask(indexId);
       assert task != null : "Task for unsaved data indexing was not initialized for index " + indexId;
