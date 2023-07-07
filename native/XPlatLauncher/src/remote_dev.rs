@@ -352,8 +352,10 @@ impl RemoteDevLaunchConfiguration {
                         remote_dev_properties.push(("idea.suppress.statistics.report", "true"));
                     }
                     "0" | "false" => {
-                        if env::var("REMOTE_DEV_SERVER_TRACE").is_ok_and( |remote_dev_server_trace| !remote_dev_server_trace.is_empty() ) {
-                            info!("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable");
+                        if let Ok(trace_var) = env::var("REMOTE_DEV_SERVER_TRACE") {
+                            if !trace_var.is_empty() {
+                                info!("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable");
+                            }
                         }
 
                         // Disable JCEF support for now since it does not work in headless environment now
