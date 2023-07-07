@@ -99,6 +99,10 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
   }
 
+  public void testEffectivelyFinal21() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+  }
+
   public void testEffectivelyFinalWhen() {
     doTest();
   }
