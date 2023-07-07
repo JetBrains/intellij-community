@@ -291,29 +291,3 @@ private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
         }
     }
 }
-
-private object RenderOptions {
-    val overrideRenderOptions = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
-        annotationRenderer = annotationRenderer.with {
-            annotationFilter = KtRendererAnnotationsFilter.NONE
-        }
-        modifiersRenderer = modifiersRenderer.with {
-            keywordsRenderer = keywordsRenderer.with { keywordFilter = KtRendererKeywordFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD) }
-        }
-    }
-
-    val actualRenderOptions = overrideRenderOptions.with {
-        modifiersRenderer = modifiersRenderer.with {
-            keywordsRenderer = keywordsRenderer.with {
-                keywordFilter =
-                    keywordFilter or KtRendererKeywordFilter.onlyWith(KtTokens.INNER_KEYWORD) or KtRendererKeywordFilter.onlyWith(KtTokens.VISIBILITY_MODIFIERS)
-                KtRendererKeywordFilter.onlyWith(KtTokens.MODALITY_MODIFIERS)
-            }
-        }
-    }
-    val expectRenderOptions = actualRenderOptions.with {
-        modifiersRenderer = modifiersRenderer.with {
-            keywordsRenderer = keywordsRenderer.with { keywordFilter = keywordFilter or KtRendererKeywordFilter.onlyWith(KtTokens.ACTUAL_KEYWORD) }
-        }
-    }
-}
