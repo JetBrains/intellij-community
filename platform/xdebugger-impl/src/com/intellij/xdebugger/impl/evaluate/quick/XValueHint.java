@@ -125,7 +125,6 @@ public class XValueHint extends AbstractValueHint {
 
   @Override
   protected void onHintHidden() {
-    super.onHintHidden();
     disposeVisibleHint();
   }
 

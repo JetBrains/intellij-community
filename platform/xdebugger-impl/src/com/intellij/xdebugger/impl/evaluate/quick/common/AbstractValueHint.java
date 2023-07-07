@@ -225,10 +225,20 @@ public abstract class AbstractValueHint {
 
   private boolean myInsideShow = false; // to avoid invoking myHideRunnable for new popups with updated presentation
 
-  private void invokeHideRunnableIfNeeded() {
-    if (myHideRunnable != null && !myInsideShow) {
-      myHideRunnable.run();
+  private void processHintHidden() {
+    if (!myInsideShow) {
+      if (myHideRunnable != null) {
+        myHideRunnable.run();
+      }
+      myHintHidden = true;
     }
+
+    disposeHighlighter();
+    if (getEditor().getUserData(HINT_KEY) == this) {
+      getEditor().putUserData(HINT_KEY, null);
+    }
+
+    onHintHidden();
   }
 
   private void setCurrentEditorHint() {
@@ -267,8 +277,7 @@ public abstract class AbstractValueHint {
       myCurrentHint.addHintListener(new HintListener() {
         @Override
         public void hintHidden(@NotNull EventObject event) {
-          invokeHideRunnableIfNeeded();
-          onHintHidden();
+          processHintHidden();
         }
       });
 
@@ -303,10 +312,6 @@ public abstract class AbstractValueHint {
   }
 
   protected void onHintHidden() {
-    disposeHighlighter();
-    if (getEditor().getUserData(HINT_KEY) == this) {
-      getEditor().putUserData(HINT_KEY, null);
-    }
   }
 
   protected boolean isHintHidden() {
@@ -443,8 +448,7 @@ public abstract class AbstractValueHint {
         popup.addListener(new JBPopupListener() {
           @Override
           public void onClosed(@NotNull LightweightWindowEvent event) {
-            invokeHideRunnableIfNeeded();
-            onHintHidden();
+            processHintHidden();
           }
         });
         setCurrentEditorHint();
