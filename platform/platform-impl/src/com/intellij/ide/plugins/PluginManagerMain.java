@@ -238,7 +238,8 @@ public final class PluginManagerMain {
 
       boolean result;
       if (!disabled.isEmpty() && !disabledDependants.isEmpty()) {
-        int code =
+        Integer codeHeadless = PluginUtilsKt.getEnableDisabledPluginsDependentConfirmationData();
+        int code = codeHeadless != null ? codeHeadless :
           MessageDialogBuilder.yesNoCancel(IdeBundle.message("dialog.title.dependent.plugins.found"), XmlStringUtil.wrapInHtml(message))
             .yesText(IdeBundle.message("button.enable.all"))
             .noText(IdeBundle.message("button.enable.updated.plugins", disabled.size()))
@@ -257,7 +258,10 @@ public final class PluginManagerMain {
           message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part9", disabledDependants.size());
         }
         message += "?";
-        result = MessageDialogBuilder.yesNo(IdeBundle.message("dialog.title.dependent.plugins.found"), XmlStringUtil.wrapInHtml(message)).guessWindowAndAsk();
+        Integer codeHeadless = PluginUtilsKt.getEnableDisabledPluginsDependentConfirmationData();
+        result = codeHeadless != null
+                 ? codeHeadless.equals(Messages.YES)
+                 : MessageDialogBuilder.yesNo(IdeBundle.message("dialog.title.dependent.plugins.found"), XmlStringUtil.wrapInHtml(message)).guessWindowAndAsk();
         if (!result) {
           return false;
         }

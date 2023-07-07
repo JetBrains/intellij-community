@@ -1273,6 +1273,8 @@
     <postStartupActivity implementation="com.intellij.ide.startup.CheckKeysStartupActivity" order="first"/>
 
     <environmentKeyProvider implementation="com.intellij.ide.impl.ProjectOpenKeyProvider"/>
+    <environmentKeyProvider implementation="com.intellij.ide.plugins.PluginEnvironmentKeyProvider"/>
+
 
     <actionConfigurationCustomizer implementation="com.intellij.openapi.wm.impl.GlobalMenuLinux$MyActionTuner"/>
 
