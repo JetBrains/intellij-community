@@ -10,7 +10,18 @@ interface TargetWizardModel {
 
   val languageConfigForIntrospection: LanguageRuntimeConfiguration?
 
-  fun save() {}
+  /**
+   * Applies changes to the [subject].
+   *
+   * It should not schedule any tasks or save configs that might duplicate since that method might be called multiple times.
+   * See [commit].
+   */
+  fun applyChanges()
 
-  fun commit() {}
+  /**
+   * Applies final changes to the [subject] on finish action of the Wizard.
+   *
+   * That method should be called once and can be used for saving extra configs and scheduling tasks.
+   */
+  fun commit()
 }

@@ -1,12 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
-import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.ExecutionExceptionWithAttachments
 import com.intellij.ide.wizard.CommitStepException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -45,7 +42,7 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContext
 
     stepDescription = getInitStepDescription()
 
-    model.save()
+    model.applyChanges()
 
     // TODO [targets] get rid of `!!` in `model.languageConfigForIntrospection!!`
     customToolPanel = TargetCustomToolPanel(model.project, model.subject.getTargetType(), ::editingTargetConfiguration,
@@ -94,6 +91,7 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContext
       }
 
       try {
+        // TODO TO BE FIXED
         model.commit()
 
         customTool = customToolPanel.createCustomTool()
