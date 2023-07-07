@@ -241,10 +241,21 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
       return cachedLookupElements;
     }
   }
+  
+  private static final class ErrorInTestException extends RuntimeException {
+    private ErrorInTestException(String message) {
+      super(message);
+    }
+  }
 
   private static boolean executeMessage(@NotNull Project project, @NotNull ModDisplayMessage message) {
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor == null) return false;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {
+        throw new ErrorInTestException(message.messageText());
+      }
+    }
     switch (message.kind()) {
       case INFORMATION -> HintManager.getInstance().showInformationHint(editor, message.messageText());
       case ERROR -> HintManager.getInstance().showErrorHint(editor, message.messageText());
@@ -292,7 +303,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
         return ReadAction.nonBlocking(supplier).expireWhen(context.project()::isDisposed).executeSynchronously();
       }, name, true, context.project());
     if (next == null) return;
-    CommandProcessor.getInstance().executeCommand(context.project(), () -> executeInteractively(context, next, editor), name, onTheFly);
+    CommandProcessor.getInstance().executeCommand(context.project(), () -> executeInteractively(context, next, editor), name, null);
   }
 
   private static VirtualFile actualize(@NotNull VirtualFile file) {
