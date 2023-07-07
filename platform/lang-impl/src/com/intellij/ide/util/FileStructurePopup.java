@@ -375,29 +375,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
   public @NotNull Promise<TreePath> select(Object element) {
     int[] stage = {1, 0}; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
     TreePath[] deepestPath = {null};
-    TreeVisitor visitor = path -> {
-      Object last = path.getLastPathComponent();
-      Object userObject = StructureViewComponent.unwrapNavigatable(last);
-      Object value = StructureViewComponent.unwrapValue(last);
-      if (Comparing.equal(value, element) ||
-          userObject instanceof AbstractTreeNode && ((AbstractTreeNode<?>)userObject).canRepresent(element)) {
-        return TreeVisitor.Action.INTERRUPT;
-      }
-      if (value instanceof PsiElement && element instanceof PsiElement) {
-        if (PsiTreeUtil.isAncestor((PsiElement)value, (PsiElement)element, true)) {
-          int count = path.getPathCount();
-          if (stage[1] == 0 || stage[1] < count) {
-            stage[1] = count;
-            deepestPath[0] = path;
-          }
-        }
-        else if (stage[0] != 3) {
-          stage[0] = 2;
-          return TreeVisitor.Action.SKIP_CHILDREN;
-        }
-      }
-      return TreeVisitor.Action.CONTINUE;
-    };
+    TreeVisitor visitor = path -> StructureViewComponent.visitPathForElementSelection(path, element, stage, deepestPath);
     Function<TreePath, Promise<TreePath>> action = path -> {
       myTree.expandPath(path);
       TreeUtil.selectPath(myTree, path);

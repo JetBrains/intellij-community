@@ -445,27 +445,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
           result.setError("rejected");
           return TreeVisitor.Action.INTERRUPT;
         }
-        Object last = path.getLastPathComponent();
-        Object userObject = unwrapNavigatable(last);
-        Object value = unwrapValue(last);
-        if (Comparing.equal(value, element) ||
-            userObject instanceof AbstractTreeNode && ((AbstractTreeNode<?>)userObject).canRepresent(element)) {
-          return TreeVisitor.Action.INTERRUPT;
-        }
-        if (value instanceof PsiElement && element instanceof PsiElement) {
-          if (PsiTreeUtil.isAncestor((PsiElement)value, (PsiElement)element, true)) {
-            int count = path.getPathCount();
-            if (stage[1] == 0 || stage[1] < count) {
-              stage[1] = count;
-              deepestPath[0] = path;
-            }
-          }
-          else if (stage[0] != 3) {
-            stage[0] = 2;
-            return TreeVisitor.Action.SKIP_CHILDREN;
-          }
-        }
-        return TreeVisitor.Action.CONTINUE;
+        return visitPathForElementSelection(path, element, stage, deepestPath);
       }
     };
     Function<TreePath, Promise<TreePath>> action = path -> {
@@ -503,6 +483,55 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     };
     myAsyncTreeModel.accept(visitor).thenAsync(fallback).processed(result);
     return myCurrentFocusPromise;
+  }
+
+  /**
+   *  Visits the specified path and checks whether it's a match for selecting the current editor element.
+   *  <p>
+   *    There's an optimization: if the node is not an ancestor of the one we're looking for,
+   *    its children are skipped. However, some structure views (MarkdownStructureViewModel)
+   *    actually have custom grouping that can group unrelated PSI elements into a common node,
+   *    so a second pass is done if no element was found during the first pass. To indicate the current
+   *    stage, the {@code stage} parameter is passed, containing two values: the first is the current
+   *    stage (1 - first pass, but no skipped children yet; 2 - first pass, and some children were skipped;
+   *    3 - the second pass with optimization disabled), and the second value is used to store the length
+   *    of the longest tree path found so far. The corresponding value is stored into the {@code deepestPath}
+   *    parameter.
+   *  </p>
+   * @param path        the path to visit
+   * @param element     the element to look for
+   * @param stage       the current stage and the length of the longest path found so far
+   * @param deepestPath the longest path found so far
+   * @return INTERRUPT if the matching node is found, SKIP_CHILDREN if the optimization is performed, CONTINUE in other cases
+   */
+  @ApiStatus.Internal
+  public static TreeVisitor.@NotNull Action visitPathForElementSelection(
+    @NotNull TreePath path,
+    Object element,
+    int[] stage,
+    TreePath[] deepestPath
+  ) {
+    Object last = path.getLastPathComponent();
+    Object userObject = unwrapNavigatable(last);
+    Object value = unwrapValue(last);
+    if (Comparing.equal(value, element) ||
+        userObject instanceof AbstractTreeNode && ((AbstractTreeNode<?>)userObject).canRepresent(element)) {
+      return TreeVisitor.Action.INTERRUPT;
+    }
+    if (value instanceof PsiElement && element instanceof PsiElement) {
+      if (PsiTreeUtil.isAncestor((PsiElement)value, (PsiElement)element, true)) {
+        int count = path.getPathCount();
+        if (stage[1] == 0 || stage[1] < count) {
+          stage[1] = count;
+          deepestPath[0] = path;
+        }
+      }
+      else if (stage[0] != 3) {
+        stage[0] = 2;
+        return TreeVisitor.Action.SKIP_CHILDREN;
+      }
+    }
+    return TreeVisitor.Action.CONTINUE;
   }
 
   private void scrollToSelectedElement() {
