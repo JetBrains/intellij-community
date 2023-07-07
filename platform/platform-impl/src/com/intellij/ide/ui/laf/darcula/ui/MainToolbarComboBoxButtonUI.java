@@ -148,6 +148,7 @@ public class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
       size.width += ((AbstractButton)c).getIconTextGap() + EXPAND_ICON.getIconWidth();
 
     JBInsets.addTo(size, button.getMargin());
+    size.height = Integer.min(size.height, JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSize().height);
     return size;
   }
 
