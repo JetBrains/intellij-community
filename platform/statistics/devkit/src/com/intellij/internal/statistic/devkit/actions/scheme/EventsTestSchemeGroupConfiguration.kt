@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInspection.InspectionEngine
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
+import com.intellij.icons.AllIcons
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.config.SerializationHelper
 import com.intellij.internal.statistic.eventLog.events.scheme.GroupDescriptor
@@ -97,13 +98,6 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
       }
       buttonsGroup {
         row {
-          allowAllEventsRadioButton = radioButton(StatisticsBundle.message("stats.allow.all.events"))
-            .selected(!initialGroup.useCustomRules)
-            .applyToComponent {
-              addChangeListener { updateRulesOption() }
-            }.component
-        }
-        row {
           customRulesRadioButton = radioButton(StatisticsBundle.message("stats.use.custom.validation.rules"))
             .gap(RightGap.SMALL)
             .selected(initialGroup.useCustomRules)
@@ -111,6 +105,15 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
               addChangeListener { updateRulesOption() }
             }.component
           contextHelp(StatisticsBundle.message("stats.test.scheme.custom.rules.help"))
+        }
+        row {
+          allowAllEventsRadioButton = radioButton(StatisticsBundle.message("stats.allow.all.events"))
+            .selected(!initialGroup.useCustomRules)
+            .applyToComponent {
+              icon(AllIcons.General.BalloonWarning12)
+              addChangeListener { updateRulesOption() }
+            }.component
+          contextHelp(StatisticsBundle.message("stats.allow.all.events.help"))
         }
       }
       row {
