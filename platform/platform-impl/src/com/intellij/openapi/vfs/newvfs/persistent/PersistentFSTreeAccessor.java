@@ -59,7 +59,7 @@ class PersistentFSTreeAccessor {
   void doSaveChildren(int parentId, @NotNull ListResult toSave) throws IOException {
     if (parentId == SUPER_ROOT_ID) {
       throw new AssertionError(
-        "Incorrect call .doSaveChildren() with is a super-root record id(=" + SUPER_ROOT_ID + "). " +
+        "Incorrect call .doSaveChildren() with a super-root record id(=" + SUPER_ROOT_ID + "). " +
         "Super-root is a special file record for internal use, it MUST NOT be used directly");
     }
 
