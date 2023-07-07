@@ -206,8 +206,12 @@ public class AnsiEscapeDecoderTest extends LightPlatformTestCase {
   private static void check(boolean testCharByCharProcessing, @NotNull List<ColoredText> texts) {
     AnsiEscapeDecoder decoder = new AnsiEscapeDecoder();
     List<Pair<String, String>> actualColoredChunks = new ArrayList<>();
-    AnsiEscapeDecoder.ColoredTextAcceptor acceptor = (text, attributes) ->
-      actualColoredChunks.add(Pair.create(text, StringUtil.trimStart(attributes.toString(), "\u001b[0;")));
+    AnsiEscapeDecoder.ColoredTextAcceptor acceptor = (text, attributes) -> {
+      ProcessOutputType processOutputType = (ProcessOutputType)attributes;
+      String escapeSequence = processOutputType.getEscapeSequence();
+      String outputType = escapeSequence != null ? escapeSequence : processOutputType.getBaseOutputType().toString();
+      actualColoredChunks.add(Pair.create(text, StringUtil.trimStart(outputType, "\u001b[0;")));
+    };
     for (ColoredText text : texts) {
       decoder.escapeText(text.myRawText, text.myOutputType, acceptor);
     }
