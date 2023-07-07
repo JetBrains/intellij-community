@@ -51,4 +51,36 @@ class GHPullRequest(id: String,
     : Repository(owner, isFork)
 
   class Owner(val login: String)
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is GHPullRequest) return false
+    if (!super.equals(other)) return false
+
+    if (reviewDecision != other.reviewDecision) return false
+    if (body != other.body) return false
+    if (baseRefName != other.baseRefName) return false
+    if (baseRefOid != other.baseRefOid) return false
+    if (baseRepository != other.baseRepository) return false
+    if (headRefName != other.headRefName) return false
+    if (headRefOid != other.headRefOid) return false
+    if (headRepository != other.headRepository) return false
+    if (reviews != other.reviews) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = super.hashCode()
+    result = 31 * result + (reviewDecision?.hashCode() ?: 0)
+    result = 31 * result + body.hashCode()
+    result = 31 * result + baseRefName.hashCode()
+    result = 31 * result + baseRefOid.hashCode()
+    result = 31 * result + (baseRepository?.hashCode() ?: 0)
+    result = 31 * result + headRefName.hashCode()
+    result = 31 * result + headRefOid.hashCode()
+    result = 31 * result + (headRepository?.hashCode() ?: 0)
+    result = 31 * result + reviews.hashCode()
+    return result
+  }
 }
