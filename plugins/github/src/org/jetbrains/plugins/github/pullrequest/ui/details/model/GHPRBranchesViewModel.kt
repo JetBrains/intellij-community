@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.asStateFlow
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.openapi.diagnostic.thisLogger
@@ -87,12 +88,4 @@ internal class GHPRBranchesViewModel(
       GHPRStatisticsCollector.logDetailsBranchesOpened(project)
     }
   }
-}
-
-private fun <T> SingleValueModel<T>.asStateFlow(): StateFlow<T> {
-  val flow = MutableStateFlow(value)
-  addAndInvokeListener {
-    flow.value = value
-  }
-  return flow
 }
