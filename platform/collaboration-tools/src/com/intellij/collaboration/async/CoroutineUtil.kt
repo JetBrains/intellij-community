@@ -156,7 +156,7 @@ fun <ID : Any, T, R> Flow<Iterable<T>>.associateBy(sourceIdentifier: (T) -> ID,
                                                    destroy: suspend R.() -> Unit,
                                                    update: (suspend R.(T) -> Unit)? = null,
                                                    customHashingStrategy: HashingStrategy<ID>? = null)
-  : Flow<Map<ID, R>> = associateIndexedBy(sourceIdentifier, { cs, item, -> mapper(cs, item) }, destroy, update, customHashingStrategy)
+  : Flow<Map<ID, R>> = associateIndexedBy(sourceIdentifier, { cs, item -> mapper(cs, item) }, destroy, update, customHashingStrategy)
 
 fun <ID : Any, T, R> Flow<Iterable<T>>.associateIndexedBy(
   sourceIdentifier: (T) -> ID,
@@ -238,3 +238,18 @@ fun <ID : Any, T, R> Flow<Iterable<T>>.mapCachingIndexed(sourceIdentifier: (T) -
   associateIndexedBy(sourceIdentifier, mapper, destroy, update).map { it.values.toList() }
 
 fun <T> Flow<Collection<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }
+
+/**
+ * Treats 'this' flow as representing a single list of results. Meaning each emitted value is accumulated
+ * with the previous ones into a single list and re-emitted.
+ *
+ * This emits the same mutable list every time, new results in upstream flow will thus modify the previously
+ * emitted list. Take note of this when using the emitted list directly.
+ */
+fun <T> Flow<List<T>>.collectBatches(): Flow<List<T>> {
+  val result = mutableListOf<T>()
+  return transform {
+    result.addAll(it)
+    emit(result)
+  }
+}

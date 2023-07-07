@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.api.HttpStatusErrorException
+import com.intellij.collaboration.async.collectBatches
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -300,12 +301,3 @@ internal class LoadedGitLabMergeRequest(
 
   override suspend fun submitDraftNotes() = discussionsContainer.submitDraftNotes()
 }
-
-private fun <T> Flow<List<T>>.collectBatches(): Flow<List<T>> =
-  transform {
-    val result = mutableListOf<T>()
-    collect {
-      result.addAll(it)
-      emit(result)
-    }
-  }
