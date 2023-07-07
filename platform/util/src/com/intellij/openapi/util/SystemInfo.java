@@ -77,7 +77,7 @@ public final class SystemInfo {
 
   public static final boolean isJBSystemMenu = isMac && Boolean.getBoolean("jbScreenMenuBar.enabled");
 
-  public static final boolean isMacSystemMenu = isJBSystemMenu || Boolean.getBoolean("apple.laf.useScreenMenuBar");
+  public static final boolean isMacSystemMenu = isMac && (isJBSystemMenu || Boolean.getBoolean("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
 
