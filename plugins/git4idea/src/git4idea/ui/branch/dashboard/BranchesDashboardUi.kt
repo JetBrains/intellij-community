@@ -27,6 +27,7 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.speedSearch.SpeedSearch
+import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
@@ -280,7 +281,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     })
   }
 
-  inner class BranchesTreePanel : BorderLayoutPanel(), DataProvider {
+  inner class BranchesTreePanel : BorderLayoutPanel(), DataProvider, QuickActionProvider {
     override fun getData(dataId: String): Any? {
       return when {
         SELECTED_ITEMS.`is`(dataId) -> filteringTree.component.selectionPaths
@@ -290,9 +291,18 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
         GIT_BRANCH_DESCRIPTORS.`is`(dataId) -> filteringTree.getSelectedBranchNodes()
         BRANCHES_UI_CONTROLLER.`is`(dataId) -> uiController
         VcsLogInternalDataKeys.LOG_UI_PROPERTIES.`is`(dataId) -> logUi.properties
+        QuickActionProvider.KEY.`is`(dataId) -> this
         else -> null
       }
     }
+
+    override fun getActions(originalProvider: Boolean): List<AnAction> {
+      return createToolbarGroup().getChildren(null).asList()
+    }
+
+    override fun getComponent(): JComponent = filteringTree.component
+
+    override fun isCycleRoot(): Boolean = true
   }
 
   fun getMainComponent(): JComponent {
