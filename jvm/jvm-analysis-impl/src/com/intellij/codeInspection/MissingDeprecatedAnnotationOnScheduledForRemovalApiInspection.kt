@@ -19,6 +19,7 @@ class MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection : LocalInspe
   private companion object {
     private val DEPRECATED_ANNOTATION_NAME = java.lang.Deprecated::class.java.canonicalName
     private val KOTLIN_DEPRECATED_ANNOTATION_NAME = Deprecated::class.java.canonicalName
+    private const val SCALA_DEPRECATED_ANNOTATION_NAME = "scala.deprecated"
     private val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME = ApiStatus.ScheduledForRemoval::class.java.canonicalName
   }
 
@@ -64,7 +65,9 @@ class MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection : LocalInspe
     }
 
     private fun hasDeprecatedAnnotation(node: UAnnotated) =
-      node.findAnnotation(DEPRECATED_ANNOTATION_NAME) != null || node.findAnnotation(KOTLIN_DEPRECATED_ANNOTATION_NAME) != null
+      node.findAnnotation(DEPRECATED_ANNOTATION_NAME) != null ||
+      node.findAnnotation(KOTLIN_DEPRECATED_ANNOTATION_NAME) != null ||
+      node.findAnnotation(SCALA_DEPRECATED_ANNOTATION_NAME) != null
 
     private fun isScheduledForRemoval(annotated: UAnnotated): Boolean =
       annotated.findAnnotation(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME) != null
