@@ -117,7 +117,8 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     val oldFilters = ui.filterUi.filters
     val newFilters = if (selectedFilters.isNotEmpty()) {
       oldFilters.without(VcsLogBranchLikeFilter::class.java).with(VcsLogFilterObject.fromBranches(selectedFilters))
-    } else {
+    }
+    else {
       oldFilters.without(VcsLogBranchLikeFilter::class.java)
     }
     ui.filterUi.filters = newFilters
@@ -185,12 +186,10 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   private fun initMainUi() {
     val diffAction = ShowBranchDiffAction()
-    diffAction.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("Diff.ShowDiff"), branchesTreeWithLogPanel)
+    diffAction.registerCustomShortcutSet(branchesTreeWithLogPanel, null)
 
     val deleteAction = DeleteBranchAction()
-    val shortcuts = KeymapUtil.getActiveKeymapShortcuts("SafeDelete").shortcuts + KeymapUtil.getActiveKeymapShortcuts(
-      "EditorDeleteToLineStart").shortcuts
-    deleteAction.registerCustomShortcutSet(CustomShortcutSet(*shortcuts), branchesTreeWithLogPanel)
+    deleteAction.registerCustomShortcutSet(branchesTreeWithLogPanel, null)
 
     createFocusFilterFieldAction(branchesSearchFieldWrapper)
     installPasteAction(filteringTree)
@@ -265,7 +264,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   }
 
   private fun installPasteAction(tree: FilteringBranchesTree) {
-    tree.component.actionMap.put(TransferHandler.getPasteAction().getValue(Action.NAME), object: AbstractAction () {
+    tree.component.actionMap.put(TransferHandler.getPasteAction().getValue(Action.NAME), object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent?) {
         val speedSearch = tree.searchModel.speedSearch as? SpeedSearch ?: return
         val pasteContent =
