@@ -1,4 +1,4 @@
-// "Create missing branches: 'AC', 'AA', 'AB', and 'A'" "true-preview"
+// "Create missing branches: 'A', 'AA', 'AB', and 'AC'" "true-preview"
 sealed class A permits AC, AA, AB {}
 final class AA extends A {}
 sealed class AB extends A permits ABC, ABA {}
