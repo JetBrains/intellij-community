@@ -10,7 +10,7 @@ class Test {
     switch (o) {
       case Integer i when (switch (o) {
         case Integer ii when ii != <error descr="Variable used in guarded pattern should be final or effectively final">mode</error> -> 2;
-          case default -> 1;
+          default -> 1;
       }) == <error descr="Variable used in guarded pattern should be final or effectively final">mode</error> -> System.out.println();
         default -> {}
     }
@@ -26,12 +26,12 @@ class Test {
     switch (o) {
       case Integer i when (switch (<error descr="Variable used in guarded pattern should be final or effectively final">o</error>) {
         case Integer ii when ii != mode -> 2;
-        case default -> 1;
+        default -> 1;
       }) == mode -> o = null;
       default -> {}
     }
     switch (o) {
-      case Integer i when (i = mode) > 0 -> System.out.println();
+      case Integer i when (<error descr="Cannot assign a value to variable 'i', because it is declared outside the guard">i</error> = mode) > 0 -> System.out.println();
       default -> {}
     }
   }
@@ -52,7 +52,7 @@ class Test {
 
   void testNested(Object o, Integer in) {
     switch (o) {
-      case Integer mode when (mode = 42) > 9:
+      case Integer mode when (<error descr="Cannot assign a value to variable 'mode', because it is declared outside the guard">mode</error> = 42) > 9:
         switch (o) {
           case Integer i when (i = <error descr="Variable used in guarded pattern should be final or effectively final">mode</error>) > 0 -> System.out.println();
             default -> System.out.println();
@@ -61,7 +61,7 @@ class Test {
     }
     String str;
     str = switch (o) {
-      case Integer mode when (mode = 42) > 9 ->
+      case Integer mode when (<error descr="Cannot assign a value to variable 'mode', because it is declared outside the guard">mode</error> = 42) > 9 ->
         switch (o) {
           case Integer i when (i = <error descr="Variable used in guarded pattern should be final or effectively final">mode</error>) > 0 -> "";
             default -> "";
@@ -69,7 +69,7 @@ class Test {
       default -> "";
     };
     str = switch (o) {
-      case Integer mode when (mode = 42) > 9:
+      case Integer mode when (<error descr="Cannot assign a value to variable 'mode', because it is declared outside the guard">mode</error> = 42) > 9:
         yield switch (o) {
           case Integer i when (i = <error descr="Variable used in guarded pattern should be final or effectively final">mode</error>) > 0 -> "";
             default -> "";
@@ -100,7 +100,7 @@ class Test {
     }
     // double nested
     switch (o) {
-      case Integer mode when (mode = 42) > 9:
+      case Integer mode when (<error descr="Cannot assign a value to variable 'mode', because it is declared outside the guard">mode</error> = 42) > 9:
         switch (o) {
           case Integer i -> {
             switch (o) {
