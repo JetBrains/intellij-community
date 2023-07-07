@@ -300,7 +300,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
       FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_UNRESOLVABLE.with(fileRecordsNameIdsUnresolvable),
       FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_NOT_NULL.with(fileRecordsContentIdsNotNull),
       FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_UNRESOLVABLE.with(fileRecordsContentIdsUnresolvable),
-      FIELD_HEALTH_CHECK_FILE_RECORDS_NULL_PARENTS.with(fileRecordsChildrenChecked),
+      FIELD_HEALTH_CHECK_FILE_RECORDS_NULL_PARENTS.with(fileRecordsNullParents),
       FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_CHECKED.with(fileRecordsChildrenChecked),
       FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_INCONSISTENT.with(fileRecordsInconsistentParentChildRelationships),
       FIELD_HEALTH_CHECK_FILE_RECORDS_GENERAL_ERRORS.with(fileRecordsGeneralErrors),
