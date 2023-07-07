@@ -524,7 +524,10 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     DefaultColorsScheme defaultScheme = DefaultColorSchemesManager.getInstance().getFirstScheme();
     String editableCopyName = defaultScheme.getEditableCopyName();
     EditorColorsScheme editableCopy = getScheme(editableCopyName);
-    assert editableCopy != null : "An editable copy of " + defaultScheme.getName() + " has not been initialized.";
+    if (editableCopy == null) {
+      LOG.error("An editable copy of " + defaultScheme.getName() + " has not been initialized.");
+      return defaultScheme;
+    }
     return editableCopy;
   }
 
