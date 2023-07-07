@@ -524,7 +524,6 @@ public final class CustomizationUtil {
       customizationGroup.add(rollbackAction);
     }
 
-    customizationGroup.addSeparator();
     customizationGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ToolbarPopupActions"));
 
     return new PopupHandler() {
