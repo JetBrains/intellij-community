@@ -186,11 +186,13 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
       components.forEach { (it as? JComponent)?.setScaledPreferredSize() }
     }
 
-    private fun JComponent.setScaledPreferredSize() {
-      val size = CurrentTheme.TitlePane.buttonPreferredSize().clone() as Dimension
-      if (isCompactMode) size.height = JBUIScale.scale(30)
-      preferredSize = Dimension((size.width * UISettings.defFontScale).toInt(), (size.height * UISettings.defFontScale).toInt())
+  private fun JComponent.setScaledPreferredSize() {
+    val size = CurrentTheme.TitlePane.buttonPreferredSize(UISettings.defFontScale).clone() as Dimension
+    if (isCompactMode) {
+      size.height = JBUIScale.scale(30)
     }
+    preferredSize = Dimension(size.width, size.height)
+  }
 
     override fun updateUI() {
       super.updateUI()

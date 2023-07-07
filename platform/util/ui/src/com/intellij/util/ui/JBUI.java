@@ -2120,18 +2120,13 @@ public final class JBUI {
 
     public final static class TitlePane {
 
-      public static @NotNull Dimension buttonPreferredSize() {
-        return size(buttonPreferredSizeKey(), defaultButtonPreferredSize());
+      public static @NotNull Dimension buttonPreferredSize(float scaleDefaultValues) {
+        return size(buttonPreferredSizeKey(), size((int)(47 * scaleDefaultValues), (int)(28 * scaleDefaultValues)));
       }
 
       @NotNull
       public static String buttonPreferredSizeKey() {
         return "TitlePane.Button.preferredSize";
-      }
-
-      @NotNull
-      public static JBDimension defaultButtonPreferredSize() {
-        return size(47, 28);
       }
     }
 
