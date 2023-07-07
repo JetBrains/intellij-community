@@ -21,6 +21,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.action.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewPopup
@@ -127,8 +128,11 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     val submitButton = JButton(GitLabMergeRequestSubmitReviewAction(this, reviewFlowVm)).apply {
       toolTipText = GitLabBundle.message("merge.request.review.submit.action.tooltip")
     }
+    val cs = this
     reviewFlowVm.submitReviewInputHandler = {
-      GitLabMergeRequestSubmitReviewPopup.show(it, submitButton, true)
+      withContext(cs.coroutineContext) {
+        GitLabMergeRequestSubmitReviewPopup.show(it, submitButton, true)
+      }
     }
 
     val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
