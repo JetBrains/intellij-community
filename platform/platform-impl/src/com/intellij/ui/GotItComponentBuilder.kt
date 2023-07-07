@@ -309,7 +309,6 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
         if (action != null) {
           action()
           afterLinkClickedAction()
-          balloon.hide(true)
         }
         else thisLogger().error("Unknown link: ${event.description}")
       }
@@ -319,7 +318,6 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
       setListener(LinkListener { _, _ ->
         linkAction()
         afterLinkClickedAction()
-        balloon.hide(true)
       }, null)
     }
 
