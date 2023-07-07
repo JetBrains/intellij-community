@@ -200,22 +200,6 @@ void TrimLine(char* line)
   }
 }
 
-static bool LoadVMOptionsFile(const char* path, std::vector<std::string>& vmOptionLines) {
-  FILE *f;
-  if (fopen_s(&f, path, "rt")) return false;
-
-  char line[4096];
-  while (fgets(line, sizeof(line), f)) {
-    TrimLine(line);
-    if (strlen(line) > 0 && line[0] != '#' && strcmp(line, "-server") != 0) {
-      vmOptionLines.push_back(line);
-    }
-  }
-  fclose(f);
-
-  return true;
-}
-
 static void ReplaceAll(std::string &str, const std::string &find, const std::string &replace) {
   size_t p = 0;
   while (p < str.length()) {
@@ -224,6 +208,24 @@ static void ReplaceAll(std::string &str, const std::string &find, const std::str
     str.replace(p, find.size(), replace);
     p += replace.size();
   }
+}
+
+static bool LoadVMOptionsFile(const char *path, std::vector<std::string> &vmOptionLines, const std::string &homeDir) {
+  FILE *f;
+  if (fopen_s(&f, path, "rt")) return false;
+
+  char buffer[4096];
+  while (fgets(buffer, sizeof(buffer), f)) {
+    TrimLine(buffer);
+    if (strlen(buffer) > 0 && buffer[0] != '#' && strcmp(buffer, "-server") != 0) {
+      std::string line(buffer);
+      ReplaceAll(line, IDE_HOME_MACRO, homeDir);
+      vmOptionLines.push_back(line);
+    }
+  }
+  fclose(f);
+
+  return true;
 }
 
 static std::string CollectLibJars(const std::string& jarList, const std::string &homeDir) {
@@ -309,19 +311,19 @@ static void LoadVMOptions(const std::string &homeDir) {
 
   // 1. %<IDE_NAME>_VM_OPTIONS%
   LoadStringA(hInst, IDS_VM_OPTIONS_ENV_VAR, buffer1, _MAX_PATH);
-  if (GetEnvironmentVariableA(buffer1, buffer2, _MAX_PATH) != 0 && LoadVMOptionsFile(buffer2, lines)) {
+  if (GetEnvironmentVariableA(buffer1, buffer2, _MAX_PATH) != 0 && LoadVMOptionsFile(buffer2, lines, homeDir)) {
     vmOptionsFile = buffer2;
   }
   else {
     // 2. <IDE_HOME>\bin\<exe_name>.vmoptions ...
-    if (LoadVMOptionsFile(bin_vmoptions, lines)) {
+    if (LoadVMOptionsFile(bin_vmoptions, lines, homeDir)) {
       vmOptionsFile = bin_vmoptions;
     }
     // ... [+ <IDE_HOME>.vmoptions (Toolbox) || <config_directory>\<exe_name>.vmoptions]
     strcpy_s(buffer1, _MAX_PATH, bin_vmoptions);
     char *ideHomeEnd = strrchr(buffer1, '\\') - 4;  // "bin\"
     strcpy_s(ideHomeEnd, _MAX_PATH - (ideHomeEnd - buffer1), ".vmoptions");
-    if (LoadVMOptionsFile(buffer1, user_lines)) {
+    if (LoadVMOptionsFile(buffer1, user_lines, homeDir)) {
       vmOptionsFile = buffer1;
     }
     else {
@@ -329,7 +331,7 @@ static void LoadVMOptions(const std::string &homeDir) {
       ExpandEnvironmentStringsA(buffer1, buffer2, _MAX_PATH);
       char *exeParentEnd = strrchr(bin_vmoptions, '\\');
       strcat_s(buffer2, exeParentEnd);
-      if (LoadVMOptionsFile(buffer2, user_lines)) {
+      if (LoadVMOptionsFile(buffer2, user_lines, homeDir)) {
         vmOptionsFile = buffer2;
       }
     }
