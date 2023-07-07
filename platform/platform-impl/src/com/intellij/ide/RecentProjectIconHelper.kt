@@ -6,7 +6,6 @@ package com.intellij.ide
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.JBColor
 import com.intellij.ui.icons.loadPng
@@ -268,4 +267,9 @@ private object ProjectIconPalette : ColorPalette {
         to JBColor.namedColor("RecentProject.Color9.Avatar.End", JBColor(0xFF78B5, 0xE96FA3))
       )
     }
+
+  override fun gradient(seed: String?): Pair<Color, Color> {
+    val index = seed?.let { ProjectWindowCustomizerService.getInstance().getOrGenerateAssociatedColorIndex(seed) } ?: 0
+    return gradients[index]
+  }
 }
