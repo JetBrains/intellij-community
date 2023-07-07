@@ -230,27 +230,30 @@ public class MacWinTabsHandler {
   }
 
   private static void updateTabBar(@NotNull Object frameObject, int height) {
-    JFrame frame = null;
+    JRootPane rootPane;
     if (frameObject instanceof JFrame) {
-      frame = (JFrame)frameObject;
+      rootPane = ((JFrame)frameObject).getRootPane();
     }
-    else if (frameObject instanceof ProjectFrameHelper) {
-      if (Disposer.isDisposed((Disposable)frameObject)) {
-        return;
-      }
-      frame = ((ProjectFrameHelper)frameObject).getFrame();
+    else if (frameObject instanceof ProjectFrameHelper frameHelper) {
+      rootPane = frameHelper.getFrame().getRootPane();
     }
-    if (frame == null) {
+    else {
       return;
     }
 
-    JComponent filler = (JComponent)frame.getRootPane().getClientProperty(WIN_TAB_FILLER);
+    if (rootPane == null) {
+      return;
+    }
+
+    JComponent filler = (JComponent)rootPane.getClientProperty(WIN_TAB_FILLER);
     if (filler == null) {
       return;
     }
+
     if (height > 0) {
       height++;
     }
+
     boolean visible = height > 0;
     boolean oldVisible = filler.isVisible();
     filler.setVisible(visible);
@@ -260,6 +263,7 @@ public class MacWinTabsHandler {
     if (parent == null || oldVisible == visible) {
       return;
     }
+
     parent.doLayout();
     parent.revalidate();
     parent.repaint();
