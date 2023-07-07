@@ -963,11 +963,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private void indexUnsavedDocuments(@NotNull final ID<?, ?> indexId,
-                                     @Nullable Project project,
+                                     @Nullable("All projects") Project project,
                                      @Nullable GlobalSearchScope filter,
                                      @Nullable VirtualFile restrictedFile) {
     if (myUpToDateIndicesForUnsavedOrTransactedDocuments.contains(indexId)) {
-      return; // no need to index unsaved docs        // todo: check scope ?
+      return; // no need to index unsaved docs        // todo: we only index files for a project, but this service is app-wide
     }
 
     Document[] unsavedDocuments = myFileDocumentManager.getUnsavedDocuments();
@@ -982,10 +982,19 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     documents.addAll(transactedDocuments);
     Collections.addAll(documents, uncommittedDocuments);
 
-    Collection<Document> documentsToProcessForProject = ContainerUtil.filter(documents,
+    LOG.assertTrue(project == null || filter == null || filter.getProject() == null || project.equals(filter.getProject()),
+                   "filter should filter files in provided project. ref: 50cf572587cf");
+    Collection<Document> documentsToProcessForProject = project == null ? documents :
+                                                        ContainerUtil.filter(documents,
                                                                              document -> belongsToScope(
                                                                                myFileDocumentManager.getFile(document), restrictedFile,
-                                                                               filter));
+                                                                               GlobalSearchScope.everythingScope(project)));
+
+    if (documentsToProcessForProject.size() != documents.size()) {
+      LOG.warn("Some files were filtered, which may lead to PSI/index inconsistency" +
+               ". documents.size=" + documents.size() +
+               ", documentsToProcessForProject.size=" + documentsToProcessForProject.size());
+    }
 
     if (!documentsToProcessForProject.isEmpty()) {
       UpdateTask<Document> task = myRegisteredIndexes.getUnsavedDataUpdateTask(indexId);
