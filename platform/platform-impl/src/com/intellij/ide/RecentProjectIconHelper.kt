@@ -269,4 +269,9 @@ private object ProjectIconPalette : ColorPalette {
         to JBColor.namedColor("RecentProject.Color9.Avatar.End", JBColor(0xFF78B5, 0xE96FA3))
       )
     }
+
+  override fun gradient(seed: String?): Pair<Color, Color> {
+    val index = seed?.let { ProjectWindowCustomizerService.getInstance().getOrGenerateAssociatedColorIndex(seed) } ?: 0
+    return gradients[index]
+  }
 }

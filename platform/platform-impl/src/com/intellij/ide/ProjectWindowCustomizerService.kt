@@ -25,10 +25,10 @@ import com.intellij.ui.JBColor
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-import com.intellij.util.ui.ColorPalette
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import java.awt.*
+import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -81,6 +81,8 @@ internal enum class MainToolbarCustomizationType {
 }
 
 private const val TOOLBAR_BACKGROUND_KEY = "PROJECT_TOOLBAR_COLOR"
+private const val ASSOCIATED_PROJECT_COLOR_INDEX_KEY = "ASSOCIATED_PROJECT_COLOR_INDEX_KEY"
+private const val LAST_CALCULATED_COLOR_INDEX_KEY = "LAST_CALCULATED_COLOR_INDEX_KEY"
 
 private fun isForceColorfulToolbar() = Registry.`is`("ide.colorful.toolbar.force", true)
 
@@ -156,11 +158,43 @@ class ProjectWindowCustomizerService : Disposable {
       return ProjectColors(color, color)
     }
 
+    // Get calculated earlier color or calculate next color
     return colorCache.computeIfAbsent(projectPath) {
       Disposer.register(project) { colorCache.remove(projectPath) }
-      ProjectColors(ColorPalette.select (gradientColors, projectPath), ColorPalette.select(backgroundColors, projectPath))
+      val associatedIndex = getOrGenerateAssociatedColorIndex(projectPath)
+
+      ProjectColors(background = backgroundColors[associatedIndex],
+                    gradient = gradientColors[associatedIndex])
     }
   }
+
+  fun getOrGenerateAssociatedColorIndex(projectPath: String): Int {
+    var index = propertiesStorage.getInt(associatedProjectColorKey(projectPath), -1)
+    if (index >= 0 && index < backgroundColors.size && index < gradientColors.size) return index
+
+    // Calculate next colors by incrementing (and saving the new value) color index
+    index = propertiesStorage.nextColorIndex(minOf(backgroundColors.size, gradientColors.size))
+
+    // Save calculated colors and clear customized colors for the project
+    setAssociatedColorsIndex(projectPath, index)
+
+    return index
+  }
+
+  private fun setAssociatedColorsIndex(projectPath: String, index: Int) {
+    propertiesStorage.setValue(associatedProjectColorKey(projectPath), index, -1)
+  }
+
+  private fun PropertiesComponent.nextColorIndex(colorsCount: Int): Int {
+    val randomDefault = Random().nextInt() % colorsCount
+    val result = (getInt(LAST_CALCULATED_COLOR_INDEX_KEY, randomDefault) + 1) % colorsCount
+    setValue(LAST_CALCULATED_COLOR_INDEX_KEY, result, -1)
+    return result
+  }
+
+  private val propertiesStorage: PropertiesComponent get() = PropertiesComponent.getInstance()
+
+  private fun associatedProjectColorKey(projectPath: String) = "${ASSOCIATED_PROJECT_COLOR_INDEX_KEY}_$projectPath"
 
   internal fun getPaintingType(): MainToolbarCustomizationType {
     return when (Registry.get("ide.colorful.toolbar.gradient.type").selectedOption) {
