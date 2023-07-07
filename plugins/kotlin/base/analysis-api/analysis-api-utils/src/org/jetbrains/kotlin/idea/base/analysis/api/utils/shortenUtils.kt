@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption.Companion.defaultCallableShortenOption
@@ -28,7 +29,7 @@ fun shortenReferences(
     element: KtElement,
     classShortenOption: (KtClassLikeSymbol) -> ShortenOption = defaultClassShortenOption,
     callableShortenOption: (KtCallableSymbol) -> ShortenOption = defaultCallableShortenOption
-): Unit = shortenReferencesInRange(
+): PsiElement? = shortenReferencesInRange(
     element.containingKtFile,
     element.textRange,
     classShortenOption,
@@ -47,13 +48,13 @@ fun shortenReferencesInRange(
     range: TextRange = file.textRange,
     classShortenOption: (KtClassLikeSymbol) -> ShortenOption = defaultClassShortenOption,
     callableShortenOption: (KtCallableSymbol) -> ShortenOption = defaultCallableShortenOption
-) {
+): PsiElement? {
      val shortenCommand = allowAnalysisOnEdt {
         analyze(file) {
             collectPossibleReferenceShortenings(file, range, classShortenOption, callableShortenOption)
         }
     }
-    shortenCommand.invokeShortening()
+    return shortenCommand.invokeShortening().firstOrNull()
 }
 
 
