@@ -527,9 +527,7 @@ public final class CustomizationUtil {
       customizationGroup.add(rollbackAction);
     }
 
-    customizationGroup.addSeparator();
-    ActionGroup popupActionsGroup = (ActionGroup)ActionManager.getInstance().getAction("ToolbarPopupActions");
-    customizationGroup.addAll(popupActionsGroup);
+    customizationGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ToolbarPopupActions"));
 
     return new PopupHandler() {
       @Override
