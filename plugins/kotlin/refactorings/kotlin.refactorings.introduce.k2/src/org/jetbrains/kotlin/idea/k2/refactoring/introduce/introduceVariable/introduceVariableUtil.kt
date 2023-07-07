@@ -17,12 +17,12 @@ internal fun chooseApplicableComponentNames(
     editor: Editor?,
     callback: (List<String>) -> Unit
 ) {
-    val functions = analyzeInModalWindow(contextExpression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+    val componentNames = analyzeInModalWindow(contextExpression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
         getApplicableComponentNames(contextExpression)
     }
-    if (functions.size <= 1) return callback(emptyList())
+    if (componentNames.size <= 1) return callback(emptyList())
 
-    if (isUnitTestMode()) return callback(functions)
+    if (isUnitTestMode()) return callback(componentNames)
 
     if (editor == null) return callback(emptyList())
 
@@ -37,7 +37,7 @@ internal fun chooseApplicableComponentNames(
         .setMovable(true)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChosenCallback { callback(if (it == singleVariable) emptyList() else functions) }
+        .setItemChosenCallback { callback(if (it == singleVariable) emptyList() else componentNames) }
         .createPopup()
         .showInBestPositionFor(editor)
 }
