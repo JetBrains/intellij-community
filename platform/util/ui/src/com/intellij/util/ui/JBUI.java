@@ -1172,12 +1172,22 @@ public final class JBUI {
         @NotNull public static Insets borderInsets() {
           return insets("MainToolbar.Dropdown.borderInsets", isNewUI() ? insets(5, 10, 5, 6) : insets(3, 5));
         }
+
+        @NotNull public static JBValue hoverArc() {
+          return new JBValue.UIInteger("MainToolbar.Dropdown.arc", 12);
+        }
       }
 
       public static final class SplitDropdown {
 
         @NotNull public static Insets borderInsets() {
           return insets("MainToolbar.SplitDropdown.borderInsets", isNewUI() ? insets(5, 5, 5, 3) : insets(3, 5));
+        }
+      }
+
+      public static final class Button {
+        @NotNull public static JBValue hoverArc() {
+          return new JBValue.UIInteger("MainToolbar.Button.arc", 12);
         }
       }
     }
