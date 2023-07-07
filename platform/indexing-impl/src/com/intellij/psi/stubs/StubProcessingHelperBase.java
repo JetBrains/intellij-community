@@ -88,12 +88,11 @@ public abstract class StubProcessingHelperBase {
   private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, PsiElement psiElement) {
     if (requiredClass.isInstance(psiElement)) return true;
 
-    // better logging for KTIJ-25981
     String extraMessage = "psiElement is not instance of requiredClass.\n" +
                           "psiElement=" + psiElement +
                           ", psiElement.class=" + psiElement.getClass() +
                           ", requiredClass=" + requiredClass +
-                          ".\nPlease link with KTIJ-25981";
+                          ".\nref: 50cf572587cf";
 
     StubTree stubTree = ((PsiFileWithStubSupport)psiFile).getStubTree();
     if (stubTree == null && psiFile instanceof PsiFileImpl) stubTree = ((PsiFileImpl)psiFile).calcStubTree();
@@ -145,12 +144,11 @@ public abstract class StubProcessingHelperBase {
       return true;
     }
     if (!requiredClass.isInstance(psiFile)) {
-      // better logging for KTIJ-25981
       String extraMessage = "psiFile is not instance of requiredClass.\n" +
                             "psiFile=" + psiFile +
                             ", psiFile.class=" + psiFile.getClass() +
                             ", requiredClass=" + requiredClass +
-                            ".\nPlease link with KTIJ-25981";
+                            ".\nref: 50cf572587cf";
       inconsistencyDetected(objectStubTree, (PsiFileWithStubSupport)psiFile, extraMessage);
       return true;
     }
