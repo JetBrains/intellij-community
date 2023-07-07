@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
-import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneViewModel.UIState
+import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneUISelectorViewModel.UIState
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 
@@ -38,12 +38,15 @@ internal class GitLabCloneComponent(
   accountManager: GitLabAccountManager
 ) : VcsCloneDialogExtensionComponent() {
   private val cs: CoroutineScope = disposingMainScope() + modalityState.asContextElement()
-  private val cloneVm = GitLabCloneViewModelImpl(project, cs, accountManager)
+
+  private val uiSelectorVm = GitLabCloneUISelectorViewModelImpl(cs, accountManager)
+  private val loginVm = GitLabCloneLoginViewModelImpl(cs, accountManager)
+  private val repositoriesVm = GitLabCloneRepositoriesViewModelImpl(project, cs, accountManager)
 
   private val searchField: SearchTextField = SearchTextField(false).apply {
     addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
-        cloneVm.setSearchValue(text)
+        repositoriesVm.setSearchValue(text)
       }
     })
   }
@@ -53,23 +56,23 @@ internal class GitLabCloneComponent(
     ClonePathProvider.defaultParentDirectoryPath(project, GitRememberedInputs.getInstance())
   )
 
-  private val repositoriesPanel: DialogPanel = GitLabCloneRepositoriesComponentFactory.create(
-    cs, cloneVm, searchField, directoryField
-  ).apply {
-    registerValidators(cs.nestedDisposable())
-  }
   private val wrapper: Wrapper = Wrapper().apply {
-    bindContentIn(cs, cloneVm.uiState) { uiState ->
-      when (uiState) {
-        is UIState.Login -> GitLabCloneLoginComponentFactory.create(this, cloneVm, uiState.account)
-        UIState.Repositories -> repositoriesPanel
+    bindContentIn(cs, uiSelectorVm.uiState) { ui ->
+      val innerCs = this
+      when (ui) {
+        is UIState.Login -> GitLabCloneLoginComponentFactory.create(innerCs, loginVm, uiSelectorVm, ui.account)
+        UIState.Repositories -> GitLabCloneRepositoriesComponentFactory.create(
+          innerCs, repositoriesVm, uiSelectorVm, searchField, directoryField
+        ).apply {
+          registerValidators(innerCs.nestedDisposable())
+        }
       }
     }
   }
 
   init {
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      cloneVm.selectedUrl.collectLatest { selectedUrl ->
+      repositoriesVm.selectedUrl.collectLatest { selectedUrl ->
         val isUrlSelected = selectedUrl != null
         dialogStateListener.onOkActionEnabled(isUrlSelected)
         if (isUrlSelected) {
@@ -80,7 +83,7 @@ internal class GitLabCloneComponent(
     }
 
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      cloneVm.accountsRefreshRequest.collect {
+      repositoriesVm.accountsUpdatedRequest.collectLatest {
         dialogStateListener.onListItemChanged()
       }
     }
@@ -91,7 +94,7 @@ internal class GitLabCloneComponent(
   }
 
   override fun doClone(checkoutListener: CheckoutProvider.Listener) {
-    cloneVm.doClone(checkoutListener, directoryField.text)
+    repositoriesVm.doClone(checkoutListener, directoryField.text)
   }
 
   override fun doValidateAll(): List<ValidationInfo> {

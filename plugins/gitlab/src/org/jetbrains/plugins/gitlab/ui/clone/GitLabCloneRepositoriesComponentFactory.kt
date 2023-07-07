@@ -24,11 +24,10 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
-import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneViewModel.SearchModel
+import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneRepositoriesViewModel.SearchModel
 import javax.swing.JSeparator
 import javax.swing.ListCellRenderer
 import javax.swing.ListModel
@@ -36,19 +35,20 @@ import javax.swing.ListModel
 internal object GitLabCloneRepositoriesComponentFactory {
   fun create(
     cs: CoroutineScope,
-    cloneVm: GitLabCloneViewModel,
+    repositoriesVm: GitLabCloneRepositoriesViewModel,
+    uiSelectorVm: GitLabCloneUISelectorViewModel,
     searchField: SearchTextField,
     directoryField: TextFieldWithBrowseButton
   ): DialogPanel {
-    val accountsModel = createAccountsModel(cs, cloneVm)
-    val repositoriesModel = createRepositoriesModel(cs, cloneVm)
+    val accountsModel = createAccountsModel(cs, repositoriesVm)
+    val repositoriesModel = createRepositoriesModel(cs, repositoriesVm)
 
     val accountsPanel = CompactAccountsPanelFactory(accountsModel).create(
-      cloneVm.accountDetailsProvider,
+      repositoriesVm.accountDetailsProvider,
       VcsCloneDialogUiSpec.Components.avatarSize,
-      AccountsPopupConfig(cloneVm)
+      AccountsPopupConfig(uiSelectorVm)
     )
-    val repositoryList = createRepositoryList(cs, cloneVm, accountsModel, repositoriesModel)
+    val repositoryList = createRepositoryList(cs, repositoriesVm, uiSelectorVm, accountsModel, repositoriesModel)
     CollaborationToolsUIUtil.attachSearch(repositoryList, searchField) { cloneItem ->
       when (cloneItem) {
         is GitLabCloneListItem.Error -> ""
@@ -85,24 +85,25 @@ internal object GitLabCloneRepositoriesComponentFactory {
 
   private fun createRepositoryList(
     cs: CoroutineScope,
-    cloneVm: GitLabCloneViewModel,
+    repositoriesVm: GitLabCloneRepositoriesViewModel,
+    uiSelectorVm: GitLabCloneUISelectorViewModel,
     accountsModel: ListModel<GitLabAccount>,
     repositoriesModel: ListModel<GitLabCloneListItem>
   ): JBList<GitLabCloneListItem> {
     return JBList(repositoriesModel).apply {
-      cellRenderer = createRepositoryRenderer(accountsModel, repositoriesModel, cloneVm::switchToLoginPanel)
+      cellRenderer = createRepositoryRenderer(accountsModel, repositoriesModel, uiSelectorVm::switchToLoginPanel)
       isFocusable = false
       selectionModel.addListSelectionListener {
-        cloneVm.selectItem(selectedValue)
+        repositoriesVm.selectItem(selectedValue)
       }
-      bindBusyIn(cs, cloneVm.isLoading)
+      bindBusyIn(cs, repositoriesVm.isLoading)
 
       val mouseAdapter = LinkActionMouseAdapter(this)
       addMouseListener(mouseAdapter)
       addMouseMotionListener(mouseAdapter)
 
       cs.launchNow {
-        cloneVm.searchValue.collectLatest { searchValue ->
+        repositoriesVm.searchValue.collectLatest { searchValue ->
           emptyText.text = when (searchValue) {
             is SearchModel.Text -> StatusText.getDefaultEmptyText()
             is SearchModel.Url -> CollaborationToolsBundle.message("clone.dialog.repository.url.text", searchValue.url)
@@ -112,10 +113,10 @@ internal object GitLabCloneRepositoriesComponentFactory {
     }
   }
 
-  private fun createAccountsModel(cs: CoroutineScope, cloneVm: GitLabCloneViewModel): ListModel<GitLabAccount> {
+  private fun createAccountsModel(cs: CoroutineScope, repositoriesVm: GitLabCloneRepositoriesViewModel): ListModel<GitLabAccount> {
     val accountsModel = CollectionListModel<GitLabAccount>()
-    cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      cloneVm.accountsRefreshRequest.collectLatest { accounts ->
+    cs.launch {
+      repositoriesVm.accountsUpdatedRequest.collectLatest { accounts ->
         accountsModel.replaceAll(accounts.toList())
       }
     }
@@ -123,10 +124,13 @@ internal object GitLabCloneRepositoriesComponentFactory {
     return accountsModel
   }
 
-  private fun createRepositoriesModel(cs: CoroutineScope, cloneVm: GitLabCloneViewModel): ListModel<GitLabCloneListItem> {
+  private fun createRepositoriesModel(
+    cs: CoroutineScope,
+    repositoriesVm: GitLabCloneRepositoriesViewModel
+  ): ListModel<GitLabCloneListItem> {
     val repositoriesModel = CollectionListModel<GitLabCloneListItem>()
-    cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      cloneVm.items.collectLatest { items ->
+    cs.launch {
+      repositoriesVm.items.collectLatest { items ->
         repositoriesModel.replaceAll(items)
       }
     }
@@ -156,10 +160,10 @@ internal object GitLabCloneRepositoriesComponentFactory {
     )
   }
 
-  private class AccountsPopupConfig(cloneVm: GitLabCloneViewModel) : CompactAccountsPanelFactory.PopupConfig<GitLabAccount> {
+  private class AccountsPopupConfig(uiSelectorVm: GitLabCloneUISelectorViewModel) : CompactAccountsPanelFactory.PopupConfig<GitLabAccount> {
     private val loginWithTokenAction: AccountMenuItem.Action = AccountMenuItem.Action(
       CollaborationToolsBundle.message("clone.dialog.login.with.token.action"),
-      { cloneVm.switchToLoginPanel(account = null) },
+      { uiSelectorVm.switchToLoginPanel(account = null) },
       showSeparatorAbove = true
     )
 

@@ -14,25 +14,21 @@ import com.intellij.util.childScope
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabApiImpl
-import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
-import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneViewModel.SearchModel
-import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneViewModel.UIState
+import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneRepositoriesViewModel.SearchModel
 import java.net.MalformedURLException
 import java.net.URL
 import java.nio.file.Paths
 
-internal interface GitLabCloneViewModel {
-  val uiState: SharedFlow<UIState>
-  val accountsRefreshRequest: SharedFlow<Set<GitLabAccount>>
+internal interface GitLabCloneRepositoriesViewModel {
   val isLoading: Flow<Boolean>
+  val accountsUpdatedRequest: SharedFlow<Set<GitLabAccount>>
 
   val items: SharedFlow<List<GitLabCloneListItem>>
   val searchValue: SharedFlow<SearchModel>
@@ -44,20 +40,7 @@ internal interface GitLabCloneViewModel {
 
   fun setSearchValue(text: String)
 
-  fun switchToLoginPanel(account: GitLabAccount?)
-
-  fun switchToRepositoryList()
-
   fun doClone(checkoutListener: CheckoutProvider.Listener, directoryPath: String)
-
-  fun updateAccount(account: GitLabAccount, credentials: String)
-
-  fun isAccountUnique(serverPath: GitLabServerPath, accountName: String): Boolean
-
-  sealed interface UIState {
-    class Login(val account: GitLabAccount?) : UIState
-    object Repositories : UIState
-  }
 
   sealed interface SearchModel {
     class Url(val url: String) : SearchModel
@@ -65,25 +48,22 @@ internal interface GitLabCloneViewModel {
   }
 }
 
-internal class GitLabCloneViewModelImpl(
+internal class GitLabCloneRepositoriesViewModelImpl(
   private val project: Project,
   parentCs: CoroutineScope,
   private val accountManager: GitLabAccountManager
-) : GitLabCloneViewModel {
+) : GitLabCloneRepositoriesViewModel {
   private val vcsNotifier: VcsNotifier = project.service<VcsNotifier>()
 
   private val cs: CoroutineScope = parentCs.childScope()
+
   private val taskLauncher: SingleCoroutineLauncher = SingleCoroutineLauncher(cs)
+  override val isLoading: Flow<Boolean> = taskLauncher.busy
 
   private val accounts: Flow<Set<GitLabAccount>> = accountManager.accountsState
 
-  private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState.Login(null))
-  override val uiState: SharedFlow<UIState> = _uiState.asSharedFlow()
-
-  private val _accountsRefreshRequest: MutableSharedFlow<Set<GitLabAccount>> = MutableSharedFlow()
-  override val accountsRefreshRequest: SharedFlow<Set<GitLabAccount>> = _accountsRefreshRequest.asSharedFlow()
-
-  override val isLoading: Flow<Boolean> = taskLauncher.busy
+  private val _accountsUpdatedRequest: MutableSharedFlow<Set<GitLabAccount>> = MutableSharedFlow(replay = 1)
+  override val accountsUpdatedRequest: SharedFlow<Set<GitLabAccount>> = _accountsUpdatedRequest.asSharedFlow()
 
   private val _selectedItem: MutableStateFlow<GitLabCloneListItem?> = MutableStateFlow(null)
 
@@ -108,31 +88,26 @@ internal class GitLabCloneViewModelImpl(
   }
 
   init {
-    cs.launch(start = CoroutineStart.UNDISPATCHED) {
+    cs.launch {
       accounts.collectLatest { accounts ->
-        _accountsRefreshRequest.emit(accounts)
-        if (accounts.isNotEmpty()) {
-          switchToRepositoryList()
-        }
-
+        _accountsUpdatedRequest.emit(accounts)
         accounts.forEach { account ->
           launch {
             accountManager.getCredentialsFlow(account).collectLatest {
-              _accountsRefreshRequest.emit(accounts)
+              _accountsUpdatedRequest.emit(accounts)
             }
           }
         }
       }
     }
 
-    cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      _accountsRefreshRequest.collectLatest { accounts ->
+    cs.launch {
+      _accountsUpdatedRequest.collectLatest { accounts ->
         taskLauncher.launch {
           _items.value = accounts.flatMap { account ->
             collectRepositoriesByAccount(account)
           }
         }
-        switchToRepositoryList()
       }
     }
   }
@@ -150,14 +125,6 @@ internal class GitLabCloneViewModelImpl(
     catch (_: MalformedURLException) {
       SearchModel.Text
     }
-  }
-
-  override fun switchToLoginPanel(account: GitLabAccount?) {
-    _uiState.value = UIState.Login(account)
-  }
-
-  override fun switchToRepositoryList() {
-    _uiState.value = UIState.Repositories
   }
 
   override fun doClone(checkoutListener: CheckoutProvider.Listener, directoryPath: String) {
@@ -183,16 +150,6 @@ internal class GitLabCloneViewModelImpl(
     val parentDirectory = parent.toAbsolutePath().toString()
 
     GitCheckoutProvider.clone(project, Git.getInstance(), checkoutListener, destinationParent, selectedUrl, directoryName, parentDirectory)
-  }
-
-  override fun updateAccount(account: GitLabAccount, credentials: String) {
-    cs.launch {
-      accountManager.updateAccount(account, credentials)
-    }
-  }
-
-  override fun isAccountUnique(serverPath: GitLabServerPath, accountName: String): Boolean {
-    return accountManager.isAccountUnique(serverPath, accountName)
   }
 
   private suspend fun collectRepositoriesByAccount(account: GitLabAccount): List<GitLabCloneListItem> {

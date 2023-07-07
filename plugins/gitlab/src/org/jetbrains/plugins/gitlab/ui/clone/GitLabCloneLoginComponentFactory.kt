@@ -35,8 +35,13 @@ import javax.swing.JButton
 import javax.swing.JComponent
 
 internal object GitLabCloneLoginComponentFactory {
-  fun create(cs: CoroutineScope, cloneVm: GitLabCloneViewModel, account: GitLabAccount?): JComponent {
-    val (loginModel, errorFlow) = createLoginModel(cs, cloneVm, account)
+  fun create(
+    cs: CoroutineScope,
+    loginVm: GitLabCloneLoginViewModel,
+    uiSelectorVm: GitLabCloneUISelectorViewModel,
+    account: GitLabAccount?
+  ): JComponent {
+    val (loginModel, errorFlow) = createLoginModel(cs, loginVm, account)
     val titlePanel = JBUI.Panels.simplePanel().apply {
       @Suppress("DialogTitleCapitalization")
       val title = JBLabel(GitLabBundle.message("clone.dialog.login.title"), UIUtil.ComponentStyle.LARGE).apply {
@@ -47,8 +52,8 @@ internal object GitLabCloneLoginComponentFactory {
     val loginButton = JButton(CollaborationToolsBundle.message("clone.dialog.button.login.mnemonic")).apply {
       bindDisabledIn(cs, loginModel.loginState.map { it is LoginModel.LoginState.Connecting })
     }
-    val backLink = LinkLabel<Unit>(IdeBundle.message("button.back"), null) { _, _ -> cloneVm.switchToRepositoryList() }.apply {
-      bindVisibilityIn(cs, cloneVm.accountsRefreshRequest.map { it.isNotEmpty() })
+    val backLink = LinkLabel<Unit>(IdeBundle.message("button.back"), null) { _, _ -> uiSelectorVm.switchToRepositoryList() }.apply {
+      bindVisibilityIn(cs, loginVm.accounts.map { it.isNotEmpty() })
     }
     val loginInputPanel = TokenLoginInputPanelFactory(loginModel).create(
       serverFieldDisabled = false,
@@ -96,10 +101,10 @@ internal object GitLabCloneLoginComponentFactory {
     }
   }
 
-  private fun createLoginModel(cs: CoroutineScope, cloneVm: GitLabCloneViewModel, account: GitLabAccount?): PanelModel {
+  private fun createLoginModel(cs: CoroutineScope, loginVm: GitLabCloneLoginViewModel, account: GitLabAccount?): PanelModel {
     val loginModel = GitLabTokenLoginPanelModel(
       requiredUsername = null,
-      uniqueAccountPredicate = if (account == null) cloneVm::isAccountUnique else { _, _ -> true }
+      uniqueAccountPredicate = if (account == null) loginVm::isAccountUnique else { _, _ -> true }
     ).apply {
       serverUri = GitLabServerPath.DEFAULT_SERVER.uri
     }
@@ -109,7 +114,7 @@ internal object GitLabCloneLoginComponentFactory {
         when (loginState) {
           is LoginModel.LoginState.Connected -> {
             val storedAccount = account ?: GitLabAccount(name = loginState.username, server = loginModel.getServerPath())
-            cloneVm.updateAccount(storedAccount, loginModel.token)
+            loginVm.updateAccount(storedAccount, loginModel.token)
           }
           LoginModel.LoginState.Connecting -> {
             errorFlow.emit(null)
