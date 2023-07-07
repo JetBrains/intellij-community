@@ -203,13 +203,21 @@ final class PersistentFSConnector {
         useContentHashes
       );
 
-      // sources usually zipped with 4x ratio
-      if (useContentHashes) {
-        contentHashesEnumerator = new ContentHashEnumerator(contentsHashesFile, PERSISTENT_FS_STORAGE_CONTEXT);
-        checkStoragesAreConsistent(contentsStorage, contentHashesEnumerator);
+      try {
+        // sources usually zipped with 4x ratio
+        if (useContentHashes) {
+          contentHashesEnumerator = new ContentHashEnumerator(contentsHashesFile, PERSISTENT_FS_STORAGE_CONTEXT);
+          checkStoragesAreConsistent(contentsStorage, contentHashesEnumerator);
+        }
+        else {
+          contentHashesEnumerator = null;
+        }
       }
-      else {
-        contentHashesEnumerator = null;
+      catch (VersionUpdatedException e) {
+        throw new VFSNeedsRebuildException(IMPL_VERSION_MISMATCH, "content hash enumerator version updated: " + e.getMessage(), e);
+      }
+      catch (CorruptedException e) {
+        throw new VFSNeedsRebuildException(NOT_CLOSED_PROPERLY, "content hash enumerator corrupted", e);
       }
 
       //MAYBE RC: I'd like to have completely new Enumerator here:
@@ -422,7 +430,15 @@ final class PersistentFSConnector {
     }
     else {
       LOG.info("VFS uses strict names enumerator");
-      return new PersistentStringEnumerator(namesFile, PERSISTENT_FS_STORAGE_CONTEXT);
+      try {
+        return new PersistentStringEnumerator(namesFile, PERSISTENT_FS_STORAGE_CONTEXT);
+      }
+      catch (VersionUpdatedException e) {
+        throw new VFSNeedsRebuildException(IMPL_VERSION_MISMATCH, "name enumerator version updated: " + e.getMessage(), e);
+      }
+      catch (CorruptedException e) {
+        throw new VFSNeedsRebuildException(NOT_CLOSED_PROPERLY, "name enumerator corrupted", e);
+      }
     }
   }
 
