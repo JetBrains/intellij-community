@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -9,10 +10,16 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 import org.junit.Test;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
 public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
+
+  @Override
+  protected boolean importProjectOnSetup() {
+    return true;
+  }
   @Override
   protected MavenIndicesTestFixture createIndicesFixture() {
     return new MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins");

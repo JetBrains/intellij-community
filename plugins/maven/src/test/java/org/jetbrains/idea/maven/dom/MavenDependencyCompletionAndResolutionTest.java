@@ -24,13 +24,8 @@ import java.util.List;
 
 public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    importProject("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    """);
+  protected boolean importProjectOnSetup() {
+    return true;
   }
 
   @Test

@@ -51,7 +51,7 @@ public class MavenIndicesTestFixture {
     myExtraRepoDirs = extraRepoDirs;
   }
 
-  public void setUp() throws Exception {
+  public void setUpBeforeImport() throws Exception {
     myRepositoryHelper = new MavenCustomRepositoryHelper(myDir.toFile(), ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir));
 
     for (String each : myExtraRepoDirs) {
@@ -60,7 +60,14 @@ public class MavenIndicesTestFixture {
 
     MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(
       myRepositoryHelper.getTestDataPath(myLocalRepoDir));
+  }
 
+  public void setUp() throws Exception {
+    setUpBeforeImport();
+    setUpAfterImport();
+  }
+
+  public void setUpAfterImport() throws Exception {
     MavenIndexerWrapper.setTestIndicesDir(myDir.resolve("MavenIndices"));
     getIndicesManager().scheduleUpdateIndicesList(null);
     getIndicesManager().waitForBackgroundTasksInTests();

@@ -43,7 +43,20 @@ public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
                                      Collections.singletonList(new MavenCompletionProviderFactory()),
                                      getTestRootDisposable(), false, null);
     myIndicesFixture = createIndicesFixture();
-    myIndicesFixture.setUp();
+    myIndicesFixture.setUpBeforeImport();
+
+    if (importProjectOnSetup()) {
+      importProject("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      """);
+    }
+    myIndicesFixture.setUpAfterImport();
+  }
+
+  protected boolean importProjectOnSetup() {
+    return false;
   }
 
   protected MavenIndicesTestFixture createIndicesFixture() {
