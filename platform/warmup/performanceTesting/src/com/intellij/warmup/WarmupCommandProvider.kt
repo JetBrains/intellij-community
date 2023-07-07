@@ -6,6 +6,6 @@ import com.jetbrains.performancePlugin.CreateCommand
 
 class WarmupCommandProvider : CommandProvider {
   override fun getCommands() : Map<String, CreateCommand> = mapOf(
-    Pair("%checkWarmupBuild", CreateCommand(::CheckWarmupBuildStatusCommand)),
+    Pair(PREFIX, CreateCommand(::CheckWarmupBuildStatusCommand)),
   )
 }
