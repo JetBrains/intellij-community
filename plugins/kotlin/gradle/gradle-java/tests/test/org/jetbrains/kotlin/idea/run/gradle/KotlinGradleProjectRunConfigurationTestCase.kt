@@ -5,11 +5,10 @@ import com.intellij.openapi.application.runReadAction
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.run.getConfiguration
 import org.jetbrains.kotlin.idea.test.checkPluginIsCorrect
+import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertEquals
-import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
 
 abstract class KotlinGradleProjectRunConfigurationTestCase : KotlinGradleProjectTestCase() {
 
@@ -21,7 +20,6 @@ abstract class KotlinGradleProjectRunConfigurationTestCase : KotlinGradleProject
     }
 
     @ParameterizedTest
-    @TargetVersions("5.6.2")
     @AllGradleVersionsSource
     fun testInternalTest(gradleVersion: GradleVersion) {
         testKotlinProject(gradleVersion) {

@@ -3,15 +3,16 @@ package org.jetbrains.plugins.gradle.execution.test.events
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderThan
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleTestNavigationTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
-  @TargetVersions("4.7 <=> 7.0")
   @AllGradleVersionsSource
   fun `test display name and navigation with Java and Junit 5 OLD`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsOlderThan(gradleVersion, "7.0")
     testJunit5Project(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT5_TEST)
       writeText("src/test/java/org/example/DisplayNameTestCase.java", JAVA_DISPLAY_NAME_JUNIT5_TEST)
@@ -80,9 +81,9 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
   }
 
   @ParameterizedTest
-  @TargetVersions("7.0+")
   @AllGradleVersionsSource
   fun `test display name and navigation with Java and Junit 5`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion, "7.0")
     testJunit5Project(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT5_TEST)
       writeText("src/test/java/org/example/DisplayNameTestCase.java", JAVA_DISPLAY_NAME_JUNIT5_TEST)

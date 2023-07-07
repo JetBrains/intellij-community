@@ -6,6 +6,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.plugins.gradle.testFramework.GradleProjectTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinIsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 
@@ -18,8 +19,10 @@ abstract class KotlinGradleProjectTestCase : GradleProjectTestCase() {
         )
     }
 
-    fun testKotlinProject(gradleVersion: GradleVersion, test: () -> Unit) =
+    fun testKotlinProject(gradleVersion: GradleVersion, test: () -> Unit) {
+        assumeThatKotlinIsSupported(gradleVersion)
         test(gradleVersion, KOTLIN_PROJECT, test)
+    }
 
     companion object {
 

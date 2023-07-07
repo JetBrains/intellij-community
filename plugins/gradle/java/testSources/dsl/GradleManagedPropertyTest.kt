@@ -3,26 +3,25 @@ package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
-import org.jetbrains.plugins.gradle.codeInspection.GradleDisablerTestUtils
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
-import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.codeInspection.GradleDisablerTestUtils
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROVIDER_PROPERTY
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleManagedPropertyTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
-  @TargetVersions("6.0+")
   @AllGradleVersionsSource("""
       "<caret>myExt"                                : pkg.MyExtension,
       "myExt.<caret>stringProperty"                 : $GRADLE_API_PROVIDER_PROPERTY<$JAVA_LANG_STRING>,
@@ -34,6 +33,7 @@ class GradleManagedPropertyTest : GradleCodeInsightTestCase() {
       "myExt { getStringProperty().get(<caret>) }"  : $JAVA_LANG_STRING
   """)
   fun types(gradleVersion: GradleVersion, expression: String, type: String) {
+    assumeThatGradleIsAtLeast(gradleVersion, "6.0")
     test(gradleVersion, FIXTURE_BUILDER) {
       testBuildscript(expression) {
         typingTest(elementUnderCaret(GrExpression::class.java), type)
@@ -42,9 +42,9 @@ class GradleManagedPropertyTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @TargetVersions("6.0+")
   @AllGradleVersionsSource
   fun highlighting(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion, "6.0")
     Disposer.newDisposable().use { parentDisposable ->
       test(gradleVersion, FIXTURE_BUILDER) {
         GradleDisablerTestUtils.enableAllDisableableInspections(parentDisposable)

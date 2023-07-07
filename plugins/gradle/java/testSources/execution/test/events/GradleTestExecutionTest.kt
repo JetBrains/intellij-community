@@ -4,15 +4,14 @@ package org.jetbrains.plugins.gradle.execution.test.events
 import com.intellij.openapi.util.SystemInfo
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatConfigurationCacheIsSupported
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleTestExecutionTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
-  @TargetVersions("4.7+")
   @AllGradleVersionsSource
   fun `test grouping events of the same suite comes from different tasks`(gradleVersion: GradleVersion) {
     testJunit5Project(gradleVersion) {
@@ -563,9 +562,9 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
   }
 
   @ParameterizedTest
-  @TargetVersions("8.1+")
-  @GradleTestSource("8.1")
+  @AllGradleVersionsSource
   fun `test configuration cache for tests`(gradleVersion: GradleVersion) {
+    assumeThatConfigurationCacheIsSupported(gradleVersion)
     testJavaProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """
         |package org.example;
@@ -594,9 +593,9 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
   }
 
   @ParameterizedTest
-  @TargetVersions("3.5+")
   @AllGradleVersionsSource
   fun `test configuration resolves after execution graph`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion, "3.5")
     testJavaProject(gradleVersion) {
       appendText("build.gradle", """
         |import java.util.concurrent.atomic.AtomicBoolean;

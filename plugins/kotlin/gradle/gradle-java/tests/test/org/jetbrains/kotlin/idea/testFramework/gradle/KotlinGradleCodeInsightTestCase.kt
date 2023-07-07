@@ -6,6 +6,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase.Companion.KOTLIN_PROJECT
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinIsSupported
 
 abstract class KotlinGradleCodeInsightTestCase : GradleCodeInsightTestCase() {
 
@@ -16,6 +17,8 @@ abstract class KotlinGradleCodeInsightTestCase : GradleCodeInsightTestCase() {
         )
     }
 
-    fun testKotlinProject(gradleVersion: GradleVersion, test: () -> Unit) =
+    fun testKotlinProject(gradleVersion: GradleVersion, test: () -> Unit) {
+        assumeThatKotlinIsSupported(gradleVersion)
         test(gradleVersion, KOTLIN_PROJECT, test)
+    }
 }

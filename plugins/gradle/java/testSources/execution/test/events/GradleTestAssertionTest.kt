@@ -8,16 +8,15 @@ import junit.framework.ComparisonFailure
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatJunit5IsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleTestAssertionTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
-  @TargetVersions("4.7+")
   @AllGradleVersionsSource
   fun `test assertion result of Junit 5`(gradleVersion: GradleVersion) {
     testJunit5Project(gradleVersion) {
@@ -266,7 +265,6 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
   }
 
   @ParameterizedTest
-  @TargetVersions("4.7+")
   @AllGradleVersionsSource
   fun `test assertion result of raw Junit 5`(gradleVersion: GradleVersion) {
     testJunit5Project(gradleVersion) {
@@ -398,7 +396,6 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
   }
 
   @ParameterizedTest
-  @TargetVersions("4.7+")
   @AllGradleVersionsSource
   fun `test assertion result of AssertJ`(gradleVersion: GradleVersion) {
     testJunit5AssertJProject(gradleVersion) {
@@ -1366,9 +1363,9 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
   }
 
   @ParameterizedTest
-  @TargetVersions("4.7+")
   @AllGradleVersionsSource
   fun `test intellij file comparison test Junit 5`(gradleVersion: GradleVersion) {
+    assumeThatJunit5IsSupported(gradleVersion)
     val fixture = GradleTestFixtureBuilder.create("GradleTestAssertionTest-file-comparison-junit-5") {
       withSettingsFile {
         setProjectName("GradleTestAssertionTest-file-comparison-junit-5")

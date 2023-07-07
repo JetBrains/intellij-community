@@ -3,13 +3,11 @@ package org.jetbrains.plugins.gradle.execution.test.events
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 
 class SpockGradleTestNavigationTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
-  @TargetVersions("5.6+")
   @AllGradleVersionsSource
   fun `test display name and navigation with Groovy and Spock`(gradleVersion: GradleVersion) {
     testSpockProject(gradleVersion) {
@@ -37,7 +35,6 @@ class SpockGradleTestNavigationTest : GradleExecutionTestCase() {
   }
 
   @ParameterizedTest
-  @TargetVersions("5.6+")
   @AllGradleVersionsSource
   fun `test navigation for inner Groovy class with Spock specification`(gradleVersion: GradleVersion) {
     testSpockProject(gradleVersion) {
