@@ -318,8 +318,7 @@ public class JavaKeywordCompletion {
   }
 
   private void addWhen() {
-    LanguageLevel level = PsiUtil.getLanguageLevel(myPosition);
-    if (!(level == LanguageLevel.JDK_20_PREVIEW || level.isAtLeast(LanguageLevel.JDK_21))) {
+    if (!HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(myPosition)) {
       return;
     }
     PsiElement element = PsiTreeUtil.skipWhitespacesAndCommentsForward(myPrevLeaf);

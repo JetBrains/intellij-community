@@ -10,7 +10,7 @@ public class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_20;
+    return JAVA_21;
   }
 
   public void testDefaultInRuleSwitch() { doTest(); }
@@ -81,6 +81,7 @@ public class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   public void testCompleteFinalInsideSwitch() { doTest("\n"); }
 
   public void testCompleteYieldInsideSwitch() { doTest(); }
+  public void testWhenInSwitchRule() { doTest(); }
 
   private void doTestPostfixCompletion() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
