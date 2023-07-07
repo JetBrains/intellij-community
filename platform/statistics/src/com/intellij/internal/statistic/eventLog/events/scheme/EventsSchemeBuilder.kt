@@ -181,4 +181,4 @@ object EventsSchemeBuilder {
                                        val pluginId: String)
 }
 
-internal class IllegalMetadataSchemeStateException(message: String) : IllegalStateException(message)
+internal class IllegalMetadataSchemeStateException(message: String) : Exception(message)
