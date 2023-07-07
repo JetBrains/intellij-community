@@ -4,7 +4,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.progress.*
-import com.intellij.openapi.progress.impl.TextDetailsProgressReporter
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -22,7 +21,6 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.trySendBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.CoroutineContext
 
 fun Lifetime.launchWithBackgroundProgress(
@@ -315,12 +313,11 @@ private class CoroutineProgressContext(
 
 @Deprecated("It is a legacy api")
 abstract class ProgressCoroutineScope(
-  override val coroutineContext: CoroutineContext,
   @Deprecated("Use progress reporter api")
-  val indicator: ProgressIndicator) : CoroutineScope
+  val indicator: ProgressIndicator)
 
 @Deprecated("It is a legacy api")
-private class ProgressCoroutineScopeBridge private constructor(coroutineContext: CoroutineContext, val bridgeIndicator: BridgeIndicator) : ProgressCoroutineScope(coroutineContext, bridgeIndicator) {
+private class ProgressCoroutineScopeBridge private constructor(coroutineContext: CoroutineContext, val bridgeIndicator: BridgeIndicator) : ProgressCoroutineScope(bridgeIndicator) {
   companion object {
 
     suspend fun <T> use(isModal: Boolean, action: suspend ProgressCoroutineScope.() -> T): T {
@@ -328,35 +325,24 @@ private class ProgressCoroutineScopeBridge private constructor(coroutineContext:
         val parentScope = this
         coroutineScope {
           val bridge = ProgressCoroutineScopeBridge(coroutineContext, BridgeIndicator(coroutineContext, isModal))
-          try {
-            bridge.initializationTask.await()
-            assert(bridge.bridgeIndicator.reporterIsSet)
-            bridge.action()
+
+          withRawProgressReporter {
+            bridge.bridgeIndicator.reporter = rawProgressReporter!!
+
+            val job = launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+              awaitCancellationAndInvoke {
+                if (!parentScope.isActive)
+                  bridge.bridgeIndicator.cancel()
+              }
+            }
+
+            try {
+              bridge.action()
+            }
+            finally {
+              job.cancel()
+            }
           }
-          finally {
-            bridge.close(!parentScope.isActive)
-          }
-        }
-      }
-    }
-  }
-
-  private val needToCancel = AtomicBoolean(true)
-  val initializationTask = CompletableDeferred<Unit>()
-
-  fun close(needToCancelFlag: Boolean) {
-    needToCancel.set(needToCancelFlag)
-    job.cancel()
-  }
-
-  private val job = launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
-    indeterminateStep {
-      withRawProgressReporter {
-        bridgeIndicator.reporter = rawProgressReporter!!
-        initializationTask.complete(Unit)
-        awaitCancellationAndInvoke {
-          if (needToCancel.get())
-            bridgeIndicator.cancel()
         }
       }
     }
@@ -365,7 +351,6 @@ private class ProgressCoroutineScopeBridge private constructor(coroutineContext:
 
 private interface BridgeIndicatorBase : ProgressIndicatorEx{
   var reporter:  RawProgressReporter
-  val reporterIsSet: Boolean
 }
 
 private class BridgeIndicator(val coroutineContext: CoroutineContext, private val isModalFlag: Boolean) : BridgeIndicatorBase by BridgeIndicatorEx(coroutineContext) {
@@ -379,8 +364,6 @@ private class BridgeIndicator(val coroutineContext: CoroutineContext, private va
 
 private class BridgeIndicatorEx(val coroutineContext: CoroutineContext) : AbstractProgressIndicatorExBase(), StandardProgressIndicator, BridgeIndicatorBase {
   override lateinit var reporter:  RawProgressReporter
-
-  override val reporterIsSet get() = this::reporter.isInitialized
 
   override fun cancel() {
     coroutineContext.cancel()
@@ -416,7 +399,7 @@ private class BridgeIndicatorEx(val coroutineContext: CoroutineContext) : Abstra
 }
 
 @Deprecated("It is a legacy api")
-class ProgressCoroutineScopeLegacy private constructor(coroutineContext: CoroutineContext, indicator: ProgressIndicator) : ProgressCoroutineScope(coroutineContext, indicator) {
+class ProgressCoroutineScopeLegacy private constructor(indicator: ProgressIndicator) : ProgressCoroutineScope(indicator) {
 
   companion object {
     internal suspend fun <T> execute(coroutineContext: CoroutineContext, progressLifetime: Lifetime, indicator: ProgressIndicator, action: suspend ProgressCoroutineScope.() -> T): T {
@@ -434,10 +417,8 @@ class ProgressCoroutineScopeLegacy private constructor(coroutineContext: Corouti
         }
 
         coroutineScope {
-          TextDetailsProgressReporter(this).use { reporter ->
-            withContext(ModalityState.defaultModalityState().asContextElement() + sink.asContextElement() + reporter.asContextElement()) {
-              ProgressCoroutineScopeLegacy(this.coroutineContext, indicator).action()
-            }
+          withContext(ModalityState.defaultModalityState().asContextElement() + sink.asContextElement()) {
+            ProgressCoroutineScopeLegacy(indicator).action()
           }
         }
       }
