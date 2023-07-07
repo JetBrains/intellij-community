@@ -313,6 +313,12 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     }
   }
 
+  /**
+   * This method is used to rearrange branches.
+   * Now it can change the order of branches or divide some branches into several separate branches.
+   * For example, a null branch will be extracted from others.
+   * @return rearranged branches
+   */
   @NotNull
   private static List<SwitchBranch> rearrangeBranches(@NotNull List<SwitchBranch> branches,
                                                       @NotNull PsiElement context) {
@@ -334,32 +340,43 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         result.add(branch);
         continue;
       }
-      List<PsiCaseLabelElement> previousExpressions = new ArrayList<>();
-      for (PsiCaseLabelElement expression : caseExpressions) {
-        PsiCaseLabelElement external = findNullLabel(List.of(expression));
-        if (external == null && expression instanceof PsiPattern) {
-          external = expression;
-        }
-        if (external == null) {
-          previousExpressions.add(expression);
-        }
-        else {
-          if (!previousExpressions.isEmpty()) {
-            SwitchBranch otherBranch =
-              new SwitchBranch(branch.myIsDefault, new ArrayList<>(previousExpressions), branch.myRuleResult, branch.myUsedElements);
-            result.add(otherBranch);
-            previousExpressions.clear();
-          }
-          SwitchBranch specialBranch = new SwitchBranch(branch.myIsDefault, List.of(external), branch.myRuleResult, branch.myUsedElements);
-          result.add(specialBranch);
-        }
-      }
-      if (!previousExpressions.isEmpty()) {
-        SwitchBranch otherBranch = new SwitchBranch(branch.myIsDefault, previousExpressions, branch.myRuleResult, branch.myUsedElements);
-        result.add(otherBranch);
-      }
+      rearrangeCases(branch, caseExpressions, result);
     }
     return result;
+  }
+
+  /**
+   * This method is used to rearrange case elements.
+   * Method is used by {@link #rearrangeBranches(List, PsiElement)}.
+   * @param result - container, where sorted cases will be added
+   */
+  private static void rearrangeCases(@NotNull SwitchBranch branch,
+                                     @NotNull List<? extends PsiCaseLabelElement> caseExpressions,
+                                     @NotNull List<SwitchBranch> result) {
+    List<PsiCaseLabelElement> previousExpressions = new ArrayList<>();
+    for (PsiCaseLabelElement expression : caseExpressions) {
+      PsiCaseLabelElement external = findNullLabel(List.of(expression));
+      if (external == null && expression instanceof PsiPattern) {
+        external = expression;
+      }
+      if (external == null) {
+        previousExpressions.add(expression);
+      }
+      else {
+        if (!previousExpressions.isEmpty()) {
+          SwitchBranch otherBranch =
+            new SwitchBranch(branch.myIsDefault, new ArrayList<>(previousExpressions), branch.myRuleResult, branch.myUsedElements);
+          result.add(otherBranch);
+          previousExpressions.clear();
+        }
+        SwitchBranch specialBranch = new SwitchBranch(branch.myIsDefault, List.of(external), branch.myRuleResult, branch.myUsedElements);
+        result.add(specialBranch);
+      }
+    }
+    if (!previousExpressions.isEmpty()) {
+      SwitchBranch otherBranch = new SwitchBranch(branch.myIsDefault, previousExpressions, branch.myRuleResult, branch.myUsedElements);
+      result.add(otherBranch);
+    }
   }
 
   @Nullable
