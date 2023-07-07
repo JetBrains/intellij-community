@@ -1,15 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.completion
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.Scheduler
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.serialization.json.Json
 import org.jetbrains.terminal.completion.ShellCommand
 import java.io.IOException
+import java.time.Duration
 
 class IJCommandSpecManager : CommandSpecManager {
-  private val completionSpecs: MutableMap<String, ShellCommand> = HashMap()
+  private val completionSpecs: Cache<String, ShellCommand> = Caffeine.newBuilder()
+    .maximumSize(10)
+    .expireAfterAccess(Duration.ofMinutes(5))
+    .scheduler(Scheduler.systemScheduler())
+    .build()
 
   private val json: Json = Json {
     ignoreUnknownKeys = true
@@ -27,7 +35,7 @@ class IJCommandSpecManager : CommandSpecManager {
    *     - sub2.json
    */
   override fun getCommandSpec(commandName: String): ShellCommand? {
-    completionSpecs[commandName]?.let { return it }
+    completionSpecs.getIfPresent(commandName)?.let { return it }
 
     val (spec, path) = if (commandName.contains('/')) {
       val mainCommand = commandName.substringBefore('/')
@@ -62,7 +70,7 @@ class IJCommandSpecManager : CommandSpecManager {
     }
 
     if (subcommand != null) {
-      completionSpecs[commandName] = subcommand
+      completionSpecs.put(commandName, subcommand)
     }
 
     return subcommand
