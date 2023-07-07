@@ -52,7 +52,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
@@ -65,7 +64,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.InstanceOfUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
@@ -361,6 +363,31 @@ public final class HighlightUtil {
     return errorResult;
   }
 
+  static HighlightInfo.Builder checkOutsideDeclaredCantBeAssignmentInGuard(PsiAssignmentExpression assignment) {
+    if (PsiUtil.getLanguageLevel(assignment) == LanguageLevel.JDK_20_PREVIEW) {
+      return null;
+    }
+    PsiPatternGuard patternGuard = PsiTreeUtil.getParentOfType(assignment, PsiPatternGuard.class);
+    if (patternGuard == null) {
+      return null;
+    }
+    PsiExpression guardingExpression = patternGuard.getGuardingExpression();
+    if (!PsiTreeUtil.isAncestor(guardingExpression, assignment, false)) {
+      return null;
+    }
+    PsiExpression expression = assignment.getLExpression();
+    if (!(expression instanceof PsiReferenceExpression referenceExpression &&
+          referenceExpression.resolve() instanceof PsiVariable psiVariable)) {
+      return null;
+    }
+    if (PsiTreeUtil.isAncestor(guardingExpression, psiVariable, false)) {
+      return null;
+    }
+    String message = JavaErrorBundle.message("impossible.assign.declared.outside.guard", psiVariable.getName());
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+      .range(expression)
+      .descriptionAndTooltip(message);
+  }
 
   static HighlightInfo.Builder checkAssignmentOperatorApplicable(@NotNull PsiAssignmentExpression assignment) {
     PsiJavaToken operationSign = assignment.getOperationSign();

@@ -389,6 +389,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
     if (!myHolder.hasErrorResults()) add(HighlightUtil.checkAssignmentCompatibleTypes(assignment));
     if (!myHolder.hasErrorResults()) add(HighlightUtil.checkAssignmentOperatorApplicable(assignment));
+    if (!myHolder.hasErrorResults()) add(HighlightUtil.checkOutsideDeclaredCantBeAssignmentInGuard(assignment));
     if (!myHolder.hasErrorResults()) visitExpression(assignment);
   }
 
