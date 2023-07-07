@@ -88,9 +88,24 @@ suspend fun captureComponent(component: Component, file: File) {
   g.dispose()
 }
 
+fun getNextFolder(base: File): File {
+  var counter = 0
+  var folder = base
+
+  while (folder.exists()) {
+    counter++
+    val name = "${base.name}_$counter"
+    folder = File(base.parentFile, name)
+  }
+
+  folder.mkdirs()
+  return folder
+}
+
 internal suspend fun takeScreenshotOfAllWindows(childFolder: String? = null) {
   val projects = ProjectManager.getInstance().openProjects
-  val screenshotPath = File(PathManager.getLogPath() + "/screenshots/" + (childFolder ?: "")).apply { mkdirs() }
+  var screenshotPath = File(PathManager.getLogPath() + "/screenshots/" + (childFolder ?: "default")).apply { mkdirs() }
+  screenshotPath = getNextFolder(screenshotPath)
   for (project in projects) {
     try {
       withTimeout(30.seconds) {
