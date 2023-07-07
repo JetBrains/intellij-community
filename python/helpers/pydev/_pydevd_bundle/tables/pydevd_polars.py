@@ -45,3 +45,21 @@ def display_data(table, max_cols, max_colwidth, start, end):
 def __create_config():
     # type: () -> pl.Config
     return pl.Config(fmt_str_lengths=1000, set_tbl_cols=-1)
+
+
+def get_column_descriptions(table, max_cols, max_colwidth):
+    # type: (pl.DataFrame, int, int) -> str
+    described_df = __get_describe_df(table)
+
+    return get_data(described_df, max_cols, max_colwidth, None, None)
+
+
+# Polars compute NaN-s in describe. So, we don't need get_value_counts for Polars
+def get_value_counts(table, max_cols, max_colwidth):
+    # type: (pl.DataFrame, int, int) -> str
+    return
+
+
+def __get_describe_df(table):
+    # type: (pl.DataFrame) -> pl.DataFrame
+    return table.describe(percentiles=(0.05, 0.25, 0.5, 0.75, 0.95))
