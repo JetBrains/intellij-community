@@ -14,6 +14,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.UserActivityWatcher;
+import com.intellij.util.ui.JBFont;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,8 +90,7 @@ public class MavenRunnerPanel {
     panel.add(myVMParametersEditor, c);
 
     JLabel labelOverrideJvmConfig = new JLabel(MavenConfigurableBundle.message("maven.settings.vm.options.tooltip"));
-    Font font = labelOverrideJvmConfig.getFont();
-    labelOverrideJvmConfig.setFont(new Font(font.getName(), font.getStyle(), font.getSize() - 2));
+    labelOverrideJvmConfig.setFont(JBFont.small());
     c.gridx = 1;
     c.gridy++;
     c.weightx = 1;
