@@ -17,6 +17,9 @@ import com.intellij.notification.impl.NotificationFullContent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.TaskCancellation
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
@@ -160,14 +163,16 @@ private suspend fun checkRuntime() {
     val configFile = Path.of(directory, configName)
     if (Files.isRegularFile(configFile)) {
       switchAction = NotificationAction.createSimpleExpiring(IdeBundle.message("action.SwitchToJBR.text")) {
-        try {
-          Files.delete(configFile)
-          ApplicationManagerEx.getApplicationEx().restart(true)
-        }
-        catch (e: IOException) {
-          LOG.warn("cannot delete $configFile", e)
-          val content = IdeBundle.message("cannot.delete.jre.config", configFile, IoErrorText.message(e))
-          Notification(NOTIFICATION_GROUP_ID, content, NotificationType.ERROR).notify(null)
+        runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("deleting.jre.config"), TaskCancellation.cancellable()) {
+          try {
+            Files.delete(configFile)
+            ApplicationManagerEx.getApplicationEx().restart(true)
+          }
+          catch (e: IOException) {
+            LOG.warn("cannot delete $configFile", e)
+            val content = IdeBundle.message("cannot.delete.jre.config", configFile, IoErrorText.message(e))
+            Notification(NOTIFICATION_GROUP_ID, content, NotificationType.ERROR).notify(null)
+          }
         }
       }
     }
