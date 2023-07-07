@@ -71,7 +71,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
       val serializationResult = serializer.serializeCache(tmpFile, if (userPreProcessor) cachePreProcess(storage) else storage)
       when (serializationResult) {
         is SerializationResult.Fail<*> -> LOG.warn("Workspace model cache was not serialized: ${serializationResult.info}")
-        is SerializationResult.Success -> WorkspaceFusLogger.Util.logCacheSize(serializationResult.size)
+        is SerializationResult.Success -> WorkspaceModelFusLogger.Util.logCacheSize(serializationResult.size)
       }
 
       try {

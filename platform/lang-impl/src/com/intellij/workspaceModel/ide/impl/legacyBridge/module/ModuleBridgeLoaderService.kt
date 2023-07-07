@@ -31,7 +31,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootMana
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.workspaceModel.ide.impl.WorkspaceFusLogger
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelFusLogger
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -51,7 +51,7 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
 
       val start = System.currentTimeMillis()
 
-      WorkspaceFusLogger.Util.logIsLoadedFromCache(workspaceModel.loadedFromCache)
+      WorkspaceModelFusLogger.Util.logIsLoadedFromCache(workspaceModel.loadedFromCache)
       if (workspaceModel.loadedFromCache) {
         val activity = StartUpMeasurer.startActivity("modules loading with cache")
         if (projectModelSynchronizer.hasNoSerializedJpsModules()) {

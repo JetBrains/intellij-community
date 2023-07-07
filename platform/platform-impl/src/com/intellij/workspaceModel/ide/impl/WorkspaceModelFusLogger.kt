@@ -3,16 +3,15 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
-import com.intellij.internal.statistic.eventLog.events.EventFields.Int
 import com.intellij.internal.statistic.eventLog.events.EventFields.Long
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 
-class WorkspaceFusLogger : CounterUsagesCollector() {
+class WorkspaceModelFusLogger : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = Util.GROUP
 
   object Util {
-    val GROUP = EventLogGroup("workspace", 1)
+    val GROUP = EventLogGroup("workspaceModel", 1)
 
     /**
      * Time of loading of iml files. These files are loaded to the empty storage on start. The loading happens every time, but
