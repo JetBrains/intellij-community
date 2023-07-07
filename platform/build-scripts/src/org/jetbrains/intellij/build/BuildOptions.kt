@@ -192,16 +192,20 @@ class BuildOptions(
     const val INTELLIJ_BUILD_INCREMENTAL_COMPILATION = "intellij.build.incremental.compilation"
 
     /**
-     * Allows override version isEap flag in ApplicationInfo.xml
-     * @see [org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl]
+     * Allows to override [ApplicationInfoProperties.isEAP]
      */
     const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP = "intellij.build.override.application.version.is.eap"
 
     /**
-     * Allows override version suffix in ApplicationInfo.xml
-     * @see [org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl]
+     * Allows to override [ApplicationInfoProperties.versionSuffix]
      */
     const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX = "intellij.build.override.application.version.suffix"
+
+    /**
+     * Allows to override [ApplicationInfoProperties.majorReleaseDate]
+     */
+    const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_MAJOR_RELEASE_DATE = "intellij.build.override.application.version.majorReleaseDate"
+
     /**
      * Pass comma-separated names of build steps (see below) to this system property to skip them.
      */
