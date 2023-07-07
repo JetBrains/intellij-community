@@ -21,9 +21,9 @@ interface EnvironmentKeyProvider {
 
   /**
    * Returns all keys that are used by a client of [EnvironmentService].
-   * Each [EnvironmentKey] must be registered at least in one [EnvironmentKeyProvider.getKnownKeys].
+   * Each [EnvironmentKey] must be registered at least in one [EnvironmentKeyProvider.knownKeys].
    */
-  fun getKnownKeys(): Map<EnvironmentKey, @EnvironmentKeyDescription String>
+  val knownKeys: Map<EnvironmentKey, @EnvironmentKeyDescription String>
 
   /**
    * Returns all keys that are absolutely required for a project to be configured without interaction with the user.

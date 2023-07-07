@@ -63,7 +63,7 @@ class EnvironmentKeyStubGenerator : ModernApplicationStarter() {
 
 private suspend fun generateKeyConfig(generateDescriptions: Boolean, configuration: EnvironmentConfiguration): ByteArray {
   val environmentKeys = blockingContext {
-    EnvironmentKeyProvider.EP_NAME.extensionList.flatMap { it.getKnownKeys().toList() }
+    EnvironmentKeyProvider.EP_NAME.extensionList.flatMap { it.knownKeys.toList() }
   }.sortedBy { it.first.id }
 
   val registeredKeys = environmentKeys.mapTo(HashSet()) { it.first }

@@ -194,7 +194,7 @@ private val notRegisteredDummyKey: EnvironmentKey = EnvironmentKey.create("not.r
 
 private class TestKeyProvider : EnvironmentKeyProvider {
 
-  override fun getKnownKeys(): Map<EnvironmentKey, String> = mapOf(
+  override val knownKeys: Map<EnvironmentKey, String> = mapOf(
     dummyKey to "My dummy test key\nWith a long description",
     dummyKey2 to "Just another dummy key",
   )

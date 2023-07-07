@@ -64,7 +64,7 @@ class GradleWarmupConfigurator : WarmupConfigurator {
   override suspend fun runWarmup(project: Project): Boolean {
     val basePath = project.basePath ?: return false
     val service = service<EnvironmentService>()
-    val projectSelectionKey = service.getEnvironmentValue(ProjectOpenKeyProvider.PROJECT_OPEN_PROCESSOR, "Gradle")
+    val projectSelectionKey = service.getEnvironmentValue(ProjectOpenKeyProvider.Keys.PROJECT_OPEN_PROCESSOR, "Gradle")
     if (projectSelectionKey != "Gradle") {
       // something else was selected to open the project
       return false
