@@ -49,10 +49,6 @@ public class NormalSwitchCompletionTest extends NormalCompletionTestCase {
 
   public void testCompleteNullInSwitchExpr() { doTest(); }
 
-  public void testCompleteDefaultInSwitchStmt() { doTest(); }
-
-  public void testCompleteDefaultInSwitchExpr() { doTest(); }
-
   public void testCompletePatternVariableSwitchStmt() { doTest(); }
 
   public void testCompletePatternVariableSwitchExpr() { doTest(); }

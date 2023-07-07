@@ -409,7 +409,6 @@ public class JavaKeywordCompletion {
     if (selectorType instanceof PsiPrimitiveType) return;
 
     addKeyword(createKeyword(PsiKeyword.NULL));
-    addKeyword(createKeyword(PsiKeyword.DEFAULT));
   }
 
   private boolean isInsideCaseLabel() {
