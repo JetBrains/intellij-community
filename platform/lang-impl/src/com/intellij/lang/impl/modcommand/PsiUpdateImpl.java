@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl.modcommand;
 
+import com.intellij.codeInspection.ModCommands;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.InjectionEditService;
@@ -213,7 +214,8 @@ final class PsiUpdateImpl {
     private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
     private @Nullable ModRenameSymbol myRenameSymbol;
     private boolean myPositionUpdated = false;
-    private @NlsContexts.Tooltip String myMessage;
+    private @NlsContexts.Tooltip String myErrorMessage;
+    private @NlsContexts.Tooltip String myInfoMessage;
 
     private record ChangedDirectoryInfo(@NotNull ChangedVirtualDirectory directory, @NotNull PsiDirectory psiDirectory) {
       static @NotNull ModPsiUpdaterImpl.ChangedDirectoryInfo create(@NotNull PsiDirectory directory) {
@@ -381,10 +383,18 @@ final class PsiUpdateImpl {
 
     @Override
     public void cancel(@NotNull @NlsContexts.Tooltip String errorMessage) {
-      if (myMessage != null) {
+      if (myErrorMessage != null) {
         throw new IllegalStateException("Update is already cancelled");
       }
-      myMessage = errorMessage;
+      myErrorMessage = errorMessage;
+    }
+
+    @Override
+    public void message(@NotNull String message) {
+      if (myInfoMessage != null) {
+        throw new IllegalStateException("Message display was already requested; cannot show two messages");
+      }
+      myInfoMessage = message;
     }
 
     @Override
@@ -451,14 +461,15 @@ final class PsiUpdateImpl {
     }
 
     private @NotNull ModCommand getCommand() {
-      if (myMessage != null) {
-        return error(myMessage);
+      if (myErrorMessage != null) {
+        return error(myErrorMessage);
       }
       return myChangedFiles.values().stream().map(FileTracker::getUpdateCommand).reduce(nop(), ModCommand::andThen)
         .andThen(myChangedDirectories.values().stream()
                    .flatMap(info -> info.createFileCommands(myTracker.myProject))
                    .reduce(nop(), ModCommand::andThen))
-        .andThen(getNavigateCommand()).andThen(getHighlightCommand()).andThen(myRenameSymbol == null ? nop() : myRenameSymbol);
+        .andThen(getNavigateCommand()).andThen(getHighlightCommand()).andThen(myRenameSymbol == null ? nop() : myRenameSymbol)
+        .andThen(myInfoMessage == null ? nop() : ModCommands.info(myInfoMessage));
     }
 
     @NotNull

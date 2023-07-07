@@ -72,4 +72,11 @@ public interface ModPsiUpdater extends ModPsiNavigator {
    * @param errorMessage the error message to display
    */
   void cancel(@NotNull @NlsContexts.Tooltip String errorMessage);
+
+  /**
+   * Display message
+   * 
+   * @param message message to display
+   */
+  void message(@NotNull @NlsContexts.Tooltip String message);
 }
