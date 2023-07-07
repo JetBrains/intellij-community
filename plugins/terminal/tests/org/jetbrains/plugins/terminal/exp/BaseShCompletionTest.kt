@@ -277,10 +277,14 @@ abstract class BaseShCompletionTest : BasePlatformTestCase() {
     }
   }
 
-  private fun assertSingleItemCompleted(elements: Array<LookupElement>?, expectedItem: String) {
-    assertTrue("Completion result is not empty: ${elements?.map { it.lookupString }}", elements.isNullOrEmpty())
-    val promptText = myFixture.editor.document.text
-    assertTrue("Incorrect prompt text: '$promptText'", promptText.endsWith(expectedItem))
+  protected fun assertSingleItemCompleted(elements: Array<LookupElement>?, expectedItem: String) {
+    if (!elements.isNullOrEmpty()) {
+      assertSameElements(elements.map { it.lookupString }, listOf(expectedItem))
+    }
+    else {
+      val promptText = myFixture.editor.document.text
+      assertTrue("Incorrect prompt text: '$promptText'", promptText.endsWith(expectedItem))
+    }
   }
 
   companion object {

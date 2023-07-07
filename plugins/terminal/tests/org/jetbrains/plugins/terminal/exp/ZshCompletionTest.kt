@@ -90,8 +90,7 @@ class ZshCompletionTest : BaseShCompletionTest() {
     myFixture.type("$commandName -")
     val elements = myFixture.completeBasic()
 
-    assertTrue(elements.isNullOrEmpty())
-    assertTrue(myFixture.editor.document.text.endsWith("-a"))
+    assertSingleItemCompleted(elements, "-a")
     assertPromptRestored()
   }
 
