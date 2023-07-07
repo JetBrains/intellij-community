@@ -579,7 +579,8 @@ final class ActionUpdater {
     boolean isPopup = presentation.isPopupGroup();
     boolean canBePerformed = presentation.isPerformGroup();
     boolean performOnly = isPopup && canBePerformed && Boolean.TRUE.equals(presentation.getClientProperty(ActionMenu.SUPPRESS_SUBMENU));
-    boolean alwaysVisible = child instanceof AlwaysVisibleActionGroup;
+    boolean alwaysVisible = child instanceof AlwaysVisibleActionGroup ||
+                            Boolean.TRUE.equals(presentation.getClientProperty(ActionMenu.ALWAYS_VISIBLE));
     boolean skipChecks = performOnly || alwaysVisible;
     boolean hideDisabled = isPopup && !skipChecks && hideDisabledBase;
     boolean hideEmpty = isPopup && !skipChecks && (presentation.isHideGroupIfEmpty() || group.hideIfNoVisibleChildren());

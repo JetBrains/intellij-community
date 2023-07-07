@@ -192,15 +192,22 @@ internal suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
                                            frame: JFrame,
                                            presentationFactory: PresentationFactory,
                                            isFirstUpdate: Boolean): List<ActionGroup> {
+  // enforce the "always-visible" flag for all main menu items
+  // without forcing everyone to employ custom groups in their plugin.xmls.
+  val adjustedGroup = object : ActionGroupWrapper(mainActionGroup) {
+    override fun getChildren(e: AnActionEvent?) = super.getChildren(e).apply {
+      forEach { it.templatePresentation.putClientProperty(ActionMenu.ALWAYS_VISIBLE, true) }
+    }
+  }
   val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode()
   if (!useAsyncExpand && !isUnitTestMode) {
-    return syncExpandMainActionGroup(mainActionGroup, serviceAsync<ActionManager>(), frame, menuBar, presentationFactory)
+    return syncExpandMainActionGroup(adjustedGroup, serviceAsync<ActionManager>(), frame, menuBar, presentationFactory)
   }
   try {
     return withContext(CoroutineName("expandMainActionGroup") + Dispatchers.EDT) {
       val targetComponent = serviceAsync<WindowManager>().getFocusedComponent(frame) ?: menuBar
       val dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(targetComponent))
-      Utils.expandActionGroupAsync(mainActionGroup, presentationFactory, dataContext, ActionPlaces.MAIN_MENU, false, isFirstUpdate)
+      Utils.expandActionGroupAsync(adjustedGroup, presentationFactory, dataContext, ActionPlaces.MAIN_MENU, false, isFirstUpdate)
     }.await().filterIsInstance<ActionGroup>()
   }
   catch (e: ProcessCanceledException) {

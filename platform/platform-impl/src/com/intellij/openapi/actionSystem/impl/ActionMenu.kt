@@ -115,6 +115,12 @@ class ActionMenu @JvmOverloads constructor(private val context: DataContext?,
     @JvmField
     val SUPPRESS_SUBMENU: Key<Boolean> = Key.create("SUPPRESS_SUBMENU")
 
+    /**
+     * Same as [AlwaysVisibleActionGroup]
+     */
+    @JvmField
+    val ALWAYS_VISIBLE: Key<Boolean> = Key.create("ALWAYS_VISIBLE")
+
     @JvmStatic
     fun shouldConvertIconToDarkVariant(): Boolean {
       return JBColor.isBright() && ColorUtil.isDark(JBColor.namedColor("MenuItem.background", 0xffffff))
