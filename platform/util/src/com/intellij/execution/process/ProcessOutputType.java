@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents a stream (stdout/stderr/system) output type. It can be a base output type or a colored output type.
  * Base stdout/stderr output types are constants: {@link ProcessOutputTypes#STDOUT}, {@link ProcessOutputTypes#STDERR} and
  * {@link ProcessOutputTypes#SYSTEM}.<br/>
- * A colored stdout/stderr output type corresponds to an unique ANSI color attributes info passed as
+ * A colored stdout/stderr output type corresponds to a unique ANSI color attributes info passed as
  * {@code name} constructor parameter, and base stream output type (stdout/stderr) - {@code streamType} parameter.
  * <p/>
  * Use {@link com.intellij.execution.ui.ConsoleViewContentType#getConsoleViewType} to get TextAttributes for an instance
