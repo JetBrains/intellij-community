@@ -11,16 +11,11 @@ import com.intellij.util.ProcessingContext
 import org.jetbrains.plugins.terminal.util.SHELL_TYPE_KEY
 import org.jetbrains.plugins.terminal.util.ShellType
 
-class TerminalCompletionContributor : CompletionContributor() {
+class TerminalSessionCompletionContributor : CompletionContributor() {
   init {
-    val mainProvider = CommandSpecCompletionProvider()
-    val secondaryProvider = ShCompletionProvider()
-
-    extend(CompletionType.BASIC, psiElement().inFile(psiFile().with(ShellTypeCondition(ShellType.ZSH))), mainProvider)
-    extend(CompletionType.BASIC, psiElement().inFile(psiFile().with(ShellTypeCondition(ShellType.ZSH))), secondaryProvider)
-
-    extend(CompletionType.BASIC, psiElement().inFile(psiFile().with(ShellTypeCondition(ShellType.BASH))), mainProvider)
-    extend(CompletionType.BASIC, psiElement().inFile(psiFile().with(ShellTypeCondition(ShellType.BASH))), secondaryProvider)
+    val provider = ShCompletionProvider()
+    extend(CompletionType.BASIC, psiElement().inFile(psiFile().with(ShellTypeCondition(ShellType.ZSH))), provider)
+    extend(CompletionType.BASIC, psiElement().inFile(psiFile().with(ShellTypeCondition(ShellType.BASH))), provider)
   }
 
   private class ShellTypeCondition(private val type: ShellType) : PatternCondition<PsiFile>("shellType") {

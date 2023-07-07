@@ -164,7 +164,7 @@ class ShCompletionProvider : CompletionProvider<CompletionParameters>() {
       .withInsertHandler { context, element ->
         val value = element.lookupString
         val editor = context.editor
-        if (TerminalCompletionContributor.isSingleCharParameter(value) && lookup != null) {
+        if (TerminalSessionCompletionContributor.isSingleCharParameter(value) && lookup != null) {
           // Suppose we have the command 'ls -al' and want to add '-d' parameter
           // Because of the platform implementation it replaced the whole parameters string with '-d'.
           // At this moment we have 'ls -d', but we need 'ls -ald', so replace one parameter with their concatenation
@@ -177,7 +177,7 @@ class ShCompletionProvider : CompletionProvider<CompletionParameters>() {
           editor.caretModel.moveToOffset(startOffset + toInsert.length)
         }
 
-        if (!TerminalCompletionContributor.isSingleCharParameter(value) && !value.endsWith("/")) {
+        if (!TerminalSessionCompletionContributor.isSingleCharParameter(value) && !value.endsWith("/")) {
           val offset = editor.caretModel.offset
           editor.document.insertString(offset, " ")
           editor.caretModel.moveToOffset(offset + 1)
@@ -204,7 +204,7 @@ class ShCompletionProvider : CompletionProvider<CompletionParameters>() {
 
   private class TerminalCompletionPrefixMatcher(prefix: String) : PrefixMatcher(prefix) {
     override fun prefixMatches(name: String): Boolean {
-      return if (TerminalCompletionContributor.isSingleCharParameter(name) && prefix.startsWith("-") && !prefix.startsWith("--")) {
+      return if (TerminalSessionCompletionContributor.isSingleCharParameter(name) && prefix.startsWith("-") && !prefix.startsWith("--")) {
         val parameter = name.removePrefix("-")
         !prefix.contains(parameter)
       }

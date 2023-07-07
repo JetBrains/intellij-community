@@ -7,16 +7,19 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.sh.psi.ShSimpleCommand
-import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.TreeTraversal
 import org.jetbrains.plugins.terminal.exp.completion.*
+import org.jetbrains.plugins.terminal.util.ShellType
 import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellCommand
 
-class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>() {
-  override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+class TerminalCommandSpecCompletionContributor : CompletionContributor() {
+  override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(TerminalSession.KEY)
     if (session == null || parameters.completionType != CompletionType.BASIC) {
+      return
+    }
+    if (session.shellIntegration?.shellType != ShellType.ZSH) {
       return
     }
 

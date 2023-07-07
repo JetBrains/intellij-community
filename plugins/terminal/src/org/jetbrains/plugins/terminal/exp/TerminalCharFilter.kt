@@ -18,8 +18,8 @@ class TerminalCharFilter : CharFilter() {
       // It is command completion lookup
       val matches = lookup.items.filter { matchesAfterAppendingChar(lookup, it, c) }
       if (matches.isNotEmpty()) {
-        if (matches.all { TerminalCompletionContributor.isSingleCharParameter(it.lookupString) }
-            && !lookup.items.any { TerminalCompletionContributor.isSingleCharParameter(it.lookupString) && it.lookupString[1] == c }) {
+        if (matches.all { TerminalSessionCompletionContributor.isSingleCharParameter(it.lookupString) }
+            && !lookup.items.any { TerminalSessionCompletionContributor.isSingleCharParameter(it.lookupString) && it.lookupString[1] == c }) {
           // Close lookup if we are completing single char parameters and user typed the char,
           // that do not match any of available parameters
           Result.HIDE_LOOKUP

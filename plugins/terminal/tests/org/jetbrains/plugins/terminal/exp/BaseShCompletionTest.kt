@@ -4,12 +4,16 @@
 
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.sh.ShFileType
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.utils.io.createFile
@@ -34,6 +38,10 @@ abstract class BaseShCompletionTest : BasePlatformTestCase() {
   override fun setUp() {
     Assume.assumeTrue("Shell is not found in '$shellPath'", File(shellPath).exists())
     super.setUp()
+
+    val descriptor = DefaultPluginDescriptor("org.jetbrains.plugins.terminal")
+    val contributor = CompletionContributorEP("Shell Script", TerminalSessionCompletionContributor::class.java.name, descriptor)
+    ExtensionTestUtil.maskExtensions(CompletionContributor.EP, listOf(contributor), testRootDisposable)
 
     Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, testRootDisposable)
     session = TerminalSessionTestUtil.startTerminalSession(project, shellPath, testRootDisposable)
