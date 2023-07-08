@@ -162,24 +162,28 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testYieldAsExpr2() { doParserTest("yield += 2"); }
   public void testYieldAsExpr3() { doParserTest("yield ? 10 : 20"); }
 
-  public void testStringTemplate1() { doParserTest("STR.\"\""); }
-  public void testStringTemplate2() { doParserTest("STR.\"\\{}\""); }
-  public void testStringTemplate3() { doParserTest("STR.\"\\{ 1 }\""); }
-  public void testStringTemplate4() { doParserTest("STR.\"\\{ (1) } \\{ \"!\" }\""); }
-  public void testStringTemplate5() { doParserTest("STR.\"\\{ \"\"\"\n!\"\"\" }\""); }
-  public void testStringTemplate6() { doParserTest("\"\\{}\""); }
-  public void testStringTemplate7() { doParserTest("STR.\"\\{}\".length()"); }
-  public void testStringTemplate8() { doParserTest("STR.\"\\{"); }
-  public void testTextBlockTemplate1() { doParserTest("STR.\"\"\"\n\"\"\""); }
-  public void testTextBlockTemplate2() { doParserTest("STR.\"\"\"\n\\{}\"\"\""); }
-  public void testTextBlockTemplate3() { doParserTest("STR.\"\"\"\n\\{ 1 }\"\"\""); }
-  public void testTextBlockTemplate4() { doParserTest("STR.\"\"\"\n\\{ (1) } \\{ \"!\" }\"\"\""); }
-  public void testTextBlockTemplate5() { doParserTest("STR.\"\"\"\n\\{ \"\"\"\n!\"\"\" }\"\"\""); }
-  public void testTextBlockTemplate6() { doParserTest("\"\"\"\n\\{}\"\"\""); }
-  public void testTextBlockTemplate7() { doParserTest("STR.\"\"\"\n\\{}\"\"\".length()"); }
-  public void testTextBlockTemplate8() { doParserTest("STR.\"\"\"\\{"); }
+  public void testStringTemplate1() { doParserTest(); }
+  public void testStringTemplate2() { doParserTest(); }
+  public void testStringTemplate3() { doParserTest(); }
+  public void testStringTemplate4() { doParserTest(); }
+  public void testStringTemplate5() { doParserTest(); }
+  public void testStringTemplate6() { doParserTest(); }
+  public void testStringTemplate7() { doParserTest(); }
+  public void testStringTemplate8() { doParserTest(); }
+  public void testTextBlockTemplate1() { doParserTest(); }
+  public void testTextBlockTemplate2() { doParserTest(); }
+  public void testTextBlockTemplate3() { doParserTest(); }
+  public void testTextBlockTemplate4() { doParserTest(); }
+  public void testTextBlockTemplate5() { doParserTest(); }
+  public void testTextBlockTemplate6() { doParserTest(); }
+  public void testTextBlockTemplate7() { doParserTest(); }
+  public void testTextBlockTemplate8() { doParserTest(); }
 
   private void doParserTest(String text) {
     doParserTest(text, builder -> JavaParser.INSTANCE.getExpressionParser().parse(builder));
+  }
+
+  private void doParserTest() {
+    doParserTest(builder -> JavaParser.INSTANCE.getExpressionParser().parse(builder));
   }
 }
