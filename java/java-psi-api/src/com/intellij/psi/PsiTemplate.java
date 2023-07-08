@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 
 /**
@@ -13,11 +15,11 @@ public interface PsiTemplate extends PsiExpression {
   /**
    * @return the fragments of this template.
    */
-  List<PsiLiteralExpression> getFragments();
+  @NotNull List<@NotNull PsiLiteralExpression> getFragments();
 
   /**
    * @return the embedded expression in this template;
    */
-  List<PsiExpression> getEmbeddedExpressions();
+  @NotNull List<@NotNull PsiExpression> getEmbeddedExpressions();
 
 }
