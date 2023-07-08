@@ -301,9 +301,11 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
               if (childId < FSRecords.MIN_REGULAR_FILE_ID || childId > maxAllocatedID) {
                 //RC: actually this branch is now unreachable -- childId is checked inside .listIds(), and
                 //    CorruptionException is thrown if childId is outside the range.
-                generalErrors++ //MAYBE RC: dedicated counter?
-                log.info("file[#$fileId]{$fileName}: children[$i][#$childId] " +
-                         "is outside of allocated IDs range [${FSRecords.MIN_REGULAR_FILE_ID}..$maxAllocatedID]")
+
+                generalErrors++.alsoLogThrottled(
+                  "file[#$fileId]{$fileName}: children[$i][#$childId] " +
+                  "is outside of allocated IDs range [${FSRecords.MIN_REGULAR_FILE_ID}..$maxAllocatedID]"
+                )
               }
               else {
                 val childParentId = fileRecords.getParent(childId)
@@ -317,8 +319,10 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             }
           }
           else if (children.isNotEmpty()) {
-            inconsistentParentChildRelationships++ //MAYBE RC: dedicated counter for that kind of errors?
-            log.info("file[#$fileId]{$fileName}: !directory (flags: ${Integer.toBinaryString(flags)}) but has children(${children.size})")
+            //MAYBE RC: dedicated counter for that kind of errors?
+            inconsistentParentChildRelationships++.alsoLogThrottled(
+              "file[#$fileId]{$fileName}: !directory (flags: ${Integer.toBinaryString(flags)}) but has children(${children.size})"
+            )
           }
 
           //TODO RC: try read _all_ attributes, check all them are readable
@@ -347,8 +351,6 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
         //MAYBE RC: use .listIdsUnchecked() method -- to not trigger VFS rebuild?
         val childrenOfParent = impl.listIds(parentId)
         if (childrenOfParent.indexOf(fileId) < 0) {
-          inconsistentParentChildRelationships++ //MAYBE RC: dedicated counter?
-
           //Check: is it an orphan _duplicate_ -- is there a non-orphan child with the same name?
           val fileNameId = fileRecords.getNameId(fileId)
           val hasChildWithSameName = childrenOfParent
@@ -359,12 +361,13 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             "first ${MAX_CHILDREN_TO_LOG} of ${childrenOfParent.size}: "
           else
             ""
-
-          log.info("file[#$fileId]{$fileName}: record is orphan, " +
-                   ".parent[#$parentId].children($childrenPrefix${childrenOfParent.joinToString(limit = MAX_CHILDREN_TO_LOG)}) " +
-                   "doesn't contain it, " +
-                   if (hasChildWithSameName) "but there is non-orphan child with same name."
-                   else "and there are NO non-orphan children with the same name."
+          //MAYBE RC: dedicated counter?
+          inconsistentParentChildRelationships++.alsoLogThrottled(
+            "file[#$fileId]{$fileName}: record is orphan, " +
+            ".parent[#$parentId].children($childrenPrefix${childrenOfParent.joinToString(limit = MAX_CHILDREN_TO_LOG)}) " +
+            "doesn't contain it, " +
+            if (hasChildWithSameName) "but there is non-orphan child with same name."
+            else "and there are NO non-orphan children with the same name."
           )
         }
       }
@@ -385,8 +388,10 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
 
         for (rootId in rootIds) {
           if (rootId < FSRecords.MIN_REGULAR_FILE_ID || rootId > maxAllocatedID) {
-            generalErrors++ //MAYBE RC: dedicated counter for that kind of errors?
-            log.info("root[#$rootId]: is outside of allocated IDs range [${FSRecords.MIN_REGULAR_FILE_ID}..$maxAllocatedID]")
+            //MAYBE RC: dedicated counter for that kind of errors?
+            generalErrors++.alsoLogThrottled(
+              "root[#$rootId]: is outside of allocated IDs range [${FSRecords.MIN_REGULAR_FILE_ID}..$maxAllocatedID]")
+            
             continue
           }
           val rootParentId = records.getParent(rootId)
