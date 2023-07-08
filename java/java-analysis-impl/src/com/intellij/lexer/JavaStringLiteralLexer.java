@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lexer;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,6 +18,14 @@ class JavaStringLiteralLexer extends StringLiteralLexer {
                          boolean canEscapeEolOrFramingSpaces,
                          String additionalValidEscapes) {
     super(quoteChar, originalLiteralToken, canEscapeEolOrFramingSpaces, additionalValidEscapes);
+  }
+
+  @Override
+  protected boolean highlightAsOriginalLiteral(char escapedChar) {
+    if (ElementType.STRING_TEMPLATE_FRAGMENTS.contains(myOriginalLiteralToken)) {
+      return escapedChar == '{';
+    }
+    return super.highlightAsOriginalLiteral(escapedChar);
   }
 
   @Override
