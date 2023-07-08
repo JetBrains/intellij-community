@@ -369,7 +369,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
           if (recordType == LargeBlobStorageRecordLayout.RECORD_TYPE_MOVED) {
             final int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
             if (redirectToId == NULL_ID) { //!actual && redirectTo = NULL
-              throw new IOException("Record[" + currentRecordId + "] is deleted");
+              throw new RecordAlreadyDeletedException("Can't read record[" + currentRecordId + "]: it was deleted");
             }
             currentRecordId = redirectToId;
           }
@@ -473,7 +473,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
           if (recordType == LargeBlobStorageRecordLayout.RECORD_TYPE_MOVED) {
             final int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
             if (!isValidRecordId(redirectToId)) {
-              throw new IOException("Can't write to record[" + currentRecordId + "]: it was deleted");
+              throw new RecordAlreadyDeletedException("Can't write to record[" + currentRecordId + "]: it was deleted");
             }
             currentRecordId = redirectToId;
             continue;//hope redirect chains are not too long...
@@ -590,7 +590,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
           case LargeBlobStorageRecordLayout.RECORD_TYPE_MOVED -> {
             final int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
             if (!isValidRecordId(redirectToId)) {
-              throw new IllegalStateException("Can't delete record[" + recordId + "]: it was already deleted");
+              throw new RecordAlreadyDeletedException("Can't delete record[" + recordId + "]: it was already deleted");
             }
 
             // (redirectToId=NULL) <=> 'record deleted' ('moved nowhere')

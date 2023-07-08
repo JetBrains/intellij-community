@@ -362,7 +362,7 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
         }
         if (!isRecordActual(recordActualLength)) {
           if (!isValidRecordId(recordRedirectedToId)) {
-            throw new IOException("Record[" + recordId + "] is deleted");
+            throw new RecordAlreadyDeletedException("Can't read record[" + recordId + "]: it was deleted");
           }
           //MAYBE RC: try to avoid recursion here, since we lock >1 pages while really only need to lock 1
           return readRecord(recordRedirectedToId, reader, redirectToIdRef);
@@ -471,7 +471,7 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
 
         if (!isRecordActual(recordActualLength)) { //record deleted or moved: check was it moved to a new location?
           if (!isValidRecordId(recordRedirectedToId)) {
-            throw new IOException("Can't write to record[" + recordId + "]: it was deleted");
+            throw new RecordAlreadyDeletedException("Can't write to record[" + recordId + "]: it was deleted");
           }
           //hope redirect chains are not too long...
           return writeToRecord(recordRedirectedToId, writer, expectedRecordSizeHint, leaveRedirectOnRecordRelocation);
@@ -575,7 +575,7 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
         final int recordRedirectedToId = readRecordRedirectToId(buffer, offsetOnPage);
 
         if (isRecordDeleted(recordActualLength)) {//record deleted or moved: check was it moved to a new location?
-          throw new IllegalStateException("Can't delete record[" + recordId + "]: it was already deleted");
+          throw new RecordAlreadyDeletedException("Can't delete record[" + recordId + "]: it was already deleted");
         }
         else {
           putRecordLengthMark(buffer, offsetOnPage, DELETED_RECORD_MARK);
