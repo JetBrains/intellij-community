@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
@@ -150,22 +151,10 @@ public class AboutDialog extends DialogWrapper {
     box.add(Box.createVerticalStrut(10));
     myInfo.add(appName);
 
-    String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
-    String buildInfoNonLocalized = MessageFormat.format("Build #{0}", appInfo.getBuild().asString());
-    Date buildDate = appInfo.getBuildDate().getTime();
-    String formattedBuildDate = DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(buildDate);
-    if (appInfo.getBuild().isSnapshot()) {
-      String buildTime = new SimpleDateFormat("HH:mm").format(buildDate);
-      buildInfo += IdeBundle.message("about.box.build.date.time", NlsMessages.formatDateLong(buildDate), buildTime);
-      buildInfoNonLocalized += MessageFormat.format(", built on {0} at {1}", formattedBuildDate, buildTime);
-    }
-    else {
-      buildInfo += IdeBundle.message("about.box.build.date", NlsMessages.formatDateLong(buildDate));
-      buildInfoNonLocalized += MessageFormat.format(", built on {0}", formattedBuildDate);
-    }
-    lines.add(buildInfo);
+    @NotNull Pair<String, String> result = getBuildInfo(appInfo);
+    lines.add(result.first);
     lines.add("");
-    myInfo.add(buildInfoNonLocalized);
+    myInfo.add(result.second);
 
     LicensingFacade la = LicensingFacade.getInstance();
     if (la != null) {
@@ -231,6 +220,24 @@ public class AboutDialog extends DialogWrapper {
     addEmptyLine(box);
 
     return box;
+  }
+
+  @NotNull
+  public static Pair<String, String> getBuildInfo(ApplicationInfoEx appInfo) {
+    String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
+    String buildInfoNonLocalized = MessageFormat.format("Build #{0}", appInfo.getBuild().asString());
+    Date buildDate = appInfo.getBuildDate().getTime();
+    String formattedBuildDate = DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(buildDate);
+    if (appInfo.getBuild().isSnapshot()) {
+      String buildTime = new SimpleDateFormat("HH:mm").format(buildDate);
+      buildInfo += IdeBundle.message("about.box.build.date.time", NlsMessages.formatDateLong(buildDate), buildTime);
+      buildInfoNonLocalized += MessageFormat.format(", built on {0} at {1}", formattedBuildDate, buildTime);
+    }
+    else {
+      buildInfo += IdeBundle.message("about.box.build.date", NlsMessages.formatDateLong(buildDate));
+      buildInfoNonLocalized += MessageFormat.format(", built on {0}", formattedBuildDate);
+    }
+    return Pair.create(buildInfo, buildInfoNonLocalized);
   }
 
   private static JBFont getDefaultTextFont() {
