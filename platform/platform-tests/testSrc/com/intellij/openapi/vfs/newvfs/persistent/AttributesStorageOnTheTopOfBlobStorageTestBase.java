@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordAlreadyDeletedException;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.IntPair;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
@@ -268,6 +269,44 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   }
 
   @Test
+  public void singleAttributeInserted_CouldBeAndDeletedTwice() throws IOException {
+    final AttributeRecord record = newAttributeRecord(ARBITRARY_FILE_ID, ARBITRARY_ATTRIBUTE_ID)
+      .withRandomAttributeBytes(INLINE_ATTRIBUTE_SMALLER_THAN + 1);
+
+    final AttributeRecord insertedRecord = attributes.insertOrUpdateRecord(record, attributesStorage);
+
+    assertTrue("Attribute just inserted must exist",
+               insertedRecord.existsInStorage(attributesStorage)
+    );
+
+    final boolean deleted = attributes.deleteRecord(insertedRecord, attributesStorage);
+    assertTrue("Attribute must be deleted successfully", deleted);
+    final boolean exists = insertedRecord.existsInStorage(attributesStorage);
+    assertFalse("Attribute just deleted must NOT exist", exists);
+
+    if (AttributesStorageOverBlobStorage.IGNORE_ALREADY_DELETED_ERRORS) {
+      final boolean deletedSecondTime = attributesStorage.deleteAttributes(
+        insertedRecord.recordId(),
+        insertedRecord.fileId()
+      );
+      assertFalse("Attribute is already deleted, must not be deleted on second attempt",
+                  deletedSecondTime);
+    }
+    else {
+      try {
+        attributesStorage.deleteAttributes(
+          insertedRecord.recordId(),
+          insertedRecord.fileId()
+        );
+        fail("IGNORE_ALREADY_DELETED_ERRORS=false => must throw error on second attempt to delete already deleted record");
+      }
+      catch (RecordAlreadyDeletedException e) {
+        //OK, it is expected get error if IGNORE_ALREADY_DELETED_ERRORS=false
+      }
+    }
+  }
+
+  @Test
   public void manyAttributesInserted_AreAllReportedExistInStorage_AndCouldBeReadBackAsIs() throws IOException {
     final int maxAttributeValueSize = Short.MAX_VALUE / 2;
     final int differentAttributesCount = 1024;
@@ -487,7 +526,6 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
         .withAttributeBytes(attributeValue, attributeValue.length);
 
       recordsReadWithForEach.put(attributeRecord.uniqueId(), attributeRecord);
-
     });
 
     return recordsReadWithForEach;

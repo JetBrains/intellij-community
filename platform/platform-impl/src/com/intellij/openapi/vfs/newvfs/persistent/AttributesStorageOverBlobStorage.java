@@ -10,12 +10,14 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStreamBase;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordAlreadyDeletedException;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.RepresentableAsByteArraySequence;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -27,12 +29,26 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.checkAttributeValueSize;
+import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.LOG;
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 /**
  * Attribute storage implemented on the top of {@link StreamlinedBlobStorage}
  */
+@ApiStatus.Internal
 public class AttributesStorageOverBlobStorage implements AbstractAttributesStorage {
   public static final int MAX_SUPPORTED_ATTRIBUTE_ID = 1 << AttributeEntry.BIG_ENTRY_ATTR_ID_BITS;
+
+  /**
+   * Under correct usage, we should never delete already deleted attribute record -- which is why storage was made
+   * throw exception in such a case.
+   * But in case of unexpected app termination, delete op could be interrupted in the middle, hence continues
+   * on restart, leading to the AlreadyDeletedException. It may be worth ignoring such errors, i.e. effectively
+   * allowing to delete already deleted record one more time. This is risky -- storage is definitely compromised
+   * -- but it could 'self-heal' storage in case of small corruptions without bothering the user with full VFS
+   * rebuild (which is a default way to 'self-heal' compromised VFS).
+   */
+  public static final boolean IGNORE_ALREADY_DELETED_ERRORS = getBooleanProperty("vfs.attributes.ignore-already-deleted-errors", true);
 
   //Persistent format (see AttributesRecord/AttributeEntry):
   //  Storage := (AttributeDirectoryRecord | AttributeDedicatedRecord)*
@@ -712,7 +728,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
         modCount.incrementAndGet();
       }
       catch (Throwable t) {
-        FSRecords.LOG.warn("Error storing " + attribute + " of file(" + fileId + ")");
+        LOG.warn("Error storing " + attribute + " of file(" + fileId + ")");
         throw FSRecords.handleError(t);
       }
       finally {
@@ -829,7 +845,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
       });
 
       if (recordToDelete.get() != NON_EXISTENT_ATTR_RECORD_ID) {
-        storage.deleteRecord(recordToDelete.get());
+        deleteRecordInStorage(recordToDelete.get());
       }
 
       return updatedAttributeRecordId;
@@ -1008,27 +1024,52 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
     if (attributesRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
       return false;
     }
-    //Use writeToRecord even though we only read is a trick to avoid deadlock: we call .deleteRecord()
-    // inside callback, which tries to acquire storage write lock, which could lead to deadlock
-    // if storage readLock is already acquired, even by current thread (RW lock not allow read->write
-    // lock escalation).
-    storage.writeToRecord(attributesRecordId, buffer -> {
-      final AttributesRecord attributesRecord = new AttributesRecord(buffer);
-      assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
-                                                        " != backref fileId(" + attributesRecord.backRefFileId + ")";
-      for (final AttributeEntry entry = attributesRecord.currentEntry();
-           entry.isValid();
-           entry.moveToNextEntry()) {
-        if (!entry.isValueInlined()) {
-          storage.deleteRecord(entry.dedicatedValueRecordId());
+
+    try {
+      //Use writeToRecord even though we only read is a trick to avoid deadlock: we call .deleteRecord()
+      // inside callback, which tries to acquire storage write lock, which could lead to deadlock
+      // if storage readLock is already acquired, even by current thread (RW lock not allow read->write
+      // lock escalation).
+      storage.writeToRecord(attributesRecordId, buffer -> {
+        final AttributesRecord attributesRecord = new AttributesRecord(buffer);
+        assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
+                                                          " != backref fileId(" + attributesRecord.backRefFileId + ")";
+        for (final AttributeEntry entry = attributesRecord.currentEntry();
+             entry.isValid();
+             entry.moveToNextEntry()) {
+          if (!entry.isValueInlined()) {
+            deleteRecordInStorage(entry.dedicatedValueRecordId());
+          }
         }
+        return null;//indicate no actual write happened
+      });
+    }
+    catch (RecordAlreadyDeletedException ex) {
+      if (IGNORE_ALREADY_DELETED_ERRORS) {
+        LOG.warn("Record [" + attributesRecordId + "] is already deleted -> likely");
       }
-      return null;//indicate no actual write happened
-    });
+      else {
+        throw ex;
+      }
+    }
 
-    storage.deleteRecord(attributesRecordId);
+    return deleteRecordInStorage(attributesRecordId);
+  }
 
-    return true;
+  private boolean deleteRecordInStorage(int recordId) throws IOException {
+    try {
+      storage.deleteRecord(recordId);
+      return true;
+    }
+    catch (RecordAlreadyDeletedException ex) {
+      if (IGNORE_ALREADY_DELETED_ERRORS) {
+        LOG.warn("Record [" + recordId + "] is already deleted -> likely");
+        return false;
+      }
+      else {
+        throw ex;
+      }
+    }
   }
 
 
@@ -1162,5 +1203,4 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
     usedAttributeRecordIds.add(attributeRecordId);
     //FIXME RC: read all the entries in attributeRecordId
   }
-
 }
