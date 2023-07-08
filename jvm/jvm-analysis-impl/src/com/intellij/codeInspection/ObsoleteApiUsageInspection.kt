@@ -45,6 +45,9 @@ class ObsoleteApiUsageInspection : LocalInspectionTool() {
         if (declaration !is UClass && declaration !is UMethod && declaration !is UField) return
         if (declaration.findAnnotation(OBSOLETE_ANNOTATION_NAME) != null) {
           val elementToHighlight = (sourceNode as? UDeclaration)?.uastAnchor.sourcePsiElement ?: sourceNode.sourcePsi ?: return
+          // Do not highlight method references that map to obsolete functional interface.
+          // this problem will be highlighted elsewhere (e.g., at declaration of the method accepting functional interface) 
+          if (elementToHighlight is PsiMethodReferenceExpression && target is PsiClass) return
           if (elementToHighlight is PsiReference) {
             problemsHolder.registerProblem(
               elementToHighlight as PsiReference, JvmAnalysisBundle.message("jvm.inspections.usages.of.obsolete.api.description"),
