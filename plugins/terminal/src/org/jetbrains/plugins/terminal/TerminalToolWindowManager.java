@@ -3,8 +3,8 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Sets;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.DistractionFreeModeController;
 import com.intellij.ide.actions.ShowContentAction;
-import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.ide.dnd.DnDDropHandler;
 import com.intellij.ide.dnd.DnDEvent;
@@ -724,7 +724,7 @@ class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISetting
   }
 
   private boolean shouldMakeDistractionFree() {
-    return !myWindow.getAnchor().isHorizontal() && ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled();
+    return !myWindow.getAnchor().isHorizontal() && DistractionFreeModeController.isDistractionFreeModeEnabled();
   }
 
   @Override

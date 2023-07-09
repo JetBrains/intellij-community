@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac
 
-import com.intellij.ide.actions.ToggleDistractionFreeModeAction
+import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
@@ -37,7 +37,7 @@ internal object MacFullScreenControlsManager {
       configureColors()
     }
 
-    if (ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()) {
+    if (DistractionFreeModeController.isDistractionFreeModeEnabled()) {
       updateForDistractionFreeMode(true)
     }
   }
@@ -95,7 +95,7 @@ internal object MacFullScreenControlsManager {
         configureForDistractionFreeMode(true)
       }
     }
-    else if (!ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()) {
+    else if (!DistractionFreeModeController.isDistractionFreeModeEnabled()) {
       configureForDistractionFreeMode(false)
     }
   }

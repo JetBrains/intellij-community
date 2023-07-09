@@ -25,11 +25,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+/**
+ * @see DistractionFreeModeController
+ */
 public class ToggleDistractionFreeModeAction extends DumbAwareAction implements LightEditCompatible {
-  private static final String KEY = "editor.distraction.free.mode";
-  private static final String BEFORE = "BEFORE.DISTRACTION.MODE.";
-  private static final String AFTER = "AFTER.DISTRACTION.MODE.";
-  private static final String LAST_ENTER_VALUE = "DISTRACTION.MODE.ENTER.VALUE";
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -39,7 +38,7 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
       return;
     }
 
-    String text = ActionsBundle.message(isDistractionFreeModeEnabled() ?
+    String text = ActionsBundle.message(DistractionFreeModeController.isDistractionFreeModeEnabled() ?
                                         "action.ToggleDistractionFreeMode.exit" :
                                         "action.ToggleDistractionFreeMode.enter");
     presentation.setText(text);
@@ -52,7 +51,7 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    RegistryValue value = RegistryManager.getInstance().get(KEY);
+    RegistryValue value = RegistryManager.getInstance().get(DistractionFreeModeController.KEY);
     boolean enter = !value.asBoolean();
     value.setValue(enter);
 
@@ -61,7 +60,7 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
       return;
     }
 
-    PropertiesComponent.getInstance().setValue(LAST_ENTER_VALUE, String.valueOf(enter));
+    PropertiesComponent.getInstance().setValue(DistractionFreeModeController.LAST_ENTER_VALUE, String.valueOf(enter));
 
     if (SystemInfo.isMac) {
       MacFullScreenControlsManager.INSTANCE.updateForDistractionFreeMode(enter);
@@ -72,8 +71,8 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
                  ToolbarSettings.getInstance(),
                  EditorSettingsExternalizable.getInstance().getOptions(),
                  DaemonCodeAnalyzerSettings.getInstance(),
-                 enter ? BEFORE : AFTER,
-                 enter ? AFTER : BEFORE,
+                 enter ? DistractionFreeModeController.BEFORE : DistractionFreeModeController.AFTER,
+                 enter ? DistractionFreeModeController.AFTER : DistractionFreeModeController.BEFORE,
                  !enter);
     if (enter) {
       TogglePresentationModeAction.storeToolWindows(project, false);
@@ -120,18 +119,27 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
     // @formatter:on
   }
 
+  /**
+   * @deprecated Use {@link DistractionFreeModeController}
+   */
+  @Deprecated
   public static boolean shouldMinimizeCustomHeader() {
-    return PropertiesComponent.getInstance().getBoolean(LAST_ENTER_VALUE, false);
+    return DistractionFreeModeController.shouldMinimizeCustomHeader();
   }
 
+  /**
+   * @deprecated Use {@link DistractionFreeModeController}
+   */
+  @Deprecated
   public static int getStandardTabPlacement() {
-    if (!isDistractionFreeModeEnabled()) {
-      return UISettings.getInstance().getEditorTabPlacement();
-    }
-    return PropertiesComponent.getInstance().getInt(BEFORE + "EDITOR_TAB_PLACEMENT", SwingConstants.TOP);
+    return DistractionFreeModeController.getStandardTabPlacement();
   }
 
+  /**
+   * @deprecated Use {@link DistractionFreeModeController}
+   */
+  @Deprecated
   public static boolean isDistractionFreeModeEnabled() {
-    return RegistryManager.getInstance().is(KEY);
+    return DistractionFreeModeController.isDistractionFreeModeEnabled();
   }
 }

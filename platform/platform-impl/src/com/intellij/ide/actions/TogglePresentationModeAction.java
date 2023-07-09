@@ -106,7 +106,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
   }
 
   private static void storeToolWindows(@Nullable Project project) {
-     storeToolWindows(project, ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled());
+     storeToolWindows(project, DistractionFreeModeController.isDistractionFreeModeEnabled());
   }
 
   static void storeToolWindows(@Nullable Project project, boolean inDistractionFree) {
@@ -125,7 +125,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
   }
 
   private static void restoreToolWindows(@Nullable Project project) {
-    restoreToolWindows(project, ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled());
+    restoreToolWindows(project, DistractionFreeModeController.isDistractionFreeModeEnabled());
   }
 
   static void restoreToolWindows(@Nullable Project project, boolean inDistractionFree) {

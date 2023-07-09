@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
-import com.intellij.ide.actions.ToggleDistractionFreeModeAction
+import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -182,7 +182,7 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   fun isAvailable(): Boolean {
-    return !ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled() &&
+    return !DistractionFreeModeController.isDistractionFreeModeEnabled() &&
            (PlatformUtils.isRider () || Registry.`is`("ide.colorful.toolbar", true))
   }
 

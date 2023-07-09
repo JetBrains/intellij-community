@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
+import com.intellij.ide.actions.DistractionFreeModeController;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ExperimentalUI;
@@ -91,7 +91,7 @@ public class EditorGutterLayout {
 
   List<GutterArea> getLayout() {
     if (ExperimentalUI.isNewUI()) {
-      if (ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()) {
+      if (DistractionFreeModeController.isDistractionFreeModeEnabled()) {
         return getNewUIDFMLayout();
       }
       return getExperimentalGutterLayout();

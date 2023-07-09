@@ -5,7 +5,7 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.ToggleDistractionFreeModeAction
+import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.*
@@ -73,8 +73,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     @JvmStatic
     val tabLimit: Int
       get() {
-        if (ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()
-            && ToggleDistractionFreeModeAction.getStandardTabPlacement() == UISettings.TABS_NONE) {
+        if (DistractionFreeModeController.isDistractionFreeModeEnabled()
+            && DistractionFreeModeController.getStandardTabPlacement() == UISettings.TABS_NONE) {
           return 1
         }
         else {

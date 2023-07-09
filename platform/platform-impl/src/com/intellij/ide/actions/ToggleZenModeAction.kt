@@ -14,7 +14,7 @@ class ToggleZenModeAction : DumbAwareAction() {
         private fun Project.getFrame() = WindowManagerEx.getInstanceEx().findFrameHelper(this)
 
         fun isZenModeEnabled(project: Project): Boolean {
-            if (!ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled())
+            if (!DistractionFreeModeController.isDistractionFreeModeEnabled())
                 return false
             if (isFullScreenApplicable()) {
                 val frame = project.getFrame()
@@ -56,7 +56,7 @@ class ToggleZenModeAction : DumbAwareAction() {
     private fun applyZenMode(e: AnActionEvent, state: Boolean) {
         val project = e.project ?: return
 
-        if (ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled() != state)
+        if (DistractionFreeModeController.isDistractionFreeModeEnabled() != state)
             toggleDistractionFreeModeAction.actionPerformed(e)
 
         if (isFullScreenApplicable()) {

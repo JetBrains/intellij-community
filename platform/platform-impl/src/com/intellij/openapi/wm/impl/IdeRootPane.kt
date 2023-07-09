@@ -7,7 +7,7 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.diagnostic.rootTask
 import com.intellij.diagnostic.subtask
 import com.intellij.ide.GeneralSettings
-import com.intellij.ide.actions.ToggleDistractionFreeModeAction
+import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.menu.ActionAwareIdeMenuBar
 import com.intellij.ide.menu.createMacMenuBar
 import com.intellij.ide.ui.UISettings
@@ -104,7 +104,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   }
 
   internal fun isCompactHeaderFastCheck(): Boolean {
-    return ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader() || isLightEdit
+    return DistractionFreeModeController.shouldMinimizeCustomHeader() || isLightEdit
   }
 
   protected open val isLightEdit: Boolean
