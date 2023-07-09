@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
 import com.intellij.debugger.engine.DebugProcessImpl
@@ -26,7 +26,8 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
     fun findVisibleVariableNames(location: Location): List<String> {
         val sourcePosition = KotlinPositionManager(debugProcess).safeGetSourcePosition(location) ?: return emptyList()
         ProgressManager.checkCanceled()
-        return findVisibleVariableNamesFrom(sourcePosition.elementAt)
+        val elementAt = sourcePosition.elementAt ?: return emptyList()
+        return findVisibleVariableNamesFrom(elementAt)
     }
 
     private fun findVisibleVariableNamesFrom(element: PsiElement): List<String> {

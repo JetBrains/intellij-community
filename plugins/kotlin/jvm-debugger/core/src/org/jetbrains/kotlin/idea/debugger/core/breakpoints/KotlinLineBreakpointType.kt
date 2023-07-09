@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The package directive doesn't match the file location to prevent API breakage
 package org.jetbrains.kotlin.idea.debugger.breakpoints
@@ -112,7 +112,7 @@ class KotlinLineBreakpointType :
         if (lambdas.isEmpty() && condRet == null) return emptyList()
 
         val result = LinkedList<JavaLineBreakpointType.JavaBreakpointVariant>()
-        val elementAt = pos.elementAt.parentsWithSelf.firstIsInstance<KtElement>()
+        val elementAt = pos.elementAt?.parentsWithSelf?.firstIsInstance<KtElement>() ?: return emptyList()
         val mainMethod = PsiTreeUtil.getParentOfType(elementAt, KtFunction::class.java, false)
         var mainMethodAdded = false
         if (mainMethod != null) {
@@ -157,7 +157,7 @@ class KotlinLineBreakpointType :
         val lambdaOrdinal = properties.lambdaOrdinal ?: return null
         // Since lambda breakpoints are placed on the first lambda statement,
         // we should find the function parent to highlight lambda breakpoints properly
-        val function = position.elementAt.parentOfType<KtFunction>() ?: return null
+        val function = position.elementAt?.parentOfType<KtFunction>() ?: return null
         val updatedPosition = SourcePosition.createFromElement(function) ?: return null
         return getLambdaByOrdinal(updatedPosition, lambdaOrdinal)?.textRange
     }

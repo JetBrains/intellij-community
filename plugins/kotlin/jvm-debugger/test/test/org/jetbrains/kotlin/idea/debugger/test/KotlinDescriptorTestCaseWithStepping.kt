@@ -250,7 +250,10 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             try {
                 doStepInto(ignoreFilters, filters[chooseFromList - 1])
             } catch (e: IndexOutOfBoundsException) {
-                val elementText = runReadAction { debuggerContext.sourcePosition.elementAt.getElementTextWithContext() }
+                val elementText = runReadAction {
+                    val elementAt = debuggerContext.sourcePosition.elementAt ?: return@runReadAction "<no-element>"
+                    elementAt.getElementTextWithContext()
+                }
                 throw AssertionError("Couldn't find smart step into command at: \n$elementText", e)
             }
         }
@@ -285,7 +288,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     private fun List<SmartStepTarget>.getIndicesInTree(): List<Int> {
         val targetsIndicesInTree = MutableList(size) { 0 }
         runReadAction {
-            val elementAt = debuggerContext.sourcePosition.elementAt
+            val elementAt = debuggerContext.sourcePosition.elementAt ?: return@runReadAction
             val topmostElement = getTopmostElementAtOffset(elementAt, elementAt.textRange.startOffset)
             topmostElement.accept(object : KtTreeVisitorVoid() {
                 private var elementIndex = 0

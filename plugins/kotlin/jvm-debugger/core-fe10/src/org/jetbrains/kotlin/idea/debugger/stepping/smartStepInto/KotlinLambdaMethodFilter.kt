@@ -63,7 +63,7 @@ class KotlinLambdaMethodFilter(
                 return@runReadAction true
             }
 
-            val blockAt = elementAt.parentOfType<KtBlockExpression>(withSelf = true)
+            val blockAt = elementAt?.parentOfType<KtBlockExpression>(withSelf = true)
             blockAt == bodyExpression
         }
     }
