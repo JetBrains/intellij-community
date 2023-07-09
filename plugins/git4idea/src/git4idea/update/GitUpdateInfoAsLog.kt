@@ -51,7 +51,9 @@ class GitUpdateInfoAsLog(private val project: Project,
   class NotificationData(val updatedFilesCount: Int,
                          val receivedCommitsCount: Int,
                          val filteredCommitsCount: Int?,
-                         val viewCommitAction: Runnable)
+                         val viewCommitAction: Runnable,
+                         val ranges: Map<GitRepository, HashRange>?,
+                         var overview: String? = null)
 
   private class CommitsAndFiles(val updatedFilesCount: Int, val receivedCommitsCount: Int)
 
@@ -71,7 +73,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     val rangeFilter = createRangeFilter()
     runInEdt { findOrCreateLogUi(rangeFilter, false) }
     return NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, null,
-                            getViewCommitsAction(rangeFilter))
+                            getViewCommitsAction(rangeFilter), ranges)
   }
 
   private fun isPathFilterSet(): Boolean {
@@ -253,7 +255,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
           val visibleCommitCount = visiblePack.visibleGraph.visibleCommitCount
           val data = NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, visibleCommitCount,
-                                      getViewCommitsAction(rangeFilter))
+                                      getViewCommitsAction(rangeFilter), ranges)
           dataSupplier.complete(data)
         }
       }

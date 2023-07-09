@@ -495,6 +495,8 @@
       <add-to-group group-id="CopyFileReference"/>
       <add-to-group group-id="Copy.Paste.Special" relative-to-action="CopyReference" anchor="after"/>
     </group>
+
+    <group id="Git.Update.Notification.Group" popup="false"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -775,6 +777,9 @@
 
     <vcs.commitMessageProvider implementation="git4idea.commit.GitTemplateCommitMessageProvider" order="first"/>
     <jbProtocolRevisionResolver implementation="git4idea.GitNavigateRevisionResolver"/>
+    <registryKey key="generate.commit.messages.overview"
+                 defaultValue="false"
+                 description="Adds the action 'AI Generated Overview' onto the git 'successfully updated' notification."/>
   </extensions>
 
   <extensionPoints>
@@ -785,6 +790,7 @@
                     dynamic="true"/>
     <extensionPoint interface="git4idea.fetch.GitFetchHandler" name="gitFetchHandler" dynamic="true"/>
     <extensionPoint interface="git4idea.config.GitProtectedBranchProvider" name="gitProtectedBranchProvider" dynamic="true"/>
+    <extensionPoint interface="git4idea.update.GitPostUpdateHandler" name="gitPostUpdateHandler" dynamic="true"/>
   </extensionPoints>
 
   <projectListeners>

@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter;
@@ -581,7 +582,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
         if (myUpdateSessions.size() == 1 && showsCustomNotification(myVcsToVirtualFiles.keySet())) {
           // multi-vcs projects behave as before: only a compound notification & file tree is shown for them, for the sake of simplicity
-          myUpdateSessions.get(0).showNotification();
+          if (Registry.is("generate.commit.messages.overview")) {
+            myUpdateSessions.forEach(UpdateSession::postProcess);
+          } else {
+            myUpdateSessions.get(0).showNotification();
+          }
         }
         else {
           final UpdateInfoTree tree = showUpdateTree(continueChainFinal && updateSuccess && noMerged, someSessionWasCancelled);
