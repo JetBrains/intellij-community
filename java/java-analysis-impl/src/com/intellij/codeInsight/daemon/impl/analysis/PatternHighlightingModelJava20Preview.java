@@ -299,7 +299,10 @@ final class PatternHighlightingModelJava20Preview {
       patternClass = PsiUtil.resolveClassInClassTypeOnly(JavaPsiPatternUtil.getPatternType(element));
       if (patternClass != null) {
         patternClasses.put(patternClass, pattern);
-        SwitchBlockHighlightingModel.visitAllPermittedClasses(patternClass, permittedClass -> patternClasses.put(permittedClass, pattern));
+        Set<PsiClass> classes = SwitchBlockHighlightingModel.returnAllPermittedClasses(patternClass);
+        for (PsiClass aClass : classes) {
+          patternClasses.put(aClass, pattern);
+        }
       }
     }
     return patternClasses;
