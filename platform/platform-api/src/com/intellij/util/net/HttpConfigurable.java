@@ -109,9 +109,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
     HttpConfigurable state = new HttpConfigurable();
     XmlSerializerUtil.copyBean(this, state);
-    if (!KEEP_PROXY_PASSWORD) {
-      removeSecure("proxy.password");
-    }
     correctPasswords(state);
     return state;
   }
@@ -146,9 +143,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   @Override
   public void loadState(@NotNull HttpConfigurable state) {
     XmlSerializerUtil.copyBean(state, this);
-    if (!KEEP_PROXY_PASSWORD) {
-      removeSecure("proxy.password");
-    }
     correctPasswords(this);
   }
 
