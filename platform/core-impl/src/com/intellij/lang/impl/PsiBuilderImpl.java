@@ -51,6 +51,8 @@ import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance(PsiBuilderImpl.class);
 
+  static PsiBuilderDiagnostics DIAGNOSTICS;
+
   // function stored in PsiBuilderImpl's user data that is called during reparse when the algorithm is not sure what to merge
   public static final Key<TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>>
     CUSTOM_COMPARATOR = Key.create("CUSTOM_COMPARATOR");
@@ -163,6 +165,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     myLexStarts = tokens.lexStarts;
     myLexTypes = tokens.lexTypes;
     myLexemeCount = tokens.lexemeCount;
+    if (DIAGNOSTICS != null) {
+      DIAGNOSTICS.registerPass(text.length(), myLexemeCount);
+    }
   }
 
   private @NotNull TokenSequence performLexing(@Nullable Object parentCachingNode) {
@@ -820,6 +825,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     assert marker.myLexemeIndex >= 0 : "The marker is already disposed";
     if (myDebugMode) {
       myProduction.assertNoDoneMarkerAround(marker);
+    }
+    if (DIAGNOSTICS != null) {
+      DIAGNOSTICS.registerRollback(myCurrentLexeme - marker.myLexemeIndex);
     }
     myCurrentLexeme = marker.myLexemeIndex;
     myTokenTypeChecked = true;
