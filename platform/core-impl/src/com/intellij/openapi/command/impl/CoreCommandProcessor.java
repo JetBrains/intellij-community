@@ -196,8 +196,11 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     application.assertWriteIntentLockAcquired();
 
     if (CommandLog.LOG.isDebugEnabled()) {
+      String currentCommandName;
+      if (myCurrentCommand != null) currentCommandName = myCurrentCommand.myName;
+      else currentCommandName = "<null>";
       CommandLog.LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId +
-                           ", in command = " + (myCurrentCommand != null) +
+                           ", in command = " + currentCommandName +
                            ", in transparent action = " + isUndoTransparentActionInProgress());
     }
 
@@ -277,6 +280,8 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       myCurrentCommand = null;
       publisher.commandFinished(event);
     }
+
+    CommandLog.LOG.debug("finishCommand: name = " + event.getCommandName() + ", groupId = " + event.getCommandGroupId());
   }
 
   @Override
