@@ -479,6 +479,11 @@ public class SwitchBlockHighlightingModel {
                                                            @NotNull List<? extends PsiCaseLabelElement> elements) {
     LinkedHashMap<PsiClass, PsiPattern> patternClasses = findPatternClasses(elements);
     List<PsiEnumConstant> enumConstants = StreamEx.of(elements).map(element -> getEnumConstant(element)).nonNull().toList();
+    List<PsiPrimaryPattern> unconditionalPatterns =
+      ContainerUtil.mapNotNull(elements, element -> JavaPsiPatternUtil.findUnconditionalPattern(element));
+    List<PsiTypeTestPattern> typeTestPatterns =
+      ContainerUtil.filterIsInstance(unconditionalPatterns, PsiTypeTestPattern.class);
+
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(selectorType));
     if (selectorClass == null) return Collections.emptySet();
     Queue<PsiClass> nonVisited = new ArrayDeque<>();
@@ -503,7 +508,9 @@ public class SwitchBlockHighlightingModel {
       }
       else {
         visited.add(psiClass);
-        if (!(psiClass.isEnum() && findMissingEnumConstant(psiClass, enumConstants).isEmpty())) {
+        if (!ContainerUtil.exists(typeTestPatterns,
+                                  pattern -> JavaPsiPatternUtil.isUnconditionalForType(pattern, TypeUtils.getType(psiClass), true)) &&
+          !(psiClass.isEnum() && findMissingEnumConstant(psiClass, enumConstants).isEmpty())) {
           missingClasses.add(psiClass);
         }
       }
