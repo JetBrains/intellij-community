@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.WeighedFileEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.lang.MarkdownFileType
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.hasMarkdownType
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 
 internal class MarkdownPreviewFileEditorProvider: WeighedFileEditorProvider() {
@@ -15,7 +16,7 @@ internal class MarkdownPreviewFileEditorProvider: WeighedFileEditorProvider() {
     if (!MarkdownHtmlPanelProvider.hasAvailableProviders()) {
       return false
     }
-    return file.fileType == MarkdownFileType.INSTANCE || isMarkdownScratch(project, file)
+    return file.hasMarkdownType() || isMarkdownScratch(project, file)
   }
 
   private fun isMarkdownScratch(project: Project, file: VirtualFile): Boolean {
