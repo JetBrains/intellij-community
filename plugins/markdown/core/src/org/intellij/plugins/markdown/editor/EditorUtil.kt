@@ -2,7 +2,9 @@ package org.intellij.plugins.markdown.editor
 
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.CaretModel
+import org.jetbrains.annotations.ApiStatus
 
-internal fun CaretModel.runForEachCaret(reverseOrder: Boolean = false, block: (Caret) -> Unit) {
+@ApiStatus.Internal
+fun CaretModel.runForEachCaret(reverseOrder: Boolean = false, block: (Caret) -> Unit) {
   runForEachCaret(block, reverseOrder)
 }

@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.editor.paste
+package org.intellij.plugins.markdown.images.editor.paste
 
 import com.intellij.ide.PasteProvider
 import com.intellij.ide.dnd.FileCopyPasteUtil

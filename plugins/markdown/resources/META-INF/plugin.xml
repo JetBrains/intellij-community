@@ -7,13 +7,13 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
-    <plugin id="com.intellij.platform.images"/>
   </dependencies>
   <content>
     <module name="intellij.markdown.fenceInjection"/>
     <module name="intellij.markdown.frontmatter"/>
     <module name="intellij.markdown.frontmatter.yaml"/>
     <module name="intellij.markdown.frontmatter.toml"/>
+    <module name="intellij.markdown.images"/>
   </content>
 
   <description><![CDATA[
@@ -161,14 +161,6 @@
 
     <fileEditorProvider implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
     <textEditorCustomizer implementation="org.intellij.plugins.markdown.ui.floating.AddFloatingToolbarTextEditorCustomizer"/>
-
-    <customPasteProvider id="MarkdownImagePasteProvider"
-                         implementation="org.intellij.plugins.markdown.editor.paste.MarkdownImagePasteProvider"/>
-    <customPasteProvider id="MarkdownFileLinkPasteProvider"
-                         order="after MarkdownImagePasteProvider"
-                         implementation="org.intellij.plugins.markdown.editor.paste.FileLinkPasteProvider"/>
-    <customFileDropHandler id="MarkdownEditorFileDropHandler"
-                           implementation="org.intellij.plugins.markdown.editor.paste.MarkdownFileDropHandler"/>
 
     <spellchecker.support language="Markdown"
                           implementationClass="org.intellij.plugins.markdown.spellchecking.MarkdownSpellcheckingStrategy"/>

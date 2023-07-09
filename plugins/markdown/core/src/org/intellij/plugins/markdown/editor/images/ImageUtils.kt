@@ -10,8 +10,10 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.IncorrectOperationException
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.jetbrains.annotations.ApiStatus
 
-internal object ImageUtils {
+@ApiStatus.Internal
+object ImageUtils {
   @JvmStatic
   fun createMarkdownImageText(description: String = "", path: String, title: String = ""): String {
     val actualTitle = when {

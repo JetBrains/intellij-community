@@ -1,0 +1,18 @@
+<idea-plugin package="org.intellij.plugins.markdown.images">
+  <dependencies>
+    <plugin id="com.intellij.platform.images"/>
+    <plugin id="com.intellij.modules.xml"/>
+  </dependencies>
+
+  <resource-bundle>messages.MarkdownImagesBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <customPasteProvider id="MarkdownImagePasteProvider"
+                         implementation="org.intellij.plugins.markdown.images.editor.paste.MarkdownImagePasteProvider"/>
+    <customPasteProvider id="MarkdownFileLinkPasteProvider"
+                         order="after MarkdownImagePasteProvider"
+                         implementation="org.intellij.plugins.markdown.images.editor.paste.FileLinkPasteProvider"/>
+    <customFileDropHandler id="MarkdownEditorFileDropHandler"
+                           implementation="org.intellij.plugins.markdown.images.editor.paste.MarkdownFileDropHandler"/>
+  </extensions>
+</idea-plugin>
