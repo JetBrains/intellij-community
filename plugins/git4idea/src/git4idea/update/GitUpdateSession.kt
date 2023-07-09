@@ -13,9 +13,9 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction.Updater.isAIGeneratedSummaryEnabled
 import com.intellij.openapi.vcs.update.UpdateSession
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -91,7 +91,7 @@ class GitUpdateSession(private val project: Project,
       notification.addAction(NotificationAction.createSimple(Supplier { GitBundle.message("action.NotificationAction.GitUpdateSession.text.view.commits") },
                                                              notificationData.viewCommitAction))
 
-      if (Registry.`is`("generate.commit.messages.overview")) {
+      if (isAIGeneratedSummaryEnabled()) {
         val group = ActionManager.getInstance().getAction("Git.Update.Notification.Group") as ActionGroup
         group.getChildren(null).forEach { notification.addAction(it) }
       }
@@ -153,7 +153,7 @@ class GitUpdateSession(private val project: Project,
       content += additionalContent
     }
 
-    return if (Registry.`is`("generate.commit.messages.overview")) {
+    return if (isAIGeneratedSummaryEnabled()) {
       DataProviderNotification(VcsNotifier.STANDARD_NOTIFICATION.displayId, title, content, type, overview).also {
         it.setDisplayId(displayId)
       }

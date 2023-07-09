@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -582,7 +583,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
         if (myUpdateSessions.size() == 1 && showsCustomNotification(myVcsToVirtualFiles.keySet())) {
           // multi-vcs projects behave as before: only a compound notification & file tree is shown for them, for the sake of simplicity
-          if (Registry.is("generate.commit.messages.overview")) {
+          if (isAIGeneratedSummaryEnabled()) {
             myUpdateSessions.forEach(UpdateSession::postProcess);
           } else {
             myUpdateSessions.get(0).showNotification();
@@ -614,6 +615,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
     }
 
+    public static boolean isAIGeneratedSummaryEnabled() {
+      return Registry.is("generate.commit.messages.overview") && AdvancedSettings.getBoolean("git.ai.generated.commits.summary");
+    }
 
     private void showContextInterruptedError() {
       gatherContextInterruptedMessages();
