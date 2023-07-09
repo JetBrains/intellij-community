@@ -438,12 +438,16 @@ public class SwitchBlockHighlightingModel {
 
   private enum SelectorKind {INT, ENUM, STRING, CLASS_OR_ARRAY}
 
-  static @NotNull LinkedHashMap<PsiClass, PsiPattern> findPatternClasses(@NotNull List<? extends PsiCaseLabelElement> elements) {
+  private static @NotNull LinkedHashMap<PsiClass, PsiPattern> findPatternClasses(@NotNull List<? extends PsiCaseLabelElement> elements) {
     LinkedHashMap<PsiClass, PsiPattern> patternClasses = new LinkedHashMap<>();
     for (PsiCaseLabelElement element : elements) {
       PsiPattern pattern = extractPattern(element);
       if (pattern == null) continue;
-      PsiClass patternClass = PsiUtil.resolveClassInClassTypeOnly(JavaPsiPatternUtil.getPatternType(element));
+      PsiClass patternClass;
+      if (element instanceof PsiDeconstructionPattern) {
+        continue;
+      }
+      patternClass = PsiUtil.resolveClassInClassTypeOnly(JavaPsiPatternUtil.getPatternType(element));
       if (patternClass != null) {
         patternClasses.put(patternClass, pattern);
         visitAllPermittedClasses(patternClass, permittedClass -> patternClasses.put(permittedClass, pattern));
@@ -452,7 +456,7 @@ public class SwitchBlockHighlightingModel {
     return patternClasses;
   }
 
-  private static @Nullable PsiPattern extractPattern(PsiCaseLabelElement element) {
+  static @Nullable PsiPattern extractPattern(PsiCaseLabelElement element) {
     if (element instanceof PsiPatternGuard patternGuard) {
       Object constVal = ExpressionUtils.computeConstantExpression(patternGuard.getGuardingExpression());
       return Boolean.TRUE.equals(constVal) ? patternGuard.getPattern() : null;
@@ -460,7 +464,7 @@ public class SwitchBlockHighlightingModel {
     return ObjectUtils.tryCast(element, PsiPattern.class);
   }
 
-  private static void visitAllPermittedClasses(@NotNull PsiClass psiClass, Consumer<? super PsiClass> consumer){
+  static void visitAllPermittedClasses(@NotNull PsiClass psiClass, Consumer<? super PsiClass> consumer){
     Set<PsiClass> visitedClasses = new HashSet<>();
     Queue<PsiClass> notVisitedClasses = new LinkedList<>();
     notVisitedClasses.add(psiClass);
@@ -476,13 +480,13 @@ public class SwitchBlockHighlightingModel {
   }
 
   static @NotNull Set<PsiClass> findMissedClassesForSealed(@NotNull PsiType selectorType,
-                                                           @NotNull List<? extends PsiCaseLabelElement> elements) {
+                                                           @NotNull List<? extends PsiCaseLabelElement> elements,
+                                                           @Nullable PsiElement context) {
     LinkedHashMap<PsiClass, PsiPattern> patternClasses = findPatternClasses(elements);
     List<PsiEnumConstant> enumConstants = StreamEx.of(elements).map(element -> getEnumConstant(element)).nonNull().toList();
-    List<PsiPrimaryPattern> unconditionalPatterns =
-      ContainerUtil.mapNotNull(elements, element -> JavaPsiPatternUtil.findUnconditionalPattern(element));
     List<PsiTypeTestPattern> typeTestPatterns =
-      ContainerUtil.filterIsInstance(unconditionalPatterns, PsiTypeTestPattern.class);
+      ContainerUtil.filterIsInstance(
+        ContainerUtil.mapNotNull(elements, element -> JavaPsiPatternUtil.findUnconditionalPattern(element)), PsiTypeTestPattern.class);
 
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(selectorType));
     if (selectorClass == null) return Collections.emptySet();
@@ -510,7 +514,10 @@ public class SwitchBlockHighlightingModel {
         visited.add(psiClass);
         if (!ContainerUtil.exists(typeTestPatterns,
                                   pattern -> JavaPsiPatternUtil.isUnconditionalForType(pattern, TypeUtils.getType(psiClass), true)) &&
-          !(psiClass.isEnum() && findMissingEnumConstant(psiClass, enumConstants).isEmpty())) {
+            !(psiClass.isEnum() && findMissingEnumConstant(psiClass, enumConstants).isEmpty()) &&
+            !(psiClass.isRecord() && context !=null &&
+              PsiUtil.getLanguageLevel(psiClass)!=LanguageLevel.JDK_20_PREVIEW &&
+              PatternHighlightingModel.checkRecordExhaustiveness(elements, TypeUtils.getType(psiClass), context).isExhaustive())) {
           missingClasses.add(psiClass);
         }
       }
@@ -537,7 +544,7 @@ public class SwitchBlockHighlightingModel {
       if (kind == SelectorKind.INT) return;
       if (kind == null) {
         HighlightInfo.Builder info = createError(mySelector, JavaErrorBundle.message("switch.invalid.selector.types",
-                                                                             JavaHighlightUtil.formatType(mySelectorType)));
+                                                                                     JavaHighlightUtil.formatType(mySelectorType)));
         registerFixesOnInvalidSelector(info);
         holder.add(info.create());
       }
@@ -613,7 +620,7 @@ public class SwitchBlockHighlightingModel {
       if (!(label instanceof PsiParenthesizedExpression) && isNullType(label)) {
         if (mySelectorType instanceof PsiPrimitiveType && !isNullType(mySelector)) {
           HighlightInfo.Builder error = createError(label, JavaErrorBundle.message("incompatible.switch.null.type", "null",
-                                                                           JavaHighlightUtil.formatType(mySelectorType)));
+                                                                                   JavaHighlightUtil.formatType(mySelectorType)));
           holder.add(error.create());
         }
         return;
@@ -978,18 +985,8 @@ public class SwitchBlockHighlightingModel {
      */
     private void checkCompleteness(@NotNull List<? extends PsiCaseLabelElement> elements, @NotNull HighlightInfoHolder results,
                                    boolean inclusiveUnconditionalAndDefault) {
-      List<PsiType> selectorTypes = new ArrayList<>();
-      PsiClass resolvedClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
       //T is an intersection type T1& ... &Tn and P covers Ti, for one of the types Ti (1≤i≤n)
-      if (resolvedClass instanceof PsiTypeParameter typeParameter) {
-        PsiClassType[] types = typeParameter.getExtendsListTypes();
-        Arrays.stream(types)
-          .filter(t -> t != null)
-          .forEach(t -> selectorTypes.add(t));
-      }
-      if (selectorTypes.isEmpty()) {
-        selectorTypes.add(mySelectorType);
-      }
+      List<PsiType> selectorTypes = PatternHighlightingModel.getAllTypes(mySelectorType);
 
       if (inclusiveUnconditionalAndDefault) {
         PsiCaseLabelElement elementCoversType =
@@ -1024,36 +1021,18 @@ public class SwitchBlockHighlightingModel {
         checkEnumCompleteness(selectorClass, enumElements, results, !elements.isEmpty());
         return;
       }
-      List<PsiType> sealedTypes = selectorTypes.stream()
-        .filter(type -> {
-          PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(type));
-          return psiClass != null && psiClass.hasModifierProperty(SEALED);
-        })
-        .toList();
+      List<PsiType> sealedTypes = getSealedTypes(selectorTypes);
       if (!sealedTypes.isEmpty()) {
-        if (selectorClass != null) {
-          //records are final, checking intersections are not needed
-          checkRecordExhaustiveness(elements, selectorClass, results);
-        }
-        for (int i = 0; i < sealedTypes.size(); i++) {
-          PsiType currentSelectorType = sealedTypes.get(i);
-          HighlightInfo.Builder info = checkSealedClassCompleteness(currentSelectorType, elements);
-          if (info == null) {
-            return;
-          }
-          if (i == sealedTypes.size() - 1) {
-            results.add(info.create());
-            return;
-          }
-        }
+        checkSealed(elements, results, selectorTypes, selectorClass);
+        return;
       }
       //records are final, checking intersections are not needed
-      else if (selectorClass != null && selectorClass.isRecord()) {
+      if (selectorClass != null && selectorClass.isRecord()) {
         if (!checkRecordCaseSetNotEmpty(elements)) {
           results.add(createCompletenessInfoForSwitch(!elements.isEmpty()).create());
         }
         else {
-          checkRecordExhaustiveness(elements, selectorClass, results);
+          checkRecordExhaustiveness(elements, mySelectorType, results);
         }
       }
       else {
@@ -1061,11 +1040,48 @@ public class SwitchBlockHighlightingModel {
       }
     }
 
+    private void checkSealed(@NotNull List<? extends PsiCaseLabelElement> elements,
+                             @NotNull HighlightInfoHolder results,
+                             @NotNull List<PsiType> sealedTypes,
+                             @Nullable PsiClass selectorClass) {
+      boolean checked = true;
+      for (int i = 0; i < sealedTypes.size(); i++) {
+        PsiType currentSelectorType = sealedTypes.get(i);
+        HighlightInfo.Builder info = checkSealedClassCompleteness(currentSelectorType, elements);
+        if (info == null) {
+          break;
+        }
+        if (i == sealedTypes.size() - 1) {
+          results.add(info.create());
+          checked = false;
+          break;
+        }
+      }
+      if (checked && selectorClass != null && PsiUtil.getLanguageLevel(selectorClass) == LanguageLevel.JDK_20_PREVIEW) {
+        checkRecordExhaustiveness(elements, mySelectorType, results);
+      }
+    }
+
+    @NotNull
+    private static List<PsiType> getSealedTypes(@NotNull List<PsiType> selectorTypes) {
+      return selectorTypes.stream()
+        .filter(type -> {
+          PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(type));
+          return psiClass != null && psiClass.hasModifierProperty(SEALED);
+        })
+        .toList();
+    }
+
     private void checkRecordExhaustiveness(@NotNull List<? extends PsiCaseLabelElement> elements,
-                                           @NotNull PsiClass selectorClass,
+                                           @Nullable PsiType selectorClassType,
                                            @NotNull HighlightInfoHolder results) {
+      PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(selectorClassType));
+      if (selectorClass == null) {
+        return;
+      }
       PatternHighlightingModel.RecordExhaustivenessResult exhaustivenessResult =
-        PatternHighlightingModel.checkRecordExhaustiveness(elements);
+        PatternHighlightingModel.checkRecordExhaustiveness(elements, selectorClassType, myBlock);
+
       if (!exhaustivenessResult.isExhaustive()) {
         HighlightInfo.Builder builder = createCompletenessInfoForSwitch(!elements.isEmpty());
         if (exhaustivenessResult.canBeAdded() && selectorClass.isRecord()) {
@@ -1124,7 +1140,12 @@ public class SwitchBlockHighlightingModel {
     @Nullable
     private HighlightInfo.Builder checkSealedClassCompleteness(@NotNull PsiType selectorType,
                                                                @NotNull List<? extends PsiCaseLabelElement> elements) {
-      Set<PsiClass> missingClasses = findMissedClassesForSealed(selectorType, elements);
+      Set<PsiClass> missingClasses;
+      if (LanguageLevel.JDK_20_PREVIEW == PsiUtil.getLanguageLevel(myBlock)) {
+        missingClasses = PatternHighlightingModelJava20Preview.findMissedClassesForSealed(selectorType, elements);
+      }else{
+        missingClasses = findMissedClassesForSealed(selectorType, elements, myBlock);
+      }
       if (missingClasses.isEmpty()) return null;
       HighlightInfo.Builder info = createCompletenessInfoForSwitch(!elements.isEmpty());
       List<String> allNames = collectLabelElementNames(elements, missingClasses);
@@ -1146,7 +1167,7 @@ public class SwitchBlockHighlightingModel {
     }
 
     @NotNull
-    private static Collection<PsiClass> getPermittedClasses(@NotNull PsiClass psiClass) {
+    static Collection<PsiClass> getPermittedClasses(@NotNull PsiClass psiClass) {
       PsiReferenceList permitsList = psiClass.getPermitsList();
       if (permitsList == null) {
         return SyntaxTraverser.psiTraverser(psiClass.getContainingFile())

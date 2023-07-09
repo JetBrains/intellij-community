@@ -15,19 +15,24 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.psi.util.JavaPsiPatternUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.TypeUtils;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiPredicate;
+import java.util.stream.Collectors;
 
 final class PatternHighlightingModel {
 
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
+  public static final int MAX_ITERATION_COVERAGE = 10_000;
 
   static void createDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern, @NotNull HighlightInfoHolder holder) {
     if (deconstructionPattern == null) return;
@@ -155,203 +160,420 @@ final class PatternHighlightingModel {
     return builder.create();
   }
 
-  @NotNull
-  static RecordExhaustivenessResult checkRecordExhaustiveness(@NotNull List<? extends PsiCaseLabelElement> caseElements) {
+  /**
+   * Create light description for patterns
+   */
+  static List<PatternDescription> prepareRecordPattern(@NotNull List<? extends PsiCaseLabelElement> caseElements) {
     List<PsiPrimaryPattern> unconditionalPatterns =
       ContainerUtil.mapNotNull(caseElements, element -> JavaPsiPatternUtil.findUnconditionalPattern(element));
     List<PsiDeconstructionPattern> unconditionalDeconstructions =
       ContainerUtil.filterIsInstance(unconditionalPatterns, PsiDeconstructionPattern.class);
-    if (unconditionalDeconstructions.isEmpty()) {
-      return RecordExhaustivenessResult.createExhaustiveResult(); //no deconstruction
-    }
-
-    PsiDeconstructionPattern scope = unconditionalDeconstructions.get(0);
-
-    MultiMap<PsiType, PsiDeconstructionPattern> deconstructionGroups =
-      ContainerUtil.groupBy(unconditionalDeconstructions, deconstruction -> JavaPsiPatternUtil.getPatternType(deconstruction));
-
-    MultiMap<PsiType, PsiTypeTestPattern> typeTestPatterns =
-      ContainerUtil.groupBy(
-        ContainerUtil.filterIsInstance(unconditionalPatterns, PsiTypeTestPattern.class),
-        pattern -> JavaPsiPatternUtil.getPatternType(pattern));
-
-    RecordExhaustivenessResult result = RecordExhaustivenessResult.createExhaustiveResult();
-    for (Map.Entry<PsiType, Collection<PsiDeconstructionPattern>> entry : deconstructionGroups.entrySet()) {
-      PsiType type = entry.getKey();
-      if (type == null) continue;
-      Collection<PsiTypeTestPattern> patterns = typeTestPatterns.get(type);
-      if (!patterns.isEmpty()) {
-        for (PsiPrimaryPattern pattern : patterns) {
-          //check, there is a non-deconstruction pattern, which cover it
-          if (JavaPsiPatternUtil.isUnconditionalForType(pattern, type)) {
-            return RecordExhaustivenessResult.createExhaustiveResult();
-          }
-        }
-      }
-      PsiClassType.ClassResolveResult resolve = PsiUtil.resolveGenericsClassInType(PsiUtil.captureToplevelWildcards(type, scope));
-      PsiClass selectorClass = resolve.getElement();
-      PsiSubstitutor substitutor = resolve.getSubstitutor();
-      if (selectorClass == null) continue;
-      List<PsiType> recordTypes =
-        ContainerUtil.map(selectorClass.getRecordComponents(), component -> substitutor.substitute(component.getType()));
-
-      List<List<PsiPattern>> deconstructionComponentsGroup = ContainerUtil.map(entry.getValue(), deconstruction -> Arrays.asList(
-        deconstruction.getDeconstructionList().getDeconstructionComponents()));
-      if (ContainerUtil.exists(deconstructionComponentsGroup, group -> group.size() != recordTypes.size())) {
-        return RecordExhaustivenessResult.createExhaustiveResult(); //it checked before, don't repeat error
-      }
-      RecordExhaustivenessResult currentResult = findExhaustiveInGroup(type, recordTypes, deconstructionComponentsGroup);
-      result.merge(currentResult);
-    }
-    return result;
-  }
-
-  @NotNull
-  private static RecordExhaustivenessResult findExhaustiveInGroup(@NotNull PsiType currentRecordType,
-                                                                  @NotNull List<? extends PsiType> leftRecordTypes,
-                                                                  @NotNull List<? extends List<PsiPattern>> deconstructions) {
-    if (leftRecordTypes.isEmpty() || ContainerUtil.exists(deconstructions, t -> t.size() == 0)) {
-      //there is no deconstruction, a case with an empty set of labels is considered before, don't repeat errors
-      return RecordExhaustivenessResult.createExhaustiveResult();
-    }
-    PsiType typeToCheck = leftRecordTypes.get(0);
-    //A case with unresolved type checks before, don't repeat errors
-    if (typeToCheck == null) return RecordExhaustivenessResult.createExhaustiveResult();
-    MultiMap<PsiType, List<PsiPattern>> groupedByType = ContainerUtil.groupBy(deconstructions,
-                                                                              deconstructionComponents -> JavaPsiPatternUtil.getPatternType(
-                                                                                deconstructionComponents.get(0)));
-    List<GroupExhaustiveness> groupsExhaustiveness = getGroupsExhaustiveness(currentRecordType, leftRecordTypes, groupedByType);
-    if (groupsExhaustiveness.isEmpty()) return RecordExhaustivenessResult.createNotBeAdded();
-    List<PsiPattern> checkedExhaustivePatterns = new ArrayList<>();
-    Map<PsiType, BranchesExhaustiveness> notExhaustive = new LinkedHashMap<>();
-    for (GroupExhaustiveness group : groupsExhaustiveness) {
-      if (!group.branchesExhaustiveness().result().isExhaustive()) {
-        PsiType notExhaustiveType = group.psiType();
-        notExhaustive.put(notExhaustiveType, group.branchesExhaustiveness());
+    List<PatternDescription> descriptions = new ArrayList<>();
+    for (PsiDeconstructionPattern deconstruction : unconditionalDeconstructions) {
+      PatternDescription description = createDescription(deconstruction);
+      if (description == null) {
         continue;
       }
-      Collection<List<PsiPattern>> lists = groupedByType.get(group.psiType());
-      if (lists.isEmpty()) continue;
-      List<PsiPattern> next = lists.iterator().next();
-      if (next == null || next.isEmpty()) continue;
-      checkedExhaustivePatterns.add(next.get(0));
+      descriptions.add(description);
     }
-    if (ContainerUtil.exists(checkedExhaustivePatterns, pattern -> JavaPsiPatternUtil.isUnconditionalForType(pattern, typeToCheck, true))) {
-      return RecordExhaustivenessResult.createExhaustiveResult(); // exhaustive even without not-exhaustive-subgroup
+    return descriptions;
+  }
+
+  @Nullable
+  private static PatternHighlightingModel.PatternDescription createDescription(@NotNull PsiPattern pattern) {
+    PsiType type = JavaPsiPatternUtil.getPatternType(pattern);
+    if (type == null) {
+      return null;
     }
-    Set<PsiClass> missedClasses = SwitchBlockHighlightingModel.findMissedClassesForSealed(typeToCheck, checkedExhaustivePatterns);
-    if (missedClasses.isEmpty() && !checkedExhaustivePatterns.isEmpty()) {
-      return RecordExhaustivenessResult.createExhaustiveResult(); //exhaustive even without not-exhaustive-subgroup
+    if (pattern instanceof PsiTypeTestPattern) {
+      return new PatternTypeTestDescription(type, true);
     }
-    //if one of them is unconditional, return any of them
-    List<BranchesExhaustiveness> coveredPatterns =
-      ContainerUtil.filter(notExhaustive.values(), group ->
-        group.branches().stream()
-          .filter(t -> !t.isEmpty())
-          .map(patterns -> patterns.get(0))
-          .anyMatch(pattern -> JavaPsiPatternUtil.isUnconditionalForType(pattern, typeToCheck, true)));
-    if (!coveredPatterns.isEmpty()) {
-      RecordExhaustivenessResult nextResult = coveredPatterns.get(0).result();
-      nextResult.addNextType(currentRecordType, typeToCheck);
-      return nextResult;
+    else if (pattern instanceof PsiDeconstructionPattern deconstructionPattern) {
+      List<PatternDescription> deconstructionList = new ArrayList<>();
+      for (PsiPattern component : deconstructionPattern.getDeconstructionList().getDeconstructionComponents()) {
+        PatternDescription description = createDescription(component);
+        if (description == null) {
+          return null;
+        }
+        deconstructionList.add(description);
+      }
+      return new PatternDeconstructionDescription(type, true, deconstructionList);
     }
-    return mergeMissedClasses(currentRecordType, leftRecordTypes, notExhaustive, missedClasses);
+    else {
+      throw new IllegalArgumentException("Unknown type for createDescription for exhaustiveness: " + pattern.getClass());
+    }
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  static RecordExhaustivenessResult checkRecordExhaustiveness(@NotNull List<? extends PsiCaseLabelElement> elements,
+                                                              @NotNull PsiType selectorType,
+                                                              @NotNull PsiElement context) {
+    if (PsiUtil.getLanguageLevel(context) == LanguageLevel.JDK_20_PREVIEW) {
+      return PatternHighlightingModelJava20Preview.checkRecordExhaustiveness(elements);
+    }
+    List<PatternHighlightingModel.PatternDescription> patterns = prepareRecordPattern(elements);
+    return checkRecordExhaustivenessInner(patterns, selectorType, context);
   }
 
   @NotNull
-  private static RecordExhaustivenessResult mergeMissedClasses(@NotNull PsiType recordType,
-                                                               @NotNull List<? extends PsiType> recordTypes,
-                                                               @NotNull Map<PsiType, BranchesExhaustiveness> notExhaustiveBranches,
-                                                               @NotNull Set<PsiClass> missedClasses) {
-    RecordExhaustivenessResult result = RecordExhaustivenessResult.createNotExhaustiveResult();
-    for (PsiClass missedClass : missedClasses) {
-      PsiClassType missedType = PsiTypesUtil.getClassType(missedClass);
-      BranchesExhaustiveness branchesExhaustiveness = notExhaustiveBranches.get(missedType);
-      if (branchesExhaustiveness == null) {
-        //There is a chance that branchExhaustiveness cover partially this new branch,
-        //but let's not recalculate and make it simple and fast.
-        //Otherwise, we have to process all classes in a permit list every time
-        result.addNewBranch(recordType, missedType, recordTypes);
-      }
-      else {
-        RecordExhaustivenessResult recordExhaustivenessResult = branchesExhaustiveness.result();
-        recordExhaustivenessResult.addNextType(recordType, missedType);
-        result.merge(recordExhaustivenessResult);
+  private static RecordExhaustivenessResult checkRecordExhaustivenessInner(@NotNull List<PatternDescription> patterns,
+                                                              @NotNull PsiType selectorType,
+                                                              @NotNull PsiElement context) {
+    if (patterns.isEmpty()) {
+      return RecordExhaustivenessResult.createNotBeAdded();
+    }
+    class TestCovered implements BiPredicate<Set<PatternDescription>, PsiType> {
+      boolean covered;
+
+      @Override
+      public boolean test(Set<PatternDescription> descriptions, PsiType type) {
+        covered = coverSelectorType(descriptions, selectorType);
+        return covered;
       }
     }
+    TestCovered testCovered = new TestCovered();
+    ReduceResult result = reduceInLoop(selectorType, context, new HashSet<>(patterns), testCovered);
+    if (testCovered.covered) {
+      return RecordExhaustivenessResult.createExhaustiveResult();
+    }
+
+
+    return RecordExhaustivenessResult.createNotBeAdded();
+  }
+
+  @NotNull
+  static ReduceResult reduceInLoop(@NotNull PsiType selectorType,
+                                   @NotNull PsiElement context,
+                                   @NotNull Set<PatternDescription> patterns,
+                                   @NotNull BiPredicate<Set<PatternDescription>, PsiType> stopAt) {
+    boolean changed = false;
+    int currentIteration = 0;
+    Set<PatternDescription> currentPatterns = new HashSet<>(patterns);
+    while (currentIteration < MAX_ITERATION_COVERAGE) {
+      currentIteration++;
+      if (stopAt.test(currentPatterns, selectorType)) {
+        return new ReduceResult(currentPatterns, true);
+      }
+      ReduceResult reduceResult = reduce(selectorType, context, currentPatterns);
+      changed |= reduceResult.changed();
+      currentPatterns = reduceResult.patterns();
+      if (!reduceResult.changed()) {
+        return new ReduceResult(currentPatterns, changed);
+      }
+    }
+    //todo print logs
+    return new ReduceResult(currentPatterns, changed);
+  }
+
+  //todo tests for all type reduce
+  @NotNull
+  private static ReduceResult reduce(@NotNull PsiType selectorType,
+                                     @NotNull PsiElement context,
+                                     @NotNull Set<PatternDescription> currentPatterns) {
+    //todo cache?
+    ReduceResult result = reduceRecordPatterns(currentPatterns, selectorType, context);
+    boolean changed = result.changed();
+    currentPatterns = result.patterns();
+    result = reduceDeconstructionRecordToTypePattern(currentPatterns, context);
+    changed |= result.changed();
+    currentPatterns = result.patterns();
+    result = reduceSealed(currentPatterns, selectorType);
+    changed |= result.changed();
+    currentPatterns = result.patterns();
+    return new ReduceResult(currentPatterns, changed);
+  }
+
+  record ReduceResult(Set<PatternDescription> patterns, boolean changed) {
+  }
+
+  @NotNull
+  private static ReduceResult reduceRecordPatterns(@NotNull Set<PatternDescription> patterns,
+                                                   @NotNull PsiType selectorType,
+                                                   @NotNull PsiElement context) {
+    boolean changed = false;
+    Map<PsiType, Set<PatternDeconstructionDescription>> byType = StreamEx.of(patterns)
+      .select(PatternDeconstructionDescription.class)
+      .groupingBy(t -> t.type(), Collectors.toSet());
+    Set<PatternDescription> toRemove = new HashSet<>();
+    Set<PatternDescription> toAdd = new HashSet<>();
+    for (Set<PatternDeconstructionDescription> descriptions : byType.values()) {
+      if (descriptions.isEmpty()) {
+        continue;
+      }
+      PatternDeconstructionDescription first = descriptions.iterator().next();
+      for (int i = 0; i < first.list().size(); i++) {
+        MultiMap<List<PatternDescription>, PatternDeconstructionDescription> groupWithoutOneComponent = new MultiMap<>();
+        for (PatternDeconstructionDescription description : descriptions) {
+          if (description.list().size() <= i) {
+            return new ReduceResult(patterns, false);
+          }
+          groupWithoutOneComponent.putValue(getWithoutComponent(description, i), description);
+        }
+
+        for (Map.Entry<List<PatternDescription>, Collection<PatternDeconstructionDescription>> value :
+          groupWithoutOneComponent.entrySet()) {
+          Collection<PatternDeconstructionDescription> setWithOneDifferentElement = value.getValue();
+          if (setWithOneDifferentElement.isEmpty()) {
+            continue;
+          }
+          int finalI = i;
+          Set<PatternDescription> nestedDescriptions = setWithOneDifferentElement.stream()
+            .map(t -> t.list().get(finalI))
+            .collect(Collectors.toSet());
+          List<PsiType> types = getComponentTypes(context, selectorType);
+          if (types == null || types.size() <= i) {
+            continue;
+          }
+          ReduceResult result = reduceInLoop(types.get(i), context, nestedDescriptions, (set, type) -> false);
+          if (result.changed()) {
+            changed = true;
+            toRemove.addAll(setWithOneDifferentElement);
+            toAdd.addAll(createPatternsFrom(i, result.patterns(), setWithOneDifferentElement.iterator().next()));
+          }
+        }
+      }
+    }
+    if (!changed) {
+      return new ReduceResult(patterns, false);
+    }
+    return new ReduceResult(combineResult(patterns, toRemove, toAdd), changed);
+  }
+
+  private static @NotNull Collection<PatternDeconstructionDescription> createPatternsFrom(int differentElement,
+                                                                                          @NotNull Set<PatternDescription> nesterPatterns,
+                                                                                          @NotNull PatternDeconstructionDescription sample) {
+    HashSet<PatternDeconstructionDescription> descriptions = new HashSet<>();
+    for (PatternDescription nestedPattern : nesterPatterns) {
+      descriptions.add(sample.createFor(differentElement, nestedPattern));
+    }
+    return descriptions;
+  }
+
+  private static List<PatternDescription> getWithoutComponent(@NotNull PatternDeconstructionDescription description,
+                                                              int toRemove) {
+    ArrayList<PatternDescription> shortKey = new ArrayList<>();
+    for (int i = 0; i < description.list().size(); i++) {
+      if (toRemove == i) {
+        continue;
+      }
+      shortKey.add(description.list().get(i));
+    }
+    return shortKey;
+  }
+
+  @NotNull
+  private static ReduceResult reduceDeconstructionRecordToTypePattern(@NotNull Set<PatternDescription> patterns,
+                                                                      @NotNull PsiElement context) {
+    boolean changed = false;
+    Map<PsiType, List<PsiType>> componentCache = new HashMap<>();
+    Set<PatternDescription> toAdd = new HashSet<>();
+    Set<PatternDescription> toRemove = new HashSet<>();
+    Map<PsiType, Set<PatternDeconstructionDescription>> groupedByType =
+      StreamEx.of(patterns)
+        .select(PatternDeconstructionDescription.class)
+        .groupingBy(t -> t.type(), Collectors.toSet());
+    for (Map.Entry<PsiType, Set<PatternDeconstructionDescription>> entry : groupedByType.entrySet()) {
+      for (PatternDeconstructionDescription patternDeconstructionDescription : entry.getValue()) {
+        List<PsiType> descriptionTypes = new ArrayList<>();
+        for (PatternDescription description : patternDeconstructionDescription.list()) {
+          if (description instanceof PatternTypeTestDescription patternTypeTestDescription) {
+            descriptionTypes.add(patternTypeTestDescription.type());
+          }
+        }
+        PsiType descriptionType = patternDeconstructionDescription.type();
+        List<PsiType> recordComponentTypes = componentCache.get(descriptionType);
+        if (recordComponentTypes == null) {
+          List<PsiType> recordTypes = getComponentTypes(context, descriptionType);
+          if (recordTypes == null) continue;
+          componentCache.put(descriptionType, recordTypes);
+          recordComponentTypes = recordTypes;
+        }
+        if (recordComponentTypes.size() != descriptionTypes.size()) {
+          continue;
+        }
+        boolean allCovered = true;
+        for (int i = 0; i < recordComponentTypes.size(); i++) {
+          PsiType recordComponentType = recordComponentTypes.get(i);
+          PsiType descriptionComponentType = descriptionTypes.get(i);
+          if (!oneOfUnconditional(recordComponentType, descriptionComponentType)) {
+            allCovered = false;
+            break;
+          }
+        }
+        if (allCovered) {
+          changed = true;
+          toAdd.add(new PatternTypeTestDescription(descriptionType, true));
+          toRemove.addAll(entry.getValue());
+          break;
+        }
+      }
+    }
+    if (!changed) {
+      return new ReduceResult(patterns, false);
+    }
+    Set<PatternDescription> result = combineResult(patterns, toRemove, toAdd);
+    return new ReduceResult(result, true);
+  }
+
+  @Nullable
+  private static List<PsiType> getComponentTypes(@NotNull PsiElement context, @NotNull PsiType descriptionType) {
+    //todo cache
+    PsiType capturedToplevel = PsiUtil.captureToplevelWildcards(descriptionType, context);
+    ClassResolveResult resolve = PsiUtil.resolveGenericsClassInType(capturedToplevel);
+    PsiClass selectorClass = resolve.getElement();
+    PsiSubstitutor substitutor = resolve.getSubstitutor();
+    if (selectorClass == null) return null;
+    return ContainerUtil.map(selectorClass.getRecordComponents(), component -> substitutor.substitute(component.getType()));
+  }
+
+  @NotNull
+  private static Set<PatternDescription> combineResult(@NotNull Set<? extends PatternDescription> patterns,
+                                                         Set<? extends PatternDescription> toRemove,
+                                                         Set<? extends PatternDescription> toAdd) {
+    Set<PatternDescription> result = new HashSet<>();
+    for (PatternDescription pattern : patterns) {
+      if (!toRemove.contains(pattern)) {
+        result.add(pattern);
+      }
+    }
+    result.addAll(toAdd);
     return result;
   }
 
-  private record GroupExhaustiveness(@NotNull PsiType psiType,
-                                     @NotNull PatternHighlightingModel.BranchesExhaustiveness branchesExhaustiveness) {
-    GroupExhaustiveness(@NotNull PsiType psiType, @NotNull RecordExhaustivenessResult result,
-                        @NotNull Collection<List<PsiPattern>> branches) {
-      this(psiType, new BranchesExhaustiveness(result, branches));
-    }
-  }
-
-  private record BranchesExhaustiveness(@NotNull RecordExhaustivenessResult result,
-                                        @NotNull Collection<List<PsiPattern>> branches) {
-  }
-
-
   @NotNull
-  private static List<GroupExhaustiveness> getGroupsExhaustiveness(@NotNull PsiType recordType,
-                                                                   @NotNull List<? extends PsiType> recordTypes,
-                                                                   @NotNull MultiMap<PsiType, List<PsiPattern>> groupedByType) {
-    MultiMap<PsiType, List<PsiPattern>> deconstructionGroups = getDeconstructionGroupsByType(groupedByType);
-
-    return ContainerUtil.map(deconstructionGroups.entrySet(), deconstructionGroup -> {
-      if (ContainerUtil.exists(deconstructionGroup.getValue(), t -> t == null || t.isEmpty())) {
-        return new GroupExhaustiveness(deconstructionGroup.getKey(),
-                                       RecordExhaustivenessResult.createNotBeAdded(), deconstructionGroup.getValue());
+  private static ReduceResult reduceSealed(@NotNull Set<PatternDescription> patterns,
+                                           @NotNull PsiType selectorType) {
+    //todo get from missed class
+    //todo cache
+    boolean changed = false;
+    Map<PsiType, PatternTypeTestDescription> groupByType = new HashMap<>();
+    for (PatternDescription pattern : patterns) {
+      if (pattern instanceof PatternTypeTestDescription typeTestDescription) {
+        groupByType.put(pattern.type(), typeTestDescription);
       }
-      List<PsiPattern> firstElements = ContainerUtil.map(deconstructionGroup.getValue(), it -> it.get(0));
-      if (ContainerUtil.exists(firstElements, pattern -> pattern instanceof PsiDeconstructionPattern)) {
-        RecordExhaustivenessResult nestedResult = checkRecordExhaustiveness(firstElements);
-        if (!nestedResult.isExhaustive()) {
-          //support only first level deconstruction
-          if (nestedResult.canBeAdded() && nestedResult.missedBranchesByType.size() == 1) {
-            RecordExhaustivenessResult result = RecordExhaustivenessResult.createNotExhaustiveResult();
-            result.addNewBranch(recordType, null, recordTypes);
-            return new GroupExhaustiveness(deconstructionGroup.getKey(), result, deconstructionGroup.getValue());
-          }
-          else {
-            return new GroupExhaustiveness(deconstructionGroup.getKey(), RecordExhaustivenessResult.createNotBeAdded(),
-                                           deconstructionGroup.getValue());
+    }
+    Set<PatternTypeTestDescription> toAdd = new HashSet<>();
+    Set<PsiClass> supers = new HashSet<>();
+    for (Map.Entry<PsiType, PatternTypeTestDescription> entry : groupByType.entrySet()) {
+      PsiType type = entry.getKey();
+      PsiClass currentClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(type));
+      if (currentClass == null) {
+        continue;
+      }
+      for (PsiClassType superType : currentClass.getSuperTypes()) { //todo add visited
+        if (groupByType.containsKey(superType)) {
+          continue;
+        }
+        if (!oneOfUnconditional(superType, selectorType)) {
+          continue;
+        }
+        PsiClass superClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(superType));
+        if (superClass == null) {
+          continue;
+        }
+        if (!superClass.hasModifierProperty(PsiModifier.SEALED)) {
+          continue;
+        }
+        supers.add(superClass);
+      }
+    }
+    for (PsiClass superClass : supers) {
+      Collection<PsiClass> permittedClasses =
+        SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.getPermittedClasses(superClass);
+      boolean allCovers = true;
+      for (PsiClass permittedClass : permittedClasses) {
+        PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, permittedClass, PsiSubstitutor.EMPTY);
+        PsiType permittedType = JavaPsiFacade.getElementFactory(superClass.getProject()).createType(permittedClass, substitutor);
+        if (!TypeConversionUtil.areTypesConvertible(selectorType, permittedType)) {
+          continue;
+        }
+        boolean dominated = false;
+        for (Map.Entry<PsiType, PatternTypeTestDescription> entry : groupByType.entrySet()) {
+          if (JavaPsiPatternUtil.dominates(entry.getKey(), permittedType)) {
+            dominated = true;
+            break;
           }
         }
+        if (!dominated) {
+          allCovers = false;
+          break;
+        }
       }
-      RecordExhaustivenessResult result = findExhaustiveInGroup(
-        recordType, dropFirst(recordTypes), ContainerUtil.map(deconstructionGroup.getValue(), PatternHighlightingModel::dropFirst)
-      );
-      return new GroupExhaustiveness(deconstructionGroup.getKey(), result, deconstructionGroup.getValue());
-    });
+      if (allCovers) {
+        changed = true;
+        PsiClassType superClassType = TypeUtils.getType(superClass);
+        toAdd.add(new PatternTypeTestDescription(superClassType, true));
+      }
+    }
+    if (!changed) {
+      return new ReduceResult(patterns, false);
+    }
+    return new ReduceResult(combineResult(patterns, new HashSet<>(), toAdd), changed);
   }
 
-  @NotNull
-  private static MultiMap<PsiType, List<PsiPattern>> getDeconstructionGroupsByType(@NotNull MultiMap<PsiType, List<PsiPattern>> groupedByType) {
-    MultiMap<PsiType, List<PsiPattern>> deconstructionGroups = MultiMap.create();
-    Set<PsiType> types = new HashSet<>(groupedByType.keySet());
+  private static boolean oneOfUnconditional(@NotNull PsiType overWhom, @NotNull PsiType whoType) {
+    List<PsiType> whoTypes = getAllTypes(whoType);
+    for (PsiType currentWhoType : whoTypes) {
+      if (JavaPsiPatternUtil.dominates(currentWhoType, overWhom)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean coverSelectorType(@NotNull Set<PatternDescription> patterns,
+                                           @NotNull PsiType selectorType) {
+    List<PsiType> types = getAllTypes(selectorType);
     for (PsiType currentType : types) {
-      for (PsiType compareType : groupedByType.keySet()) {
-        if (JavaPsiPatternUtil.dominates(compareType, currentType)) {
-          deconstructionGroups.putValues(currentType, groupedByType.get(compareType));
+      for (PatternDescription pattern : patterns) {
+        if (pattern instanceof PatternTypeTestDescription && JavaPsiPatternUtil.dominates(pattern.type(), currentType)) {
+          return true;
         }
       }
     }
-    return deconstructionGroups;
+    return false;
   }
 
-  private static <T> List<T> dropFirst(List<T> list) {
-    return list.subList(1, list.size());
+  public static List<PsiType> getAllTypes(@NotNull PsiType selectorType) {
+    List<PsiType> selectorTypes = new ArrayList<>();
+    PsiClass resolvedClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
+    //T is an intersection type T1& ... &Tn and P covers Ti, for one of the types Ti (1≤i≤n)
+    if (resolvedClass instanceof PsiTypeParameter typeParameter) {
+      PsiClassType[] types = typeParameter.getExtendsListTypes();
+      Arrays.stream(types)
+        .filter(t -> t != null)
+        .forEach(t -> selectorTypes.add(t));
+    }
+    if (selectorTypes.isEmpty()) {
+      selectorTypes.add(selectorType);
+    }
+    return selectorTypes;
+  }
+
+  sealed interface PatternDescription {
+    @NotNull
+    PsiType type();
+  }
+
+  record PatternTypeTestDescription(@NotNull PsiType type, boolean real) implements PatternDescription {
+  }
+
+  record PatternDeconstructionDescription(@NotNull PsiType type, boolean real,
+                                          @NotNull List<PatternDescription> list)
+    implements PatternDescription {
+    PatternDeconstructionDescription createFor(int element, PatternDescription pattern) {
+      ArrayList<PatternDescription> descriptions = new ArrayList<>(list);
+      descriptions.set(element, pattern);
+      return new PatternDeconstructionDescription(type, real, descriptions);
+    }
   }
 
   static class RecordExhaustivenessResult {
     private boolean isExhaustive;
     private boolean canBeAdded;
 
-    private final Map<PsiType, Set<List<PsiType>>> missedBranchesByType = new HashMap<>();
+    final Map<PsiType, Set<List<PsiType>>> missedBranchesByType = new HashMap<>();
 
     private RecordExhaustivenessResult(boolean exhaustive, boolean added) {
       isExhaustive = exhaustive;
