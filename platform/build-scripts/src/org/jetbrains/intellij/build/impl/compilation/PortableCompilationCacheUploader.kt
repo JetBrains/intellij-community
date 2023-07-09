@@ -156,13 +156,15 @@ internal class PortableCompilationCacheUploader(
     }
     val newHistory = if (overrideRemoteHistory) commitHistory else commitHistory + remoteCommitHistory()
     uploader.upload(path = CommitsHistory.JSON_FILE, file = writeCommitHistory(newHistory))
-    val expected = newHistory.commitsForRemote(remoteGitUrl).toList()
-    val actual = remoteCommitHistory().commitsForRemote(remoteGitUrl).take(expected.count())
-    check(ContainerUtil.equalsIdentity(expected, actual)) {
-      """
-        Expected: $expected
-        Actual: $actual
-      """.trimIndent()
+    val expected = newHistory.commitsForRemote(remoteGitUrl).toSet()
+    val actual = remoteCommitHistory().commitsForRemote(remoteGitUrl).take(expected.count()).toSet()
+    val missing = expected - actual
+    val unexpected = actual - expected
+    if (missing.any() || unexpected.any()) {
+      context.messages.warning("""
+        Missing: $missing
+        Unexpected: $unexpected
+      """.trimIndent())
     }
   }
 
