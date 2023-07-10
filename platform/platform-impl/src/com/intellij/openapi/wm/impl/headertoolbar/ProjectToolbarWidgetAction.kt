@@ -67,11 +67,15 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     widget.isOpaque = false
 
     val customizer = ProjectWindowCustomizerService.getInstance()
+    val project = presentation.getClientProperty(projectKey)
+
+    if (project != null && customizer.isAvailable()) {
+      widget.leftIcons = listOf(customizer.getProjectIcon(project))
+    }
+
     if (customizer.isActive()) {
       val paintingType = customizer.getPaintingType()
-      val project = presentation.getClientProperty(projectKey)
       if (paintingType.isShowIcon() && project != null) {
-        widget.leftIcons = listOf(customizer.getProjectIcon(project))
         customizer.showGotIt(project, widget)
       }
 
