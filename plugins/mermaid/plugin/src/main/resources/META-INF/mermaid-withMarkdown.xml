@@ -8,4 +8,10 @@
                              order="first"/>
 
   </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="Markdown"
+                            implementationClass="com.intellij.mermaid.editor.MarkdownCodeFenceCompletionContributor"/>
+
+    <typedHandler implementation="com.intellij.mermaid.editor.MarkdownCodeFenceTypedHandlerDelegate"/>
+  </extensions>
 </idea-plugin>
