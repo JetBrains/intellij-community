@@ -20,7 +20,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,12 +50,6 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
     PsiElement element = context.findLeaf();
     PsiMember constructorOrClass = getConstructorOrClass(element);
     if (constructorOrClass == null) return ModCommands.nop();
-    PsiClass aClass = constructorOrClass instanceof PsiClass cls ? cls : constructorOrClass.getContainingClass();
-    if (aClass == null || aClass.getQualifiedName() == null) {
-      String message =
-        RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("refactoring.is.not.supported.for.local.and.jsp.classes"));
-      return ModCommands.error(message);
-    }
 
     List<PsiClass> targets = StreamEx.iterate(constructorOrClass, Objects::nonNull, PsiMember::getContainingClass)
       .select(PsiClass.class).toList();
@@ -248,6 +241,6 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
 
   private static boolean isSuitableClass(PsiClass containingClass) {
     return containingClass != null && !containingClass.isInterface() && !containingClass.isEnum()
-           && !containingClass.hasModifierProperty(PsiModifier.ABSTRACT);
+           && !containingClass.hasModifierProperty(PsiModifier.ABSTRACT) && containingClass.getQualifiedName() != null;
   }
 }
