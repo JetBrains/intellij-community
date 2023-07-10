@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -490,7 +489,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     mySelectionHistory.remove(content);
     mySelectionHistory.add(0, content);
     if (isSelected(content) && requestFocus) {
-      return getFocusManager().requestFocusInProject(getComponent(), myProject).doWhenProcessed(() -> requestFocus(content, forcedFocus));
+      requestFocusWithFallback(content);
+      return ActionCallback.DONE;
     }
 
     if (!checkSelectionChangeShouldBeProcessed(content, implicit)) {
@@ -508,32 +508,18 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
     final Content[] old = getSelectedContents();
 
-    final ActiveRunnable selection = new ActiveRunnable() {
-      @Override
-      public @NotNull ActionCallback run() {
-        if (myDisposed || getIndexOfContent(content) == -1) return ActionCallback.REJECTED;
+    if (myDisposed || getIndexOfContent(content) == -1) return ActionCallback.REJECTED;
 
-        for (Content each : old) {
-          removeFromSelection(each);
-        }
-
-        addSelectedContent(content);
-
-        if (requestFocus) {
-          requestFocus(content, forcedFocus);
-        }
-        return ActionCallback.DONE;
-      }
-    };
-
-    final ActionCallback result = new ActionCallback();
-    boolean enabledFocus = getFocusManager().isFocusTransferEnabled();
-    if (focused || requestFocus) {
-      if (enabledFocus) {
-        return getFocusManager().requestFocusInProject(getComponent(), myProject).doWhenProcessed(() -> selection.run().notify(result));
-      }
+    for (Content each : old) {
+      removeFromSelection(each);
     }
-    return selection.run().notify(result);
+
+    addSelectedContent(content);
+
+    if (requestFocus || focused) {
+      requestFocusWithFallback(content);
+    }
+    return ActionCallback.DONE;
   }
 
   private boolean isSelectionHoldsFocus() {
@@ -639,6 +625,15 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     assert myContents.contains(toSelect);
     JComponent preferredFocusableComponent = toSelect.getPreferredFocusableComponent();
     return preferredFocusableComponent != null ? getFocusManager().requestFocusInProject(preferredFocusableComponent, myProject) : ActionCallback.REJECTED;
+  }
+
+  /**
+   * Focus the content if it defines a preferred focused component, focus our root panel otherwise.
+   */
+  private void requestFocusWithFallback(Content content) {
+    requestFocus(content, true).doWhenRejected(() -> {
+      getFocusManager().requestFocusInProject(getComponent(), myProject);
+    });
   }
 
   private IdeFocusManager getFocusManager() {
