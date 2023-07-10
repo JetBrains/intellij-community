@@ -231,16 +231,18 @@ class Basic {
       default -> System.out.println("1");
     }
   }
-
+  //see com.intellij.codeInsight.daemon.impl.analysis.PatternHighlightingModel.reduceRecordPatterns
   void exhaustinvenessWithInterface(Pair<I> pairI) {
-    switch (pairI) {
+    switch (<error descr="'switch' statement does not cover all possible input values">pairI</error>) {
       case Pair<I>(C fst, D snd) -> {}
       case Pair<I>(I fst, C snd) -> {}
       case Pair<I>(D fst, I snd) -> {}
     }
   }
+
+  //see com.intellij.codeInsight.daemon.impl.analysis.PatternHighlightingModel.reduceRecordPatterns
   void exhaustinvenessWithInterface2(Pair<? extends I> pairI) {
-    switch (pairI) {
+    switch (<error descr="'switch' statement does not cover all possible input values">pairI</error>) {
       case Pair<? extends I>(C fst, D snd) -> {}
       case Pair<? extends I>(I fst, C snd) -> {}
       case Pair<? extends I>(D fst, I snd) -> {}
@@ -293,5 +295,126 @@ class Basic {
       case En.A -> 0;
       case En.B -> 0;
     };
+  }
+
+
+  record PairT(T t1, T t2) {
+  }
+
+  sealed interface T {
+  }
+
+  sealed interface T1 extends T {
+  }
+
+  sealed interface T2 extends T {
+  }
+
+  record T11(T t1, T t2) implements T1 {
+  }
+
+  record T12(T t1, T t2) implements T1 {
+  }
+
+  record T21(T t1, T t2) implements T2 {
+  }
+
+  record T22(T t1, T t2) implements T2 {
+  }
+
+  public void test1(PairT pairT) {
+    switch (pairT) {
+      case PairT(T11 t1, T1 t2) -> System.out.println(1);
+      case PairT(T12 t1, T1 t2) -> System.out.println(1);
+      case PairT(T1 t1, T2 t2) -> System.out.println(1);
+      case PairT(T2 t1, T t2) -> System.out.println(1);
+    }
+  }
+
+  public void test2(PairT pairT) {
+    switch (<error descr="'switch' statement does not cover all possible input values">pairT</error>) { //error
+      case PairT(T11 t1, T1 t2) -> System.out.println(1);
+      case PairT(T12 t1, T1 t2) -> System.out.println(1);
+      case PairT(T2 t1, T t2) -> System.out.println(1);
+    }
+  }
+
+  public void test3(PairT pairT) {
+    switch (pairT) {
+      case PairT(T1 t1, T11 t2) -> System.out.println(1);
+      case PairT(T1 t1, T12 t2) -> System.out.println(1);
+      case PairT(T2 t1, T1 t2) -> System.out.println(1);
+      case PairT(T t1, T2 t2) -> System.out.println(1);
+    }
+  }
+
+  public void test4(PairT pairT) {
+    switch (pairT) {
+      case PairT(T1 t1, T11(T1 t12, T2 t22)) -> System.out.println(53714);
+      case PairT(T1 t1, T11(T2 t12, T2 t22)) -> System.out.println(1);
+      case PairT(T1 t1, T11(T t12, T1 t22)) -> System.out.println(1);
+      case PairT(T1 t1, T12 t2) -> System.out.println(1);
+      case PairT(T2 t1, T1 t2) -> System.out.println(1);
+      case PairT(T t1, T2 t2) -> System.out.println(1);
+    }
+  }
+  public void test5(PairT pairT) {
+    switch (<error descr="'switch' statement does not cover all possible input values">pairT</error>) {//error
+      case PairT(T1 t1, T11(T1 t12, T2 t22)) -> System.out.println(53714);
+      case PairT(T1 t1, T11(T t12, T1 t22)) -> System.out.println(1);
+      case PairT(T1 t1, T12 t2) -> System.out.println(1);
+      case PairT(T2 t1, T1 t2) -> System.out.println(1);
+      case PairT(T t1, T2 t2) -> System.out.println(1);
+    }
+  }
+
+  public void test6(PairT pairT) {
+    switch (pairT) {
+      case PairT(T1 t1, T11(T1 t12, T2 t22)) -> System.out.println(53714);
+      case PairT(T1 t1, T11(T2 t12, T2 t22)) -> System.out.println(1);
+      case PairT(T1 t1, T11(T t12, T1 t22)) -> System.out.println(1);
+      case PairT(T1 t1, T12(T1 t12, T t22)) -> System.out.println(1);
+      case PairT(T1 t1, T12(T2 t12, T t22)) -> System.out.println(1);
+      case PairT(T2 t1, T1 t2) -> System.out.println(1);
+      case PairT(T t1, T2 t2) -> System.out.println(1);
+    }
+  }
+  public void test7(PairT pairT) {
+    switch (pairT) {
+      case PairT(T11(T1 t12, T2 t22), T1 t1) -> System.out.println(53714);
+      case PairT(T11(T2 t12, T2 t22), T1 t1) -> System.out.println(1);
+      case PairT(T11(T t12, T1 t22), T1 t1) -> System.out.println(1);
+      case PairT(T12(T1 t12, T t22), T1 t1) -> System.out.println(1);
+      case PairT(T12(T2 t12, T t22), T1 t1) -> System.out.println(1);
+      case PairT( T1 t2, T2 t1) -> System.out.println(1);
+      case PairT( T2 t2, T t1) -> System.out.println(1);
+    }
+  }
+  public void test8(PairT pairT) {
+    switch (pairT) {
+      case PairT(T11(T1 t12, T2 t22), T1 t1) -> System.out.println(53714);
+      case PairT(T11(T2 t12, T2 t22), T1 t1) -> System.out.println(1);
+      case PairT(T11(T t12, T1 t22), T1 t1) -> System.out.println(1);
+      case PairT(T12(T1 t12, T t22), T1 t1) -> System.out.println(1);
+      case PairT(T12(T2 t12, T t22), T1 t1) -> System.out.println(1);
+      case PairT( T1 t2, T21 t1) -> System.out.println(1);
+      case PairT( T1 t2, T22(T t11, T1 t12)) -> System.out.println(1);
+      case PairT( T1 t2, T22(T t11, T2 t12)) -> System.out.println(1);
+      case PairT( T2 t2, T t1) -> System.out.println(1);
+    }
+  }
+
+  public void test9(PairT pairT) {
+    switch (<error descr="'switch' statement does not cover all possible input values">pairT</error>) {
+      case PairT(T11(T1 t12, T2 t22), T1 t1) when ((Object)pairT).hashCode()==1 -> System.out.println(53714);
+      case PairT(T11(T2 t12, T2 t22), T1 t1) -> System.out.println(1);
+      case PairT(T11(T t12, T1 t22), T1 t1) -> System.out.println(1);
+      case PairT(T12(T1 t12, T t22), T1 t1) -> System.out.println(1);
+      case PairT(T12(T2 t12, T t22), T1 t1) -> System.out.println(1);
+      case PairT( T1 t2, T21 t1) -> System.out.println(1);
+      case PairT( T1 t2, T22(T t11, T1 t12)) -> System.out.println(1);
+      case PairT( T1 t2, T22(T t11, T2 t12)) -> System.out.println(1);
+      case PairT( T2 t2, T t1) -> System.out.println(1);
+    }
   }
 }

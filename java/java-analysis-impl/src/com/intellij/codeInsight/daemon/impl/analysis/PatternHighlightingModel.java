@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AddMissingDeconstructionCom
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -31,9 +32,10 @@ import java.util.stream.Collectors;
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.findMissedClassesForSealed;
 
 final class PatternHighlightingModel {
+  private static final Logger LOG = Logger.getInstance(PatternHighlightingModel.class);
 
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
-  public static final int MAX_ITERATION_COVERAGE = 10_000;
+  public static final int MAX_ITERATION_COVERAGE = 1_000;
 
   static void createDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern, @NotNull HighlightInfoHolder holder) {
     if (deconstructionPattern == null) return;
@@ -214,6 +216,11 @@ final class PatternHighlightingModel {
     return checkRecordPatternExhaustivenessForDescription(preparePatternDescription(elements), selectorType, context);
   }
 
+  /**
+   * JEP 440-441
+   * Check record pattern exhaustiveness.
+   * This method tries to rewrite the existing set of patterns to equivalent
+   */
   @NotNull
   static RecordExhaustivenessResult checkRecordPatternExhaustivenessForDescription(@NotNull List<PatternDescription> elements,
                                                                                    @NotNull PsiType targetType,
@@ -238,7 +245,7 @@ final class PatternHighlightingModel {
           }
         }
         TestCovered testCovered = new TestCovered();
-        ReduceResult result = reduceInLoop(selectorType, context, new HashSet<>(patterns), testCovered, new HashMap<>());
+        reduceInLoop(selectorType, context, new HashSet<>(patterns), testCovered, new HashMap<>());
         if (testCovered.covered) {
           return RecordExhaustivenessResult.createExhaustiveResult();
         }
@@ -269,7 +276,7 @@ final class PatternHighlightingModel {
         return new ReduceResult(currentPatterns, changed);
       }
     }
-    //todo print logs
+    LOG.error("The number of iteration is exceeded, length of set patterns: " + patterns.size());
     return new ReduceResult(currentPatterns, changed);
   }
 
@@ -277,7 +284,9 @@ final class PatternHighlightingModel {
                                   @NotNull Set<? extends PatternDescription> currentPatterns) {
   }
 
-  //todo tests for all type reduce
+  /**
+   * Tries all types of reductions
+   */
   @NotNull
   private static ReduceResult reduce(@NotNull PsiType selectorType,
                                      @NotNull PsiElement context,
@@ -288,7 +297,7 @@ final class PatternHighlightingModel {
     if (fromCache != null) {
       return fromCache;
     }
-    ReduceResult result = reduceRecordPatterns(currentPatterns, selectorType, context, cache);
+    ReduceResult result = reduceRecordPatterns(currentPatterns, context, cache);
     boolean changed = result.changed();
     currentPatterns = result.patterns();
     result = reduceDeconstructionRecordToTypePattern(currentPatterns, context);
@@ -305,9 +314,41 @@ final class PatternHighlightingModel {
   record ReduceResult(Set<? extends PatternDescription> patterns, boolean changed) {
   }
 
+  /**
+   * Reduce i-component for a set of deconstruction patterns.
+   * Pattern(q0,...qi,.. qn)
+   * This method finds all patterns, when q0..qk..qn (k!=i) equal accros all patterns and
+   * recursively call all reduction types for a set of qi components
+   * This way leads that the next case is NOT exhaustive:
+   * <pre>{@code
+   * sealed interface I permits C, D {}
+   * final class C implements I {}
+   * final class D implements I {}
+   * record Pair<T>(T x, T y) {}
+   *
+   *     switch (pairI) {
+   *       case Pair<I>(C fst, D snd) -> {}
+   *       case Pair<I>(I fst, C snd) -> {}
+   *       case Pair<I>(D fst, I snd) -> {}
+   *     }
+   * }</pre>
+   * because there are no components with equal types.
+   * Also, now javac converts only from left to right and this code produces error (idea NOT)
+   * <pre>{@code
+   *     switch (pairI) {
+   *       case Pair(D fst, C snd) -> {
+   *       }
+   *       case Pair(C fst, C snd) -> {
+   *       }
+   *       case Pair(C fst, I snd) -> {
+   *       }
+   *       case Pair(D fst, D snd) -> {
+   *       }
+   *     }
+   * }</pre>
+   */
   @NotNull
   private static ReduceResult reduceRecordPatterns(@NotNull Set<? extends PatternDescription> patterns,
-                                                   @NotNull PsiType selectorType,
                                                    @NotNull PsiElement context,
                                                    @NotNull Map<ReduceResultCacheContext, ReduceResult> cache) {
     boolean changed = false;
@@ -316,7 +357,8 @@ final class PatternHighlightingModel {
       .groupingBy(t -> t.type(), Collectors.toSet());
     Set<PatternDescription> toRemove = new HashSet<>();
     Set<PatternDescription> toAdd = new HashSet<>();
-    for (Set<PatternDeconstructionDescription> descriptions : byType.values()) {
+    for (Map.Entry<PsiType, Set<PatternDeconstructionDescription>> entry : byType.entrySet()) {
+      Set<PatternDeconstructionDescription> descriptions = entry.getValue();
       if (descriptions.isEmpty()) {
         continue;
       }
@@ -340,7 +382,7 @@ final class PatternHighlightingModel {
           Set<PatternDescription> nestedDescriptions = setWithOneDifferentElement.stream()
             .map(t -> t.list().get(finalI))
             .collect(Collectors.toSet());
-          List<PsiType> types = getComponentTypes(context, selectorType);
+          List<PsiType> types = getComponentTypes(context, entry.getKey());
           if (types == null || types.size() <= i) {
             continue;
           }
@@ -381,6 +423,10 @@ final class PatternHighlightingModel {
     return shortKey;
   }
 
+  /**
+   * Reduce deconstruction pattern to TypePattern equivalent.
+   * R(q0..qn) -> R r
+   */
   @NotNull
   private static ReduceResult reduceDeconstructionRecordToTypePattern(@NotNull Set<? extends PatternDescription> patterns,
                                                                       @NotNull PsiElement context) {
@@ -464,6 +510,12 @@ final class PatternHighlightingModel {
     return result;
   }
 
+  /**
+   * Try to reduce sealed classes to their supertypes.
+   * Previous sealed classes are not excluded because they can be used in another combination.
+   * This method uses {@link SwitchBlockHighlightingModel#findMissedClassesForSealed(PsiType, List, List, PsiElement, Set) findMissedClassesForSealed}
+   * To prevent recursive calls, only TypeTest descriptions are passed to this method.
+   */
   @NotNull
   private static ReduceResult reduceSealed(@NotNull Set<? extends PatternDescription> patterns,
                                            @NotNull PsiType selectorType,
