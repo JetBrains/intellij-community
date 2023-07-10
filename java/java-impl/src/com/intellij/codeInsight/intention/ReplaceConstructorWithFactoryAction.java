@@ -58,14 +58,6 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
       return ModCommands.error(message);
     }
 
-    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(aClass.isInterface() ?
-                                                                  JavaRefactoringBundle.message("class.is.interface",
-                                                                                                aClass.getQualifiedName()) :
-                                                                  JavaRefactoringBundle.message("class.is.abstract",
-                                                                                                aClass.getQualifiedName()));
-      return ModCommands.error(message);
-    }
     List<PsiClass> targets = StreamEx.iterate(constructorOrClass, Objects::nonNull, PsiMember::getContainingClass)
       .select(PsiClass.class).toList();
     SmartPsiElementPointer<PsiMember> constructorOrClassPtr = SmartPointerManager.createPointer(constructorOrClass);
@@ -236,24 +228,26 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
     return JavaRefactoringBundle.message("replace.constructor.with.factory.method.title");
   }
 
-
-  private static boolean isNotEnumClass(@Nullable PsiClass psiClass) {
-    return psiClass != null && !psiClass.isEnum();
-  }
-
   @Nullable
   private static PsiMember getConstructorOrClass(@Nullable PsiElement element) {
     if (element == null) return null;
     PsiMethod method = MethodUtils.getJavaMethodFromHeader(element);
     if (method != null) {
-      return method.isConstructor() &&
-             isNotEnumClass(method.getContainingClass()) ? method : null;
+      if (!method.isConstructor()) return null;
+      var containingClass = method.getContainingClass();
+      if (!isSuitableClass(containingClass)) return null;
+      return method;
     }
     PsiClass containingClass = ClassUtils.getContainingClass(element);
-    if (containingClass == null) return null;
+    if (!isSuitableClass(containingClass)) return null;
     PsiElement lBrace = containingClass.getLBrace();
     if (lBrace != null && element.getTextRange().getStartOffset() >= lBrace.getTextRange().getStartOffset()) return null;
     if (containingClass.getConstructors().length > 0) return null;
     return containingClass;
+  }
+
+  private static boolean isSuitableClass(PsiClass containingClass) {
+    return containingClass != null && !containingClass.isInterface() && !containingClass.isEnum()
+           && !containingClass.hasModifierProperty(PsiModifier.ABSTRACT);
   }
 }
