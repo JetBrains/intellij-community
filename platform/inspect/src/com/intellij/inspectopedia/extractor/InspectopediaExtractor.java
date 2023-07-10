@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -218,9 +219,12 @@ public final class InspectopediaExtractor implements ApplicationStarter {
     final OptionsPanelInfo result = new OptionsPanelInfo();
     result.type = component.getClass().getSimpleName();
     result.value = component instanceof OptControl control ? controller.getOption(control.bindId()) : null;
-    if (component instanceof OptDropdown dropdown && result.value != null) {
-      OptDropdown.Option option = dropdown.findOption(result.value);
-      result.value = option == null ? null : option.label().label();
+    if (component instanceof OptDropdown dropdown) {
+      if (result.value != null) {
+        OptDropdown.Option option = dropdown.findOption(result.value);
+        result.value = option == null ? null : option.label().label();
+      }
+      result.content = ContainerUtil.map(dropdown.options(), opt -> opt.label().label());
     }
     LocMessage text = getMyText(component);
     result.text = text == null ? null : text.label();

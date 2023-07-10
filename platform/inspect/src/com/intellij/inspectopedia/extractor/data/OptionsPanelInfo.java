@@ -9,6 +9,7 @@ public class OptionsPanelInfo {
   public String text;
   public String description;
   public Object value;
+  public List<String> content; // drop-down content
 
   public List<OptionsPanelInfo> children = null;
 
