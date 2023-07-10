@@ -280,6 +280,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/DataClassWithCustomImplementedMembers.kt"));
         }
 
+        @TestMetadata("DefaultImplsWithTypeParameters.kt")
+        public void testDefaultImplsWithTypeParameters() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/DefaultImplsWithTypeParameters.kt"));
+        }
+
         @TestMetadata("DelegatedNested.kt")
         public void testDelegatedNested() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/DelegatedNested.kt"));
