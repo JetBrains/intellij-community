@@ -61,6 +61,8 @@ import java.util.function.BiFunction
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import javax.swing.*
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.div
 import kotlin.system.exitProcess
 
 internal const val IDE_STARTED: String = "------------------------------------------------------ IDE STARTED ------------------------------------------------------"
@@ -337,6 +339,12 @@ fun CoroutineScope.startApplication(args: List<String>,
 fun isConfigImportNeeded(configPath: Path): Boolean {
   return !Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME))
          || customTargetDirectoryToImportConfig != null
+         || newConfigDirectoryMarkerWasCreated(configPath)
+}
+
+private fun newConfigDirectoryMarkerWasCreated(configPath: Path): Boolean {
+  val autoCreatedMarker = configPath / ".config.directory.created.by.headless.or.external.app"
+  return runCatching { autoCreatedMarker.deleteIfExists() }.getOrElse { false }
 }
 
 /**
