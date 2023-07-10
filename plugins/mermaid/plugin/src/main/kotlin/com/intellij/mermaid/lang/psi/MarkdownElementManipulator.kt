@@ -11,9 +11,7 @@ class MarkdownElementManipulator : AbstractElementManipulator<MermaidMarkdownVal
   ): MermaidMarkdownValue {
     val oldText = element.text
     val newText = oldText.substring(0, range.startOffset) + newContent + oldText.substring(range.endOffset)
-    val type = element.containingFile.fileType
-    val newElement = MermaidElementFactory.createMarkdownValue(element.project, newText)
-      ?: error(type.toString() + " " + type.defaultExtension + " " + newText)
+    val newElement = checkNotNull(MermaidElementFactory.createMarkdownValue(element.project, newText))
     return element.replace(newElement) as MermaidMarkdownValue
   }
 }

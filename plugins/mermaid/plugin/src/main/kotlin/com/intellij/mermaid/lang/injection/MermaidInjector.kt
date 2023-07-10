@@ -12,14 +12,10 @@ import org.intellij.plugins.markdown.lang.MarkdownLanguage
 class MermaidInjector : LanguageInjectionContributor {
   override fun getInjection(context: PsiElement): Injection? {
     if (context is MermaidMarkdownValue) {
-      return SimpleInjection(
-        MarkdownLanguage.INSTANCE, "", "", null
-      )
+      return SimpleInjection(MarkdownLanguage.INSTANCE, "", "", null)
     }
     if (context is MermaidDirectiveValue) {
-      return SimpleInjection(
-        Json5Language.INSTANCE, "", "", null
-      )
+      return SimpleInjection(Json5Language.INSTANCE, "", "", null)
     }
     return null
   }

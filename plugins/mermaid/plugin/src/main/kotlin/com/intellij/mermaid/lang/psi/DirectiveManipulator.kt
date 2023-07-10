@@ -11,9 +11,7 @@ class DirectiveManipulator : AbstractElementManipulator<MermaidDirectiveValue>()
   ): MermaidDirectiveValue {
     val oldText = element.text
     val newText = oldText.substring(0, range.startOffset) + newContent + oldText.substring(range.endOffset)
-    val type = element.containingFile.fileType
-    val newElement = MermaidElementFactory.createDirectiveValue(element.project, newText)
-      ?: error(type.toString() + " " + type.defaultExtension + " " + newText)
+    val newElement = checkNotNull(MermaidElementFactory.createDirectiveValue(element.project, newText))
     return element.replace(newElement) as MermaidDirectiveValue
   }
 }
