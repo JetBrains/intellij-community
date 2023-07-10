@@ -58,7 +58,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
 
   @Override
   public void inlineElement(Project project, Editor editor, PsiElement element) {
-    final String refactoringId = "refactoring.inline.pattern.variable";
+    final String refactoringId = getRefactoringId(element);
     RefactoringEventData beforeData = new RefactoringEventData();
     PsiElement scope = getScope(element);
     beforeData.addElement(element);
@@ -81,6 +81,11 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       afterData.addElement(scope);
       project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, afterData);
     }
+  }
+
+  @NotNull
+  private static String getRefactoringId(@NotNull PsiElement element) {
+    return element instanceof PsiPatternVariable ? "refactoring.inline.pattern.variable" : "refactoring.inline.local.variable";
   }
 
   private static PsiElement getScope(PsiElement element) {
