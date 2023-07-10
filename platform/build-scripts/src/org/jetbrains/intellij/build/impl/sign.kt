@@ -39,19 +39,19 @@ import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.name
 
-private fun isMacBinary(name: String): Boolean {
-  return name.endsWith(".jnilib") ||
-         name.endsWith(".dylib") ||
-         name.endsWith(".so") ||
-         name.endsWith(".tbd") ||
-         name.endsWith(".node")
-}
+private fun isMacLibrary(name: String): Boolean =
+  name.endsWith(".jnilib") ||
+  name.endsWith(".dylib") ||
+  name.endsWith(".so") ||
+  name.endsWith(".tbd") ||
+  name.endsWith(".node")
 
 internal fun CoroutineScope.recursivelySignMacBinaries(root: Path,
                                                        context: BuildContext,
                                                        executableFileMatchers: Collection<PathMatcher> = emptyList()) {
   val archives = mutableListOf<Path>()
   val binaries = mutableListOf<Path>()
+
   Files.walkFileTree(root, object : SimpleFileVisitor<Path>() {
     override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
       val relativePath = root.relativize(file)
@@ -59,7 +59,7 @@ internal fun CoroutineScope.recursivelySignMacBinaries(root: Path,
       if (name.endsWith(".jar") || name.endsWith(".zip")) {
         archives.add(file)
       }
-      else if (isMacBinary(name) ||
+      else if (isMacLibrary(name) ||
                executableFileMatchers.any { it.matches(relativePath) } ||
                (SystemInfoRt.isUnix && Files.isExecutable(file))) {
         binaries.add(file)
@@ -73,6 +73,7 @@ internal fun CoroutineScope.recursivelySignMacBinaries(root: Path,
       isMacBinary(it) && !isSigned(it)
     }, context)
   }
+
   for (file in archives) {
     launch {
       signAndRepackZipIfMacSignaturesAreMissing(file, context)
@@ -83,7 +84,7 @@ internal fun CoroutineScope.recursivelySignMacBinaries(root: Path,
 private suspend fun signAndRepackZipIfMacSignaturesAreMissing(zip: Path, context: BuildContext) {
   val filesToBeSigned = mutableMapOf<String, Path>()
   suspendAwareReadZipFile(zip) { name, dataSupplier ->
-    if (!isMacBinary(name)) {
+    if (!isMacLibrary(name)) {
       return@suspendAwareReadZipFile
     }
 
@@ -217,13 +218,13 @@ internal suspend fun isSigned(path: Path): Boolean {
   }
 }
 
-internal fun isMacBinary(seekableByteChannel: SeekableByteChannel): Boolean = detectFileType(seekableByteChannel).first == FileType.MachO
+internal fun isMacBinary(byteChannel: SeekableByteChannel): Boolean =
+  detectFileType(byteChannel).first == FileType.MachO
 
-private fun detectFileType(seekableByteChannel: SeekableByteChannel): Pair<FileType, EnumSet<FileProperties>> {
-  return seekableByteChannel.use {
+private fun detectFileType(byteChannel: SeekableByteChannel): Pair<FileType, EnumSet<FileProperties>> =
+  byteChannel.use {
     it.DetectFileType()
   }
-}
 
 /**
  * Assumes [isMacBinary].

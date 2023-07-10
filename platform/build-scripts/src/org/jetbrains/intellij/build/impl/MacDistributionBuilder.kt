@@ -107,8 +107,7 @@ class MacDistributionBuilder(override val context: BuildContext,
       copyDistFiles(context = context, newDir = macDistDir, os = OsFamily.MACOS, arch = arch)
     }
 
-    customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir)
-    customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir, arch = arch)
+    customizer.copyAdditionalFiles(context = context, targetDir = macDistDir, arch = arch)
   }
 
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
@@ -192,14 +191,12 @@ class MacDistributionBuilder(override val context: BuildContext,
 
   private suspend fun signMacBinaries(osAndArchSpecificDistPath: Path, runtimeDist: Path, arch: JvmArchitecture) {
     val binariesToSign = customizer.getBinariesToSign(context, arch).map(osAndArchSpecificDistPath::resolve)
+    val matchers = generateExecutableFilesMatchers(includeRuntime = false, arch = arch).keys
     withContext(Dispatchers.IO) {
       signMacBinaries(files = binariesToSign, context = context)
-
       for (dir in listOf(osAndArchSpecificDistPath, runtimeDist)) {
         launch {
-          recursivelySignMacBinaries(root = dir,
-                                     context = context,
-                                     executableFileMatchers = generateExecutableFilesMatchers(includeRuntime = false, arch = arch).keys)
+          recursivelySignMacBinaries(root = dir, context = context, executableFileMatchers = matchers)
         }
       }
     }
@@ -362,9 +359,8 @@ class MacDistributionBuilder(override val context: BuildContext,
     }
   }
 
-  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
-    return customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
-  }
+  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> =
+    customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
 
   private suspend fun buildForArch(arch: JvmArchitecture,
                                    macZip: Path,

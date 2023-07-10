@@ -290,7 +290,7 @@ object BuildDependenciesUtil {
 
   @JvmStatic
   fun loadPropertiesFile(file: Path): Map<String, String> =
-    Files.newBufferedReader(file).use { val properties = Properties(); properties.load(it); properties}
+    Files.newBufferedReader(file).use { val properties = Properties(); properties.load(it); properties }
       .map { (k, v) -> k as String to v as String }
       .toMap()
 

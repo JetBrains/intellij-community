@@ -35,6 +35,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
+import kotlin.concurrent.withLock
 
 @ApiStatus.Internal
 object BuildDependenciesDownloader {
@@ -59,9 +60,8 @@ object BuildDependenciesDownloader {
     DependenciesProperties(communityRoot)
 
   @JvmStatic
-  fun getUriForMavenArtifact(mavenRepository: String, groupId: String, artifactId: String, version: String, packaging: String): URI {
-    return getUriForMavenArtifact(mavenRepository, groupId, artifactId, version, null, packaging)
-  }
+  fun getUriForMavenArtifact(mavenRepository: String, groupId: String, artifactId: String, version: String, packaging: String): URI =
+    getUriForMavenArtifact(mavenRepository, groupId, artifactId, version, null, packaging)
 
   @JvmStatic
   fun getUriForMavenArtifact(mavenRepository: String,
@@ -70,26 +70,14 @@ object BuildDependenciesDownloader {
                              version: String,
                              classifier: String?,
                              packaging: String): URI {
-    var result = mavenRepository
-    if (!result.endsWith("/")) {
-      result += "/"
-    }
-    result += groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/" + artifactId + "-" + version +
-              (if (classifier != null) "-$classifier" else "") +
-              "." + packaging
-    return URI.create(result)
+    val base = mavenRepository.trim('/')
+    val groupStr = groupId.replace('.', '/')
+    val classifierStr = if (classifier != null) "-${classifier}" else ""
+    return URI.create("${base}/${groupStr}/${artifactId}/${version}/${artifactId}-${version}${classifierStr}.${packaging}")
   }
 
-  private fun getProjectLocalDownloadCache(communityRoot: BuildDependenciesCommunityRoot): Path {
-    val projectLocalDownloadCache = communityRoot.communityRoot.resolve("build").resolve("download")
-    try {
-      Files.createDirectories(projectLocalDownloadCache)
-    }
-    catch (e: IOException) {
-      throw RuntimeException(e)
-    }
-    return projectLocalDownloadCache
-  }
+  private fun getProjectLocalDownloadCache(communityRoot: BuildDependenciesCommunityRoot): Path =
+    Files.createDirectories(communityRoot.communityRoot.resolve("build/download"))
 
   @Throws(IOException::class)
   private fun getDownloadCachePath(communityRoot: BuildDependenciesCommunityRoot): Path {
@@ -98,7 +86,6 @@ object BuildDependenciesDownloader {
       check(!persistentCachePath.isNullOrBlank()) {
         "'agent.persistent.cache' system property is required under TeamCity"
       }
-
       Paths.get(persistentCachePath)
     }
     else {
@@ -109,14 +96,13 @@ object BuildDependenciesDownloader {
   }
 
   @JvmStatic
-  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI): Path {
-    return downloadFileToCacheLocationSync(uri.toString(), communityRoot)
-  }
+  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI): Path =
+    downloadFileToCacheLocationSync(uri.toString(), communityRoot)
 
   fun getTargetFile(communityRoot: BuildDependenciesCommunityRoot, uriString: String): Path {
     val lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1)
-    val fileName = hashString(uriString + "V" + DOWNLOAD_CODE_VERSION).substring(0, 10) + "-" + lastNameFromUri
-    return getDownloadCachePath(communityRoot).resolve(fileName)
+    val hashString = hashString("${uriString}V${DOWNLOAD_CODE_VERSION}").substring(0, 10)
+    return getDownloadCachePath(communityRoot).resolve("${hashString}-${lastNameFromUri}")
   }
 
   @JvmStatic
@@ -125,26 +111,17 @@ object BuildDependenciesDownloader {
                                  archiveFile: Path,
                                  vararg options: BuildDependenciesExtractOptions): Path {
     cleanUpIfRequired(communityRoot)
-    return try {
-      val cachePath = getDownloadCachePath(communityRoot)
-      val toHash = archiveFile.toString() + getExtractOptionsShortString(options)
-      val directoryName = archiveFile.fileName.toString() + "." + hashString(toHash).substring(0, 6) + ".d"
-      val targetDirectory = cachePath.resolve(directoryName)
-      val flagFile = cachePath.resolve("$directoryName.flag")
-      extractFileWithFlagFileLocation(archiveFile, targetDirectory, flagFile, options)
-      targetDirectory
-    }
-    catch (e: RuntimeException) {
-      throw e
-    }
-    catch (e: Exception) {
-      throw RuntimeException(e)
-    }
+    val cachePath = getDownloadCachePath(communityRoot)
+    val hash = hashString(archiveFile.toString() + getExtractOptionsShortString(options)).substring(0, 6)
+    val directoryName = "${archiveFile.fileName}.${hash}.d"
+    val targetDirectory = cachePath.resolve(directoryName)
+    val flagFile = cachePath.resolve("${directoryName}.flag")
+    extractFileWithFlagFileLocation(archiveFile, targetDirectory, flagFile, options)
+    return targetDirectory
   }
 
-  private fun hashString(s: String): String {
-    return BigInteger(1, Hashing.sha256().hashString(s, StandardCharsets.UTF_8).asBytes()).toString(36)
-  }
+  private fun hashString(s: String): String =
+    BigInteger(1, Hashing.sha256().hashString(s, StandardCharsets.UTF_8).asBytes()).toString(36)
 
   private fun getExpectedFlagFileContent(archiveFile: Path,
                                          targetDirectory: Path,
@@ -193,8 +170,7 @@ options:${getExtractOptionsShortString(options)}
     Files.createDirectories(targetDirectory)
     val filesAfterCleaning = listDirectory(targetDirectory)
     check(filesAfterCleaning.isEmpty()) {
-      "Target directory $targetDirectory is not empty after cleaning: " +
-      filesAfterCleaning.joinToString(" ")
+      "Target directory ${targetDirectory} is not empty after cleaning: ${filesAfterCleaning.joinToString(" ")}"
     }
     val start = ByteBuffer.allocate(4)
     FileChannel.open(archiveFile).use { channel -> channel.read(start, 0) }
@@ -206,8 +182,9 @@ options:${getExtractOptionsShortString(options)}
       val unwrappedArchiveFile = archiveFile.parent.resolve(archiveFile.fileName.toString() + ".unwrapped")
       try {
         Files.newOutputStream(unwrappedArchiveFile).use { out ->
-          ZstdInputStreamNoFinalizer(
-            Files.newInputStream(archiveFile)).use { input -> input.transferTo(out) }
+          ZstdInputStreamNoFinalizer(Files.newInputStream(archiveFile)).use {
+            input -> input.transferTo(out)
+          }
         }
         extractZip(unwrappedArchiveFile, targetDirectory, stripRoot)
       }
@@ -225,18 +202,13 @@ options:${getExtractOptionsShortString(options)}
       extractTarBz2(archiveFile, targetDirectory, stripRoot)
     }
     else {
-      throw IllegalStateException("Unknown archive format at " + archiveFile + "." +
-                                  " Magic number (little endian hex): " + Integer.toHexString(magicNumber) + "." +
+      throw IllegalStateException("Unknown archive format at ${archiveFile}." +
+                                  " Magic number (little endian hex): ${Integer.toHexString(magicNumber)}." +
                                   " Currently only .tar.gz or .zip are supported")
     }
     Files.write(flagFile, getExpectedFlagFileContent(archiveFile, targetDirectory, options))
     check(checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
-      "checkFlagFile must be true right after extracting the archive. flagFile:" +
-      flagFile +
-      " archiveFile:" +
-      archiveFile +
-      " target:" +
-      targetDirectory
+      "'checkFlagFile' must be true right after extracting the archive. flagFile:${flagFile} archiveFile:${archiveFile} target:${targetDirectory}"
     }
   }
 
@@ -245,20 +217,12 @@ options:${getExtractOptionsShortString(options)}
                   communityRoot: BuildDependenciesCommunityRoot,
                   vararg options: BuildDependenciesExtractOptions) {
     cleanUpIfRequired(communityRoot)
-    val lock = fileLocks[target]
-    lock.lock()
-    try {
+    fileLocks[target].withLock {
       // Extracting different archive files into the same target should overwrite target each time
       // That's why flagFile should be dependent only on target location
-      val flagFile = getProjectLocalDownloadCache(communityRoot)
-        .resolve(hashString(target.toString()).substring(0, 6) + "-" + target.fileName.toString() + ".flag.txt")
+      val hash = hashString(target.toString()).substring(0, 6)
+      val flagFile = getProjectLocalDownloadCache(communityRoot).resolve("${hash}-${target.fileName}.flag.txt")
       extractFileWithFlagFileLocation(archiveFile, target, flagFile, options)
-    }
-    catch (e: Exception) {
-      throw RuntimeException(e)
-    }
-    finally {
-      lock.unlock()
     }
   }
 
@@ -299,15 +263,11 @@ options:${getExtractOptionsShortString(options)}
   }
 
   private val extractCount = AtomicInteger()
-  @TestOnly
-  fun getExtractCount(): Int {
-    return extractCount.get()
-  }
+
+  @TestOnly fun getExtractCount(): Int = extractCount.get()
 
   class HttpStatusException(message: String, private val statusCode: Int, val url: String) : IllegalStateException(message) {
-
-    override fun toString(): String {
-      return "HttpStatusException(status=$statusCode, url=$url, message=$message)"
-    }
+    override fun toString(): String =
+      "HttpStatusException(status=${statusCode}, url=${url}, message=${message})"
   }
 }

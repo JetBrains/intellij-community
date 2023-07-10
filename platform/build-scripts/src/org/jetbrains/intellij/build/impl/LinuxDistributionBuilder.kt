@@ -62,7 +62,6 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         generateScripts(distBinDir, arch)
         generateReadme(targetPath)
         generateVersionMarker(targetPath, context)
-        RepairUtilityBuilder.bundle(context = context, os = OsFamily.LINUX, arch = arch, distributionDir = targetPath)
         customizer.copyAdditionalFiles(context = context, targetDir = targetPath, arch = arch)
       }
     }

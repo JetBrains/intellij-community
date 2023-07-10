@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.util.io.FileUtilRt
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
-import kotlinx.serialization.decodeFromString
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
@@ -24,7 +23,7 @@ import java.nio.file.StandardOpenOption
 internal fun checkInArchive(archiveFile: Path, pathInArchive: String, context: BuildContext) {
   val productJsonPath = joinPaths(pathInArchive, PRODUCT_INFO_FILE_NAME)
   val entryData = loadEntry(archiveFile, productJsonPath)
-                  ?: throw RuntimeException("Failed to validate product-info.json: cannot find \'$productJsonPath\' in $archiveFile")
+                  ?: throw RuntimeException("Failed to validate product-info.json: cannot find '${productJsonPath}' in ${archiveFile}")
   validateProductJson(jsonText = entryData.decodeToString(),
                       relativePathToProductJson = "",
                       installationDirectories = emptyList(),
@@ -35,9 +34,9 @@ internal fun checkInArchive(archiveFile: Path, pathInArchive: String, context: B
 /**
  * Checks that product-info.json file is correct.
  *
- * @param installationDirectories directories which will be included into product installation
- * @param installationArchives    archives which will be unpacked and included into product installation (the first part specified path to archive,
- * the second part specifies path inside archive)
+ * @param installationDirectories directories which will be included in the product installation
+ * @param installationArchives    archives which will be unpacked and included in the product installation
+ * (the first part specifies a path to the archive, the second part - a path inside the archive)
  */
 internal fun validateProductJson(jsonText: String,
                                  relativePathToProductJson: String,
@@ -57,20 +56,20 @@ internal fun validateProductJson(jsonText: String,
   for (item in productJson.launch) {
     val os = item.os
     check(OsFamily.ALL.any { it.osName == os }) {
-      "Incorrect os name \'$os\' in ${relativePathToProductJson}/${PRODUCT_INFO_FILE_NAME}"
+      "Incorrect OS name '${os}' in ${relativePathToProductJson}/${PRODUCT_INFO_FILE_NAME}"
     }
     checkFileExists(path = item.launcherPath,
-                    description = "$os launcher",
+                    description = "${os} launcher",
                     relativePathToProductJson = relativePathToProductJson,
                     installationDirectories = installationDirectories,
                     installationArchives = installationArchives)
     checkFileExists(path = item.javaExecutablePath,
-                    description = "$os java executable",
+                    description = "${os} java executable",
                     relativePathToProductJson = relativePathToProductJson,
                     installationDirectories = installationDirectories,
                     installationArchives = installationArchives)
     checkFileExists(path = item.vmOptionsFilePath,
-                    description = "$os VM options file",
+                    description = "${os} VM options file",
                     relativePathToProductJson = relativePathToProductJson,
                     installationDirectories = installationDirectories,
                     installationArchives = installationArchives)

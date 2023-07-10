@@ -9,12 +9,13 @@ import java.nio.file.Path
 
 abstract class LinuxDistributionCustomizer {
   /**
-   * Path to a 128x128 png product icon for Linux distribution
+   * Path to a 128x128 PNG product icon for Linux distribution.
+   * If omitted, only an SVG icon will be included.
    */
   var iconPngPath: String? = null
 
   /**
-   * Path to png file for EAP builds (if `null` [iconPngPath] will be used)
+   * Path to a PNG product icon for EAP builds (if `null`, [iconPngPath] will be used).
    */
   var iconPngPathForEAP: String? = null
 
@@ -43,12 +44,12 @@ abstract class LinuxDistributionCustomizer {
   }
 
   /**
-   * If `true` a separate *-no-jbr.tar.gz artifact without runtime will be produced.
+   * If `true`, a separate *-no-jbr.tar.gz artifact without a runtime will be produced.
    */
   var buildTarGzWithoutBundledRuntime = false
 
   /**
-   * If `true`, the only *-no-jbr.tar.gz will be produced, no other binaries for Linux will be built.
+   * If `true`, only the `*-no-jbr.tar.gz` will be produced, and no other Linux binaries will be built.
    */
   var buildOnlyBareTarGz = false
 
@@ -61,15 +62,21 @@ abstract class LinuxDistributionCustomizer {
   var snapDescription: String? = null
 
   /**
-   * Name of the root directory inside linux .tar.gz archive
+   * Name of the root directory inside the .tar.gz archive.
    */
   open fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String =
     "${appInfo.productName}-${if (appInfo.isEAP) buildNumber else appInfo.fullVersion}"
 
   /**
-   * Override this method to copy additional files to Linux distribution of the product.
-   * @param targetDir contents of this directory will be packed into .tar.gz archive under [getRootDirectoryName]
+   * Override this method to copy additional files to the Linux distribution of the product.
    */
-  open fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
+  open suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
+    RepairUtilityBuilder.bundle(context = context, os = OsFamily.LINUX, arch = arch, distributionDir = targetDir)
+
+    @Suppress("DEPRECATION")
+    copyAdditionalFilesBlocking(context, targetDir, arch)
   }
+
+  @Deprecated("Please migrate the build script to Kotlin and override `copyAdditionalFiles`")
+  open fun copyAdditionalFilesBlocking(context: BuildContext, targetDir: Path, arch: JvmArchitecture) { }
 }

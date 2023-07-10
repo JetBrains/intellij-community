@@ -108,9 +108,7 @@ private suspend fun buildDmg(sitFile: Path,
   }
 }
 
-private fun prepareDmgBuildScripts(context: BuildContext,
-                                   customizer: MacDistributionCustomizer,
-                                   tempDir: Path, staple: Boolean): Path {
+private fun prepareDmgBuildScripts(context: BuildContext, customizer: MacDistributionCustomizer, tempDir: Path, staple: Boolean): Path {
   NioFiles.deleteRecursively(tempDir)
   tempDir.createDirectories()
   val dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")

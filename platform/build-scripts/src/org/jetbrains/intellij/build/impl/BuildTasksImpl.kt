@@ -332,7 +332,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
   if (context.isMacCodeSignEnabled) {
     withContext(Dispatchers.IO) {
       for (file in Files.newDirectoryStream(context.paths.distAllDir).use { stream ->
-        stream.filter { !it.endsWith("lib") && !it.endsWith("help") }
+        stream.filter { !it.endsWith("help") && !it.endsWith("license") && !it.endsWith("lib") }
       }) {
         launch {
           // todo exclude plugins - layoutAdditionalResources should perform codesign -
@@ -432,7 +432,7 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
       for (moduleName in modules) {
         val module = context.findRequiredModule(moduleName)
         // We pack sources of libraries which are included in compilation classpath for platform API modules.
-        // This way we'll get sources of all libraries useful for plugin developers, and the size of the archive will be reasonable.
+        // This way we'll get source files of all libraries useful for plugin developers, and the size of the archive will be reasonable.
         if (moduleName.startsWith("intellij.platform.") && context.findModule("$moduleName.impl") != null) {
           val libraries = JpsJavaExtensionService.dependencies(module).productionOnly().compileOnly().recursivelyExportedOnly().libraries
           includedLibraries.addAll(libraries)
@@ -519,6 +519,7 @@ private inline fun filterSourceFilesOnly(name: String, context: BuildContext, co
 
 private suspend fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
   val productProperties = context.productProperties
+  val productLayout = productProperties.productLayout
   val mavenArtifacts = productProperties.mavenArtifacts
 
   val toCompile = LinkedHashSet<String>()
@@ -526,7 +527,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
   context.proprietaryBuildTools.scrambleTool?.let {
     toCompile.addAll(it.additionalModulesToCompile)
   }
-  toCompile.addAll(productProperties.productLayout.mainModules)
+  toCompile.addAll(productLayout.mainModules)
   toCompile.addAll(mavenArtifacts.additionalModules)
   toCompile.addAll(mavenArtifacts.squashedModules)
   toCompile.addAll(mavenArtifacts.proprietaryModules)
@@ -536,14 +537,12 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
   val compilationTasks = CompilationTasks.create(context)
   compilationTasks.compileModules(toCompile)
 
-  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.pluginModulesToPublish,
-                                                          productLayout = context.productProperties.productLayout)
+  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = productLayout.pluginModulesToPublish, productLayout = productLayout)
   filterPluginsToPublish(pluginsToPublish, context)
 
   var enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, productProperties = context.productProperties)
   // computed only based on a bundled and plugins to publish lists, compatible plugins are not taken in an account by intention
   val projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = enabledPluginModules, context = context)
-  val productLayout = context.productProperties.productLayout
   val addPlatformCoverage = !productLayout.excludedModuleNames.contains("intellij.platform.coverage") &&
                             hasPlatformCoverage(productLayout = productLayout,
                                                 enabledPluginModules = enabledPluginModules,
@@ -566,7 +565,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
                               tempDir = context.paths.tempDir.resolve("builtinModules"),
                               ideClasspath = ideClasspath,
                               arguments = listOf("listBundledPlugins", providedModuleFile.toString()))
-        context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
+        productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
         try {
           val builtinModuleData = readBuiltinModulesFile(file = providedModuleFile)
           context.builtinModule = builtinModuleData
@@ -578,7 +577,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       }
 
       context.notifyArtifactBuilt(artifactPath = providedModuleFile)
-      if (!productProperties.productLayout.buildAllCompatiblePlugins) {
+      if (!productLayout.buildAllCompatiblePlugins) {
         val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
         buildProjectArtifacts(platform = distState.platform,
                               enabledPluginModules = enabledPluginModules,
@@ -1234,7 +1233,8 @@ fun collectModulesToCompile(context: BuildContext, result: MutableCollection<Str
 }
 
 // Captures information about all available inspections in a JSON format as part of an Inspectopedia project.
-// This is later used by Qodana and other tools. Keymaps are extracted as an XML file and also used in help authoring.
+// This is later used by Qodana and other tools.
+// Keymaps are extracted as an XML file and also used in authoring help.
 internal suspend fun buildAdditionalAuthoringArtifacts(ideClassPath: Set<String>, context: BuildContext) {
   context.executeStep(spanBuilder("build authoring asserts"), BuildOptions.DOC_AUTHORING_ASSETS_STEP) {
     val commands = listOf(Pair("inspectopedia-generator", "inspections-${context.applicationInfo.productCode.lowercase()}"),
