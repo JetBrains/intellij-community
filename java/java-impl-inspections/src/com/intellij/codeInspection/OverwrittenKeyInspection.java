@@ -249,10 +249,5 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
       if (element == null) return ModCommands.nop();
       return ModCommands.select(element);
     }
-
-    @Override
-    public boolean availableInBatchMode() {
-      return false;
-    }
   }
 }

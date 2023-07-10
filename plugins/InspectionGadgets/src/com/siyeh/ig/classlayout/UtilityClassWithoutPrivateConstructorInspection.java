@@ -66,11 +66,8 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
     final List<LocalQuickFix> fixes = new ArrayList<>();
     final PsiClass aClass = (PsiClass)infos[0];
     final PsiMethod constructor = getNullArgConstructor(aClass);
-    final boolean isOnTheFly = (boolean)infos[1];
     if (constructor == null) {
-      if (isOnTheFly || !hasImplicitConstructorUsage(aClass)) {
-        fixes.add(new CreateEmptyPrivateConstructor());
-      }
+      fixes.add(new CreateEmptyPrivateConstructor());
     }
     else {
       final Query<PsiReference> query = ReferencesSearch.search(constructor, constructor.getUseScope());
@@ -196,7 +193,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
       if (subclass != null) {
         return;
       }
-      registerClassError(aClass, aClass, isOnTheFly());
+      registerClassError(aClass, aClass);
     }
 
     private static boolean hasOnlyMain(PsiClass aClass) {

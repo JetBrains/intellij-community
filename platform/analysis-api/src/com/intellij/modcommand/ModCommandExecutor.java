@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.modcommand.ModCommandAction.ActionContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +49,8 @@ public interface ModCommandExecutor {
       if (this == Result.ABORT || next == Result.ABORT) return Result.ABORT;
       return Result.SUCCESS;
     }
+    
+    @NotNull @Nls String getMessage();
   }
   
   enum Result implements BatchExecutionResult {
@@ -65,7 +69,19 @@ public interface ModCommandExecutor {
     /**
      * Action was aborted
      */
-    ABORT
+    ABORT;
+
+
+    @Nls
+    @Override
+    public @NotNull String getMessage() {
+      return switch (this) {
+        case SUCCESS -> AnalysisBundle.message("modcommand.result.action.completed.successfully");
+        case INTERACTIVE -> AnalysisBundle.message("modcommand.result.action.is.interactive.only.cannot.be.executed.in.batch");
+        case NOTHING -> AnalysisBundle.message("modcommand.result.action.has.no.effect");
+        case ABORT -> AnalysisBundle.message("modcommand.result.action.was.aborted");
+      };
+    }
   }
 
   /**
@@ -73,5 +89,10 @@ public interface ModCommandExecutor {
    * @param message user-readable error message
    */
   record Error(@NotNull @NlsContexts.Tooltip String message) implements BatchExecutionResult {
+    @Nls
+    @Override
+    public @NotNull String getMessage() {
+      return message;
+    }
   }
 }

@@ -83,13 +83,13 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
       return Result.NOTHING;
     }
     if (command instanceof ModUpdateFileText upd) {
-      return executeUpdate(project, upd) ? Result.ABORT : Result.SUCCESS;
+      return executeUpdate(project, upd) ? Result.SUCCESS : Result.ABORT;
     }
     if (command instanceof ModCreateFile create) {
-      return executeCreate(project, create) ? Result.ABORT : Result.SUCCESS;
+      return executeCreate(project, create) ? Result.SUCCESS : Result.ABORT;
     }
     if (command instanceof ModDeleteFile deleteFile) {
-      return executeDelete(project, deleteFile) ? Result.ABORT : Result.SUCCESS;
+      return executeDelete(project, deleteFile) ? Result.SUCCESS : Result.ABORT;
     }
     if (command instanceof ModCompositeCommand cmp) {
       BatchExecutionResult result = Result.NOTHING;

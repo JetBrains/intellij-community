@@ -5,6 +5,7 @@ import com.intellij.codeInspection.BatchQuickFix;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
@@ -71,8 +72,9 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
     }
 
     @Override
-    protected <D extends CommonProblemDescriptor> void collectFix(QuickFix<D> fix, D descriptor, Project project) {
+    protected <D extends CommonProblemDescriptor> ModCommandExecutor.BatchExecutionResult collectFix(QuickFix<D> fix, D descriptor, Project project) {
       myBatchModeDescriptors.add((ProblemDescriptor)descriptor);
+      return ModCommandExecutor.Result.SUCCESS;
     }
 
     @Override
