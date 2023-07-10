@@ -182,7 +182,7 @@ class ProjectWindowCustomizerService : Disposable {
     }
     else {
       propertiesStorage.setValue(key, ColorUtil.toHex(color))
-      val toolbarColor = ColorUtil.toAlpha(color, 64)
+      val toolbarColor = ColorUtil.toAlpha(color, 90)
       setToolbarColor(toolbarColor, project)
     }
   }
@@ -323,7 +323,7 @@ class ProjectWindowCustomizerService : Disposable {
     val storage = PropertiesComponent.getInstance(project)
 
     if (background == null) storage.unsetValue(TOOLBAR_BACKGROUND_KEY)
-    else storage.setValue(TOOLBAR_BACKGROUND_KEY, ColorUtil.toHex(background))
+    else storage.setValue(TOOLBAR_BACKGROUND_KEY, ColorUtil.toHex(background, true))
   }
 
   override fun dispose() {}
