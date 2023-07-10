@@ -8,10 +8,16 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.details.GroupedRenderer
 import com.intellij.collaboration.ui.util.LinkActionMouseAdapter
 import com.intellij.collaboration.ui.util.bindBusyIn
+import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
+import com.intellij.dvcs.ui.DvcsBundle
+import com.intellij.dvcs.ui.FilePathDocumentChildPathHandle
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.CollectionListModel
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.Align
@@ -23,23 +29,29 @@ import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
+import git4idea.GitUtil
+import git4idea.remote.GitRememberedInputs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneRepositoriesViewModel.SearchModel
 import javax.swing.JSeparator
 import javax.swing.ListCellRenderer
 import javax.swing.ListModel
+import javax.swing.event.DocumentEvent
 
 internal object GitLabCloneRepositoriesComponentFactory {
   fun create(
+    project: Project,
     cs: CoroutineScope,
     repositoriesVm: GitLabCloneRepositoriesViewModel,
-    uiSelectorVm: GitLabCloneUISelectorViewModel,
-    searchField: SearchTextField,
-    directoryField: TextFieldWithBrowseButton
+    uiSelectorVm: GitLabCloneUISelectorViewModel
   ): DialogPanel {
+    val searchField = createSearchField(repositoriesVm)
+    val directoryField = createDirectoryField(project, cs, repositoriesVm)
+
     val accountsModel = createAccountsModel(cs, repositoriesVm)
     val repositoriesModel = createRepositoriesModel(cs, repositoriesVm)
 
@@ -158,6 +170,53 @@ internal object GitLabCloneRepositoriesComponentFactory {
         GroupedRenderer.createDefaultSeparator(text = value.account.name, paintLine = index != 0)
       }
     )
+  }
+
+  private fun createSearchField(repositoriesVm: GitLabCloneRepositoriesViewModel): SearchTextField {
+    return SearchTextField(false).apply {
+      addDocumentListener(object : DocumentAdapter() {
+        override fun textChanged(e: DocumentEvent) {
+          repositoriesVm.setSearchValue(text)
+        }
+      })
+    }
+  }
+
+  private fun createDirectoryField(
+    project: Project,
+    cs: CoroutineScope,
+    repositoriesVm: GitLabCloneRepositoriesViewModel
+  ): TextFieldWithBrowseButton {
+    val fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor().apply {
+      isShowFileSystemRoots = true
+      isHideIgnored = false
+    }
+    val directoryField = TextFieldWithBrowseButton().apply {
+      addBrowseFolderListener(
+        DvcsBundle.message("clone.destination.directory.browser.title"),
+        DvcsBundle.message("clone.destination.directory.browser.description"),
+        project,
+        fcd
+      )
+      addDocumentListener(object : DocumentAdapter() {
+        override fun textChanged(e: DocumentEvent) {
+          repositoriesVm.setDirectoryPath(text)
+        }
+      })
+    }
+    val cloneDirectoryChildHandle = FilePathDocumentChildPathHandle.install(
+      directoryField.textField.document,
+      ClonePathProvider.defaultParentDirectoryPath(project, GitRememberedInputs.getInstance())
+    )
+
+    cs.launchNow {
+      repositoriesVm.selectedUrl.filterNotNull().collectLatest { selectedUrl ->
+        val path = ClonePathProvider.relativeDirectoryPathForVcsUrl(project, selectedUrl).removeSuffix(GitUtil.DOT_GIT)
+        cloneDirectoryChildHandle.trySetChildPath(path)
+      }
+    }
+
+    return directoryField
   }
 
   private class AccountsPopupConfig(uiSelectorVm: GitLabCloneUISelectorViewModel) : CompactAccountsPanelFactory.PopupConfig<GitLabAccount> {

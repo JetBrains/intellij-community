@@ -14,6 +14,7 @@ import com.intellij.util.childScope
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabApiImpl
@@ -26,7 +27,7 @@ import java.net.MalformedURLException
 import java.net.URL
 import java.nio.file.Paths
 
-internal interface GitLabCloneRepositoriesViewModel {
+internal interface GitLabCloneRepositoriesViewModel : GitLabCloneViewModel {
   val isLoading: Flow<Boolean>
   val accountsUpdatedRequest: SharedFlow<Set<GitLabAccount>>
 
@@ -40,7 +41,9 @@ internal interface GitLabCloneRepositoriesViewModel {
 
   fun setSearchValue(text: String)
 
-  fun doClone(checkoutListener: CheckoutProvider.Listener, directoryPath: String)
+  fun setDirectoryPath(path: String)
+
+  fun doClone(checkoutListener: CheckoutProvider.Listener)
 
   sealed interface SearchModel {
     class Url(val url: String) : SearchModel
@@ -82,6 +85,8 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   }.stateIn(cs, SharingStarted.Eagerly, initialValue = null)
   override val selectedUrl: SharedFlow<String?> = _selectedUrl
 
+  private val directoryPath: MutableStateFlow<String> = MutableStateFlow("")
+
   override val accountDetailsProvider = GitLabAccountsDetailsProvider(cs) { account ->
     val token = accountManager.findCredentials(account) ?: return@GitLabAccountsDetailsProvider null
     GitLabApiImpl { token }
@@ -91,10 +96,12 @@ internal class GitLabCloneRepositoriesViewModelImpl(
     cs.launch {
       accounts.collectLatest { accounts ->
         _accountsUpdatedRequest.emit(accounts)
-        accounts.forEach { account ->
-          launch {
-            accountManager.getCredentialsFlow(account).collectLatest {
-              _accountsUpdatedRequest.emit(accounts)
+        coroutineScope {
+          accounts.forEach { account ->
+            launch {
+              accountManager.getCredentialsFlow(account).collectLatest {
+                _accountsUpdatedRequest.emit(accounts)
+              }
             }
           }
         }
@@ -127,8 +134,13 @@ internal class GitLabCloneRepositoriesViewModelImpl(
     }
   }
 
-  override fun doClone(checkoutListener: CheckoutProvider.Listener, directoryPath: String) {
+  override fun setDirectoryPath(path: String) {
+    directoryPath.value = path
+  }
+
+  override fun doClone(checkoutListener: CheckoutProvider.Listener) {
     val selectedUrl = _selectedUrl.value ?: error("Clone button is enabled when repository is not selected")
+    val directoryPath = directoryPath.value
     val parent = Paths.get(directoryPath).toAbsolutePath().parent
     val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
     if (destinationValidation != null) {

@@ -1,8 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.clone
 
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -10,31 +13,31 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
-import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneUISelectorViewModel.UIState
 
 internal interface GitLabCloneUISelectorViewModel {
-  val uiState: SharedFlow<UIState>
+  val vm: SharedFlow<GitLabCloneViewModel>
 
   fun switchToLoginPanel(account: GitLabAccount?)
 
   fun switchToRepositoryList()
 
-  sealed interface UIState {
-    class Login(val account: GitLabAccount?) : UIState
-    object Repositories : UIState
-  }
+  fun doClone(checkoutListener: CheckoutProvider.Listener)
 }
 
 internal class GitLabCloneUISelectorViewModelImpl(
+  project: Project,
   parentCs: CoroutineScope,
   private val accountManager: GitLabAccountManager
 ) : GitLabCloneUISelectorViewModel {
   private val cs: CoroutineScope = parentCs.childScope()
 
+  private val loginVm = GitLabCloneLoginViewModelImpl(cs, accountManager)
+  private val repositoriesVm = GitLabCloneRepositoriesViewModelImpl(project, cs, accountManager)
+
   private val accounts: SharedFlow<Set<GitLabAccount>> = accountManager.accountsState
 
-  private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState.Login(null))
-  override val uiState: SharedFlow<UIState> = _uiState.asSharedFlow()
+  private val _vm: MutableStateFlow<GitLabCloneViewModel> = MutableStateFlow(loginVm)
+  override val vm: SharedFlow<GitLabCloneViewModel> = _vm.asSharedFlow()
 
   init {
     cs.launch {
@@ -43,10 +46,12 @@ internal class GitLabCloneUISelectorViewModelImpl(
           switchToRepositoryList()
         }
 
-        accounts.forEach { account ->
-          launch {
-            accountManager.getCredentialsFlow(account).collectLatest {
-              switchToRepositoryList()
+        coroutineScope {
+          accounts.forEach { account ->
+            launch {
+              accountManager.getCredentialsFlow(account).collectLatest {
+                switchToRepositoryList()
+              }
             }
           }
         }
@@ -55,10 +60,15 @@ internal class GitLabCloneUISelectorViewModelImpl(
   }
 
   override fun switchToLoginPanel(account: GitLabAccount?) {
-    _uiState.value = UIState.Login(account)
+    loginVm.setSelectedAccount(account)
+    _vm.value = loginVm
   }
 
   override fun switchToRepositoryList() {
-    _uiState.value = UIState.Repositories
+    _vm.value = repositoriesVm
+  }
+
+  override fun doClone(checkoutListener: CheckoutProvider.Listener) {
+    repositoriesVm.doClone(checkoutListener)
   }
 }

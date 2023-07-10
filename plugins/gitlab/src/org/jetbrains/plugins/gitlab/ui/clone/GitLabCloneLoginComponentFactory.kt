@@ -35,13 +35,8 @@ import javax.swing.JButton
 import javax.swing.JComponent
 
 internal object GitLabCloneLoginComponentFactory {
-  fun create(
-    cs: CoroutineScope,
-    loginVm: GitLabCloneLoginViewModel,
-    uiSelectorVm: GitLabCloneUISelectorViewModel,
-    account: GitLabAccount?
-  ): JComponent {
-    val (loginModel, errorFlow) = createLoginModel(cs, loginVm, account)
+  fun create(cs: CoroutineScope, loginVm: GitLabCloneLoginViewModel, uiSelectorVm: GitLabCloneUISelectorViewModel): JComponent {
+    val (loginModel, errorFlow) = createLoginModel(cs, loginVm)
     val titlePanel = JBUI.Panels.simplePanel().apply {
       @Suppress("DialogTitleCapitalization")
       val title = JBLabel(GitLabBundle.message("clone.dialog.login.title"), UIUtil.ComponentStyle.LARGE).apply {
@@ -101,7 +96,8 @@ internal object GitLabCloneLoginComponentFactory {
     }
   }
 
-  private fun createLoginModel(cs: CoroutineScope, loginVm: GitLabCloneLoginViewModel, account: GitLabAccount?): PanelModel {
+  private fun createLoginModel(cs: CoroutineScope, loginVm: GitLabCloneLoginViewModel): PanelModel {
+    val account = loginVm.selectedAccount.value
     val loginModel = GitLabTokenLoginPanelModel(
       requiredUsername = null,
       uniqueAccountPredicate = if (account == null) loginVm::isAccountUnique else { _, _ -> true }
