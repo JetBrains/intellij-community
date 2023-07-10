@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.selector
 
-import com.intellij.collaboration.async.disposingScope
 import com.intellij.collaboration.util.serviceGet
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import git4idea.remote.hosting.SingleHostedGitRepositoryConnectionManager
@@ -22,10 +20,9 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
-@Service
-internal class GHRepositoryConnectionManager(project: Project) :
-  SingleHostedGitRepositoryConnectionManager<GHGitRepositoryMapping, GithubAccount, GHRepositoryConnection>,
-  Disposable {
+@Service(Service.Level.PROJECT)
+internal class GHRepositoryConnectionManager(project: Project, parentCs: CoroutineScope) :
+  SingleHostedGitRepositoryConnectionManager<GHGitRepositoryMapping, GithubAccount, GHRepositoryConnection> {
 
   private val dataContextRepository = project.serviceGet<GHPRDataContextRepository>()
 
@@ -59,7 +56,7 @@ internal class GHRepositoryConnectionManager(project: Project) :
     return GHRepositoryConnection(connectionScope, repo, account, dataContext)
   }
 
-  private val delegate = SingleHostedGitRepositoryConnectionManagerImpl(disposingScope(), connectionFactory)
+  private val delegate = SingleHostedGitRepositoryConnectionManagerImpl(parentCs, connectionFactory)
 
   override val connectionState: StateFlow<GHRepositoryConnection?>
     get() = delegate.connectionState
@@ -68,6 +65,4 @@ internal class GHRepositoryConnectionManager(project: Project) :
     delegate.openConnection(repo, account)
 
   override suspend fun closeConnection() = delegate.closeConnection()
-
-  override fun dispose() = Unit
 }
