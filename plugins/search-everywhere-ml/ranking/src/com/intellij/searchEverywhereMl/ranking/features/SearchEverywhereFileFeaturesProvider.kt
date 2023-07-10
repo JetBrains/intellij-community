@@ -150,7 +150,12 @@ class SearchEverywhereFileFeaturesProvider
     val filePath = item.virtualFile.toNioPathOrNull() ?: return emptyList()
     val basePath = item.project.guessProjectDir()?.toNioPathOrNull() ?: return emptyList()
 
-    val relativePath = basePath.relativize(filePath)
+    val relativePath = try {
+      basePath.relativize(filePath)
+    }
+    catch (e: IllegalArgumentException) {
+      return emptyList()
+    }
 
     val features = mutableMapOf<String, Any>()
     PrefixMatchingUtil.calculateFeatures(relativePath.toString(), searchQuery, features)
