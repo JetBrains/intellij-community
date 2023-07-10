@@ -458,4 +458,36 @@ class Basic {
       }
     }
   }
+
+  class Intersection{
+
+
+      sealed interface T1 {
+      }
+
+      sealed interface T2 {
+      }
+
+      final class T11 implements T1 {
+      }
+
+      final class T12 implements T2 {
+      }
+
+      final class T112 implements T1, T2 {
+      }
+
+      record Pair<L>(L a){}
+      <A extends T1 & T2> void test(A z) {
+        switch (z) {
+          case T112 c -> System.out.println("1");
+        }
+      }
+
+      <A extends T1 & T2> void test(Pair<A> z) {
+        switch (z) {
+          case Pair(T112  c) -> System.out.println("23875");
+        }
+      }
+  }
 }
