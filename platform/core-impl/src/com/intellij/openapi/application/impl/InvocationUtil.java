@@ -65,4 +65,9 @@ public final class InvocationUtil {
       super(targetClass + " class internal API has been changed", cause);
     }
   }
+
+  public static boolean priorityEventPending() {
+    AWTEvent event = Toolkit.getDefaultToolkit().getSystemEventQueue().peekEvent();
+    return event != null && event.getClass().getName().equals("sun.awt.PeerEvent");
+  }
 }

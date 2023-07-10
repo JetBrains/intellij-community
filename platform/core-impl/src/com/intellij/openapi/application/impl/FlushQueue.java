@@ -39,7 +39,7 @@ final class FlushQueue {
         break;
       }
       runNextEvent(info);
-      if (System.currentTimeMillis() - startTime > 5) {
+      if (InvocationUtil.priorityEventPending() || System.currentTimeMillis() - startTime > 5) {
         synchronized (getQueueLock()) {
           requestFlush();
         }
