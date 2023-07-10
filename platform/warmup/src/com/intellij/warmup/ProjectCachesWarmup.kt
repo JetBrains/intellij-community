@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModernApplicationStarter
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.platform.util.ArgsParser
 import com.intellij.util.SystemProperties
@@ -20,6 +21,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.asDeferred
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 import kotlin.system.exitProcess
 
@@ -82,13 +84,14 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
 
     val application = ApplicationManager.getApplication()
     WarmupStatus.statusChanged(application, WarmupStatus.InProgress)
+    val timeStart = System.currentTimeMillis()
 
     initLogger(args)
 
-    var totalIndexedFiles = 0
+    val totalIndexedFiles = AtomicInteger(0)
     val handler = object : ProjectIndexingActivityHistoryListener {
       override fun onFinishedDumbIndexing(history: ProjectDumbIndexingHistory) {
-        totalIndexedFiles += history.totalStatsPerFileType.values.sumOf { it.totalNumberOfFiles }
+        totalIndexedFiles.addAndGet(history.totalStatsPerFileType.values.sumOf { it.totalNumberOfFiles })
       }
     }
     application.messageBus.connect().subscribe(ProjectIndexingActivityHistoryListener.TOPIC, handler)
@@ -125,8 +128,13 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
       }
     }
 
-    WarmupStatus.statusChanged(application, WarmupStatus.Finished(totalIndexedFiles))
-    WarmupLogger.logInfo("IDE Warm-up finished. $totalIndexedFiles files were indexed. Exiting the application...")
+    WarmupStatus.statusChanged(application, WarmupStatus.Finished(totalIndexedFiles.get()))
+    val timeEnd = System.currentTimeMillis()
+
+    WarmupLogger.logInfo("""IDE Warm-up finished.
+ - Elapsed time: ${Formats.formatDuration(timeEnd - timeStart)}
+ - Number of indexed files: $totalIndexedFiles. 
+Exiting the application...""")
     withContext(Dispatchers.EDT) {
       blockingContext {
         application.exit(false, true, false)
