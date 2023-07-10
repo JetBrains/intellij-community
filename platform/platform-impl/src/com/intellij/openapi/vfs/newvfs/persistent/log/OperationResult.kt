@@ -20,6 +20,12 @@ class OperationResult<out T : Any> private constructor(
     return fromException(exceptionClass)
   }
 
+  override fun toString(): String {
+    return if (hasValue) "OperationResult(value=$value)"
+    else "OperationResult(exception=$exceptionClass)"
+  }
+
+
   companion object {
     fun <T : Any> fromValue(value: T): OperationResult<T> =
       OperationResult(value, "")
@@ -48,7 +54,12 @@ class OperationResult<out T : Any> private constructor(
           value as Int
         }
         Boolean::class.javaObjectType -> {
-          if (value as Boolean) { 1 } else { 0 }
+          if (value as Boolean) {
+            1
+          }
+          else {
+            0
+          }
         }
         Unit::class.javaObjectType -> 0
         else -> throw IllegalStateException("OperationResult is not designed to be used with type-parameter " + T::class.java.name)
@@ -90,7 +101,8 @@ internal inline fun <R : Any> catchResult(crossinline processor: (result: Operat
   val safeProcessor = { result: OperationResult<R> ->
     try {
       processor(result)
-    } catch (e: Throwable) {
+    }
+    catch (e: Throwable) {
       OperationResult.LOG.error(AssertionError("operation result processor must not throw an exception", e))
     }
   }
@@ -109,4 +121,5 @@ internal inline fun <R : Any> catchResult(crossinline processor: (result: Operat
   }
 }
 
-internal inline infix fun <R : Any> (() -> R).catchResult(crossinline processor: (result: OperationResult<R>) -> Unit) = catchResult(processor, this)
+internal inline infix fun <R : Any> (() -> R).catchResult(crossinline processor: (result: OperationResult<R>) -> Unit) =
+  catchResult(processor, this)

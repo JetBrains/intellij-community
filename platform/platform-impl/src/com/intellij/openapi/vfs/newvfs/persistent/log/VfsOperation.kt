@@ -38,6 +38,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeResult(operation.result, enumerator)
         }
       }
+
+      override fun toString(): String {
+        return "AllocateRecord(result=$result)"
+      }
     }
 
     class SetAttributeRecordId(val fileId: Int, val recordId: Int, result: OperationResult<Unit>)
@@ -58,6 +62,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeInt(operation.recordId)
             writeResult(operation.result, enumerator)
           }
+      }
+
+      override fun toString(): String {
+        return "SetAttributeRecordId(fileId=$fileId, recordId=$recordId, result=$result)"
       }
     }
 
@@ -80,6 +88,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeResult(operation.result, enumerator)
           }
       }
+
+      override fun toString(): String {
+        return "SetContentRecordId(fileId=$fileId, recordId=$recordId, result=$result)"
+      }
     }
 
     class SetParent(val fileId: Int, val parentId: Int, result: OperationResult<Unit>)
@@ -99,6 +111,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeInt(operation.parentId)
           writeResult(operation.result, enumerator)
         }
+      }
+
+      override fun toString(): String {
+        return "SetParent(fileId=$fileId, parentId=$parentId, result=$result)"
       }
     }
 
@@ -120,6 +136,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeResult(operation.result, enumerator)
         }
       }
+
+      override fun toString(): String {
+        return "SetNameId(fileId=$fileId, nameId=$nameId, result=$result)"
+      }
     }
 
     class SetFlags(val fileId: Int, val flags: Int, result: OperationResult<Boolean>)
@@ -139,6 +159,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeInt(operation.flags)
           writeResult(operation.result, enumerator)
         }
+      }
+
+      override fun toString(): String {
+        return "SetFlags(fileId=$fileId, flags=$flags, result=$result)"
       }
     }
 
@@ -160,6 +184,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeResult(operation.result, enumerator)
         }
       }
+
+      override fun toString(): String {
+        return "SetLength(fileId=$fileId, length=$length, result=$result)"
+      }
     }
 
     class SetTimestamp(val fileId: Int, val timestamp: Long, result: OperationResult<Boolean>)
@@ -180,6 +208,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeResult(operation.result, enumerator)
         }
       }
+
+      override fun toString(): String {
+        return "SetTimestamp(fileId=$fileId, timestamp=$timestamp, result=$result)"
+      }
     }
 
     class MarkRecordAsModified(val fileId: Int, result: OperationResult<Unit>)
@@ -198,6 +230,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeInt(operation.fileId)
             writeResult(operation.result, enumerator)
           }
+      }
+
+      override fun toString(): String {
+        return "MarkRecordAsModified(fileId=$fileId, result=$result)"
       }
     }
 
@@ -230,6 +266,11 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeResult(operation.result, enumerator)
         }
       }
+
+      override fun toString(): String {
+        return "FillRecord(fileId=$fileId, timestamp=$timestamp, length=$length, flags=$flags, nameId=$nameId, " +
+               "parentId=$parentId, overwriteAttrRef=$overwriteAttrRef, result=$result)"
+      }
     }
 
     class CleanRecord(val fileId: Int, result: OperationResult<Unit>)
@@ -248,6 +289,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeResult(operation.result, enumerator)
         }
       }
+
+      override fun toString(): String {
+        return "CleanRecord(fileId=$fileId, result=$result)"
+      }
     }
 
     class SetVersion(val version: Int, result: OperationResult<Unit>)
@@ -265,6 +310,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeInt(operation.version)
           writeResult(operation.result, enumerator)
         }
+      }
+
+      override fun toString(): String {
+        return "SetVersion(version=$version, result=$result)"
       }
     }
 
@@ -307,6 +356,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeResult(operation.result, enumerator)
         }
       }
+
+      override fun toString(): String {
+        return "WriteAttribute(fileId=$fileId, enumeratedAttribute=$enumeratedAttribute, attrDataPayloadRef=$attrDataPayloadRef, result=$result)"
+      }
     }
 
     class DeleteAttributes(val fileId: Int, result: OperationResult<Unit>)
@@ -324,6 +377,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeInt(operation.fileId)
           writeResult(operation.result, enumerator)
         }
+      }
+
+      override fun toString(): String {
+        return "DeleteAttributes(fileId=$fileId, result=$result)"
       }
     }
 
@@ -344,6 +401,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeResult(operation.result, enumerator)
         }
       }
+
+      override fun toString(): String {
+        return "SetVersion(version=$version, result=$result)"
+      }
     }
 
     companion object {
@@ -358,6 +419,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
   sealed class ContentsOperation<T : Any>(tag: VfsOperationTag, result: OperationResult<T>) : VfsOperation<T>(tag, result) {
     class WriteBytes(val recordId: Int, val fixedSize: Boolean, val dataPayloadRef: PayloadRef, result: OperationResult<Unit>)
       : ContentsOperation<Unit>(VfsOperationTag.CONTENT_WRITE_BYTES, result) {
+
       internal companion object : Serializer<WriteBytes> {
         override val valueSizeBytes: Int = Int.SIZE_BYTES + 1 + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): WriteBytes =
@@ -375,6 +437,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writePayloadRef(operation.dataPayloadRef)
           writeResult(operation.result, enumerator)
         }
+      }
+
+      override fun toString(): String {
+        return "WriteBytes(recordId=$recordId, fixedSize=$fixedSize, dataPayloadRef=$dataPayloadRef, result=$result)"
       }
     }
 
@@ -395,6 +461,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writePayloadRef(operation.dataPayloadRef)
           writeResult(operation.result, enumerator)
         }
+      }
+
+      override fun toString(): String {
+        return "WriteStream(recordId=$recordId, dataPayloadRef=$dataPayloadRef, result=$result)"
       }
     }
 
@@ -418,6 +488,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeResult(operation.result, enumerator)
         }
       }
+
+      override fun toString(): String {
+        return "WriteStream2(recordId=$recordId, fixedSize=$fixedSize, dataPayloadRef=$dataPayloadRef, result=$result)"
+      }
     }
 
     class AppendStream(val recordId: Int, val dataPayloadRef: PayloadRef, result: OperationResult<Unit>)
@@ -437,6 +511,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writePayloadRef(operation.dataPayloadRef)
           writeResult(operation.result, enumerator)
         }
+      }
+
+      override fun toString(): String {
+        return "AppendStream(recordId=$recordId, dataPayloadRef=$dataPayloadRef, result=$result)"
       }
     }
 
@@ -460,6 +538,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeResult(operation.result, enumerator)
         }
       }
+
+      override fun toString(): String {
+        return "ReplaceBytes(recordId=$recordId, offset=$offset, dataPayloadRef=$dataPayloadRef, result=$result)"
+      }
     }
 
     class AcquireNewRecord(result: OperationResult<Int>)
@@ -475,6 +557,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         override fun OutputStream.serialize(operation: AcquireNewRecord, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeResult(operation.result, enumerator)
         }
+      }
+
+      override fun toString(): String {
+        return "AcquireNewRecord(result=$result)"
       }
     }
 
@@ -494,6 +580,11 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeResult(operation.result, enumerator)
         }
       }
+
+      override fun toString(): String {
+        return "AcquireRecord(recordId=$recordId, result=$result)"
+      }
+
     }
 
     class ReleaseRecord(val recordId: Int, result: OperationResult<Unit>)
@@ -511,6 +602,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeInt(operation.recordId)
           writeResult(operation.result, enumerator)
         }
+      }
+
+      override fun toString(): String {
+        return "ReleaseRecord(recordId=$recordId, result=$result)"
       }
     }
 
@@ -530,6 +625,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeInt(operation.version)
             writeResult(operation.result, enumerator)
           }
+      }
+
+      override fun toString(): String {
+        return "SetVersion(version=$version, result=$result)"
       }
     }
 
@@ -568,6 +667,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeInt(operation.fileId)
           }
         }
+
+        override fun toString(): String {
+          return "EventStart.ContentChange(fileId=$fileId, eventTimestamp=$eventTimestamp, result=$result)"
+        }
       }
 
       class Copy(eventTimestamp: Long, val fileId: Int, val newParentId: Int)
@@ -587,6 +690,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeInt(operation.fileId)
             writeInt(operation.newParentId)
           }
+        }
+
+        override fun toString(): String {
+          return "EventStart.Copy(fileId=$fileId, newParentId=$newParentId, eventTimestamp=$eventTimestamp, result=$result)"
         }
       }
 
@@ -614,6 +721,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeBoolean(operation.isDirectory)
           }
         }
+
+        override fun toString(): String {
+          return "EventStart.Create(parentId=$parentId, newChildName=$newChildName, isDirectory=$isDirectory, eventTimestamp=$eventTimestamp, result=$result)"
+        }
       }
 
       class Delete(eventTimestamp: Long, val fileId: Int) : EventStart(VfsOperationTag.VFILE_EVENT_DELETE, eventTimestamp) {
@@ -630,6 +741,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeLong(operation.eventTimestamp)
             writeInt(operation.fileId)
           }
+        }
+
+        override fun toString(): String {
+          return "EventStart.Delete(fileId=$fileId, eventTimestamp=$eventTimestamp, result=$result)"
         }
       }
 
@@ -653,6 +768,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeInt(operation.newParentId)
           }
         }
+
+        override fun toString(): String {
+          return "EventStart.Move(fileId=$fileId, oldParentId=$oldParentId, newParentId=$newParentId, eventTimestamp=$eventTimestamp, result=$result)"
+        }
       }
 
       class PropertyChange(eventTimestamp: Long, val fileId: Int, @PropName val propertyName: String)
@@ -672,6 +791,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeInt(operation.fileId)
             writeInt(enumerator.enumerate(operation.propertyName))
           }
+        }
+
+        override fun toString(): String {
+          return "EventStart.PropertyChange(fileId=$fileId, propertyName='$propertyName', eventTimestamp=$eventTimestamp, result=$result)"
         }
       }
     }
@@ -695,6 +818,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeByte(operation.eventTag.ordinal)
           writeResult(operation.result, enumerator)
         }
+      }
+
+      override fun toString(): String {
+        return "EventEnd(eventTag=$eventTag, result=$result)"
       }
     }
   }

@@ -71,7 +71,7 @@ val VfsOperationTag.isVFileEventOperation: Boolean get() = VfsOperationTag.VFILE
 value class VfsOperationTagsMask(val mask: Long) {
   constructor(vararg tags: VfsOperationTag) : this(tags.map { 1L shl it.ordinal }.fold(0L, Long::or))
 
-  fun contains(tag: VfsOperationTag): Boolean = (mask and (1L shl tag.ordinal)) != 0L
+  operator fun contains(tag: VfsOperationTag): Boolean = (mask and (1L shl tag.ordinal)) != 0L
 
   fun toList(): List<VfsOperationTag> = VfsOperationTag.VALUES.filter { contains(it) }
 
