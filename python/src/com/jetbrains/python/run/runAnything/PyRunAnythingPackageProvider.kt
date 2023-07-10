@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.sdk.isTargetBased
@@ -17,9 +18,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * Install packages on Python interpreter using Run Anything.
+ */
 abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
   private var cacheInitialized = AtomicBoolean(false)
 
+  @RequiresBackgroundThread
   override fun suggestCompletionVariants(dataContext: DataContext,
                                          commandLine: CommandLine): Sequence<String> {
     if (getSdk(dataContext)?.isTargetBased() == true) return emptySequence()
@@ -80,14 +85,13 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
     return compOperator().map { Pair(param.indexOf(it), it) }.filter { it.first != -1 }.firstOrNull() ?: Pair(null, null)
   }
 
-  private fun compOperator(): Sequence<String> {
-    return listOf("==", ">=", "<=", ">", "<").asSequence()
-  }
+  private fun compOperator(): Sequence<String> = listOf("==", ">=", "<=", ">", "<").asSequence()
 
-  protected fun getSdk(dataContext: DataContext): Sdk? {
-    return dataContext.project.modules.firstOrNull()?.pythonSdk
-  }
+  protected fun getSdk(dataContext: DataContext): Sdk? = dataContext.project.modules.firstOrNull()?.pythonSdk
 
+  /**
+   * Complete package name if it's not a command flag or a package version
+   */
   private fun shouldCompletePackageNames(parameters: List<String>, toComplete: String): Boolean {
     val allFlags = toComplete.isEmpty() && parameters.drop(1).all { it.startsWith("-") }
     val allPreviousFlags = toComplete.isNotEmpty() && parameters.drop(1).dropLast(1).all { it.startsWith("-") }
