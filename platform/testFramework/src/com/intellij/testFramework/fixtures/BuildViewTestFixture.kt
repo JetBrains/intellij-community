@@ -42,7 +42,7 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
   override fun tearDown(): Unit = RunAll(
     ThrowableRunnable { if (::syncViewManager.isInitialized) syncViewManager.waitForPendingBuilds() },
     ThrowableRunnable { if (::buildViewManager.isInitialized) buildViewManager.waitForPendingBuilds() },
-    ThrowableRunnable { Disposer.dispose(fixtureDisposable) }
+    ThrowableRunnable { runInEdtAndWait { Disposer.dispose(fixtureDisposable) } }
   ).run()
 
   fun assertSyncViewTreeEquals(executionTreeText: String) {
