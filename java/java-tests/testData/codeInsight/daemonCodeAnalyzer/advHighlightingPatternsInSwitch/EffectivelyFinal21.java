@@ -162,4 +162,13 @@ class Test {
       default -> {}
     }
   }
+
+  void testNested(Object o, Integer in) {
+    switch (o) {
+      case Integer mode when (<error descr="Cannot assign a value to variable 'mode', because it is declared outside the guard">mode</error>--) > 9:
+        break;
+      default:
+        break;
+    }
+  }
 }

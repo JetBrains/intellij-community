@@ -389,7 +389,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
     if (!myHolder.hasErrorResults()) add(HighlightUtil.checkAssignmentCompatibleTypes(assignment));
     if (!myHolder.hasErrorResults()) add(HighlightUtil.checkAssignmentOperatorApplicable(assignment));
-    if (!myHolder.hasErrorResults()) add(HighlightUtil.checkOutsideDeclaredCantBeAssignmentInGuard(assignment));
+    if (!myHolder.hasErrorResults()) add(HighlightUtil.checkOutsideDeclaredCantBeAssignmentInGuard(assignment.getLExpression()));
     if (!myHolder.hasErrorResults()) visitExpression(assignment);
   }
 
@@ -1139,6 +1139,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) {
       add(HighlightUtil.checkUnaryOperatorApplicable(expression.getOperationSign(), expression.getOperand()));
     }
+    if (!myHolder.hasErrorResults()) add(HighlightUtil.checkOutsideDeclaredCantBeAssignmentInGuard(expression.getOperand()));
   }
 
   private void registerConstructorCall(@NotNull PsiConstructorCall constructorCall) {

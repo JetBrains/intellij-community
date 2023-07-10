@@ -363,20 +363,29 @@ public final class HighlightUtil {
     return errorResult;
   }
 
-  static HighlightInfo.Builder checkOutsideDeclaredCantBeAssignmentInGuard(PsiAssignmentExpression assignment) {
-    if (PsiUtil.getLanguageLevel(assignment) == LanguageLevel.JDK_20_PREVIEW) {
+  /**
+   * JEP 440-441
+   * Any variable that is used but not declared by a guard must either be final or effectively final (4.12.4)
+   * and cannot be assigned to (15.26),
+   * incremented (15.14.2), or decremented (15.14.3), otherwise a compile-time error occurs
+   **/
+  @Nullable
+  static HighlightInfo.Builder checkOutsideDeclaredCantBeAssignmentInGuard(@Nullable PsiExpression expressionVariable) {
+    if (expressionVariable == null) {
       return null;
     }
-    PsiPatternGuard patternGuard = PsiTreeUtil.getParentOfType(assignment, PsiPatternGuard.class);
+    if (PsiUtil.getLanguageLevel(expressionVariable) == LanguageLevel.JDK_20_PREVIEW) {
+      return null;
+    }
+    PsiPatternGuard patternGuard = PsiTreeUtil.getParentOfType(expressionVariable, PsiPatternGuard.class);
     if (patternGuard == null) {
       return null;
     }
     PsiExpression guardingExpression = patternGuard.getGuardingExpression();
-    if (!PsiTreeUtil.isAncestor(guardingExpression, assignment, false)) {
+    if (!PsiTreeUtil.isAncestor(guardingExpression, expressionVariable, false)) {
       return null;
     }
-    PsiExpression expression = assignment.getLExpression();
-    if (!(expression instanceof PsiReferenceExpression referenceExpression &&
+    if (!(expressionVariable instanceof PsiReferenceExpression referenceExpression &&
           referenceExpression.resolve() instanceof PsiVariable psiVariable)) {
       return null;
     }
@@ -385,7 +394,7 @@ public final class HighlightUtil {
     }
     String message = JavaErrorBundle.message("impossible.assign.declared.outside.guard", psiVariable.getName());
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-      .range(expression)
+      .range(expressionVariable)
       .descriptionAndTooltip(message);
   }
 
