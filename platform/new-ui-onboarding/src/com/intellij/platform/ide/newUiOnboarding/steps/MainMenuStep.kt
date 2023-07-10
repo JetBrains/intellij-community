@@ -1,16 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.newUiOnboarding.steps
+package com.intellij.platform.ide.newUiOnboarding.steps
 
-import com.intellij.ide.newUiOnboarding.NewUiOnboardingBundle
-import com.intellij.ide.newUiOnboarding.NewUiOnboardingStep
-import com.intellij.ide.newUiOnboarding.NewUiOnboardingStepData
-import com.intellij.ide.newUiOnboarding.NewUiOnboardingUtil
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepData
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingUtil
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBUI

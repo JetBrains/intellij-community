@@ -1,18 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.newUiOnboarding.steps
+package com.intellij.platform.ide.newUiOnboarding.steps
 
 import com.intellij.ide.ReopenProjectAction
-import com.intellij.ide.newUiOnboarding.NewUiOnboardingBundle
-import com.intellij.ide.newUiOnboarding.NewUiOnboardingStep
-import com.intellij.ide.newUiOnboarding.NewUiOnboardingStepData
-import com.intellij.ide.newUiOnboarding.NewUiOnboardingUtil
-import com.intellij.ide.newUiOnboarding.NewUiOnboardingUtil.findUiComponent
 import com.intellij.openapi.actionSystem.AnActionHolder
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepData
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingUtil
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingUtil.findUiComponent
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.components.JBList
