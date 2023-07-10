@@ -172,16 +172,21 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   fun getOrGenerateAssociatedColorIndex(projectPath: String): Int {
-    var index = propertiesStorage.getInt(associatedProjectColorKey(projectPath), -1)
-    if (index >= 0 && index < backgroundColors.size && index < gradientColors.size) return index
+    getAssociatedColorIndex(projectPath)?.let { return it }
 
     // Calculate next colors by incrementing (and saving the new value) color index
-    index = propertiesStorage.nextColorIndex(minOf(backgroundColors.size, gradientColors.size))
+    val index = propertiesStorage.nextColorIndex(minOf(backgroundColors.size, gradientColors.size))
 
     // Save calculated colors and clear customized colors for the project
     setAssociatedColorsIndex(projectPath, index)
 
     return index
+  }
+
+  fun getAssociatedColorIndex(projectPath: String): Int? {
+    val index = propertiesStorage.getInt(associatedProjectColorKey(projectPath), -1)
+    if (index >= 0 && index < backgroundColors.size && index < gradientColors.size) return index
+    return null
   }
 
   fun setAssociatedColorsIndex(projectPath: String, index: Int) {
