@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
 import com.intellij.find.FindBundle;
@@ -21,7 +21,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.*;
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleTable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableCellRenderer;
@@ -139,7 +141,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
     SelectablePanel panel = new SelectablePanel() {
       @Override
-      public AccessibleContext getAccessibleContext() {
+      public @NotNull AccessibleContext getAccessibleContext() {
         AccessibleContext acc = super.getAccessibleContext();
         if (column == CURRENT_ASTERISK_COL) {
           acc.setAccessibleName(getAccessibleNameForRow(list, row, isOriginUsage));
@@ -254,7 +256,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       if (size.width > widthPerComponent) {
         UsageGroup.ClippingMode clippingMode = (UsageGroup.ClippingMode) scc.getClientProperty(CLIPPING_STRATEGY);
         getClippingStrategy(clippingMode).cutText(scc, widthPerComponent);
-      };
+      }
     }
   }
 
