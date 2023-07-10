@@ -60,6 +60,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   private boolean myCanBeDeleted = true;
 
+  private boolean myIsVisible = true;
+
   // version influences XML format and triggers migration
   private int myVersion = CURR_VERSION;
 
@@ -934,7 +936,11 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   public boolean isVisible() {
-    return true;
+    return myIsVisible;
+  }
+
+  public void setVisible(boolean isVisible) {
+    myIsVisible = isVisible;
   }
 
   public static boolean isVisible(@NotNull EditorColorsScheme scheme) {

@@ -343,7 +343,12 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       }
     }
     for (EditorColorsScheme brokenScheme : brokenSchemesList) {
-      mySchemeManager.removeScheme(brokenScheme);
+      if (brokenScheme instanceof AbstractColorsScheme && !(brokenScheme instanceof ReadOnlyColorsScheme)) {
+        ((AbstractColorsScheme)brokenScheme).setVisible(false);
+      }
+      else {
+        mySchemeManager.removeScheme(brokenScheme);
+      }
     }
   }
 
@@ -531,6 +536,9 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @Override
   public @NotNull EditorColorsScheme getGlobalScheme() {
     EditorColorsScheme scheme = mySchemeManager.getActiveScheme();
+    if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme) && !((AbstractColorsScheme)scheme).isVisible()) {
+      return getDefaultScheme();
+    }
     EditorColorsScheme editableCopy = getEditableCopy(scheme);
     if (editableCopy != null) return editableCopy;
     return scheme == null ? getDefaultScheme() : scheme;
