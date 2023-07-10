@@ -8,7 +8,7 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.kotlin.KotlinReceiverUParameter
 
-class KtUElementAsPsiCheckProvider : UElementAsPsiCheckProvider {
+internal class KtUElementAsPsiCheckProvider : UElementAsPsiCheckProvider {
 
   override fun isPsiElementReceiver(uMethod: UMethod): Boolean {
     val psi = uMethod.sourcePsi ?: return false
