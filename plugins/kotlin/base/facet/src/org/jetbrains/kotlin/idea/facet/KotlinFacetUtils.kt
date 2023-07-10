@@ -96,7 +96,7 @@ fun KotlinFacetSettings.initializeIfNeeded(
 
 private fun getDefaultTargetPlatform(module: Module, rootModel: ModuleRootModel?): TargetPlatform {
     val platformKind = IdePlatformKind.ALL_KINDS.firstOrNull {
-        getRuntimeLibraryVersions(module, rootModel, it).isNotEmpty()
+        getRuntimeLibraryVersions(module, rootModel, it).any()
     } ?: JvmPlatforms.defaultJvmPlatform.idePlatformKind
     if (platformKind == JvmIdePlatformKind) {
         var jvmTarget = Kotlin2JvmCompilerArgumentsHolder.getInstance(module.project).settings.jvmTarget?.let { JvmTarget.fromString(it) }

@@ -19,19 +19,25 @@ class KotlinVersionInfoProviderByModuleDependencies : KotlinVersionInfoProvider 
         module: Module,
         platformKind: IdePlatformKind,
         rootModel: ModuleRootModel?
-    ): Collection<IdeKotlinVersion> {
+    ): Collection<IdeKotlinVersion> = getLibraryVersionsSequence(module, platformKind, rootModel).toList()
+
+    override fun getLibraryVersionsSequence(
+        module: Module,
+        platformKind: IdePlatformKind,
+        rootModel: ModuleRootModel?
+    ): Sequence<IdeKotlinVersion> {
         if (module.isDisposed) {
-            return emptyList()
+            return emptySequence()
         }
 
         val versionProvider = IdePlatformKindProjectStructure.getInstance(module.project).getLibraryVersionProvider(platformKind)
         val orderEntries = (rootModel ?: ModuleRootManager.getInstance(module)).orderEntries
 
-        return mutableListOf<IdeKotlinVersion>().apply {
+        return sequence {
             for (orderEntry in orderEntries) {
                 val library = (orderEntry as? LibraryOrderEntry)?.library ?: continue
                 val version = versionProvider(library) ?: continue
-                add(version)
+                yield(version)
             }
         }
     }
