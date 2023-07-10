@@ -108,8 +108,8 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
     PsiFile selectedFile = selectedEditor == null ? null : PsiDocumentManager.getInstance(myProject).getCachedPsiFile(selectedEditor.getDocument());
     if (selectedFile != null && !application.isUnitTestMode()) {
       application.invokeLater(() -> {
-        if (!selectedEditor.isDisposed()) {
-          EditorMarkupModel markupModel = (EditorMarkupModel)selectedEditor.getMarkupModel();
+        if (!selectedEditor.isDisposed() &&
+            selectedEditor.getMarkupModel() instanceof EditorMarkupModel markupModel) {
           ErrorStripeUpdateManager.getInstance(myProject).setOrRefreshErrorStripeRenderer(markupModel, selectedFile);
         }
       }, ModalityState.stateForComponent(selectedEditor.getComponent()), myProject.getDisposed());
