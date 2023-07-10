@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.ide.actions.cache.RecoverVfsFromLogService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -20,6 +22,7 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
@@ -99,6 +102,24 @@ public final class FSRecordsImpl {
     ExceptionUtil.rethrow(error);
   };
 
+  public static final ErrorHandler ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD_AND_SUGGEST_CACHE_RECOVERY_IF_ALLOWED =
+    (records, error) -> {
+      records.connection.markAsCorruptedAndScheduleRebuild(error);
+      ApplicationManager.getApplication().getService(RecoverVfsFromLogService.class).suggestAutomaticRecoveryIfAllowed();
+      if (error instanceof IOException) {
+        throw new UncheckedIOException((IOException)error);
+      }
+      ExceptionUtil.rethrow(error);
+    };
+
+  public static ErrorHandler getDefaultErrorHandler() {
+    if (VfsLog.LOG_VFS_OPERATIONS_ENABLED) {
+      return ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD_AND_SUGGEST_CACHE_RECOVERY_IF_ALLOWED;
+    }
+    else {
+      return ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD;
+    }
+  }
 
   public final @NotNull PersistentFSConnection connection;
   private final @NotNull PersistentFSContentAccessor contentAccessor;
@@ -176,7 +197,7 @@ public final class FSRecordsImpl {
 
   static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
                                @NotNull List<ConnectionInterceptor> connectionInterceptors) throws UncheckedIOException {
-    return connect(storagesDirectoryPath, connectionInterceptors, ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD);
+    return connect(storagesDirectoryPath, connectionInterceptors, getDefaultErrorHandler());
   }
 
   static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,

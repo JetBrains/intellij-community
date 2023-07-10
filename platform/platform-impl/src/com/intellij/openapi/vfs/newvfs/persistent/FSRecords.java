@@ -6,8 +6,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
+import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
+import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
@@ -82,7 +85,7 @@ public final class FSRecords {
   //========== lifecycle: =====================================================
 
   static synchronized void connect(@NotNull List<ConnectionInterceptor> connectionInterceptors) throws UncheckedIOException {
-    connect(connectionInterceptors, FSRecordsImpl.ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD);
+    connect(connectionInterceptors, FSRecordsImpl.getDefaultErrorHandler());
   }
 
   static synchronized void connect(@NotNull List<ConnectionInterceptor> connectionInterceptors,

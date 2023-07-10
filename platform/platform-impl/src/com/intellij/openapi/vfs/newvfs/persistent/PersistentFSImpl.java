@@ -48,6 +48,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -138,10 +139,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private void initVfsLog() {
     var readOnly = !VfsLog.LOG_VFS_OPERATIONS_ENABLED;
-    var vfsLogPath = new PersistentFSPaths(Path.of(FSRecords.getCachesDir())).getVfsLogStorage();
-    if (!VfsLog.LOG_VFS_OPERATIONS_ENABLED) {
-      // forcefully erase VfsLog storages if the feature is disabled so that when it will be
-      // enabled again we won't consider old data as a source for recovery
+    var paths = new PersistentFSPaths(Path.of(FSRecords.getCachesDir()));
+    var vfsLogPath = paths.getVfsLogStorage();
+    // forcefully erase VfsLog storages if the feature is disabled (or vfs is corrupted) so that when it will be
+    // enabled again we won't consider old data as a source for recovery
+    if (!VfsLog.LOG_VFS_OPERATIONS_ENABLED || Files.exists(paths.getCorruptionMarkerFile())) {
       try {
         VfsLogImpl.Companion.clearStorage(vfsLogPath);
       }
@@ -1825,6 +1827,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     public NewVirtualFile find(int fileId) {
+      if (VfsLog.LOG_VFS_OPERATIONS_ENABLED) {
+        int maxId = fsRecords.connection().getRecords().maxAllocatedID();
+        if (fileId > maxId) {
+          // do not corrupt vfs if provided fileId is out of bounds
+          throw new IndexOutOfBoundsException("recordId(=" + fileId + ") is outside of allocated IDs range (0, " + maxId + "]");
+        }
+      }
       try {
         ascendUntilCachedParent(fileId);
       }
