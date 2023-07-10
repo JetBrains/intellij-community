@@ -1,11 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
 
 

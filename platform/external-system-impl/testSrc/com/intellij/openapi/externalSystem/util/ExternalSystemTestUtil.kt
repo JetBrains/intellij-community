@@ -42,7 +42,6 @@ suspend fun performAction(
   project: Project? = null,
   systemId: ProjectSystemId? = null,
   selectedFile: VirtualFile? = null,
-  blocking: Boolean = false
 ) {
   withSelectedFileIfNeeded(selectedFile) {
     val event = TestActionEvent.createTestEvent {
@@ -50,7 +49,6 @@ suspend fun performAction(
         ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.`is`(it) -> systemId
         CommonDataKeys.PROJECT.`is`(it) -> project
         CommonDataKeys.VIRTUAL_FILE.`is`(it) -> selectedFile
-        ExternalSystemDataKeys.BLOCKING_ACTIVITY.`is`(it) -> blocking
         else -> null
       }
     }

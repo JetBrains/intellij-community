@@ -4,10 +4,8 @@ package org.jetbrains.idea.maven.project.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.actions.MavenAction
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil
@@ -15,16 +13,8 @@ import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 
 class AddFileAsMavenProjectAction : MavenAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val blocking = e.getData(ExternalSystemDataKeys.BLOCKING_ACTIVITY)
-    if (null != blocking && blocking) {
-      runBlocking {
-        actionPerformedAsync(e)
-      }
-    }
-    else {
-      val cs = MavenCoroutineScopeProvider.getCoroutineScope(e.project)
-      cs.launch { actionPerformedAsync(e) }
-    }
+    val cs = MavenCoroutineScopeProvider.getCoroutineScope(e.project)
+    cs.launch { actionPerformedAsync(e) }
   }
 
   suspend fun actionPerformedAsync(e: AnActionEvent) {

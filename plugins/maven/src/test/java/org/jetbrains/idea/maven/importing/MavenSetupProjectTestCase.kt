@@ -5,6 +5,8 @@ import com.intellij.ide.actions.ImportProjectAction
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.xml.MavenBuildFileBuilder
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -17,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.utils.module.assertModules
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
@@ -77,11 +80,16 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
 
   suspend fun attachProjectFromScriptAsync(project: Project, projectFile: VirtualFile): Project {
     performAction(
-      action = AddFileAsMavenProjectAction(),
+      action = object : AnAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+          runBlocking {
+            AddFileAsMavenProjectAction().actionPerformedAsync(e)
+          }
+        }
+      },
       project = project,
       systemId = SYSTEM_ID,
       selectedFile = projectFile,
-      blocking = true
     )
     return project
   }
