@@ -204,7 +204,7 @@ def test_get_info_format(setup_dataframe):
 @pytest.mark.skipif(sys.version_info < (3, 0), reason="Different format for Python2")
 def test_describe_many_columns_check_html(setup_dataframe_many_columns):
     df = setup_dataframe_many_columns
-    actual = pandas_tables_helpers.get_column_desciptions(df, -1, 1000)
+    actual = pandas_tables_helpers.get_column_descriptions(df, -1, 1000)
 
     read_expected_from_file_and_compare_with_actual(
         actual=actual,
