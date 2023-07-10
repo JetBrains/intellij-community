@@ -41,37 +41,36 @@ abstract class MavenEmbedderWrapperEx(private val project: Project) : MavenEmbed
                                                   console: MavenConsole?,
                                                   task: LongRunningEmbedderTask<R>): R {
     val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
-    val asyncTask = cs.async {
-      val progressIndication = launch {
-        while (isActive) {
-          delay(500)
-          val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
-          console?.handleConsoleEvents(status.consoleEvents())
-          indicator?.fraction = status.fraction()
-          syncConsole?.handleDownloadEvents(status.downloadEvents())
-          if (null != indicator && indicator.isCanceled) {
-            if (embedder.cancelLongRunningTask(longRunningTaskId, ourToken)) {
-              throw MavenProcessCanceledException()
-            }
-          }
-        }
-      }
 
-      val result = async {
-        try {
-          return@async withContext(Dispatchers.IO) {
-            return@withContext task.run(embedder, longRunningTaskId)
+    val progressIndication = cs.launch {
+      while (isActive) {
+        delay(500)
+        val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
+        console?.handleConsoleEvents(status.consoleEvents())
+        indicator?.fraction = status.fraction()
+        syncConsole?.handleDownloadEvents(status.downloadEvents())
+        if (null != indicator && indicator.isCanceled) {
+          if (embedder.cancelLongRunningTask(longRunningTaskId, ourToken)) {
+            break
           }
         }
-        catch (e: Exception) {
-          throw MavenProcessCanceledException(e)
-        }
-        finally {
-          progressIndication.cancel()
+      }
+    }
+
+    val asyncTask = cs.async {
+      try {
+        withContext(Dispatchers.IO) {
+          task.run(embedder, longRunningTaskId)
         }
       }
-      return@async result.await()
+      catch (e: Exception) {
+        throw MavenProcessCanceledException(e)
+      }
+      finally {
+        progressIndication.cancel()
+      }
     }
+
     return asyncTask.await()
   }
 }
