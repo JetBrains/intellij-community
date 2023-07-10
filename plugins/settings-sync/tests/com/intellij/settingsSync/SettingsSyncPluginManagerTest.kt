@@ -347,10 +347,10 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
   }
 
   private fun restart_required_base(installedBefore: Boolean, enabledBefore: Boolean, enabledInPush: Boolean){
-    val restartRequiredRef = AtomicReference<Pair<String, String>>()
+    val restartRequiredRef = AtomicReference<RestartReason>()
     SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {
-      override fun restartRequired(cause: String, details: String) {
-        restartRequiredRef.set(Pair(cause, details))
+      override fun restartRequired(reason: RestartReason) {
+        restartRequiredRef.set(reason)
       }
     })
     testPluginManager.addPluginDescriptors(quickJump)
@@ -370,6 +370,12 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
       }
     }
     assertNotNull(restartRequiredRef.get(), "Should have processed")
-    assert(restartRequiredRef.get().second.contains("plugin(s): Test plugin name..."))
+    if (!installedBefore) {
+      assert(restartRequiredRef.get() is RestartForPluginInstall)
+    } else if (enabledBefore) {
+      assert(restartRequiredRef.get() is RestartForPluginDisable)
+    } else {
+      assert(restartRequiredRef.get() is RestartForPluginEnable)
+    }
   }
 }

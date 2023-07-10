@@ -13,11 +13,8 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
+import com.intellij.settingsSync.*
 import com.intellij.settingsSync.NOTIFICATION_GROUP
-import com.intellij.settingsSync.SettingsSyncBundle
-import com.intellij.settingsSync.SettingsSyncEvents
-import com.intellij.settingsSync.SettingsSyncSettings
-import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 
 internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Boolean) : SettingsSyncPluginInstaller {
@@ -62,8 +59,7 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
       SettingsSyncEvents.getInstance().fireCategoriesChanged()
     }
     if (pluginsRequiredRestart.size > 0) {
-      SettingsSyncEvents.getInstance().fireRestartRequired("install", SettingsSyncBundle.message("sync.restart.notification.submessage.plugins",
-                                                                                      "install", pluginsRequiredRestart.joinToString(", ")))
+      SettingsSyncEvents.getInstance().fireRestartRequired(RestartForPluginInstall(pluginsRequiredRestart))
     }
   }
 

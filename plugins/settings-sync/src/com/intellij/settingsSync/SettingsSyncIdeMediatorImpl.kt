@@ -32,7 +32,6 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.time.Instant
-import java.util.*
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Predicate
@@ -56,12 +55,12 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   override val enabled: Boolean
     get() = enabledCondition()
 
-  private val restartRequiredReasons: MutableMap<String, String> = hashMapOf()
+  private val restartRequiredReasons = mutableListOf<RestartReason>()
 
   init {
     SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {
-      override fun restartRequired(cause: String, details: String) {
-        restartRequiredReasons[cause] = details
+      override fun restartRequired(reason: RestartReason) {
+        restartRequiredReasons.add(reason)
       }
     })
   }
@@ -121,27 +120,13 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   }
 
   private fun buildRestartNeededNotification(): Notification {
-    fun String.capitalize() : String {
-      return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-    }
-
-    fun getSingleReasonRestartMessage(): String {
-      assert(restartRequiredReasons.size == 1)
-      val (_, description) = restartRequiredReasons.entries.first()
-      return SettingsSyncBundle.message("sync.restart.notification.message", description)
-    }
-
-    fun getMultireasonRestartMessage(): String {
+    fun getMultiReasonRestartMessage(): String {
       assert(restartRequiredReasons.size > 1)
       val message = StringBuilder(SettingsSyncBundle.message("sync.restart.notification.message.subtitle")).append('\n')
-      var counter = 0
 
-      val keys = listOf("install", "enable", "disable", "registry")
-      for (key in keys) {
-        if (restartRequiredReasons.containsKey(key)) {
-          message.append("${++counter}. ")
-          message.append(restartRequiredReasons.getValue(key).capitalize()).append('\n')
-        }
+      val sortedRestartReasons = restartRequiredReasons.sorted()
+      for ((counter, reason) in sortedRestartReasons.withIndex()) {
+        message.append(reason.getMultiReasonNotificationListEntry(counter + 1))
       }
 
       message.dropLast(0) // we do not need the new line in the end
@@ -150,8 +135,8 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
 
     val message = when {
       restartRequiredReasons.isEmpty() -> throw RuntimeException("No restart reasons found")
-      restartRequiredReasons.size == 1 -> getSingleReasonRestartMessage()
-      else -> getMultireasonRestartMessage()
+      restartRequiredReasons.size == 1 -> restartRequiredReasons.first().getSingleReasonNotificationMessage()
+      else -> getMultiReasonRestartMessage()
     }
     return NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
       .createNotification(SettingsSyncBundle.message("sync.restart.notification.title"),
@@ -330,7 +315,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     invokeAndWaitIfNeeded {
       reloadComponents(changedFileSpecs, deletedFileSpecs)
       if (Registry.getInstance().isRestartNeeded) {
-        SettingsSyncEvents.getInstance().fireRestartRequired("registry", SettingsSyncBundle.message("sync.restart.notification.submessage.registry"))
+        SettingsSyncEvents.getInstance().fireRestartRequired(RestartForNewUI)
       }
     }
   }
