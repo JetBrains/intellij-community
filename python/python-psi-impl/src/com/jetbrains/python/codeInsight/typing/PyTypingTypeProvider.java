@@ -1085,8 +1085,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
     if (resolved instanceof PyTargetExpression referenceExpression) {
       Collection<String> operandNames = resolveToQualifiedNames(referenceExpression, context.getTypeContext());
       if (ContainerUtil.exists(operandNames, name -> name.equals(LITERALSTRING) || name.equals(LITERALSTRING_EXT))) {
-        PyType strType = PyBuiltinCache.getInstance(resolved).getStringType(LanguageLevel.forElement(resolved));
-        return Ref.create(PyLiteralStringType.Companion.create(resolved, false));
+        return Ref.create(PyLiteralStringType.Companion.create(resolved));
       }
     }
 

@@ -2004,6 +2004,31 @@ public class Py3TypeTest extends PyTestCase {
                      """);
   }
 
+  // PY-61137
+  public void testLiteralStringIsNotInferredWithoutExplicitAnnotation() {
+    doTest("list[str]",
+           """
+             expr = ['1' + '2']""");
+    doTest("list[str]",
+           """
+             from typing import TypeVar
+             T = TypeVar("T")
+             def same_type(x: T, y: T) -> T:
+                 pass
+             s: str
+             expr = same_type(['foo'], [s])""");
+    doTest("list[str]",
+           "expr = ['foo', 'bar']");
+    doTest("deque[str]",
+           """
+             from collections import deque
+             expr = deque(['foo', 'bar'])""");
+    doTest("LiteralString",
+           "expr = '1' + '2'");
+    doTest("LiteralString",
+           "expr = '%s' % ('a')");
+  }
+
   // PY-27708
   public void testDictCompExpressionWithGenerics() {
     doTest("dict[str, (Any) -> Any]",
