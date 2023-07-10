@@ -2431,6 +2431,11 @@
       <action internal="true" id="ResolveAllRepositoryLibraries" class="com.intellij.ide.actions.ResolveAllRepositoryLibrariesAction"/>
       <add-to-group group-id="Internal" anchor="after" relative-to-action="Internal.Java"/>
     </group>
+
+    <action id="com.intellij.openapi.projectRoots.impl.ParseSdkmanrcAction"
+            class="com.intellij.openapi.projectRoots.impl.ParseSdkmanrcAction">
+      <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
