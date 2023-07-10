@@ -105,7 +105,7 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiClass wrContainingClass = updater.getWritable(
       constructorOrClass instanceof PsiClass cls ? cls : Objects.requireNonNull(constructorOrClass.getContainingClass()));
-    PsiReferenceExpression classReferenceExpression = factory.createReferenceExpression(wrContainingClass);
+    PsiReferenceExpression classReferenceExpression = factory.createReferenceExpression(targetClass);
     String factoryName = suggestName(wrContainingClass);
     PsiReferenceExpression qualifiedMethodReference = (PsiReferenceExpression)factory.createExpressionFromText("A." + factoryName, null);
     PsiMethod constructor = ObjectUtils.tryCast(constructorOrClass, PsiMethod.class);
