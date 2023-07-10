@@ -319,7 +319,7 @@ class ProjectWindowCustomizerService : Disposable {
     return getBackgroundProjectColor(project)
   }
 
-  fun setToolbarColor(background:Color?, project: Project) {
+  private fun setToolbarColor(background:Color?, project: Project) {
     val storage = PropertiesComponent.getInstance(project)
 
     if (background == null) storage.unsetValue(TOOLBAR_BACKGROUND_KEY)
