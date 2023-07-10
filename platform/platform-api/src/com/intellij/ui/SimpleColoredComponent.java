@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -1406,7 +1407,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       TextRenderer renderer = this.renderer;
       if (renderer == null) {
         String text = this.text;
-        if (needFontFallback(font, text)) {
+        if (needFontFallback(font, text) && !AppMode.isRemoteDevHost()) {
           renderer = new LayoutTextRenderer(createTextLayout(text, font, frc));
         }
         else {
