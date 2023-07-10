@@ -438,6 +438,27 @@ public class SwitchBlockHighlightingModel {
 
   private enum SelectorKind {INT, ENUM, STRING, CLASS_OR_ARRAY}
 
+  private static Set<PsiClass> findSealedUpperClasses(Set<PsiClass> classes) {
+    HashSet<PsiClass> sealedUpperClasses = new HashSet<>();
+    Set<PsiClass> visited = new HashSet<>();
+    Queue<PsiClass> nonVisited = new ArrayDeque<>(classes);
+    while (!nonVisited.isEmpty()) {
+      PsiClass polled = nonVisited.poll();
+      if (!visited.add(polled)) {
+        continue;
+      }
+      PsiClassType[] types = polled.getSuperTypes();
+      for (PsiClassType type : types) {
+        PsiClass superClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(type));
+        if (isAbstractSealed(superClass)) {
+          nonVisited.add(superClass);
+          sealedUpperClasses.add(superClass);
+        }
+      }
+    }
+    return sealedUpperClasses;
+  }
+
   private static @NotNull LinkedHashMap<PsiClass, PsiType> findPatternClasses(@NotNull List<PatternDescription> elements) {
     LinkedHashMap<PsiClass, PsiType> patternClasses = new LinkedHashMap<>();
     for (PatternDescription element : elements) {
@@ -457,6 +478,7 @@ public class SwitchBlockHighlightingModel {
     return patternClasses;
   }
 
+
   static @Nullable PsiPattern extractPattern(PsiCaseLabelElement element) {
     if (element instanceof PsiPatternGuard patternGuard) {
       Object constVal = ExpressionUtils.computeConstantExpression(patternGuard.getGuardingExpression());
@@ -467,16 +489,19 @@ public class SwitchBlockHighlightingModel {
 
   static Set<PsiClass> returnAllPermittedClasses(@NotNull PsiClass psiClass) {
     return CachedValuesManager.getCachedValue(psiClass, () -> {
+      Set<PsiClass> result = new HashSet<>();
       Set<PsiClass> visitedClasses = new HashSet<>();
       Queue<PsiClass> notVisitedClasses = new LinkedList<>();
       notVisitedClasses.add(psiClass);
       while (!notVisitedClasses.isEmpty()) {
         PsiClass notVisitedClass = notVisitedClasses.poll();
-        if (!notVisitedClass.hasModifierProperty(SEALED) || visitedClasses.contains(notVisitedClass)) continue;
+        if (!isAbstractSealed(notVisitedClass) || visitedClasses.contains(notVisitedClass)) continue;
         visitedClasses.add(notVisitedClass);
-        notVisitedClasses.addAll(PatternsInSwitchBlockHighlightingModel.getPermittedClasses(psiClass));
+        Collection<PsiClass> permittedClasses = PatternsInSwitchBlockHighlightingModel.getPermittedClasses(psiClass);
+        result.addAll(permittedClasses);
+        notVisitedClasses.addAll(permittedClasses);
       }
-      return CachedValueProvider.Result.create(visitedClasses, PsiModificationTracker.MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -487,6 +512,8 @@ public class SwitchBlockHighlightingModel {
                                                            @NotNull Set<PsiClass> visitedCovered) {
     record ClassWithDependencies(PsiClass mainClass, Set<PsiClass> dependencies){}
     LinkedHashMap<PsiClass, PsiType> patternClasses = findPatternClasses(elements);
+    //according JEP 440-441 only direct abstract sealed classes are allowed (14.11.1.1)
+    Set<PsiClass> sealedUpperClasses = findSealedUpperClasses(patternClasses.keySet());
     List<PatternTypeTestDescription> typeTestPatterns = ContainerUtil.filterIsInstance(elements, PatternTypeTestDescription.class);
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(selectorType));
     if (selectorClass == null) return Collections.emptySet();
@@ -497,8 +524,7 @@ public class SwitchBlockHighlightingModel {
     while (!nonVisited.isEmpty()) {
       ClassWithDependencies peeked = nonVisited.peek();
       PsiClass psiClass = peeked.mainClass;
-      if ((psiClass.hasModifierProperty(SEALED) || psiClass.getPermitsList() != null) &&
-          (psiClass.hasModifierProperty(ABSTRACT) || psiClass.equals(selectorClass))) {
+      if (sealedUpperClasses.contains(psiClass)) {
         boolean covered  = true;
         for (PsiClass permittedClass : PatternsInSwitchBlockHighlightingModel.getPermittedClasses(psiClass)) {
           if (!visited.add(permittedClass)) continue;
@@ -533,6 +559,11 @@ public class SwitchBlockHighlightingModel {
       missingClasses.add(selectorClass);
     }
     return missingClasses;
+  }
+
+  static boolean isAbstractSealed(@Nullable PsiClass psiClass) {
+    return psiClass != null &&
+           (psiClass.hasModifierProperty(SEALED) || psiClass.getPermitsList() != null) && psiClass.hasModifierProperty(ABSTRACT);
   }
 
   public static class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlightingModel {
@@ -1073,7 +1104,7 @@ public class SwitchBlockHighlightingModel {
       return selectorTypes.stream()
         .filter(type -> {
           PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(type));
-          return psiClass != null && (psiClass.hasModifierProperty(SEALED) || psiClass.getPermitsList() != null);
+          return psiClass != null && (isAbstractSealed(psiClass));
         })
         .toList();
     }
