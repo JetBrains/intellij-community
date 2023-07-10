@@ -40,6 +40,8 @@ import org.junit.Assert;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import static com.jetbrains.env.PyEnvTestCase.escapeTestMessage;
+
 /**
  * <h1>Task that knows how to execute some process with console.</h1>
  * <p>
@@ -203,10 +205,10 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     XDebuggerTestUtil.waitForSwing();
     try {
       runner.assertExitCodeIsCorrect(code);
-      checkTestResults(runner, stdOut.toString(), stdErr.toString(), stdAll.toString(), code);
+      checkTestResults(runner, escapeTestMessage(stdOut.toString()), escapeTestMessage(stdErr.toString()), escapeTestMessage(stdAll.toString()), code);
     }
     catch (Throwable e) {
-      throw new RuntimeException(stdAll.toString(), e);
+      throw new RuntimeException(escapeTestMessage(stdAll.toString()), e);
     }
   }
 
