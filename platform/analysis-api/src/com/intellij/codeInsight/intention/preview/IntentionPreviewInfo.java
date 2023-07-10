@@ -59,7 +59,8 @@ public interface IntentionPreviewInfo {
   };
 
   /**
-   * Changes in the file copy should be displayed as intention preview
+   * Changes in the file copy should be displayed as intention preview. Differences in leading/trailing 
+   * whitespaces will be shown only if there are no other differences. Otherwise, whitespaces will be trimmed before shown the diff.
    */
   IntentionPreviewInfo DIFF = new IntentionPreviewInfo() {
     @Override
@@ -69,7 +70,7 @@ public interface IntentionPreviewInfo {
   };
 
   /**
-   * Changes in the file copy should be displayed as intention preview, without trimming any whitespaces
+   * Changes in the file copy should be displayed as intention preview, without trimming any whitespaces.
    */
   IntentionPreviewInfo DIFF_NO_TRIM = new IntentionPreviewInfo() {
     @Override
