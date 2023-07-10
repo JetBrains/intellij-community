@@ -170,6 +170,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon RemoveMulticaret = load("actions/RemoveMulticaret.svg", -1294662253, 2);
     /** 16x16 */ public static final @NotNull Icon Replace = load("actions/replace.svg", 2131324858, 2);
     /** 16x16 */ public static final @NotNull Icon Rerun = load("actions/rerun.svg", 674779890, 10);
+    /** 16x16 */ public static final @NotNull Icon RerunAutomatically = load("actions/rerunAutomatically.svg", 498588395, 2);
     /** 16x16 */ public static final @NotNull Icon Restart = load("actions/restart.svg", -781157291, 2);
     /** 16x16 */ public static final @NotNull Icon RestartDebugger = load("actions/restartDebugger.svg", 1959527065, 10);
     /** 16x16 */ public static final @NotNull Icon RestartFrame = load("actions/restartFrame.svg", 1600414410, 2);

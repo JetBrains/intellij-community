@@ -31,6 +31,7 @@
       "projectDirectory.svg": "actions/projectDirectory.svg",
       "runAll.svg": "actions/runAll.svg",
       "reformatCode.svg": "actions/reformatCode.svg",
+      "rerunAutomatically.svg": "actions/rerunAutomatically.svg",
       "showReadAccess.svg": "actions/showReadAccess.svg",
       "showWriteAccess.svg": "actions/showWriteAccess.svg",
       "split.svg": "modules/split.svg",
