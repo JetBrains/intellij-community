@@ -14,6 +14,7 @@
     <module name="intellij.markdown.frontmatter.yaml"/>
     <module name="intellij.markdown.frontmatter.toml"/>
     <module name="intellij.markdown.images"/>
+    <module name="intellij.markdown.xml"/>
   </content>
 
   <description><![CDATA[
@@ -54,6 +55,9 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.flavourProvider"
                     interface="org.intellij.plugins.markdown.lang.parser.MarkdownFlavourProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.additionalFenceLanguageSuggester"
+                    interface="org.intellij.plugins.markdown.injection.aliases.AdditionalFenceLanguageSuggester"
                     dynamic="true"/>
   </extensionPoints>
 

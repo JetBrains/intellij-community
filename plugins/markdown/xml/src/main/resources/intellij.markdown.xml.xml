@@ -1,0 +1,8 @@
+<idea-plugin package="org.intellij.plugins.markdown.xml">
+  <dependencies>
+    <plugin id="com.intellij.modules.xml"/>
+  </dependencies>
+  <extensions defaultExtensionNs="org.intellij.markdown">
+    <additionalFenceLanguageSuggester implementation="org.intellij.plugins.markdown.xml.EmbeddedTokensSuggester"/>
+  </extensions>
+</idea-plugin>

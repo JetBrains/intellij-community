@@ -11,5 +11,6 @@
     <orderEntry type="module" module-name="intellij.markdown.fenceInjection" />
     <orderEntry type="module" module-name="intellij.markdown.frontmatter" />
     <orderEntry type="module" module-name="intellij.markdown.images" />
+    <orderEntry type="module" module-name="intellij.markdown.xml" />
   </component>
 </module>

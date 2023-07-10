@@ -246,7 +246,8 @@ object CommunityRepositoryModules {
       "intellij.markdown.frontmatter",
       "intellij.markdown.frontmatter.yaml",
       "intellij.markdown.frontmatter.toml",
-      "intellij.markdown.images"
+      "intellij.markdown.images",
+      "intellij.markdown.xml"
     )),
     plugin(listOf("intellij.settingsSync", "intellij.settingsSync.git")),
     plugin(listOf(
