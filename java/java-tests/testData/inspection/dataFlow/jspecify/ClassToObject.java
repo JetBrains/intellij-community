@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import org.jspecify.nullness.NullMarked;
-import org.jspecify.nullness.Nullable;
-import org.jspecify.nullness.NullnessUnspecified;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NullnessUnspecified;
 
 @NullMarked
 class ClassToObject {
@@ -34,35 +33,29 @@ class ClassToObject {
     return x;
   }
 
-  @NullnessUnspecified
-  Object x3(ClassToObject x) {
+  @NullnessUnspecified Object x3(ClassToObject x) {
     return x;
   }
 
-  @NullnessUnspecified
-  Object x4(@NullnessUnspecified ClassToObject x) {
+  @NullnessUnspecified Object x4(@NullnessUnspecified ClassToObject x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @NullnessUnspecified
-  Object x5(@Nullable ClassToObject x) {
+  @NullnessUnspecified Object x5(@Nullable ClassToObject x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @Nullable
-  Object x6(ClassToObject x) {
+  @Nullable Object x6(ClassToObject x) {
     return x;
   }
 
-  @Nullable
-  Object x7(@NullnessUnspecified ClassToObject x) {
+  @Nullable Object x7(@NullnessUnspecified ClassToObject x) {
     return x;
   }
 
-  @Nullable
-  Object x8(@Nullable ClassToObject x) {
+  @Nullable Object x8(@Nullable ClassToObject x) {
     return x;
   }
 }

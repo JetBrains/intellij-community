@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import org.jspecify.nullness.NullMarked;
-import org.jspecify.nullness.Nullable;
-import org.jspecify.nullness.NullnessUnspecified;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NullnessUnspecified;
 
 @NullMarked
 class TypeVariableToSelfUnspec<
@@ -41,83 +40,67 @@ class TypeVariableToSelfUnspec<
     NullChildOfParametricT extends @Nullable ParametricT,
     //
     UnusedT> {
-  @NullnessUnspecified
-  Never1T x0(Never1T x) {
+  @NullnessUnspecified Never1T x0(Never1T x) {
     return x;
   }
 
-  @NullnessUnspecified
-  ChildOfNever1T x1(ChildOfNever1T x) {
+  @NullnessUnspecified ChildOfNever1T x1(ChildOfNever1T x) {
     return x;
   }
 
-  @NullnessUnspecified
-  UnspecChildOfNever1T x2(UnspecChildOfNever1T x) {
+  @NullnessUnspecified UnspecChildOfNever1T x2(UnspecChildOfNever1T x) {
     return x;
   }
 
-  @NullnessUnspecified
-  NullChildOfNever1T x3(NullChildOfNever1T x) {
+  @NullnessUnspecified NullChildOfNever1T x3(NullChildOfNever1T x) {
     return x;
   }
 
-  @NullnessUnspecified
-  Never2T x4(Never2T x) {
+  @NullnessUnspecified Never2T x4(Never2T x) {
     return x;
   }
 
-  @NullnessUnspecified
-  ChildOfNever2T x5(ChildOfNever2T x) {
+  @NullnessUnspecified ChildOfNever2T x5(ChildOfNever2T x) {
     return x;
   }
 
-  @NullnessUnspecified
-  UnspecChildOfNever2T x6(UnspecChildOfNever2T x) {
+  @NullnessUnspecified UnspecChildOfNever2T x6(UnspecChildOfNever2T x) {
     return x;
   }
 
-  @NullnessUnspecified
-  NullChildOfNever2T x7(NullChildOfNever2T x) {
+  @NullnessUnspecified NullChildOfNever2T x7(NullChildOfNever2T x) {
     return x;
   }
 
-  @NullnessUnspecified
-  UnspecT x8(UnspecT x) {
+  @NullnessUnspecified UnspecT x8(UnspecT x) {
     return x;
   }
 
-  @NullnessUnspecified
-  ChildOfUnspecT x9(ChildOfUnspecT x) {
+  @NullnessUnspecified ChildOfUnspecT x9(ChildOfUnspecT x) {
     return x;
   }
 
-  @NullnessUnspecified
-  UnspecChildOfUnspecT x10(UnspecChildOfUnspecT x) {
+  @NullnessUnspecified UnspecChildOfUnspecT x10(UnspecChildOfUnspecT x) {
     return x;
   }
 
-  @NullnessUnspecified
-  NullChildOfUnspecT x11(NullChildOfUnspecT x) {
+  @NullnessUnspecified NullChildOfUnspecT x11(NullChildOfUnspecT x) {
     return x;
   }
 
-  @NullnessUnspecified
-  ParametricT x12(ParametricT x) {
+  @NullnessUnspecified ParametricT x12(ParametricT x) {
     return x;
   }
 
-  @NullnessUnspecified
-  ChildOfParametricT x13(ChildOfParametricT x) {
+  @NullnessUnspecified ChildOfParametricT x13(ChildOfParametricT x) {
     return x;
   }
 
-  @NullnessUnspecified
-  UnspecChildOfParametricT x14(UnspecChildOfParametricT x) {
+  @NullnessUnspecified UnspecChildOfParametricT x14(UnspecChildOfParametricT x) {
     return x;
   }
 
-  @NullnessUnspecified
-  NullChildOfParametricT x15(NullChildOfParametricT x) {
+  @NullnessUnspecified NullChildOfParametricT x15(NullChildOfParametricT x) {
     return x;
   }
 }
