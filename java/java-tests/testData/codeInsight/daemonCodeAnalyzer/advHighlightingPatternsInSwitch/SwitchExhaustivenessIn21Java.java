@@ -430,4 +430,32 @@ class Basic {
       case RR(Object c1, TI2 c2) -> System.out.println("2");
     }
   }
+
+  class OnlyDirectChildren{
+    sealed interface T permits T1, T2, T3 {}
+    sealed interface T1 extends T permits T12 {}
+    sealed class T2 implements T {}
+    sealed interface T3 extends T {}
+    final class T12 extends T2 implements T1 {}
+    final class T13 implements T3 {}
+
+    void test(T i) {
+      switch (<error descr="'switch' statement does not cover all possible input values">i</error>) {
+        case T2 i2 ->
+          System.out.println("2");
+        case T13 i3 ->
+          System.out.println("3");
+      }
+    }
+    void test2(T i) {
+      switch (i) {
+        case T2 i2 ->
+          System.out.println("2");
+        case T1 i1 ->
+          System.out.println("1");
+        case T13 i3 ->
+          System.out.println("3");
+      }
+    }
+  }
 }
