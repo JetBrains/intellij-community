@@ -70,7 +70,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         ModCommandAction.ActionContext.from(editor, element.getContainingFile()).withElement(element);
       String name = getActionName(element);
       ModCommand command = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        return ReadAction.nonBlocking(() -> perform(context)).expireWhen(context.project()::isDisposed).executeSynchronously();
+        return ReadAction.nonBlocking(() -> perform(context)).executeSynchronously();
       }, name, true, context.project());
       if (command == null) return;
       CommandProcessor.getInstance().executeCommand(
