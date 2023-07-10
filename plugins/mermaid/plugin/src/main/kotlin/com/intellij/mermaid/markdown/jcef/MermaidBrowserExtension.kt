@@ -1,29 +1,10 @@
 package com.intellij.mermaid.markdown.jcef
 
-import com.intellij.openapi.util.Disposer
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
-import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 
-class MermaidBrowserExtension(panel: MarkdownHtmlPanel) : MarkdownBrowserPreviewExtension, ResourceProvider {
-  init {
-    @Suppress("UnstableApiUsage")
-    panel.browserPipe?.subscribe(storeFileEventName, ::storeFileEvent)
-    Disposer.register(this) {
-      @Suppress("UnstableApiUsage")
-      panel.browserPipe?.removeSubscription(storeFileEventName, ::storeFileEvent)
-    }
-  }
-
-  private fun storeFileEvent(data: String) {
-    if (data.isEmpty()) {
-      return
-    }
-    val key = data.substring(0, data.indexOf(';'))
-    val content = data.substring(data.indexOf(';') + 1)
-    generatingProvider?.store(key, content.toByteArray())
-  }
+class MermaidBrowserExtension() : MarkdownBrowserPreviewExtension, ResourceProvider {
 
   override val scripts: List<String> = listOf(
     THEME_DEFINITION_FILENAME,
@@ -42,6 +23,7 @@ class MermaidBrowserExtension(panel: MarkdownHtmlPanel) : MarkdownBrowserPreview
       THEME_DEFINITION_FILENAME -> ResourceProvider.Resource(
         "window.mermaidTheme = '${MermaidCodeGeneratingProviderExtension.determineTheme()}';".toByteArray()
       )
+
       else -> ResourceProvider.loadInternalResource(this::class.java, resourceName)
     }
   }
@@ -52,16 +34,11 @@ class MermaidBrowserExtension(panel: MarkdownHtmlPanel) : MarkdownBrowserPreview
 
   class Provider : MarkdownBrowserPreviewExtension.Provider {
     override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension {
-      return MermaidBrowserExtension(panel)
+      return MermaidBrowserExtension()
     }
   }
 
   companion object {
     private const val THEME_DEFINITION_FILENAME = "mermaid/themeDefinition.js"
-    private const val storeFileEventName = "storeMermaidFile"
-
-    @Suppress("UnstableApiUsage")
-    private val generatingProvider
-      get() = MarkdownExtensionsUtil.findCodeFenceGeneratingProvider<MermaidCodeGeneratingProviderExtension>()
   }
 }

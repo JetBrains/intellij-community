@@ -52,7 +52,7 @@ suspend fun viewerMain() {
 
 private suspend fun performViewUpdate(content: String) {
   val document = window.document
-  val container = document.getElementById("diagram-container") as HTMLElement
+  val container = document.getElementById("diagram-container") ?: return
   renderBlock(container, "", content)
 }
 

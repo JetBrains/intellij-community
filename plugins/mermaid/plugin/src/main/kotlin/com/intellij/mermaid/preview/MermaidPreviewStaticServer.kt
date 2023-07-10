@@ -9,7 +9,6 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
-import org.intellij.lang.annotations.Language
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.FileResponses
@@ -17,7 +16,7 @@ import org.jetbrains.io.send
 import java.nio.ByteBuffer
 import java.util.*
 
-internal class MermaidPreviewStaticServer: HttpRequestHandler() {
+internal class MermaidPreviewStaticServer : HttpRequestHandler() {
   private fun obtainStaticPath(path: String): String {
     return path.split('/').drop(2).joinToString(separator = "/")
   }
@@ -45,7 +44,7 @@ internal class MermaidPreviewStaticServer: HttpRequestHandler() {
       </head>
       <body>
         <div class="language-mermaid">
-          <div id="diagram-container"></div>
+          <div id="diagram-container" class="mermaid"></div>
         </div>
       </body>
     </html>
@@ -62,7 +61,11 @@ internal class MermaidPreviewStaticServer: HttpRequestHandler() {
     }
   }
 
-  override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
+  override fun process(
+    urlDecoder: QueryStringDecoder,
+    request: FullHttpRequest,
+    context: ChannelHandlerContext
+  ): Boolean {
     val path = urlDecoder.path()
     check(path.startsWith(prefixPath)) { "prefix should have been checked by #isSupported" }
     val resourceName = obtainStaticPath(path)

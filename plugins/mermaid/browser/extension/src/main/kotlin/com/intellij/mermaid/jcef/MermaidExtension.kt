@@ -1,11 +1,14 @@
 package com.intellij.mermaid.jcef
 
-import com.intellij.mermaid.api.*
+import com.intellij.mermaid.jcef.impl.decode
 import kotlinx.browser.window
-import kotlinx.coroutines.*
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
-import org.w3c.dom.*
+import kotlinx.coroutines.launch
+import org.w3c.dom.Element
+import org.w3c.dom.HTMLElement
+import org.w3c.dom.asList
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -23,6 +26,31 @@ private suspend fun performRender() {
     renderBlocks(blocks)
   }
   console.log("Generated all mermaid blocks in $time")
+}
+
+suspend fun renderBlocks(blocks: List<HTMLElement>) {
+  coroutineScope {
+    for (block in blocks) {
+      // renderAsync for some reason depends on some global state,
+      // so it is not possible to run it in parallel
+      processBlock(block)
+    }
+  }
+}
+
+val nodeToContent = mutableMapOf<Element, String>()
+
+suspend fun processBlock(block: HTMLElement) {
+  block.removeAttribute("data-processed")
+  val cacheId = block.getAttribute("data-cache-id")
+  checkNotNull(cacheId) { "data-cache-id was not set for block" }
+  val content = block.getAttribute("data-actual-fence-content")
+  checkNotNull(content) { "data-actual-fence-content was not set for block" }
+
+  if (nodeToContent[block] == content) return
+
+  val actualContent = decode(content)
+  renderBlock(block, cacheId, actualContent)
 }
 
 suspend fun markdownExtensionMain() {

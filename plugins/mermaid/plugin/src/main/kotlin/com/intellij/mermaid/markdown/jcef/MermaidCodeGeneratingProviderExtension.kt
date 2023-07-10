@@ -5,31 +5,26 @@ import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets
 import com.intellij.mermaid.lang.lexer.MermaidTokens
 import com.intellij.mermaid.settings.MermaidSettings
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.ui.ColorUtil
 import org.intellij.markdown.ast.ASTNode
-import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
-import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCacheCollector
+import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import java.util.*
 
 @Suppress("UnstableApiUsage")
-internal class MermaidCodeGeneratingProviderExtension(collector: MarkdownCodeFencePluginCacheCollector? = null) :
-  MarkdownCodeFenceCacheableProvider(collector) {
+internal class MermaidCodeGeneratingProviderExtension : CodeFenceGeneratingProvider {
   override fun isApplicable(language: String): Boolean {
     return language == "mermaid"
   }
 
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
-    val text = removeIcons(raw)
-    val hash = MarkdownUtil.md5(text, "") + determineTheme()
-    val key = getUniqueFile("mermaid", hash, "svg").toFile()
-    return when {
-      key.exists() -> "<div><img src=\"${key.toURI()}\"/></div>"
-      else -> "<div>${createRawContentElement(hash, text)}</div>"
-    }
+    val content = removeIcons(raw)
+    val hash = MarkdownUtil.md5(content, "") + determineTheme()
+    return """
+      <div class="mermaid" data-cache-id="$hash" id="$hash" data-actual-fence-content="${escapeContent(content)}"></div>
+    """.trimIndent()
   }
 
   private fun removeIcons(raw: String): String {
@@ -77,21 +72,8 @@ internal class MermaidCodeGeneratingProviderExtension(collector: MarkdownCodeFen
     }.joinToString(separator = "") { it.first }
   }
 
-  fun store(key: String, content: ByteArray) {
-    val actualKey = getUniqueFile("mermaid", key, "svg").toFile()
-    FileUtil.createParentDirs(actualKey)
-    actualKey.outputStream().buffered().use {
-      it.write(content)
-    }
-    collector?.addAliveCachedFile(this, actualKey)
-  }
-
   private fun escapeContent(content: String): String {
     return String(Base64.getEncoder().encode(content.toByteArray()))
-  }
-
-  private fun createRawContentElement(hash: String, content: String): String {
-    return "<div class=\"mermaid\" data-cache-id=\"$hash\" id=\"$hash\" data-actual-fence-content=\"${escapeContent(content)}\"></div>"
   }
 
   companion object {
