@@ -133,11 +133,18 @@ class ProjectWindowCustomizerService : Disposable {
   fun getBackgroundProjectColor(project: Project): Color = getProjectToolbarColor(project).background
 
   private fun getProjectToolbarColor(project: Project): ProjectColors {
+    // Get toolbar color for those who has already set it
     val projectPath = getProjectNameForIcon(project)
     val colorStr = PropertiesComponent.getInstance(project).getValue(TOOLBAR_BACKGROUND_KEY)
     val color = ColorUtil.fromHex(colorStr, null)
     if (color != null) {
       return ProjectColors(color, color)
+    }
+
+    // Get custom project color and transform it for toolbar
+    getProjectCustomColor(projectPath)?.let {
+      val toolbarColor = ColorUtil.toAlpha(it, 90)
+      return ProjectColors(toolbarColor, toolbarColor)
     }
 
     // Get calculated earlier color or calculate next color
@@ -178,12 +185,12 @@ class ProjectWindowCustomizerService : Disposable {
 
     if (color == null) {
       propertiesStorage.unsetValue(key)
-      setToolbarColor(null, project)
+
+      // Remove toolbar color for those users who set it up before it's removal
+      PropertiesComponent.getInstance(project).unsetValue(TOOLBAR_BACKGROUND_KEY)
     }
     else {
       propertiesStorage.setValue(key, ColorUtil.toHex(color))
-      val toolbarColor = ColorUtil.toAlpha(color, 90)
-      setToolbarColor(toolbarColor, project)
     }
   }
 
@@ -317,13 +324,6 @@ class ProjectWindowCustomizerService : Disposable {
   fun getToolbarBackground(project: Project?):Color? {
     if (project == null) return null
     return getBackgroundProjectColor(project)
-  }
-
-  private fun setToolbarColor(background:Color?, project: Project) {
-    val storage = PropertiesComponent.getInstance(project)
-
-    if (background == null) storage.unsetValue(TOOLBAR_BACKGROUND_KEY)
-    else storage.setValue(TOOLBAR_BACKGROUND_KEY, ColorUtil.toHex(background, true))
   }
 
   override fun dispose() {}
