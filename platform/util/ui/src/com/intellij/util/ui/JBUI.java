@@ -468,6 +468,14 @@ public final class JBUI {
       }
     }
 
+    public interface SearchOption {
+      JBColor BUTTON_SELECTED_BACKGROUND = JBColor.namedColor("SearchOption.selectedBackground", 0xDAE4ED, 0x5C6164);
+      JBColor BUTTON_SELECTED_PRESSED_BACKGROUND =
+        JBColor.namedColor("SearchOption.selectedPressedBackground", JBUI.CurrentTheme.ActionButton.pressedBackground());
+      JBColor BUTTON_SELECTED_HOVERED_BACKGROUND =
+        JBColor.namedColor("SearchOption.selectedHoveredBackground", JBUI.CurrentTheme.ActionButton.pressedBackground());
+    }
+
     public interface SegmentedButton {
       Color SELECTED_START_BORDER_COLOR = JBColor.namedColor("SegmentedButton.selectedStartBorderColor", Gray.xBF);
       Color SELECTED_END_BORDER_COLOR = JBColor.namedColor("SegmentedButton.selectedEndBorderColor", Gray.xB8);
