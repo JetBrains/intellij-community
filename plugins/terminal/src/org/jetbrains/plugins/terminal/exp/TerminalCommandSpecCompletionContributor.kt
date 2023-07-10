@@ -5,11 +5,8 @@ import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.sh.psi.ShSimpleCommand
 import com.intellij.util.containers.TreeTraversal
 import org.jetbrains.plugins.terminal.exp.completion.*
-import org.jetbrains.plugins.terminal.util.ShellType
 import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellCommand
 
@@ -19,14 +16,13 @@ class TerminalCommandSpecCompletionContributor : CompletionContributor() {
     if (session == null || parameters.completionType != CompletionType.BASIC) {
       return
     }
-    if (session.shellIntegration?.shellType != ShellType.ZSH) {
-      return
-    }
+    val shellType = session.shellIntegration?.shellType ?: return
+    val shellSupport = TerminalShellSupport.findByShellType(shellType) ?: return
 
     val prefix = result.prefixMatcher.prefix.substringAfterLast('/') // take last part if it is a file path
     val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
 
-    val tokens = getCurCommandTokens(parameters)
+    val tokens = shellSupport.getCommandTokens(parameters.position) ?: return
     if (tokens.isEmpty()) {
       return
     }
@@ -43,15 +39,6 @@ class TerminalCommandSpecCompletionContributor : CompletionContributor() {
 
     resultSet.addAllElements(elements)
     resultSet.stopHere()
-  }
-
-  private fun getCurCommandTokens(parameters: CompletionParameters): List<String> {
-    val curElement = parameters.position
-    val commandElement: ShSimpleCommand = PsiTreeUtil.getParentOfType(curElement, ShSimpleCommand::class.java)
-                                          ?: return emptyList()
-    val curElementEndOffset = curElement.textRange.endOffset
-    return commandElement.children.filter { it.textRange.endOffset <= curElementEndOffset }
-      .map { it.text.replace(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED, "") }
   }
 
   private fun computeCompletionElements(session: TerminalSession, command: String, arguments: List<String>): List<LookupElement>? {

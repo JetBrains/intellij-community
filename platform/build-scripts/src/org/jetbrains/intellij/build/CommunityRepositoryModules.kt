@@ -207,6 +207,7 @@ object CommunityRepositoryModules {
     },
     javaFXPlugin("intellij.javaFX.community"),
     plugin("intellij.terminal") { spec ->
+      spec.withModule("intellij.terminal.sh")
       spec.withResource("resources/zsh/.zshenv", "zsh")
       spec.withResource("resources/zsh/hooks.zsh", "zsh")
       spec.withResource("resources/shell-integrations", "shell-integrations")

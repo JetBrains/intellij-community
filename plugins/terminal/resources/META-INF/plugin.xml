@@ -9,11 +9,11 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
-    <plugin id="com.jetbrains.sh"/>
   </dependencies>
 
   <content>
     <module name="intellij.terminal/cloud"/>
+    <module name="intellij.terminal.sh"/>
   </content>
 
   <resource-bundle>messages.TerminalBundle</resource-bundle>

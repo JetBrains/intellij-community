@@ -12,7 +12,6 @@ import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.sh.ShFileType
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.io.createDirectory
@@ -48,7 +47,7 @@ abstract class BaseShCompletionTest : BasePlatformTestCase() {
     val completionManager = createCompletionManager(session)
     val model = session.model
 
-    myFixture.configureByText(ShFileType.INSTANCE, "")
+    myFixture.configureByText("test.sh", "")
     myFixture.editor.putUserData(TerminalSession.KEY, session)
     myFixture.editor.putUserData(TerminalCompletionManager.KEY, completionManager)
     myFixture.file.putUserData(SHELL_TYPE_KEY, session.shellIntegration?.shellType)

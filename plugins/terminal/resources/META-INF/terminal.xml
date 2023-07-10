@@ -75,6 +75,10 @@
                     interface="org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.commandSpec"
                     beanClass="org.jetbrains.plugins.terminal.exp.completion.CommandSpecBean" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.shellSupport"
+                    beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport"/>
+    </extensionPoint>
   </extensionPoints>
 
   <actions>
