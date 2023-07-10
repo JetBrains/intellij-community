@@ -216,6 +216,8 @@ public final class FSRecordsImpl {
         invertedNameIndex,
         connectionInterceptors
       );
+      LOG.info("VFS initialized: " + NANOSECONDS.toMillis(initializationResult.totalInitializationDurationNs) + " ms, " +
+               initializationResult.attemptsFailures + " failed attempts");
       PersistentFSConnection connection = initializationResult.connection;
       PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(USE_CONTENT_HASHES, connection);
       PersistentFSAttributeAccessor attributeAccessor = new PersistentFSAttributeAccessor(connection);
@@ -1231,7 +1233,7 @@ public final class FSRecordsImpl {
     return description;
   }
 
-  public int corruptionsDetected(){
+  public int corruptionsDetected() {
     return connection.corruptionsDetected();
   }
   //========== accessors for diagnostics & sanity checks: ========================

@@ -290,7 +290,6 @@ public final class PersistentFSConnection {
 
     if (attributes != null) {
       attributes.close();
-      //Disposer.dispose(attributes);
     }
 
     if (contents != null) {

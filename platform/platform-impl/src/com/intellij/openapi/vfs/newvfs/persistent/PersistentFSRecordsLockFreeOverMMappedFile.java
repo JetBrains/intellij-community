@@ -98,7 +98,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   //          we find a record(s) with modCount>globalModCount => there were writes unfinished on app crush, and
   //          likely at least those records are corrupted.
 
-  //FIXME RC: instead of dirty flag -> just compare .globalModCount != getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET)
+  //MAYBE RC: instead of dirty flag -> just compare .globalModCount != getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET)
   private final AtomicBoolean dirty = new AtomicBoolean(false);
 
   //cached for faster access:
@@ -357,6 +357,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
   @Override
   public int allocateRecord() {
+    dirty.compareAndSet(false, true);
     return allocatedRecordsCount.incrementAndGet();
   }
 

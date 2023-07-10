@@ -353,6 +353,16 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   public void close() throws IOException {
     write(() -> {
       saveGlobalModCount();
+      //Newly allocated record could be not yet modified -- and myFile automatically expands only
+      // on modification. To not lose recordCount value -- expand file manually.
+      int recordsCount = myRecordCount.get();
+      if (recordsCount == 0) {
+        myFile.setLogicalSize(PersistentFSHeaders.HEADER_SIZE);
+      }
+      else {
+        int fileSize = (recordsCount + 1) * RECORD_SIZE;
+        myFile.setLogicalSize(fileSize);
+      }
       myFile.close();
     });
   }

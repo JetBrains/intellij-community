@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TemporaryDirectory;
 import com.intellij.util.io.PageCacheUtils;
 import org.junit.After;
@@ -286,7 +287,7 @@ public class VFSRebuildingTest {
       //FIXME RC: currently 'attributes_enums.dat' is not checked during VFS init
       filesNotLeadingToVFSRebuild.remove("attributes_enums.dat");
       assertTrue(
-        "VFS[" + storageKind + "] is not rebuild even though " + filesNotLeadingToVFSRebuild + " were deleted",
+        "VFS[" + storageKind + "] is not rebuilt if one of " + filesNotLeadingToVFSRebuild + " is deleted",
         filesNotLeadingToVFSRebuild.isEmpty()
       );
     }
@@ -346,6 +347,7 @@ public class VFSRebuildingTest {
     try {
       final PersistentFSRecordsStorage records = connection.getRecords();
       records.setConnectionStatus(PersistentFSHeaders.CONNECTED_MAGIC);
+      records.force();
 
       //do NOT call connection.close() -- just reopen the connection:
 
@@ -357,7 +359,7 @@ public class VFSRebuildingTest {
           new InvertedNameIndex(),
           Collections.emptyList()
         );
-        fail("VFS init must fail with");
+        fail("VFS init must fail with NOT_CLOSED_SAFELY");
       }
       catch (VFSNeedsRebuildException requestToRebuild) {
         //OK, this is what we expect
@@ -366,6 +368,31 @@ public class VFSRebuildingTest {
     finally {
       connection.close();
     }
+  }
+
+
+  @Test
+  public void benchmarkVfsInitializationTime() throws Exception {
+    PlatformTestUtil.startPerformanceTest(
+        "create VFS from scratch", 100,
+        () -> {
+          Path cachesDir = temporaryDirectory.createDir();
+          int version = 1;
+
+          PersistentFSConnector.connect(
+            cachesDir,
+            version,
+            true,
+            new InvertedNameIndex(),
+            Collections.emptyList()
+          );
+          //PersistentFSConnector.disconnect(initResult.connection);
+          //System.out.println(initResult.totalInitializationDurationNs / 1000_000);
+        })
+      .ioBound()
+      .warmupIterations(1)
+      .attempts(4)
+      .assertTiming();
   }
 
 

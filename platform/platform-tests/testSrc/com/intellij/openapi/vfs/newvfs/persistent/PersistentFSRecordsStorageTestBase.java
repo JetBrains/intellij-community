@@ -84,6 +84,30 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   }
 
   @Test
+  public void maxAllocatedId_IsStored_AndRestoredAfterStorageReopened() throws Exception {
+    final int allocatedRecordId = storage.allocateRecord();
+
+    assertTrue("First inserted record should get id (=" + allocatedRecordId + ") > FSRecords.NULL_FILE_ID",
+               allocatedRecordId > FSRecords.NULL_FILE_ID //TODO replace with universal NULL_ID
+    );
+
+    assertEquals("Should be 1 (just inserted) record in the storage",
+                 1,
+                 storage.recordsCount()
+    );
+
+    storage.close();
+    final T storageReopened = openStorage(storagePath);
+    storage = storageReopened;//for tearDown to successfully close it
+
+    assertEquals(
+      "Max allocated id must be kept after reopening",
+      storageReopened.maxAllocatedID(),
+      allocatedRecordId
+    );
+  }
+
+  @Test
   public void cleanRecord_throwsException_IfRecordIdIsOutsideOfAllocatedRange() throws IOException {
     final int cleanedRecordId = 10;
     try {
