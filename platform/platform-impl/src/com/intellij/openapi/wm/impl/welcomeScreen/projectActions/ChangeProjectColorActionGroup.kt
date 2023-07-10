@@ -42,6 +42,20 @@ class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware {
 class ChangeProjectColorAction(val projectName: String, val name: @NlsSafe String, val index: Int):
   AnAction(name, "", RecentProjectIconHelper.generateProjectIcon(projectName, true, 16, colorIndex = index)), DumbAware
 {
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.text = "$name$nameSuffix"
+  }
+
+  private val nameSuffix: String get() {
+    val customizer = ProjectWindowCustomizerService.getInstance()
+    if (index == customizer.getAssociatedColorIndex(projectName).takeIf { customizer.getProjectCustomColor(projectName) == null }) {
+      return " (${IdeBundle.message("action.ChangeProjectColorAction.Current.title")})"
+    }
+    return ""
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val customizer = ProjectWindowCustomizerService.getInstance()
     customizer.setAssociatedColorsIndex(projectName, index)
