@@ -39,6 +39,7 @@ import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.NewUI
 import com.intellij.ui.ToggleActionButton
 import com.intellij.ui.popup.KeepingPopupOpenAction
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.ContainerUtil
@@ -318,7 +319,7 @@ class EnableStripeGroup : ToggleAction(), DumbAware {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = NewUI.isEnabled() && customizedGroup != null
+    e.presentation.isEnabledAndVisible = NewUI.isEnabled() && customizedGroup != null && (PlatformUtils.isDataGrip() || Toggleable.isSelected(e.presentation))
   }
 
   override fun isSelected(e: AnActionEvent): Boolean =
