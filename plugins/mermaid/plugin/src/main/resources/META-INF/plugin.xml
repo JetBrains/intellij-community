@@ -134,6 +134,7 @@
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="com.intellij.mermaid.lang.injection.DirectiveJsonSchemaProviderFactory"/>
+    <ProviderFactory implementation="com.intellij.mermaid.lang.injection.FrontmatterYamlSchemaProviderFactory"/>
   </extensions>
   <actions>
     <action id="Mermaid.ExportDiagram"

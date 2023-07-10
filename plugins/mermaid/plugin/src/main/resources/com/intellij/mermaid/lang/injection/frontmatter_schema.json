@@ -1,0 +1,10 @@
+{
+  "properties": {
+    "title": {
+      "type": [
+        "string",
+        "any"
+      ]
+    }
+  }
+}
