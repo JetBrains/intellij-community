@@ -93,4 +93,19 @@ class X {
   }
 
   native static boolean predicate();
+
+  sealed interface I1 {}
+  sealed interface I2 {}
+  record R1() implements I1 {}
+  record R2() implements I2 {}
+  record R3() implements I1, I2 {};
+
+  public class Test22{
+    public <T extends I1 & I2> void test(T c) {
+      switch (c) {
+        case <error descr="Incompatible types. Found: 'X.R2', required: 'T'">R2 r1</error> -> System.out.println(5);
+        case R3 r1 -> System.out.println(1);
+      }
+    }
+  }
 }
