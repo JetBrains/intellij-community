@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorState;
@@ -173,6 +174,11 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
   @Override
   public Project getProject() {
     return project;
+  }
+
+  @Override
+  public void trySetHighlighter(@NotNull EditorHighlighter highlighter) {
+    editorModel.trySetHighlighter(highlighter);
   }
 
   @Override

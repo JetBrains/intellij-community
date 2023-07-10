@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
@@ -830,6 +831,15 @@ public class EditorModel {
 
     if (editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y == targetTopOfVisibleArea) {
       isLocalScrollBarStabilized = true;
+    }
+  }
+
+  public void trySetHighlighter(@NotNull EditorHighlighter highlighter) {
+    if (editor instanceof EditorEx) {
+      ((EditorEx)editor).setHighlighter(highlighter);
+    } else {
+      LOG.warn("[Large File Editor Subsystem] EditorModel.trySetHighlighter: " + editor.getClass().getName()
+               + " is not instance of EditorEx. Can't set proper editor highlighter.");
     }
   }
 
