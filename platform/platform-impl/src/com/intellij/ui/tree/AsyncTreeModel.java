@@ -12,6 +12,7 @@ import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NonNls;
@@ -111,6 +112,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
 
   @Override
   public void dispose() {
+    EDT.assertIsEdt();
     super.dispose();
     model.removeTreeModelListener(listener);
   }
