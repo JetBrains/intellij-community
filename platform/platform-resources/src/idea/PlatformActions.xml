@@ -1630,7 +1630,6 @@
       <separator/>
       <reference id="ChangeProjectColorActionGroup"/>
       <reference id="WelcomeScreen.ChangeProjectIcon"/>
-      <action id="ChangeMainToolbarColor" class="com.intellij.ide.ui.customization.ChangeMainToolbarColorAction"/>
       <action id="ColoredHeaderAction" class="com.intellij.ide.ui.customization.UseProjectColorsCheckboxAction"/>
     </group>
   </actions>
