@@ -43,13 +43,13 @@
                   id="terminalCompletionAutoPopup" order="first"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.terminal.exp.TerminalCharFilter"
                        id="terminal" order="first"/>
-    <completion.contributor language="Shell Script"
+    <completion.contributor language="any"
                             id="terminalCommandSpec"
                             implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCommandSpecCompletionContributor"
                             order="first"/>
-    <completion.contributor language="Shell Script"
+    <completion.contributor language="any"
                             implementationClass="org.jetbrains.plugins.terminal.exp.TerminalSessionCompletionContributor"
-                            order="after terminalCommandSpec"/>
+                            order="before shShebang"/>
     <weigher key="completion"
              id="terminalCommandSpec"
              order="before stats"

@@ -31,10 +31,18 @@
     <psi.referenceContributor language="Shell Script" implementation="com.intellij.sh.ShUrlReferenceContributor"/>
 
     <typedHandler implementation="com.intellij.sh.ShTypedHandler"/>
-    <completion.contributor language="Shell Script" implementationClass="com.intellij.sh.completion.ShShebangCompletionContributor" order="first"/>
-    <completion.contributor id="shFilePathCompletionContributor" language="Shell Script" implementationClass="com.intellij.sh.completion.ShFilePathCompletionContributor"/>
-    <completion.contributor language="Shell Script" implementationClass="com.intellij.sh.completion.ShCommandCompletionContributor"/>
-    <completion.contributor language="Shell Script" implementationClass="com.intellij.sh.completion.ShKeywordCompletionContributor" order="after shFilePathCompletionContributor"/>
+    <completion.contributor id="shShebang" language="Shell Script"
+                            implementationClass="com.intellij.sh.completion.ShShebangCompletionContributor"
+                            order="after terminalCommandSpec"/>
+    <completion.contributor id="shFilePathCompletionContributor" language="Shell Script"
+                            implementationClass="com.intellij.sh.completion.ShFilePathCompletionContributor"
+                            order="after shShebang"/>
+    <completion.contributor id="shCommand" language="Shell Script"
+                            implementationClass="com.intellij.sh.completion.ShCommandCompletionContributor"
+                            order="after shFilePathCompletionContributor"/>
+    <completion.contributor language="Shell Script"
+                            implementationClass="com.intellij.sh.completion.ShKeywordCompletionContributor"
+                            order="after shCommand"/>
     <lang.braceMatcher language="Shell Script" implementationClass="com.intellij.sh.ShBraceMatcher"/>
     <lang.documentationProvider language="Shell Script" implementationClass="com.intellij.sh.ShDocumentationProvider"/>
 
