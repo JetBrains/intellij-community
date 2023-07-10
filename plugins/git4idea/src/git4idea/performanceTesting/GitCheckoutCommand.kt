@@ -41,11 +41,6 @@ class GitCheckoutCommand(text: String, line: Int) : AbstractCommand(text, line, 
     val focusedComponent = IdeFocusManager.findInstance().focusOwner
     val dataContext = DataManager.getInstance().getDataContext(focusedComponent)
     val gitRepository = GitBranchUtil.guessRepositoryForOperation(context.project, dataContext)
-    runBlocking {
-      withContext(Dispatchers.Default) {
-        hardReset(context)
-      }
-    }
     brancher.checkoutNewBranchStartingFrom(branchName, branchName, true, mutableListOf(gitRepository),
                                            Runnable { actionCallback.setDone() })
     return actionCallback.toPromise()
