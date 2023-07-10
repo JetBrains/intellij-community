@@ -61,29 +61,31 @@ public class ArtifactExternalDependenciesImporterImpl implements ArtifactExterna
   @Override
   public void applyChanges(ModifiableArtifactModel artifactModel, final PackagingElementResolvingContext context) {
     myManifestFiles.saveManifestFiles();
-    final List<Pair<? extends CompositePackagingElement<?>, List<PackagingElement<?>>>> elementsToInclude =
-      new ArrayList<>();
-    for (Artifact artifact : artifactModel.getArtifacts()) {
-      ArtifactUtil.processPackagingElements(artifact, ArtifactElementType.ARTIFACT_ELEMENT_TYPE,
-                                            new PackagingElementProcessor<>() {
-                                              @Override
-                                              public boolean process(@NotNull ArtifactPackagingElement artifactPackagingElement,
-                                                                     @NotNull PackagingElementPath path) {
-                                                final Artifact included = artifactPackagingElement.findArtifact(context);
-                                                final CompositePackagingElement<?> parent = path.getLastParent();
-                                                if (parent != null && included != null) {
-                                                  final List<PackagingElement<?>> elements = myExternalDependencies.get(included);
-                                                  if (elements != null) {
-                                                    elementsToInclude.add(Pair.create(parent, elements));
+    if (!myExternalDependencies.isEmpty()) {
+      final List<Pair<? extends CompositePackagingElement<?>, List<PackagingElement<?>>>> elementsToInclude =
+        new ArrayList<>();
+      for (Artifact artifact : artifactModel.getArtifacts()) {
+        ArtifactUtil.processPackagingElements(artifact, ArtifactElementType.ARTIFACT_ELEMENT_TYPE,
+                                              new PackagingElementProcessor<>() {
+                                                @Override
+                                                public boolean process(@NotNull ArtifactPackagingElement artifactPackagingElement,
+                                                                       @NotNull PackagingElementPath path) {
+                                                  final Artifact included = artifactPackagingElement.findArtifact(context);
+                                                  final CompositePackagingElement<?> parent = path.getLastParent();
+                                                  if (parent != null && included != null) {
+                                                    final List<PackagingElement<?>> elements = myExternalDependencies.get(included);
+                                                    if (elements != null) {
+                                                      elementsToInclude.add(Pair.create(parent, elements));
+                                                    }
                                                   }
+                                                  return true;
                                                 }
-                                                return true;
-                                              }
-                                            }, context, false);
-    }
+                                              }, context, false);
+      }
 
-    for (Pair<? extends CompositePackagingElement<?>, List<PackagingElement<?>>> pair : elementsToInclude) {
-      pair.getFirst().addOrFindChildren(pair.getSecond());
+      for (Pair<? extends CompositePackagingElement<?>, List<PackagingElement<?>>> pair : elementsToInclude) {
+        pair.getFirst().addOrFindChildren(pair.getSecond());
+      }
     }
   }
 }
