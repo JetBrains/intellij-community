@@ -2,26 +2,16 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data.loaders
 
 import com.intellij.collaboration.api.page.ApiPageUtil
-import com.intellij.collaboration.async.modelFlow
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.*
 import java.net.URI
 import java.net.http.HttpResponse
 
-private val LOG = logger<GitLabETagUpdatableListLoader<*>>()
-
 class GitLabETagUpdatableListLoader<T>(
-  parentCs: CoroutineScope,
   private val initialURI: URI,
   private val request: suspend (uri: URI, eTag: String?) -> HttpResponse<out List<T>?>
 ) {
-  private val cs = parentCs.childScope(Dispatchers.IO)
-
   private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   val batches: Flow<List<T>> = channelFlow {
@@ -42,11 +32,9 @@ class GitLabETagUpdatableListLoader<T>(
         currentCoroutineContext().cancel()
       }
     }
-  }.modelFlow(cs, LOG)
+  }
 
-  fun checkForUpdates() {
-    cs.launch {
-      updateRequests.emit(Unit)
-    }
+  suspend fun checkForUpdates() {
+    updateRequests.emit(Unit)
   }
 }

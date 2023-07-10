@@ -133,10 +133,10 @@ private fun createUnresolvedDiscussionsPositionsFlow(mergeRequest: GitLabMergeRe
   withContext(CoroutineName("GitLab Merge Request discussions positions collector")) {
     val discussionsCache = ConcurrentHashMap<String, GitLabNotePosition>()
     val draftNotesCache = ConcurrentHashMap<String, GitLabNotePosition>()
-    mergeRequest.discussions.collectLatest { discussions ->
+    mergeRequest.discussions.collectLatest { discussionsResult ->
       coroutineScope {
         discussionsCache.clear()
-        discussions.forEach { disc ->
+        discussionsResult.getOrNull()?.forEach { disc ->
           launchNow {
             val positionFlow = disc.firstNote.filterNotNull().flatMapLatest { it.position }
             combine(disc.resolved, positionFlow) { resolved, position ->
@@ -150,10 +150,10 @@ private fun createUnresolvedDiscussionsPositionsFlow(mergeRequest: GitLabMergeRe
       }
     }
 
-    mergeRequest.draftNotes.collectLatest { notes ->
+    mergeRequest.draftNotes.collectLatest { notesResult ->
       coroutineScope {
         draftNotesCache.clear()
-        notes.forEach { note ->
+        notesResult.getOrNull()?.forEach { note ->
           launchNow {
             note.position.collectLatest {
               if (it != null) draftNotesCache[note.id] = it else draftNotesCache.remove(note.id)

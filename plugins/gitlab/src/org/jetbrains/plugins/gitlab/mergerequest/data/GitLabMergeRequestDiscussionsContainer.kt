@@ -3,10 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.api.data.GraphQLRequestPagination
 import com.intellij.collaboration.api.page.ApiPageUtil
-import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.async.mapCaching
-import com.intellij.collaboration.async.mapFiltered
-import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
@@ -30,9 +27,9 @@ import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 interface GitLabMergeRequestDiscussionsContainer {
-  val discussions: Flow<Collection<GitLabMergeRequestDiscussion>>
-  val systemNotes: Flow<Collection<GitLabNote>>
-  val draftNotes: Flow<Collection<GitLabMergeRequestDraftNote>>
+  val discussions: Flow<Result<Collection<GitLabMergeRequestDiscussion>>>
+  val systemNotes: Flow<Result<Collection<GitLabNote>>>
+  val draftNotes: Flow<Result<Collection<GitLabMergeRequestDraftNote>>>
 
   val canAddNotes: Boolean
 
@@ -65,8 +62,8 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val discussionEvents = MutableSharedFlow<GitLabDiscussionEvent>()
-  private val nonEmptyDiscussionsData: Flow<List<GitLabDiscussionDTO>> =
-    reloadRequests.transformLatest { collectNonEmptyDiscussions() }.modelFlow(cs, LOG)
+  private val nonEmptyDiscussionsData: Flow<Result<List<GitLabDiscussionDTO>>> =
+    reloadRequests.transformLatest { collectNonEmptyDiscussions() }.asResultFlow().modelFlow(cs, LOG)
 
   private suspend fun FlowCollector<List<GitLabDiscussionDTO>>.collectNonEmptyDiscussions() {
     supervisorScope {
@@ -126,21 +123,25 @@ class GitLabMergeRequestDiscussionsContainerImpl(
     }
   }
 
-  override val discussions: Flow<List<GitLabMergeRequestDiscussion>> =
+  override val discussions: Flow<Result<List<GitLabMergeRequestDiscussion>>> =
     nonEmptyDiscussionsData
+      .throwFailure()
       .mapFiltered { !it.notes.first().system }
       .mapCaching(
         GitLabDiscussionDTO::id,
         { disc ->
-          LoadedGitLabDiscussion(this, project, api, glProject, { discussionEvents.emit(it) }, mr, disc, getDiscussionDraftNotes(disc.id))
+          LoadedGitLabDiscussion(this, project, api, glProject, { discussionEvents.emit(it) }, mr, disc, getDiscussionDraftNotes(disc.id).throwFailure())
         },
         LoadedGitLabDiscussion::destroy,
         LoadedGitLabDiscussion::update
       )
+      .asResultFlow()
       .modelFlow(cs, LOG)
 
-  override val systemNotes: Flow<List<GitLabNote>> =
+  override val systemNotes: Flow<Result<List<GitLabNote>>> =
     nonEmptyDiscussionsData
+      .throwFailure()
+      // When one note in a discussion is a system note, all are, so we check the first.
       .mapFiltered { it.notes.first().system }
       .map { discussions -> discussions.map { it.notes.first() } }
       .mapCaching(
@@ -148,11 +149,12 @@ class GitLabMergeRequestDiscussionsContainerImpl(
         { note -> GitLabSystemNote(note) },
         {}
       )
+      .asResultFlow()
       .modelFlow(cs, LOG)
 
   private val draftNotesEvents = MutableSharedFlow<GitLabNoteEvent<GitLabMergeRequestDraftNoteRestDTO>>()
 
-  private val draftNotesData = reloadRequests.transformLatest { collectDraftNotes() }.modelFlow(cs, LOG)
+  private val draftNotesData = reloadRequests.transformLatest { collectDraftNotes() }.asResultFlow().modelFlow(cs, LOG)
 
   private suspend fun FlowCollector<List<DraftNoteWithAuthor>>.collectDraftNotes() {
     supervisorScope {
@@ -219,21 +221,30 @@ class GitLabMergeRequestDiscussionsContainerImpl(
     }
   }
 
-  override val draftNotes: Flow<Collection<GitLabMergeRequestDraftNote>> =
-    draftNotesData.mapCaching(
-      { it.note.id },
-      { (note, author) -> GitLabMergeRequestDraftNoteImpl(this, api, glProject, mr, draftNotesEvents::emit, note, author) },
-      GitLabMergeRequestDraftNoteImpl::destroy,
-      { update(it.note) }
-    ).modelFlow(cs, LOG)
+  override val draftNotes: Flow<Result<Collection<GitLabMergeRequestDraftNote>>> =
+    draftNotesData
+      .throwFailure()
+      .mapCaching(
+        { it.note.id },
+        { (note, author) -> GitLabMergeRequestDraftNoteImpl(this, api, glProject, mr, draftNotesEvents::emit, note, author) },
+        GitLabMergeRequestDraftNoteImpl::destroy,
+        { update(it.note) }
+      )
+      .asResultFlow()
+      .modelFlow(cs, LOG)
 
   private data class DraftNoteWithAuthor(val note: GitLabMergeRequestDraftNoteRestDTO, val author: GitLabUserDTO)
 
-  private fun getDiscussionDraftNotes(discussionGid: String): Flow<List<GitLabMergeRequestDraftNote>> =
-    draftNotes.mapFiltered {
-      val discussionId = it.discussionId
-      discussionId != null && discussionGid.endsWith(discussionId)
-    }
+  private fun getDiscussionDraftNotes(discussionGid: String): Flow<Result<List<GitLabMergeRequestDraftNote>>> =
+    draftNotes
+      .map { result ->
+        result.map { notes ->
+          notes.filter {
+            val discussionId = it.discussionId
+            discussionId != null && discussionGid.endsWith(discussionId)
+          }
+        }
+      }
 
   override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {

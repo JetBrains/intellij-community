@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.api.HttpStatusErrorException
+import com.intellij.collaboration.async.asResultFlow
 import com.intellij.collaboration.async.collectBatches
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
@@ -40,9 +41,9 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val details: StateFlow<GitLabMergeRequestFullDetails>
   val changes: SharedFlow<GitLabMergeRequestChanges>
 
-  val labelEvents: Flow<List<GitLabResourceLabelEventDTO>>
-  val stateEvents: Flow<List<GitLabResourceStateEventDTO>>
-  val milestoneEvents: Flow<List<GitLabResourceMilestoneEventDTO>>
+  val labelEvents: Flow<Result<List<GitLabResourceLabelEventDTO>>>
+  val stateEvents: Flow<Result<List<GitLabResourceStateEventDTO>>>
+  val milestoneEvents: Flow<Result<List<GitLabResourceMilestoneEventDTO>>>
 
   // NOT a great place for it, but placing it in VM layer is a pain in the neck
   val draftReviewText: MutableStateFlow<String>
@@ -101,31 +102,37 @@ internal class LoadedGitLabMergeRequest(
     }.modelFlow(cs, LOG)
 
   private val stateEventsLoader =
-    GitLabETagUpdatableListLoader<GitLabResourceStateEventDTO>(cs, getMergeRequestStateEventsUri(glProject, mergeRequest)
+    GitLabETagUpdatableListLoader<GitLabResourceStateEventDTO>(getMergeRequestStateEventsUri(glProject, mergeRequest)
     ) { uri, eTag ->
       api.rest.loadUpdatableJsonList<GitLabResourceStateEventDTO>(
         glProject.serverPath, GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
       )
     }
-  override val stateEvents = stateEventsLoader.batches.collectBatches().modelFlow(cs, LOG)
+  override val stateEvents = stateEventsLoader.batches.collectBatches()
+    .asResultFlow()
+    .modelFlow(cs, LOG)
 
   private val labelEventsLoader =
-    GitLabETagUpdatableListLoader<GitLabResourceLabelEventDTO>(cs, getMergeRequestLabelEventsUri(glProject, mergeRequest)
+    GitLabETagUpdatableListLoader<GitLabResourceLabelEventDTO>(getMergeRequestLabelEventsUri(glProject, mergeRequest)
     ) { uri, eTag ->
       api.rest.loadUpdatableJsonList<GitLabResourceLabelEventDTO>(
         glProject.serverPath, GitLabApiRequestName.REST_GET_MERGE_REQUEST_LABEL_EVENTS, uri, eTag
       )
     }
-  override val labelEvents = labelEventsLoader.batches.collectBatches().modelFlow(cs, LOG)
+  override val labelEvents = labelEventsLoader.batches.collectBatches()
+    .asResultFlow()
+    .modelFlow(cs, LOG)
 
   private val milestoneEventsLoader =
-    GitLabETagUpdatableListLoader<GitLabResourceMilestoneEventDTO>(cs, getMergeRequestMilestoneEventsUri(glProject, mergeRequest)
+    GitLabETagUpdatableListLoader<GitLabResourceMilestoneEventDTO>(getMergeRequestMilestoneEventsUri(glProject, mergeRequest)
     ) { uri, eTag ->
       api.rest.loadUpdatableJsonList<GitLabResourceMilestoneEventDTO>(
         glProject.serverPath, GitLabApiRequestName.REST_GET_MERGE_REQUEST_MILESTONE_EVENTS, uri, eTag
       )
     }
-  override val milestoneEvents = milestoneEventsLoader.batches.collectBatches().modelFlow(cs, LOG)
+  override val milestoneEvents = milestoneEventsLoader.batches.collectBatches()
+    .asResultFlow()
+    .modelFlow(cs, LOG)
 
   private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
   override val isLoading: SharedFlow<Boolean> = _isLoading.asSharedFlow()
@@ -150,10 +157,11 @@ internal class LoadedGitLabMergeRequest(
   override fun refreshData() {
     cs.launch {
       mergeRequestRefreshRequest.emit(Unit)
+
+      stateEventsLoader.checkForUpdates()
+      labelEventsLoader.checkForUpdates()
+      milestoneEventsLoader.checkForUpdates()
     }
-    stateEventsLoader.checkForUpdates()
-    labelEventsLoader.checkForUpdates()
-    milestoneEventsLoader.checkForUpdates()
     discussionsContainer.requestReload()
   }
 
@@ -290,9 +298,9 @@ internal class LoadedGitLabMergeRequest(
   private val discussionsContainer =
     GitLabMergeRequestDiscussionsContainerImpl(parentCs, project, api, projectMapping.repository, this)
 
-  override val discussions: Flow<Collection<GitLabMergeRequestDiscussion>> = discussionsContainer.discussions
-  override val systemNotes: Flow<Collection<GitLabNote>> = discussionsContainer.systemNotes
-  override val draftNotes: Flow<Collection<GitLabMergeRequestDraftNote>> = discussionsContainer.draftNotes
+  override val discussions: Flow<Result<Collection<GitLabMergeRequestDiscussion>>> = discussionsContainer.discussions
+  override val systemNotes: Flow<Result<Collection<GitLabNote>>> = discussionsContainer.systemNotes
+  override val draftNotes: Flow<Result<Collection<GitLabMergeRequestDraftNote>>> = discussionsContainer.draftNotes
   override val canAddNotes: Boolean = discussionsContainer.canAddNotes
 
   override suspend fun addNote(body: String) = discussionsContainer.addNote(body)

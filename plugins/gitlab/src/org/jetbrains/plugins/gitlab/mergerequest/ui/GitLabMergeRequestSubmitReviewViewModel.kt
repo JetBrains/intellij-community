@@ -46,10 +46,10 @@ internal interface GitLabMergeRequestSubmitReviewViewModel {
 }
 
 internal fun GitLabMergeRequest.getSubmittableReview(currentUser: GitLabUserDTO): Flow<SubmittableReview?> =
-  combine(draftNotes, details) { draftNotes, details ->
+  combine(draftNotes, details) { draftNotesResult, details ->
     val permissions = details.userPermissions
     val approvals = details.approvedBy
-    val draftComments = draftNotes.count()
+    val draftComments = draftNotesResult.getOrNull()?.count() ?: return@combine null
     val canChangeApproval = permissions.canApprove || approvals.any { it.id == currentUser.id }
     if (draftComments > 0 || canChangeApproval) SubmittableReview(draftComments)
     else null
@@ -68,7 +68,7 @@ class GitLabMergeRequestSubmitReviewViewModelImpl(
   private val _error = MutableStateFlow<Throwable?>(null)
   override val error: Flow<Throwable?> get() = _error.asStateFlow()
 
-  override val draftCommentsCount: Flow<Int> = mergeRequest.draftNotes.map { it.count() }
+  override val draftCommentsCount: Flow<Int> = mergeRequest.draftNotes.map { result -> result.getOrNull()?.count() ?: 0 }
   override val isApproved: Flow<Boolean> = mergeRequest.details.map { it.approvedBy.any { user -> user.id == currentUser.id } }
     .modelFlow(cs, thisLogger())
   override val text: MutableStateFlow<String> = mergeRequest.draftReviewText

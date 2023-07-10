@@ -253,3 +253,15 @@ fun <T> Flow<List<T>>.collectBatches(): Flow<List<T>> {
     emit(result)
   }
 }
+
+/**
+ * Maps values in the flow to successful results and catches and wraps any exception into a failure result.
+ */
+fun <T> Flow<T>.asResultFlow(): Flow<Result<T>> =
+  map { Result.success(it) }.catch { emit(Result.failure(it)) }
+
+/**
+ * Maps a flow or results to a flow of values from successful results. Failure results are re-thrown as exceptions.
+ */
+fun <T> Flow<Result<T>>.throwFailure(): Flow<T> =
+  map { it.getOrThrow() }
