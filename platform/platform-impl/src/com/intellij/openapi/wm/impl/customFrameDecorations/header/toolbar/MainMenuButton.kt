@@ -36,8 +36,8 @@ import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-internal class MainMenuButton {
-  var expandableMenu: ExpandableMenu? = null
+class MainMenuButton {
+  internal var expandableMenu: ExpandableMenu? = null
   private val menuAction = ShowMenuAction()
   private var disposable: Disposable? = null
   private var shortcutsChangeConnection: MessageBusConnection? = null
@@ -131,7 +131,8 @@ internal class MainMenuButton {
     }
   }
 
-  private inner class ShowMenuAction : LightEditCompatible, DumbAwareAction (
+  @ApiStatus.Internal
+  inner class ShowMenuAction : LightEditCompatible, DumbAwareAction(
     IdeBundle.messagePointer("main.toolbar.menu.button"),
     ExpUiIcons.General.WindowsMenu_20x20) {
 
