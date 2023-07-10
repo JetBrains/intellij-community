@@ -76,7 +76,7 @@ import org.jetbrains.kotlin.idea.base.psi.getLineNumber as _getLineNumber
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
 
-@Deprecated("Was moved to the common part", replaceWith = ReplaceWith("org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringUtilKt.canRefactor()"))
+@Deprecated("Was moved to the common part", replaceWith = ReplaceWith("canRefactorElement()"))
 fun PsiElement.canRefactor(): Boolean {
     return when {
         !isValid -> false

@@ -156,7 +156,7 @@ public class MoveKotlinNestedClassesDialog extends RefactoringDialog {
                         if (!(lookupObject instanceof DescriptorBasedDeclarationLookupObject)) return false;
                         PsiElement psiElement = ((DescriptorBasedDeclarationLookupObject) lookupObject).getPsiElement();
                         if (lookupObject instanceof PackageLookupObject) return true;
-                        return (psiElement instanceof KtClassOrObject) && KotlinCommonRefactoringUtilKt.canRefactor(psiElement);
+                        return (psiElement instanceof KtClassOrObject) && KotlinCommonRefactoringUtilKt.canRefactorElement(psiElement);
                     }
             );
         }

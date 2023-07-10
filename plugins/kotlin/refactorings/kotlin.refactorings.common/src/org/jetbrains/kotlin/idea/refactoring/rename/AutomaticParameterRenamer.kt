@@ -12,7 +12,7 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
-import org.jetbrains.kotlin.idea.refactoring.canRefactor
+import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -29,7 +29,7 @@ class AutomaticParameterRenamer(element: KtParameter, newName: String) : Automat
         val function = element.ownerFunction ?: return
         for (overrider in HierarchySearchRequest(function, function.useScope).searchOverriders()) {
             val callable = overrider.namedUnwrappedElement ?: continue
-            if (!callable.canRefactor()) continue
+            if (!callable.canRefactorElement()) continue
             val parameter: PsiNamedElement? = when (callable) {
                 is KtCallableDeclaration -> callable.valueParameters.firstOrNull { it.name == element.name }
                 is PsiMethod -> callable.parameterList.parameters.firstOrNull { it.name == element.name }

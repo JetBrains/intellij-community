@@ -10,11 +10,11 @@ import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 
-fun PsiElement.canRefactor(): Boolean {
+fun PsiElement.canRefactorElement(): Boolean {
   return when {
     !isValid -> false
     this is PsiPackage ->
-      directories.any { it.canRefactor() }
+      directories.any { it.canRefactorElement() }
     this is KtElement || (this is PsiMember && language == JavaLanguage.INSTANCE) || this is PsiDirectory ->
       RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this)
     else -> false

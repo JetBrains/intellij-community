@@ -213,7 +213,7 @@ public class MoveKotlinMethodDialog extends RefactoringDialog {
                         if (!(lookupObject instanceof DescriptorBasedDeclarationLookupObject)) return false;
                         PsiElement psiElement = ((DescriptorBasedDeclarationLookupObject) lookupObject).getPsiElement();
                         if (lookupObject instanceof PackageLookupObject) return true;
-                        return (psiElement instanceof KtObjectDeclaration) && KotlinCommonRefactoringUtilKt.canRefactor(psiElement);
+                        return (psiElement instanceof KtObjectDeclaration) && KotlinCommonRefactoringUtilKt.canRefactorElement(psiElement);
                     }
             );
         }
