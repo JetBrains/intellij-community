@@ -74,8 +74,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     val elementId = session.itemIdProvider.getId(element)
     val mlElementInfo = state.getElementFeatures(elementId, element, contributor, priority, session.mixedListInfo, session.cachedContextInfo)
 
-    // Don't calculate ML weight for typo fix, as otherwise it will affect the ranking priority, which is meant to be Int.MAX_VALUE
-    val mlWeight = if (state.orderByMl && contributor !is SearchEverywhereSpellingCorrectorContributor) {
+    val mlWeight = if (shouldCalculateMlWeight(contributor, state)) {
       state.getMLWeight(session.cachedContextInfo, mlElementInfo)
     } else {
       null
@@ -87,6 +86,15 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     else {
       SearchEverywhereFoundElementInfoWithMl(element, priority, contributor, mlWeight, mlElementInfo.features)
     }
+  }
+
+  private fun shouldCalculateMlWeight(contributor: SearchEverywhereContributor<*>, searchState: SearchEverywhereMlSearchState): Boolean {
+    // Don't calculate ML weight for typo fix, as otherwise it will affect the ranking priority, which is meant to be Int.MAX_VALUE
+    if (contributor is SearchEverywhereSpellingCorrectorContributor) return false
+    // If we're showing recently used actions (empty query) then we don't want to apply ML sorting either
+    if (searchState.tabId == ActionSearchEverywhereContributor::class.simpleName && searchState.searchQuery.isEmpty()) return false
+
+    return searchState.orderByMl
   }
 
   override fun onSearchRestart(project: Project?,

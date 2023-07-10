@@ -15,7 +15,7 @@ internal class SearchEverywhereMlSearchState(
   private val sessionStartTime: Long, val searchStartTime: Long,
   val searchIndex: Int, val searchStartReason: SearchRestartReason,
   val tabId: String, val experimentGroup: Int, val orderByMl: Boolean,
-  val keysTyped: Int, val backspacesTyped: Int, private val searchQuery: String,
+  val keysTyped: Int, val backspacesTyped: Int, val searchQuery: String,
   private val modelProvider: SearchEverywhereModelProvider,
   private val providersCache: FeaturesProviderCache?,
   projectIsDumb: Boolean?,
