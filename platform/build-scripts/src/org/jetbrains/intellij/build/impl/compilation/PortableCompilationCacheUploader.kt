@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.impl.compilation
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -157,7 +156,7 @@ internal class PortableCompilationCacheUploader(
     val newHistory = if (overrideRemoteHistory) commitHistory else commitHistory + remoteCommitHistory()
     uploader.upload(path = CommitsHistory.JSON_FILE, file = writeCommitHistory(newHistory))
     val expected = newHistory.commitsForRemote(remoteGitUrl).toSet()
-    val actual = remoteCommitHistory().commitsForRemote(remoteGitUrl).take(expected.count()).toSet()
+    val actual = remoteCommitHistory().commitsForRemote(remoteGitUrl).toSet()
     val missing = expected - actual
     val unexpected = actual - expected
     if (missing.any() || unexpected.any()) {
