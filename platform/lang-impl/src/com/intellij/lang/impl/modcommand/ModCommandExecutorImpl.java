@@ -61,7 +61,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
   @Override
   public void executeInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @Nullable Editor editor) {
     if (!ensureWritable(context.project(), command)) return;
-    doExecute(context, command, editor, true);
+    doExecuteInteractively(context, command, editor);
   }
 
   private static boolean ensureWritable(@NotNull Project project, @NotNull ModCommand command) {
@@ -70,43 +70,102 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
   }
 
   @Override
-  public void executeInBatch(@NotNull ActionContext context, @NotNull ModCommand command) {
-    if (!ensureWritable(context.project(), command)) return;
-    doExecute(context, command, null, false);
+  public @NotNull BatchExecutionResult executeInBatch(@NotNull ActionContext context, @NotNull ModCommand command) {
+    if (!ensureWritable(context.project(), command)) {
+      return new Error(LangBundle.message("executor.error.files.are.marked.as.readonly"));
+    }
+    return doExecuteInBatch(context, command);
   }
 
-  private boolean doExecute(@NotNull ActionContext context, @NotNull ModCommand command, @Nullable Editor editor, boolean onTheFly) {
+  private BatchExecutionResult doExecuteInBatch(@NotNull ActionContext context, @NotNull ModCommand command) {
+    Project project = context.project();
+    if (command instanceof ModNothing) {
+      return Result.NOTHING;
+    }
+    if (command instanceof ModUpdateFileText upd) {
+      return executeUpdate(project, upd) ? Result.ABORT : Result.SUCCESS;
+    }
+    if (command instanceof ModCreateFile create) {
+      return executeCreate(project, create) ? Result.ABORT : Result.SUCCESS;
+    }
+    if (command instanceof ModDeleteFile deleteFile) {
+      return executeDelete(project, deleteFile) ? Result.ABORT : Result.SUCCESS;
+    }
+    if (command instanceof ModCompositeCommand cmp) {
+      BatchExecutionResult result = Result.NOTHING;
+      for (ModCommand subCommand : cmp.commands()) {
+        result = result.compose(doExecuteInBatch(context, subCommand));
+        if (result == Result.ABORT || result instanceof Error) break;
+      }
+      return result;
+    }
+    if (command instanceof ModChooseAction chooser) {
+      return executeChooseInBatch(context, chooser);
+    }
+    if (command instanceof ModNavigate || command instanceof ModHighlight ||
+        command instanceof ModCopyToClipboard || command instanceof ModRenameSymbol) {
+      return Result.INTERACTIVE;
+    }
+    if (command instanceof ModDisplayMessage message) {
+      if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {
+        return new Error(message.messageText());
+      }
+      return Result.INTERACTIVE;
+    }
+    throw new IllegalArgumentException("Unknown command: " + command);
+  }
+
+  private BatchExecutionResult executeChooseInBatch(@NotNull ActionContext context, ModChooseAction chooser) {
+    ModCommandAction action = StreamEx.of(chooser.actions()).filter(act -> act.getPresentation(context) != null)
+      .findFirst().orElse(null);
+    if (action == null) return Result.NOTHING;
+
+    String name = chooser.title();
+    ModCommand next = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.nonBlocking((Callable<? extends ModCommand>)() -> {
+      if (action.getPresentation(context) == null) return null;
+      return action.perform(context);
+    }).executeSynchronously(), name, true, context.project());
+    if (next == null) return Result.ABORT;
+    var nextStep = new Runnable() {
+      BatchExecutionResult myResult = Result.NOTHING;
+      
+      @Override
+      public void run() {
+        myResult = executeInBatch(context, next);
+      }
+    };
+    CommandProcessor.getInstance().executeCommand(context.project(), nextStep, name, null);
+    return nextStep.myResult;
+  }
+
+  private boolean doExecuteInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @Nullable Editor editor) {
     Project project = context.project();
     if (command instanceof ModUpdateFileText upd) {
       return executeUpdate(project, upd);
     }
     if (command instanceof ModCompositeCommand cmp) {
-      return executeComposite(context, cmp, editor, onTheFly);
+      return executeComposite(context, cmp, editor);
     }
     if (command instanceof ModNavigate nav) {
-      if (!onTheFly) return true;
       return executeNavigate(project, nav);
     }
     if (command instanceof ModHighlight highlight) {
-      if (!onTheFly) return true;
       return executeHighlight(project, highlight);
     }
     if (command instanceof ModCopyToClipboard copyToClipboard) {
-      if (!onTheFly) return true;
       return executeCopyToClipboard(copyToClipboard);
     }
     if (command instanceof ModNothing) {
       return true;
     }
     if (command instanceof ModChooseAction chooser) {
-      return executeChoose(context, chooser, onTheFly, editor);
+      return executeChoose(context, chooser, editor);
     }
     if (command instanceof ModDisplayMessage message) {
-      if (!onTheFly) return true; // TODO: gather all errors and display them together?
       return executeMessage(project, message);
     }
     if (command instanceof ModRenameSymbol rename) {
-      if (!onTheFly) return true;
       return executeRename(project, rename);
     }
     if (command instanceof ModCreateFile create) {
@@ -227,7 +286,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     }
 
     @Override
-    public Result calculateResult(ExpressionContext context) {
+    public com.intellij.codeInsight.template.Result calculateResult(ExpressionContext context) {
       return new TextResult(myOrig);
     }
 
@@ -263,16 +322,16 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     return true;
   }
 
-  private boolean executeChoose(@NotNull ActionContext context, ModChooseAction chooser, boolean onTheFly, @Nullable Editor editor) {
+  private boolean executeChoose(@NotNull ActionContext context, ModChooseAction chooser, @Nullable Editor editor) {
     record ActionAndPresentation(@NotNull ModCommandAction action, @NotNull ModCommandAction.Presentation presentation) {}
     List<ActionAndPresentation> actions = StreamEx.of(chooser.actions()).mapToEntry(action -> action.getPresentation(context))
       .nonNullValues().mapKeyValue(ActionAndPresentation::new).toList();
     if (actions.isEmpty()) return true;
     
     String name = chooser.title();
-    if (actions.size() == 1 || !onTheFly) {
+    if (actions.size() == 1) {
       ModCommandAction action = actions.get(0).action();
-      executeNextStep(context, name, editor, onTheFly, () -> {
+      executeNextStep(context, name, editor, () -> {
         if (action.getPresentation(context) == null) return null;
         return action.perform(context);
       });
@@ -297,8 +356,8 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     return true;
   }
 
-  private void executeNextStep(@NotNull ActionContext context, @NotNull @NlsContexts.Command String name, @Nullable Editor editor, 
-                               boolean onTheFly, Callable<? extends ModCommand> supplier) {
+  private void executeNextStep(@NotNull ActionContext context, @NotNull @NlsContexts.Command String name, @Nullable Editor editor,
+                               Callable<? extends ModCommand> supplier) {
     ModCommand next = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         return ReadAction.nonBlocking(supplier).expireWhen(context.project()::isDisposed).executeSynchronously();
       }, name, true, context.project());
@@ -347,10 +406,9 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     return FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
   }
 
-  private boolean executeComposite(@NotNull ActionContext context, ModCompositeCommand cmp, @Nullable Editor editor, boolean onTheFly) {
+  private boolean executeComposite(@NotNull ActionContext context, ModCompositeCommand cmp, @Nullable Editor editor) {
     for (ModCommand command : cmp.commands()) {
-      boolean status = doExecute(context, command, editor, onTheFly);
-      if (!status) {
+      if (!doExecuteInteractively(context, command, editor)) {
         return false;
       }
     }

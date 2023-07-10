@@ -4,6 +4,7 @@ package com.intellij.modcommand;
 import com.intellij.modcommand.ModCommandAction.ActionContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,14 +28,50 @@ public interface ModCommandExecutor {
    *
    * @param context current context
    * @param command a command to execute
+   * @return result of execution
    */
   @RequiresEdt
-  void executeInBatch(@NotNull ActionContext context, @NotNull ModCommand command);
+  @NotNull BatchExecutionResult executeInBatch(@NotNull ActionContext context, @NotNull ModCommand command);
 
   /**
    * @return an instance of this service
    */
   static @NotNull ModCommandExecutor getInstance() {
     return ApplicationManager.getApplication().getService(ModCommandExecutor.class);
+  }
+
+  sealed interface BatchExecutionResult {
+    default @NotNull BatchExecutionResult compose(@NotNull BatchExecutionResult next) {
+      if (next == Result.NOTHING || next.equals(this) || this instanceof Error) return this;
+      if (this == Result.NOTHING || next instanceof Error) return next;
+      if (this == Result.ABORT || next == Result.ABORT) return Result.ABORT;
+      return Result.SUCCESS;
+    }
+  }
+  
+  enum Result implements BatchExecutionResult {
+    /**
+     * Action was successfully executed
+     */
+    SUCCESS,
+    /**
+     * Action is interactive only, thus produces no effect
+     */
+    INTERACTIVE,
+    /**
+     * Action has no effect
+     */
+    NOTHING,
+    /**
+     * Action was aborted
+     */
+    ABORT
+  }
+
+  /**
+   * Indicates that the action execution was unsuccessful
+   * @param message user-readable error message
+   */
+  record Error(@NotNull @NlsContexts.Tooltip String message) implements BatchExecutionResult {
   }
 }
