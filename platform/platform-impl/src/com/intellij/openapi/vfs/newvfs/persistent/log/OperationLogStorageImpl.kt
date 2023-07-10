@@ -7,6 +7,8 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.Operat
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.AppendContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.Companion.Mode
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getMeter
+import com.intellij.platform.diagnostic.telemetry.VFS
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.DataEnumerator
 import kotlinx.coroutines.CoroutineScope
@@ -17,24 +19,47 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicLong
 
 class OperationLogStorageImpl(
   storagePath: Path,
   private val stringEnumerator: DataEnumerator<String>,
   private val scope: CoroutineScope,
-  writerJobsCount: Int
+  writerJobsCount: Int,
+  trackJobStatistics: Boolean = true
 ) : OperationLogStorage {
   private val appendLogStorage: AppendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, CHUNK_SIZE)
   private val writeQueue = Channel<() -> Unit>(
-    capacity = SystemProperties.getIntProperty("idea.vfs.log-vfs-operations.buffer-capacity", 10_000),
+    capacity = SystemProperties.getIntProperty("idea.vfs.log-vfs-operations.buffer-capacity", 5_000),
     BufferOverflow.SUSPEND
   )
 
   @Volatile
   private var isClosed = false
 
+  private val telemetry = object {
+    val jobsOffloadedToWorkers: AtomicLong = AtomicLong(0)
+    val jobsPerformedOnMainThread: AtomicLong = AtomicLong(0)
+
+    fun setupTelemetry() {
+      val meter = getMeter(VFS)
+
+      val jobsOffloadedToWorkersGauge = meter.counterBuilder("VfsLog.OperationsLogStorage.jobsOffloadedToWorkers").buildObserver()
+      val jobsPerformedOnMainThreadGauge = meter.counterBuilder("VfsLog.OperationsLogStorage.jobsPerformedOnMainThread").buildObserver()
+
+      meter.batchCallback(
+        {
+          jobsOffloadedToWorkersGauge.record(jobsOffloadedToWorkers.get())
+          jobsPerformedOnMainThreadGauge.record(jobsPerformedOnMainThread.get())
+        },
+        jobsOffloadedToWorkersGauge, jobsPerformedOnMainThreadGauge
+      )
+    }
+  }
+
   init {
     repeat(writerJobsCount) { scope.launch { writeWorker() } }
+    if (trackJobStatistics) telemetry.setupTelemetry()
   }
 
   override fun bytesForOperationDescriptor(tag: VfsOperationTag): Int =
@@ -64,7 +89,11 @@ class OperationLogStorageImpl(
     val entry = appendLogStorage.appendEntry(descriptorSize.toLong())
     val job = { writeJobImpl(compute, tag, entry, descriptorSize) }
     val submitted = writeQueue.trySend(job)
-    if (submitted.isSuccess) return
+    if (submitted.isSuccess) {
+      telemetry.jobsOffloadedToWorkers.incrementAndGet()
+      return
+    }
+    telemetry.jobsPerformedOnMainThread.incrementAndGet()
     performWriteJob(job)
   }
 
