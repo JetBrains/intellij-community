@@ -111,9 +111,8 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                     if (target.isTopLevelCallable()) return@any false
                     if (target === declaration) return@any false
                     analyze(target) {
-                        if (!declaration.canBeAnalysed()) return@any false
                         val targetSymbol = target.getSymbol() as? KtCallableSymbol ?: return@any false
-                        declaration.getSymbol() in targetSymbol.getAllOverriddenSymbols()
+                        declaration.originalElement in targetSymbol.getAllOverriddenSymbols().mapNotNull { it.psi?.originalElement }
                     }
                 }
                 is PsiMethod -> {
