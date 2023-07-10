@@ -18,8 +18,6 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyLiteralStringType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
@@ -166,26 +164,13 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     final LanguageLevel languageLevel = file == null ? LanguageLevel.forElement(this) : file.getLanguageLevel();
 
     final ASTNode firstNode = ContainerUtil.getFirstItem(getStringNodes());
-    final PyClassType strType = builtinCache.getStrType();
-    final PyClassType litStr = PyLiteralStringType.Companion.create(this, true);
     if (firstNode != null) {
       if (firstNode.getElementType() == PyElementTypes.FSTRING_NODE) {
         // f-strings can't have "b" prefix, so they are always unicode
-        if (languageLevel.isPy3K()) {
-          boolean allLiteralStringFragments = StreamEx.of(this.getStringElements())
-            .select(PyFormattedStringElement.class)
-            .flatMap(element -> element.getFragments().stream())
-            .map(fragment -> fragment != null && fragment.getExpression() != null ? context.getType(fragment.getExpression()) : null)
-            .nonNull()
-            .allMatch(type -> type instanceof PyLiteralStringType);
-          return allLiteralStringFragments ? litStr : strType;
-        }
-        else {
-          return builtinCache.getUnicodeType(languageLevel);
-        }
+        return builtinCache.getUnicodeType(languageLevel);
       }
       else if (firstNode.getElementType() == PyTokenTypes.DOCSTRING) {
-        return litStr != null ? litStr : strType;
+        return builtinCache.getStrType();
       }
       else if (((PyStringElement)firstNode).isBytes()) {
         return builtinCache.getBytesType(languageLevel);
@@ -197,15 +182,10 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
                                                                           (file != null &&
                                                                            file.hasImportFromFuture(FutureFeature.UNICODE_LITERALS)));
       if (PyTokenTypes.UNICODE_NODES.contains(type)) {
-        if (languageLevel.isPy3K()) {
-          return litStr != null ? litStr : strType;
-        }
-        else {
-          return builtinCache.getUnicodeType(languageLevel);
-        }
+        return builtinCache.getUnicodeType(languageLevel);
       }
     }
-    return litStr != null ? litStr : strType;
+    return builtinCache.getStrType();
   }
 
   @Override

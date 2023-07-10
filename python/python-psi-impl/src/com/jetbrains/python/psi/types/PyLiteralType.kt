@@ -97,6 +97,12 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
       }
       val substitution = if (substitutions != null) PyTypeChecker.substitute(expected, substitutions, context) else expected
       val substitutionOrBound = if (substitution is PyTypeVarType) substitution.bound else substitution
+      if (containsLiteralString(substitutionOrBound)) {
+        val literalStringType = PyLiteralStringType.fromLiteral(expression, context)
+        if (literalStringType != null) {
+          return literalStringType
+        }
+      }
       if (containsLiteral(substitutionOrBound)) {
         return fromLiteralValue(expression, context)
       }
@@ -107,6 +113,12 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
       return type is PyLiteralType ||
              type is PyUnionType && type.members.any { containsLiteral(it) } ||
              type is PyCollectionType && type.elementTypes.any { containsLiteral(it) }
+    }
+
+    private fun containsLiteralString(type: PyType?): Boolean {
+      return type is PyLiteralStringType ||
+             type is PyUnionType && type.members.any { containsLiteralString(it) } ||
+             type is PyCollectionType && type.elementTypes.any { containsLiteralString(it) }
     }
 
     private fun toLiteralType(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyType? {
