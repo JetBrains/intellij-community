@@ -1629,9 +1629,9 @@
       <reference id="MainToolbarQuickActions"/>
       <separator/>
       <reference id="ChangeProjectColorActionGroup"/>
-      <action id="ColoredHeaderAction" class="com.intellij.ide.ui.customization.UseProjectColorsCheckboxAction"/>
       <reference id="WelcomeScreen.ChangeProjectIcon"/>
       <action id="ChangeMainToolbarColor" class="com.intellij.ide.ui.customization.ChangeMainToolbarColorAction"/>
+      <action id="ColoredHeaderAction" class="com.intellij.ide.ui.customization.UseProjectColorsCheckboxAction"/>
     </group>
   </actions>
 </idea-plugin>
