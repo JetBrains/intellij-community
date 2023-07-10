@@ -26,7 +26,7 @@ class AvatarIcon(private val targetSize: Int,
     g as Graphics2D
     val iconSize = getIconSize()
     val scale = g.transform.scaleX
-    val imageColor = palette.gradient(avatarName).first
+    val imageColor = palette.gradient(gradientSeed).first
     if (scale != cachedImageScale || imageColor != cachedImageColor) {
       cachedImage = null
     }
@@ -41,7 +41,7 @@ class AvatarIcon(private val targetSize: Int,
                                           palette = palette)
       this.cachedImage = cachedImage
       cachedImageScale = scale
-      cachedImageColor = palette.gradient(avatarName).first
+      cachedImageColor = palette.gradient(gradientSeed).first
     }
 
     withTxAndClipAligned(g, x, y, cachedImage.width, cachedImage.height) { gg ->
