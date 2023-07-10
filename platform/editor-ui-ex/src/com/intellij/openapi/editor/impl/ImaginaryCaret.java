@@ -56,6 +56,10 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
   public void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
     if (offset < 0)
       offset = 0;
+    if (getSelectionRange().contains(myPos)) {
+      myPos = offset;
+      return;
+    }
     myStart = myPos = myEnd = offset;
   }
 
