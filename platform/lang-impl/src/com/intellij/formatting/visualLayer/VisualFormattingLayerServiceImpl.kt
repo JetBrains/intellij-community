@@ -2,6 +2,8 @@
 package com.intellij.formatting.visualLayer
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInspection.incorrectFormatting.FormattingChanges
 import com.intellij.codeInspection.incorrectFormatting.detectFormattingChanges
 import com.intellij.formatting.visualLayer.VisualFormattingLayerElement.*
