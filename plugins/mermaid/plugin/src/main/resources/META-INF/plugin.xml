@@ -5,6 +5,7 @@
 
   <depends>com.intellij.modules.platform</depends>
   <depends optional="true" config-file="mermaid-withMarkdown.xml">org.intellij.plugins.markdown</depends>
+  <depends optional="true" config-file="mermaid-withYAML.xml">org.jetbrains.plugins.yaml</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Mermaid"
@@ -127,6 +128,8 @@
                              implementationClass="com.intellij.mermaid.lang.psi.MarkdownElementManipulator"/>
     <lang.elementManipulator forClass="com.intellij.mermaid.lang.psi.MermaidDirectiveValue"
                              implementationClass="com.intellij.mermaid.lang.psi.DirectiveManipulator"/>
+    <lang.elementManipulator forClass="com.intellij.mermaid.lang.psi.MermaidFrontmatterContent"
+                             implementationClass="com.intellij.mermaid.lang.psi.FrontmatterContentManipulator"/>
 
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">

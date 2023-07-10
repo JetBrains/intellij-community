@@ -36,7 +36,7 @@ file ::= [frontmatter EOL] start
 private start ::= EOL start | directive start | diagram
 
 frontmatter ::= FRONTMATTER_START EOL frontmatterContent FRONTMATTER_END
-frontmatterContent ::= (FRONTMATTER_VALUE* EOL)*
+frontmatterContent ::= FRONTMATTER_VALUE { mixin="com.intellij.mermaid.lang.psi.impl.MermaidLanguageInjectionHost" }
 
 private diagram ::= pieHeader EOL* [pieBody]
   | journeyHeader EOL* [journeyBody]

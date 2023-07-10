@@ -105,6 +105,19 @@ class MermaidElementFactory {
       return elements.filterIsInstance<MermaidDirectiveValue>().firstOrNull()
     }
 
+    fun createFrontmatterContent(project: Project, value: String): MermaidFrontmatterContent? {
+      val text = buildString {
+        appendLine("---")
+        appendLine(value)
+        appendLine("---")
+        appendLine("graph")
+      }
+
+      val file = createFile(project, text)
+      val elements = SyntaxTraverser.psiTraverser(file).asSequence()
+      return elements.filterIsInstance<MermaidFrontmatterContent>().firstOrNull()
+    }
+
     private fun createFile(project: Project?, text: String): MermaidFile {
       val name = "dummy.mermaid"
       return PsiFileFactory.getInstance(project).createFileFromText(name, MermaidLanguage, text) as MermaidFile

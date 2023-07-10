@@ -10,7 +10,7 @@ import org.jetbrains.intellij.utils.ArchiveUtils
 import org.jetbrains.intellij.utils.DependenciesDownloader
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.nio.file.Files
-import java.util.Date
+import java.util.*
 
 plugins {
   java
@@ -67,7 +67,7 @@ intellij {
   val platformVersion = System.getenv("PLATFORM_VERSION") ?: properties("platformVersion")
   version.set(platformVersion)
   type.set(properties("platformType"))
-  plugins.set(listOf("org.intellij.plugins.markdown"))
+  plugins.set(listOf("org.intellij.plugins.markdown", "yaml"))
 }
 
 changelog {
