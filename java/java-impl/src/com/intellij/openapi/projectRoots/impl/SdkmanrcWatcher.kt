@@ -6,10 +6,12 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JdkFinder
@@ -84,7 +86,7 @@ data class SdkmanCandidate(val target: String,
 
 @Service(Service.Level.PROJECT)
 class SdkmanrcWatcherService(private val project: Project, private val scope: CoroutineScope): Disposable {
-  private val file: File = File(project.basePath, ".sdkmanrc")
+  val file: File = File(project.basePath, ".sdkmanrc")
 
   fun registerListener(project: Project) {
     val connection = project.messageBus.connect(this)
@@ -110,9 +112,9 @@ class SdkmanrcWatcherService(private val project: Project, private val scope: Co
     scope.launch {
       val result = suggestSdkFromSdkmanrc()
       withContext(Dispatchers.EDT) {
-        when (result) {
-          is SdkSuggestion.Jdk -> if (!result.project) configure(result.jdk, result.target)
-          is SdkSuggestion.Path -> configure(result.path, result.target)
+        when {
+          result is SdkSuggestion.Jdk && !result.project -> configure(result.jdk, result.target)
+          result is SdkSuggestion.Path -> configure(result.path, result.target)
           else -> Unit
         }
       }
@@ -120,16 +122,20 @@ class SdkmanrcWatcherService(private val project: Project, private val scope: Co
   }
 
   @RequiresBackgroundThread
-  fun suggestSdkFromSdkmanrc(): SdkSuggestion? {
+  suspend fun suggestSdkFromSdkmanrc(): SdkSuggestion? {
     if (!file.exists()) return null
 
     // Parse .sdkmanrc
     val properties = Properties().apply {
-      load(file.reader())
+      val vfText = readAction {
+        findVirtualFile()?.let { FileDocumentManager.getInstance().getDocument(it)?.text }
+      }
+      load(vfText?.byteInputStream() ?: file.inputStream())
     }
 
     val java = properties.getProperty("java") ?: return null
     val target = SdkmanCandidate.parse(java) ?: return null
+    LOG.info(".sdkmanrc found: $target")
 
     val testedPaths = mutableListOf<String>()
 
@@ -162,6 +168,8 @@ class SdkmanrcWatcherService(private val project: Project, private val scope: Co
 
     return null
   }
+
+  private fun findVirtualFile() = VirtualFileManager.getInstance().findFileByNioPath(file.toPath().toAbsolutePath())
 
   @RequiresEdt
   private suspend fun configure(path: String, target: SdkmanCandidate) {

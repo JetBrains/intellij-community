@@ -40,7 +40,7 @@ class SdkmanrcWatcherHeavyTests : HeavyPlatformTestCase() {
         assert(suggestion2 is SdkmanrcWatcherService.SdkSuggestion.Jdk)
         assert((suggestion2 as SdkmanrcWatcherService.SdkSuggestion.Jdk).jdk.versionString == "JetBrains Runtime version 17.0.7")
       }
-      catch (e: Exception) {}
+      catch (_: Exception) {}
       finally {
         scope.cancel()
       }
