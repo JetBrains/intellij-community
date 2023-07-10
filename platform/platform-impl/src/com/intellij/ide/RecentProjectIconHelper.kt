@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.ui.*
 import org.imgscalr.Scalr
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.Color
 import java.awt.Component
@@ -96,7 +97,7 @@ internal class RecentProjectIconHelper {
 
       var generatedProjectIcon: Icon = AvatarIcon(targetSize = size,
                                                   arcRatio = 0.3,
-                                                  gradientSeed = name,
+                                                  gradientSeed = path,
                                                   avatarName = name,
                                                   palette = palette).withIconPreScaled(false)
 
@@ -253,7 +254,9 @@ private class EmptyIconData(iconSize: Int = unscaledProjectIconSize()) : IconDat
   }
 }
 
-private object ProjectIconPalette : ColorPalette {
+@Internal
+object ProjectIconPalette : ColorPalette {
+  @Suppress("UnregisteredNamedColor")
   override val gradients: Array<Pair<Color, Color>>
     get() {
       return arrayOf(
@@ -280,15 +283,7 @@ private object ProjectIconPalette : ColorPalette {
 
   override fun gradient(seed: String?): Pair<Color, Color> {
     seed ?: return gradients[0]
-
-    val customizer = ProjectWindowCustomizerService.getInstance()
-
-    customizer.getProjectCustomColor(seed)?.let {
-      return Pair(it, it)
-    }
-
-    val index = customizer.getOrGenerateAssociatedColorIndex(seed)
-    return gradients[index]
+    return ProjectWindowCustomizerService.getInstance().getProjectIconColor(seed)
   }
 }
 
