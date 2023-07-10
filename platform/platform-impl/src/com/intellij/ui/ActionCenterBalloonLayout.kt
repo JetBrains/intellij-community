@@ -190,9 +190,24 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
   }
 
   override fun setBounds(balloons: List<Balloon>, startX: Int, startY: Int) {
-    val shadowVerticalOffset = if (ShadowJava2DPainter.enabled()) 0 else JBUI.scale(8)
-    var verticalOffset = if (ShadowJava2DPainter.enabled()) 0 else JBUI.scale(2)
+    val javaShadow = ShadowJava2DPainter.enabled()
+    val shadowVerticalOffset = if (javaShadow) 0 else JBUI.scale(8)
+    var verticalOffset = if (javaShadow) 0 else JBUI.scale(2)
+    var startX = startX
     var y = startY
+
+    if (javaShadow) {
+      val startOffset = JBUI.scale(10)
+      val insets = ShadowJava2DPainter.getInsets("Notification")
+      val rightOffset = startOffset - insets.right
+      val bottomOffset = startOffset - insets.bottom
+      if (bottomOffset > 0) {
+        y -= bottomOffset
+      }
+      if (rightOffset > 0) {
+        startX -= rightOffset
+      }
+    }
 
     for (balloon in balloons) {
       val bounds = Rectangle(super.getSize(balloon))
@@ -263,8 +278,10 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
         balloon.setAnimationEnabled(false)
         balloon.setZeroPositionInLayer(false)
 
-        balloon.setShadowBorderProvider(
-          NotificationBalloonRoundShadowBorderProvider(NotificationsUtil.getMoreButtonBackground(), NotificationsManagerImpl.BORDER_COLOR))
+        val provider = NotificationBalloonRoundShadowBorderProvider(NotificationsUtil.getMoreButtonBackground(),
+                                                                    NotificationsManagerImpl.BORDER_COLOR)
+        balloon.setShadowBorderProvider(provider)
+        provider.hideSide(true, false)
 
         balloon.setActionProvider(object : BalloonImpl.ActionProvider {
           override fun createActions(): List<BalloonImpl.ActionButton> {
@@ -281,7 +298,7 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
       if (hostBalloon is BalloonImpl) {
         val provider = hostBalloon.shadowBorderProvider
         if (provider is NotificationBalloonRoundShadowBorderProvider) {
-          provider.hideBottomSide()
+          provider.hideSide(false, true)
         }
       }
       return this

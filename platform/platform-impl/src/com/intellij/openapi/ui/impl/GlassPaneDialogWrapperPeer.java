@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.ShadowJava2DPainter;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.jcef.HwFacadeJPanel;
 import com.intellij.util.MathUtil;
@@ -348,8 +349,15 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     private MyDialog(IdeGlassPaneEx pane, DialogWrapper wrapper) {
       setLayout(new BorderLayout());
       setOpaque(false);
-      setBorder(BorderFactory.createEmptyBorder(AllIcons.Ide.Shadow.Top.getIconHeight(), AllIcons.Ide.Shadow.Left.getIconWidth(),
-                                                AllIcons.Ide.Shadow.Bottom.getIconHeight(), AllIcons.Ide.Shadow.Right.getIconWidth()));
+
+      if (ShadowJava2DPainter.Companion.enabled()) {
+        Insets insets = ShadowJava2DPainter.Companion.getInsets("Ide");
+        setBorder(BorderFactory.createEmptyBorder(insets.top, insets.left, insets.bottom, insets.right));
+      }
+      else {
+        setBorder(BorderFactory.createEmptyBorder(AllIcons.Ide.Shadow.Top.getIconHeight(), AllIcons.Ide.Shadow.Left.getIconWidth(),
+                                                  AllIcons.Ide.Shadow.Bottom.getIconHeight(), AllIcons.Ide.Shadow.Right.getIconWidth()));
+      }
 
       myPane = pane;
       myDialogWrapper = new WeakReference<>(wrapper);

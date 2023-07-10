@@ -2,153 +2,108 @@
 package com.intellij.ui
 
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import java.awt.*
+import java.awt.Color
+import java.awt.GradientPaint
+import java.awt.Graphics2D
+import java.awt.Insets
+
 
 private val DEF_INSETS = JBInsets(5)
-private val DEF_SIZE = JBDimension(5, 5)
 private val DEF_COLOR = Gray._200.withAlpha(50)
 
 /**
  * @author Alexander Lobas
  */
 class ShadowJava2DPainter(private val uiKeyGroup: String, private val roundedCorners: Boolean, private val borderColor: Color? = null) {
+  private var hideTopCorners = false
   private var hideBottomSide = false
 
   companion object {
-    fun enabled(): Boolean = Registry.`is`("ide.java2d.shadowEnabled", false)
+    fun enabled(): Boolean = Registry.`is`("ide.java2d.shadowEnabled", true)
+
+    fun getInsets(uiKeyGroup: String): Insets = JBUI.insets("${uiKeyGroup}.Shadow.borderInsets", DEF_INSETS)
   }
 
-  fun hideBottomSide() {
-    hideBottomSide = true
+  fun hideSide(topCorners: Boolean, bottom: Boolean) {
+    hideTopCorners = topCorners
+    hideBottomSide = bottom
   }
 
-  fun getInsets(): Insets = JBUI.insets("${uiKeyGroup}.Shadow.borderInsets", DEF_INSETS)
+  fun getInsets() = Companion.getInsets(uiKeyGroup)
 
   fun paintShadow(g: Graphics2D, x: Int, y: Int, width: Int, height: Int) {
     val insets = getInsets()
-    val topLeftSize = JBUI.size("${uiKeyGroup}.Shadow.topLeftSize", DEF_SIZE)
-    val topRightSize = JBUI.size("${uiKeyGroup}.Shadow.topRightSize", DEF_SIZE)
-    val bottomLeftSize = JBUI.size("${uiKeyGroup}.Shadow.bottomLeftSize", DEF_SIZE)
-    val bottomRightSize = JBUI.size("${uiKeyGroup}.Shadow.bottomRightSize", DEF_SIZE)
-
-    setGradient(g, "top", 0, insets.top)
-    g.fillRect(x + topLeftSize.width, y, width - topLeftSize.width - topRightSize.width, insets.top)
-
-    if (!hideBottomSide) {
-      setGradient(g, "bottom", 0, insets.bottom)
-      g.fillRect(x + bottomLeftSize.width, y + height - insets.bottom, width - bottomLeftSize.width - bottomRightSize.width, insets.bottom)
-    }
-
-    setGradient(g, "left", insets.left, 0)
-    g.fillRect(x, y + topLeftSize.height, insets.left, height - topLeftSize.height - bottomLeftSize.height)
-
-    setGradient(g, "right", insets.right, 0)
-    g.fillRect(x + width - insets.right, y + topRightSize.height, insets.right, height - topRightSize.height - bottomRightSize.height)
+    val xxLeft = x + insets.left
+    val yyTop = y + insets.top
+    val xxRight = x + width - insets.right
+    val yyBottom = y + height - insets.bottom
+    val widthLR = width - insets.left - insets.right
+    val heightTB = height - insets.top - insets.bottom
 
     if (roundedCorners) {
-      paintArcCorner(g, x, y, topLeftSize, true, true, "topLeft")
-      paintArcCorner(g, x + width - topRightSize.width, y, topRightSize, true, false, "topRight")
+      val size = JBUI.scale(6)
+
+      g.color = getColor("topLeft", "1")
+      g.fillRect(x + insets.left, y + insets.top, size, size)
+
+      g.color = getColor("topRight", "1")
+      g.fillRect(xxRight - size, y + insets.top, size, size)
+
       if (!hideBottomSide) {
-        paintArcCorner(g, x + width - bottomRightSize.width, y + height - bottomRightSize.height, bottomRightSize, false, false,
-                       "bottomRight")
-        paintArcCorner(g, x, y + height - bottomLeftSize.height, bottomLeftSize, false, true, "bottomLeft")
+        g.color = getColor("bottomRight", "1")
+        g.fillRect(xxRight - size, yyBottom - size, size, size)
+
+        g.color = getColor("bottomLeft", "1")
+        g.fillRect(x + insets.left, yyBottom - size, size, size)
       }
     }
-    else {
-      paintPolygonCorner(g, x, y, width, height, insets, topLeftSize, true, true, "topLeft")
-      paintPolygonCorner(g, x, y, width, height, insets, topRightSize, true, false, "topRight")
-      if (!hideBottomSide) {
-        paintPolygonCorner(g, x, y, width, height, insets, bottomRightSize, false, false, "bottomRight")
-        paintPolygonCorner(g, x, y, width, height, insets, bottomLeftSize, false, true, "bottomLeft")
-      }
+
+    setGradient(g, "top", "0", "1", xxLeft, y, xxLeft, yyTop)
+    g.fillRect(xxLeft, y, widthLR, insets.top)
+
+    if (!hideBottomSide) {
+      setGradient(g, "bottom", "1", "0", xxLeft, yyBottom, xxLeft, y + height)
+      g.fillRect(xxLeft, yyBottom, widthLR, insets.bottom)
+    }
+
+    val offset = if (hideTopCorners) JBUI.scale(7) else 0
+    setGradient(g, "left", "0", "1", x, yyTop + offset, xxLeft, yyTop + offset)
+    g.fillRect(x, yyTop + offset, insets.left, heightTB - offset)
+
+    setGradient(g, "right", "1", "0", xxRight, yyTop + offset, x + width, yyTop + offset)
+    g.fillRect(xxRight, yyTop + offset, insets.right, heightTB - offset)
+
+    if (!hideTopCorners) {
+      drawCorner(g, "topLeft", x, y, insets.left, insets.top)
+      drawCorner(g, "topRight", xxRight, y, insets.right, insets.top)
+    }
+
+    if (!hideBottomSide) {
+      drawCorner(g, "bottomRight", xxRight, yyBottom, insets.right, insets.bottom)
+      drawCorner(g, "bottomLeft", x, yyBottom, insets.left, insets.bottom)
     }
 
     if (borderColor != null) {
+      val one = JBUI.scale(1)
       g.color = borderColor
-      g.drawRect(x + insets.left - 1, y + insets.top - 1, x + width - insets.left - insets.right + 1,
-                 y + height - insets.top - insets.bottom + 1)
+      g.drawRect(xxLeft - one, yyTop - one, widthLR + one, heightTB + one)
     }
   }
 
-  private fun paintArcCorner(g: Graphics2D, x: Int, y: Int, size: Dimension, top: Boolean, left: Boolean, side: String) {
-    val w2 = size.width * 2
-    val h2 = size.height * 2
-
-    setGradient(g, side, size.width, size.height)
-
-    if (top && left) {
-      g.fillArc(x, y, w2, h2, 90, 90)
+  private fun drawCorner(g: Graphics2D, side: String, x: Int, y: Int, width: Int, height: Int) {
+    when (side) {
+      "topLeft" -> setGradient(g, side, "0", "1", x + width / 2, y + height / 2, x + width, y + height)
+      "topRight" -> setGradient(g, side, "0", "1", x + width / 2, y + height / 2, x, y + height)
+      "bottomRight" -> setGradient(g, side, "0", "1", x + width / 2, y + height / 2, x, y)
+      "bottomLeft" -> setGradient(g, side, "0", "1", x + width / 2, y + height / 2, x + width, y)
     }
-    else if (top/* && !left*/) {
-      g.fillArc(x - size.width, y, w2, h2, 0, 90)
-    }
-    else if (/*!top && */!left) {
-      g.fillArc(x - size.width, y - size.height, w2, h2, 0, -90)
-    }
-    else /*if (!top && left)*/ {
-      g.fillArc(x, y - size.height, w2, h2, -90, -90)
-    }
+    g.fillRect(x, y, width, height)
   }
 
-  private fun paintPolygonCorner(g: Graphics2D,
-                                 x: Int,
-                                 y: Int,
-                                 width: Int,
-                                 height: Int,
-                                 insets: Insets,
-                                 sideSize: Dimension,
-                                 top: Boolean,
-                                 left: Boolean,
-                                 side: String) {
-    setGradient(g, side, sideSize.width, sideSize.height)
-
-    val polygon = Polygon()
-
-    if (top && left) {
-      polygon.addPoint(x, y + sideSize.height)
-      polygon.addPoint(x, y)
-      polygon.addPoint(x + sideSize.width, y)
-      polygon.addPoint(x + sideSize.width, y + insets.top)
-      polygon.addPoint(x + insets.left, y + insets.top)
-      polygon.addPoint(x + insets.left, y + sideSize.height)
-      polygon.addPoint(x, y + sideSize.height)
-    }
-    else if (top/* && !left*/) {
-      polygon.addPoint(x + width - sideSize.width, y)
-      polygon.addPoint(x + width, y)
-      polygon.addPoint(x + width, y + sideSize.height)
-      polygon.addPoint(x + width - insets.right, y + sideSize.height)
-      polygon.addPoint(x + width - insets.right, y + insets.top)
-      polygon.addPoint(x + width - sideSize.width, y + insets.top)
-      polygon.addPoint(x + width - sideSize.width, y)
-    }
-    else if (/*!top && */!left) {
-      polygon.addPoint(x + width - sideSize.width, y + height - insets.bottom)
-      polygon.addPoint(x + width - insets.right, y + height - insets.bottom)
-      polygon.addPoint(x + width - insets.right, y + height - sideSize.height)
-      polygon.addPoint(x + width, y + height - sideSize.height)
-      polygon.addPoint(x + width, y + height)
-      polygon.addPoint(x + width - sideSize.width, y + height)
-      polygon.addPoint(x + width - sideSize.width, y + height - insets.bottom)
-    }
-    else /*if (!top && left)*/ {
-      polygon.addPoint(x, y + height)
-      polygon.addPoint(x, y + height - sideSize.height)
-      polygon.addPoint(x + insets.left, y + height - sideSize.height)
-      polygon.addPoint(x + insets.left, y + height - insets.bottom)
-      polygon.addPoint(x + sideSize.width, y + height - insets.bottom)
-      polygon.addPoint(x + sideSize.width, y + height)
-      polygon.addPoint(x, y + height)
-    }
-
-    g.fillPolygon(polygon)
-  }
-
-  private fun setGradient(g: Graphics2D, sideKey: String, lengthX: Int, lengthY: Int) {
-    g.paint = GradientPaint(0f, 0f, getColor(sideKey, "0"), lengthX.toFloat(), lengthY.toFloat(), getColor(sideKey, "1"))
+  private fun setGradient(g: Graphics2D, sideKey: String, gKey0: String, gKey1: String, x0: Int, y0: Int, x1: Int, y1: Int) {
+    g.paint = GradientPaint(x0.toFloat(), y0.toFloat(), getColor(sideKey, gKey0), x1.toFloat(), y1.toFloat(), getColor(sideKey, gKey1))
   }
 
   private fun getColor(sideKey: String, gradientKey: String): Color {
