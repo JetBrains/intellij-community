@@ -78,6 +78,11 @@ interface OperationLogStorage {
    */
   fun end(): Iterator
 
+  /**
+   * An [Iterator] that is initially positioned at the specified location. [position] must point to an operation start.
+   */
+  fun iterator(position: Long): Iterator
+
   fun flush()
   fun dispose()
 

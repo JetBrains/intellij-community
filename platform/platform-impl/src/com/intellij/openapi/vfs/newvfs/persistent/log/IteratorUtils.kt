@@ -218,4 +218,22 @@ object IteratorUtils {
       TraverseDirection.REWIND -> hasPrevious()
       TraverseDirection.PLAY -> hasNext()
     }
+
+  /**
+   * After invocation, the iterator will be positioned at the [position].
+   * If it is impossible to reach [position] via log traversal, [IllegalStateException] will be thrown.
+   * @return the original iterator instance with adjusted [position]
+   */
+  fun OperationLogStorage.Iterator.navigateTo(position: Long) = this.also {
+    val initialPosition = getPosition()
+    while (getPosition() < position && hasNext()) {
+      skipNext()
+    }
+    while (getPosition() > position && hasPrevious()) {
+      skipPrevious()
+    }
+    if (getPosition() != position) {
+      throw IllegalStateException("impossible to reach position $position from $initialPosition, current position is $position")
+    }
+  }
 }

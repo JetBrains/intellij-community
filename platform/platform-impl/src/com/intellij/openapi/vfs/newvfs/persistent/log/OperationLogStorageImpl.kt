@@ -2,17 +2,19 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.AppendContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.Companion.Mode
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.DataEnumerator
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Path
 
@@ -41,8 +43,10 @@ class OperationLogStorageImpl(
   private fun sizeOfValueInDescriptor(size: Int) = size - VfsOperationTag.SIZE_BYTES * 2
 
   private suspend fun writeWorker() {
-    for (job in writeQueue) {
-      performWriteJob(job)
+    withContext(NonCancellable) {
+      for (job in writeQueue) {
+        performWriteJob(job)
+      }
     }
   }
 
@@ -73,7 +77,7 @@ class OperationLogStorageImpl(
     entryWriter.use {
       compute.use { _ ->
         try {
-          if (isClosed) throw CancellationException("OperationLogStorage is disposed")
+          if (isClosed) throw ProcessCanceledException(RuntimeException("OperationLogStorage is closed ($tag at ${entryWriter.position})"))
           val operation = compute()
           if (tag != operation.tag) {
             throw IllegalStateException("expected $tag, got ${operation.tag}")
@@ -97,6 +101,8 @@ class OperationLogStorageImpl(
       }
     }
   }
+
+  fun dropOperationsUpTo(position: Long): Unit = appendLogStorage.clearUpTo(position)
 
   override fun readAt(position: Long): OperationReadResult = try {
     readFirstTag(position, ::readWholeDescriptor)
@@ -217,6 +223,10 @@ class OperationLogStorageImpl(
 
   override fun begin(): OperationLogStorage.Iterator = UnconstrainedIterator(startOffset())
   override fun end(): OperationLogStorage.Iterator = UnconstrainedIterator(size())
+  override fun iterator(position: Long): OperationLogStorage.Iterator = UnconstrainedIterator(position)
+
+  fun constrainedIterator(position: Long, allowedRangeBegin: Long, allowedRangeEnd: Long): OperationLogStorage.Iterator =
+    ConstrainedIterator(position, allowedRangeBegin, allowedRangeEnd)
 
   /**
    * @return begin and end iterators that are constrained to currently available range, i.e. copies of these
@@ -233,9 +243,12 @@ class OperationLogStorageImpl(
     appendLogStorage.flush()
   }
 
-  override fun dispose() {
+  fun closeWriteQueue() {
     isClosed = true
     writeQueue.close()
+  }
+
+  override fun dispose() {
     flush()
     appendLogStorage.close()
   }

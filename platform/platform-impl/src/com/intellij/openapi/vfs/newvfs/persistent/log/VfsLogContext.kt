@@ -2,7 +2,10 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.vfs.newvfs.FileAttribute
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.ExtendedVfsSnapshot
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
 import com.intellij.util.io.DataEnumerator
+import com.intellij.util.io.SimpleStringPersistentEnumerator
 import org.jetbrains.annotations.ApiStatus
 import java.io.OutputStream
 
@@ -45,7 +48,15 @@ interface VfsLogOperationWriteContext : VfsLogBaseContext {
  */
 interface VfsLogQueryContext : VfsLogBaseContext, AutoCloseable {
   val payloadReader: PayloadReader
-  // TODO access to compacted vfs instance
+
+  /**
+   * TODO
+   * this is [com.intellij.openapi.vfs.newvfs.persistent.log.compaction.CompactedVfsSnapshot] that is positioned at [begin]
+   */
+  fun getBaseSnapshot(
+    getNameByNameId: (Int) -> State.DefinedState<String>,
+    getAttributeEnumerator: () -> SimpleStringPersistentEnumerator
+  ): ExtendedVfsSnapshot?
 
   /**
    * @return an Iterator pointing to the start of the available range of operations in [OperationLogStorage],
@@ -62,9 +73,36 @@ interface VfsLogQueryContext : VfsLogBaseContext, AutoCloseable {
    *  [begin] or [end].
    */
   fun end(): OperationLogStorage.Iterator
+
+  /**
+   * TODO returns a copy of the context that will inherit current lock, current context will be considered closed after invocation,
+   *      but won't release the lock
+   */
+  fun transferLock(): VfsLogQueryContext
 }
 
 @ApiStatus.Internal
-interface VfsLogCompactionContext : VfsLogBaseContext, AutoCloseable {
-  // TODO
+interface VfsLogCompactionContext : VfsLogQueryContext, AutoCloseable {
+  fun constrainedIterator(position: Long, allowedRangeBegin: Long, allowedRangeEnd: Long): OperationLogStorage.Iterator
+
+  /** produced iterator is unconstrained */
+  override fun begin(): OperationLogStorage.Iterator
+
+  /** produced iterator is unconstrained */
+  override fun end(): OperationLogStorage.Iterator
+
+  fun cancellationWasRequested(): Boolean
+
+  fun clearOperationLogStorageUpTo(position: Long)
+  fun clearPayloadStorageUpTo(position: Long)
+
+  val targetOperationLogSize: Long
+
+  override fun getBaseSnapshot(
+    getNameByNameId: (Int) -> State.DefinedState<String>,
+    getAttributeEnumerator: () -> SimpleStringPersistentEnumerator
+  ): Nothing = throw UnsupportedOperationException("we are the very Compaction itself")
+
+  override fun transferLock(): Nothing =
+    throw UnsupportedOperationException("compaction context transfer is not permitted")
 }

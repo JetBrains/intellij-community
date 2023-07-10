@@ -26,6 +26,8 @@ sealed interface State {
   companion object {
     fun notEnoughInformation(message: String, cause: Throwable? = null): NotAvailable = NotAvailable(NotEnoughInformationCause(message, cause))
     fun <T> DefinedState<T>.get(): T = mapCases({ throw AssertionError("value expected to be available", it) }) { it }
+    fun <T> DefinedState<T>.getOrNull(): T? = mapCases({ null }) { it }
+    fun <T> DefinedState<T>.getOrDefault(default: () -> T): T = mapCases({ default() }) { it }
 
     inline fun <T, R> DefinedState<T>.mapCases(onNotAvailable: (cause: NotAvailableException) -> R,
                                                onReady: (value: T) -> R): R = when (this) {

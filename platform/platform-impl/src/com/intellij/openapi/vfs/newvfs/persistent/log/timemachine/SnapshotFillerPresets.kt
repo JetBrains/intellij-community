@@ -8,8 +8,10 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperat
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTagsMask
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTagsMask.Companion.union
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.ExtendedVfsSnapshot.AttributeDataMap
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.FillInVfsSnapshot.FillInVirtualFileSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.FillInVfsSnapshot.FillInVirtualFileSnapshot.FillInProperty
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsChronicle.ContentRestorationSequence.Companion.isFormed
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.PropertyOverwriteRule
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.isRelevantAndModifies
 import kotlinx.collections.immutable.toImmutableMap
@@ -81,14 +83,13 @@ object SnapshotFillerPresets {
 
   val attributesFiller = Filler(VfsModificationContract.attributeData.relevantOperations) { snapshot ->
     VfsModificationContract.attributeData.isRelevantAndModifies(this) { overwriteData ->
-      this as VfsOperation.AttributesOperation
+      val fileId = (this as? VfsOperation.AttributesOperation)?.fileId ?: (this as? VfsOperation.RecordsOperation)?.fileId
       val file = snapshot.getFileById(fileId ?: return@isRelevantAndModifies)
       if (overwriteData.enumeratedAttributeFilter == null) {
         assert(overwriteData.data == null) // deletion
         if (!file.attributesFinished) {
-          file.attributeDataMap.fillIn(file.formingAttributesDataMap.toImmutableMap().let(State::Ready))
+          file.attributeDataMap.fillIn(AttributeDataMap.of(file.formingAttributesDataMap.toImmutableMap(), true).let(State::Ready))
           file.formingAttributesDataMap.clear()
-          file.attributesFinished = true
         }
       }
       else if (!file.attributesFinished) {

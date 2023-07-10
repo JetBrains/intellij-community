@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificatio
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.ContentModificationRule.Companion.forContentRecordId
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.ContentOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.PropertyOverwriteRule.Companion.forFileId
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.RecoveredChildrenIds
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.RecoveredChildrenIds
 
 object VfsChronicle {
   /*
@@ -74,43 +74,52 @@ object VfsChronicle {
     )
 
   interface ContentRestorationSequence {
-    val initial: ContentOperation.Set
+    val initial: ContentOperation.Set?
 
     /** in chronological order */
     val modifications: List<ContentOperation.Modify>
 
     companion object {
-      fun ContentRestorationSequence.restoreContent(payloadReader: PayloadReader): State.DefinedState<ByteArray> =
-        modifications.fold(initial.readContent(payloadReader)) { data, modOp ->
+      val ContentRestorationSequence.isFormed: Boolean get() = initial != null
+      fun ContentRestorationSequence.restoreContent(payloadReader: PayloadReader): State.DefinedState<ByteArray> {
+        return modifications.fold(
+          initial?.readContent(payloadReader) ?: return State.NotAvailable("initial content was not found")
+        ) { data, modOp ->
           data.bind { modOp.modifyContent(it, payloadReader) }
         }
+      }
     }
   }
 
-  class ContentRestorationSequenceBuilder {
-    private val reversedModifications = mutableListOf<ContentOperation.Modify>()
-    private var initial: ContentOperation.Set? = null
+  operator fun ContentRestorationSequence.plus(rhs: ContentRestorationSequence): ContentRestorationSequence {
+    val lhs = this@plus
+    return object : ContentRestorationSequence {
+      override val initial: ContentOperation.Set?
+      override val modifications: List<ContentOperation.Modify>
+      init {
+        if (rhs.initial != null) {
+          initial = rhs.initial
+          modifications = rhs.modifications
+        } else {
+          initial = lhs.initial
+          modifications = lhs.modifications + rhs.modifications
+        }
+      }
+    }
+  }
 
-    val isFormed: Boolean get() = initial != null
+  class ContentRestorationSequenceBuilder : ContentRestorationSequence {
+    private val modificationsDeque = ArrayDeque<ContentOperation.Modify>()
+    override val modifications: List<ContentOperation.Modify> get() = modificationsDeque.toList()
+    override var initial: ContentOperation.Set? = null
+      private set
 
-    fun prependModification(mod: ContentOperation.Modify) = reversedModifications.add(mod)
+    fun prependModification(mod: ContentOperation.Modify) = modificationsDeque.addFirst(mod)
+    fun appendModification(mod: ContentOperation.Modify) = modificationsDeque.addLast(mod)
 
     fun setInitial(set: ContentOperation.Set) {
       assert(initial == null)
       initial = set
-    }
-
-    fun buildWithInitial(set: ContentOperation.Set): ContentRestorationSequence =
-      ContentRestorationSequenceImpl(set, reversedModifications.reversed())
-        .also { assert(initial == null) }
-
-    fun buildIfInitialIsPresent(): ContentRestorationSequence? = initial?.let {
-      ContentRestorationSequenceImpl(it, reversedModifications.reversed())
-    }
-
-    companion object {
-      private class ContentRestorationSequenceImpl(override val initial: ContentOperation.Set,
-                                                   override val modifications: List<ContentOperation.Modify>) : ContentRestorationSequence
     }
   }
 
@@ -126,12 +135,11 @@ object VfsChronicle {
       when (val op = lookup.value) {
         is ContentOperation.Modify -> seqBuilder.prependModification(op)
         is ContentOperation.Set -> {
-          return seqBuilder.buildWithInitial(op).let(State::Ready)
+          return seqBuilder.let(State::Ready)
         }
       }
     }
-    // no ContentOp.SetValue was found
-    return State.NotAvailable()
+    return seqBuilder.let(State::Ready)
   }
 
   /**
@@ -187,11 +195,6 @@ object VfsChronicle {
     }
     return RecoveredChildrenIds.of(childrenIds.toList(), false)
   }
-
-  /**
-   * @see [restoreChildrenIds]
-   */
-  fun restoreRootIds(iterator: OperationLogStorage.Iterator): RecoveredChildrenIds = restoreChildrenIds(iterator, 1) // ROOT_FILE_ID
 
   // traversing utilities
 

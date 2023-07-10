@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
-import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.Source
-import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.Source.Companion.isInline
+import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.PayloadSource
+import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.PayloadSource.Companion.isInline
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadStorageIO.PayloadAppendContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.ULongPacker
@@ -12,7 +12,7 @@ import kotlinx.collections.immutable.toPersistentSet
 import java.io.OutputStream
 
 object InlinedPayloadStorage : PayloadStorageIO {
-  override val sourcesDeclaration: PersistentSet<Source> = Source.values().filter { it.isInline }.toPersistentSet()
+  override val sourcesDeclaration: PersistentSet<PayloadSource> = PayloadSource.values().filter { it.isInline }.toPersistentSet()
 
   fun isSuitableForInlining(sizeBytes: Long) = sizeBytes <= 7
 
@@ -47,7 +47,7 @@ object InlinedPayloadStorage : PayloadStorageIO {
         packedOffset = packedOffset.setInt(byte.toUByte().toInt(), index * Byte.SIZE_BITS, Byte.SIZE_BITS)
       }
     }
-    return PayloadRef(packedOffset.toLong(), Source.VALUES[data.size])
+    return PayloadRef(packedOffset.toLong(), PayloadSource.VALUES[data.size])
   }
 
   private fun PayloadRef.unInlineData(): ByteArray {

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
-import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.Source
+import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.PayloadSource
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.Companion.Mode
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
@@ -15,7 +15,7 @@ import java.nio.file.Path
 class PayloadStorageImpl(
   storagePath: Path,
 ) : PayloadStorage {
-  override val sourcesDeclaration: PersistentSet<Source> = persistentSetOf(Source.PayloadStorage)
+  override val sourcesDeclaration: PersistentSet<PayloadSource> = persistentSetOf(PayloadSource.PayloadStorage)
   private val appendLogStorage: AppendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, CHUNK_SIZE)
 
   override fun appendPayload(sizeBytes: Long): PayloadStorageIO.PayloadAppendContext {
@@ -33,7 +33,7 @@ class PayloadStorageImpl(
           write(serializedSize)
           write(data, offset, length)
         }
-        return PayloadRef(appendContext.position, Source.PayloadStorage)
+        return PayloadRef(appendContext.position, PayloadSource.PayloadStorage)
       }
 
       override fun fillData(body: OutputStream.() -> Unit): PayloadRef {
@@ -41,7 +41,7 @@ class PayloadStorageImpl(
           write(serializedSize)
           body()
         }
-        return PayloadRef(appendContext.position, Source.PayloadStorage)
+        return PayloadRef(appendContext.position, PayloadSource.PayloadStorage)
       }
 
       override fun close() {
@@ -51,7 +51,7 @@ class PayloadStorageImpl(
   }
 
   override fun readPayload(payloadRef: PayloadRef): State.DefinedState<ByteArray> {
-    if (payloadRef.source != Source.PayloadStorage) throw IllegalArgumentException("PayloadStorageImpl cannot read $payloadRef")
+    if (payloadRef.source != PayloadSource.PayloadStorage) throw IllegalArgumentException("PayloadStorageImpl cannot read $payloadRef")
     if (payloadRef.offset >= appendLogStorage.size()) {
       return State.NotAvailable("failed to read $payloadRef: data was not written yet")
     }
@@ -73,6 +73,8 @@ class PayloadStorageImpl(
     appendLogStorage.read(payloadRef.offset + dataOffset, data)
     return data.let(State::Ready)
   }
+
+  fun dropPayloadsUpTo(position: Long): Unit = appendLogStorage.clearUpTo(position)
 
   override fun size(): Long = appendLogStorage.size()
 

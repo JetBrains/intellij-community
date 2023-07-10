@@ -14,7 +14,7 @@ interface PayloadStorage: PayloadStorageIO {
 }
 
 interface PayloadStorageIO {
-  val sourcesDeclaration: PersistentSet<PayloadRef.Source>
+  val sourcesDeclaration: PersistentSet<PayloadRef.PayloadSource>
   fun appendPayload(sizeBytes: Long): PayloadAppendContext
   fun readPayload(payloadRef: PayloadRef): State.DefinedState<ByteArray>
 

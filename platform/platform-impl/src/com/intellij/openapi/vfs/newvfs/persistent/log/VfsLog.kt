@@ -13,7 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 interface VfsLog {
   /**
    * Guarantees that there is no concurrent compaction running until [VfsLogQueryContext] is closed.
-   * This method blocks until the concurrent compaction finishes (if there is one).
+   * In case there is a concurrent compaction running, it will be automatically requested to cancel, and this method will block until
+   * compaction is finished.
    * @see [tryQuery]
    * @see [VfsLogQueryContext]
    */

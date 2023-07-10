@@ -7,9 +7,12 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.VFileEventBasedIterator.ReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.forEachContainedOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.*
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SinglePassVfsTimeMachine
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.fmap
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.getOrNull
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.mapCases
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.SimpleStringPersistentEnumerator
@@ -172,25 +175,16 @@ private fun vfsRecoveryDraft(queryContext: VfsLogQueryContext,
   var vfileEvents = 0
   var vfileEventContentOps = 0
 
-  val payloadReader = queryContext.payloadReader
-  val perPropVTM = PerPropertyCachingVfsTimeMachine(
-    queryContext,
-    id2filename = fsRecordsOracle::getNameByNameId,
-    payloadReader = payloadReader,
-    attributeEnumerator = attributeEnumerator
-  )
   val singlePassVTM = SinglePassVfsTimeMachine(
     queryContext,
-    id2filename = fsRecordsOracle::getNameByNameId,
-    payloadReader = payloadReader,
-    attributeEnumerator = attributeEnumerator
+    nameByNameId = fsRecordsOracle::getNameByNameId,
+    getAttributeEnumerator = { attributeEnumerator }
   )
   val vfsTimeMachine = singlePassVTM
-    //.withOracle(fsRecordsOracle)
-    .withContradictionCheck(perPropVTM)
+  //.withOracle(fsRecordsOracle)
 
   fun VfsSnapshot.VirtualFileSnapshot.represent(): String =
-    "file: name=$name parent=$parentId id=$fileId ts=$timestamp len=$length flags=$flags contentId=$contentRecordId attrId=$attributesRecordId"
+    "file: name=${getName()} parent=$parentId id=$fileId ts=$timestamp len=$length flags=$flags contentId=$contentRecordId attrId=$attributesRecordId"
 
   fun buildDiff(textBefore: String, textAfter: String): Diff {
     val linesBefore = textBefore.strip().split("\n").toMutableList()
@@ -287,17 +281,21 @@ private fun vfsRecoveryDraft(queryContext: VfsLogQueryContext,
                 val oldParent = snapshotBefore.getFileById(startOp.oldParentId)
                 val oldParentAfter = snapshotAfter.getFileById(startOp.oldParentId)
                 val newParent = snapshotBefore.getFileById(startOp.newParentId)
-                println("MOVE FROM PARENT ${oldParent.name} to ${newParent.name}")
+                println("MOVE FROM PARENT ${oldParent.getName()} to ${newParent.getName()}")
                 //println("old parent's children ids before: ${oldParent.readChildAttr()}")
                 //println("old parent's children ids after: ${oldParentAfter.readChildAttr()}")
-                println("old parent's children ids before: ${oldParent.getChildrenIds().fmap { it.map { snapshotBefore.getFileById(it).name } }}")
-                println("old parent's children ids after: ${oldParentAfter.getChildrenIds().fmap { it.map { snapshotAfter.getFileById(it).name } }}")
+                println("old parent's children ids before: ${
+                  snapshotBefore.getChildrenIdsOf(oldParent.fileId).fmap { it.map { snapshotBefore.getFileById(it).getName() } }
+                }")
+                println("old parent's children ids after: ${
+                  snapshotAfter.getChildrenIdsOf(oldParentAfter.fileId).fmap { it.map { snapshotAfter.getFileById(it).getName() } }
+                }")
               }
               VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE -> {
                 val startOp =
                   (rec.begin().next() as OperationReadResult.Complete).operation as VfsOperation.VFileEventOperation.EventStart.ContentChange
                 val fileBefore = snapshotBefore.getFileById(startOp.fileId)
-                if (fileBefore.name.getOrNull()?.endsWith(".kt") != true) continue
+                if (fileBefore.getName().getOrNull()?.endsWith(".kt") != true) continue
                 val fileAfter = snapshotAfter.getFileById(startOp.fileId)
                 println(fileBefore.represent())
                 //println("stub index stamp data: ${fileBefore.readStubIndexStampAttr()}")
@@ -345,9 +343,12 @@ fun main(args: Array<String>) {
   val logPath = Path.of(args[0])
   val log = VfsLogImpl(logPath, true)
 
-  single(log)
+  //val names = PersistentStringEnumerator(logPath.parent / "names.dat", true)::valueOf
+  val attributeEnumerator = SimpleStringPersistentEnumerator(logPath.parent / "attributes_enums.dat")
+
+  //single(log)
   //benchmark(log, 30)
-  return
+  //return
 
   val queryContext = log.query()
   queryContext.use {
@@ -356,8 +357,6 @@ fun main(args: Array<String>) {
                                             ExceptionUtil.rethrow(error)
                                           },
                                           queryContext)
-    //val names = PersistentStringEnumerator(logPath.parent / "names.dat", true)::valueOf
-    val attributeEnumerator = SimpleStringPersistentEnumerator(logPath.parent / "attributes_enums.dat")
 
     Closeable {
       fsRecordsOracle.disposeConnection()
