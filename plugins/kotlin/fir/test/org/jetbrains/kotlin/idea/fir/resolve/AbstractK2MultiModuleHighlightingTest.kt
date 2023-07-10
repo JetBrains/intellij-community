@@ -5,9 +5,11 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore.loadText
-import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNamedElement
 import com.intellij.testFramework.PsiTestUtil
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
@@ -18,7 +20,7 @@ import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 
-open class AbstractK2MultiModuleHighlightingTest : AbstractMultiModuleTest() {
+abstract class AbstractK2MultiModuleHighlightingTest : AbstractMultiModuleTest() {
     override fun isFirPlugin(): Boolean {
         return true
     }
@@ -54,26 +56,27 @@ open class AbstractK2MultiModuleHighlightingTest : AbstractMultiModuleTest() {
     }
 
     protected fun doTest(filePath: String) {
-        val testFile = LocalFileSystem.getInstance().refreshAndFindFileByPath("$filePath/sourceModule/test.txt")!!
-        val text = loadText(testFile)
-        val moduleName = findStringWithPrefixes(text, "// module:")!!
-        val relativePath = findStringWithPrefixes(text, "// file:")!!
-        val target = doResolveInLibrary()
+        val libraryFile = LocalFileSystem.getInstance().refreshAndFindFileByPath("$testDataPath/_library/lib/Elem.kt")!!
+        configureByExistingFile(libraryFile)
+        val offset = editor.caretModel.offset
+        val psiReference = file.findReferenceAt(offset)!!
+        val target = psiReference.resolve()
         assertNotNull(target)
         target as PsiNamedElement
+
+        val testFile = LocalFileSystem.getInstance().refreshAndFindFileByPath("$filePath/sourceModule/test.txt")!!
+        val text = loadText(testFile)
+
         assertEquals(findStringWithPrefixes(text, "// expected class:"), target.name)
+
+        val moduleName = findStringWithPrefixes(text, "// module:")!!
+        val relativePath = findStringWithPrefixes(text, "// file:")!!
         val dep = ModuleManager.getInstance(project).findModuleByName(moduleName)!!
         val targetFileInTemp = dep.sourceRoots[0].findFileByRelativePath(relativePath)!!
         WriteCommandAction.writeCommandAction(project).run<RuntimeException> {
-            targetFileInTemp.delete(null)
+            //this should trigger cache invalidation
+            (PsiManager.getInstance(project).findFile(targetFileInTemp) as PsiClassOwner).classes[0].unwrapped!!.delete()
         }
-
-        assertNull(doResolveInLibrary())
-    }
-
-    private fun doResolveInLibrary(): PsiElement? {
-        val libraryFile = LocalFileSystem.getInstance().refreshAndFindFileByPath("$testDataPath/_library/lib/Elem.kt")!!
-        configureByExistingFile(libraryFile)
-        return file.findReferenceAt(editor.caretModel.offset)?.resolve()
+        assertNull(psiReference.resolve())
     }
 }
