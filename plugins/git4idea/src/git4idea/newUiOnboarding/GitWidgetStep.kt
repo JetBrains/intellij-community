@@ -2,16 +2,16 @@
 package git4idea.newUiOnboarding
 
 import com.intellij.ide.DataManager
-import com.intellij.ide.newUiOnboarding.NewUiOnboardingBundle
-import com.intellij.ide.newUiOnboarding.NewUiOnboardingStep
-import com.intellij.ide.newUiOnboarding.NewUiOnboardingStepData
-import com.intellij.ide.newUiOnboarding.NewUiOnboardingUtil
 import com.intellij.openapi.actionSystem.AnActionHolder
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepData
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingUtil
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.components.JBList
