@@ -115,7 +115,7 @@ internal object MermaidSpacingBuilder {
       .after(MermaidTokens.RIGHT_OF).spaces(1)
       .after(MermaidTokens.Sequence.OVER).spaces(1)
       .around(MermaidTokens.ALIAS).spaces(1)
-      .around(MermaidElements.NODE_TEXT).spaceIf(false)
+      .between(MermaidElements.NODE_TEXT, MermaidElements.NODE_TEXT).spaceIf(false)
       .after(CLICK_KEYWORDS_SPACE_AFTER).spaces(1)
       .before(MermaidTokens.LINK_TARGET).spaces(1)
       .between(MermaidElements.STRING, MermaidElements.STRING).spaces(1)

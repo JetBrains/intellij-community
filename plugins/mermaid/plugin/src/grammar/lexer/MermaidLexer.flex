@@ -270,9 +270,12 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\"] { yybegin(node_quoted_text); return DOUBLE_QUOTE; }
   [\"]/` { yypushstate(md_string); return DOUBLE_QUOTE; }
 
-  [!#$%&'*+,-\.`?:=<>\w\^]+ | [\\/] { return ALIAS; }
+  [!#$%&'*+,-\.`?:=<>\w\^]+/[\\/][\]] { return ALIAS; }
+  [!#$%&'*+,-\.`?:=<>\w\^]+/[\\/] {  }
+  [!#$%&'*+,-\.`?:=<>\w\^]+ { return ALIAS; }
 
   [^\S\n\r]+ { return WHITE_SPACE; }
+
   "]" { yybegin(flowchart_body); return CLOSE_SQUARE; }
   ")" { yybegin(flowchart_body); return CLOSE_ROUND; }
   "])" { yybegin(flowchart_body); return Flowchart.STADIUM_END; }
@@ -284,6 +287,11 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "\\]" { yybegin(flowchart_body); return Flowchart.TRAP_END; }
   "/]" { yybegin(flowchart_body); return Flowchart.INV_TRAP_END; }
   ")))" { yybegin(flowchart_body); return Flowchart.DOUBLE_CIRCLE_END; }
+
+  [\\/]/[^\S\n\r] { return ALIAS; }
+  [\\/]/[)}] { return ALIAS; }
+  [\\/]/[\\/][\]] { return ALIAS; }
+  [\\/] {  }
 }
 <node_quoted_text> {
   [\"] { yybegin(node_text); return DOUBLE_QUOTE; }
