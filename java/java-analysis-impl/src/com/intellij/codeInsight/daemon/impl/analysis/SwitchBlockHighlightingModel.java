@@ -161,7 +161,7 @@ public class SwitchBlockHighlightingModel {
 
     if (kind == null || requiredLevel != null && !myLevel.isAtLeast(requiredLevel)) {
       boolean is7 = myLevel.isAtLeast(LanguageLevel.JDK_1_7);
-      String expected = JavaErrorBundle.message(is7 ? "valid.switch.17.selector.types" : "valid.switch.selector.types");
+      String expected = JavaErrorBundle.message(is7 ? "valid.switch.1_7.selector.types" : "valid.switch.selector.types");
       HighlightInfo.Builder info =
         createError(mySelector, JavaErrorBundle.message("incompatible.types", expected, JavaHighlightUtil.formatType(mySelectorType)));
       registerFixesOnInvalidSelector(info);
@@ -706,9 +706,9 @@ public class SwitchBlockHighlightingModel {
         if (kind == SelectorKind.INT || kind == SelectorKind.STRING) {
           return;
         }
-        String expected = JavaErrorBundle.message("valid.switch.21.constant.types");
         HighlightInfo.Builder infoIncompatibleTypes =
-          createError(expr, JavaErrorBundle.message("unexpected.type", expected, JavaHighlightUtil.formatType(expr.getType())));
+          createError(expr, JavaErrorBundle.message("incompatible.label.types", JavaHighlightUtil.formatType(expr.getType()),
+                                                    JavaHighlightUtil.formatType(mySelectorType)));
         holder.add(infoIncompatibleTypes.create());
         return;
       }
