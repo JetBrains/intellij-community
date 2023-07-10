@@ -8,10 +8,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.*
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.testFramework.replaceService
 import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
 import java.io.File
 
@@ -53,7 +51,11 @@ class StructureImportingFsRefreshTest : MavenMultiVersionImportingTestCase() {
 
     override fun getFileSystem(protocol: String?) = delegate.getFileSystem(protocol)
 
-    override fun syncRefresh() = delegate.syncRefresh()
+    override fun syncRefresh(): Long {
+      val result = delegate.syncRefresh()
+      vfsRefreshPromise.setResult(null)
+      return result
+    }
 
     override fun asyncRefresh(postAction: Runnable?): Long {
       return delegate.asyncRefresh {
