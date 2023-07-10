@@ -1,5 +1,6 @@
 package com.jetbrains.performancePlugin.remotedriver.fixtures
 
+import com.intellij.driver.model.StringTable
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
 import com.intellij.util.ui.tree.TreeUtil
@@ -9,6 +10,7 @@ import com.jetbrains.performancePlugin.remotedriver.dataextractor.JListTextCellR
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.JTableTextCellReader
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.JTreeTextCellReader
 import org.assertj.swing.core.Robot
+import org.assertj.swing.data.TableCell.*
 import org.assertj.swing.fixture.JComboBoxFixture
 import org.assertj.swing.fixture.JListFixture
 import org.assertj.swing.fixture.JTableFixture
@@ -50,16 +52,29 @@ class JTableTextFixture(robot: Robot, component: JTable) : JTableFixture(robot, 
   init {
     replaceCellReader(JTableTextCellReader())
   }
-}
 
-class JListTextFixture(robot: Robot, component: JList<*>) : JListFixture(robot, component) {
-  init {
-    replaceCellReader(JListTextCellReader())
+  fun collectItems(): StringTable {
+    return StringTable().also { table ->
+      contents().forEachIndexed { rowNumber, rows ->
+        table[rowNumber] = HashMap<Int, String>().apply {
+          rows.forEachIndexed { columnNumber, value -> put(columnNumber, value) }
+        }
+      }
+    }
   }
-}
 
-class JComboBoxTextFixture(robot: Robot, component: JComboBox<*>) : JComboBoxFixture(robot, component) {
-  init {
-    replaceCellReader(JComboBoxTextCellReader())
-  }
+  fun clickCell(row: Int, column: Int) = cell(row(row).column(column)).click()
+  fun rightClickCell(row: Int, column: Int) = cell(row(row).column(column)).rightClick()
+  fun doubleClickCell(row: Int, column: Int) = cell(row(row).column(column)).doubleClick()
 }
+  class JListTextFixture(robot: Robot, component: JList<*>) : JListFixture(robot, component) {
+    init {
+      replaceCellReader(JListTextCellReader())
+    }
+  }
+
+  class JComboBoxTextFixture(robot: Robot, component: JComboBox<*>) : JComboBoxFixture(robot, component) {
+    init {
+      replaceCellReader(JComboBoxTextCellReader())
+    }
+  }
