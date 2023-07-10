@@ -522,11 +522,24 @@ public final class EditorTestUtil {
   }
 
   /**
-   * Runs syntax highlighter for the {@code testFile}, serializes highlighting results and comparing them with file from {@code answerFilePath}
+   * Runs syntax highlighter for the {@code testFile}, serializes highlighting results and compares them with {@code expected}
+   *
+   * @param allowUnhandledTokens allows to have tokens without highlighting
+   */
+  public static void testFileSyntaxHighlighting(@NotNull PsiFile testFile, boolean allowUnhandledTokens, @NotNull String expected) {
+    UsefulTestCase.assertTextEquals(expected, serializeHighlightingResults(testFile, allowUnhandledTokens));
+  }
+
+  /**
+   * Runs syntax highlighter for the {@code testFile}, serializes highlighting results and compares them with file from {@code answerFilePath}
    *
    * @param allowUnhandledTokens allows to have tokens without highlighting
    */
   public static void testFileSyntaxHighlighting(@NotNull PsiFile testFile, @NotNull String answerFilePath, boolean allowUnhandledTokens) {
+    UsefulTestCase.assertSameLinesWithFile(answerFilePath, serializeHighlightingResults(testFile, allowUnhandledTokens));
+  }
+
+  private static String serializeHighlightingResults(@NotNull PsiFile testFile, boolean allowUnhandledTokens) {
     TestCase.assertNotNull("Fixture has no file", testFile);
     final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(testFile.getFileType(),
                                                                                               testFile.getProject(),
@@ -566,7 +579,7 @@ public final class EditorTestUtil {
     if (!allowUnhandledTokens && !notHighlightedTokens.isEmpty()) {
       TestCase.fail("Some tokens have no highlighting: " + notHighlightedTokens);
     }
-    UsefulTestCase.assertSameLinesWithFile(answerFilePath, sb.toString());
+    return sb.toString();
   }
 
   private static String serializeTextAttributeKey(@Nullable TextAttributesKey key) {
