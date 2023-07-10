@@ -6,8 +6,6 @@ import com.intellij.diagnostic.EventWatcher;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -29,8 +27,7 @@ final class FlushQueue {
   private final BulkArrayQueue<RunnableInfo> myQueue = new BulkArrayQueue<>();  //guarded by getQueueLock()
 
   private void flushNow() {
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    app.assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     synchronized (getQueueLock()) {
       FLUSHER_SCHEDULED = false;
     }
@@ -41,7 +38,7 @@ final class FlushQueue {
       if (info == null) {
         break;
       }
-      runNextEvent(info, app);
+      runNextEvent(info);
       if (InvocationUtil.priorityEventPending() || System.currentTimeMillis() - startTime > 5) {
         synchronized (getQueueLock()) {
           requestFlush();
@@ -77,9 +74,9 @@ final class FlushQueue {
   }
 
   // Extracted to have a capture point
-  private static void doRun(@Async.Execute @NotNull RunnableInfo info, @NotNull ApplicationEx app) {
+  private static void doRun(@Async.Execute @NotNull RunnableInfo info) {
     try (AccessToken ignored = ClientId.withClientId(info.clientId)) {
-      app.runWithImplicitRead(info.runnable);
+      info.runnable.run();
     }
   }
 
@@ -117,11 +114,11 @@ final class FlushQueue {
     }
   }
 
-  private static void runNextEvent(@NotNull RunnableInfo info, @NotNull ApplicationEx app) {
+  private static void runNextEvent(@NotNull RunnableInfo info) {
     final EventWatcher watcher = EventWatcher.getInstanceOrNull();
     final long waitingFinishedNs = System.nanoTime();
     try {
-      doRun(info, app);
+      doRun(info);
     }
     catch (ProcessCanceledException ignored) {
 

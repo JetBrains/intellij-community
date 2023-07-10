@@ -584,9 +584,9 @@ class IdeEventQueue private constructor() : EventQueue() {
       (application.serviceIfCreated<WindowManager>() as WindowManagerEx?)?.dispatchComponentEvent(e)
     }
     when (e) {
-      is KeyEvent -> application.runWithImplicitRead { dispatchKeyEvent(e) }
-      is MouseEvent -> application.runWithImplicitRead { dispatchMouseEvent(e) }
-      else -> defaultDispatchEvent(e)
+      is KeyEvent -> dispatchKeyEvent(e)
+      is MouseEvent -> dispatchMouseEvent(e)
+      else -> application.runWithoutImplicitRead { defaultDispatchEvent(e) }
     }
   }
 

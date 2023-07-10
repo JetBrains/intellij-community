@@ -334,8 +334,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean isWriteIntentLockAcquired() {
-    // Write lock is good too
-    return myLock.isWriteThread() && (myLock.isWriteIntentLocked() || myLock.isWriteAcquired());
+    return myLock.isWriteThread() && myLock.isWriteIntentLocked();
   }
 
   @Deprecated
@@ -464,7 +463,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     if (isDispatchThread()) {
-      runIntendedWriteActionOnCurrentThread(runnable);
+      runnable.run();
       return;
     }
     if (EDT.isCurrentThreadEdt()) {
@@ -1185,6 +1184,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private void startWrite(@NotNull Class<?> clazz) {
+    assertWriteIntentLockAcquired();
     assertNotInsideListener();
     myWriteActionPending = true;
     try {
@@ -1492,23 +1492,13 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void runWithoutImplicitRead(@NotNull Runnable runnable) {
-    if (StartupUtil.isImplicitReadOnEDTDisabled()) {
+    if (!StartupUtil.isImplicitReadOnEDTDisabled()) {
       runnable.run();
       return;
     }
     runWithDisabledImplicitRead(runnable);
   }
 
-  @Override
-  public void runWithImplicitRead(@NotNull Runnable runnable) {
-    if (!StartupUtil.isImplicitReadOnEDTDisabled()) {
-      runnable.run();
-      return;
-    }
-    runWithEnabledImplicitRead(runnable);
-  }
-
-  @Deprecated
   private void runWithDisabledImplicitRead(@NotNull Runnable runnable) {
     // This method is used to allow easily find stack traces which violate disabled ImplicitRead
     boolean oldVal = myLock.isImplicitReadAllowed();
@@ -1520,19 +1510,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       myLock.setAllowImplicitRead(oldVal);
     }
   }
-
-  private void runWithEnabledImplicitRead(@NotNull Runnable runnable) {
-    // This method is used to allow easily find stack traces which violate disabled ImplicitRead
-    boolean oldVal = myLock.isImplicitReadAllowed();
-    try {
-      myLock.setAllowImplicitRead(true);
-      runnable.run();
-    }
-    finally {
-      myLock.setAllowImplicitRead(oldVal);
-    }
-  }
-
 
   /** Count read & write actions executed, and report to OpenTelemetry Metrics */
   private static class OTelReadWriteActionsMonitor implements AutoCloseable{

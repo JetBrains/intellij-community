@@ -9,7 +9,10 @@ import com.intellij.idea.IdeaLogger;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -217,15 +220,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
     initApplication();
 
-    if (runInDispatchThread()) {
-      WriteIntentReadAction.run((ThrowableRunnable<Exception>)this::lateSetUp);
-    }
-    else {
-      lateSetUp();
-    }
-  }
-
-  private void lateSetUp() throws Exception {
     projectTracker = ((TestProjectManager)ProjectManager.getInstance()).startTracking();
 
     if (myOldSdks == null) { // some bastard's overridden initApplication completely
@@ -634,16 +628,14 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     boolean runInCommand = annotatedWith(WrapInCommand.class);
     if (runInCommand) {
       Ref<Throwable> e = new Ref<>();
-      WriteIntentReadAction.run((Runnable)() -> {
-        CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-          try {
-            super.runTestRunnable(testRunnable);
-          }
-          catch (Throwable throwable) {
-            e.set(throwable);
-          }
-        }, null, null);
-      });
+      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+        try {
+          super.runTestRunnable(testRunnable);
+        }
+        catch (Throwable throwable) {
+          e.set(throwable);
+        }
+      }, null, null);
       if (!e.isNull()) {
         throw e.get();
       }

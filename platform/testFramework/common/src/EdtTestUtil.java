@@ -28,11 +28,8 @@ public final class EdtTestUtil {
   @TestOnly
   public static <T extends Throwable> void runInEdtAndWait(@NotNull ThrowableRunnable<T> runnable) throws T {
     Application app = ApplicationManager.getApplication();
-    if (app != null && app.isDispatchThread()) {
-      app.runWriteIntentReadAction(() -> { runnable.run(); return null; });
-      return;
-    }
-    else if (EDT.isCurrentThreadEdt()) {
+    if (app == null ? EDT.isCurrentThreadEdt() : app.isDispatchThread()) {
+      // reduce stack trace
       runnable.run();
       return;
     }

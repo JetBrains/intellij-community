@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -383,14 +382,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       () -> {
         if (project != null) {
           // needed for myVirtualFilePointerTracker check below
-          WriteIntentReadAction.run((Runnable)() -> {
-            ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
-          });
+          ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
         }
       },
       () -> checkEditorsReleased(),
       () -> super.tearDown(),
-      () -> WriteIntentReadAction.run((Runnable)() -> Disposer.dispose(mySdkParentDisposable)),
+      () -> Disposer.dispose(mySdkParentDisposable),
       () -> myOldSdks.checkForJdkTableLeaks(),
       () -> {
         if (myThreadTracker != null) {
@@ -414,9 +411,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       },
       () -> {
         if (ApplicationManager.getApplication() instanceof ApplicationEx) {
-          WriteIntentReadAction.run((Runnable)() -> {
-            HeavyPlatformTestCase.cleanupApplicationCaches(getProject());
-          });
+          HeavyPlatformTestCase.cleanupApplicationCaches(getProject());
         }
       },
       () -> {

@@ -18,7 +18,6 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.UndoManagerImpl
@@ -105,14 +104,12 @@ class TestApplicationManager private constructor() {
         },
         {
           if (isLightProject) {
-            WriteIntentReadAction.run { LightPlatformTestCase.tearDownSourceRoot(project) }
+            LightPlatformTestCase.tearDownSourceRoot(project)
           }
         },
         {
-          WriteIntentReadAction.run {
-            WriteCommandAction.runWriteCommandAction(project) {
-              app.serviceIfCreated<FileDocumentManager, FileDocumentManagerImpl>()?.dropAllUnsavedDocuments()
-            }
+          WriteCommandAction.runWriteCommandAction(project) {
+            app.serviceIfCreated<FileDocumentManager, FileDocumentManagerImpl>()?.dropAllUnsavedDocuments()
           }
         },
         { project.serviceIfCreated<EditorHistoryManager>()?.removeAllFiles() },
@@ -123,17 +120,17 @@ class TestApplicationManager private constructor() {
         },
         { LightPlatformTestCase.checkAssertions() },
         { LightPlatformTestCase.clearUncommittedDocuments(project) },
-        { WriteIntentReadAction.run { (UndoManager.getInstance(project) as UndoManagerImpl).dropHistoryInTests() } },
+        { (UndoManager.getInstance(project) as UndoManagerImpl).dropHistoryInTests() },
         { project.serviceIfCreated<TemplateDataLanguageMappings>()?.cleanupForNextTest() },
         { (project.serviceIfCreated<PsiManager>() as PsiManagerImpl?)?.cleanupForNextTest() },
         { (project.serviceIfCreated<StructureViewFactory>() as StructureViewFactoryImpl?)?.cleanupForNextTest() },
         { waitForProjectLeakingThreads(project) },
-        { WriteIntentReadAction.run { dropModuleRootCaches(project) } },
+        { dropModuleRootCaches(project) },
         {
           // reset data provider before disposing the project to ensure that the disposed project is not accessed
           getInstanceIfCreated()?.setDataProvider(null)
         },
-        { WriteIntentReadAction.run { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } },
+        { ProjectManagerEx.getInstanceEx().forceCloseProject(project) },
         {
           if (testCounter++ % 100 == 0) {
             // Some tests are written in Groovy, and running all of them may result in some 40M of memory wasted on bean data,

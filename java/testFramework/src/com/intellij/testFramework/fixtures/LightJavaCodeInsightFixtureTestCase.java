@@ -2,7 +2,6 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -19,7 +18,6 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.io.File;
 
 /**
@@ -112,13 +110,7 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
 
-    if (runInDispatchThread() && SwingUtilities.isEventDispatchThread()) {
-      WriteIntentReadAction.run(
-        (Runnable)() -> LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6));
-    }
-    else {
-      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
-    }
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
   }
 
   @NotNull
