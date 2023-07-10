@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Ref
@@ -55,7 +56,9 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     createModulePom("../anotherProject/m2", "<groupId>test</groupId>" +
                                             "<artifactId>m2</artifactId>" +
                                             "<version>2</version>")
-    MavenOpenProjectProvider().linkToExistingProject(p2Root, myProject)
+    runBlockingMaybeCancellable {
+      MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, myProject)
+    }
     waitForLinkingCompleted()
     assertModules("project1", "m1", "project2", "m2")
     val allConnectors = MavenServerManager.getInstance().allConnectors
@@ -100,7 +103,9 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                                             "<version>2</version>")
 
     createProjectSubFile("../anotherProject/.mvn/jvm.config", "-Dsomething=blablabla")
-    MavenOpenProjectProvider().linkToExistingProject(p2Root, myProject)
+    runBlockingMaybeCancellable {
+      MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, myProject)
+    }
     waitForLinkingCompleted()
     assertModules("project1", "m1", "project2", "m2")
 
@@ -143,7 +148,9 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     val value = Registry.`is`("maven.server.per.idea.project")
     try {
       Registry.get("maven.server.per.idea.project").setValue(true)
-      MavenOpenProjectProvider().linkToExistingProject(p2Root, myProject)
+      runBlockingMaybeCancellable {
+        MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, myProject)
+      }
       waitForLinkingCompleted()
       assertModules("project1", "m1", "project2", "m2")
 
