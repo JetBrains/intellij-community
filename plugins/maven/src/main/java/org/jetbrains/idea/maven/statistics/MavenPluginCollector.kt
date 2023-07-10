@@ -13,21 +13,23 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class MavenPluginCollector : ProjectUsagesCollector() {
 
-  private val groupAndArtifactId = EventFields.StringValidatedByCustomRule<MavenIdValidationRule>("groupAndArtifactId")
+  private val groupId = EventFields.StringValidatedByCustomRule<MavenIdValidationRule>("group_id")
+  private val artifactId = EventFields.StringValidatedByCustomRule<MavenIdValidationRule>("artifact_id")
   private val version = EventFields.StringValidatedByCustomRule<MavenIdValidationRule>("version")
   private val isExtension = EventFields.Boolean("extension")
 
-  private val mavenPluginId = group.registerVarargEvent("mavenPluginId",
-                                                        groupAndArtifactId, version)
+  private val mavenPluginId = group.registerVarargEvent("MAVEN_PLUGIN_ID",
+                                                        groupId, artifactId, version, isExtension)
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val manager = MavenProjectsManager.getInstance(project)
     if (!manager.isMavenizedProject) return emptySet()
-    return manager.projects
+    return manager.projects.asSequence()
       .flatMap { it.declaredPlugins }
       .map {
         mavenPluginId.metric(
-          groupAndArtifactId with "${it.groupId}:${it.artifactId}",
+          groupId with it.groupId,
+          artifactId with it.artifactId,
           version with it.version,
           isExtension with it.isExtensions
         )
@@ -40,13 +42,13 @@ class MavenPluginCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("maven.plugins", 1)
+    private val GROUP = EventLogGroup("maven.plugins", 2)
   }
 }
 
 internal class MavenIdValidationRule : CustomValidationRule() {
   override fun getRuleId(): String {
-    return "maven-plugin_coordinates"
+    return "maven_plugin_coordinates_validation_rule_allow_all"
   }
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
