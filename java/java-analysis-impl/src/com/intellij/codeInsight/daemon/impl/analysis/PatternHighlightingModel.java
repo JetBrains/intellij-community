@@ -30,6 +30,7 @@ import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.findMissedClassesForSealed;
+import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.oneOfUnconditional;
 
 final class PatternHighlightingModel {
   private static final Logger LOG = Logger.getInstance(PatternHighlightingModel.class);
@@ -333,18 +334,7 @@ final class PatternHighlightingModel {
    *     }
    * }</pre>
    * because there are no components with equal types.
-   * Also, now javac converts only from left to right and this code produces error (idea NOT)
-   * <pre>{@code
-   *     switch (pairI) {
-   *       case Pair(D fst, C snd) -> {
-   *       }
-   *       case Pair(C fst, C snd) -> {
-   *       }
-   *       case Pair(C fst, I snd) -> {
-   *       }
-   *       case Pair(D fst, D snd) -> {
-   *       }
-   *     }
+   * Also, see <a href="https://bugs.openjdk.org/browse/JDK-8311815">bug in OpenJDK</a>
    * }</pre>
    */
   @NotNull
@@ -461,7 +451,7 @@ final class PatternHighlightingModel {
         for (int i = 0; i < recordComponentTypes.size(); i++) {
           PsiType recordComponentType = recordComponentTypes.get(i);
           PsiType descriptionComponentType = descriptionTypes.get(i);
-          if (!oneOfUnconditional(recordComponentType, descriptionComponentType)) {
+          if (!oneOfUnconditional(descriptionComponentType, recordComponentType)) {
             allCovered = false;
             break;
           }
@@ -513,7 +503,7 @@ final class PatternHighlightingModel {
   /**
    * Try to reduce sealed classes to their supertypes or if selectorType is covered any of types,then return selectorType.
    * Previous sealed classes are not excluded because they can be used in another combination.
-   * This method uses {@link SwitchBlockHighlightingModel#findMissedClassesForSealed(PsiType, List, List, PsiElement, Set) findMissedClassesForSealed}
+   * This method uses {@link SwitchBlockHighlightingModel#findMissedClassesForSealed(PsiType, List, List, PsiElement) findMissedClassesForSealed}
    * To prevent recursive calls, only TypeTest descriptions are passed to this method.
    */
   @NotNull
@@ -541,34 +531,31 @@ final class PatternHighlightingModel {
     Set<PatternTypeTestDescription> typeTestDescriptions =
       StreamEx.of(patterns).select(PatternTypeTestDescription.class).collect(Collectors.toSet());
     Set<PatternTypeTestDescription> toAdd = new HashSet<>();
-    List<PsiType> extendedSelectorTypes = getAllTypes(selectorType);
     Set<PsiType> existedTypes = typeTestDescriptions.stream().map(t -> t.type()).collect(Collectors.toSet());
-    for (PsiType extendedSelectorType : extendedSelectorTypes) {
-      boolean unconditionalCovers = false;
-      for (PatternTypeTestDescription description : typeTestDescriptions) {
-        if (JavaPsiPatternUtil.dominates(description.type(), extendedSelectorType)) {
-          toAdd.add(new PatternTypeTestDescription(extendedSelectorType));
-          changed = true;
-          unconditionalCovers = true;
-          break;
-        }
+    boolean unconditionalCovers = false;
+    for (PatternTypeTestDescription description : typeTestDescriptions) {
+      if (oneOfUnconditional(description.type(), selectorType)) {
+        toAdd.add(new PatternTypeTestDescription(selectorType));
+        changed = true;
+        unconditionalCovers = true;
+        break;
       }
-      if (unconditionalCovers) {
-        continue;
-      }
-      HashSet<PsiClass> visitedPossibleNotCovered = new HashSet<>();
-      Set<PsiClass> missed =
-        findMissedClassesForSealed(extendedSelectorType, new ArrayList<>(typeTestDescriptions), new ArrayList<>(), context,
-                                   visitedPossibleNotCovered);
-      visitedPossibleNotCovered.removeAll(missed);
-      for (PsiClass covered : visitedPossibleNotCovered) {
+    }
+    if (!unconditionalCovers) {
+      Set<PsiClass> visitedCovered = findMissedClassesForSealed(selectorType, new ArrayList<>(typeTestDescriptions), new ArrayList<>(), context).coveredClasses();
+      for (PsiClass covered : visitedCovered) {
         PsiClassType classType = TypeUtils.getType(covered);
-        if (!existedTypes.contains(classType) && oneOfUnconditional(classType, extendedSelectorType)) {
-          if (extendedSelectorType.equals(classType) && !missed.isEmpty()) {
-            continue;
+        if (!existedTypes.contains(classType)) {
+          if (oneOfUnconditional(selectorType, classType)) {
+            toAdd.add(new PatternTypeTestDescription(classType));
+            changed = true;
           }
-          toAdd.add(new PatternTypeTestDescription(classType));
-          changed = true;
+          //find something upper. let's change to selectorType
+          if (oneOfUnconditional(classType, selectorType)) {
+            toAdd.add(new PatternTypeTestDescription(selectorType));
+            changed = true;
+            break;
+          }
         }
       }
     }
@@ -582,30 +569,17 @@ final class PatternHighlightingModel {
     return new ReduceResult(newPatterns, true);
   }
 
-  private static boolean oneOfUnconditional(@NotNull PsiType overWhom, @NotNull PsiType whoType) {
-    List<PsiType> whoTypes = getAllTypes(whoType);
-    for (PsiType currentWhoType : whoTypes) {
-      if (JavaPsiPatternUtil.dominates(currentWhoType, overWhom)) {
+  private static boolean coverSelectorType(@NotNull Set<? extends PatternDescription> patterns,
+                                           @NotNull PsiType selectorType) {
+    for (PatternDescription pattern : patterns) {
+      if (pattern instanceof PatternTypeTestDescription && oneOfUnconditional(pattern.type(), selectorType)) {
         return true;
       }
     }
     return false;
   }
 
-  private static boolean coverSelectorType(@NotNull Set<? extends PatternDescription> patterns,
-                                           @NotNull PsiType selectorType) {
-    List<PsiType> types = getAllTypes(selectorType);
-    for (PsiType currentType : types) {
-      for (PatternDescription pattern : patterns) {
-        if (pattern instanceof PatternTypeTestDescription && JavaPsiPatternUtil.dominates(pattern.type(), currentType)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  public static List<PsiType> getAllTypes(@NotNull PsiType selectorType) {
+  static List<PsiType> getAllTypes(@NotNull PsiType selectorType) {
     List<PsiType> selectorTypes = new ArrayList<>();
     PsiClass resolvedClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
     //T is an intersection type T1& ... &Tn and P covers Ti, for one of the types Ti (1≤i≤n)
