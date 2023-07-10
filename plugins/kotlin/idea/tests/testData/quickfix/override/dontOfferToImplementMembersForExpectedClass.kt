@@ -6,5 +6,5 @@ interface I {
     fun foo()
 }
 
-@Suppress("UNSUPPORTED_FEATURE")
+@Suppress("NOT_A_MULTIPLATFORM_COMPILATION")
 expect <caret>class A : I
