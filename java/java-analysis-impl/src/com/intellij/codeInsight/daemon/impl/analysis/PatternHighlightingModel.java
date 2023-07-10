@@ -303,7 +303,7 @@ final class PatternHighlightingModel {
     result = reduceDeconstructionRecordToTypePattern(currentPatterns, context);
     changed |= result.changed();
     currentPatterns = result.patterns();
-    result = reduceSealed(currentPatterns, selectorType, context);
+    result = reduceClasses(currentPatterns, selectorType, context);
     changed |= result.changed();
     currentPatterns = result.patterns();
     ReduceResult reduceResult = new ReduceResult(currentPatterns, changed);
@@ -511,15 +511,15 @@ final class PatternHighlightingModel {
   }
 
   /**
-   * Try to reduce sealed classes to their supertypes.
+   * Try to reduce sealed classes to their supertypes or if selectorType is covered any of types,then return selectorType.
    * Previous sealed classes are not excluded because they can be used in another combination.
    * This method uses {@link SwitchBlockHighlightingModel#findMissedClassesForSealed(PsiType, List, List, PsiElement, Set) findMissedClassesForSealed}
    * To prevent recursive calls, only TypeTest descriptions are passed to this method.
    */
   @NotNull
-  private static ReduceResult reduceSealed(@NotNull Set<? extends PatternDescription> patterns,
-                                           @NotNull PsiType selectorType,
-                                           @NotNull PsiElement context) {
+  private static ReduceResult reduceClasses(@NotNull Set<? extends PatternDescription> patterns,
+                                            @NotNull PsiType selectorType,
+                                            @NotNull PsiElement context) {
     Set<PatternTypeTestDescription> consideredDescription =
       StreamEx.of(patterns).select(PatternTypeTestDescription.class).collect(Collectors.toSet());
     if (consideredDescription.isEmpty()) {
@@ -527,16 +527,16 @@ final class PatternHighlightingModel {
     }
     return CachedValuesManager.getCachedValue(context, () -> {
       Map<ReduceResultCacheContext, ReduceResult> result = ConcurrentFactoryMap.createMap(reduceContext -> {
-        return reduceSealedInner(reduceContext.currentPatterns, reduceContext.selectorType, context);
+        return reduceClassesInner(reduceContext.currentPatterns, reduceContext.selectorType, context);
       });
       return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     }).get(new ReduceResultCacheContext(selectorType, patterns));
   }
 
   @NotNull
-  private static ReduceResult reduceSealedInner(@NotNull Set<? extends PatternDescription> patterns,
-                                                @NotNull PsiType selectorType,
-                                                @NotNull PsiElement context) {
+  private static ReduceResult reduceClassesInner(@NotNull Set<? extends PatternDescription> patterns,
+                                                 @NotNull PsiType selectorType,
+                                                 @NotNull PsiElement context) {
     boolean changed = false;
     Set<PatternTypeTestDescription> typeTestDescriptions =
       StreamEx.of(patterns).select(PatternTypeTestDescription.class).collect(Collectors.toSet());
@@ -544,6 +544,18 @@ final class PatternHighlightingModel {
     List<PsiType> extendedSelectorTypes = getAllTypes(selectorType);
     Set<PsiType> existedTypes = typeTestDescriptions.stream().map(t -> t.type()).collect(Collectors.toSet());
     for (PsiType extendedSelectorType : extendedSelectorTypes) {
+      boolean unconditionalCovers = false;
+      for (PatternTypeTestDescription description : typeTestDescriptions) {
+        if (JavaPsiPatternUtil.dominates(description.type(), extendedSelectorType)) {
+          toAdd.add(new PatternTypeTestDescription(extendedSelectorType));
+          changed = true;
+          unconditionalCovers = true;
+          break;
+        }
+      }
+      if (unconditionalCovers) {
+        continue;
+      }
       HashSet<PsiClass> visitedPossibleNotCovered = new HashSet<>();
       Set<PsiClass> missed =
         findMissedClassesForSealed(extendedSelectorType, new ArrayList<>(typeTestDescriptions), new ArrayList<>(), context,

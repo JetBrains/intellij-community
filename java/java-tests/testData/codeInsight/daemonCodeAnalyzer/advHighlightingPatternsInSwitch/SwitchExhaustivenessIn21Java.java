@@ -417,4 +417,17 @@ class Basic {
       case PairT( T2 t2, T t1) -> System.out.println(1);
     }
   }
+
+
+
+  sealed interface TInt {}
+  final class TI1 implements TInt {}
+  final class TI2 implements TInt {}
+  record RR(String s, TInt i) {}
+  void test(RR r) {
+    switch (r) {
+      case RR(CharSequence c1, TI1 c2) -> System.out.println("1");
+      case RR(Object c1, TI2 c2) -> System.out.println("2");
+    }
+  }
 }
