@@ -4,6 +4,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -24,15 +25,19 @@ import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.io.*
 import org.jdom.Element
 import java.io.InputStream
+import java.lang.RuntimeException
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.time.Instant
+import java.util.*
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Predicate
+import kotlin.collections.ArrayList
+import kotlin.collections.LinkedHashSet
 import kotlin.concurrent.withLock
 import kotlin.io.path.exists
 import kotlin.io.path.name
@@ -105,12 +110,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   private fun notifyRestartNeeded() {
     if (restartRequiredReasons.isEmpty())
       return
-    val message = restartRequiredReasons.values.joinToString()
-    val notification = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
-      .createNotification(SettingsSyncBundle.message("sync.restart.notification.title"),
-                          SettingsSyncBundle.message("sync.restart.notification.message",
-                                                     restartRequiredReasons.size, message),
-                          NotificationType.INFORMATION)
+    val notification = buildRestartNeededNotification()
     notification.addAction(NotificationAction.create(
       SettingsSyncBundle.message("sync.restart.notification.action", ApplicationNamesInfo.getInstance().fullProductName),
       com.intellij.util.Consumer {
@@ -118,6 +118,45 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
         app.restart(true)
       }))
     notification.notify(null)
+  }
+
+  private fun buildRestartNeededNotification(): Notification {
+    fun String.capitalize() : String {
+      return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+    }
+
+    fun getSingleReasonRestartMessage(): String {
+      assert(restartRequiredReasons.size == 1)
+      val (_, description) = restartRequiredReasons.entries.first()
+      return SettingsSyncBundle.message("sync.restart.notification.message", description)
+    }
+
+    fun getMultireasonRestartMessage(): String {
+      assert(restartRequiredReasons.size > 1)
+      val message = StringBuilder(SettingsSyncBundle.message("sync.restart.notification.message.subtitle")).append('\n')
+      var counter = 0
+
+      val keys = listOf("install", "enable", "disable", "registry")
+      for (key in keys) {
+        if (restartRequiredReasons.containsKey(key)) {
+          message.append("${++counter}. ")
+          message.append(restartRequiredReasons.getValue(key).capitalize()).append('\n')
+        }
+      }
+
+      message.dropLast(0) // we do not need the new line in the end
+      return message.toString()
+    }
+
+    val message = when {
+      restartRequiredReasons.isEmpty() -> throw RuntimeException("No restart reasons found")
+      restartRequiredReasons.size == 1 -> getSingleReasonRestartMessage()
+      else -> getMultireasonRestartMessage()
+    }
+    return NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
+      .createNotification(SettingsSyncBundle.message("sync.restart.notification.title"),
+                          message,
+                          NotificationType.INFORMATION)
   }
 
   override fun activateStreamProvider() {
@@ -171,7 +210,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
 
   override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
     if (!isApplicable(fileSpec, roamingType)) return false
-    
+
     val path = appConfig.resolve(fileSpec)
     val adjustedSpec = getFileRelativeToRootConfig(fileSpec)
     return readUnderLock(adjustedSpec) {
@@ -291,7 +330,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     invokeAndWaitIfNeeded {
       reloadComponents(changedFileSpecs, deletedFileSpecs)
       if (Registry.getInstance().isRestartNeeded) {
-        SettingsSyncEvents.getInstance().fireRestartRequired("registry", SettingsSyncBundle.message("sync.registry.update.message"))
+        SettingsSyncEvents.getInstance().fireRestartRequired("registry", SettingsSyncBundle.message("sync.restart.notification.submessage.registry"))
       }
     }
   }

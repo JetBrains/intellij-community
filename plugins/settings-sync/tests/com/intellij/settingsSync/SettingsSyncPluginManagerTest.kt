@@ -370,6 +370,6 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
       }
     }
     assertNotNull(restartRequiredRef.get(), "Should have processed")
-    assert(restartRequiredRef.get().second.contains("1"))
+    assert(restartRequiredRef.get().second.contains("plugin(s): Test plugin name..."))
   }
 }

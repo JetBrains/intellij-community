@@ -45,10 +45,11 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
     for (installer in installers) {
       try {
         if (!install(installer)) {
-          pluginsRequiredRestart.add("'${installer.pluginName}'")
+          pluginsRequiredRestart.add(installer.pluginName)
         }
         LOG.info("Setting sync installed plugin ID: ${installer.id.idString}")
       } catch (ex: Exception) {
+
         // currently, we don't install plugins that have missing dependencies.
         // TODO: toposort plugin with dependencies.
         // TODO: Skip installation dependent plugins, if any dependency fails to install.
@@ -61,8 +62,8 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
       SettingsSyncEvents.getInstance().fireCategoriesChanged()
     }
     if (pluginsRequiredRestart.size > 0) {
-      SettingsSyncEvents.getInstance().fireRestartRequired("install", SettingsSyncBundle.message("plugins.sync.install.message",
-                                                                                                 pluginsRequiredRestart.size))
+      SettingsSyncEvents.getInstance().fireRestartRequired("install", SettingsSyncBundle.message("sync.restart.notification.submessage.plugins",
+                                                                                      "install", pluginsRequiredRestart.joinToString(", ")))
     }
   }
 

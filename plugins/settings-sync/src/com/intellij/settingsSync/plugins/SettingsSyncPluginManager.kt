@@ -204,13 +204,8 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
             }
           }
           LOG.warn("The $actionName for the following plugins require restart: " + pluginsReqRestart.joinToString())
-          val message = if (enable) {
-            SettingsSyncBundle.message("plugins.sync.enable.message",
-                                       pluginsReqRestart.size)
-          } else {
-            SettingsSyncBundle.message("plugins.sync.disable.message",
-                                       pluginsReqRestart.size)
-          }
+          val message = SettingsSyncBundle.message("sync.restart.notification.submessage.plugins",
+                                                   if (enable) "enable" else "disable", pluginsReqRestart.joinToString(", "))
           SettingsSyncEvents.getInstance().fireRestartRequired(actionName, message)
         }
       }
