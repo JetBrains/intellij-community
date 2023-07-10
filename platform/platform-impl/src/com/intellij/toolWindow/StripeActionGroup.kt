@@ -271,8 +271,10 @@ class EnableStripeGroup : ToggleAction(), DumbAware {
       NotRoamableUiSettings.getInstance().experimentalSingleStripe = enabled
     }
 
-    fun isSingleStripeEnabled() = customizedGroup?.let { isActionGroupAdded(it, STRIPE_ACTION_GROUP_ID) } == true
+    fun isSingleStripeEnabled() = hasActionOnToolbar()
                                   && NotRoamableUiSettings.getInstance().experimentalSingleStripe
+
+    fun hasActionOnToolbar() = customizedGroup?.let { isActionGroupAdded(it, STRIPE_ACTION_GROUP_ID) } == true
 
     @Suppress("SameParameterValue")
     private fun isActionGroupAdded(groupPath: List<String>, actionId: String): Boolean {
