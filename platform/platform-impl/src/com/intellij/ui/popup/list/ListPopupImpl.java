@@ -27,10 +27,7 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.ClosableByLeftArrow;
-import com.intellij.ui.popup.HintUpdateSupply;
-import com.intellij.ui.popup.NextStepHandler;
-import com.intellij.ui.popup.WizardPopup;
+import com.intellij.ui.popup.*;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.SlowOperations;
@@ -534,6 +531,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       String message = String.format("Cannot open submenu for '%s' item. PopupStep is null", valueText);
       LOG.warn(message);
       return;
+    }
+
+    if ((PopupStep<?>)myStep instanceof ActionPopupStep actionPopupStep && nextStep instanceof ActionPopupStep nextActionPopupStep) {
+      nextActionPopupStep.setSubStepContextAdjuster(actionPopupStep.getSubStepContextAdjuster());
     }
 
     Point point = myList.indexToLocation(myList.getSelectedIndex());
