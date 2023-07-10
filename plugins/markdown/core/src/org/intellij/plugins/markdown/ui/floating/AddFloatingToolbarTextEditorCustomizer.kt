@@ -6,8 +6,8 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorCustomizer
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
-import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.hasMarkdownType
 import org.intellij.plugins.markdown.util.MarkdownPluginScope
 
 private class AddFloatingToolbarTextEditorCustomizer: TextEditorCustomizer {
@@ -22,7 +22,7 @@ private class AddFloatingToolbarTextEditorCustomizer: TextEditorCustomizer {
 
   private fun shouldAcceptEditor(editor: TextEditor): Boolean {
     val file = editor.file
-    return file.fileType == MarkdownFileType.INSTANCE || shouldAcceptScratchFile(editor)
+    return file.hasMarkdownType() || shouldAcceptScratchFile(editor)
   }
 
   private fun shouldAcceptScratchFile(editor: TextEditor): Boolean {
