@@ -32,7 +32,7 @@ class RecoverVfsFromOperationsLogDialog(
   }
 
   private val comboboxModel = SortedComboBoxModel(
-    recoveryPoints.take(30).toList().map(::RecoveryPointWrapper),
+    recoveryPoints.take(10).toList().map(::RecoveryPointWrapper),
     Comparator { o1, o2 ->
       o1.rp.timestamp.compareTo(o2.rp.timestamp) * -1
     }
@@ -50,6 +50,10 @@ class RecoverVfsFromOperationsLogDialog(
     }
 
     cancelAction.text = IdeBundle.message("button.cancel.without.mnemonic")
+
+    if (comboboxModel.items.isNotEmpty()) {
+      comboboxModel.selectedItem = comboboxModel.items[0]
+    }
   }
 
   override fun createCenterPanel(): DialogPanel = panel {
