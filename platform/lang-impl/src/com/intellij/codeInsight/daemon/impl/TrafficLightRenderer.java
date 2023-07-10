@@ -59,6 +59,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.codeInsight.daemon.impl.PassExecutorService.LOG;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private final @NotNull Project myProject;
@@ -89,12 +92,11 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     init(project, myDocument);
     myUIController = editor == null ? createUIController() : createUIController(editor);
     record Stuff(@NotNull Map<Language, FileHighlightingSetting> fileHighlightingSettings,
-                 boolean inLibrary,
-                 boolean shouldHighlight){}
-    Stuff info = ReadAction.computeCancellable(() -> {
+                 boolean inLibrary) {}
+    Stuff info = ReadAction.compute(() -> {
       PsiFile psiFile = getPsiFile();
       if (psiFile == null) {
-        return new Stuff(Collections.emptyMap(),false,false);
+        return new Stuff(Collections.emptyMap(),false);
       }
       FileViewProvider viewProvider = psiFile.getViewProvider();
       Set<Language> languages = viewProvider.getLanguages();
@@ -109,13 +111,29 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       VirtualFile virtualFile = psiFile.getVirtualFile();
       assert virtualFile != null;
       boolean inLib = fileIndex.isInLibrary(virtualFile) && !fileIndex.isInContent(virtualFile);
-      boolean shouldHighlight = ProblemHighlightFilter.shouldHighlightFile(getPsiFile());
-      return new Stuff(settingMap, inLib, shouldHighlight);
+      return new Stuff(settingMap, inLib);
     });
+
+    shouldHighlight = shouldBeHighlighted();
     myFileHighlightingSettings = info.fileHighlightingSettings();
     inLibrary = info.inLibrary();
-    shouldHighlight = info.shouldHighlight();
     myHighlightingSettingsModificationCount = HighlightingSettingsPerFile.getInstance(project).getModificationCount();
+  }
+
+  private boolean shouldBeHighlighted() {
+    AtomicReference<String> fileName = new AtomicReference<>();
+    try {
+      return ReadAction.computeCancellable(() -> {
+        PsiFile file = getPsiFile();
+        if (file == null) return false;
+
+        fileName.set(file.getName());
+        return ProblemHighlightFilter.shouldHighlightFile(file);
+      });
+    } catch (ReadAction.CannotReadException e) {
+      LOG.warn("Couldn't detect 'shouldHighlight' status for the file '" + fileName.get() + "'. Set it to 'false'.", e);
+      return false;
+    }
   }
 
   private void init(@NotNull Project project, @NotNull Document document) {
