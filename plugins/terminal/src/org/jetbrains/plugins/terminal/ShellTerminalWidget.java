@@ -14,6 +14,7 @@ import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.Terminal;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -45,6 +47,8 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
   private static final Logger LOG = Logger.getInstance(ShellTerminalWidget.class);
   private static final long VFS_REFRESH_DELAY_MS = 500;
+  private static final ExecutorService EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+    ShellTerminalWidget.class.getSimpleName() + " command executor", 1);
 
   private boolean myEscapePressed = false;
   private String myCommandHistoryFilePath;
@@ -211,23 +215,33 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
     String command;
     while ((command = myPendingCommandsToExecute.poll()) != null) {
-      try {
-        doExecuteCommand(command, ttyConnector);
-      }
-      catch (IOException e) {
-        LOG.warn("Cannot execute " + command, e);
-      }
+      doExecuteCommand(command, ttyConnector);
     }
   }
 
-  private void doExecuteCommand(@NotNull String shellCommand, @NotNull TtyConnector connector) throws IOException {
-    StringBuilder result = new StringBuilder();
-    if (myEscapePressed) {
-      result.append((char)KeyEvent.VK_BACK_SPACE); // remove Escape first, workaround for IDEA-221031
-    }
-    String enterCode = new String(getTerminal().getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8);
-    result.append(shellCommand).append(enterCode);
-    connector.write(result.toString());
+  private void doExecuteCommand(@NotNull String shellCommand, @NotNull TtyConnector connector) {
+    EXECUTOR.execute(() -> {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Before writing command " + shellCommand);
+      }
+      if (connector.isConnected()) {
+        StringBuilder result = new StringBuilder();
+        if (myEscapePressed) {
+          result.append((char)KeyEvent.VK_BACK_SPACE); // remove Escape first, workaround for IDEA-221031
+        }
+        String enterCode = new String(getTerminal().getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8);
+        result.append(shellCommand).append(enterCode);
+        try {
+          connector.write(result.toString());
+        }
+        catch (IOException e) {
+          LOG.info("Failed to write command for execution in terminal", e);
+        }
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("After writing command " + shellCommand);
+      }
+    });
   }
 
   public boolean hasRunningCommands() throws IllegalStateException {
