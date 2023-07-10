@@ -39,17 +39,13 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="any"
-                            id="kind_ordering_factors"
-                            implementationClass="com.intellij.turboComplete.platform.contributor.KindOrderingFeaturesContributor"
-                            order="first, after liveTemplates"/>
-    <completion.contributor language="any"
                             id="kind_executor"
                             implementationClass="com.intellij.turboComplete.platform.contributor.KindExecutingCompletionContributor"
-                            order="first, after kind_ordering_factors, before duplicate_remover"/>
+                            order="first, after ml_context, before KotlinCompletionContributor"/>
     <completion.contributor language="any"
                             id="duplicate_remover"
                             implementationClass="com.intellij.turboComplete.platform.contributor.FilteringCompletionContributor"
-                            order="first"/>
+                            order="first, before KotlinCompletionContributor"/>
 
     <completion.ml.contextFeatures language="" implementationClass="com.intellij.turboComplete.features.context.AllKindsUsageFeatures"/>
     <completion.ml.contextFeatures language=""
