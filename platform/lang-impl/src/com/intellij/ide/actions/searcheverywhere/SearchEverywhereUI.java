@@ -26,7 +26,6 @@ import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -547,7 +546,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
 
       @Override
-      public Runnable getActionOnClick(@NotNull InputEvent inputEvent) {
+      public Runnable getActionOnClick() {
         if (!Registry.is("search.everywhere.footer.extended.info")) return null;
 
         Rectangle bounds = ((TextFieldWithPopupHandlerUI)mySearchField.getUI()).getExtensionIconBounds(this);
@@ -1743,13 +1742,25 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         }
 
         @Override
-        public Runnable getActionOnClick(@NotNull InputEvent inputEvent) {
+        public boolean isSelected() {
+          return action instanceof ToggleAction toggleAction && toggleAction.isSelected(createActionEvent());
+        }
+
+        @Override
+        public Dimension getButtonSize() {
+          return ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE;
+        }
+
+        @Override
+        public Runnable getActionOnClick() {
           return () -> {
-            AnActionEvent event =
-              AnActionEvent.createFromInputEvent(inputEvent, ActionPlaces.POPUP, action.getTemplatePresentation().clone(),
-                                                 DataContext.EMPTY_CONTEXT);
-            ActionUtil.performDumbAwareWithCallbacks(action, event, () -> action.actionPerformed(event));
+            action.actionPerformed(createActionEvent());
           };
+        }
+
+        private AnActionEvent createActionEvent() {
+          return AnActionEvent.createFromDataContext(ActionPlaces.POPUP, action.getTemplatePresentation().clone(),
+                                                     DataContext.EMPTY_CONTEXT);
         }
       };
     }
