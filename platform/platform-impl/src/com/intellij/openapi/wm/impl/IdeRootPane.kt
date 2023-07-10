@@ -683,7 +683,7 @@ private fun createToolbar(): JComponent {
   if (ExperimentalUI.isNewUI()) {
     val toolbar = MainToolbar()
     toolbar.init(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
-    toolbar.border = JBUI.Borders.empty(0, 5)
+    toolbar.border = JBUI.Borders.emptyLeft(5)
     return toolbar
   }
   else {
