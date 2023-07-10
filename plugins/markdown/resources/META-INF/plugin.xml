@@ -186,8 +186,6 @@
     <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
                         serviceImplementation="org.intellij.plugins.markdown.ui.preview.accessor.impl.MarkdownLinkOpenerImpl"/>
 
-    <projectService serviceImplementation="org.intellij.plugins.markdown.settings.pandoc.PandocSettings"/>
-
     <projectConfigurable id="Settings.Markdown"
                          bundle="messages.MarkdownBundle"
                          groupId="language"
