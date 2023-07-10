@@ -107,6 +107,11 @@ public abstract class FileTemplateBase implements FileTemplate {
   }
 
   @Override
+  public String toString() {
+    return getName() + '.' + getExtension();
+  }
+
+  @Override
   public boolean isTemplateOfType(final @NotNull FileType fType) {
     return fType.equals(FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(getExtension()));
   }

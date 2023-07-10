@@ -250,4 +250,10 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     }
     return false
   }
+
+  fun testInternalTemplates() {
+    val manager = FileTemplateManager.getInstance(project)
+    val intersect = manager.internalTemplates.toSet().intersect(manager.allTemplates.toSet())
+    assertTrue("Internal templates should be located in 'internal' folder: $intersect", intersect.isEmpty())
+  }
 }
