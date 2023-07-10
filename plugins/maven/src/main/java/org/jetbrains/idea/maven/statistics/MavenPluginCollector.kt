@@ -13,13 +13,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class MavenPluginCollector : ProjectUsagesCollector() {
 
-  private val groupId = EventFields.StringValidatedByCustomRule<MavenIdValidationRule>("group_id")
-  private val artifactId = EventFields.StringValidatedByCustomRule<MavenIdValidationRule>("artifact_id")
-  private val version = EventFields.StringValidatedByCustomRule<MavenIdValidationRule>("version")
-  private val isExtension = EventFields.Boolean("extension")
-
   private val mavenPluginId = group.registerVarargEvent("MAVEN_PLUGIN_ID",
-                                                        groupId, artifactId, version, isExtension)
+                                                        groupArtifactId, Companion.version, isExtension, hasConfiguration)
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val manager = MavenProjectsManager.getInstance(project)
@@ -28,10 +23,10 @@ class MavenPluginCollector : ProjectUsagesCollector() {
       .flatMap { it.declaredPlugins }
       .map {
         mavenPluginId.metric(
-          groupId with it.groupId,
-          artifactId with it.artifactId,
-          version with it.version,
-          isExtension with it.isExtensions
+          groupArtifactId with "${it.groupId}:${it.artifactId}",
+          Companion.version with it.version,
+          isExtension with it.isExtensions,
+          hasConfiguration with (it.configurationElement != null)
         )
       }.toSet()
   }
@@ -43,12 +38,45 @@ class MavenPluginCollector : ProjectUsagesCollector() {
 
   companion object {
     private val GROUP = EventLogGroup("maven.plugins", 2)
+
+    val groupArtifactId = EventFields.StringValidatedByCustomRule<MavenPluginCoordinatesWhitelistValidationRule>("group_artifact_id")
+    val version = EventFields.StringValidatedByCustomRule<MavenPluginVersionAllowAllValidationRule>("version")
+    val isExtension = EventFields.Boolean("extension")
+    val hasConfiguration = EventFields.Boolean("has_configuration")
+
   }
 }
 
-internal class MavenIdValidationRule : CustomValidationRule() {
+
+internal class MavenPluginCoordinatesWhitelistValidationRule : CustomValidationRule() {
+  private val whiteList: Set<String>
+
+  init {
+    val url = this::class.java.getResource("/org/jetbrains/idea/maven/statistics/maven-whitelist-plugins.txt")
+    whiteList = url
+                  ?.readText()
+                  ?.lines()
+                  ?.asSequence()
+                  ?.filter { it.isNotBlank() }
+                  ?.map { it.trim() }
+                  ?.filter { !it.startsWith('#') }
+                  ?.toSet() ?: emptySet()
+
+  }
+
+  override fun doValidate(data: String, context: EventContext): ValidationResultType {
+    return if (data in whiteList) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
+  }
+
   override fun getRuleId(): String {
-    return "maven_plugin_coordinates_validation_rule_allow_all"
+    return "maven_plugin_rule_whitelist_ids"
+  }
+
+}
+
+internal class MavenPluginVersionAllowAllValidationRule : CustomValidationRule() {
+  override fun getRuleId(): String {
+    return "maven_plugin_version_validation_rule_allow_all"
   }
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
