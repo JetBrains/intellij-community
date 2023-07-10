@@ -65,7 +65,8 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
         catch (e: Throwable) {
           LOG.error("failed to clear obsolete block file: ${blockPath.absolute()}")
         }
-      } else {
+      }
+      else {
         filesInUse++
         spaceInUse += blockPath.size()
       }
@@ -82,7 +83,8 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
   override fun performUpdate(
     fromState: State,
     newSize: Int,
-    updatedEntries: Map<Int, Entry>,
+    updatedEntryIds: Set<Int>,
+    getUpdatedEntry: (Int) -> Entry,
     checkCancelled: () -> Unit
   ): State {
     val stateBuilder = StateBuilder(
@@ -90,7 +92,8 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
       fromState.lastAllocatedBlockId,
       ArrayList(fromState.blocks.map { it.descriptor }),
       fromState,
-      updatedEntries
+      updatedEntryIds,
+      getUpdatedEntry
     )
     stateBuilder.adjustBlocksToMatchSize().also { checkCancelled() }
     stateBuilder.applySizeChanges().also { checkCancelled() }
@@ -98,7 +101,7 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
     stateBuilder.splitTooLargeBlocks().also { checkCancelled() }
     stateBuilder.mergeSmallBlocks().also { checkCancelled() }
     // success, write new blocks and make a new state
-    return stateBuilder.finalizeState(fromState, updatedEntries, checkCancelled)
+    return stateBuilder.finalizeState(checkCancelled)
   }
 
   private inner class StateBuilder(
@@ -106,7 +109,8 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
     var lastAllocatedBlockId: Int,
     val blocks: ArrayList<BlockDescriptor>,
     val fromState: State,
-    val updatedEntries: Map<Int, Entry>
+    val updatedEntryIds: Set<Int>,
+    val getUpdatedEntry: (Int) -> Entry
   ) {
     private fun issueBlock(entryIdBegin: Int, entryIdEnd: Int, blockSizeBytes: Long) =
       BlockDescriptor(lastAllocatedBlockId + 1, entryIdBegin, entryIdEnd, blockSizeBytes).also {
@@ -135,7 +139,7 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
         else {
           for (entryId in fromState.size until size) {
             newBlockSize += entryExternalizer.getEntrySize(
-              updatedEntries[entryId] ?: throw IllegalArgumentException("updatedEntries does not contain update for new entry $entryId")
+              getUpdatedEntry(entryId) ?: throw IllegalArgumentException("updatedEntries does not contain update for new entry $entryId")
             )
           }
         }
@@ -143,31 +147,38 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
       }
     }
 
-    private lateinit var updatedEntryNewSize: Map<Int, Long>
+    private lateinit var updatedEntryNewSize: Map<Int, Long> // set only if entryExternalizer is non-const size
     fun applySizeChanges() {
-      // apply size changes
       val affectedExistingBlocks = hashSetOf<Int>()
       val existingBlocksNewSizes = hashMapOf<Int, Long>()
       blocks.forEach {
         existingBlocksNewSizes[it.blockId] = it.blockSizeBytes
       }
-
-      updatedEntryNewSize = updatedEntries.mapValues { (entryId, e) ->
-        val newEntrySize = entryExternalizer.getEntrySize(e)
-        if (entryId < fromState.size) {
-          val oldEntrySize = fromState.getEntrySize(entryId)
-          val blockId = findResponsibleBlock(entryId).blockId
-          affectedExistingBlocks.add(blockId)
-          existingBlocksNewSizes[blockId] = existingBlocksNewSizes[blockId]!! + newEntrySize - oldEntrySize
+      if (entryExternalizer is EntryArrayStorage.ConstSizeEntryExternalizer) {
+        updatedEntryIds.forEach { entryId ->
+          if (entryId < fromState.size) {
+            val blockId = findResponsibleBlock(entryId).blockId
+            affectedExistingBlocks.add(blockId)
+          }
         }
-        newEntrySize
+      }
+      else {
+        updatedEntryNewSize = updatedEntryIds.associateWith { entryId ->
+          val newEntrySize = entryExternalizer.getEntrySize(getUpdatedEntry(entryId))
+          if (entryId < fromState.size) {
+            val oldEntrySize = fromState.getEntrySize(entryId)
+            val blockId = findResponsibleBlock(entryId).blockId
+            affectedExistingBlocks.add(blockId)
+            existingBlocksNewSizes[blockId] = existingBlocksNewSizes[blockId]!! + newEntrySize - oldEntrySize
+          }
+          newEntrySize
+        }
       }
 
       for (i in 0 until blocks.size) {
-        val blockDesc = blocks[i]
-        if (blockDesc.blockId in affectedExistingBlocks) {
-          blocks[i] = issueBlock(blockDesc.entryIdBegin, blockDesc.entryIdEnd,
-                                 existingBlocksNewSizes[blockDesc.blockId]!!)
+        val desc = blocks[i]
+        if (desc.blockId in affectedExistingBlocks) {
+          blocks[i] = issueBlock(desc.entryIdBegin, desc.entryIdEnd, existingBlocksNewSizes[desc.blockId]!!)
         }
       }
     }
@@ -245,31 +256,31 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
       blocks.addAll(newBlocks)
     }
 
-    fun finalizeState(previousState: State, updatedEntries: Map<Int, Entry>, checkCancelled: () -> Unit): State {
+    fun finalizeState(checkCancelled: () -> Unit): State {
       val newState = State(
         size,
         lastAllocatedBlockId,
         ArrayList(blocks.map {
-          if (it.blockId <= previousState.lastAllocatedBlockId) previousState.getBlockById(it.blockId)
+          if (it.blockId <= fromState.lastAllocatedBlockId) fromState.getBlockById(it.blockId)
           else Block(it)
         })
       )
       newState.blocks.forEach {
         checkCancelled()
         with(it) {
-          if (descriptor.blockId > previousState.lastAllocatedBlockId) {
+          if (descriptor.blockId > fromState.lastAllocatedBlockId) {
             if (entryExternalizer is EntryArrayStorage.ConstSizeEntryExternalizer &&
-                descriptor.entryIdBegin < previousState.size &&
-                descriptor.entryRange == previousState.findResponsibleBlock(descriptor.entryIdBegin).descriptor.entryRange) {
-              val previousBlock = previousState.findResponsibleBlock(descriptor.entryIdBegin)
-              previousBlock.descriptor.blockPath.copyTo(descriptor.blockPath)
+                descriptor.entryIdBegin < fromState.size &&
+                descriptor.entryRange == fromState.findResponsibleBlock(descriptor.entryIdBegin).descriptor.entryRange) {
+              val previousBlock = fromState.findResponsibleBlock(descriptor.entryIdBegin)
+              previousBlock.descriptor.blockPath.copyTo(descriptor.blockPath, overwrite = true)
               fileChannel.access {
-                updateModifiedConstSizeEntries(updatedEntries)
+                updateModifiedConstSizeEntries(updatedEntryIds, getUpdatedEntry)
               }
             }
             else {
               fileChannel.access {
-                writeBlock { entryId -> updatedEntries[entryId] ?: previousState.getEntry(entryId) }
+                writeBlock { entryId -> if (entryId in updatedEntryIds) getUpdatedEntry(entryId) else fromState.getEntry(entryId) }
               }
             }
           }
@@ -386,7 +397,7 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
       for (entryId in descriptor.entryRange) {
         with(entryExternalizer) {
           val entry = getEntry(entryId)
-          io.offsetView(currentOffset.toLong()).serialize(entry)
+          io.offsetView(currentOffset).serialize(entry)
           currentOffset += getEntrySize(entry)
         }
       }
@@ -394,21 +405,21 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
       force(false)
     }
 
-    internal fun FileChannel.updateModifiedConstSizeEntries(updatedEntries: Map<Int, Entry>) {
+    internal fun FileChannel.updateModifiedConstSizeEntries(updatedIds: Set<Int>, getUpdatedEntry: (Int) -> Entry) {
       entryExternalizer as EntryArrayStorage.ConstSizeEntryExternalizer
       val io = asStorageIO()
       with(entryExternalizer) {
-        if (updatedEntries.size < descriptor.entryCount) {
-          updatedEntries.forEach { (entryId, entry) ->
+        if (updatedIds.size < descriptor.entryCount) {
+          updatedIds.forEach { entryId ->
             if (entryId in descriptor.entryRange) {
-              io.offsetView(getEntryOffset(entryId).toLong()).serialize(entry)
+              io.offsetView(getEntryOffset(entryId)).serialize(getUpdatedEntry(entryId))
             }
           }
         }
         else {
           for (entryId in descriptor.entryRange) {
-            updatedEntries[entryId]?.let {
-              io.offsetView(getEntryOffset(entryId).toLong()).serialize(it)
+            if (entryId in updatedIds) {
+              io.offsetView(getEntryOffset(entryId).toLong()).serialize(getUpdatedEntry(entryId))
             }
           }
         }
@@ -434,7 +445,7 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
       val entryCount: Int get() = entryIdEnd - entryIdBegin
 
       companion object {
-        const val BLOCK_SUFFIX = ".part.bin"
+        const val BLOCK_SUFFIX = ".bin"
       }
     }
 

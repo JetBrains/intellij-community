@@ -29,7 +29,7 @@ class AutoSizeAdjustingBlockEntryArrayStorageTest {
       valuesSeries.add(ArrayList(List(i * 200) { if (it % 5 == 0) it to it * 3 else it to it * 2 }))
     }
 
-    for (desiredBlockSize in listOf(10240, 102400, 1024000)) {
+    for (desiredBlockSize in listOf<Long>(10240, 102400, 1024000)) {
       for (maxEntriesPerBlock in listOf(250, 1000, 5000)) {
         if (printStats) println("blockSize $desiredBlockSize, maxEntries $maxEntriesPerBlock")
         val time = measureTime {
@@ -49,7 +49,7 @@ class AutoSizeAdjustingBlockEntryArrayStorageTest {
     }
 
 
-    for (desiredBlockSize in listOf(512 * 1024, 2 * 1024 * 1024, 8 * 1024 * 1024)) {
+    for (desiredBlockSize in listOf<Long>(512 * 1024, 2 * 1024 * 1024, 8 * 1024 * 1024)) {
       for (maxEntriesPerBlock in listOf(250, 1000, 4000)) {
         if (printStats) println("blockSize $desiredBlockSize, maxEntries $maxEntriesPerBlock")
         val time = measureTime {
@@ -62,7 +62,7 @@ class AutoSizeAdjustingBlockEntryArrayStorageTest {
 
   private fun <E> runModifications(
     tempDir: Path,
-    desiredBlockSize: Int, maxEntriesPerBlock: Int, entryExternalizer: EntryArrayStorage.EntryExternalizer<E>,
+    desiredBlockSize: Long, maxEntriesPerBlock: Int, entryExternalizer: EntryArrayStorage.EntryExternalizer<E>,
     valueSeries: List<ArrayList<E>>,
     printCompactionStats: Boolean = true
   ) {
@@ -166,14 +166,6 @@ class AutoSizeAdjustingBlockEntryArrayStorageTest {
         write(0, buf)
         write(4, data)
       }
-    }
-
-    object UnitExternalizer : ConstSizeEntryExternalizer<Unit> {
-      override val entrySize: Long = 0
-
-      override fun RandomAccessReadBuffer.deserialize() {}
-
-      override fun RandomAccessWriteBuffer.serialize(entry: Unit) {}
     }
   }
 }

@@ -6,15 +6,23 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @ApiStatus.Internal
 interface EntryArrayStorage<Entry, State: EntryArrayStorage.PersistentState<Entry>>: AutoCloseable {
+  fun performUpdate(
+    fromState: State,
+    newSize: Int,
+    updatedEntries: Map<Int, Entry>,
+    checkCancelled: () -> Unit = { }
+  ): State = performUpdate(fromState, newSize, updatedEntries.keys, { updatedEntries[it]!! }, checkCancelled)
 
   /**
-   * In case the size increases, [updatedEntries] must contain entries that correspond to the newly created ids
+   * In case the size increases, [updatedEntryIds] must contain elements that correspond to the newly created ids
+   * @param getUpdatedEntry can be invoked only on elements of [updatedEntryIds]
    * @param checkCancelled should throw an exception in case operation should be cancelled
    */
   fun performUpdate(
     fromState: State,
     newSize: Int,
-    updatedEntries: Map<Int, Entry>,
+    updatedEntryIds: Set<Int>,
+    getUpdatedEntry: (Int) -> Entry,
     checkCancelled: () -> Unit = { }
   ): State
 
@@ -56,5 +64,15 @@ interface EntryArrayStorage<Entry, State: EntryArrayStorage.PersistentState<Entr
     val spaceFreedUpBytes: Long,
     val currentFilesInUse: Int,
     val currentSpaceConsumptionBytes: Long,
-  )
+  ) {
+    companion object {
+      operator fun StorageSpaceConsumptionStatistics.plus(rhs: StorageSpaceConsumptionStatistics): StorageSpaceConsumptionStatistics =
+        StorageSpaceConsumptionStatistics(
+          obsoleteFilesRemoved + rhs.obsoleteFilesRemoved,
+          spaceFreedUpBytes + rhs.spaceFreedUpBytes,
+          currentFilesInUse + rhs.currentFilesInUse,
+          currentSpaceConsumptionBytes + rhs.currentSpaceConsumptionBytes
+        )
+    }
+  }
 }
