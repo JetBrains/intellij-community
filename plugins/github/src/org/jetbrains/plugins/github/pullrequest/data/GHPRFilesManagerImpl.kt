@@ -3,6 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffVirtualFileBase
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
@@ -10,7 +12,6 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.*
-import java.util.*
 
 internal class GHPRFilesManagerImpl(private val project: Project,
                                     private val repository: GHRepositoryCoordinates) : GHPRFilesManager {
@@ -96,9 +97,12 @@ internal class GHPRFilesManagerImpl(private val project: Project,
   }
 
   override fun dispose() {
-    for (file in (files.values + diffFiles.values + newPRDiffFiles.values)) {
-      FileEditorManager.getInstance(project).closeFile(file)
-      file.isValid = false
+    // otherwise the exception is thrown when removing an editor tab
+    (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+      for (file in (files.values + diffFiles.values + newPRDiffFiles.values)) {
+        FileEditorManager.getInstance(project).closeFile(file)
+        file.isValid = false
+      }
     }
   }
 }
