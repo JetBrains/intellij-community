@@ -306,9 +306,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Google Auto Common Utilities", libraryName = "auto-common",
                    url = "https://github.com/google/auto/tree/master/common")
       .apache("https://github.com/google/auto/blob/master/LICENSE"),
-    LibraryLicense(name = "Google Drive API V3", libraryName = "google.apis.api.services.drive",
-                   url = "https://github.com/googleapis/google-api-java-client-services/tree/master/clients/google-api-services-drive/v3")
-      .apache("https://github.com/googleapis/google-api-java-client-services/blob/master/LICENSE"),
     LibraryLicense(libraryName = "Gradle", url = "https://gradle.org/", licenseUrl = "https://gradle.org/license")
       .apache("https://github.com/gradle/gradle/blob/master/LICENSE"),
     LibraryLicense(name = "Grazie AI", libraryName = "ai.grazie.spell.gec.engine.local",
