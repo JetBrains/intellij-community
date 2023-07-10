@@ -72,7 +72,7 @@ internal class MarkdownFileDropHandler: CustomFileDropHandler() {
     internal fun buildTextContent(files: Sequence<Path>, file: PsiFile): String {
       val imageFileType = ImageFileTypeManager.getInstance().imageFileType
       val registry = FileTypeRegistry.getInstance()
-      val currentDirectory = file.containingDirectory?.virtualFile?.toNioPath()
+      val currentDirectory = obtainDirectoryPath(file)
       val relativePaths = files.map { obtainRelativePath(it, currentDirectory) }
       return relativePaths.joinToString(separator = "\n") { path ->
         when (registry.getFileTypeByExtension(path.extension)) {
@@ -80,6 +80,11 @@ internal class MarkdownFileDropHandler: CustomFileDropHandler() {
           else -> createFileLink(path)
         }
       }
+    }
+
+    private fun obtainDirectoryPath(file: PsiFile): Path? {
+      val directory = file.containingDirectory?.virtualFile ?: return null
+      return directory.fileSystem.getNioPath(directory)
     }
 
     private fun obtainRelativePath(path: Path, currentDirectory: Path?): Path {
@@ -101,7 +106,7 @@ internal class MarkdownFileDropHandler: CustomFileDropHandler() {
     }
 
     private fun createFileLink(file: Path): String {
-      val independentPath = createUri(FileUtil.toSystemIndependentName (file.toString()))
+      val independentPath = createUri(FileUtil.toSystemIndependentName(file.toString()))
       return "[${file.name}]($independentPath)"
     }
 
