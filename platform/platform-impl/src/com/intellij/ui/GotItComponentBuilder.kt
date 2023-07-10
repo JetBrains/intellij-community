@@ -714,7 +714,7 @@ private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
 
     private fun shortcutSpan(shortcutText: @NlsSafe String) = HtmlChunk.span().attr("class", "shortcut").addText(shortcutText).toString()
 
-    private val SHORTCUT_REGEX: Regex = Regex("""<shortcut (?<type>actionId|raw)="(?<value>\w+)"/>""")
+    private val SHORTCUT_REGEX: Regex = Regex("""<shortcut (?<type>actionId|raw)="(?<value>[\w.]+)"/>""")
   }
 
   private class ShortcutView(elem: Element) : InlineView(elem) {
