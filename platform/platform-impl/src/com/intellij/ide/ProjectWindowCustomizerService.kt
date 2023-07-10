@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
@@ -22,6 +23,7 @@ import com.intellij.ui.JBColor
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
+import java.io.File
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -32,12 +34,6 @@ private fun getProjectPath(project: Project): String {
     //thisLogger().warn("Impossible: no path for project $project")
     ""
   }
-}
-
-@Internal
-fun getProjectNameForIcon(project: Project): String {
-  val path = getProjectPath(project)
-  return RecentProjectIconHelper.getProjectName(path)
 }
 
 @Service(Service.Level.PROJECT)
@@ -80,9 +76,13 @@ enum class MainToolbarCustomizationType {
 }
 
 private const val TOOLBAR_BACKGROUND_KEY = "PROJECT_TOOLBAR_COLOR"
-private const val PROJECT_CUSTOM_COLOR_KEY = "PROJECT_CUSTOM_COLOR_KEY"
-private const val ASSOCIATED_PROJECT_COLOR_INDEX_KEY = "ASSOCIATED_PROJECT_COLOR_INDEX_KEY"
 private const val LAST_CALCULATED_COLOR_INDEX_KEY = "LAST_CALCULATED_COLOR_INDEX_KEY"
+
+private data class ProjectColors(@JvmField val gradient: Color,
+                                 @JvmField val background: Color,
+                                 val iconColorStart: Color,
+                                 val iconColorEnd: Color,
+                                 val index: Int? = null)
 
 @Service
 class ProjectWindowCustomizerService : Disposable {
@@ -91,13 +91,16 @@ class ProjectWindowCustomizerService : Disposable {
     fun getInstance(): ProjectWindowCustomizerService = service<ProjectWindowCustomizerService>()
   }
 
-  private data class ProjectColors(val gradient: Color, val background: Color)
-
   private var wasGradientPainted = false
   private var ourSettingsValue = UISettings.getInstance().differentiateProjects
   private val colorCache = mutableMapOf<String, ProjectColors>()
   private val listeners = mutableListOf<(Boolean) -> Unit>()
+  private val defaultColors = ProjectColors(gradientColors[0],
+                                            backgroundColors[0],
+                                            ProjectIconPalette.gradients[0].first,
+                                            ProjectIconPalette.gradients[0].second)
 
+  @Suppress("UnregisteredNamedColor")
   private val gradientColors: Array<Color>
     get() = arrayOf(
       JBColor.namedColor("RecentProject.Color1.MainToolbarGradientStart", JBColor(0xDB3D3C, 0xCE443C)),
@@ -111,6 +114,7 @@ class ProjectWindowCustomizerService : Disposable {
       JBColor.namedColor("RecentProject.Color9.MainToolbarGradientStart", JBColor(0xE75371, 0xD75370))
     )
 
+  @Suppress("UnregisteredNamedColor")
   private val backgroundColors: Array<Color>
     get() = arrayOf(
       JBColor.namedColor("RecentProject.Color1.MainToolbarDropdownBackground", JBColor(0x534036, 0x534036)),
@@ -128,40 +132,59 @@ class ProjectWindowCustomizerService : Disposable {
     return project.service<ProjectWindowCustomizerIconCache>().cachedIcon
   }
 
-  fun getGradientProjectColor(project: Project): Color = getProjectToolbarColor(project).gradient
+  private fun getGradientProjectColor(project: Project): Color {
+    return getDeprecatedCustomToolbarColor(project)
+           ?: project.basePath?.let { getProjectColor(it).gradient }
+           ?: defaultColors.gradient
+  }
 
-  fun getBackgroundProjectColor(project: Project): Color = getProjectToolbarColor(project).background
+  fun getBackgroundProjectColor(project: Project): Color {
+    return getDeprecatedCustomToolbarColor(project)
+           ?: project.basePath?.let { getProjectColor(it).background }
+           ?: defaultColors.background
+  }
 
-  private fun getProjectToolbarColor(project: Project): ProjectColors {
-    // Get toolbar color for those who has already set it
-    val projectPath = getProjectNameForIcon(project)
+  fun getProjectIconColor(projectPath: String): Pair<Color, Color> {
+    val projectColors = getProjectColor(projectPath)
+    return Pair(projectColors.iconColorStart, projectColors.iconColorEnd)
+  }
+
+  private fun getDeprecatedCustomToolbarColor(project: Project): Color? {
     val colorStr = PropertiesComponent.getInstance(project).getValue(TOOLBAR_BACKGROUND_KEY)
-    val color = ColorUtil.fromHex(colorStr, null)
-    if (color != null) {
-      return ProjectColors(color, color)
-    }
+    return ColorUtil.fromHex(colorStr, null)
+  }
 
-    // Get custom project color and transform it for toolbar
-    getProjectCustomColor(projectPath)?.let {
-      val toolbarColor = ColorUtil.toAlpha(it, 90)
-      return ProjectColors(toolbarColor, toolbarColor)
-    }
+  @Internal
+  fun getCurrentProjectColorIndex(projectPath: String): Int? =  getProjectColor(projectPath).index
 
+  private fun getProjectColor(projectPath: String): ProjectColors {
     // Get calculated earlier color or calculate next color
     return colorCache.getOrPut(projectPath) {
-      Disposer.register(project) { colorCache.remove(projectPath) }
-      val associatedIndex = getOrGenerateAssociatedColorIndex(projectPath)
+      // Get custom project color and transform it for toolbar
+      val customColors = ProjectColorReader(projectPath).getCustomColor()?.let {
+        val toolbarColor = ColorUtil.toAlpha(it, 90)
+        ProjectColors(toolbarColor, toolbarColor, it, it)
+      }
 
-      ProjectColors(background = backgroundColors[associatedIndex],
-                    gradient = gradientColors[associatedIndex])
+      if (customColors != null) {
+        customColors
+      }
+      else {
+        val associatedIndex = getOrGenerateAssociatedColorIndex(projectPath)
+        ProjectColors(background = backgroundColors[associatedIndex],
+                      gradient = gradientColors[associatedIndex],
+                      iconColorStart = ProjectIconPalette.gradients[associatedIndex].first,
+                      iconColorEnd = ProjectIconPalette.gradients[associatedIndex].second,
+                      index = associatedIndex)
+      }
     }
   }
 
-  fun getOrGenerateAssociatedColorIndex(projectPath: String): Int {
+  private fun getOrGenerateAssociatedColorIndex(projectPath: String): Int {
     getAssociatedColorIndex(projectPath)?.let { return it }
 
     // Calculate next colors by incrementing (and saving the new value) color index
-    val index = propertiesStorage.nextColorIndex(minOf(backgroundColors.size, gradientColors.size))
+    val index = PropertiesComponent.getInstance().nextColorIndex(minOf(backgroundColors.size, gradientColors.size))
 
     // Save calculated colors and clear customized colors for the project
     setAssociatedColorsIndex(projectPath, index)
@@ -169,40 +192,35 @@ class ProjectWindowCustomizerService : Disposable {
     return index
   }
 
-  fun getAssociatedColorIndex(projectPath: String): Int? {
-    val index = propertiesStorage.getInt(associatedProjectColorKey(projectPath), -1)
+  private fun getAssociatedColorIndex(projectPath: String): Int? {
+    val index = ProjectColorReader(projectPath).getAssociatedColorIndex() ?: return null
     if (index >= 0 && index < backgroundColors.size && index < gradientColors.size) return index
     return null
   }
 
+  @Internal
   fun setAssociatedColorsIndex(projectPath: String, index: Int) {
-    propertiesStorage.setValue(associatedProjectColorKey(projectPath), index, -1)
+    ProjectColorReader(projectPath).setAssociatedColorIndex(index)
   }
 
+  @Internal
   fun setProjectCustomColor(project: Project, color: Color?) {
-    val projectPath = getProjectNameForIcon(project)
-    val key = projectColorKey(projectPath, PROJECT_CUSTOM_COLOR_KEY)
+    val projectPath = project.basePath ?: return
+    clearToolbarColorsAndInMemoryCache(project)
 
     if (color == null) {
-      propertiesStorage.unsetValue(key)
-
-      // Remove toolbar color for those users who set it up before it's removal
-      PropertiesComponent.getInstance(project).unsetValue(TOOLBAR_BACKGROUND_KEY)
+      ProjectColorReader(projectPath).clean()
     }
     else {
-      propertiesStorage.setValue(key, ColorUtil.toHex(color))
+      ProjectColorReader(projectPath).setCustomColor(color)
     }
   }
 
-  fun getProjectCustomColor(projectPath: String): Color? {
-    val colorHex = propertiesStorage.getValue(projectColorKey(projectPath, PROJECT_CUSTOM_COLOR_KEY)) ?: return null
-    return ColorUtil.fromHex(colorHex)
-  }
-
-  fun clearCustomColorsAndCache(project: Project) {
-    setProjectCustomColor(project, null)
-    val projectPath = getProjectNameForIcon(project)
-    colorCache.remove(projectPath)
+  @Internal
+  fun clearToolbarColorsAndInMemoryCache(project: Project) {
+    // Remove toolbar color for those users who set it up before it's removal
+    PropertiesComponent.getInstance(project).unsetValue(TOOLBAR_BACKGROUND_KEY)
+    project.basePath?.let { colorCache.remove(it) }
   }
 
   private fun PropertiesComponent.nextColorIndex(colorsCount: Int): Int {
@@ -212,18 +230,13 @@ class ProjectWindowCustomizerService : Disposable {
     return result
   }
 
-  private val propertiesStorage: PropertiesComponent get() = PropertiesComponent.getInstance()
-
-  private fun associatedProjectColorKey(projectPath: String) = projectColorKey(projectPath, ASSOCIATED_PROJECT_COLOR_INDEX_KEY)
-  private fun projectColorKey(projectPath: String, key: String) = "${key}_$projectPath"
-
   fun getPaintingType() = when (Registry.get("ide.colorful.toolbar.gradient.type").selectedOption) {
-      "Just Icon"                    -> MainToolbarCustomizationType.JUST_ICON
-      "Linear Gradient and Icon"     -> MainToolbarCustomizationType.LINEAR_GRAD_WITH_ICON
-      "Circular Gradient and Icon"   -> MainToolbarCustomizationType.CIRCULAR_GRADIENT_WITH_ICON
-      "Dropdown Background and Icon" -> MainToolbarCustomizationType.DROPDOWN_WITH_ICON
-      "Just Dropdown"                -> MainToolbarCustomizationType.JUST_DROPDOWN
-      else                           -> MainToolbarCustomizationType.LINEAR_GRAD_WITH_ICON
+    "Just Icon"                    -> MainToolbarCustomizationType.JUST_ICON
+    "Linear Gradient and Icon"     -> MainToolbarCustomizationType.LINEAR_GRAD_WITH_ICON
+    "Circular Gradient and Icon"   -> MainToolbarCustomizationType.CIRCULAR_GRADIENT_WITH_ICON
+    "Dropdown Background and Icon" -> MainToolbarCustomizationType.DROPDOWN_WITH_ICON
+    "Just Dropdown"                -> MainToolbarCustomizationType.JUST_DROPDOWN
+    else                           -> MainToolbarCustomizationType.LINEAR_GRAD_WITH_ICON
   }
 
   internal fun update(newValue: Boolean) {
@@ -339,3 +352,52 @@ private class ProjectWindowCustomizerListener : ProjectActivity, UISettingsListe
   }
 }
 
+private class ProjectColorReader(private val projectPath: String) {
+  companion object {
+    fun of(project: Project): ProjectColorReader? {
+      project.basePath?.let { return ProjectColorReader(it) }
+      return null
+    }
+  }
+
+  private fun getFile(): File? {
+    val dotIdeaPath = RecentProjectIconHelper.getDotIdeaPath(projectPath) ?: return null
+    return dotIdeaPath.resolve("project-color").toFile()
+  }
+
+  fun setAssociatedColorIndex(index: Int) {
+    val file = getFile() ?: return
+    FileUtil.writeToFile(file, index.toString())
+  }
+
+  fun getAssociatedColorIndex(): Int? {
+    val file = getFile()?.takeIf { it.exists() } ?: return null
+    val str = file.readText()
+    try {
+      return str.toInt()
+    }
+    catch (e: NumberFormatException) {
+      return null
+    }
+  }
+
+  fun setCustomColor(color: Color) {
+    val file = getFile() ?: return
+    FileUtil.writeToFile(file, ColorUtil.toHex(color, true))
+  }
+
+  fun getCustomColor(): Color? {
+    val file = getFile()?.takeIf { it.exists() } ?: return null
+    try {
+      return ColorUtil.fromHex(file.readText())
+    }
+    catch (e: IllegalArgumentException) {
+      return null
+    }
+  }
+
+  fun clean() {
+    val file = getFile() ?: return
+    FileUtil.writeToFile(file, "")
+  }
+}
