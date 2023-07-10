@@ -26,6 +26,7 @@ import javax.swing.*;
 
 public class KotlinFindFunctionUsagesDialog extends FindMethodUsagesDialog {
     private StateRestoringCheckBox expectedUsages;
+    private StateRestoringCheckBox myCbIncludeOverloadedAndExtensions;
 
     public KotlinFindFunctionUsagesDialog(
             PsiMethod method,
@@ -74,18 +75,19 @@ public class KotlinFindFunctionUsagesDialog extends FindMethodUsagesDialog {
     protected void addUsagesOptions(JPanel optionsPanel) {
         super.addUsagesOptions(optionsPanel);
 
-        if (!Utils.renameCheckbox(
+        Utils.removeCheckbox(optionsPanel, JavaBundle.message("find.options.include.overloaded.methods.checkbox"));
+        /*if (!Utils.renameCheckbox(
                 optionsPanel,
                 JavaBundle.message("find.options.include.overloaded.methods.checkbox"),
                 KotlinBundle.message("find.declaration.include.overloaded.methods.checkbox")
-        )) {
-            addCheckboxToPanel(
-                    KotlinBundle.message("find.declaration.include.overloaded.methods.checkbox"),
-                    FindSettings.getInstance().isSearchOverloadedMethods(),
-                    optionsPanel,
-                    false
-            );
-        }
+        )) {*/
+        myCbIncludeOverloadedAndExtensions = addCheckboxToPanel(
+                KotlinBundle.message("find.declaration.include.overloaded.methods.checkbox"),
+                FindSettings.getInstance().isSearchOverloadedMethods(),
+                optionsPanel,
+                true
+        );
+        /*}*/
         PsiElement element = LightClassUtilsKt.getUnwrapped(getPsiElement());
         //noinspection ConstantConditions
         KtDeclaration function = element instanceof KtNamedDeclaration
@@ -107,10 +109,19 @@ public class KotlinFindFunctionUsagesDialog extends FindMethodUsagesDialog {
     @Override
     public void calcFindUsagesOptions(JavaMethodFindUsagesOptions options) {
         super.calcFindUsagesOptions(options);
+        options.isIncludeOverloadUsages = isToChange(myCbIncludeOverloadedAndExtensions) && myCbIncludeOverloadedAndExtensions.isSelected();
 
         KotlinFunctionFindUsagesOptions kotlinOptions = (KotlinFunctionFindUsagesOptions) options;
         if (expectedUsages != null) {
             kotlinOptions.setSearchExpected(expectedUsages.isSelected());
+        }
+    }
+
+    @Override
+    protected void doOKAction() {
+        if (shouldDoOkAction()) {
+            super.doOKAction();
+            FindSettings.getInstance().setSearchOverloadedMethods(myCbIncludeOverloadedAndExtensions.isSelected());
         }
     }
 }
