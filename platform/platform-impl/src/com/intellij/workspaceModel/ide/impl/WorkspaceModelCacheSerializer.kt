@@ -60,18 +60,19 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
   }
 
   // Serialize and atomically replace cacheFile. Delete temporary file in any cache to avoid junk in cache folder
-  internal fun saveCacheToFile(storage: EntityStorageSnapshot, file: Path, userPreProcessor: Boolean = false) {
+  internal fun saveCacheToFile(storage: EntityStorageSnapshot, file: Path, userPreProcessor: Boolean = false): SaveInfo {
     val start = System.currentTimeMillis()
 
     LOG.debug("Saving Workspace model cache to $file")
     val dir = file.parent
     Files.createDirectories(dir)
+    var cacheSize: Long? = null
     val tmpFile = Files.createTempFile(dir, "cache", ".tmp")
     try {
       val serializationResult = serializer.serializeCache(tmpFile, if (userPreProcessor) cachePreProcess(storage) else storage)
       when (serializationResult) {
         is SerializationResult.Fail<*> -> LOG.warn("Workspace model cache was not serialized: ${serializationResult.info}")
-        is SerializationResult.Success -> WorkspaceModelFusLogger.Util.logCacheSize(serializationResult.size)
+        is SerializationResult.Success -> cacheSize = serializationResult.size
       }
 
       try {
@@ -86,7 +87,13 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
       Files.deleteIfExists(tmpFile)
     }
     saveCacheToFileTimeMs.addElapsedTimeMs(start)
+    return SaveInfo(System.currentTimeMillis() - start, cacheSize)
   }
+
+  data class SaveInfo(
+    val loadingTime: Long,
+    val loadedSize: Long?,
+  )
 
   private fun cachePreProcess(storage: EntityStorage): EntityStorageSnapshot {
     val builder = MutableEntityStorage.from(storage)

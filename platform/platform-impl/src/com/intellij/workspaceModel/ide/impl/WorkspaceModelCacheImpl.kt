@@ -28,7 +28,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.exists
-import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
@@ -94,10 +93,8 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
 
     if (!cachesInvalidated.get()) {
       LOG.debug("Saving project model cache to $cacheFile")
-      val time = measureTimeMillis {
-        cacheSerializer.saveCacheToFile(storage, cacheFile, userPreProcessor = true)
-      }
-      WorkspaceModelFusLogger.Util.logCacheSaving(time)
+      val (time, size) = cacheSerializer.saveCacheToFile(storage, cacheFile, userPreProcessor = true)
+      WorkspaceModelFusLogger.Util.logCacheSave(time, size ?: -1)
       //todo check that where are no entities in the storage instead
       if (unloadedStorage != EntityStorageSnapshot.empty()) {
         LOG.debug("Saving project model cache to $unloadedEntitiesCacheFile")
@@ -121,7 +118,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
     val (cache, time) = measureTimedValue {
       cacheSerializer.loadCacheFromFile(cacheFile, invalidateCachesMarkerFile, invalidateProjectCacheMarkerFile)
     }
-    WorkspaceModelFusLogger.Util.logCacheLoading(time.inWholeMilliseconds)
+    WorkspaceModelFusLogger.Util.logCacheLoading(if (cache != null) time.inWholeMilliseconds else -1)
     return cache
   }
   override fun loadUnloadedEntitiesCache(): EntityStorage? {

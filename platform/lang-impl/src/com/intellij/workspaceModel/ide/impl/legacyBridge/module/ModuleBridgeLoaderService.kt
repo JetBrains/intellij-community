@@ -51,7 +51,6 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
 
       val start = System.currentTimeMillis()
 
-      WorkspaceModelFusLogger.Util.logIsLoadedFromCache(workspaceModel.loadedFromCache)
       if (workspaceModel.loadedFromCache) {
         val activity = StartUpMeasurer.startActivity("modules loading with cache")
         if (projectModelSynchronizer.hasNoSerializedJpsModules()) {
