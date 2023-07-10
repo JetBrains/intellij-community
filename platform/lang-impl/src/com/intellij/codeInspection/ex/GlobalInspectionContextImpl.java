@@ -26,6 +26,7 @@ import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.IntEventField;
 import com.intellij.internal.statistic.eventLog.events.LongEventField;
+import com.intellij.internal.statistic.eventLog.events.RoundedIntEventField;
 import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.LangBundle;
@@ -1355,11 +1356,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   }
 
   static class InspectionPerformanceCollector extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("inspection.performance", 2);
+    private static final EventLogGroup GROUP = new EventLogGroup("inspection.performance", 3);
 
     static final LongEventField TOTAL_DURATION = new LongEventField("total_duration_ms");
     static final LongEventField BUILD_REFERENCE_GRAPH_DURATION = new LongEventField("build_reference_graph_duration_ms");
-    static final IntEventField NUMBER_OF_FILES = new IntEventField("number_of_files");
+    static final RoundedIntEventField NUMBER_OF_FILES = new RoundedIntEventField("number_of_files");
     static final IntEventField NUMBER_OF_INSPECTIONS = new IntEventField("number_of_inspections");
 
     static final VarargEventId GLOBAL_INSPECTION_FINISHED = GROUP.registerVarargEvent("global.inspection.finished",
