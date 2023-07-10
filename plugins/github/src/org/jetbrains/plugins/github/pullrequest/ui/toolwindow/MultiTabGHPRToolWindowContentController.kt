@@ -24,7 +24,7 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.ui.selector.GHRepositoryAndAccountSelectorComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.selector.GHRepositoryAndAccountSelectorViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.selector.GHRepositoryConnectionManager
+import org.jetbrains.plugins.github.pullrequest.GHRepositoryConnectionManager
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import java.awt.BorderLayout
