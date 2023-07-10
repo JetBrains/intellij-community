@@ -38,7 +38,7 @@ suspend fun renderBlock(
     checkNotNull(node) { "Failed to find svg node after append" }
 
     node.updatePieDiagramViewBox()
-    block.findParentDivContainer().addStyleAttributeFromElement(node)
+    node.removeUserJourneyHeightAttribute()
 
     nodeToLastValidHtml[block] = block.innerHTML
     return node
@@ -53,11 +53,10 @@ private fun Element.findSvgElement(): Element? {
   return findChildElement { it.nodeName == "svg" }
 }
 
-private fun Element.findParentDivContainer(): Element {
-  val parentElement = parentElement
-  checkNotNull(parentElement)
-  check(parentElement.nodeName == "DIV")
-  return parentElement
+private fun Element.removeUserJourneyHeightAttribute() {
+  if (getAttribute("aria-roledescription") != "journey") return
+
+  removeAttribute("height")
 }
 
 private fun Element.updatePieDiagramViewBox() {
