@@ -186,10 +186,10 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     }
 
     private fun compileCodeFragment(context: ExecutionContext): CompiledCodeFragmentData {
-        return if (isK2Plugin()) compiledCodeFragmentDataK2() else compiledCodeFragmentDataK1(context)
+        return if (isK2Plugin()) compiledCodeFragmentDataK2(context) else compiledCodeFragmentDataK1(context)
     }
 
-    private fun compiledCodeFragmentDataK2(): CompiledCodeFragmentData = runReadAction {
+    private fun compiledCodeFragmentDataK2(context: ExecutionContext): CompiledCodeFragmentData = runReadAction {
         val module = codeFragment.module
 
         val compilerConfiguration = CompilerConfiguration().apply {
@@ -229,6 +229,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             } catch (e: ProcessCanceledException) {
                 throw e
             } catch (e: Exception) {
+                reportErrorWithAttachments(context, codeFragment, CodeFragmentCodegenException(e))
                 throw EvaluateExceptionUtil.createEvaluateException(e)
             }
         }
