@@ -144,6 +144,7 @@ object ShortcutsRenderingUtil {
     KeyEvent.VK_RIGHT -> "→"
     KeyEvent.VK_UP -> "↑"
     KeyEvent.VK_DOWN -> "↓"
+    KeyEvent.VK_BACK_SLASH -> """\"""
     else -> if (SystemInfo.isMac) getMacKeyString(code) else getLinuxWinKeyString(code)
   }.replaceSpacesWithNonBreakSpaces()
 
