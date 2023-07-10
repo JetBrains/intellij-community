@@ -25,7 +25,7 @@ class ExperimentalUiCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("experimental.ui.interactions", 5)
+    private val GROUP = EventLogGroup("experimental.ui.interactions", 6)
 
     private val switchSourceField = EventFields.Enum<SwitchSource>("switch_source")
     private val expUiField = EventFields.Boolean("exp_ui")
