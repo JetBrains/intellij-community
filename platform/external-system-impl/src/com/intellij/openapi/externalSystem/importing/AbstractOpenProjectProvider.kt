@@ -37,7 +37,9 @@ abstract class AbstractOpenProjectProvider {
   }
 
   @Deprecated("use async method instead")
-  open fun linkToExistingProject(projectFile: VirtualFile, project: Project) {}
+  open fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
+    throw UnsupportedOperationException()
+  }
 
   open suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
     withContext(Dispatchers.EDT) {

@@ -24,7 +24,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<MavenServerEmbedder> {
-  protected final Project myProject;
+  private final Project myProject;
 
   MavenEmbedderWrapper(@NotNull Project project) {
     super(null);

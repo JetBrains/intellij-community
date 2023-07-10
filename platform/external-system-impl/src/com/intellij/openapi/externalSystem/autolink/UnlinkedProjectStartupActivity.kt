@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.autolink
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.createExtensionDisposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
@@ -183,7 +184,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
       val extensionDisposable = EP_NAME.createExtensionDisposable(extension, project)
       UnlinkedProjectNotificationAware.getInstance(project)
         .notificationNotify(extension.createProjectId(externalProjectPath)) {
-          val cs = project.getService(CoroutineScopeService::class.java).coroutineScope
+          val cs = project.service<CoroutineScopeService>().coroutineScope
           cs.launch(extensionDisposable) {
             extension.linkAndLoadProjectAsync(project, externalProjectPath)
           }

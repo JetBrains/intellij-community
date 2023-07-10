@@ -24,6 +24,7 @@ interface ExternalSystemUnlinkedProjectAware {
 
   @Deprecated("use async method instead")
   fun linkAndLoadProject(project: Project, externalProjectPath: String) {
+    throw UnsupportedOperationException()
   }
 
   suspend fun linkAndLoadProjectAsync(project: Project, externalProjectPath: String) {

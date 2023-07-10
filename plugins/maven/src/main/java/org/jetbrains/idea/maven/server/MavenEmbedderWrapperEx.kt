@@ -10,7 +10,7 @@ import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import java.util.*
 
-abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(project) {
+abstract class MavenEmbedderWrapperEx(private val project: Project) : MavenEmbedderWrapper(project) {
   @Throws(MavenProcessCanceledException::class)
   override fun <R> runLongRunningTask(task: LongRunningEmbedderTask<R>,
                                       indicator: ProgressIndicator?,
@@ -40,7 +40,7 @@ abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(p
                                                   syncConsole: MavenSyncConsole?,
                                                   console: MavenConsole?,
                                                   task: LongRunningEmbedderTask<R>): R {
-    val cs = MavenCoroutineScopeProvider.getCoroutineScope(myProject)
+    val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
     val asyncTask = cs.async {
       val progressIndication = launch {
         while (isActive) {
