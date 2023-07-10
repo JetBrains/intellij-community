@@ -43,8 +43,6 @@ import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.utils.Printer
 import java.util.concurrent.Callable
 
-class CodeFragmentCodegenException(val reason: Exception) : Exception()
-
 class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
     companion object {
