@@ -19,10 +19,10 @@ The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
 
   <!--suppress PluginXmlValidity -->
   <change-notes><![CDATA[
-    <h3>1.9.0-Beta</h3>
+    <h3>1.9.0</h3>
     <ul>
       <li>Language: stable `rangeUntil` operator, stable data objects feature, stable `Enum.entries` replacement for `Enum.values()`, stable `@Volatile` annotation</li>
-      <li>K2: basic support for Kotlin/Native and multiplatform projects, support for Kotlin/JS since 1.8.20</li>
+      <li>K2: JVM promoted to beta, basic support for Kotlin/Native and multiplatform projects, support for Kotlin/JS since 1.8.20</li>
       <li>Kotlin/JVM: `@JvmDefault` and old `-Xjvm-default` modes deprecated with error, support for Java 20 bytecode</li>
       <li>Kotlin/Native: new custom memory allocator, no object initialization when accessing `const val`, partial linkage enabled by default</li>
       <li>Kotlin Multiplatform: new name for the `android` block, new Android source set layout enabled by default, support for Gradle configuration caching in multiplatform libraries, ability to disable sources publication in the Kotlin Multiplatform Gradle plugin, ability to add dependencies between Pods when using the CocoaPods Gradle plugin</li>
