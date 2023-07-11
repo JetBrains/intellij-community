@@ -13,15 +13,11 @@ import org.jetbrains.yaml.YAMLLanguage
 
 class MermaidInjector : LanguageInjectionContributor {
   override fun getInjection(context: PsiElement): Injection? {
-    if (context is MermaidMarkdownValue) {
-      return SimpleInjection(MarkdownLanguage.INSTANCE, "", "", null)
+    return when (context) {
+      is MermaidMarkdownValue -> SimpleInjection(MarkdownLanguage.INSTANCE, "", "", null)
+      is MermaidDirectiveValue -> SimpleInjection(Json5Language.INSTANCE, "", "", null)
+      is MermaidFrontmatterContent -> SimpleInjection(YAMLLanguage.INSTANCE, "", "", null)
+      else -> null
     }
-    if (context is MermaidDirectiveValue) {
-      return SimpleInjection(Json5Language.INSTANCE, "", "", null)
-    }
-    if (context is MermaidFrontmatterContent) {
-      return SimpleInjection(YAMLLanguage.INSTANCE, "", "", null)
-    }
-    return null
   }
 }
