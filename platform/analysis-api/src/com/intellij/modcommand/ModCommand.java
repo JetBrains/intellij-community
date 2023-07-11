@@ -16,7 +16,7 @@ import java.util.Set;
  */
 public sealed interface ModCommand
   permits ModChooseAction, ModCompositeCommand, ModCopyToClipboard, ModCreateFile, ModDeleteFile, ModDisplayMessage, ModHighlight,
-          ModNavigate, ModNothing, ModRenameSymbol, ModUpdateFileText {
+          ModNavigate, ModNothing, ModRenameSymbol, ModShowConflicts, ModUpdateFileText {
 
   /**
    * @return true if the command does nothing

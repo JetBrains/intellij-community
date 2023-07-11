@@ -44,8 +44,8 @@ public interface ModCommandExecutor {
 
   sealed interface BatchExecutionResult {
     default @NotNull BatchExecutionResult compose(@NotNull BatchExecutionResult next) {
-      if (next == Result.NOTHING || next.equals(this) || this instanceof Error) return this;
-      if (this == Result.NOTHING || next instanceof Error) return next;
+      if (next == Result.NOTHING || next.equals(this) || this instanceof Error || this == Result.CONFLICTS) return this;
+      if (this == Result.NOTHING || next instanceof Error || next == Result.CONFLICTS) return next;
       if (this == Result.ABORT || next == Result.ABORT) return Result.ABORT;
       return Result.SUCCESS;
     }
@@ -69,8 +69,11 @@ public interface ModCommandExecutor {
     /**
      * Action was aborted
      */
-    ABORT;
-
+    ABORT,
+    /**
+     * Conflicts should be displayed and confirmed
+     */
+    CONFLICTS;
 
     @Nls
     @Override
@@ -80,6 +83,7 @@ public interface ModCommandExecutor {
         case INTERACTIVE -> AnalysisBundle.message("modcommand.result.action.is.interactive.only.cannot.be.executed.in.batch");
         case NOTHING -> AnalysisBundle.message("modcommand.result.action.has.no.effect");
         case ABORT -> AnalysisBundle.message("modcommand.result.action.was.aborted");
+        case CONFLICTS -> AnalysisBundle.message("modcommand.result.conflict");
       };
     }
   }

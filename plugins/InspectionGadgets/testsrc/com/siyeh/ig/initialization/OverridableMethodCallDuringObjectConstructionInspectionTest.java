@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.initialization;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -30,7 +30,11 @@ public class OverridableMethodCallDuringObjectConstructionInspectionTest extends
     final IntentionAction intention = myFixture.getAvailableIntention(InspectionGadgetsBundle.message("make.method.final.fix.name", "a"));
     assertNotNull(intention);
     String customPreviewText = myFixture.getIntentionPreviewText(intention);
-    assertEquals("public final void a() {}", customPreviewText);
+    assertEquals("""
+                   class One {
+                     public final void a() {}
+                   }
+                   """, customPreviewText);
   }
 
   public void testNoQuickFixes() {

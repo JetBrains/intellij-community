@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.initialization;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -35,21 +36,21 @@ import java.util.List;
 public class OverridableMethodCallDuringObjectConstructionInspection extends BaseInspection {
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[0];
     final PsiClass callClass = ClassUtils.getContainingClass(methodCallExpression);
     final PsiMethod method = methodCallExpression.resolveMethod();
     if (method == null || callClass == null || MethodUtils.isOverriddenInHierarchy(method, callClass)) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }
-    final List<InspectionGadgetsFix> fixes = new SmartList<>();
+    final List<LocalQuickFix> fixes = new SmartList<>();
     if (!callClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       fixes.add(new MakeClassFinalFix(callClass));
     }
     if (!(method instanceof PsiCompiledElement) && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       fixes.add(new MakeMethodFinalFix(method.getName()));
     }
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override

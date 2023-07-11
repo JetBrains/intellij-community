@@ -42,9 +42,11 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,6 +107,12 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (command instanceof ModNavigate || command instanceof ModHighlight ||
         command instanceof ModCopyToClipboard || command instanceof ModRenameSymbol) {
       return Result.INTERACTIVE;
+    }
+    if (command instanceof ModShowConflicts showConflicts) {
+      if (showConflicts.conflicts().isEmpty()) {
+        return executeInBatch(context, showConflicts.nextStep());
+      }
+      return Result.CONFLICTS;
     }
     if (command instanceof ModDisplayMessage message) {
       if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {
@@ -174,7 +182,23 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (command instanceof ModDeleteFile deleteFile) {
       return executeDelete(project, deleteFile);
     }
+    if (command instanceof ModShowConflicts showConflicts) {
+      return executeShowConflicts(context, showConflicts, editor);
+    }
     throw new IllegalArgumentException("Unknown command: " + command);
+  }
+
+  private boolean executeShowConflicts(@NotNull ActionContext context, @NotNull ModShowConflicts conflicts, @Nullable Editor editor) {
+    MultiMap<PsiElement, String> conflictData = new MultiMap<>();
+    conflicts.conflicts().forEach((e, c) -> conflictData.put(e, c.messages()));
+    if (!conflictData.isEmpty()) {
+      var conflictsDialog =
+        new ConflictsDialog(context.project(), conflictData, () -> doExecuteInteractively(context, conflicts.nextStep(), editor));
+      if (!conflictsDialog.showAndGet()) {
+        return false;
+      }
+    }
+    return doExecuteInteractively(context, conflicts.nextStep(), editor);
   }
 
   private static boolean executeCopyToClipboard(@NotNull ModCopyToClipboard clipboard) {
