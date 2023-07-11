@@ -8,6 +8,8 @@ open class DebugOutputPrinter {
 
   private val stack = mutableSetOf<Any>()
 
+  protected var indent = " "
+
   fun printValue(value: Any): String =
     StringBuilder().printValue(0, value).toString()
 
@@ -27,13 +29,14 @@ open class DebugOutputPrinter {
       is String -> builder.append("\"").append(value.ellipsis(80)).append("\"")
       is PsiElement -> builder.printPsiElement(value)
       is List<*> -> builder.printList(level, value)
+      is Set<*> -> builder.printSet(level, value)
       is Map<*, *> -> builder.printMap(level, value)
       is Pair<*, *> -> builder.printPair(level, value)
       null -> builder.append("<null>")
       else -> builder.append(value)
     }
 
-  protected fun StringBuilder.printProperty(level: Int, name: String, value: Any?): StringBuilder {
+  protected open fun StringBuilder.printProperty(level: Int, name: String, value: Any?): StringBuilder {
     if (value == null) return this
     indent(level).append(name).append(": ")
       .printValue(level, value)
@@ -44,15 +47,15 @@ open class DebugOutputPrinter {
   protected open fun printRecursiveValue(builder: StringBuilder, level: Int, value: Any) =
     builder.append("<recursive value of class ${value.javaClass.simpleName}>")
 
-  private fun StringBuilder.printMap(level: Int,
-                                     map: Map<*, *>): StringBuilder =
+  protected open fun StringBuilder.printMap(level: Int,
+                                            map: Map<*, *>): StringBuilder =
     printObject(level) {
       for (entry in map) {
         printProperty(it, entry.key.toString(), entry.value)
       }
     }
 
-  private fun StringBuilder.printList(level: Int, list: List<*>): StringBuilder {
+  protected open fun StringBuilder.printList(level: Int, list: List<*>): StringBuilder {
     append("[")
     if (list.isEmpty()) {
       append("]")
@@ -67,21 +70,36 @@ open class DebugOutputPrinter {
     return this
   }
 
-  protected fun StringBuilder.printObject(level: Int,
-                                          printer: (level: Int) -> Unit): StringBuilder {
+  protected open fun StringBuilder.printSet(level: Int, set: Set<*>): StringBuilder {
+    append("<")
+    if (set.isEmpty()) {
+      append(">")
+    }
+    else {
+      append('\n')
+      set.forEach {
+        indent(level + 1).printValue(level + 1, it).append(",\n")
+      }
+      indent(level).append(">")
+    }
+    return this
+  }
+
+  protected open fun StringBuilder.printObject(level: Int,
+                                               printer: (level: Int) -> Unit): StringBuilder {
     append("{\n")
     printer(level + 1)
     indent(level).append("}")
     return this
   }
 
-  private fun StringBuilder.printPair(level: Int, pair: Pair<*, *>): StringBuilder =
+  protected open fun StringBuilder.printPair(level: Int, pair: Pair<*, *>): StringBuilder =
     printMap(level, mapOf(Pair("first", pair.first), Pair("second", pair.second)))
 
   protected fun StringBuilder.indent(level: Int): StringBuilder =
-    append(" ".repeat(level))
+    append(indent.repeat(level))
 
-  private fun StringBuilder.printPsiElement(element: PsiElement): StringBuilder {
+  protected open fun StringBuilder.printPsiElement(element: PsiElement): StringBuilder {
     append(element::class.java.simpleName)
       .append(" <")
       .append(element.containingFile.virtualFile?.path?.removeOutputPathPrefix())

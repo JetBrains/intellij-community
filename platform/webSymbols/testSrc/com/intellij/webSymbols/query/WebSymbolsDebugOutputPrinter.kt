@@ -42,6 +42,9 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       printProperty(level, "source", item.symbol)
     }
 
+  override fun StringBuilder.printSet(level: Int, set: Set<*>): StringBuilder {
+    return append(set.toString())
+  }
 
   private fun StringBuilder.printSymbol(topLevel: Int, source: WebSymbol): StringBuilder {
     if (parents.contains(source)) {
