@@ -7,6 +7,7 @@ import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -217,10 +218,25 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
   }
 
   protected PsiFileSystemItem @Nullable [] getPsiFiles(@Nullable List<? extends File> fileList) {
+    return psiFilesFromVirtualFiles(getVirtualFiles(fileList));
+  }
+
+  private static @Nullable List<VirtualFile> getVirtualFiles(@Nullable List<? extends File> fileList) {
     if (fileList == null) return null;
-    List<PsiFileSystemItem> sourceFiles = new ArrayList<>();
+    List<VirtualFile> virtualFiles = new ArrayList<>();
     for (File file : fileList) {
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      if (vFile != null) {
+        virtualFiles.add(vFile);
+      }
+    }
+    return virtualFiles;
+  }
+
+  private PsiFileSystemItem @Nullable [] psiFilesFromVirtualFiles(@Nullable List<? extends VirtualFile> fileList) {
+    if (fileList == null) return null;
+    List<PsiFileSystemItem> sourceFiles = new ArrayList<>();
+    for (VirtualFile vFile : fileList) {
       PsiFileSystemItem psiFile = PsiUtilCore.findFileSystemItem(myProject, vFile);
       if (psiFile != null) {
         sourceFiles.add(psiFile);
@@ -310,17 +326,20 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     @Override
     public void doDropFiles(List<? extends File> files, @NotNull TreePath target) {
-      ReadAction.nonBlocking(() -> getDropContext(getPsiFiles(files), target))
-        .finishOnUiThread(ModalityState.defaultModalityState(), dropContext -> {
-          DropTargetNode node = getLastUserObject(DropTargetNode.class, target);
-          if (node != null) {
-            node.dropExternalFiles((PsiFileSystemItem[])dropContext.sourceElements(), DataManager.getInstance().getDataContext(myTree));
-          }
-          else {
-            doDrop(dropContext, true);
-          }
-        })
-        .submit(AppExecutorUtil.getAppExecutorService());
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        var virtualFiles = getVirtualFiles(files);
+        ReadAction.nonBlocking(() -> getDropContext(psiFilesFromVirtualFiles(virtualFiles), target))
+          .finishOnUiThread(ModalityState.defaultModalityState(), dropContext -> {
+            DropTargetNode node = getLastUserObject(DropTargetNode.class, target);
+            if (node != null) {
+              node.dropExternalFiles((PsiFileSystemItem[])dropContext.sourceElements(), DataManager.getInstance().getDataContext(myTree));
+            }
+            else {
+              doDrop(dropContext, true);
+            }
+          })
+          .submit(AppExecutorUtil.getAppExecutorService());
+      });
     }
 
     @NotNull
@@ -392,9 +411,12 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     @Override
     public void doDropFiles(List<? extends File> files, @NotNull TreePath target) {
-      ReadAction.nonBlocking(() -> new DropContext(getPsiFiles(files), getPsiElement(target), null))
-        .finishOnUiThread(ModalityState.defaultModalityState(), context -> doDrop(context))
-        .submit(AppExecutorUtil.getAppExecutorService());
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        var virtualFiles = getVirtualFiles(files);
+        ReadAction.nonBlocking(() -> new DropContext(psiFilesFromVirtualFiles(virtualFiles), getPsiElement(target), null))
+          .finishOnUiThread(ModalityState.defaultModalityState(), context -> doDrop(context))
+          .submit(AppExecutorUtil.getAppExecutorService());
+      });
     }
   }
 
