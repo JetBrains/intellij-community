@@ -36,7 +36,10 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.getValueArgumentName
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
-import org.jetbrains.kotlin.idea.refactoring.introduce.*
+import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringException
+import org.jetbrains.kotlin.idea.refactoring.introduce.findExpressionByCopyableDataAndClearIt
+import org.jetbrains.kotlin.idea.refactoring.introduce.mustBeParenthesizedInInitializerPosition
+import org.jetbrains.kotlin.idea.refactoring.introduce.removeTemplateEntryBracesIfPossible
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -55,15 +58,13 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
     val INTRODUCE_VARIABLE get() = KotlinBundle.message("introduce.variable")
 
     private val EXPRESSION_KEY = Key.create<Boolean>("EXPRESSION_KEY")
-    private val COMMON_PARENT_KEY = Key.create<Boolean>("COMMON_PARENT_KEY")
 
     private var KtExpression.isOccurrence: Boolean by NotNullablePsiCopyableUserDataProperty(Key.create("OCCURRENCE"), false)
 
     private class IntroduceVariableContext(
         private val expression: KtExpression,
         private val nameSuggestions: List<Collection<String>>,
-        private val commonContainer: PsiElement,
-        private val commonParent: PsiElement,
+        private val container: PsiElement,
         private val replaceOccurrence: Boolean,
         private val componentNames: List<String>,
     ) {
@@ -110,8 +111,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         private fun runRefactoring(
             isVar: Boolean,
             expression: KtExpression,
-            commonContainer: PsiElement,
-            commonParent: PsiElement,
+            container: PsiElement,
         ) {
             val initializer = (expression as? KtParenthesizedExpression)?.expression ?: expression
             val initializerText = if (initializer.mustBeParenthesizedInInitializerPosition()) "(${initializer.text})" else initializer.text
@@ -139,12 +139,12 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                 }.let { psiFactory.createProperty(it) }
             }
 
-            var anchor = calculateAnchor(commonParent, commonContainer, listOf(expression)) ?: return
-            val needBraces = commonContainer !is KtBlockExpression && commonContainer !is KtClassBody && commonContainer !is KtFile
+            var anchor = calculateAnchor(expression, container) ?: return
+            val needBraces = container !is KtBlockExpression && container !is KtClassBody && container !is KtFile
             ApplicationManager.getApplication().runWriteAction {
                 if (!needBraces) {
-                    property = commonContainer.addBefore(property, anchor) as KtDeclaration
-                    commonContainer.addBefore(psiFactory.createNewLine(), anchor)
+                    property = container.addBefore(property, anchor) as KtDeclaration
+                    container.addBefore(psiFactory.createNewLine(), anchor)
                 } else {
                     var emptyBody: KtExpression = psiFactory.createEmptyBody()
                     val firstChild = emptyBody.firstChild
@@ -157,14 +157,14 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                             anchor = exprAfterReplace
                         }
 
-                        var oldElement: PsiElement = commonContainer
-                        if (commonContainer is KtWhenEntry) {
-                            val body = commonContainer.expression
+                        var oldElement: PsiElement = container
+                        if (container is KtWhenEntry) {
+                            val body = container.expression
                             if (body != null) {
                                 oldElement = body
                             }
-                        } else if (commonContainer is KtContainerNode) {
-                            val children = commonContainer.children
+                        } else if (container is KtContainerNode) {
+                            val children = container.children
                             for (child in children) {
                                 if (child is KtExpression) {
                                     oldElement = child
@@ -217,9 +217,9 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                             property = child
                         }
                     }
-                    if (commonContainer is KtContainerNode) {
-                        if (commonContainer.parent is KtIfExpression) {
-                            val next = commonContainer.nextSibling
+                    if (container is KtContainerNode) {
+                        if (container.parent is KtIfExpression) {
+                            val next = container.nextSibling
                             if (next != null) {
                                 val nextNext = next.nextSibling
                                 if (nextNext != null && nextNext.node.elementType == KtTokens.ELSE_KEYWORD) {
@@ -232,7 +232,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     }
                 }
                 if (!needBraces) {
-                    if (expression.shouldReplaceOccurrence(commonContainer)) {
+                    if (expression.shouldReplaceOccurrence(container)) {
                         replaceExpression(expression, true)
                     } else {
                         val sibling = PsiTreeUtil.skipSiblingsBackward(expression, PsiWhiteSpace::class.java)
@@ -250,44 +250,36 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         }
 
         fun runRefactoring(isVar: Boolean) {
-            if (commonContainer !is KtDeclarationWithBody) return runRefactoring(
+            if (container !is KtDeclarationWithBody) return runRefactoring(
                 isVar,
                 expression,
-                commonContainer,
-                commonParent,
+                container,
             )
 
-            commonContainer.bodyExpression.sure { "Original body is not found: $commonContainer" }
+            container.bodyExpression.sure { "Original body is not found: $container" }
 
             expression.putCopyableUserData(EXPRESSION_KEY, true)
-            commonParent.putCopyableUserData(COMMON_PARENT_KEY, true)
 
-            analyzeInModalWindow(commonContainer, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-                ConvertToBlockBodyUtils.createContext(commonContainer, ShortenReferencesFacility.getInstance(), reformat = false)?.let {
-                    ConvertToBlockBodyUtils.convert(commonContainer, it)
+            analyzeInModalWindow(container, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+                ConvertToBlockBodyUtils.createContext(container, ShortenReferencesFacility.getInstance(), reformat = false)?.let {
+                    ConvertToBlockBodyUtils.convert(container, it)
                 }
-                val newCommonContainer = commonContainer.bodyBlockExpression.sure { "New body is not found: $commonContainer" }
-                val newExpression = newCommonContainer.findExpressionByCopyableDataAndClearIt(EXPRESSION_KEY)
-                val newCommonParent = newCommonContainer.findElementByCopyableDataAndClearIt(COMMON_PARENT_KEY)
+                val newContainer = container.bodyBlockExpression.sure { "New body is not found: $container" }
+                val newExpression = newContainer.findExpressionByCopyableDataAndClearIt(EXPRESSION_KEY)
 
                 runRefactoring(
                     isVar,
                     newExpression ?: return@analyzeInModalWindow,
-                    newCommonContainer,
-                    newCommonParent ?: return@analyzeInModalWindow
+                    newContainer,
                 )
             }
         }
     }
 
-    private fun calculateAnchor(commonParent: PsiElement, commonContainer: PsiElement, allReplaces: List<KtExpression>): PsiElement? {
-        if (commonParent != commonContainer) return commonParent.parentsWithSelf.firstOrNull { it.parent == commonContainer }
-
-        val startOffset = allReplaces.fold(commonContainer.endOffset) { offset, expr ->
-            min(offset, expr.startOffset)
-        }
-
-        return commonContainer.allChildren.lastOrNull { it.textRange.contains(startOffset) }
+    private fun calculateAnchor(expression: PsiElement, container: PsiElement): PsiElement? {
+        if (expression != container) return expression.parentsWithSelf.firstOrNull { it.parent == container }
+        val startOffset = min(container.endOffset, expression.startOffset)
+        return container.allChildren.lastOrNull { it.textRange.contains(startOffset) }
     }
 
     private fun PsiElement.isAssignmentLHS(): Boolean = parents.any {
@@ -326,21 +318,6 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         is KtLoopExpression -> parent.body != place
         is KtArrayAccessExpression -> true
         else -> false
-    }
-
-    private fun KtExpression.getOccurrenceContainer(): KtElement? {
-        var result: KtElement? = null
-        for ((place, parent) in parentsWithSelf.zip(parents)) {
-            when {
-                parent is KtContainerNode && place !is KtBlockExpression && !parent.isBadContainerNode(place) -> result = parent
-                parent is KtClassBody || parent is KtFile -> return result ?: parent as? KtElement
-                parent is KtBlockExpression -> result = parent
-                parent is KtWhenEntry && place !is KtBlockExpression -> result = parent
-                parent is KtDeclarationWithBody && parent.bodyExpression == place && place !is KtBlockExpression -> result = parent
-            }
-        }
-
-        return null
     }
 
     private fun showErrorHint(project: Project, editor: Editor?, @NlsContexts.DialogMessage message: String) {
@@ -401,7 +378,6 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         editor: Editor?,
         expression: KtExpression,
         container: KtElement,
-        occurrenceContainer: KtElement,
         isVar: Boolean,
     ) {
         val parent = expression.parent
@@ -450,19 +426,13 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         val callback = {
             val replaceOccurrence = expression.shouldReplaceOccurrence(container)
 
-            val commonParent = expression.parent as KtElement
-            var commonContainer = commonParent as? KtFile ?: commonParent.getContainer()!!
-            if (commonContainer != container && container.isAncestor(commonContainer, true)) {
-                commonContainer = container
-            }
-
             expression.chooseApplicableComponentNamesForVariableDeclaration(replaceOccurrence, editor) { componentNames ->
-                val anchor = calculateAnchor(commonParent, commonContainer, listOf(expression))
+                val anchor = calculateAnchor(expression, container)
                 val suggestedNames = allowAnalysisOnEdt {
                     analyze(expression) {
                         val nameValidator = KotlinDeclarationNameValidator(
                             expression,
-                            anchor?.siblings() ?: commonContainer.allChildren,
+                            anchor?.siblings() ?: container.allChildren,
                             KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
                             this,
                         )
@@ -481,8 +451,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                 val introduceVariableContext = IntroduceVariableContext(
                     expression,
                     suggestedNames,
-                    commonContainer,
-                    commonParent,
+                    container,
                     replaceOccurrence,
                     componentNames
                 )
@@ -544,34 +513,27 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         return parent.bodyExpression == this && (parent is KtFunctionLiteral || parent.isFunctionalExpression())
     }
 
-    private fun KtExpression.getCandidateContainers(): List<Pair<KtElement, KtElement>> {
+    private fun KtExpression.getCandidateContainers(): List<KtElement> {
         val firstContainer = getContainer() ?: return emptyList()
-        val firstOccurrenceContainer = getOccurrenceContainer() ?: return emptyList()
 
         val containers = SmartList(firstContainer)
-        val occurrenceContainers = SmartList(firstOccurrenceContainer)
 
-        if (!firstContainer.isFunExpressionOrLambdaBody()) return listOf(firstContainer to firstOccurrenceContainer)
+        if (!firstContainer.isFunExpressionOrLambdaBody()) return listOf(firstContainer)
 
         val lambdasAndContainers = ArrayList<Pair<KtExpression, KtElement>>().apply {
             var container = firstContainer
             do {
                 var lambda: KtExpression = container.getNonStrictParentOfType<KtFunction>()!!
-                if (lambda is KtFunctionLiteral) lambda =
-                    lambda.parent as? KtLambdaExpression ?: return@apply //if (!isResolvableNextTo(lambda)) return@apply
+                if (lambda is KtFunctionLiteral) {
+                    lambda = lambda.parent as? KtLambdaExpression ?: return@apply
+                }
                 container = lambda.getContainer() ?: return@apply
                 add(lambda to container)
             } while (container.isFunExpressionOrLambdaBody())
         }
 
         lambdasAndContainers.mapTo(containers) { it.second }
-        lambdasAndContainers.mapTo(occurrenceContainers) { it.first.getOccurrenceContainer() }
-        return ArrayList<Pair<KtElement, KtElement>>().apply {
-            for ((container, occurrenceContainer) in (containers zip occurrenceContainers)) {
-                if (occurrenceContainer == null) continue
-                add(container to occurrenceContainer)
-            }
-        }
+        return containers
     }
 
     private fun doRefactoring(
@@ -579,7 +541,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         editor: Editor?,
         expressionToExtract: KtExpression?,
         isVar: Boolean,
-        selectContainer: (List<Pair<KtElement, KtElement>>, (Pair<KtElement, KtElement>) -> Unit) -> Unit
+        selectContainer: (List<KtElement>, (KtElement) -> Unit) -> Unit
     ) {
         val expression = expressionToExtract?.let { KtPsiUtil.safeDeparenthesize(it) }
             ?: return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.expression"))
@@ -594,10 +556,8 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.container"))
         }
 
-        selectContainer(candidateContainers) { (container, occurrenceContainer) ->
-            doRefactoring(
-                project, editor, expression, container, occurrenceContainer, isVar
-            )
+        selectContainer(candidateContainers) { container ->
+            doRefactoring(project, editor, expression, container, isVar)
         }
     }
 
@@ -618,9 +578,12 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             doRefactoring(candidateContainers.last())
         } else {
             chooseContainerElementIfNecessary(
-                candidateContainers, editor,
-                KotlinBundle.message("text.select.target.code.block"), true, { it.first },
-                doRefactoring
+                candidateContainers,
+                editor,
+                KotlinBundle.message("text.select.target.code.block"),
+                true,
+                { it },
+                doRefactoring,
             )
         }
     }
