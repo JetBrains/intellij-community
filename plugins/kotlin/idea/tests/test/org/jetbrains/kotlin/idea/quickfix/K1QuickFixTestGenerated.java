@@ -11342,11 +11342,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/optIn/existingFileAnnotationWithPackage.kt");
             }
 
-            @TestMetadata("forbiddenRetentionSource.kt")
-            public void testForbiddenRetentionSource() throws Exception {
-                runTest("testData/quickfix/optIn/forbiddenRetentionSource.kt");
-            }
-
             @TestMetadata("forbiddenTargetsExpression.kt")
             public void testForbiddenTargetsExpression() throws Exception {
                 runTest("testData/quickfix/optIn/forbiddenTargetsExpression.kt");
@@ -12456,6 +12451,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
     public static class RemoveAnnotation extends AbstractK1QuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("forbiddenRetentionSource.kt")
+        public void testForbiddenRetentionSource() throws Exception {
+            runTest("testData/quickfix/removeAnnotation/forbiddenRetentionSource.kt");
         }
 
         @TestMetadata("jvmField.kt")

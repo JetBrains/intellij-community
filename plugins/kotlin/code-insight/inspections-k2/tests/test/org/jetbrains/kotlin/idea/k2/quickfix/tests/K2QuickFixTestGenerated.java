@@ -749,6 +749,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("forbiddenRetentionSource.kt")
+        public void testForbiddenRetentionSource() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/forbiddenRetentionSource.kt");
+        }
+
         @TestMetadata("jvmField.kt")
         public void testJvmField() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/removeAnnotation/jvmField.kt");

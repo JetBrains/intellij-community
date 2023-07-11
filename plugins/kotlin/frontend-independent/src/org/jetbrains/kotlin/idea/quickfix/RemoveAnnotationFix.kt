@@ -47,6 +47,11 @@ class RemoveAnnotationFix(@Nls private val text: String, annotationEntry: KtAnno
             RemoveAnnotationFix(KotlinBundle.message("remove.annotation.doesnt.have.any.effect"), psiElement)
     }
 
+    object RemoveForbiddenOptInRetention : QuickFixesPsiBasedFactory<KtAnnotationEntry>(KtAnnotationEntry::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+        override fun doCreateQuickFix(psiElement: KtAnnotationEntry): List<IntentionAction> =
+            listOf(RemoveAnnotationFix(KotlinBundle.message("fix.opt_in.remove.forbidden.retention"), psiElement))
+    }
+
     companion object : QuickFixesPsiBasedFactory<KtAnnotationEntry>(KtAnnotationEntry::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
         override fun doCreateQuickFix(psiElement: KtAnnotationEntry): List<IntentionAction> =
             listOf(RemoveAnnotationFix(KotlinBundle.message("fix.remove.annotation.text"), annotationEntry = psiElement))

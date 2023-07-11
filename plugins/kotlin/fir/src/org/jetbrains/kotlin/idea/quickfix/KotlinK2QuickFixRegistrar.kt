@@ -247,6 +247,14 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         )
     }
 
+    private val optIn = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerPsiQuickFixes(
+            KtFirDiagnostic.OptInMarkerWithWrongRetention::class,
+            RemoveAnnotationFix.RemoveForbiddenOptInRetention
+        )
+    }
+
+
     override val list: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(
         keywords,
         addAbstract,
@@ -263,5 +271,6 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         vararg,
         visibility,
         other,
+        optIn
     )
 }
