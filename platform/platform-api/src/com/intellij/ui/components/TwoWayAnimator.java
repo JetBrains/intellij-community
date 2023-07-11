@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.util.Alarm;
@@ -72,14 +72,14 @@ abstract class TwoWayAnimator {
 
     @Override
     public void paintNow(int frame, int totalFrames, int cycle) {
-      if (isForward() ? (frame > myFrame) : (frame < myFrame)) {
+      if (isForward ? (frame > myFrame) : (frame < myFrame)) {
         setFrame(frame);
       }
     }
 
     @Override
     protected void paintCycleEnd() {
-      setFrame(isForward() ? myMaxFrame : 0);
+      setFrame(isForward ? myMaxFrame : 0);
     }
   }
 }

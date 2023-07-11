@@ -24,7 +24,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
 
   @Override
   protected Dimension calcPreferredSize() {
-    return new Dimension(myPassiveIcon.getIconWidth(), myPassiveIcon.getIconHeight());
+    return new Dimension(passiveIcon.getIconWidth(), passiveIcon.getIconHeight());
   }
 
   public void updateLocation(@NotNull JComponent container) {
@@ -68,6 +68,6 @@ public class AsyncProcessIcon extends AnimatedIcon {
 
 
   public boolean isDisposed() {
-    return myAnimator.isDisposed();
+    return animator.isDisposed();
   }
 }

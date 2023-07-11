@@ -1,186 +1,159 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.ui
 
-package com.intellij.util.ui;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.util.concurrency.EdtScheduledExecutorService
+import org.jetbrains.annotations.ApiStatus.Obsolete
+import org.jetbrains.annotations.NonNls
+import java.awt.GraphicsEnvironment
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
+import javax.swing.SwingUtilities
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
-import org.jetbrains.annotations.NonNls;
+abstract class Animator @JvmOverloads constructor(private val name: @NonNls String?,
+                                                  private val totalFrames: Int,
+                                                  private val cycleDuration: Int,
+                                                  private val isRepeatable: Boolean,
+                                                  @JvmField protected val isForward: Boolean = true) : Disposable {
+  private var ticker: ScheduledFuture<*>? = null
+  private var currentFrame = 0
+  private var startTime: Long = 0
+  private var startDeltaTime: Long = 0
+  private var initialStep = false
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+  @Obsolete
+  fun isForward(): Boolean = isForward
 
-public abstract class Animator implements Disposable {
-  private final String myName;
-  private final int myTotalFrames;
-  private final int myCycleDuration;
-  private final boolean myForward;
-  private final boolean myRepeatable;
+  @Volatile
+  var isDisposed: Boolean = false
+    private set
 
-  private ScheduledFuture<?> myTicker;
-
-  private int myCurrentFrame;
-  private long myStartTime;
-  private long myStartDeltaTime;
-  private boolean myInitialStep;
-  private volatile boolean myDisposed;
-
-  public Animator(@NonNls final String name,
-                  final int totalFrames,
-                  final int cycleDuration,
-                  boolean repeatable) {
-    this(name, totalFrames, cycleDuration, repeatable, true);
+  init {
+    reset()
+    if (skipAnimation()) {
+      animationDone()
+    }
   }
 
-  public Animator(@NonNls final String name,
-                  final int totalFrames,
-                  final int cycleDuration,
-                  boolean repeatable,
-                  boolean forward) {
-    myName = name;
-    myTotalFrames = totalFrames;
-    myCycleDuration = cycleDuration;
-    myRepeatable = repeatable;
-    myForward = forward;
+  private fun onTick() {
+    if (isDisposed) {
+      return
+    }
 
-    reset();
+    if (initialStep) {
+      initialStep = false
+      // keep animation state on suspend
+      startTime = System.currentTimeMillis() - startDeltaTime
+      paint()
+      return
+    }
+
+    val cycleTime = (System.currentTimeMillis() - startTime).toDouble()
+    if (cycleTime < 0) {
+      // currentTimeMillis() is not monotonic - let's pretend that animation didn't change
+      return
+    }
+
+    var newFrame = (cycleTime * totalFrames / cycleDuration).toLong()
+    if (isRepeatable) {
+      newFrame %= totalFrames.toLong()
+    }
+    if (newFrame == currentFrame.toLong()) {
+      return
+    }
+
+    if (!isRepeatable && newFrame >= totalFrames) {
+      animationDone()
+      return
+    }
+
+    currentFrame = newFrame.toInt()
+    paint()
+  }
+
+  private fun paint() {
+    paintNow(frame = if (isForward) currentFrame else totalFrames - currentFrame - 1, totalFrames = totalFrames, cycle = cycleDuration)
+  }
+
+  private fun animationDone() {
+    stopTicker()
+    if (!isDisposed) {
+      SwingUtilities.invokeLater(::paintCycleEnd)
+    }
+  }
+
+  private fun stopTicker() {
+    val ticker = ticker ?: return
+    this.ticker = null
+    ticker.cancel(false)
+  }
+
+  protected open fun paintCycleEnd() {}
+  fun suspend() {
+    startDeltaTime = System.currentTimeMillis() - startTime
+    initialStep = true
+    stopTicker()
+  }
+
+  open fun resume() {
+    if (isDisposed) {
+      stopTicker()
+      return
+    }
 
     if (skipAnimation()) {
-      animationDone();
-    }
-  }
-
-  private void onTick() {
-    if (isDisposed()) return;
-
-    if (myInitialStep) {
-      myInitialStep = false;
-      myStartTime = System.currentTimeMillis() - myStartDeltaTime; // keep animation state on suspend
-      paint();
-      return;
+      animationDone()
+      return
     }
 
-    double cycleTime = System.currentTimeMillis() - myStartTime;
-    if (cycleTime < 0) return; // currentTimeMillis() is not monotonic - let's pretend that animation didn't changed
-
-    long newFrame = (long)(cycleTime * myTotalFrames / myCycleDuration);
-
-    if (myRepeatable) {
-      newFrame %= myTotalFrames;
+    if (cycleDuration == 0) {
+      currentFrame = totalFrames - 1
+      paint()
+      animationDone()
     }
-
-    if (newFrame == myCurrentFrame) return;
-
-    if (!myRepeatable && newFrame >= myTotalFrames) {
-      animationDone();
-      return;
-    }
-
-    myCurrentFrame = (int)newFrame;
-
-    paint();
-  }
-
-  private void paint() {
-    paintNow(myForward ? myCurrentFrame : myTotalFrames - myCurrentFrame - 1, myTotalFrames, myCycleDuration);
-  }
-
-  private void animationDone() {
-    stopTicker();
-
-    if (!isDisposed()) {
-      SwingUtilities.invokeLater(this::paintCycleEnd);
-    }
-  }
-
-  private void stopTicker() {
-    if (myTicker != null) {
-      myTicker.cancel(false);
-      myTicker = null;
-    }
-  }
-
-  protected void paintCycleEnd() {
-
-  }
-
-  public void suspend() {
-    myStartDeltaTime = System.currentTimeMillis() - myStartTime;
-    myInitialStep = true;
-    stopTicker();
-  }
-
-  public void resume() {
-    if (isDisposed()) {
-      stopTicker();
-      return;
-    }
-    if (skipAnimation()) {
-      animationDone();
-      return;
-    }
-
-    if (myCycleDuration == 0) {
-      myCurrentFrame = myTotalFrames - 1;
-      paint();
-      animationDone();
-    }
-    else if (myTicker == null) {
-      myTicker = EdtScheduledExecutorService.getInstance().scheduleWithFixedDelay(new Runnable() {
-        @Override
-        public void run() {
-          onTick();
+    else if (ticker == null) {
+      ticker = EdtScheduledExecutorService.getInstance().scheduleWithFixedDelay(object : Runnable {
+        override fun run() {
+          onTick()
         }
 
-        @Override
-        public String toString() {
-          return "Scheduled "+Animator.this;
+        override fun toString(): String {
+          return "Scheduled " + this@Animator
         }
-      }, 0, myCycleDuration * 1000L / myTotalFrames, TimeUnit.MICROSECONDS);
+      }, 0, cycleDuration * 1000L / totalFrames, TimeUnit.MICROSECONDS)
     }
   }
 
-  private static boolean skipAnimation() {
-    if (GraphicsEnvironment.isHeadless()) {
-      return true;
-    }
-    Application app = ApplicationManager.getApplication();
-    return app != null && app.isUnitTestMode();
+  abstract fun paintNow(frame: Int, totalFrames: Int, cycle: Int)
+
+  override fun dispose() {
+    stopTicker()
+    isDisposed = true
   }
 
-  public abstract void paintNow(int frame, int totalFrames, int cycle);
+  val isRunning: Boolean
+    get() = ticker != null
 
-  @Override
-  public void dispose() {
-    stopTicker();
-    myDisposed = true;
+  fun reset() {
+    currentFrame = 0
+    startDeltaTime = 0
+    initialStep = true
   }
 
-  public boolean isRunning() {
-    return myTicker != null;
-  }
-
-  public void reset() {
-    myCurrentFrame = 0;
-    myStartDeltaTime = 0;
-    myInitialStep = true;
-  }
-
-  public final boolean isForward() {
-    return myForward;
-  }
-
-  public boolean isDisposed() {
-    return myDisposed;
-  }
-
-  @Override
-  public String toString() {
-    ScheduledFuture<?> future = myTicker;
-    return "Animator '"+myName+"' @" + System.identityHashCode(this) +
-           (future == null || future.isDone() ? " (stopped)": " (running "+myCurrentFrame+"/"+myTotalFrames +" frame)");
+  override fun toString(): String {
+    val future = ticker
+    return "Animator '$name' @" + System.identityHashCode(this) +
+           if (future == null || future.isDone) " (stopped)" else " (running $currentFrame/$totalFrames frame)"
   }
 }
+
+private fun skipAnimation(): Boolean {
+  if (GraphicsEnvironment.isHeadless()) {
+    return true
+  }
+
+  val app = ApplicationManager.getApplication()
+  return app != null && app.isUnitTestMode()
+}
+
