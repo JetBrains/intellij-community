@@ -104,6 +104,58 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   @Test
+  public void testBuiltInMavenMultimoduleDirProperty() throws Exception {
+    createProjectPom("""
+                       <groupId>test</groupId<artifactId>project</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <myDir>${<caret>maven.multiModuleProjectDirectory}</myDir>
+                       </properties>>
+                       """);
+
+    PsiDirectory multimoduleDir = PsiManager.getInstance(myProject).findDirectory(myProjectPom.getParent());
+    assertResolved(myProjectPom, multimoduleDir);
+  }
+
+    @Test
+    public void testBuiltInMavenMultimoduleDirPropertyParentFile() throws Exception {
+     createModulePom("m1",
+                                     """
+                                       <parent>
+                                          <groupId>test</groupId>
+                                          <artifactId>project</artifactId>
+                                          <version>1</version>
+                                       </parent>
+                                       <artifactId>m1</artifactId>
+                                       """);
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                      <module>m1</module>
+                    </modules>
+                    """);
+
+    VirtualFile m1 = createModulePom("m1",
+                                     """
+                                       <parent>
+                                          <groupId>test</groupId>
+                                          <artifactId>project</artifactId>
+                                          <version>1</version>
+                                       </parent>
+                                       <artifactId>m1</artifactId>
+                                       <properties>
+                                         <myDir>${<caret>maven.multiModuleProjectDirectory}</myDir>
+                                       </properties>
+                                       """);
+      PsiDirectory multimoduleDir = PsiManager.getInstance(myProject).findDirectory(myProjectPom.getParent());
+      assertResolved(m1, multimoduleDir);
+
+  }
+
+  @Test
   public void testResolutionWithSeveralProperties() throws Exception {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -967,9 +1019,10 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                   "parentProfilesXmlProp");
     assertContain(variants, "artifactId", "project.artifactId", "pom.artifactId");
     assertContain(variants, "basedir", "project.basedir", "pom.basedir", "project.baseUri", "pom.basedir");
-    assert !variants.contains("baseUri");
+    assertDoNotContain(variants, "baseUri");
     assertContain(variants, "maven.build.timestamp");
-    assert !variants.contains("project.maven.build.timestamp");
+    assertContain(variants, "maven.multiModuleProjectDirectory");
+    assertDoNotContain(variants, "project.maven.build.timestamp");
     assertContain(variants, "settingsXmlProp");
     assertContain(variants, "settings.localRepository");
     assertContain(variants, "user.home", "env." + getEnvVar());

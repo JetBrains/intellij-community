@@ -108,8 +108,16 @@ public final class MavenExternalParameters {
 
     params.getProgramParametersList().addProperty("idea.version", MavenUtil.getIdeaVersionToPassToMavenProcess());
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.3") >= 0) {
-      params.getVMParametersList().addProperty("maven.multiModuleProjectDirectory",
-                                               MavenServerUtil.findMavenBasedir(parameters.getWorkingDirFile()).getPath());
+      String mavenMultimoduleDir;
+
+      if (!StringUtil.isEmptyOrSpaces(parameters.getMultimoduleDir())) {
+        mavenMultimoduleDir = parameters.getMultimoduleDir();
+      }
+      else {
+        mavenMultimoduleDir = MavenServerUtil.findMavenBasedir(parameters.getWorkingDirFile()).getPath();
+      }
+
+      params.getVMParametersList().addProperty("maven.multiModuleProjectDirectory", mavenMultimoduleDir);
     }
 
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.5") >= 0) {

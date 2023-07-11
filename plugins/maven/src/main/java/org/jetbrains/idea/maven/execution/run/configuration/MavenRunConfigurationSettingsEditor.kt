@@ -51,6 +51,7 @@ import org.jetbrains.idea.maven.project.MavenGeneralSettings
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.server.MavenServerUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil
 import java.awt.Component
@@ -114,6 +115,7 @@ class MavenRunConfigurationSettingsEditor(
       addLocalRepositoryFragment(distributionComponent, userSettingsComponent)
       addOutputLevelFragment()
       addThreadsFragment()
+      addMultimoduleDirFragment(distributionComponent, userSettingsComponent)
       addUsePluginRegistryTag()
       addPrintStacktracesTag()
       addUpdateSnapshotsTag()
@@ -122,6 +124,7 @@ class MavenRunConfigurationSettingsEditor(
       addCheckSumPolicyTag()
       addMultiProjectBuildPolicyTag()
       addEmulateTerminalTag()
+
     }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addJavaOptionsGroupFragment() =
@@ -563,4 +566,21 @@ class MavenRunConfigurationSettingsEditor(
       { generalSettingsOrDefault.threads },
       { generalSettingsOrDefault.threads = it }
     ).modifyLabeledComponentSize { columns(10) }
+
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMultimoduleDirFragment(distributionComponent: DistributionComboBox,
+                                                                                          userSettingsComponent: TextFieldWithBrowseButton) =
+    addRemovableLabeledTextSettingsEditorFragment(
+      JBTextField(),
+      object : LabeledSettingsFragmentInfo {
+        override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.label")
+        override val settingsId: String = "maven.multimoduledir.fragment"
+        override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.name")
+        override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
+        override val settingsHint: String? = null
+        override val settingsActionHint: String = MavenConfigurableBundle.message("maven.settings.general.thread.count.tooltip")
+      },
+      { runnerParameters.multimoduleDir },
+      { runnerParameters.multimoduleDir = it },
+      { MavenServerUtil.findMavenBasedir(runnerParameters.workingDirFile).canonicalPath }
+    )
 }
