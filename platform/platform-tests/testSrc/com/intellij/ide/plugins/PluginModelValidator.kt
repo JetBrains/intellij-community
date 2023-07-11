@@ -89,7 +89,10 @@ class PluginModelValidator(sourceModules: List<Module>) {
       val descriptor = moduleMetaInfo.pluginDescriptor ?: continue
       val descriptorFile = moduleMetaInfo.pluginDescriptorFile ?: continue
 
-      val id = descriptor.getChild("id")?.content ?: descriptor.getChild("name")?.content
+      val id = descriptor.getChild("id")?.content
+               ?: descriptor.getChild("name")?.content
+               // can't specify 'com.intellij', because there is ultimate plugin with the same ID
+               ?: if (sourceModuleName == "intellij.idea.community.resources") "com.intellij.community" else null
       if (id == null) {
         _errors.add(PluginValidationError(
           "Plugin id is not specified",
@@ -540,7 +543,8 @@ class PluginModelValidator(sourceModules: List<Module>) {
       return
     }
 
-    val pluginDescriptorFile = metaInf / "plugin.xml"
+    val pluginFileName = if (moduleName == "intellij.idea.community.resources") "IdeaPlugin.xml" else "plugin.xml"
+    val pluginDescriptorFile = metaInf / pluginFileName
     val pluginDescriptor = pluginDescriptorFile.readXmlAsModel()
 
     val moduleDescriptorFile = sourceRoot / "$moduleName.xml"
