@@ -1,26 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.clone
 
+import com.intellij.collaboration.auth.ui.login.LoginModel
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
 
 internal interface GitLabCloneLoginViewModel : GitLabCloneViewModel {
   val accounts: SharedFlow<Set<GitLabAccount>>
-  val selectedAccount: StateFlow<GitLabAccount?>
-
-  fun setSelectedAccount(account: GitLabAccount?)
-
-  fun updateAccount(account: GitLabAccount, credentials: String)
-
-  fun isAccountUnique(serverPath: GitLabServerPath, accountName: String): Boolean
+  val tokenLoginModel: GitLabTokenLoginPanelModel
 }
 
 internal class GitLabCloneLoginViewModelImpl(
@@ -29,22 +23,37 @@ internal class GitLabCloneLoginViewModelImpl(
 ) : GitLabCloneLoginViewModel {
   private val cs: CoroutineScope = parentCs.childScope()
 
-  private val _selectedAccount: MutableStateFlow<GitLabAccount?> = MutableStateFlow(null)
-  override val selectedAccount: StateFlow<GitLabAccount?> = _selectedAccount.asStateFlow()
-
+  private var selectedAccount: GitLabAccount? = null
   override val accounts: SharedFlow<Set<GitLabAccount>> = accountManager.accountsState
 
-  override fun setSelectedAccount(account: GitLabAccount?) {
-    _selectedAccount.value = account
-  }
+  override val tokenLoginModel: GitLabTokenLoginPanelModel = GitLabTokenLoginPanelModel(
+    requiredUsername = null,
+    uniqueAccountPredicate = accountManager::isAccountUnique
+  )
 
-  override fun updateAccount(account: GitLabAccount, credentials: String) {
+  init {
     cs.launch {
-      accountManager.updateAccount(account, credentials)
+      with(tokenLoginModel) {
+        loginState.collectLatest { loginState ->
+          if (loginState is LoginModel.LoginState.Connected) {
+            val storedAccount = selectedAccount ?: GitLabAccount(name = loginState.username, server = getServerPath())
+            updateAccount(storedAccount, token)
+          }
+        }
+      }
     }
   }
 
-  override fun isAccountUnique(serverPath: GitLabServerPath, accountName: String): Boolean {
-    return accountManager.isAccountUnique(serverPath, accountName)
+  fun setSelectedAccount(account: GitLabAccount?) {
+    selectedAccount = account
+    with(tokenLoginModel) {
+      requiredUsername = account?.name
+      uniqueAccountPredicate = if (account == null) accountManager::isAccountUnique else { _, _ -> true }
+      serverUri = account?.server?.uri ?: GitLabServerPath.DEFAULT_SERVER.uri
+    }
+  }
+
+  private suspend fun updateAccount(account: GitLabAccount, credentials: String) {
+    accountManager.updateAccount(account, credentials)
   }
 }

@@ -20,23 +20,18 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.authentication.GitLabSecurityUtil
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
-import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JButton
 import javax.swing.JComponent
 
 internal object GitLabCloneLoginComponentFactory {
   fun create(cs: CoroutineScope, loginVm: GitLabCloneLoginViewModel, uiSelectorVm: GitLabCloneUISelectorViewModel): JComponent {
-    val (loginModel, errorFlow) = createLoginModel(cs, loginVm)
+    val loginModel = loginVm.tokenLoginModel
     val titlePanel = JBUI.Panels.simplePanel().apply {
       @Suppress("DialogTitleCapitalization")
       val title = JBLabel(GitLabBundle.message("clone.dialog.login.title"), UIUtil.ComponentStyle.LARGE).apply {
@@ -70,10 +65,17 @@ internal object GitLabCloneLoginComponentFactory {
       }
     }
 
-    val errorPresenter = GitLabLoginErrorStatusPresenter()
-    val errorPanel = ErrorStatusPanelFactory.create(cs, errorFlow, errorPresenter, Alignment.LEFT).apply {
-      bindVisibilityIn(cs, errorFlow.map { it != null })
+    val errorFlow = channelFlow<Throwable?> {
+      loginModel.loginState.collectLatest { loginState ->
+        when (loginState) {
+          LoginModel.LoginState.Connecting -> send(null)
+          is LoginModel.LoginState.Failed -> send(loginState.error)
+          else -> {}
+        }
+      }
     }
+    val errorPresenter = GitLabLoginErrorStatusPresenter()
+    val errorPanel = ErrorStatusPanelFactory.create(cs, errorFlow, errorPresenter, Alignment.LEFT)
 
     return VerticalListPanel().apply {
       border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
@@ -95,39 +97,4 @@ internal object GitLabCloneLoginComponentFactory {
       CollaborationToolsUIUtil.focusPanel(componentWithError)
     }
   }
-
-  private fun createLoginModel(cs: CoroutineScope, loginVm: GitLabCloneLoginViewModel): PanelModel {
-    val account = loginVm.selectedAccount.value
-    val loginModel = GitLabTokenLoginPanelModel(
-      requiredUsername = null,
-      uniqueAccountPredicate = if (account == null) loginVm::isAccountUnique else { _, _ -> true }
-    ).apply {
-      serverUri = GitLabServerPath.DEFAULT_SERVER.uri
-    }
-    val errorFlow = MutableSharedFlow<Throwable?>(replay = 1)
-    cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      loginModel.loginState.collectLatest { loginState ->
-        when (loginState) {
-          is LoginModel.LoginState.Connected -> {
-            val storedAccount = account ?: GitLabAccount(name = loginState.username, server = loginModel.getServerPath())
-            loginVm.updateAccount(storedAccount, loginModel.token)
-          }
-          LoginModel.LoginState.Connecting -> {
-            errorFlow.emit(null)
-          }
-          LoginModel.LoginState.Disconnected -> {}
-          is LoginModel.LoginState.Failed -> {
-            errorFlow.emit(loginState.error)
-          }
-        }
-      }
-    }
-
-    return PanelModel(loginModel, errorFlow)
-  }
-
-  private data class PanelModel(
-    val loginModel: GitLabTokenLoginPanelModel,
-    val errorFlow: SharedFlow<Throwable?>
-  )
 }

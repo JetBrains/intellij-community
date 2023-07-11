@@ -36,7 +36,7 @@ internal class GitLabCloneUISelectorViewModelImpl(
 
   private val accounts: SharedFlow<Set<GitLabAccount>> = accountManager.accountsState
 
-  private val _vm: MutableStateFlow<GitLabCloneViewModel> = MutableStateFlow(loginVm)
+  private val _vm: MutableStateFlow<GitLabCloneViewModel> = MutableStateFlow(repositoriesVm)
   override val vm: SharedFlow<GitLabCloneViewModel> = _vm.asSharedFlow()
 
   init {

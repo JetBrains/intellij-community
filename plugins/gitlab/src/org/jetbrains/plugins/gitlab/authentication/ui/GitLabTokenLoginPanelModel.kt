@@ -17,8 +17,8 @@ import org.jetbrains.plugins.gitlab.authentication.GitLabSecurityUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.validateServerVersion
 
-class GitLabTokenLoginPanelModel(private val requiredUsername: String? = null,
-                                 private val uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean)
+class GitLabTokenLoginPanelModel(var requiredUsername: String? = null,
+                                 var uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean)
   : LoginPanelModelBase(), LoginTokenGenerator {
 
   override suspend fun checkToken(): String {
@@ -33,7 +33,7 @@ class GitLabTokenLoginPanelModel(private val requiredUsername: String? = null,
     val username = user.username
     if (requiredUsername != null) {
       require(username == requiredUsername) {
-        GitLabBundle.message("account.username.mismatch", requiredUsername, username)
+        GitLabBundle.message("account.username.mismatch", requiredUsername!!, username)
       }
     }
 
