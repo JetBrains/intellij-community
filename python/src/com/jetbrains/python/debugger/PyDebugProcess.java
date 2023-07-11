@@ -517,6 +517,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     settings.add(new WatchReturnValuesAction(this));
     settings.add(new PyVariableViewSettings.SimplifiedView(this));
     settings.add(new PyVariableViewSettings.VariablesPolicyGroup());
+    settings.add(new PyVariableViewSettings.QuotingPolicyGroup());
   }
 
   private static final class WatchReturnValuesAction extends ToggleAction {

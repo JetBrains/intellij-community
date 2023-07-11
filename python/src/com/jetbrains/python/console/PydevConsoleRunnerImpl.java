@@ -71,9 +71,7 @@ import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.console.actions.ShowCommandQueueAction;
 import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
-import com.jetbrains.python.debugger.PyDebugRunner;
-import com.jetbrains.python.debugger.PyDebugValue;
-import com.jetbrains.python.debugger.PyVariableViewSettings;
+import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -228,6 +226,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     settings.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     settings.add(new PyVariableViewSettings.SimplifiedView(null));
     settings.add(new PyVariableViewSettings.VariablesPolicyGroup());
+    settings.add(new PyVariableViewSettings.QuotingPolicyGroup());
     toolbarActions.add(settings);
     // New console
     toolbarActions.add(new NewConsoleAction());
@@ -1388,7 +1387,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       myEnvironmentVariables = envs;
       myEnvironmentVariables.putAll(consoleSettings.getEnvs());
       PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
-      if (debuggerSettings.getValuesPolicy() != PyDebugValue.ValuesPolicy.SYNC) {
+      if (debuggerSettings.getValuesPolicy() != ValuesPolicy.SYNC) {
         myEnvironmentVariables.put(PyDebugValue.POLICY_ENV_VARS.get(debuggerSettings.getValuesPolicy()), "True");
       }
       if (PyConsoleOutputCustomizer.Companion.getInstance().isInlineOutputSupported()) {

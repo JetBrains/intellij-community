@@ -65,10 +65,6 @@ public class PyDebugValue extends XNamedValue {
 
   private @NotNull PyDebugValueDescriptor myDescriptor = new PyDebugValueDescriptor();
 
-  public enum ValuesPolicy {
-    SYNC, ASYNC, ON_DEMAND
-  }
-
   private static final Map<String, ValuesPolicy> POLICY_DEFAULT_VALUES = ImmutableMap.of("__pydevd_value_async", ValuesPolicy.ASYNC,
                                                                                          "__pydevd_value_on_demand",
                                                                                          ValuesPolicy.ON_DEMAND);

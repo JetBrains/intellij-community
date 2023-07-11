@@ -643,7 +643,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     if (debuggerSettings.isLibrariesFilterEnabled()) {
       environmentController.putFixedValue(PYDEVD_FILTER_LIBRARIES, "True");
     }
-    if (debuggerSettings.getValuesPolicy() != PyDebugValue.ValuesPolicy.SYNC) {
+    if (debuggerSettings.getValuesPolicy() != ValuesPolicy.SYNC) {
       environmentController.putFixedValue(PyDebugValue.POLICY_ENV_VARS.get(debuggerSettings.getValuesPolicy()), "True");
     }
 

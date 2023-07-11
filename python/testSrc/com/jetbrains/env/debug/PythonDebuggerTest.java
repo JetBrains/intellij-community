@@ -13,10 +13,7 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
-import com.jetbrains.python.debugger.PyDebugValue;
-import com.jetbrains.python.debugger.PyDebuggerException;
-import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
-import com.jetbrains.python.debugger.PyExceptionBreakpointType;
+import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -31,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static com.jetbrains.python.debugger.PyDebugUtilsKt.getQuotingString;
 import static org.junit.Assert.*;
 
 public class PythonDebuggerTest extends PyEnvTestCase {
@@ -1703,6 +1701,41 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         testLength("lst");
         testLength("np_arr");
+        resume();
+      }
+    });
+  }
+
+  @Test
+  public void testQuotingInCopyAction() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_quoting_value.py") {
+      private void testQuotingValue(String value) throws PyDebuggerException {
+        var variable = myDebugProcess.evaluate(value, false, false).getValue();
+        for (var policy : QuotingPolicy.values()) {
+          String result = getQuotingString(policy, variable);
+          switch (policy) {
+            case DOUBLE -> assertFalse(result.contains("'"));
+            case SINGLE -> assertFalse(result.contains("\""));
+            case NONE -> {
+              assertFalse(result.contains("'"));
+              assertFalse(result.contains("\""));
+            }
+          }
+        }
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 10);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        testQuotingValue("car");
+        testQuotingValue("some_str");
+        testQuotingValue("some_lst");
+        testQuotingValue("some_dict");
         resume();
       }
     });

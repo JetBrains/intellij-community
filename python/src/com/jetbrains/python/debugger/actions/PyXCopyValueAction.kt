@@ -6,6 +6,8 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.debugger.PyCopyValueEvaluationCallback
+import com.jetbrains.python.debugger.getQuotingString
+import com.jetbrains.python.debugger.settings.PyDebuggerSettings
 
 class PyXCopyValueAction : XCopyValueAction() {
 
@@ -21,11 +23,12 @@ class PyXCopyValueAction : XCopyValueAction() {
     }
     else {
       val fullValueEvaluator = valueNode.fullValueEvaluator
+      val quotingPolicy = PyDebuggerSettings.getInstance().quotingPolicy
       if (fullValueEvaluator != null) {
-        PyCopyValueEvaluationCallback(valueNode, valueCollector).startFetchingValue(fullValueEvaluator)
+        PyCopyValueEvaluationCallback(valueNode, valueCollector, quotingPolicy).startFetchingValue(fullValueEvaluator)
       }
       else {
-        valueCollector.add((DebuggerUIUtil.getNodeRawValue(valueNode) ?: ""))
+        valueCollector.add(getQuotingString(quotingPolicy, DebuggerUIUtil.getNodeRawValue(valueNode) ?: ""))
       }
     }
   }

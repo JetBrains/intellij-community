@@ -6,10 +6,12 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.HeadlessValueEvaluationCallback
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 
-class PyCopyValueEvaluationCallback(node: XValueNodeImpl, private val valueCollector: XFetchValueActionBase.ValueCollector) : HeadlessValueEvaluationCallback(node) {
+class PyCopyValueEvaluationCallback(node: XValueNodeImpl,
+                                    private val valueCollector: XFetchValueActionBase.ValueCollector,
+                                    private val currentPolicy: QuotingPolicy) : HeadlessValueEvaluationCallback(node) {
   private val valueIndex = valueCollector.acquire()
 
   override fun evaluationComplete(value: String, project: Project) {
-    valueCollector.evaluationComplete(valueIndex, value)
+    valueCollector.evaluationComplete(valueIndex, getQuotingString(currentPolicy, value))
   }
 }
