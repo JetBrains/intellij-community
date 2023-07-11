@@ -229,10 +229,24 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val modulesToRemoveKotlinVersion = mutableListOf<Module>()
         // Remove version from modules with the same version as the version to configure:
         modulesWithTheSameKotlin?.values?.let { modulesToRemoveKotlinVersion.addAll(it) }
-        val rootModule: Module?
-        if (topLevelBuildScript != null) {
-            rootModule = topLevelBuildScript.module
-            if (rootModule != null) {
+        val rootModule = getRootModule(project)
+        if (rootModule != null) {
+            val addVersionToSettings: Boolean
+            // If there are different Kotlin versions in the project, don't add to settings
+            if (kotlinVersionsAndModules.filter { it.key != kotlinVersion.artifactVersion }.isNotEmpty()) {
+                addVersionToSettings = false
+            } else {
+                // If we have any version in the root nodule, don't need to add the version to the settings file
+                addVersionToSettings = !kotlinVersionsAndModules.values.flatMap { it.keys }.contains(rootModule.name)
+            }
+            if (addVersionToSettings) {
+                rootModule.getBuildScriptSettingsPsiFile()?.let {
+                    if (configureSettingsFile(it, kotlinVersion, filesToOpen)) { // This happens only for JVM, not for Android
+                        addVersionToModuleBuildScript = false
+                    }
+                }
+            }
+            if (topLevelBuildScript != null) {
                 // rootModule is just <PROJECT_NAME>, but we need <PROJECT_NAME>.main:
                 val rootModuleName = rootModule.name
                 val firstSourceRootNodule = modulesWithTheSameKotlin?.get(rootModuleName)
@@ -240,15 +254,6 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                     // We don't cut a Kotlin version from a top build script
                     modulesToRemoveKotlinVersion.remove(firstSourceRootNodule)
                     addVersionToModuleBuildScript = false
-                }
-                // If we have any version in the root nodule, don't need to add the version to the settings file
-                val addVersionToSettings = !kotlinVersionsAndModules.values.flatMap { it.keys }.contains(rootModule.name)
-                if (addVersionToSettings) {
-                    rootModule.getBuildScriptSettingsPsiFile()?.let {
-                        if (configureSettingsFile(it, kotlinVersion, filesToOpen)) { // This happens only for JVM, not for Android
-                            addVersionToModuleBuildScript = false
-                        }
-                    }
                 }
 
                 val jvmTarget = if (modulesAndJvmTargets.isNotEmpty()) {

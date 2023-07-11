@@ -357,6 +357,56 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
         }
     }
 
+    @Test
+    @TargetVersions("7.6+")
+    fun testProjectWithoutRootBuildScriptAndWithDifferentKotlinVersion() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val moduleApp = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(moduleApp),
+                    IdeKotlinVersion.get("1.9.0-RC"),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+
+                val subModules = listOf("app", "app1")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testProjectWithoutRootBuildScriptAndWithSameKotlinVersion() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val moduleApp = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(moduleApp),
+                    IdeKotlinVersion.get("1.9.0"),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+
+                val subModules = listOf("app", "app1")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
     /**
      * This test fails expectedly:
      * Error resolving plugin [id: 'org.jetbrains.kotlin.jvm', version: '1.7.0']

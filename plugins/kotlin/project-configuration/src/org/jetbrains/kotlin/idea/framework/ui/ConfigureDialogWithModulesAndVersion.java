@@ -53,7 +53,7 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper implemen
     @NotNull private final String minimumVersion;
 
     private final Map<String, Map<String, Module>> kotlinVersionsAndModules;
-    @Nullable private final String rootNoduleVersion;
+    @Nullable private final String rootModuleVersion;
     @Nullable private final Module rootModule;
 
     private final Map<String, List<String>> jvmModulesTargetingUnsupportedJvm;
@@ -82,7 +82,7 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper implemen
 
         var kotlinVersions = getKotlinVersionsAndModules(project, configurator);
         kotlinVersionsAndModules = kotlinVersions.getFirst();
-        rootNoduleVersion = kotlinVersions.getSecond();
+        rootModuleVersion = kotlinVersions.getSecond();
 
         setTitle(KotlinProjectConfigurationBundle.message("configure.kotlin.title", configurator.getPresentableText()));
 
@@ -141,8 +141,8 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper implemen
             if (modulesToConfigure.contains(rootModule) &&
                 !(kotlinVersionsAndModules.size() == 1 && kotlinVersionsAndModules.containsKey(currentSelectedKotlinVersion))) {
                 createMessageAboutDifferentKotlinVersions(currentSelectedKotlinVersion);
-            } else if (rootNoduleVersion != null &&
-                       !IdeKotlinVersion.get(rootNoduleVersion).equals(IdeKotlinVersion.get(currentSelectedKotlinVersion))) {
+            } else if (rootModuleVersion != null &&
+                       !IdeKotlinVersion.get(rootModuleVersion).equals(IdeKotlinVersion.get(currentSelectedKotlinVersion))) {
                 createMessageThatTopLevelAndModulesShouldHaveSameVersion();
             } else {
                 listOfKotlinVersionsAndModules.setVisible(false);
@@ -153,9 +153,9 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper implemen
     }
 
     private void createMessageThatTopLevelAndModulesShouldHaveSameVersion() {
-        String message = KotlinProjectConfigurationBundle.message("configure.kotlin.root.contains.another.kotlin", rootNoduleVersion) +
+        String message = KotlinProjectConfigurationBundle.message("configure.kotlin.root.contains.another.kotlin", rootModuleVersion) +
                          KotlinProjectConfigurationBundle.message("configure.kotlin.root.should.contain.same.version") +
-                         KotlinProjectConfigurationBundle.message("configure.kotlin.choose.the.same.kotlin.version", rootNoduleVersion);
+                         KotlinProjectConfigurationBundle.message("configure.kotlin.choose.the.same.kotlin.version", rootModuleVersion);
         Messages.installHyperlinkSupport(listOfKotlinVersionsAndModules);
         listOfKotlinVersionsAndModules.setText(message);
         listOfKotlinVersionsAndModules.setVisible(true);
@@ -213,7 +213,7 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper implemen
                                              modulesWithThisTargetVersion.stream().limit(MODULES_TO_DISPLAY_SIZE).sorted()
                                                      .collect(Collectors.joining(DELIMITER)));
                                      modulesEnumeration.append(
-                                             KotlinProjectConfigurationBundle.message("configure.kotlin.jvm.target.in.nodules.and.more",
+                                             KotlinProjectConfigurationBundle.message("configure.kotlin.jvm.target.in.modules.and.more",
                                                                                       modulesWithThisTargetVersion.size() -
                                                                                       MODULES_TO_DISPLAY_SIZE));
                                  } else {

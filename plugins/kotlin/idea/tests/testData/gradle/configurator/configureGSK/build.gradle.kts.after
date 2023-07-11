@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.1.2"
+    kotlin("jvm")
 }
 buildscript {
     repositories {
