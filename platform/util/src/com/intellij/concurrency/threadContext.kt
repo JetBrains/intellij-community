@@ -7,10 +7,11 @@ package com.intellij.concurrency
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.concurrency.isCheckContextAssertions
 import com.intellij.util.concurrency.captureCallableThreadContext
 import com.intellij.util.concurrency.capturePropagationAndCancellationContext
 import com.intellij.util.concurrency.captureRunnableThreadContext
+import com.intellij.util.concurrency.isCheckContextAssertions
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -212,7 +213,15 @@ fun <T, U> captureThreadContext(f : Function<in T, out U>) : Function<in T, out 
  */
 fun getContextSkeleton(context: CoroutineContext): Set<CoroutineContext.Element> {
   checkContextInstalled()
-  return context.minusKey(Job.Key).fold(HashSet()) { m, elem -> m.apply { add(elem) } }
+  return context.fold(HashSet()) { acc, element ->
+    when (element.key) {
+      Job -> Unit
+      CoroutineName -> Unit
+      @Suppress("INVISIBLE_MEMBER") kotlinx.coroutines.CoroutineId -> Unit
+      else -> acc.add(element)
+    }
+    acc
+  }
 }
 
 /**
