@@ -15,7 +15,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" scope="PROVIDED" name="cli-parser" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
@@ -59,5 +58,6 @@
     <orderEntry type="module" module-name="intellij.driver.impl" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.startUpPerformanceReporter" />
   </component>
 </module>

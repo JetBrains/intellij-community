@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="com.intellij.diagnostic.startUpPerformanceReporter" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+  </component>
+</module>
