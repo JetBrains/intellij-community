@@ -1,29 +1,21 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
-
+public class ConvertToVarargsMethodFix extends PsiUpdateModCommandQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
@@ -31,33 +23,20 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
-  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     if (!(element instanceof PsiMethod method)) {
       return;
     }
-    final Collection<PsiElement> writtenElements = new ArrayList<>();
-    writtenElements.add(method);
     final Collection<PsiReferenceExpression> methodCalls = new ArrayList<>();
     for (final PsiReference reference : ReferencesSearch.search(method, method.getUseScope(), false)) {
       final PsiElement referenceElement = reference.getElement();
-      if (referenceElement instanceof PsiReferenceExpression) {
-        writtenElements.add(referenceElement);
-        methodCalls.add((PsiReferenceExpression)referenceElement);
+      if (referenceElement instanceof PsiReferenceExpression ref) {
+        methodCalls.add(updater.getWritable(ref));
       }
     }
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(writtenElements)) {
-      return;
-    }
-    WriteAction.run(() -> {
-      makeMethodVarargs(method);
-      makeMethodCallsVarargs(methodCalls);
-    });
+    method = updater.getWritable(method);
+    makeMethodVarargs(method);
+    makeMethodCallsVarargs(methodCalls);
   }
 
   private static void makeMethodVarargs(PsiMethod method) {
@@ -107,18 +86,5 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
       }
       lastArgument.delete();
     }
-  }
-
-  @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    final PsiMethod method = ObjectUtils.tryCast(previewDescriptor.getPsiElement(), PsiMethod.class);
-    if (method == null) {
-      return IntentionPreviewInfo.EMPTY;
-    }
-    makeMethodVarargs(method);
-    List<PsiReferenceExpression> refsInFile = SyntaxTraverser.psiTraverser(method.getContainingFile()).filter(PsiReferenceExpression.class)
-      .filter(ref -> ref.isReferenceTo(method)).toList();
-    makeMethodCallsVarargs(refsInFile);
-    return IntentionPreviewInfo.DIFF;
   }
 }

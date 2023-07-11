@@ -2,13 +2,13 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ConvertToVarargsMethodFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -56,7 +56,7 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new ConvertToVarargsMethodFix();
   }
 
