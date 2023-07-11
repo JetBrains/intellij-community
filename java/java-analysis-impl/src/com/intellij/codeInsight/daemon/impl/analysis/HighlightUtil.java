@@ -377,6 +377,9 @@ public final class HighlightUtil {
     if (PsiUtil.getLanguageLevel(expressionVariable) == LanguageLevel.JDK_20_PREVIEW) {
       return null;
     }
+    if (!PsiUtil.isAccessedForWriting(expressionVariable)) {
+      return null;
+    }
     PsiPatternGuard patternGuard = PsiTreeUtil.getParentOfType(expressionVariable, PsiPatternGuard.class);
     if (patternGuard == null) {
       return null;
