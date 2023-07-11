@@ -925,6 +925,12 @@ public class SwitchBlockHighlightingModel {
             addIllegalFallThroughError(problem.element(), problem.message(), holder, alreadyFallThroughElements);
           }
           else if (JavaPsiPatternUtil.containsPatternVariable(first)) {
+            PsiElement nextNotLabel = PsiTreeUtil.skipSiblingsForward(switchLabelElement, PsiWhiteSpace.class, PsiComment.class,
+                                                                 PsiSwitchLabelStatement.class);
+            //there is no statement, it is allowed to go through (14.11.1 JEP 440-441)
+            if (!(nextNotLabel instanceof PsiStatement)) {
+              continue;
+            }
             if (PsiTreeUtil.skipWhitespacesAndCommentsForward(switchLabelElement) instanceof PsiSwitchLabelStatement) {
               addIllegalFallThroughError(first, "multiple.switch.labels", holder, alreadyFallThroughElements);
             }
