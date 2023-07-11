@@ -332,7 +332,11 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.ID_KEYWORD,
         MermaidTokens.TYPE,
         MermaidTokens.ACC_TITLE,
-        MermaidTokens.ACC_DESCR
+        MermaidTokens.ACC_DESCR,
+        MermaidTokens.CLICK,
+        MermaidTokens.CALLBACK,
+        MermaidTokens.Mindmap.OPEN_ICON,
+        MermaidTokens.Mindmap.CLOSE_ICON
       )
       fillMap(
         holder,
