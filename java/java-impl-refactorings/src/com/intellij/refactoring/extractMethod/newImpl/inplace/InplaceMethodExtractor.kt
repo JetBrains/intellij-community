@@ -62,7 +62,7 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   private val extractor: DuplicatesMethodExtractor = createExtractor()
 
-  private val editorState = EditorState(editor)
+  private val editorState = EditorState(file.project, editor)
 
   private var methodIdentifierRange: RangeMarker? = null
 

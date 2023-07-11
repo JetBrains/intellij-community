@@ -2,7 +2,7 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -11,15 +11,14 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
 
-class EditorState(val editor: Editor){
+class EditorState(val project: Project, val editor: Editor){
   private val caretToRevert: Int = editor.caretModel.currentCaret.offset
   private val selectionToRevert: TextRange? = ExtractMethodHelper.findEditorSelection(editor)
   private val textToRevert: String = editor.document.text
 
   fun revert() {
-    val project = editor.project
-    val undoManager = if (project != null) UndoManager.getInstance(project) else UndoManager.getGlobalInstance()
-    runWriteAction {
+    val undoManager = UndoManager.getInstance(project)
+    WriteAction.run<Throwable> {
       if (undoManager.isUndoOrRedoInProgress) {
         ApplicationManager.getApplication().invokeLater { revertWithoutPostprocessing(project) }
       }
@@ -29,13 +28,8 @@ class EditorState(val editor: Editor){
     }
   }
 
-  private fun revertWithoutPostprocessing(project: Project?) {
-    if (project != null) {
+  private fun revertWithoutPostprocessing(project: Project) {
       PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(::revertState)
-    }
-    else {
-      revertState()
-    }
   }
 
   private fun revertState() {

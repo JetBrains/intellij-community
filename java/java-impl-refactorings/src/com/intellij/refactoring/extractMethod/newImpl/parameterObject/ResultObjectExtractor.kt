@@ -52,7 +52,7 @@ object ResultObjectExtractor {
     val file = scope.first().containingFile
     val project = file.project
     val extractRange = createGreedyRangeMarker(file.viewProvider.document, scope.first().textRange.union(scope.last().textRange))
-    val editorState = EditorState(editor)
+    val editorState = EditorState(project, editor)
     val disposable = Disposer.newDisposable()
     WriteCommandAction.writeCommandAction(project).run<Throwable> {
       try {
