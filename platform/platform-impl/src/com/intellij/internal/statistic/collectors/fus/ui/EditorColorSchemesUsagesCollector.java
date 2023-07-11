@@ -21,7 +21,7 @@ import java.util.Set;
 
 public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollector {
 
-  private final static int CURR_VERSION = 6;
+  private final static int CURR_VERSION = 7;
 
   public static final String SCHEME_NAME_OTHER = "Other";
   public final static String[] KNOWN_NAMES = {
@@ -48,6 +48,7 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
     "Rider",
     "IntelliJ Light",
     "Light",
+    "Light with Light Header",
     "Dark",
     SCHEME_NAME_OTHER
   };
