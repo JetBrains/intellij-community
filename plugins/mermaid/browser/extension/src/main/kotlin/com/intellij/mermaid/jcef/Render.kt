@@ -1,10 +1,10 @@
 package com.intellij.mermaid.jcef
 
 import com.intellij.mermaid.api.Mermaid
+import com.intellij.mermaid.api.MermaidRenderResult
 import com.intellij.mermaid.api.appendTo
 import kotlinx.coroutines.await
 import org.w3c.dom.Element
-import org.w3c.dom.Node
 import org.w3c.dom.asList
 
 val nodeToLastValidHtml = mutableMapOf<Element, String>()
@@ -24,7 +24,7 @@ suspend fun renderBlock(
   block: Element,
   cacheId: String,
   content: String
-): Node? {
+): MermaidRenderResult? {
   if (content.isBlank() && nodeToLastValidHtml[block] == null) return null
 
   val id = "mermaid-generated-$cacheId"
@@ -41,7 +41,7 @@ suspend fun renderBlock(
     node.removeUserJourneyHeightAttribute()
 
     nodeToLastValidHtml[block] = block.innerHTML
-    return node
+    return renderResult
   } catch (exception: Throwable) {
     console.error("Error while generating blocks:\n", exception)
     handleFailedRender(block, exception)

@@ -1,5 +1,7 @@
 package com.intellij.mermaid.jcef
 
+import com.intellij.mermaid.api.MermaidRenderResult
+import com.intellij.mermaid.api.appendTo
 import com.intellij.mermaid.jcef.impl.decode
 import kotlinx.browser.window
 import kotlinx.coroutines.coroutineScope
@@ -38,7 +40,7 @@ suspend fun renderBlocks(blocks: List<HTMLElement>) {
   }
 }
 
-val nodeToContent = mutableMapOf<Element, String>()
+val nodeToCacheIdAndContent = mutableMapOf<Element, Pair<String, MermaidRenderResult>>()
 
 suspend fun processBlock(block: HTMLElement) {
   block.removeAttribute("data-processed")
@@ -47,10 +49,14 @@ suspend fun processBlock(block: HTMLElement) {
   val content = block.getAttribute("data-actual-fence-content")
   checkNotNull(content) { "data-actual-fence-content was not set for block" }
 
-  if (nodeToContent[block] == content) return
-
-  val actualContent = decode(content)
-  renderBlock(block, cacheId, actualContent)
+  if (nodeToCacheIdAndContent[block]?.first == cacheId) {
+    val renderResult = nodeToCacheIdAndContent[block]?.second ?: return
+    renderResult.appendTo(block)
+  } else {
+    val actualContent = decode(content)
+    val generated = renderBlock(block, cacheId, actualContent) ?: return
+    nodeToCacheIdAndContent[block] = cacheId to generated
+  }
 }
 
 suspend fun markdownExtensionMain() {
