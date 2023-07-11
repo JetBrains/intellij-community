@@ -252,6 +252,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
             KtFirDiagnostic.OptInMarkerWithWrongRetention::class,
             RemoveAnnotationFix.RemoveForbiddenOptInRetention
         )
+        registerPsiQuickFixes(
+            KtFirDiagnostic.OptInWithoutArguments::class,
+            RemoveAnnotationFix
+        )
     }
 
 

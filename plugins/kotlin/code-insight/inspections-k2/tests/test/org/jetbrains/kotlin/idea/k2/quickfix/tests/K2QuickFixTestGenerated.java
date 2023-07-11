@@ -774,6 +774,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/removeAnnotation/jvmOverloadsOnAnnotationClassConstructor.kt");
         }
 
+        @TestMetadata("optInWithoutArguments.kt")
+        public void testOptInWithoutArguments() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/optInWithoutArguments.kt");
+        }
+
         @TestMetadata("setTargetOnGetter.kt")
         public void testSetTargetOnGetter() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/removeAnnotation/setTargetOnGetter.kt");
