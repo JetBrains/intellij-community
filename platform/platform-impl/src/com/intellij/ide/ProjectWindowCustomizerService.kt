@@ -243,7 +243,7 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   private fun PropertiesComponent.nextColorIndex(colorsCount: Int): Int {
-    val randomDefault = Random().nextInt() % colorsCount
+    val randomDefault = Random().nextInt(colorsCount)
     val result = (getInt(LAST_CALCULATED_COLOR_INDEX_KEY, randomDefault) + 1) % colorsCount
     setValue(LAST_CALCULATED_COLOR_INDEX_KEY, result, -1)
     return result
