@@ -21,6 +21,8 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "AhoCorasickDoubleArrayTrie", libraryName = "com.hankcs:aho-corasick-double-array-trie",
                    url = "https://github.com/hankcs/AhoCorasickDoubleArrayTrie")
       .apache("https://github.com/hankcs/AhoCorasickDoubleArrayTrie#license"),
+    LibraryLicense(name = "Allure java commons", libraryName = "io.qameta.allure.java.commons", url = "https://github.com/allure-framework/allure-java")
+      .apache("https://github.com/allure-framework/allure-java/blob/master/README.md"),
     androidDependency(name = "Am Instrument Data proto", libraryName = "libam-instrumentation-data-proto"),
     LibraryLicense(name = "Amazon Ion Java", libraryName = "ion", url = "https://github.com/amzn/ion-java")
       .apache("https://github.com/amzn/ion-java/blob/master/LICENSE"),
