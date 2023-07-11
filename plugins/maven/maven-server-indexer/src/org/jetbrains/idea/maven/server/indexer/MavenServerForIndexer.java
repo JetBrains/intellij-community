@@ -18,6 +18,12 @@ public class MavenServerForIndexer extends MavenWatchdogAware implements MavenSe
   private volatile MavenIdeaIndexerImpl myIndexerRef;
   private volatile PlexusContainer myPlexusContainer;
 
+  public MavenServerForIndexer() {
+    if (!System.getProperties().containsKey("org.slf4j.simpleLogger.defaultLogLevel")) {
+      System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "error");
+    }
+  }
+
   @Override
   public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) throws RemoteException {
     throw new UnsupportedOperationException("indexing server");
