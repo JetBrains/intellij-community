@@ -94,10 +94,6 @@ class RecentPlacesFeatures : ElementFeatureProvider {
       }
       return null
     }
-
-    companion object {
-      private const val MAX_CHILDREN_PER_PLACE = 10
-    }
   }
 
   @Service(Service.Level.PROJECT)
@@ -126,3 +122,5 @@ class RecentPlacesFeatures : ElementFeatureProvider {
     }
   }
 }
+
+private const val MAX_CHILDREN_PER_PLACE = 10
