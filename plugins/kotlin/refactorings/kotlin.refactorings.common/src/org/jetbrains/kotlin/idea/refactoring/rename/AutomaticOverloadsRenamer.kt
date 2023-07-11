@@ -51,8 +51,6 @@ private fun KtNamedFunction.getOverloads(): Collection<KtNamedFunction> {
             if (symbol.isActual() && symbol.getExpectForActual() != null) return emptyList()
             val result = LinkedHashSet<KtNamedFunction>()
             listOfNotNull<KtScope>(
-                //TODO add scope from current context
-                containingKtFile.getFileSymbol().getFileScope(),
                 getPackageSymbolIfPackageExists(containingKtFile.packageFqName)?.getPackageScope(),
                 (symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.getDeclaredMemberScope(),
                 symbol.receiverParameter?.type?.expandedClassSymbol?.getDeclaredMemberScope()
