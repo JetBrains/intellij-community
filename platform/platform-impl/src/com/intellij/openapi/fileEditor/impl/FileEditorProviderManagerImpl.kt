@@ -17,6 +17,9 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.TestOnly
 
@@ -31,46 +34,22 @@ data class FileEditorProviderManagerState(@JvmField val selectedProviders: Map<S
 @State(name = "FileEditorProviderManager",
        storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)])
 class FileEditorProviderManagerImpl : FileEditorProviderManager,
-                                      SerializablePersistentStateComponent<FileEditorProviderManagerState>(FileEditorProviderManagerState()) {
-  private inline fun doGetProviders(providerChecker: (FileEditorProvider) -> Boolean): List<FileEditorProvider> {
-    // collect all possible editors
-    val sharedProviders = mutableListOf<FileEditorProvider>()
-    var hideDefaultEditor = false
-    var hasHighPriorityEditors = false
-    for (provider in FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList) {
-      if (providerChecker(provider)) {
-        sharedProviders.add(provider)
-        hideDefaultEditor = hideDefaultEditor or (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR)
-        hasHighPriorityEditors = hasHighPriorityEditors or (provider.policy == FileEditorPolicy.HIDE_OTHER_EDITORS)
-        if (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR && !DumbService.isDumbAware(provider)) {
-          val message = "HIDE_DEFAULT_EDITOR is supported only for DumbAware providers; " + provider.javaClass + " is not DumbAware."
-          LOG.error(PluginException.createByClass(message, null, provider.javaClass))
-        }
-      }
-    }
+                                      SerializablePersistentStateComponent<FileEditorProviderManagerState>(
+                                        FileEditorProviderManagerState()) {
 
-    // throw out default editors provider if necessary
-    if (hideDefaultEditor) {
-      sharedProviders.removeIf { it is DefaultPlatformFileEditorProvider }
-    }
-    if (hasHighPriorityEditors) {
-      sharedProviders.removeIf { it.policy != FileEditorPolicy.HIDE_OTHER_EDITORS }
-    }
-
-    // sort editors according policies
-    sharedProviders.sortWith(MyComparator)
-    return sharedProviders
-  }
-
-  private fun checkProvider(project: Project, file: VirtualFile, provider: FileEditorProvider): Boolean {
+  private fun checkProvider(project: Project,
+                            file: VirtualFile,
+                            provider: FileEditorProvider,
+                            suppressors: List<FileEditorProviderSuppressor>): Boolean {
     if (!DumbService.isDumbAware(provider) && DumbService.isDumb(project)) {
       return false
     }
+
     if (!provider.accept(project, file)) {
       return false
     }
 
-    for (suppressor in FileEditorProviderSuppressor.EP_NAME.extensionList) {
+    for (suppressor in suppressors) {
       if (suppressor.isSuppressed(project, file, provider)) {
         LOG.info("FileEditorProvider ${provider.javaClass} for VirtualFile $file " +
                  "was suppressed by FileEditorProviderSuppressor ${suppressor.javaClass}")
@@ -80,20 +59,73 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
     return true
   }
 
+  @Suppress("DuplicatedCode")
   override fun getProviderList(project: Project, file: VirtualFile): List<FileEditorProvider> {
-    return doGetProviders { provider ->
-      ApplicationManager.getApplication().runReadAction<Boolean, RuntimeException> {
-        checkProvider(project, file, provider)
+    // collect all possible editors
+    val sharedProviders = mutableListOf<FileEditorProvider>()
+    var hideDefaultEditor = false
+    var hasHighPriorityEditors = false
+
+    val suppressors = FileEditorProviderSuppressor.EP_NAME.extensionList
+    for (provider in FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList) {
+      if (ApplicationManager.getApplication().runReadAction<Boolean, RuntimeException> {
+          checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)
+        }) {
+        sharedProviders.add(provider)
+        hideDefaultEditor = hideDefaultEditor or (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR)
+        hasHighPriorityEditors = hasHighPriorityEditors or (provider.policy == FileEditorPolicy.HIDE_OTHER_EDITORS)
+        checkPolicy(provider)
       }
     }
+    return postProcessResult(hideDefaultEditor = hideDefaultEditor,
+                             sharedProviders = sharedProviders,
+                             hasHighPriorityEditors = hasHighPriorityEditors)
+
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
+  @Suppress("DuplicatedCode")
   override suspend fun getProvidersAsync(project: Project, file: VirtualFile): List<FileEditorProvider> {
-    return doGetProviders { provider ->
-      readAction {
-        checkProvider(project, file, provider)
-      }
+    // collect all possible editors
+    var hideDefaultEditor = false
+    var hasHighPriorityEditors = false
+    val suppressors = FileEditorProviderSuppressor.EP_NAME.extensionList
+    val sharedProviders = coroutineScope {
+      FileEditorProvider.EP_FILE_EDITOR_PROVIDER.filterableLazySequence().map { item ->
+        async {
+          val provider = item.instance
+          if (provider == null || !readAction {
+              checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)
+            }) {
+            return@async null
+          }
+
+          hideDefaultEditor = hideDefaultEditor or (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR)
+          hasHighPriorityEditors = hasHighPriorityEditors or (provider.policy == FileEditorPolicy.HIDE_OTHER_EDITORS)
+          checkPolicy(provider)
+          provider
+        }
+      }.toList()
+    }.mapNotNullTo(mutableListOf()) { it.getCompleted() }
+    return postProcessResult(hideDefaultEditor = hideDefaultEditor,
+                             sharedProviders = sharedProviders,
+                             hasHighPriorityEditors = hasHighPriorityEditors)
+
+  }
+
+  private fun postProcessResult(hideDefaultEditor: Boolean,
+                                sharedProviders: MutableList<FileEditorProvider>,
+                                hasHighPriorityEditors: Boolean): List<FileEditorProvider> {
+    // throw out default editors provider if necessary
+    if (hideDefaultEditor) {
+      sharedProviders.removeIf { it is DefaultPlatformFileEditorProvider }
     }
+    if (hasHighPriorityEditors) {
+      sharedProviders.removeIf { it.policy != FileEditorPolicy.HIDE_OTHER_EDITORS }
+    }
+    // sort editors according policies
+    sharedProviders.sortWith(MyComparator)
+    return sharedProviders
   }
 
   override fun getProvider(editorTypeId: String): FileEditorProvider? {
@@ -139,5 +171,12 @@ private object MyComparator : Comparator<FileEditorProvider> {
     if (c != 0) return c
     val value = getWeight(provider1) - getWeight(provider2)
     return if (value > 0) 1 else if (value < 0) -1 else 0
+  }
+}
+
+private fun checkPolicy(provider: FileEditorProvider) {
+  if (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR && !DumbService.isDumbAware(provider)) {
+    val message = "HIDE_DEFAULT_EDITOR is supported only for DumbAware providers; ${provider.javaClass} is not DumbAware."
+    LOG.error(PluginException.createByClass(message, null, provider.javaClass))
   }
 }

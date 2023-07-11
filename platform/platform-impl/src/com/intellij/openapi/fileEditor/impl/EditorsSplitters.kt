@@ -965,7 +965,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
           file.putUserData(OPENED_IN_BULK, true)
 
           val newProviders = async(CoroutineName("editor provider computing")) {
-            FileEditorProviderManager.getInstance().getProvidersAsync(fileEditorManager.project, file)
+            serviceAsync<FileEditorProviderManager>().getProvidersAsync(fileEditorManager.project, file)
           }
 
           val document = readActionBlocking {
