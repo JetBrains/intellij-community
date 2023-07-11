@@ -313,7 +313,7 @@
   </template>
 
   <template id="mermaid_codeFence" name="mermaid_codeFence"
-            value="mermaid &#10;$END$$SELECTION$&#10;:::"
+            value="mermaid&#10;$END$$SELECTION$&#10;:::"
             description="triple colon code fence"
             toReformat="false" toShortenFQNames="false">
     <context>

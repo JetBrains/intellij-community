@@ -2,5 +2,8 @@
 
 Some simple text
 
-:::<caret>
 Another simple text
+
+:::mermaid
+<caret>
+:::
