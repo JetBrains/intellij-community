@@ -697,6 +697,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinAliasedMethodUsages.0.kt");
             }
 
+            @TestMetadata("kotlinExtensionFunction.0.kt")
+            public void testKotlinExtensionFunction() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinExtensionFunction.0.kt");
+            }
+
             @TestMetadata("kotlinInterfaceImplThroughDelegate.0.kt")
             public void testKotlinInterfaceImplThroughDelegate() throws Exception {
                 runTest("../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinInterfaceImplThroughDelegate.0.kt");
