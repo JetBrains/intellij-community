@@ -227,8 +227,9 @@ public final class Registry  {
     Set<String> keys2process = new HashSet<>(userProperties.keySet());
     for (Map.Entry<String, String> entry : map.entrySet()) {
       RegistryValue registryValue = registry.doGet(entry.getKey());
-      String currentValue = registryValue.get(entry.getKey(), null, true);
-      if (!StringUtil.equals(currentValue, entry.getValue())) {
+      String currentValue = registryValue.get(entry.getKey(), null, false);
+      // currentValue == null means value is not in the bundle. Simply ignore it
+      if (currentValue != null && !StringUtil.equals(currentValue, entry.getValue())) {
         registryValue.setValue(entry.getValue());
       }
       keys2process.remove(entry.getKey());
