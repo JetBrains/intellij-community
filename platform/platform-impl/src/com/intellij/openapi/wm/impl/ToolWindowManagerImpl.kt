@@ -1711,7 +1711,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
 
     entry.toolWindow.applyWindowInfo(info.copy())
-    entry.stripeButton = getToolWindowPane(paneId).buttonManager.createStripeButton(toolWindow = entry.toolWindow, info = info, task = null)
+    if (info.isShowStripeButton || info.isVisible) { // A safety check: if the tool window is visible, we ignore isShowStripeButton.
+      entry.stripeButton = getToolWindowPane(paneId).buttonManager.createStripeButton(
+        toolWindow = entry.toolWindow,
+        info = info,task = null
+      )
+    }
   }
 
   internal fun setSideTool(id: String, isSplit: Boolean) {
