@@ -17,34 +17,30 @@ package com.siyeh.ig.memory;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.options.JavaClassValidator;
-import com.intellij.codeInspection.BatchQuickFix;
-import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ModCommands;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandBatchQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -87,7 +83,7 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
     return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  private static class InnerClassMayBeStaticFix extends InspectionGadgetsFix implements BatchQuickFix {
+  private static class InnerClassMayBeStaticFix extends ModCommandBatchQuickFix {
 
     @Override
     @NotNull
@@ -96,75 +92,28 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      applyFix(project, new ProblemDescriptor[] {descriptor}, List.of(), null);
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      PsiClass innerClass = ObjectUtils.tryCast(previewDescriptor.getStartElement().getParent(), PsiClass.class);
-      if (innerClass == null) {
-        return IntentionPreviewInfo.EMPTY;
-      }
-      Handler handler = new Handler(innerClass);
-      handler.collectLocalReferences();
-      handler.makeStatic();
-      return IntentionPreviewInfo.DIFF;
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project,
-                         CommonProblemDescriptor @NotNull [] descriptors,
-                         @NotNull List psiElementsToIgnore, @Nullable Runnable refreshViews) {
-      final List<Handler> handlers = new SmartList<>();
-      for (CommonProblemDescriptor descriptor : descriptors) {
-        final PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement().getParent();
-        if (!(element instanceof PsiClass)) continue;
-        handlers.add(new Handler((PsiClass)element));
-      }
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> {
-          handlers.forEach(Handler::collectReferences);
-          List<PsiElement> elements = ContainerUtil.flatMap(handlers, handler -> handler.getElements());
-          WriteCommandAction.writeCommandAction(project, elements)
-            .withName(InspectionGadgetsBundle.message("make.static.quickfix"))
-            .withGlobalUndo()
-            .run(() -> handlers.forEach(Handler::makeStatic));
-        }, InspectionGadgetsBundle.message("make.static.quickfix"), true, project);
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull List<ProblemDescriptor> descriptors) {
+      final List<Handler> handlers = StreamEx.of(descriptors).map(descriptor -> descriptor.getPsiElement().getParent())
+        .select(PsiClass.class).map(Handler::new).toList();
+      return ModCommands.psiUpdate(ModCommandAction.ActionContext.from(descriptors.get(0)), updater -> {
+        ContainerUtil.map(handlers, h -> h.getWritable(updater))
+          .forEach(Handler::makeStatic);
+      });
     }
 
     private static class Handler {
+      private final @NotNull PsiClass innerClass;
+      private final @NotNull List<@NotNull PsiElement> references;
 
-      private final PsiClass innerClass;
-      private List<PsiElement> references = null;
-
-      Handler(PsiClass innerClass) {
+      Handler(@NotNull PsiClass innerClass) {
         this.innerClass = innerClass;
+        final Collection<PsiReference> references = ReferencesSearch.search(innerClass, innerClass.getUseScope()).findAll();
+        this.references = ContainerUtil.map(references, PsiReference::getElement);
       }
 
-      public List<PsiElement> getElements() {
-        final List<PsiElement> elements = new SmartList<>();
-        elements.add(innerClass);
-        elements.addAll(references);
-        return elements;
-      }
-
-      /** Should be called under progress */
-      void collectReferences() {
-        ReadAction.run(() -> {
-          final Collection<PsiReference> references = ReferencesSearch.search(innerClass, innerClass.getUseScope()).findAll();
-          this.references = ContainerUtil.map(references, PsiReference::getElement);
-        });
-      }
-
-      void collectLocalReferences() {
-        this.references = SyntaxTraverser.psiTraverser(innerClass.getContainingFile())
-          .filter(e -> e instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)e).isReferenceTo(innerClass)).toList();
+      private Handler(@NotNull PsiClass innerClass, @NotNull List<@NotNull PsiElement> references) {
+        this.innerClass = innerClass;
+        this.references = references;
       }
 
       void makeStatic() {
@@ -199,6 +148,11 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
               removeTypeArguments(ref);
             }
           });
+      }
+
+      Handler getWritable(@NotNull ModPsiUpdater updater) {
+        return new Handler(updater.getWritable(innerClass),
+                           ContainerUtil.map(references, updater::getWritable));
       }
 
       private static void removeTypeArguments(PsiJavaCodeReferenceElement ref) {
