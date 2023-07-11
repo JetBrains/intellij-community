@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.style;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
@@ -7,7 +7,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.style.EscapedSpaceInspection;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_20;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
 
 public class EscapedSpaceInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
@@ -17,7 +17,7 @@ public class EscapedSpaceInspectionTest extends LightQuickFixParameterizedTestCa
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_20;
+    return JAVA_21;
   }
 
   @Override
