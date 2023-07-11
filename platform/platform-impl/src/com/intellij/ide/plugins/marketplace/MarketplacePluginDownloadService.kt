@@ -17,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.*
 import java.net.URLConnection
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.zip.ZipInputStream
 import kotlin.io.path.exists
 
@@ -41,7 +40,7 @@ open class MarketplacePluginDownloadService {
     @JvmStatic
     @Throws(IOException::class)
     fun getPluginTempFile(): File {
-      val pluginsTemp = File(PathManager.getPluginTempPath())
+      val pluginsTemp = PathManager.getStartupScriptDir().toFile()
       if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
         throw IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp))
       }
@@ -258,6 +257,6 @@ private fun getPluginFileUrlAndGuessFileParameters(pluginUrl: String): Pair<Stri
 
 private fun getPrevPluginArchive(prevPlugin: Path): Path {
   val suffix = if (prevPlugin.endsWith(".jar")) "" else ".zip"
-  return Paths.get(PathManager.getPluginTempPath()).resolve("${prevPlugin.fileName}$suffix")
+  return PathManager.getStartupScriptDir().resolve("${prevPlugin.fileName}$suffix")
 }
 

@@ -110,7 +110,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
       return
     }
 
-    val tempFile = Paths.get(PathManager.getPluginTempPath()).resolve(saveFile.fileName)
+    val tempFile = PathManager.getStartupScriptDir().resolve(saveFile.fileName)
     saveFile.copy(tempFile)
     val filenameFilter = ImportSettingsFilenameFilter(getRelativeNamesToExtract(getMarkedComponents(dialog.exportableComponents)))
     StartupActionScriptManager.addActionCommands(listOf(StartupActionScriptManager.UnzipCommand(tempFile, configPath, filenameFilter),

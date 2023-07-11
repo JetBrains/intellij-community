@@ -5,10 +5,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.system.CpuArch;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,6 +60,7 @@ public final class PathManager {
   private static String ourScratchPath;
   private static String ourPluginPath;
   private static String ourLogPath;
+  private static Path ourStartupScriptDir;
 
   // IDE installation paths
 
@@ -442,6 +440,22 @@ public final class PathManager {
     return platformPath(selector, "Logs", "", "LOCALAPPDATA", LOG_DIRECTORY, "XDG_CACHE_HOME", ".cache", LOG_DIRECTORY);
   }
 
+  /**
+   * Returns the path to the directory where the script which is executed at startup and files used by it are located.
+   * @see com.intellij.ide.startup.StartupActionScriptManager
+   */
+  @ApiStatus.Internal
+  public static @NotNull Path getStartupScriptDir() {
+    if (ourStartupScriptDir != null) return ourStartupScriptDir;
+    return getSystemDir().resolve(PLUGINS_DIRECTORY);
+  }
+
+  /**
+   * This method isn't supposed to be used in new code. If you need to locate a directory where the startup script and related files are
+   * located, use {@link #getStartupScriptDir()} instead. If you need to save some custom caches related to plugins, create a your own 
+   * directory under {@link #getSystemDir()}.
+   */
+  @ApiStatus.Obsolete
   public static @NotNull String getPluginTempPath() {
     return getSystemPath() + '/' + PLUGINS_DIRECTORY;
   }
@@ -625,6 +639,7 @@ public final class PathManager {
           if (paths.pluginsPath != null) System.setProperty(PROPERTY_PLUGINS_PATH, paths.pluginsPath);
           if (paths.logDirPath != null) System.setProperty(PROPERTY_LOG_PATH, paths.logDirPath);
 
+          if (paths.startupScriptDir != null) ourStartupScriptDir = paths.startupScriptDir;
           // NB: IDE might use instance from a different classloader
           ourConfigPath = null;
           ourSystemPath = null;
