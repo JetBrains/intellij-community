@@ -48,8 +48,6 @@ private val windowBorderThicknessInPhysicalPx: Int = run {
 
 internal fun updateWinControlsTheme(background: Color, customTitleBar: CustomTitleBar) {
   customTitleBar.putProperty("controls.dark", ColorUtil.isDark(background))
-  customTitleBar.putProperty("controls.foreground.normal", UIManager.getColor("WindowControls.foreground"))
-  customTitleBar.putProperty("controls.foreground.inactive", UIManager.getColor("WindowControls.inactiveForeground"))
 }
 
 internal sealed class CustomHeader(@JvmField internal val window: Window) : JPanel() {
