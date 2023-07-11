@@ -3,7 +3,6 @@ package com.intellij.ui.scale
 
 import com.intellij.ui.JreHiDpiUtil
 import java.awt.Component
-import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.GraphicsConfiguration
 import java.lang.ref.WeakReference
@@ -177,20 +176,6 @@ class ScaleContext : UserScaleContext {
 
   fun copyWithScale(scale: Scale): ScaleContext {
     val result = ScaleContext(usrScale, sysScale, objScale, scale)
-    overriddenScales?.let {
-      result.overriddenScales = it.clone()
-    }
-    return result
-  }
-
-  // system scale from the current `Graphics` and the current user scale, object scale from the icon scale context
-  fun copyIfNeeded(g: Graphics): ScaleContext {
-    val newSystemScale = JBUIScale.sysScale(g as? Graphics2D)
-    val newUserScale = JBUIScale.userScale
-    if (newSystemScale == getScale(ScaleType.SYS_SCALE).toFloat() && newUserScale == getScale(ScaleType.USR_SCALE).toFloat()) {
-      return this
-    }
-    val result = ScaleContext(ScaleType.USR_SCALE.of(newUserScale), ScaleType.SYS_SCALE.of(newSystemScale), objScale)
     overriddenScales?.let {
       result.overriddenScales = it.clone()
     }

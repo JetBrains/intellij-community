@@ -330,6 +330,15 @@ object JBUIScale {
   }
 
   /**
+   * Returns the pixel scale factor, corresponding to the provided configuration.
+   * In the IDE-managed HiDPI mode defaults to [.pixScale]
+   */
+  @JvmStatic
+  fun pixScale(gc: GraphicsConfiguration?): Float {
+    return if (JreHiDpiUtil.isJreHiDPIEnabled()) sysScale(gc) * scale(1f) else scale(1f)
+  }
+
+  /**
    * @return 'f' scaled by the user scale factor
    */
   @JvmStatic

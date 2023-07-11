@@ -52,15 +52,15 @@ public final class JBUI {
    * In the IDE-managed HiDPI mode defaults to {@link #pixScale()}
    */
   public static float pixScale(@Nullable GraphicsConfiguration gc) {
-    return JreHiDpiUtil.isJreHiDPIEnabled() ? JBUIScale.sysScale(gc) * JBUIScale.scale(1f) : JBUIScale.scale(1f);
+    return JBUIScale.pixScale(gc);
   }
 
   /**
    * Returns the pixel scale factor, corresponding to the device the provided component is tied to.
    * In the IDE-managed HiDPI mode defaults to {@link #pixScale()}
    */
-  public static float pixScale(@Nullable Component comp) {
-    return pixScale(comp != null ? comp.getGraphicsConfiguration() : null);
+  public static float pixScale(@Nullable Component component) {
+    return pixScale(component == null ? null : component.getGraphicsConfiguration());
   }
 
   /**

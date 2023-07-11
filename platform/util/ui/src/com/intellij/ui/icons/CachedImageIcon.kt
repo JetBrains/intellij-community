@@ -97,12 +97,21 @@ open class CachedImageIcon internal constructor(
   override fun getToolTip(composite: Boolean): String? = toolTip?.get()
 
   final override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-    val scaleContext = when {
-      scaleContext != null -> scaleContext.copyIfNeeded(g)
-      c != null -> ScaleContext.create(c)
-      else -> ScaleContext.create(g as Graphics2D)
+    if (scaleContext != null) {
+      resolveActualIcon(scaleContext).paintIcon(c, g, x, y)
+      return
     }
-    resolveActualIcon(scaleContext).paintIcon(c, g, x, y)
+
+    val resolver = resolver
+    if (resolver == null || !isIconActivated) {
+      return
+    }
+
+    val gc = c?.graphicsConfiguration ?: (g as Graphics2D).deviceConfiguration
+    synchronized(scaledIconCache) {
+      checkPathTransform()
+      scaledIconCache.getCachedIcon(host = this, gc = gc) ?: EMPTY_ICON
+    }.paintIcon(c, g, x, y)
   }
 
   final override fun getIconWidth(): Int = resolveActualIcon().iconWidth

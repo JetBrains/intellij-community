@@ -5,7 +5,9 @@ package com.intellij.ui.icons
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.DerivedScaleType
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.JBHiDPIScaledImage
@@ -16,6 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
 import java.awt.Graphics
+import java.awt.GraphicsConfiguration
 import java.awt.Image
 import java.lang.ref.SoftReference
 import javax.swing.Icon
@@ -33,29 +36,40 @@ internal class ScaledIconCache {
   private val cache = Long2ObjectLinkedOpenHashMap<SoftReference<Icon>>(SCALED_ICONS_CACHE_LIMIT)
 
   @Synchronized
+  fun getCachedIcon(host: CachedImageIcon, gc: GraphicsConfiguration?): Icon? {
+    val sysScale = JBUIScale.sysScale(gc)
+    val pixScale = if (JreHiDpiUtil.isJreHiDPIEnabled()) {
+      sysScale * JBUIScale.scale(1f)
+    }
+    else {
+      JBUIScale.scale(1f)
+    }
+
+    val cacheKey = pixScale.toDouble().toBits()
+    cache.getAndMoveToFirst(cacheKey)?.get()?.let {
+      return it
+    }
+
+    val scaleContext = ScaleContext.create(ScaleType.SYS_SCALE.of(sysScale))
+    return loadIcon(host = host, scaleContext = scaleContext, cacheKey = cacheKey)
+  }
+
+  @Synchronized
   fun getOrScaleIcon(host: CachedImageIcon, scaleContext: ScaleContext): Icon? {
     val cacheKey = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toBits()
     // don't worry that empty ref in the map, we compute and put a new icon by the same key, so no need to remove invalid entry
     cache.getAndMoveToFirst(cacheKey)?.get()?.let {
       return it
     }
+    return loadIcon(host = host, scaleContext = scaleContext, cacheKey = cacheKey)
+  }
 
+  private fun loadIcon(host: CachedImageIcon, scaleContext: ScaleContext, cacheKey: Long): Icon? {
     val image = host.loadImage(scaleContext = scaleContext, isDark = host.isDark) ?: return null
-
-    // image wasn't loaded or broken
-    val width = image.getWidth(null)
-    val height = image.getHeight(null)
-    if (width < 1 || height < 1) {
-      logger<ScaledResultIcon>().error("Invalid icon: $host")
-      return EMPTY_ICON
-    }
-
     val icon = ScaledResultIcon(image = image, original = host, objectScale = scaleContext.getScale(ScaleType.OBJ_SCALE).toFloat())
-    if ((4L * width * height) <= CACHED_IMAGE_MAX_SIZE) {
-      cache.putAndMoveToFirst(cacheKey, SoftReference(icon))
-      if (cache.size > SCALED_ICONS_CACHE_LIMIT) {
-        cache.removeLast()
-      }
+    cache.putAndMoveToFirst(cacheKey, SoftReference(icon))
+    if (cache.size > SCALED_ICONS_CACHE_LIMIT) {
+      cache.removeLast()
     }
     return icon
   }
