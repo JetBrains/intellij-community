@@ -19,7 +19,10 @@ import org.jetbrains.kotlin.analysis.project.structure.KtScriptDependencyModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSdkModule
 import org.jetbrains.kotlin.analysis.project.structure.impl.KotlinModuleDependentsProviderBase
+import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.util.getTransitiveLibraryDependencyInfos
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -48,6 +51,7 @@ internal class IdeKotlinModuleDependentsProvider(private val project: Project) :
         val directDependents = mutableSetOf<KtModule>()
         directDependents.addFriendDependents(module)
         directDependents.addWorkspaceModelDependents(symbolicId)
+        directDependents.addAnchorModuleDependents(module)
 
         return directDependents
     }
@@ -72,6 +76,30 @@ internal class IdeKotlinModuleDependentsProvider(private val project: Project) :
                 // model yet and thus cannot be a proper `KtModule`. If there is a production source `KtModule`, we only need to add that
                 // because the test source `KtModule` will be a direct friend dependent of the production source `KtModule`.
                 addIfNotNull(moduleEntity.findModule(snapshot)?.productionOrTestSourceModuleInfo?.toKtModule())
+            }
+    }
+
+    private fun MutableSet<KtModule>.addAnchorModuleDependents(module: KtModule) {
+        val moduleInfo = (module as? KtSourceModuleByModuleInfo)?.ideaModuleInfo as? ModuleSourceInfo ?: return
+
+        // If `module` is an anchor module, it has library dependents in the form of anchoring libraries. See
+        // `ResolutionAnchorCacheService` for additional documentation.
+        val anchoringLibraries = ResolutionAnchorCacheService.getInstance(project).librariesForResolutionAnchors[moduleInfo] ?: return
+
+        // Because dependency relationships between libraries aren't supported by the project model (as noted in
+        // `ResolutionAnchorCacheService`), library dependencies are approximated by the following relationship: If a module `M1` depends on
+        // two libraries `L1` and `L2`, `L1` depends on `L2` and `L2` depends on `L1` (`L1 <--> L2`). This does not apply without
+        // restriction for multi-platform projects. However, anchor module usage is strictly limited to the `intellij` project, which is not
+        // a multi-platform project. Because the approximate library dependencies are bidirectional, library dependencies are also library
+        // dependents, and we can simply use `getTransitiveLibraryDependencyInfos`.
+        //
+        // Because anchor modules are rare and `getTransitiveDependents` already caches dependents as a whole, there is currently no need to
+        // cache these transitive library dependencies.
+        LibraryDependenciesCache.getInstance(project)
+            .getTransitiveLibraryDependencyInfos(anchoringLibraries)
+            .forEach { libraryInfo ->
+                add(libraryInfo.toKtModule())
+                add(libraryInfo.sourcesModuleInfo.toKtModule())
             }
     }
 
