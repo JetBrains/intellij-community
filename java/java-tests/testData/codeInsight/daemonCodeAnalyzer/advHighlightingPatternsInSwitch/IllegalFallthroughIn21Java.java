@@ -187,4 +187,11 @@ class IllegalFallthroughIn21Java {
     }
 
   }
+  void emptyCase(Object o) {
+    switch (o) {
+      case Integer a1:
+      case Object a222:
+        //                System.out.println("1");
+    }
+  }
 }
