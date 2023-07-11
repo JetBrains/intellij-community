@@ -1266,8 +1266,8 @@
     <postStartupActivity implementation="com.intellij.ide.cds.CDSStartupActivity" order="last"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.cds.CDSFUSCollector"/>
 
-    <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.startUpPerformanceReporter.StartupPerformanceCollector"/>
-    <backgroundPostStartupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartupMetricCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.startUpPerformanceReporter.fus.StartupPerformanceCollector"/>
+    <postStartupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.fus.StartupMetricCollector"/>
 
     <postStartupActivity implementation="com.intellij.ide.startup.CheckProjectActivity" order="last"/>
     <postStartupActivity implementation="com.intellij.ide.startup.CheckKeysStartupActivity" order="first"/>

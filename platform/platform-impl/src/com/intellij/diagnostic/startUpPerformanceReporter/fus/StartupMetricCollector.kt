@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diagnostic.startUpPerformanceReporter
+package com.intellij.diagnostic.startUpPerformanceReporter.fus
 
 import com.intellij.diagnostic.StartUpPerformanceService
 import com.intellij.openapi.application.ApplicationManager
@@ -29,7 +29,7 @@ private class StartupMetricCollector : ProjectActivity {
 
     val metrics = StartUpPerformanceService.getInstance().getMetrics().firstOrNull()
     for (entry in Object2IntMaps.fastIterable(metrics)) {
-      StartupPerformanceCollector.logEvent(project, entry.key, entry.intValue)
+      logStartupPerformanceEvent(project = project, eventId = entry.key, duration = entry.intValue)
     }
   }
 }

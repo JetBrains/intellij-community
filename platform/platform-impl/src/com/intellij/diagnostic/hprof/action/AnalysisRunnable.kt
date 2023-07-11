@@ -31,6 +31,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.DialogWrapper
@@ -49,14 +50,12 @@ import java.util.concurrent.CompletableFuture
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 
-class AnalysisRunnable(val hprofPath: Path,
+private val LOG: Logger
+  get() = logger<AnalysisRunnable>()
+
+internal class AnalysisRunnable(val hprofPath: Path,
                        val heapProperties: HeapReportProperties,
                        private val deleteAfterAnalysis: Boolean) : Runnable {
-
-  companion object {
-    private val LOG = Logger.getInstance(AnalysisRunnable::class.java)
-  }
-
   override fun run() {
     AnalysisTask().queue()
   }
@@ -141,11 +140,11 @@ class AnalysisRunnable(val hprofPath: Path,
 }
 private const val SECTION_SEPARATOR = "================"
 
-fun getHeapDumpReportText(reportText: String, heapProperties: HeapReportProperties): String {
+internal fun getHeapDumpReportText(reportText: String, heapProperties: HeapReportProperties): String {
   return "${reportText}${SECTION_SEPARATOR}\n${heapProperties.liveStats}"
 }
 
-class ShowReportDialog(reportText: String, heapProperties: HeapReportProperties) : DialogWrapper(false) {
+internal class ShowReportDialog(reportText: String, heapProperties: HeapReportProperties) : DialogWrapper(false) {
   private val textArea: JTextArea = JTextArea(30, 130)
 
   init {
