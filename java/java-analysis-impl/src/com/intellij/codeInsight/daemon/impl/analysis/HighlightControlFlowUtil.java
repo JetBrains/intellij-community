@@ -767,10 +767,23 @@ public final class HighlightControlFlowUtil {
    */
   @Nullable
   private static HighlightInfo.Builder checkFinalUsageInsideGuardedPattern(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
-    PsiCaseLabelElement refGuardedPattern = PsiTreeUtil.getParentOfType(context, PsiPatternGuard.class);
+    PsiPatternGuard refGuardedPattern = PsiTreeUtil.getParentOfType(context, PsiPatternGuard.class);
+
     if (refGuardedPattern == null) return null;
-    PsiCaseLabelElement varGuardedPattern = PsiTreeUtil.getParentOfType(variable, PsiPatternGuard.class);
-    if (refGuardedPattern != varGuardedPattern && !isEffectivelyFinal(variable, refGuardedPattern, context)) {
+    LanguageLevel level = PsiUtil.getLanguageLevel(refGuardedPattern);
+    //assigment is covered in com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.checkOutsideDeclaredCantBeAssignmentInGuard
+    boolean isAssignment = false;
+    PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(context, PsiAssignmentExpression.class);
+    if (assignmentExpression != null && PsiTreeUtil.isAncestor(assignmentExpression.getLExpression(), context, false)) {
+      isAssignment = true;
+    }
+    if (!isAssignment && PsiTreeUtil.getParentOfType(context, PsiUnaryExpression.class) != null) {
+      isAssignment = true;
+    }
+    if (((level == LanguageLevel.JDK_20_PREVIEW && refGuardedPattern != PsiTreeUtil.getParentOfType(variable, PsiPatternGuard.class)) ||
+         (level != LanguageLevel.JDK_20_PREVIEW && !isAssignment &&
+          !PsiTreeUtil.isAncestor(refGuardedPattern.getGuardingExpression(), variable, false))) &&
+        !isEffectivelyFinal(variable, refGuardedPattern, context)) {
       String message = JavaErrorBundle.message("guarded.pattern.variable.must.be.final");
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(message);
       IntentionAction action = QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, refGuardedPattern);
