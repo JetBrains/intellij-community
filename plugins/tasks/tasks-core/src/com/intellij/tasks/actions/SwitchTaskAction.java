@@ -68,7 +68,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       TaskManager taskManager = TaskManager.getManager(project);
       LocalTask activeTask = taskManager.getActiveTask();
 
-      if (isImplicit(activeTask) &&
+      if (isOriginalDefault(activeTask) &&
           taskManager.getAllRepositories().length == 0 &&
           !TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO) {
         presentation.setEnabledAndVisible(false);
@@ -92,7 +92,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     return ActionUpdateThread.BGT;
   }
 
-  private static boolean isImplicit(LocalTask activeTask) {
+  private static boolean isOriginalDefault(LocalTask activeTask) {
     return activeTask.isDefault() && Comparing.equal(activeTask.getCreated(), activeTask.getUpdated());
   }
 
