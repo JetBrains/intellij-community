@@ -43,6 +43,8 @@ public class ForwardCompatibilityInspectionTest extends LightJavaInspectionTestC
 
   public void testRestrictedKeywordWarning() { doTest(); }
 
+  public void testLoneSemicolon() { doTest(); }
+
   public void testModuleInfoWarning() {
     withLevel(LanguageLevel.JDK_1_9, () -> {
       myFixture.configureByFile("module-info.java");
