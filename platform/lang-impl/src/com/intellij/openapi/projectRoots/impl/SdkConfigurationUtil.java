@@ -2,15 +2,12 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
@@ -21,7 +18,6 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -298,29 +294,8 @@ public final class SdkConfigurationUtil {
     // selecting the last opened project path, instead of the suggested detected JDK home (one of many).
     // The behaviour may also depend on the FileChooser implementations which does not reuse that code
     FileChooser.chooseFiles(descriptor, null, component, getSuggestedSdkRoot(sdkType), chosen -> {
-      ThrowableComputable<String, ProcessCanceledException> computable = () -> {
-        final String path = chosen.get(0).getPath();
-        if (sdkType.isValidSdkHome(path)) return path;
-
-        ProgressManager.checkCanceled();
-
-        final String adjustedPath = sdkType.adjustSelectedSdkHome(path);
-        if (sdkType.isValidSdkHome(adjustedPath)) return adjustedPath;
-
-        return null;
-      };
-
-      String sdkPath = ProgressManager
-        .getInstance()
-        .runProcessWithProgressSynchronously(
-          () -> ReadAction.compute(computable),
-          ProjectBundle.message("progress.title.checking.sdk.home"),
-          true, null
-        );
-
-      if (sdkPath != null) {
-        consumer.consume(sdkPath);
-      }
+      final String path = chosen.get(0).getPath();
+      consumer.consume(path);
     });
   }
 
