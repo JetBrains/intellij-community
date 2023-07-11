@@ -29,7 +29,7 @@ import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.findMissedClassesForSealed;
+import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.findMissedClasses;
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.oneOfUnconditional;
 
 final class PatternHighlightingModel {
@@ -503,7 +503,7 @@ final class PatternHighlightingModel {
   /**
    * Try to reduce sealed classes to their supertypes or if selectorType is covered any of types,then return selectorType.
    * Previous sealed classes are not excluded because they can be used in another combination.
-   * This method uses {@link SwitchBlockHighlightingModel#findMissedClassesForSealed(PsiType, List, List, PsiElement) findMissedClassesForSealed}
+   * This method uses {@link SwitchBlockHighlightingModel#findMissedClasses(PsiType, List, List, PsiElement) findMissedClassesForSealed}
    * To prevent recursive calls, only TypeTest descriptions are passed to this method.
    */
   @NotNull
@@ -532,30 +532,20 @@ final class PatternHighlightingModel {
       StreamEx.of(patterns).select(PatternTypeTestDescription.class).collect(Collectors.toSet());
     Set<PatternTypeTestDescription> toAdd = new HashSet<>();
     Set<PsiType> existedTypes = typeTestDescriptions.stream().map(t -> t.type()).collect(Collectors.toSet());
-    boolean unconditionalCovers = false;
-    for (PatternTypeTestDescription description : typeTestDescriptions) {
-      if (oneOfUnconditional(description.type(), selectorType)) {
-        toAdd.add(new PatternTypeTestDescription(selectorType));
-        changed = true;
-        unconditionalCovers = true;
-        break;
-      }
-    }
-    if (!unconditionalCovers) {
-      Set<PsiClass> visitedCovered = findMissedClassesForSealed(selectorType, new ArrayList<>(typeTestDescriptions), new ArrayList<>(), context).coveredClasses();
-      for (PsiClass covered : visitedCovered) {
-        PsiClassType classType = TypeUtils.getType(covered);
-        if (!existedTypes.contains(classType)) {
-          if (oneOfUnconditional(selectorType, classType)) {
-            toAdd.add(new PatternTypeTestDescription(classType));
-            changed = true;
-          }
-          //find something upper. let's change to selectorType
-          if (oneOfUnconditional(classType, selectorType)) {
-            toAdd.add(new PatternTypeTestDescription(selectorType));
-            changed = true;
-            break;
-          }
+    Set<PsiClass> visitedCovered =
+      findMissedClasses(selectorType, new ArrayList<>(typeTestDescriptions), new ArrayList<>(), context).coveredClasses();
+    for (PsiClass covered : visitedCovered) {
+      PsiClassType classType = TypeUtils.getType(covered);
+      if (!existedTypes.contains(classType)) {
+        if (oneOfUnconditional(selectorType, classType)) {
+          toAdd.add(new PatternTypeTestDescription(classType));
+          changed = true;
+        }
+        //find something upper. let's change to selectorType
+        if (oneOfUnconditional(classType, selectorType)) {
+          toAdd.add(new PatternTypeTestDescription(selectorType));
+          changed = true;
+          break;
         }
       }
     }

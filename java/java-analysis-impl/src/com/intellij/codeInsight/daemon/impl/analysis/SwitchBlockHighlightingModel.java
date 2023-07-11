@@ -515,6 +515,7 @@ public class SwitchBlockHighlightingModel {
 
   /**
    * Finds the missed and covered classes for a sealed selector type.
+   * If a selector type is not sealed classes, it will be checked if it is covered by one of elements or enumConstants
    *
    * @param selectorType   the selector type
    * @param elements       the pattern descriptions, unconditional
@@ -522,10 +523,10 @@ public class SwitchBlockHighlightingModel {
    * @param context        the context element (parent of pattern descriptions)
    * @return the container of missed and covered classes (may contain classes outside the selector type hierarchy)
    */
-  static @NotNull SealedResult findMissedClassesForSealed(@NotNull PsiType selectorType,
-                                                           @NotNull List<PatternDescription> elements,
-                                                           @NotNull List<PsiEnumConstant> enumConstants,
-                                                           @NotNull PsiElement context) {
+  static @NotNull SealedResult findMissedClasses(@NotNull PsiType selectorType,
+                                                 @NotNull List<PatternDescription> elements,
+                                                 @NotNull List<PsiEnumConstant> enumConstants,
+                                                 @NotNull PsiElement context) {
     //Used to keep dependencies. The last dependency is one of the selector types.
     record ClassWithDependencies(PsiClass mainClass, List<PsiClass> dependencies) {
     }
@@ -535,19 +536,13 @@ public class SwitchBlockHighlightingModel {
     Set<PsiClass> missingClasses = new LinkedHashSet<>();
 
     LinkedHashMap<PsiClass, PsiType> permittedPatternClasses = findPermittedClasses(elements);
-    HashSet<PsiType> usedTypes = new HashSet<>(permittedPatternClasses.values());
     //according JEP 440-441 only direct abstract sealed classes are allowed (14.11.1.1)
     Set<PsiClass> sealedUpperClasses = findSealedUpperClasses(permittedPatternClasses.keySet());
 
-    List<PatternTypeTestDescription> typeTestPatternsOutOfSealed = StreamEx.of(elements)
-      .select(PatternTypeTestDescription.class)
-      .filter(pattern -> !usedTypes.contains(pattern.type()))
-      .toList();
+    List<PatternTypeTestDescription> typeTestPatterns = ContainerUtil.filterIsInstance(elements, PatternTypeTestDescription.class);
 
-    Set<PsiClass> selectorClasses = StreamEx.of(getAllTypes(selectorType))
-      .map(type -> PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(type)))
-      .nonNull()
-      .toSet();
+    Set<PsiClass> selectorClasses = ContainerUtil.map2SetNotNull(getAllTypes(selectorType),
+                                                                 type -> PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(type)));
     if (selectorClasses.isEmpty()) return new SealedResult(Collections.emptySet(), Collections.emptySet());
 
     Queue<ClassWithDependencies> nonVisited = new ArrayDeque<>();
@@ -589,13 +584,12 @@ public class SwitchBlockHighlightingModel {
         if (TypeConversionUtil.areTypesConvertible(targetType, selectorType) ||
             //we should consider items from the intersections in the usual way
             oneOfUnconditional(targetType, selectorType)) {
-          if (//check a case, when we have something, which not in sealed hierarchy, but covers some leaves
-            !ContainerUtil.exists(typeTestPatternsOutOfSealed, pattern -> oneOfUnconditional(pattern.type(), targetType)) &&
-            //check if it is an enum and it is covered by all enums
+          if (//check if it is an enum and it is covered by all enums
             !(psiClass.isEnum() && findMissingEnumConstant(psiClass, enumConstants).isEmpty()) &&
             //check if it is a record, and it is covered by record patterns (deconstruction)
-            !(psiClass.isRecord() &&
-              checkRecordPatternExhaustivenessForDescription(elements, targetType, context).isExhaustive())) {
+            !(psiClass.isRecord() && checkRecordPatternExhaustivenessForDescription(elements, targetType, context).isExhaustive()) &&
+            //check a case, when we have something, which not in sealed hierarchy, but covers some leaves
+            !ContainerUtil.exists(typeTestPatterns, pattern -> oneOfUnconditional(pattern.type(), targetType))) {
             missingClasses.add(psiClass);
             visitedNotCovered.addAll(peeked.dependencies);
           }
@@ -1231,7 +1225,7 @@ public class SwitchBlockHighlightingModel {
       }else{
         List<PatternDescription> descriptions = preparePatternDescription(elements);
         List<PsiEnumConstant> enumConstants = StreamEx.of(elements).map(element -> getEnumConstant(element)).nonNull().toList();
-        List<PsiClass> missedSealedClasses = StreamEx.of(findMissedClassesForSealed(selectorType, descriptions, enumConstants, myBlock).missedClasses())
+        List<PsiClass> missedSealedClasses = StreamEx.of(findMissedClasses(selectorType, descriptions, enumConstants, myBlock).missedClasses())
           .sortedBy(t->t.getQualifiedName())
           .toList();
         missedClasses = new LinkedHashSet<>();
