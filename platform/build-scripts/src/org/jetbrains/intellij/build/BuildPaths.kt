@@ -67,4 +67,10 @@ abstract class BuildPaths(
    * Not to be confused with [artifacts].
    */
   val jpsArtifacts: Path = buildOutputDir.resolve("jps-artifacts")
+
+  /**
+   * Path to a directory where searchable options will be built in
+   */
+  val searchableOptionDir: Path
+    get() = tempDir.resolve("searchableOptionsResult")
 }

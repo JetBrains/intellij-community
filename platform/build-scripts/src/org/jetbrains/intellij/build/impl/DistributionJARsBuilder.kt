@@ -1193,7 +1193,7 @@ suspend fun buildSearchableOptions(ideClassPath: Set<String>,
     return null
   }
 
-  val targetDirectory = context.searchableOptionDir
+  val targetDirectory = context.paths.searchableOptionDir
   val modules = withContext(Dispatchers.IO) {
     NioFiles.deleteRecursively(targetDirectory)
     // bundled maven is also downloaded during traverseUI execution in an external process,

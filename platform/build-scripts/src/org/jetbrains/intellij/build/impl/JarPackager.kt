@@ -47,9 +47,6 @@ import kotlin.io.path.invariantSeparatorsPathString
 private val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
 private val isUnpackedDist = System.getProperty("idea.dev.build.unpacked").toBoolean()
 
-internal val BuildContext.searchableOptionDir: Path
-  get() = paths.tempDir.resolve("searchableOptionsResult")
-
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val libsThatUsedInJps = java.util.Set.of(
   "ASM",
@@ -244,7 +241,7 @@ class JarPackager private constructor(private val outputDir: Path, private val c
       val patchedDirs = moduleOutputPatcher.getPatchedDir(moduleName)
       val patchedContent = moduleOutputPatcher.getPatchedContent(moduleName)
 
-      val searchableOptionsModuleDir = context.searchableOptionDir.resolve(moduleName).takeIf {
+      val searchableOptionsModuleDir = context.paths.searchableOptionDir.resolve(moduleName).takeIf {
         withContext(Dispatchers.IO) {
           Files.exists(it)
         }
