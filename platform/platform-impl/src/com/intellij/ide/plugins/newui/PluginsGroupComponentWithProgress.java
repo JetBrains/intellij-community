@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,8 +13,7 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public abstract class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
-
-  private final Logger LOG = Logger.getInstance(PluginsGroupComponentWithProgress.class);
+  private static final Logger LOG = Logger.getInstance(PluginsGroupComponentWithProgress.class);
 
   private AsyncProcessIcon myIcon = new AsyncProcessIcon.BigCentered(IdeBundle.message("progress.text.loading"));
   private @Nullable Runnable myVisibleRunnable;
@@ -73,7 +71,7 @@ public abstract class PluginsGroupComponentWithProgress extends PluginsGroupComp
   public void dispose() {
     if (myIcon != null) {
       remove(myIcon);
-      Disposer.dispose(myIcon);
+      myIcon.dispose();
       myIcon = null;
     }
   }

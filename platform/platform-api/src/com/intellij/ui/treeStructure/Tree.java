@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.IdeBundle;
@@ -7,7 +7,10 @@ import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.paint.RectanglePainter2D;
@@ -212,7 +215,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     if (myBusyIcon != null) {
       remove(myBusyIcon);
-      Disposer.dispose(myBusyIcon);
+      myBusyIcon.dispose();
       myBusyIcon = null;
     }
   }

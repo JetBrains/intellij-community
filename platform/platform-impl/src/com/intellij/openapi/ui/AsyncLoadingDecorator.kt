@@ -3,7 +3,6 @@ package com.intellij.openapi.ui
 
 import com.intellij.CommonBundle
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.fadeOut
 import com.intellij.util.ui.AnimatedIcon
 import com.intellij.util.ui.AsyncProcessIcon
@@ -30,7 +29,7 @@ internal class AsyncLoadingDecorator(private val startDelay: Duration) {
     return scope.launch {
       delay((startDelay.inWholeMilliseconds - (System.currentTimeMillis() - scheduleTime)).coerceAtLeast(0))
       withContext(Dispatchers.EDT) {
-        val loadingLayer = LoadingLayer(AsyncProcessIcon.createBig("Loading"))
+        val loadingLayer = LoadingLayer(AsyncProcessIcon.createBig("Loading", scope))
         addUi(loadingLayer)
         this@AsyncLoadingDecorator.loadingLayer = loadingLayer
       }
@@ -50,7 +49,7 @@ internal class AsyncLoadingDecorator(private val startDelay: Duration) {
         parent.repaint()
       }
       finally {
-        Disposer.dispose(loadingLayer.processIcon)
+        loadingLayer.processIcon.dispose()
       }
     }
   }

@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions
 
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
@@ -18,7 +17,6 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle title: String) {
-
   @JvmField
   val panel: DialogPanel
 
@@ -29,7 +27,7 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
   init {
     panel = panel {
       customizeSpacingConfiguration(spacingConfiguration = object : IntelliJSpacingConfiguration() {
-        // Remove default vertical gap around cells, so the header can be smaller
+        // remove a default vertical gap around cells, so the header can be smaller
         override val verticalComponentGap: Int
           get() = 0
       }) {
@@ -68,7 +66,7 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
   }
 
   fun disposeProcessIcon() {
-    Disposer.dispose(processIcon)
+    processIcon.dispose()
     processIcon.parent?.apply {
       remove(processIcon)
       repaint()

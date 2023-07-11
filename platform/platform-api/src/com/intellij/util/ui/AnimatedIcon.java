@@ -5,7 +5,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,12 +33,16 @@ public class AnimatedIcon extends JComponent implements Disposable {
   private final String name;
 
   public AnimatedIcon(@NonNls String name, Icon[] icons, Icon passiveIcon, int cycleLength) {
+    this(name, icons, passiveIcon, cycleLength, null);
+  }
+
+  public AnimatedIcon(@NonNls String name, Icon[] icons, Icon passiveIcon, int cycleLength, @Nullable CoroutineScope coroutineScope) {
     this.name = name;
     this.icons = icons.length == 0 ? new Icon[]{passiveIcon} : icons;
     this.passiveIcon = passiveIcon;
     preferredSize = calcPreferredSize();
 
-    animator = new Animator(name, icons.length, cycleLength, true) {
+    animator = new Animator(name, icons.length, cycleLength, true, true, coroutineScope) {
       @Override
       public void paintNow(int frame, int totalFrames, int cycle) {
         int len = AnimatedIcon.this.icons.length;

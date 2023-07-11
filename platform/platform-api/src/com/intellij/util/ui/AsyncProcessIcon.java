@@ -2,6 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,8 +19,16 @@ public class AsyncProcessIcon extends AnimatedIcon {
     this(name, SMALL_ICONS, AllIcons.Process.Step_passive);
   }
 
+  public AsyncProcessIcon(@NonNls String name, @NotNull CoroutineScope coroutineScope) {
+    this(name, SMALL_ICONS, AllIcons.Process.Step_passive, coroutineScope);
+  }
+
   public AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive) {
     super(name, icons, passive, CYCLE_LENGTH);
+  }
+
+  public AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive, @NotNull CoroutineScope coroutineScope) {
+    super(name, icons, passive, CYCLE_LENGTH, coroutineScope);
   }
 
   @Override
@@ -45,6 +54,10 @@ public class AsyncProcessIcon extends AnimatedIcon {
 
   public static @NotNull AnimatedIcon createBig(@NonNls String name) {
     return new AsyncProcessIcon(name, com.intellij.ui.AnimatedIcon.Big.ICONS, AllIcons.Process.Big.Step_passive);
+  }
+
+  public static @NotNull AnimatedIcon createBig(@NonNls String name, @NotNull CoroutineScope coroutineScope) {
+    return new AsyncProcessIcon(name, com.intellij.ui.AnimatedIcon.Big.ICONS, AllIcons.Process.Big.Step_passive, coroutineScope);
   }
 
   public static class Big extends AsyncProcessIcon {

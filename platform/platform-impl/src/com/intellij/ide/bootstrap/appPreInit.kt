@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.AnimatedIcon
 import com.intellij.util.ui.AsyncProcessIcon
@@ -118,8 +117,8 @@ internal suspend fun preInitApp(app: ApplicationImpl,
     asyncScope.launch {
       if (!app.isHeadlessEnvironment) {
         launch(CoroutineName("icons preloading") + Dispatchers.IO) {
-          Disposer.dispose(AsyncProcessIcon.createBig(""))
-          Disposer.dispose(AsyncProcessIcon(""))
+          AsyncProcessIcon.createBig("", this)
+          AsyncProcessIcon("", this)
           AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
           AnimatedIcon.FS()
         }

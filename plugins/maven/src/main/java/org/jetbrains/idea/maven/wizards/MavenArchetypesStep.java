@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -36,8 +36,7 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-public class MavenArchetypesStep extends ModuleWizardStep implements Disposable {
-
+public final class MavenArchetypesStep extends ModuleWizardStep implements Disposable {
   private JCheckBox myUseArchetypeCheckBox;
   private JButton myAddArchetypeButton;
   private JPanel myArchetypesPanel;
@@ -56,7 +55,12 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   public MavenArchetypesStep(AbstractMavenModuleBuilder builder, @Nullable StepAdapter step) {
     myBuilder = builder;
     myStep = step;
-    Disposer.register(this, myLoadingIcon);
+    Disposer.register(this, new Disposable() {
+      @Override
+      public void dispose() {
+        myLoadingIcon.dispose();
+      }
+    });
 
     myArchetypesTree = new Tree();
     myArchetypesTree.setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));
@@ -224,9 +228,8 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       final Set<MavenArchetype> archetypes = MavenArchetypeManager.getInstance(findProject()).getArchetypes();
 
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
-        if (currentUpdaterMarker != myCurrentUpdaterMarker) return; // Other updater has been run.
+        if (currentUpdaterMarker != myCurrentUpdaterMarker) return; // Another updater has been run.
 
         ((CardLayout)myArchetypesPanel.getLayout()).show(myArchetypesPanel, "archetypes");
 

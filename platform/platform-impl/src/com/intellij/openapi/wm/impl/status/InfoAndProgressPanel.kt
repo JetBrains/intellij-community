@@ -933,7 +933,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       }
     }
 
-    val progressIcon: AsyncProcessIcon = AsyncProcessIcon("Background process")
+    val progressIcon: AsyncProcessIcon = AsyncProcessIcon("Background process", host.coroutineScope)
     var indicator: InfoAndProgressPanel.MyInlineProgressIndicator? = null
     private var processIconComponent: AsyncProcessIcon? = null
     private val multiProcessLink: ActionLink = object : ActionLink("", ActionListener { host.triggerPopupShowing() }) {
@@ -959,10 +959,6 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       progressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
       progressIcon.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border())
       progressIcon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"))
-
-      host.coroutineScope.coroutineContext.job.invokeOnCompletion {
-        Disposer.dispose(progressIcon)
-      }
 
       setLayout(object : AbstractLayoutManager() {
         override fun preferredLayoutSize(parent: Container): Dimension {

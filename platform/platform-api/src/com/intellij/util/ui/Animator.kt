@@ -3,24 +3,29 @@ package com.intellij.util.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.util.concurrency.EdtScheduledExecutorService
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 import java.awt.GraphicsEnvironment
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
+import kotlin.time.Duration.Companion.microseconds
 
 abstract class Animator @JvmOverloads constructor(private val name: @NonNls String?,
                                                   private val totalFrames: Int,
                                                   private val cycleDuration: Int,
                                                   private val isRepeatable: Boolean,
-                                                  @JvmField protected val isForward: Boolean = true) : Disposable {
-  private var ticker: ScheduledFuture<*>? = null
+                                                  @JvmField protected val isForward: Boolean = true,
+                                                  coroutineScope: CoroutineScope? = null) : Disposable {
+  private var ticker: Job? = null
   private var currentFrame = 0
   private var startTime: Long = 0
   private var startDeltaTime: Long = 0
   private var initialStep = false
+
+  private val coroutineScope: CoroutineScope
 
   @Obsolete
   fun isForward(): Boolean = isForward
@@ -30,6 +35,8 @@ abstract class Animator @JvmOverloads constructor(private val name: @NonNls Stri
     private set
 
   init {
+    this.coroutineScope = coroutineScope ?: CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
     reset()
     if (skipAnimation()) {
       animationDone()
@@ -86,7 +93,7 @@ abstract class Animator @JvmOverloads constructor(private val name: @NonNls Stri
   private fun stopTicker() {
     val ticker = ticker ?: return
     this.ticker = null
-    ticker.cancel(false)
+    ticker.cancel()
   }
 
   protected open fun paintCycleEnd() {}
@@ -113,15 +120,12 @@ abstract class Animator @JvmOverloads constructor(private val name: @NonNls Stri
       animationDone()
     }
     else if (ticker == null) {
-      ticker = EdtScheduledExecutorService.getInstance().scheduleWithFixedDelay(object : Runnable {
-        override fun run() {
+      ticker = coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        while (true) {
           onTick()
+          delay((cycleDuration * 1000L / totalFrames).microseconds)
         }
-
-        override fun toString(): String {
-          return "Scheduled " + this@Animator
-        }
-      }, 0, cycleDuration * 1000L / totalFrames, TimeUnit.MICROSECONDS)
+      }
     }
   }
 
@@ -129,6 +133,7 @@ abstract class Animator @JvmOverloads constructor(private val name: @NonNls Stri
 
   override fun dispose() {
     stopTicker()
+    coroutineScope.cancel()
     isDisposed = true
   }
 
@@ -144,7 +149,7 @@ abstract class Animator @JvmOverloads constructor(private val name: @NonNls Stri
   override fun toString(): String {
     val future = ticker
     return "Animator '$name' @" + System.identityHashCode(this) +
-           if (future == null || future.isDone) " (stopped)" else " (running $currentFrame/$totalFrames frame)"
+           if (future == null || future.isCompleted) " (stopped)" else " (running $currentFrame/$totalFrames frame)"
   }
 }
 

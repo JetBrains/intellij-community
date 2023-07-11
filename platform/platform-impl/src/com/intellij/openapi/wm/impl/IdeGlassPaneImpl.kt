@@ -587,7 +587,7 @@ private class IdePaneLoadingLayer(pane: JComponent, private val loadingState: Fr
   private var currentAlpha = LOADING_ALPHA
 
   @JvmField
-  val icon: AnimatedIcon = AsyncProcessIcon.createBig("Loading")
+  val icon: AnimatedIcon = AsyncProcessIcon.createBig("Loading", loadingState.loadingScope)
 
   private var selfie: Image? = loadingState.selfie
 
@@ -635,7 +635,6 @@ private class IdePaneLoadingLayer(pane: JComponent, private val loadingState: Fr
 
   private fun removeIcon(pane: JComponent) {
     pane.remove(icon)
-    Disposer.dispose(icon)
   }
 
   fun paintPane(g: Graphics, pane: JComponent) {

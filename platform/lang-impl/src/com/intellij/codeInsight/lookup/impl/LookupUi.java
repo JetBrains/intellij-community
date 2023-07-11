@@ -14,6 +14,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,13 +54,12 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
 
-class LookupUi {
+final class LookupUi {
   private static final Logger LOG = Logger.getInstance(LookupUi.class);
 
-  @NotNull
-  private final LookupImpl myLookup;
+  private final @NotNull LookupImpl myLookup;
   private final Advertiser myAdvertiser;
-  private final JBList myList;
+  private final JBList<?> myList;
   private final ModalityState myModalityState;
   private final Alarm myHintAlarm = new Alarm();
   private final JScrollPane myScrollPane;
@@ -71,7 +71,7 @@ class LookupUi {
   private int myMaximumHeight = Integer.MAX_VALUE;
   private Boolean myPositionedAbove = null;
 
-  LookupUi(@NotNull LookupImpl lookup, Advertiser advertiser, JBList list, boolean showBottomPanel) {
+  LookupUi(@NotNull LookupImpl lookup, Advertiser advertiser, JBList<?> list, boolean showBottomPanel) {
     myLookup = lookup;
     myAdvertiser = advertiser;
     myList = list;
@@ -129,14 +129,15 @@ class LookupUi {
 
     myScrollPane = ScrollPaneFactory.createScrollPane(lookup.getList(), true);
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    ComponentUtil.putClientProperty(myScrollPane.getVerticalScrollBar(), JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true);
+    myScrollPane.getVerticalScrollBar().putClientProperty(JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true);
     if (ExperimentalUI.isNewUI()) {
       Insets bodyInsets = LookupCellRenderer.bodyInsets();
       //noinspection UseDPIAwareBorders
       myScrollPane.setBorder(new EmptyBorder(bodyInsets.top, 0, showBottomPanel ? 0 : bodyInsets.bottom, 0));
       myBottomPanel.setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
       myBottomPanel.setBorder(JBUI.CurrentTheme.CompletionPopup.Advertiser.border());
-    } else {
+    }
+    else {
       myBottomPanel.setOpaque(false);
     }
 
@@ -148,7 +149,12 @@ class LookupUi {
 
     addListeners();
 
-    Disposer.register(lookup, myProcessIcon);
+    Disposer.register(lookup, new Disposable() {
+      @Override
+      public void dispose() {
+        myProcessIcon.dispose();
+      }
+    });
     Disposer.register(lookup, myHintAlarm);
   }
 
@@ -287,7 +293,7 @@ class LookupUi {
     ScreenUtil.cropRectangleToFitTheScreen(candidate);
 
     if (isPositionedAboveCaret()) {
-      // need to crop as well at bottom if lookup overlaps current line
+      // need to crop as well at bottom if lookup overlaps the current line
       Point caretLocation = editor.logicalPositionToXY(pos);
       SwingUtilities.convertPointToScreen(caretLocation, editor.getContentComponent());
       int offset = location.y + dim.height - caretLocation.y;

@@ -3,7 +3,6 @@ package com.intellij.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -534,7 +533,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       if (myBusyIcon != null) {
         remove(myBusyIcon);
-        Disposer.dispose(myBusyIcon);
+        myBusyIcon.dispose();
         myBusyIcon = null;
       }
     }
@@ -1507,7 +1506,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           return c.getAccessibleContext();
         }
         // Note: don't call "super" as 1) we know for sure the cell is not accessible
-        // and 2) the super implementation is incorrect anyways
+        // and 2) the super implementation is incorrect anyway
         return null;
       }
     }

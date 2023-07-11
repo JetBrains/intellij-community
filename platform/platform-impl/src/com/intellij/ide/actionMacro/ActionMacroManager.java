@@ -284,7 +284,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
 
     @Override
     public void dispose() {
-      Disposer.dispose(myIcon);
+      myIcon.dispose();
       if (myBalloon != null) {
         Disposer.dispose(myBalloon);
       }
