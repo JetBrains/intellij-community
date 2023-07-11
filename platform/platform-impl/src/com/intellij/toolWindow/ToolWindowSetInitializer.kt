@@ -215,7 +215,7 @@ private suspend fun addExtraTasks(tasks: List<RegisterToolWindowTask>,
     }
 
     for (bean in withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) { provider.getTasks(project) }) {
-      beanToTask(project, bean)?.let(result::add)
+      beanToTask(project, bean, bean.pluginDescriptor)?.let(result::add)
     }
   }
   return result
@@ -225,7 +225,7 @@ internal fun getToolWindowAnchor(factory: ToolWindowFactory?, bean: ToolWindowEP
   return factory?.anchor ?: ToolWindowAnchor.fromText(bean.anchor ?: ToolWindowAnchor.LEFT.toString())
 }
 
-private suspend fun beanToTask(project: Project, bean: ToolWindowEP, plugin: PluginDescriptor = bean.pluginDescriptor): RegisterToolWindowTask? {
+private suspend fun beanToTask(project: Project, bean: ToolWindowEP, plugin: PluginDescriptor): RegisterToolWindowTask? {
   val factory = bean.getToolWindowFactory(plugin)
   return if (factory.isApplicableAsync(project)) beanToTask(project, bean, plugin, factory) else null
 }
@@ -245,10 +245,11 @@ private fun beanToTask(project: Project,
     contentFactory = factory,
     stripeTitle = getStripeTitleSupplier(bean.id, project, plugin),
   )
-  task.pluginDescriptor = bean.pluginDescriptor
+  task.pluginDescriptor = plugin
   return task
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal suspend fun computeToolWindowBeans(project: Project): List<RegisterToolWindowTask> {
   return coroutineScope {
     ToolWindowEP.EP_NAME.filterableLazySequence().map { item ->
