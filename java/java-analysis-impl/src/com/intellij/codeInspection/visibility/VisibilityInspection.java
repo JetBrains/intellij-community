@@ -404,7 +404,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     return false;
   }
 
-  static boolean containsReferenceTo(PsiElement source, PsiElement target) {
+  public static boolean containsReferenceTo(PsiElement source, PsiElement target) {
     return SyntaxTraverser.psiTraverser(source)
              .filter(PsiJavaCodeReferenceElement.class)
              .filter(ref -> ref.isReferenceTo(target))

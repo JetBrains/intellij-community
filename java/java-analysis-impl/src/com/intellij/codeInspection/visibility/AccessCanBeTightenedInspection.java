@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool {
+public class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(AccessCanBeTightenedInspection.class);
   private final VisibilityInspection myVisibilityInspection;
 
