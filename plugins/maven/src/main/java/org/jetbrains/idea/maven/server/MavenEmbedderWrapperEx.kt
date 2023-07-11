@@ -2,11 +2,11 @@
 package org.jetbrains.idea.maven.server
 
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.project.MavenConsole
-import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import java.util.*
 
@@ -40,37 +40,38 @@ abstract class MavenEmbedderWrapperEx(private val project: Project) : MavenEmbed
                                                   syncConsole: MavenSyncConsole?,
                                                   console: MavenConsole?,
                                                   task: LongRunningEmbedderTask<R>): R {
-    val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
 
-    val progressIndication = cs.launch {
-      while (isActive) {
-        delay(500)
-        val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
-        console?.handleConsoleEvents(status.consoleEvents())
-        indicator?.fraction = status.fraction()
-        syncConsole?.handleDownloadEvents(status.downloadEvents())
-        if (null != indicator && indicator.isCanceled) {
-          if (embedder.cancelLongRunningTask(longRunningTaskId, ourToken)) {
-            break
+    return coroutineScope {
+      val progressIndication = launch {
+        while (isActive) {
+          delay(500)
+          blockingContext {
+            val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
+            indicator?.fraction = status.fraction()
+            console?.handleConsoleEvents(status.consoleEvents())
+            syncConsole?.handleDownloadEvents(status.downloadEvents())
+            if (null != indicator && indicator.isCanceled) {
+              if (embedder.cancelLongRunningTask(longRunningTaskId, ourToken)) {
+                throw CancellationException()
+              }
+            }
           }
         }
       }
-    }
 
-    val asyncTask = cs.async {
       try {
         withContext(Dispatchers.IO) {
-          task.run(embedder, longRunningTaskId)
+          blockingContext {
+            task.run(embedder, longRunningTaskId)
+          }
         }
       }
       catch (e: Exception) {
         throw MavenProcessCanceledException(e)
       }
       finally {
-        progressIndication.cancel()
+        progressIndication.cancelAndJoin()
       }
     }
-
-    return asyncTask.await()
   }
 }
