@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.editor
 
 import com.intellij.diff.util.FileEditorBase
@@ -58,7 +58,7 @@ class VcsLogEditor(private val project: Project, private val vcsLogFile: VcsLogF
   override fun getFile() = vcsLogFile
 }
 
-class VcsLogEditorProvider : FileEditorProvider, StructureViewFileEditorProvider, DumbAware {
+private class VcsLogEditorProvider : FileEditorProvider, StructureViewFileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean = file is VcsLogFile
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {

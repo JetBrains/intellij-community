@@ -5,6 +5,7 @@ package com.intellij.openapi.extensions
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.impl.AdapterWithCustomAttributes
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.computeIfAbsent
@@ -123,8 +124,8 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    * so, `next` may return `null` (in this case stop iteration).
    *
    * Possible use cases:
-   * 1. Conditional iteration (no need to create all extensions if iteration will be stopped due to some condition).
-   * 2. Iterated only once per application (no need to cache extension list internally).
+   * 1. Conditional iteration (no need to create all extensions if iteration is stopped due to some condition).
+   * 2. Iterated only once per application (no need to cache an extension list internally).
    */
   @ApiStatus.Internal
   fun getIterable(): Iterable<T?> = getPointImpl(null)
@@ -220,6 +221,8 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
 
     @get:ApiStatus.Internal
     val order: LoadingOrder
+
+    fun getCustomAttribute(name: String): String?
   }
 
   @ApiStatus.Internal
@@ -245,6 +248,10 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
 
             override val order: LoadingOrder
               get() = adapter.order
+
+            override fun getCustomAttribute(name: String): String? {
+              return if (adapter is AdapterWithCustomAttributes) adapter.customAttributes.get(name) else null
+            }
 
             override val instance: T?
               get() = createOrError(adapter = adapter, point = point)

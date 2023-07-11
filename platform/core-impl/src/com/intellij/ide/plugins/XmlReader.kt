@@ -553,6 +553,7 @@ private fun readExtensionPoints(reader: XMLStreamReader2,
     var beanClass: String? = null
     var `interface`: String? = null
     var isDynamic = false
+    var hasAttributes = false
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
         "area" -> area = getNullifiedAttributeValue(reader, i)
@@ -564,6 +565,7 @@ private fun readExtensionPoints(reader: XMLStreamReader2,
         "interface" -> `interface` = getNullifiedAttributeValue(reader, i)
 
         "dynamic" -> isDynamic = reader.getAttributeAsBoolean(i)
+        "hasAttributes" -> hasAttributes = reader.getAttributeAsBoolean(i)
       }
     }
 
@@ -597,7 +599,8 @@ private fun readExtensionPoints(reader: XMLStreamReader2,
       isNameQualified = qualifiedName != null,
       className = `interface` ?: beanClass!!,
       isBean = `interface` == null,
-      isDynamic = isDynamic
+      hasAttributes = hasAttributes,
+      isDynamic = isDynamic,
     ))
   }
 }
@@ -996,7 +999,7 @@ private fun readOs(value: String): ExtensionDescriptor.Os {
 }
 
 private inline fun XMLStreamReader.consumeChildElements(crossinline consumer: (name: String) -> Unit) {
-  // cursor must be at the start of the parent element
+  // the cursor must be at the start of the parent element
   assert(isStartElement)
 
   var depth = 1

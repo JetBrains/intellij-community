@@ -49,6 +49,7 @@
 
     <extensionPoint name="fileEditorProvider"
                     interface="com.intellij.openapi.fileEditor.FileEditorProvider"
+                    hasAttributes="true"
                     dynamic="true"/>
 
     <extensionPoint name="fileEditorProviderSuppressor"

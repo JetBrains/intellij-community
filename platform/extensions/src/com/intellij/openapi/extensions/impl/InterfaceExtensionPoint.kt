@@ -4,7 +4,6 @@ package com.intellij.openapi.extensions.impl
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.extensions.impl.XmlExtensionAdapter.SimpleConstructorInjectionAdapter
 
 internal class InterfaceExtensionPoint<T : Any>(
   name: String,
@@ -13,23 +12,42 @@ internal class InterfaceExtensionPoint<T : Any>(
   componentManager: ComponentManager,
   clazz: Class<T>?,
   dynamic: Boolean,
+  private val hasAttributes: Boolean,
 ) : ExtensionPointImpl<T>(name, className, pluginDescriptor, componentManager, clazz, dynamic) {
   public override fun createAdapter(descriptor: ExtensionDescriptor,
                                     pluginDescriptor: PluginDescriptor,
                                     componentManager: ComponentManager): ExtensionComponentAdapter {
-    // see comment in readExtensions WHY an element maybe created for interface extension point adapter
-    // we cannot nullify an element as part of readExtensions - in readExtensions not yet clear is it bean or interface extension
-    if (!descriptor.hasExtraAttributes && descriptor.element != null && descriptor.element!!.children.isEmpty()) {
-      descriptor.element = null
-    }
     val implementationClassName = descriptor.implementation
                                   ?: throw componentManager.createError(
                                     "Attribute \"implementation\" is not specified for \"$name\" extension",
                                     pluginDescriptor.pluginId)
+
+    if (hasAttributes) {
+      val customAttributes = if (descriptor.hasExtraAttributes) {
+        descriptor.element?.attributes ?: emptyMap()
+      }
+      else {
+        emptyMap()
+      }
+      descriptor.element = null
+      return AdapterWithCustomAttributes(implementationClassName = implementationClassName,
+                                         pluginDescriptor = pluginDescriptor,
+                                         descriptor = descriptor,
+                                         customAttributes = customAttributes,
+                                         implementationClassResolver = InterfaceExtensionImplementationClassResolver)
+    }
+    else {
+      // see comment in readExtensions WHY an element maybe created for interface extension point adapter
+      // we cannot nullify an element as part of readExtensions - in readExtensions not yet clear is it bean or interface extension
+      if (!descriptor.hasExtraAttributes && descriptor.element != null && descriptor.element!!.children.isEmpty()) {
+        descriptor.element = null
+      }
+    }
+
     return SimpleConstructorInjectionAdapter(implementationClassName = implementationClassName,
                                              pluginDescriptor = pluginDescriptor,
                                              descriptor = descriptor,
-                                             implementationClassResolver = InterfaceExtensionImplementationClassResolver.INSTANCE)
+                                             implementationClassResolver = InterfaceExtensionImplementationClassResolver)
   }
 
   override fun unregisterExtensions(componentManager: ComponentManager,
@@ -37,5 +55,24 @@ internal class InterfaceExtensionPoint<T : Any>(
                                     priorityListenerCallbacks: MutableList<in Runnable>,
                                     listenerCallbacks: MutableList<in Runnable>) {
     unregisterExtensions(false, priorityListenerCallbacks, listenerCallbacks) { it.pluginDescriptor !== pluginDescriptor }
+  }
+}
+
+internal class AdapterWithCustomAttributes(
+  implementationClassName: String,
+  pluginDescriptor: PluginDescriptor,
+  descriptor: ExtensionDescriptor,
+  implementationClassResolver: ImplementationClassResolver,
+  @JvmField val customAttributes: Map<String, String>,
+) : XmlExtensionAdapter(
+  implementationClassName = implementationClassName,
+  pluginDescriptor = pluginDescriptor,
+  orderId = descriptor.orderId,
+  order = descriptor.order,
+  extensionElement = descriptor.element,
+  implementationClassResolver = implementationClassResolver,
+) {
+  override fun <T> instantiateClass(aClass: Class<T>, componentManager: ComponentManager): T {
+    return componentManager.instantiateClassWithConstructorInjection(aClass, aClass, pluginDescriptor.pluginId)
   }
 }

@@ -14,9 +14,11 @@ import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -90,24 +92,45 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
     var hideDefaultEditor = false
     var hasHighPriorityEditors = false
     val suppressors = FileEditorProviderSuppressor.EP_NAME.extensionList
+
+    val fileType by lazy { file.fileType }
+
     val sharedProviders = coroutineScope {
       FileEditorProvider.EP_FILE_EDITOR_PROVIDER.filterableLazySequence().map { item ->
         async {
-          val provider = item.instance ?: return@async null
-          if (provider.acceptRequiresReadAction()) {
-            if (!readAction {
-                checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)
-              }) {
+          val providerFileTypeName = item.getCustomAttribute("fileType")
+          // VcsLogFileType is not registered in FileTypeRegistry - we should check also by name
+          if (providerFileTypeName != null && fileType.name != providerFileTypeName) {
+            val fileTypeRegistry = FileTypeRegistry.getInstance()
+            val providerFileType = fileTypeRegistry.findFileTypeByName(providerFileTypeName)
+            if (providerFileType == null || !fileTypeRegistry.isFileOfType(file, providerFileType)) {
               return@async null
             }
           }
-          else if (!checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)) {
-            return@async null
-          }
 
-          hideDefaultEditor = hideDefaultEditor or (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR)
-          hasHighPriorityEditors = hasHighPriorityEditors or (provider.policy == FileEditorPolicy.HIDE_OTHER_EDITORS)
-          checkPolicy(provider)
+          val provider = item.instance ?: return@async null
+          try {
+            if (provider.acceptRequiresReadAction()) {
+              if (!readAction {
+                  checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)
+                }) {
+                return@async null
+              }
+            }
+            else if (!checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)) {
+              return@async null
+            }
+
+            hideDefaultEditor = hideDefaultEditor or (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR)
+            hasHighPriorityEditors = hasHighPriorityEditors or (provider.policy == FileEditorPolicy.HIDE_OTHER_EDITORS)
+            checkPolicy(provider)
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: Throwable) {
+            LOG.error(PluginException(e, item.pluginDescriptor.pluginId))
+          }
           provider
         }
       }.toList()
