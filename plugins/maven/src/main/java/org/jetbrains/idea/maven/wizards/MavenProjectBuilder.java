@@ -6,22 +6,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,28 +24,21 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectOpenProcessor;
-import com.intellij.util.containers.ContainerUtil;
+import icons.OpenapiIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
-import org.jetbrains.idea.maven.importing.MavenImportUtil;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
-import org.jetbrains.idea.maven.project.importing.FilesList;
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
-import org.jetbrains.idea.maven.server.MavenWrapperSupport;
 import org.jetbrains.idea.maven.utils.*;
 
 import javax.swing.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-
-import static icons.OpenapiIcons.RepositoryLibraryLogo;
-import static org.jetbrains.idea.maven.server.MavenServerManager.WRAPPED_MAVEN;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Do not use this project import builder directly.
@@ -88,7 +75,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
   @Override
   public Icon getIcon() {
-    return RepositoryLibraryLogo;
+    return OpenapiIcons.RepositoryLibraryLogo;
   }
 
   @Override
@@ -107,20 +94,6 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       myParameters = new Parameters();
     }
     return myParameters;
-  }
-
-  private boolean setupProjectImport(@NotNull Project project) {
-    Path rootDirectory = getRootPath();
-    return rootDirectory != null && setRootDirectory(project, rootDirectory) && selectProjectsToUpdate();
-  }
-
-  private boolean selectProjectsToUpdate() {
-    Parameters parameters = getParameters();
-    MavenProjectsTree projectsTree = parameters.myMavenProjectTree;
-    List<MavenProject> projects = projectsTree.getRootProjects();
-    if (projects.isEmpty()) return false;
-    parameters.mySelectedProjects = projects;
-    return true;
   }
 
   public VirtualFile getProjectFileToImport() {
@@ -159,176 +132,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
                              ModifiableModuleModel model,
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel) {
-    // TODO: registry key
-    var asyncBuilder = true;
-    //noinspection ConstantValue
-    if (asyncBuilder) {
-      return commitWithAsyncBuilder(project, model, modulesProvider, artifactModel);
-    }
-
-    boolean isVeryNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE;
-    MavenImportingSettings importingSettings = getImportingSettings();
-    if (isVeryNewProject) {
-      ExternalProjectsManagerImpl.setupCreatedProject(project);
-      MavenProjectsManager.setupCreatedMavenProject(importingSettings);
-    }
-
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      FileDocumentManager.getInstance().saveAllDocuments();
-    }
-
-    MavenUtil.setupProjectSdk(project);
-
-    MavenProjectsNavigator projectsNavigator = MavenProjectsNavigator.getInstance(project);
-    if (projectsNavigator != null) projectsNavigator.setGroupModules(true);
-
-
-    if (!setupProjectImport(project)) {
-      LOG.debug(String.format("Cannot import project for %s", project.toString()));
-      return Collections.emptyList();
-    }
-
-    MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
-
-    MavenGeneralSettings generalSettings = getGeneralSettings();
-    settings.setGeneralSettings(generalSettings);
-    settings.setImportingSettings(importingSettings);
-
-    String settingsFile = System.getProperty("idea.maven.import.settings.file");
-    if (!StringUtil.isEmptyOrSpaces(settingsFile)) {
-      settings.getGeneralSettings().setUserSettingsFile(settingsFile.trim());
-    }
-
-
-    String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(ProjectUtil.guessProjectDir(project));
-    if (distributionUrl != null) {
-      settings.getGeneralSettings().setMavenHome(WRAPPED_MAVEN);
-    }
-
-    MavenExplicitProfiles selectedProfiles = MavenExplicitProfiles.NONE.clone();
-
-    String enabledProfilesList = System.getProperty("idea.maven.import.enabled.profiles");
-    String disabledProfilesList = System.getProperty("idea.maven.import.disabled.profiles");
-    if (enabledProfilesList != null || disabledProfilesList != null) {
-      appendProfilesFromString(selectedProfiles.getEnabledProfiles(), enabledProfilesList);
-      appendProfilesFromString(selectedProfiles.getDisabledProfiles(), disabledProfilesList);
-    }
-
-
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-    List<MavenProject> selectedProjects = new ArrayList<>(getParameters().mySelectedProjects);
-
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
-        !manager.hasProjects() && settings.getGeneralSettings().isShowDialogWithAdvancedSettings()) {
-      showGeneralSettingsConfigurationDialog(project, settings.getGeneralSettings(), () -> {
-        performImport(project, model, null, artifactModel, selectedProfiles, selectedProjects, importingSettings, generalSettings);
-      });
-      return Collections.emptyList();
-    }
-
-    return performImport(project, model, modulesProvider, artifactModel, selectedProfiles, selectedProjects,
-                         importingSettings, generalSettings);
-  }
-
-  @NotNull
-  private List<Module> performImport(Project project,
-                                     ModifiableModuleModel model,
-                                     ModulesProvider modulesProvider,
-                                     ModifiableArtifactModel artifactModel,
-                                     MavenExplicitProfiles selectedProfiles,
-                                     List<MavenProject> selectedProjects,
-                                     MavenImportingSettings importingSettings,
-                                     MavenGeneralSettings generalSettings) {
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-    boolean isVeryNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE;
-    manager.setIgnoredState(selectedProjects, false);
-
-
-    if (MavenUtil.isLinearImportEnabled()) {
-      MavenLog.LOG.warn("performImport: Linear Import is enabled");
-      Module dummy = MavenImportingManager.getInstance(project).openProjectAndImport(
-        new FilesList(MavenUtil.collectFiles(selectedProjects)),
-        importingSettings,
-        generalSettings,
-        MavenImportSpec.EXPLICIT_IMPORT
-      ).getPreviewModulesCreated();
-
-      if (dummy != null) {
-        return Collections.singletonList(dummy);
-      }
-      else {
-        return Collections.emptyList();
-      }
-    }
-    MavenLog.LOG.warn("performImport: Linear Import is disabled");
-
-    if (isVeryNewProject && Registry.is("maven.create.dummy.module.on.first.import")) {
-      Module previewModule = createPreviewModule(project, selectedProjects);
-      manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(selectedProjects), selectedProfiles, previewModule);
-      return Collections.singletonList(previewModule);
-    }
-    else {
-      manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(selectedProjects), selectedProfiles, null);
-    }
-
-    //noinspection UnresolvedPluginConfigReference
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
-        !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode() &&
-        (!MavenUtil.isMavenUnitTestModeEnabled() ||
-         Registry.is("ide.force.maven.import", false)) // workaround for inspection integration test
-    ) {
-      return manager.importMavenProjectsSync(Map.of(), null);
-    }
-
-    var projectsToImport = new HashMap<MavenProject, MavenProjectChanges>();
-    for (var selectedProject : selectedProjects) {
-      var projectToImport = manager.getProjectsTree().findProject(selectedProject.getFile());
-      if (null != projectToImport) {
-        projectsToImport.put(projectToImport, MavenProjectChanges.ALL);
-      }
-    }
-    boolean isFromUI = model != null;
-    List<Module> createdModules;
-    if (isFromUI) {
-      var modelsProvider = new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel);
-      createdModules = manager.importMavenProjectsSync(projectsToImport, modelsProvider);
-    }
-    else {
-      createdModules = manager.importMavenProjectsSync(projectsToImport, null);
-    }
-    return createdModules;
-  }
-
-  private @Nullable Module createPreviewModule(Project project, List<MavenProject> selectedProjects) {
-    if (ModuleManager.getInstance(project).getModules().length == 0) {
-      MavenProject root = ContainerUtil.getFirstItem(selectedProjects);
-      if (root == null) return null;
-      VirtualFile contentRoot = root.getDirectoryFile();
-
-      return MavenImportUtil.createPreviewModule(project, contentRoot);
-    }
-    return null;
-  }
-
-
-  private void showGeneralSettingsConfigurationDialog(@NotNull Project project,
-                                                      @NotNull MavenGeneralSettings generalSettings,
-                                                      Runnable runImportAfter) {
-    MavenEnvironmentSettingsDialog dialog = new MavenEnvironmentSettingsDialog(project, generalSettings, runImportAfter);
-    ApplicationManager.getApplication().invokeLater(() -> {
-      dialog.show();
-    });
-  }
-
-  private static void appendProfilesFromString(Collection<String> selectedProfiles, String profilesList) {
-    if (profilesList == null) return;
-
-    for (String profile : StringUtil.split(profilesList, ",")) {
-      String trimmedProfileName = profile.trim();
-      if (!trimmedProfileName.isEmpty()) {
-        selectedProfiles.add(trimmedProfileName);
-      }
-    }
+    return commitWithAsyncBuilder(project, model, modulesProvider, artifactModel);
   }
 
   /**
@@ -475,11 +279,6 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       getParameters().myImportRootDirectory = project == null ? null : Paths.get(Objects.requireNonNull(project.getBasePath()));
     }
     return getParameters().myImportRootDirectory;
-  }
-
-  public @Nullable String getSuggestedProjectName() {
-    List<MavenProject> list = getParameters().myMavenProjectTree.getRootProjects();
-    return list.size() == 1 ? list.get(0).getMavenId().getArtifactId() : null;
   }
 
   @Override

@@ -2,22 +2,18 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.maven.testFramework.utils.MavenImportingTestCaseKt;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import com.intellij.platform.workspace.storage.EntityChange;
 import com.intellij.platform.workspace.storage.VersionedStorageChange;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporterKt;
@@ -449,50 +445,6 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     finally {
       MavenServerManager.getInstance().shutdown(true);  // to unlock files
     }
-  }
-
-  @Test
-  public void testCheckingIfModuleIsNotDisposedBeforeCommitOnImport() {
-    importProject("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <packaging>pom</packaging>
-                    <modules>
-                      <module>m1</module>
-                      <module>m2</module>
-                    </modules>
-                    """);
-
-    createModulePom("m1",
-                    """
-                      <groupId>test</groupId>
-                      <artifactId>m1</artifactId>
-                      <version>1</version>
-                      """);
-
-    createModulePom("m2",
-                    """
-                      <groupId>test</groupId>
-                      <artifactId>m2</artifactId>
-                      <version>1</version>
-                      """);
-
-    importProject();
-    assertModules("project", "m1", "m2");
-
-    IdeModifiableModelsProviderImpl modelsProvider = new IdeModifiableModelsProviderImpl(myProject) {
-      @Override
-      public void commit() {
-        ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
-        model.disposeModule(model.findModuleByName("m1"));
-        model.disposeModule(model.findModuleByName("m2"));
-        model.commit();
-        super.commit();
-      }
-    };
-
-    MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager, modelsProvider, myProjectsManager.getProjectsFiles());
   }
 
 }

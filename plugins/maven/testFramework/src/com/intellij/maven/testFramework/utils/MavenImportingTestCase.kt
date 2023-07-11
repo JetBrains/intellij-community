@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework.utils
 
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,16 +35,4 @@ fun importMavenProjectsSync(mavenProjectsManager: MavenProjectsManager, projectF
   }
 }
 
-fun importMavenProjectsSync(mavenProjectsManager: MavenProjectsManager,
-                            modelsProvider: IdeModifiableModelsProvider,
-                            projectFiles: List<VirtualFile>) {
-  val toImport = mutableMapOf<MavenProject, MavenProjectChanges>()
-  for (each in projectFiles) {
-    val project = mavenProjectsManager.findProject(each)
-    if (project != null) {
-      toImport[project] = MavenProjectChanges.ALL
-    }
-  }
-  mavenProjectsManager.importMavenProjectsSync(toImport, modelsProvider)
-}
 

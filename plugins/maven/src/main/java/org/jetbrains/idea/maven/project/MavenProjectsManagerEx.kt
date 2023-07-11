@@ -29,7 +29,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
@@ -56,8 +55,6 @@ interface MavenAsyncProjectsManager {
 
   @ApiStatus.Internal
   suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
-  @TestOnly
-  fun importMavenProjectsSync(projectsToImport: Map<MavenProject, MavenProjectChanges>, modelsProvider: IdeModifiableModelsProvider?): List<Module>
 
   suspend fun downloadArtifacts(projects: Collection<MavenProject>,
                                 artifacts: Collection<MavenArtifact>?,
@@ -97,11 +94,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   override fun importMavenProjectsSync() {
     prepareImporter(null, emptyMap(), false, true).importMavenProjectsBlocking()
-  }
-
-  override fun importMavenProjectsSync(projectsToImport: Map<MavenProject, MavenProjectChanges>,
-                                       modelsProvider: IdeModifiableModelsProvider?): List<Module> {
-    return prepareImporter(modelsProvider, projectsToImport, false, true).importMavenProjectsBlocking()
   }
 
   private suspend fun doImportMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>,
