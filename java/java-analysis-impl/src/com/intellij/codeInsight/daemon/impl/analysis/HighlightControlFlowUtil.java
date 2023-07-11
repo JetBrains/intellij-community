@@ -775,6 +775,10 @@ public final class HighlightControlFlowUtil {
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(message);
       IntentionAction action = QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, refGuardedPattern);
       builder.registerFix(action, null, null, null, null);
+      IntentionAction action2 = QUICK_FIX_FACTORY.createMakeVariableEffectivelyFinalFix(variable);
+      if (action2 != null) {
+        builder.registerFix(action2, null, null, null, null);
+      }
       ErrorFixExtensionPoint.registerFixes(builder, context, "guarded.pattern.variable.must.be.final");
       return builder;
     }
