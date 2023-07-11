@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,12 @@ public class CreateMissingDeconstructionRecordClassBranchesFixTest extends Light
   }
 
   @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_20_PREVIEW;
+  }
+
+  @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_21;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_20;
   }
 }

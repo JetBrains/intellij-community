@@ -459,7 +459,7 @@ public class SwitchBlockHighlightingModel {
     return sealedUpperClasses;
   }
 
-  private static @NotNull LinkedHashMap<PsiClass, PsiType> findPatternClasses(@NotNull List<PatternDescription> elements) {
+  private static @NotNull LinkedHashMap<PsiClass, PsiType> findPermittedClasses(@NotNull List<PatternDescription> elements) {
     LinkedHashMap<PsiClass, PsiType> patternClasses = new LinkedHashMap<>();
     for (PatternDescription element : elements) {
       if (element instanceof PatternDeconstructionDescription) {
@@ -535,10 +535,14 @@ public class SwitchBlockHighlightingModel {
     record ClassWithDependencies(PsiClass mainClass, List<PsiClass> dependencies) {
     }
     Set<PsiClass> coveredClasses = new HashSet<>();
-    LinkedHashMap<PsiClass, PsiType> patternClasses = findPatternClasses(elements);
+    LinkedHashMap<PsiClass, PsiType> permittedPatternClasses = findPermittedClasses(elements);
+    HashSet<PsiType> usedTypes = new HashSet<>(permittedPatternClasses.values());
     //according JEP 440-441 only direct abstract sealed classes are allowed (14.11.1.1)
-    Set<PsiClass> sealedUpperClasses = findSealedUpperClasses(patternClasses.keySet());
-    List<PatternTypeTestDescription> typeTestPatterns = ContainerUtil.filterIsInstance(elements, PatternTypeTestDescription.class);
+    Set<PsiClass> sealedUpperClasses = findSealedUpperClasses(permittedPatternClasses.keySet());
+    List<PatternTypeTestDescription> typeTestPatterns = StreamEx.of(elements)
+      .select(PatternTypeTestDescription.class)
+      .filter(pattern -> !usedTypes.contains(pattern.type()))
+      .toList();
     Set<PsiClass> selectorClasses = StreamEx.of(getAllTypes(selectorType))
       .map(type -> PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(type)))
       .nonNull()
@@ -558,10 +562,10 @@ public class SwitchBlockHighlightingModel {
       PsiClass psiClass = peeked.mainClass;
       PsiClass selectorClass = peeked.dependencies.get(peeked.dependencies.size() - 1);
       coveredClasses.addAll(peeked.dependencies);
-      if (sealedUpperClasses.contains(psiClass)) {
+      if (sealedUpperClasses.contains(psiClass) || selectorClasses.contains(psiClass)) {
         for (PsiClass permittedClass : PatternsInSwitchBlockHighlightingModel.getPermittedClasses(psiClass)) {
           if (!visited.add(permittedClass)) continue;
-          PsiType patternType = patternClasses.get(permittedClass);
+          PsiType patternType = permittedPatternClasses.get(permittedClass);
           PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(selectorClass, permittedClass, PsiSubstitutor.EMPTY);
           PsiType permittedType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, substitutor);
           if (patternType == null && TypeConversionUtil.areTypesConvertible(selectorType, permittedType) ||
@@ -588,6 +592,9 @@ public class SwitchBlockHighlightingModel {
             visitedNotCovered.addAll(peeked.dependencies);
           }
         }
+        else {
+          missingClasses.add(psiClass);
+        }
       }
       nonVisited.poll();
     }
@@ -596,8 +603,11 @@ public class SwitchBlockHighlightingModel {
   }
 
   static boolean isAbstractSealed(@Nullable PsiClass psiClass) {
-    return psiClass != null &&
-           (psiClass.hasModifierProperty(SEALED) || psiClass.getPermitsList() != null) && psiClass.hasModifierProperty(ABSTRACT);
+    return psiClass != null && isSealed(psiClass) && psiClass.hasModifierProperty(ABSTRACT);
+  }
+
+  private static boolean isSealed(@Nullable PsiClass psiClass) {
+    return psiClass != null && (psiClass.hasModifierProperty(SEALED) || psiClass.getPermitsList() != null);
   }
 
   public static class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlightingModel {
@@ -1200,31 +1210,33 @@ public class SwitchBlockHighlightingModel {
     @Nullable
     private HighlightInfo.Builder checkSealedClassCompleteness(@NotNull PsiType selectorType,
                                                                @NotNull List<? extends PsiCaseLabelElement> elements) {
-      Set<PsiClass> missingClasses;
+      Set<PsiClass> missedClasses;
       if (LanguageLevel.JDK_20_PREVIEW == PsiUtil.getLanguageLevel(myBlock)) {
-        missingClasses = PatternHighlightingModelJava20Preview.findMissedClassesForSealed(selectorType, elements);
+        missedClasses = PatternHighlightingModelJava20Preview.findMissedClassesForSealed(selectorType, elements);
       }else{
         List<PatternDescription> descriptions = preparePatternDescription(elements);
         List<PsiEnumConstant> enumConstants = StreamEx.of(elements).map(element -> getEnumConstant(element)).nonNull().toList();
         List<PsiClass> missedSealedClasses = StreamEx.of(findMissedClassesForSealed(selectorType, descriptions, enumConstants, myBlock).missedClasses())
           .sortedBy(t->t.getQualifiedName())
           .toList();
-        missingClasses = new HashSet<>();
+        missedClasses = new LinkedHashSet<>();
         //if T is intersection types, it is allowed to choose any of them to cover
         for (PsiClass missedClass : missedSealedClasses) {
-          if (oneOfUnconditional(TypeUtils.getType(missedClass), selectorType)) {
-            missingClasses.clear();
-            missingClasses.add(missedClass);
+          PsiClassType missedClassType = TypeUtils.getType(missedClass);
+          if (oneOfUnconditional(missedClassType, selectorType)) {
+            missedClasses.clear();
+            missedClasses.add(missedClass);
             break;
-          }else{
-            missingClasses.add(missedClass);
+          }
+          else {
+            missedClasses.add(missedClass);
           }
         }
       }
-      if (missingClasses.isEmpty()) return null;
+      if (missedClasses.isEmpty()) return null;
       HighlightInfo.Builder info = createCompletenessInfoForSwitch(!elements.isEmpty());
-      List<String> allNames = collectLabelElementNames(elements, missingClasses);
-      Set<String> missingCases = ContainerUtil.map2LinkedSet(missingClasses, PsiClass::getQualifiedName);
+      List<String> allNames = collectLabelElementNames(elements, missedClasses);
+      Set<String> missingCases = ContainerUtil.map2LinkedSet(missedClasses, PsiClass::getQualifiedName);
       IntentionAction fix = getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, allNames);
       info.registerFix(fix, null, null, null, null);
       return info;
