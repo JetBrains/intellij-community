@@ -3,7 +3,10 @@ package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
@@ -14,6 +17,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.style.UnnecessarySemicolonInspection;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,6 +105,15 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
               }
             }
           }
+        }
+      }
+
+      @Override
+      public void visitJavaToken(@NotNull PsiJavaToken token) {
+        super.visitJavaToken(token);
+        if (languageLevel.isLessThan(LanguageLevel.JDK_21) && token.getParent() instanceof PsiImportList && token.getTokenType() == JavaTokenType.SEMICOLON) {
+          String message = JavaErrorBundle.message("lone.semicolon.warn");
+          holder.registerProblem(token, message, new UnnecessarySemicolonInspection.UnnecessarySemicolonFix());
         }
       }
     };

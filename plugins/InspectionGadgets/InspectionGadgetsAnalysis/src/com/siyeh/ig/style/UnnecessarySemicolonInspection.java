@@ -64,7 +64,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     return new UnnecessarySemicolonFix();
   }
 
-  private static class UnnecessarySemicolonFix extends PsiUpdateModCommandQuickFix {
+  public static class UnnecessarySemicolonFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
