@@ -251,12 +251,7 @@ public class SwitchBlockHighlightingModel {
     if (!holder.hasErrorResults() && myBlock instanceof PsiSwitchExpression && !hasDefaultCase) {
       PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
       if (selectorClass != null && selectorClass.isEnum()) {
-        List<PsiEnumConstant> enumConstants = values.values().stream()
-          .map(element -> {
-            return getEnumConstant(element);
-          })
-          .filter(enumConstant -> enumConstant != null)
-          .collect(Collectors.toList());
+        List<PsiEnumConstant> enumConstants = ContainerUtil.mapNotNull(values.values(), element->getEnumConstant(element));
         checkEnumCompleteness(selectorClass, enumConstants, holder, !values.values().isEmpty());
       }
       else {
