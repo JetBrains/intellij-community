@@ -33,7 +33,7 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>3.19.6</version>
+      <version>3.23.4</version>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>
