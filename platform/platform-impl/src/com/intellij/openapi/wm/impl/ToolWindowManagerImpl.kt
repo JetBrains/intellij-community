@@ -2094,7 +2094,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     else {
       // docked and sliding windows
       val dockingAreaComponent = if (source.parent is Splitter) source.parent as Splitter else source
-      if (!dockingAreaIsInSplitterWithVisibleEditorArea(dockingAreaComponent)) {
+      if (!dockingAreaComponentSizeCanBeTrusted(dockingAreaComponent)) {
         return
       }
       val anchor = info.anchor
@@ -2118,13 +2118,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     fireStateChanged(MovedOrResized, toolWindow)
   }
 
-  private fun dockingAreaIsInSplitterWithVisibleEditorArea(dockingAreaComponent: Component): Boolean {
+  private fun dockingAreaComponentSizeCanBeTrusted(dockingAreaComponent: Component): Boolean {
     val parentSplitter = dockingAreaComponent.parent as? ThreeComponentsSplitter
     if (parentSplitter == null) {
-      LOG.warn(Exception("InternalDecoratorImpl/Splitter is not in a ThreeComponentsSplitter, " +
-                         "can't perform sanity checks, tool window info is not updated. " +
-                         "Actual parent = ${dockingAreaComponent.parent}"))
-      return false
+      // The window is not in a splitter (e.g. View Mode = Undock),
+      // so we don't have to worry about the splitter resizing it in a wrong way, like in IDEA-319836.
+      return true
     }
     val editorComponent = parentSplitter.innerComponent
     if (editorComponent == null) {
