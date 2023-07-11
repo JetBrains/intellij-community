@@ -35,6 +35,7 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
   companion object {
     @JvmStatic
     val EP_NAME: ExtensionPointName<ExperimentalUIConfigurable> = ExtensionPointName.create("com.intellij.newUIConfigurable")
+    const val EXPLORE_NEW_UI_URL_TEMPLATE = "https://www.jetbrains.com/%s/new-ui/?utm_source=product&utm_medium=link&utm_campaign=new_ui_release"
   }
 
   open fun isEnabled(): Boolean = true
@@ -117,7 +118,7 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
     }
   }
 
-  open fun getExploreNewUiUrl(): String = "https://www.jetbrains.com/help/idea/new-ui.html"
+  open fun getExploreNewUiUrl(): String = EXPLORE_NEW_UI_URL_TEMPLATE.format("idea")
   open fun getExploreNewUiLabel(): @Nls String = IdeBundle.message("new.ui.explore.new.ui")
   open fun onSubmitFeedback(): Unit = NewUIFeedbackDialog(null, false).show()
   open fun getRedefinedHelpTopic(): String? = null
