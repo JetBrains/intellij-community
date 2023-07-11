@@ -280,6 +280,7 @@
     <extensionPoint name="search.projectOptionsTopHitProvider" interface="com.intellij.ide.ui.OptionsSearchTopHitProvider$ProjectLevelProvider" dynamic="true"/>
 
     <extensionPoint name="search.optionContributor" interface="com.intellij.ide.ui.search.SearchableOptionContributor" dynamic="true"/>
+    <extensionPoint name="search.additionalOptionsLocation" interface="com.intellij.ide.ui.search.SearchableOptionsRegistrar$AdditionalLocationProvider" dynamic="true"/>
 
     <extensionPoint name="pluginReplacement" interface="com.intellij.ide.plugins.PluginReplacement" dynamic="true"/>
     <extensionPoint name="pluginSuggestionProvider" dynamic="true"
