@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.ActivityImpl
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.ThreadNameManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.containers.CollectionFactory
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
@@ -31,7 +33,7 @@ internal fun computeOwnTime(allEvents: List<ActivityImpl>, threadNameManager: Th
       respectedItems.clear()
 
       if (index > 0 && list.get(index - 1).start > item.start) {
-        StartUpPerformanceReporter.LOG.error("prev ${list.get(index - 1).name} start > ${item.name}")
+        logger<StartUpMeasurer>().error("prev ${list.get(index - 1).name} start > ${item.name}")
       }
 
       for (i in (index + 1) until list.size) {

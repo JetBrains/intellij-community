@@ -6,14 +6,12 @@ import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
 
-
 fun wrapTracer(scopeName: String, tracer: Tracer, verbose: Boolean, verboseMode: Boolean): IJTracer {
   if (verbose && !verboseMode) return IJNoopTracer
   if (tracer == IJNoopTracer.noopTrace) return IJNoopTracer
 
   return TraceWrapper(scopeName, tracer, emptySet(), verbose)
 }
-
 
 private class TraceWrapper(private val scopeName: String,
                            private val tracer: Tracer,

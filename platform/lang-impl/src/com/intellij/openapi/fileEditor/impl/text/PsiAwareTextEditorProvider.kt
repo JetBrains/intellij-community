@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
+import com.intellij.diagnostic.subtask
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
@@ -26,10 +27,7 @@ import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.async
-import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
@@ -55,28 +53,29 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     val editorSupplier = suspend { editorDeferred.await() }
 
     val factory = EditorFactory.getInstance() as EditorFactoryImpl
-    val coroutineScope = asyncLoader.coroutineScope
-    val tasks = EDITOR_LOADER_EP.filterableLazySequence().mapNotNull { item ->
-      if (item.pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
-        thisLogger().error("Only core plugin can define ${EDITOR_LOADER_EP.name}: ${item.pluginDescriptor}")
-        return@mapNotNull null
-      }
+    val task = asyncLoader.coroutineScope.async(CoroutineName("TextEditorInitializer")) {
+      coroutineScope {
+        for (item in EDITOR_LOADER_EP.filterableLazySequence()) {
+          if (item.pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
+            thisLogger().error("Only core plugin can define ${EDITOR_LOADER_EP.name}: ${item.pluginDescriptor}")
+            continue
+          }
 
-      val initializer = item.instance ?: return@mapNotNull null
-      coroutineScope.async(CoroutineName("textEditorInitializer ${item.implementationClassName}")) {
-        catchingExceptionsAsync {
-          initializer.init(project = project, file = file, document = document, editorSupplier = editorSupplier)
+          val initializer = item.instance ?: continue
+          launch(CoroutineName(item.implementationClassName)) {
+            catchingExceptionsAsync {
+              initializer.init(project = project, file = file, document = document, editorSupplier = editorSupplier)
+            }
+          }
         }
       }
-    }.toList()
-
-    val taskThatAlexeyShouldRemove = coroutineScope.async {
-      tasks.joinAll()
 
       val psiManager = project.serviceAsync<PsiManager>()
       val daemonCodeAnalyzer = project.serviceAsync<DaemonCodeAnalyzer>()
-      readActionBlocking {
-        daemonCodeAnalyzer.restart(psiManager.findFile(file) ?: return@readActionBlocking)
+      subtask("DaemonCodeAnalyzer.restart") {
+        readActionBlocking {
+          daemonCodeAnalyzer.restart(psiManager.findFile(file) ?: return@readActionBlocking)
+        }
       }
     }
 
@@ -85,7 +84,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
         val editor = factory.createMainEditor(document, project, file)
         val textEditor = PsiAwareTextEditorImpl(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
         editorDeferred.complete(textEditor.editor)
-        asyncLoader.start(textEditor = textEditor, tasks = tasks + taskThatAlexeyShouldRemove)
+        asyncLoader.start(textEditor = textEditor, tasks = listOf(task))
         return textEditor
       }
     }

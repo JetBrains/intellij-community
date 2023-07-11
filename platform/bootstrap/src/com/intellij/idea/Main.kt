@@ -6,8 +6,9 @@ package com.intellij.idea
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.getTraceActivity
 import com.intellij.diagnostic.rootTask
-import com.intellij.diagnostic.runActivity
+import com.intellij.diagnostic.subtask
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.BytecodeTransformer
 import com.intellij.ide.plugins.StartupAbortedException
@@ -39,35 +40,45 @@ private const val MARKETPLACE_BOOTSTRAP_JAR = "marketplace-bootstrap.jar"
 
 fun main(rawArgs: Array<String>) {
   val startupTimings = ArrayList<Any>(12)
+  val startTimeUnixMillis = System.currentTimeMillis()
   addBootstrapTiming("startup begin", startupTimings)
 
   val args = preprocessArgs(rawArgs)
   AppMode.setFlags(args)
-
+  addBootstrapTiming("AppMode.setFlags", startupTimings)
   try {
     bootstrap(startupTimings)
-    addBootstrapTiming("main scope creating", startupTimings)
     runBlocking {
-      StartUpMeasurer.addTimings(startupTimings, "bootstrap")
-      val appInitPreparationActivity = StartUpMeasurer.startActivity("app initialization preparation")
-      val initScopeActivity = StartUpMeasurer.startActivity("init scope creating")
+      addBootstrapTiming("main scope creating", startupTimings)
       val busyThread = Thread.currentThread()
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler() + rootTask()) {
-        initScopeActivity.end()
-        // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
-        val appStarterDeferred = async(CoroutineName("main class loading")) {
-          val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
-          MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
+        addBootstrapTiming("init scope creating", startupTimings)
+        StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixMillis)
+        subtask("startApplication") {
+          val appInitPreparationActivity = StartUpMeasurer.startActivity("app initialization preparation", getTraceActivity())
+          // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
+          val appStarterDeferred = async(CoroutineName("main class loading")) {
+            val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
+            MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
+          }
+
+
+          launch(CoroutineName("ForkJoin CommonPool configuration")) {
+            IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
+          }
+
+          if (AppMode.isRemoteDevHost()) {
+            subtask("cwm host init") {
+              initRemoteDev()
+            }
+          }
+
+          startApplication(args = args,
+                           appStarterDeferred = appStarterDeferred,
+                           mainScope = this@runBlocking,
+                           busyThread = busyThread,
+                           appInitPreparationActivity = appInitPreparationActivity)
         }
-
-        launch(CoroutineName("ForkJoin CommonPool configuration")) {
-          IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
-        }
-
-        initRemoteDevIfNeeded(args)
-
-        StartUpMeasurer.appInitPreparationActivity = appInitPreparationActivity
-        startApplication(args = args, appStarterDeferred = appStarterDeferred, mainScope = this@runBlocking, busyThread = busyThread)
       }
 
       awaitCancellation()
@@ -79,26 +90,17 @@ fun main(rawArgs: Array<String>) {
   }
 }
 
-private fun initRemoteDevIfNeeded(args: List<String>) {
-  val command = args.firstOrNull()
-  val isRemoteDevEnabled = AppMode.CWM_HOST_COMMAND == command ||
-                           AppMode.CWM_HOST_NO_LOBBY_COMMAND == command ||
-                           AppMode.REMOTE_DEV_HOST_COMMAND == command
-  if (!isRemoteDevEnabled) {
-    return
-  }
+private fun initRemoteDev() {
   if (!JBR.isGraphicsUtilsSupported()) {
     error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
   }
 
-  runActivity("cwm host init") {
-    initRemoteDevGraphicsEnvironment()
-    if (isLuxEnabled()) {
-      initLux()
-    }
-    else {
-      initProjector()
-    }
+  initRemoteDevGraphicsEnvironment()
+  if (isLuxEnabled()) {
+    initLux()
+  }
+  else {
+    initProjector()
   }
 }
 
@@ -153,11 +155,12 @@ private fun initLux() {
 }
 
 private fun bootstrap(startupTimings: MutableList<Any>) {
-  addBootstrapTiming("properties loading", startupTimings)
   PathManager.loadProperties()
-  PathManager.customizePaths()
+  addBootstrapTiming("properties loading", startupTimings)
 
+  PathManager.customizePaths()
   addBootstrapTiming("plugin updates install", startupTimings)
+
   // this check must be performed before system directories are locked
   if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
     val configImportNeeded = !AppMode.isHeadless() && !Files.exists(Path.of(PathManager.getConfigPath()))
@@ -170,10 +173,11 @@ private fun bootstrap(startupTimings: MutableList<Any>) {
       // TODO get rid of this: plugins should be installed before restarting the IDE
       installPluginUpdates()
     }
+    addBootstrapTiming("plugin updates installation", startupTimings)
   }
 
-  addBootstrapTiming("classloader init", startupTimings)
   initClassLoader(AppMode.isRemoteDevHost() && !isLuxEnabled())
+  addBootstrapTiming("classloader init", startupTimings)
 }
 
 fun initClassLoader(addCwmLibs: Boolean) {
@@ -209,7 +213,7 @@ fun initClassLoader(addCwmLibs: Boolean) {
   var updateSystemClassLoader = false
   if (addCwmLibs) {
     // Remote dev requires Projector libraries in system classloader due to AWT internals (see below)
-    // At the same time, we don't want to ship them with base (non-remote) IDE due to possible unwanted interference with plugins
+    // At the same time, we don't want to ship them with a base (non-remote) IDE due to possible unwanted interference with plugins
     // See also: com.jetbrains.codeWithMe.projector.PluginClassPathRuntimeCustomizer
     val relativeLibPath = "cwm-plugin-projector/lib/projector"
     var remoteDevPluginLibs = preinstalledPluginDir.resolve(relativeLibPath)

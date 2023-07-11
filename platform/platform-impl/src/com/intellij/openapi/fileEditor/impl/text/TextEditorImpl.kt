@@ -113,7 +113,6 @@ open class TextEditorImpl @Internal constructor(@JvmField protected val project:
       val factory = EditorFactory.getInstance() as EditorFactoryImpl
       return factory.createMainEditor(document!!, project, file)
     }
-
   }
 
   protected open fun createEditorComponent(project: Project, file: VirtualFile, editor: EditorImpl): TextEditorComponent {

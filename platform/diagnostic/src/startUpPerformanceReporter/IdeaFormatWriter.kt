@@ -8,11 +8,13 @@ import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.ThreadNameManager
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import java.io.CharArrayWriter
+import java.io.Writer
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.time.ZonedDateTime
@@ -34,8 +36,7 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
             projectName: String) {
     stringWriter.write(logPrefix)
 
-    val writer = JsonFactory().createGenerator(stringWriter)
-    writer.prettyPrinter = MyJsonPrettyPrinter()
+    val writer = createJsonGenerator(stringWriter)
     writer.use {
       writer.obj {
         writer.writeStringField("version", version)
@@ -88,7 +89,7 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
 
   private fun writeParallelActivities(startTime: Long, writer: JsonGenerator) {
     for ((name, list ) in activities) {
-      StartUpPerformanceReporter.sortItems(list)
+      list.sortWith(itemComparator)
 
       val measureThreshold = if (name == ActivityCategory.DEFAULT.jsonName || name == ActivityCategory.REOPENING_EDITOR.jsonName) {
         -1
@@ -211,5 +212,57 @@ private fun writeCommonFields(event: ActivityImpl, writer: JsonGenerator, timeOf
 class ExposingCharArrayWriter : CharArrayWriter(8192) {
   fun toByteBuffer(offset: Int): ByteBuffer {
     return Charsets.UTF_8.encode(CharBuffer.wrap(buf, offset, count - offset))
+  }
+}
+
+internal fun createJsonGenerator(output: Writer): JsonGenerator {
+  val writer = JsonFactory().createGenerator(output)
+  writer.prettyPrinter = MyJsonPrettyPrinter()
+  return writer
+}
+
+// to make output more compact (quite a lot of slow components)
+private class MyJsonPrettyPrinter : IntelliJPrettyPrinter() {
+  private var objectLevel = 0
+
+  override fun writeStartObject(g: JsonGenerator) {
+    objectLevel++
+    if (objectLevel > 1) {
+      _objectIndenter = FixedSpaceIndenter.instance
+    }
+    super.writeStartObject(g)
+  }
+
+  override fun writeEndObject(g: JsonGenerator, nrOfEntries: Int) {
+    super.writeEndObject(g, nrOfEntries)
+    objectLevel--
+    if (objectLevel <= 1) {
+      _objectIndenter = UNIX_LINE_FEED_INSTANCE
+    }
+  }
+}
+
+internal val itemComparator = Comparator<ActivityImpl> { o1, o2 ->
+  if (o1 == o2.parent) {
+    return@Comparator -1
+  }
+  else if (o2 == o1.parent) {
+    return@Comparator 1
+  }
+
+  compareTime(o1, o2)
+}
+
+private fun compareTime(o1: ActivityImpl, o2: ActivityImpl): Int {
+  return when {
+    o1.start > o2.start -> 1
+    o1.start < o2.start -> -1
+    else -> {
+      when {
+        o1.end > o2.end -> -1
+        o1.end < o2.end -> 1
+        else -> 0
+      }
+    }
   }
 }

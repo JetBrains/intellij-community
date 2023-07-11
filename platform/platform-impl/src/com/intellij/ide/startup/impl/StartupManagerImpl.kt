@@ -21,7 +21,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareRunnable
@@ -36,7 +35,6 @@ import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.ModalityUiUtil
 import io.opentelemetry.api.common.AttributeKey
@@ -155,12 +153,8 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
   suspend fun initProject() {
     LOG.assertTrue(!isInitProjectActivitiesPassed)
-    runActivity("project startup") {
-      tracer.spanBuilder("run init project activities").useWithScope2 {
-        runInitProjectActivities()
-        isInitProjectActivitiesPassed = true
-      }
-    }
+    runInitProjectActivities()
+    isInitProjectActivitiesPassed = true
   }
 
   suspend fun runPostStartupActivities() {
@@ -196,7 +190,6 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       coroutineContext.ensureActive()
 
       val pluginId = adapter.pluginDescriptor.pluginId
-      @Suppress("SpellCheckingInspection")
       if (!isCorePlugin(adapter.pluginDescriptor) && pluginId.idString != "com.jetbrains.performancePlugin"
           && pluginId.idString != "com.jetbrains.performancePlugin.yourkit"
           && pluginId.idString != "com.intellij.clion-swift"
@@ -339,8 +332,8 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   }
 
   private suspend fun runPostStartupActivitiesRegisteredDynamically() {
-    tracer.spanBuilder("run post-startup dynamically registered activities").useWithScope {
-      runActivities(postStartupActivities, activityName = "project post-startup")
+    subtask("run post-startup dynamically registered activities") {
+      runActivities(postStartupActivities)
     }
 
     postStartupActivitiesPassed = DUMB_AWARE_PASSED
@@ -348,16 +341,13 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
     allActivitiesPassed.complete(value = null)
   }
 
-  private suspend fun runActivities(activities: Deque<Runnable>, activityName: String? = null) {
+  private suspend fun runActivities(activities: Deque<Runnable>) {
     synchronized(lock) {
       if (activities.isEmpty()) {
         return
       }
     }
 
-    val activity = activityName?.let {
-      StartUpMeasurer.startActivity(it)
-    }
     while (true) {
       coroutineContext.ensureActive()
 
@@ -378,16 +368,12 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       catch (e: CancellationException) {
         throw e
       }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
       catch (e: Throwable) {
         LOG.error(e)
       }
 
       addCompletedActivity(startTime = startTime, runnableClass = runnableClass, pluginId = pluginId)
     }
-    activity?.end()
   }
 
   override fun runWhenProjectIsInitialized(action: Runnable) {

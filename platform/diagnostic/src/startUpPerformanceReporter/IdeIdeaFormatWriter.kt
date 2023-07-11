@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.diagnostic.startUpPerformanceReporter
 
@@ -17,7 +17,7 @@ import com.intellij.util.io.jackson.obj
 import com.intellij.util.io.sha3_512
 import com.intellij.util.lang.ClassPath
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2LongMap
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.management.ManagementFactory
@@ -28,7 +28,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityImpl>>,
-                                   private val pluginCostMap: MutableMap<String, Object2LongMap<String>>,
+                                   private val pluginCostMap: MutableMap<String, Object2LongOpenHashMap<String>>,
                                    threadNameManager: ThreadNameManager) : IdeaFormatWriter(activities, threadNameManager,
                                                                                             StartUpPerformanceReporter.VERSION) {
   val publicStatMetrics: Object2IntOpenHashMap<String> = Object2IntOpenHashMap<String>()

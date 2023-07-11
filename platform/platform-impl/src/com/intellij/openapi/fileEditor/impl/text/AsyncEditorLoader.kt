@@ -76,12 +76,12 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     val editorComponent = textEditor.component
     val indicatorJob = loadingDecorator.startLoading(scope = coroutineScope, addUi = editorComponent::addLoadingDecoratorUi)
 
-    coroutineScope.launch {
+    coroutineScope.launch(CoroutineName("AsyncEditorLoader.wait")) {
       // await instead of joint to get errors here
       tasks.awaitAll()
       indicatorJob.cancel()
 
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.EDT + CoroutineName("execute delayed actions")) {
         editor.putUserData(ASYNC_LOADER, null)
         editor.scrollingModel.disableAnimation()
         try {

@@ -4,7 +4,7 @@
 package com.intellij.ui.scale
 
 import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.runActivity
+import com.intellij.diagnostic.subtask
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
@@ -46,16 +46,16 @@ object JBUIScale {
     get() = userScaleFactor.value
 
   @Internal
-  fun preload(uiDefaults: Supplier<UIDefaults?>) {
+  suspend fun preload(uiDefaults: Supplier<UIDefaults?>) {
     if (systemScaleFactor.isInitialized()) {
       thisLogger().error("Must be not computed before that call")
     }
 
-    runActivity("system scale factor computation") {
+    subtask("system scale factor computation") {
       systemScaleFactor.value = computeSystemScaleFactor(uiDefaults)
     }
 
-    runActivity("user scale factor computation") {
+    subtask("user scale factor computation") {
       userScaleFactor.drop()
       userScaleFactor.value
     }

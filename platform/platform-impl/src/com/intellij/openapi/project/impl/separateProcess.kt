@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
-import com.intellij.diagnostic.Activity
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -54,7 +53,7 @@ private class NewProjectActionDisabler : OpenFileAction() {
   }
 }
 
-internal suspend fun checkChildProcess(projectStoreBaseDir: Path, activity: Activity): Boolean {
+internal suspend fun checkChildProcess(projectStoreBaseDir: Path): Boolean {
   if (shouldOpenInChildProcess(projectStoreBaseDir)) {
     openInChildProcess(projectStoreBaseDir)
     if (!ProjectManagerEx.IS_CHILD_PROCESS) {
@@ -70,7 +69,6 @@ internal suspend fun checkChildProcess(projectStoreBaseDir: Path, activity: Acti
     for (processor in LowLevelProjectOpenProcessor.EP_NAME.extensions) {
       if (processor.beforeProjectOpened(projectStoreBaseDir) == LowLevelProjectOpenProcessor.PrepareProjectResult.CANCEL) {
         logger<ProjectManagerImpl>().info("Project opening preparation has been cancelled")
-        activity.end()
         throw ProcessCanceledException()
       }
     }

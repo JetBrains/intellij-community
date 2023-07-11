@@ -5,7 +5,6 @@
 
 package com.intellij.ide.bootstrap
 
-import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.subtask
 import com.intellij.ide.*
 import com.intellij.ide.plugins.PluginManagerMain
@@ -46,48 +45,49 @@ fun initApplication(context: InitAppContext) {
 }
 
 internal suspend fun initApplicationImpl(args: List<String>,
-                                         initAppActivity: Activity,
                                          app: ApplicationImpl,
                                          asyncScope: CoroutineScope,
                                          preloadCriticalServicesJob: Job) {
-  val deferredStarter = subtask("app starter creation") {
-    createAppStarterAsync(args)
+  val starter = subtask("app initialization") {
+    val deferredStarter = subtask("app starter creation") {
+      createAppStarterAsync(args)
+    }
+
+    val appInitializedListeners = coroutineScope {
+      val appInitListeners = async(CoroutineName("app init listener preload")) {
+        getAppInitializedListeners(app)
+      }
+
+      // doesn't block app start-up
+      asyncScope.launch(CoroutineName("post app init tasks")) {
+        runPostAppInitTasks()
+      }
+
+      preloadCriticalServicesJob.join()
+
+      asyncScope.launch {
+        addActivateAndWindowsCliListeners()
+      }
+
+      asyncScope.launch(CoroutineName("checkThirdPartyPluginsAllowed")) {
+        PluginManagerMain.checkThirdPartyPluginsAllowed()
+      }
+
+      appInitListeners.await()
+    }
+
+    subtask("app initialized callback") {
+      // An async scope here is intended for FLOW. FLOW!!! DO NOT USE the surrounding main scope.
+      callAppInitialized(listeners = appInitializedListeners, asyncScope = app.coroutineScope)
+    }
+    deferredStarter.await()
   }
 
-  val appInitializedListeners = subtask("app preloading") {
-    val appInitListeners = async(CoroutineName("app init listener preload")) {
-      getAppInitializedListeners(app)
-    }
-
-    // doesn't block app start-up
-    asyncScope.launch(CoroutineName("post app init tasks")) {
-      runPostAppInitTasks()
-    }
-
-    preloadCriticalServicesJob.join()
-
-    asyncScope.launch {
-      addActivateAndWindowsCliListeners()
-    }
-
-    asyncScope.launch {
-      PluginManagerMain.checkThirdPartyPluginsAllowed()
-    }
-
-    appInitListeners.await()
-  }
-
-  subtask("app initialized callback") {
-    // An async scope here is intended for FLOW. FLOW!!! DO NOT USE the surrounding main scope.
-    callAppInitialized(listeners = appInitializedListeners, asyncScope = app.coroutineScope)
-  }
-
-  initAppActivity.end()
-
-  val starter = deferredStarter.await()
   if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
     if (starter is ModernApplicationStarter) {
-      starter.start(args)
+      subtask("${starter.javaClass.simpleName}.start") {
+        starter.start(args)
+      }
     }
     else {
       // todo https://youtrack.jetbrains.com/issue/IDEA-298594

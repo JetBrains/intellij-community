@@ -5,7 +5,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public interface Activity {
+  @NotNull String getName();
+
   void end();
+
+  void end(long end);
 
   void setDescription(@NonNls @NotNull String description);
 

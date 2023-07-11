@@ -20,7 +20,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
@@ -313,10 +312,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       return projectManager.openProjectAsync(projectFile, effectiveOptions)
     }
     else {
-      // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.
+      // If .idea is missing in the recent project's dir, this might mean, for instance, that 'git clean' was called.
       // Reopening such a project should be similar to opening the dir first time (and trying to import known project formats)
       // IDEA-144453 IDEA rejects opening a recent project if there are no .idea subfolder
-      // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug were deleted
+      // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug was deleted
       LOG.info("Opening project from the recent projects, but .idea is missing. Open project as this is first time.")
       return ProjectUtil.openOrImportAsync(projectFile, effectiveOptions)
     }
@@ -369,9 +368,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
 
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      blockingContext {
-        updateSystemDockMenu()
-      }
+      updateSystemDockMenu()
     }
   }
 
@@ -522,7 +519,6 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
         if (isValidProjectPath(path)) Pair(path, entry.value) else null
       }.getOrLogException(LOG)
     }
-
 
     // ok, no non-existent project paths and every info has a frame
     val activeInfo = (toOpen.maxByOrNull { it.second.activationTimestamp } ?: return false).second

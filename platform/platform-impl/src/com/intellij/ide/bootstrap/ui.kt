@@ -5,6 +5,7 @@ package com.intellij.ide.bootstrap
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
+import com.intellij.diagnostic.subtask
 import com.intellij.ide.AssertiveRepaintManager
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.IdeEventQueue
@@ -47,12 +48,12 @@ import kotlin.system.exitProcess
 
 internal fun getSvgIconCacheFile(): Path = Path.of(PathManager.getSystemPath(), "icon-v14.db")
 
-internal fun initUi(isHeadless: Boolean) {
+internal suspend fun initUi(isHeadless: Boolean) {
   if (!isHeadless) {
-    val env = runActivity("GraphicsEnvironment init") {
+    val env = subtask("GraphicsEnvironment init") {
       GraphicsEnvironment.getLocalGraphicsEnvironment()
     }
-    runActivity("graphics environment checking") {
+    subtask("graphics environment checking") {
       if (env.isHeadlessInstance) {
         StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"),
                                          BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
@@ -63,8 +64,8 @@ internal fun initUi(isHeadless: Boolean) {
 
   // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
 
-  val baseLaF = runActivity("base LaF creation") { DarculaLaf.createBaseLaF() }
-  runActivity("base LaF initialization") {
+  val baseLaF = subtask("base LaF creation") { DarculaLaf.createBaseLaF() }
+  subtask("base LaF initialization") {
     // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
     baseLaF.initialize()
     DarculaLaf.setPreInitializedBaseLaf(baseLaF)
@@ -78,15 +79,15 @@ internal fun initUi(isHeadless: Boolean) {
     }
   }
 
-  val uiDefaults = runActivity("app-specific laf state initialization") { UIManager.getDefaults() }
+  val uiDefaults = subtask("app-specific laf state initialization") { UIManager.getDefaults() }
 
-  runActivity("html style patching") {
+  subtask("html style patching") {
     // create a separate copy for each case
     val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
     uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
     uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
 
-    runActivity("global styleSheet updating") {
+    subtask("global styleSheet updating") {
       GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
     }
   }
@@ -120,7 +121,7 @@ internal fun CoroutineScope.scheduleInitAwtToolkitAndEventQueue(lockSystemDirsJo
 }
 
 private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Thread, isHeadless: Boolean) {
-  launch {
+  launch(CoroutineName("initAwtToolkit")) {
     lockSystemDirsJob.join()
 
     checkHiDPISettings()
@@ -131,11 +132,11 @@ private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Th
     // mute system Cmd+`/Cmd+Shift+` shortcuts on macOS to avoid a conflict with corresponding platform actions (JBR-specific option)
     System.setProperty("apple.awt.captureNextAppWinKey", "true")
 
-    runActivity("awt toolkit creating") {
+    subtask("awt toolkit creating") {
       Toolkit.getDefaultToolkit()
     }
 
-    runActivity("awt auto shutdown configuring") {
+    subtask("awt auto shutdown configuring") {
       /*
       Make EDT to always persist while the main thread is alive. Otherwise, it's possible to have EDT being
       terminated by [AWTAutoShutdown], which will break a `ReadMostlyRWLock` instance.
@@ -162,15 +163,15 @@ private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Th
 }
 
 // the method must be called on EDT
-private fun patchSystem(isHeadless: Boolean) {
-  runActivity("event queue replacing") {
+private suspend fun patchSystem(isHeadless: Boolean) {
+  subtask("event queue replacing") {
     // replace system event queue
     IdeEventQueue.getInstance()
     // do not crash AWT on exceptions
     AWTExceptionHandler.register()
   }
   if (!isHeadless && "true" == System.getProperty("idea.check.swing.threading")) {
-    runActivity("repaint manager set") {
+    subtask("repaint manager set") {
       RepaintManager.setCurrentManager(AssertiveRepaintManager())
     }
   }

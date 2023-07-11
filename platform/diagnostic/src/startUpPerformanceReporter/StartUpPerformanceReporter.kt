@@ -3,7 +3,6 @@
 
 package com.intellij.diagnostic.startUpPerformanceReporter
 
-import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
@@ -18,7 +17,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.write
 import com.intellij.util.lang.ClassPath
 import it.unimi.dsi.fastutil.objects.Object2IntMap
@@ -38,6 +36,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
+private val LOG: Logger
+  get() = logger<StartUpMeasurer>()
+
 open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope) : StartUpPerformanceService {
   private var pluginCostMap: Map<String, Object2LongMap<String>>? = null
 
@@ -48,23 +49,7 @@ open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope
     @JvmStatic
     protected val perfFilePath: String? = System.getProperty("idea.log.perf.stats.file")?.takeIf(String::isNotEmpty)
 
-    internal val LOG: Logger
-      get() = logger<StartUpMeasurer>()
-
     internal const val VERSION: String = "38"
-
-    internal fun sortItems(items: MutableList<ActivityImpl>) {
-      items.sortWith(Comparator { o1, o2 ->
-        if (o1 == o2.parent) {
-          return@Comparator -1
-        }
-        else if (o2 == o1.parent) {
-          return@Comparator 1
-        }
-
-        compareTime(o1, o2)
-      })
-    }
 
     fun logStats(projectName: String) {
       logAndClearStats(projectName, perfFilePath)
@@ -134,6 +119,14 @@ private fun logAndClearStats(projectName: String, perfFilePath: String?): StartU
     }
   }
 
+  System.getProperty("idea.perf.trace.file")?.takeIf(String::isNotEmpty)?.let {
+    val file = Path.of(FileUtil.expandUserHome(it))
+    Files.createDirectories(file.parent)
+    Files.newBufferedWriter(file).use { writer ->
+      writeInJaegerJsonFormat(activities.get(ActivityCategory.DEFAULT.jsonName) ?: emptyList(), output = writer)
+    }
+  }
+
   val pluginCostMap = computePluginCostMap()
 
   val w = IdeIdeaFormatWriter(activities, pluginCostMap, threadNameManager)
@@ -146,16 +139,20 @@ private fun logAndClearStats(projectName: String, perfFilePath: String?): StartU
     }
   }
 
-  w.write(startTime, serviceActivities, instantEvents, end, projectName)
+  w.write(timeOffset = startTime,
+          serviceActivities = serviceActivities,
+          instantEvents = instantEvents,
+          end = end,
+          projectName = projectName)
 
   val currentReport = w.toByteBuffer()
 
   if (System.getProperty("idea.log.perf.stats", "false").toBoolean()) {
-    w.writeToLog(StartUpPerformanceReporter.LOG)
+    w.writeToLog(LOG)
   }
 
   if (perfFilePath != null) {
-    StartUpPerformanceReporter.LOG.info("StartUp Measurement report was written to: $perfFilePath")
+    LOG.info("StartUp Measurement report was written to: $perfFilePath")
     Path.of(perfFilePath).write(currentReport)
     currentReport.flip()
   }
@@ -173,11 +170,11 @@ private fun logAndClearStats(projectName: String, perfFilePath: String?): StartU
   return StartUpPerformanceReporterValues(pluginCostMap, currentReport, w.publicStatMetrics)
 }
 
-private class StartUpPerformanceReporterValues(val pluginCostMap: MutableMap<String, Object2LongMap<String>>,
-                                               val lastReport: ByteBuffer,
-                                               val lastMetrics: Object2IntMap<String>)
+private class StartUpPerformanceReporterValues(@JvmField val pluginCostMap: MutableMap<String, Object2LongOpenHashMap<String>>,
+                                               @JvmField val lastReport: ByteBuffer,
+                                               @JvmField val lastMetrics: Object2IntMap<String>)
 
-private fun computePluginCostMap(): MutableMap<String, Object2LongMap<String>> {
+private fun computePluginCostMap(): MutableMap<String, Object2LongOpenHashMap<String>> {
   val result = HashMap(StartUpMeasurer.pluginCostMap)
   StartUpMeasurer.pluginCostMap.clear()
 
@@ -193,41 +190,6 @@ private fun computePluginCostMap(): MutableMap<String, Object2LongMap<String>> {
     costPerPhaseMap.put("classloading (background)", classLoader.backgroundTime)
   }
   return result
-}
-
-// to make output more compact (quite a lot of slow components)
-internal class MyJsonPrettyPrinter : IntelliJPrettyPrinter() {
-  private var objectLevel = 0
-
-  override fun writeStartObject(g: JsonGenerator) {
-    objectLevel++
-    if (objectLevel > 1) {
-      _objectIndenter = FixedSpaceIndenter.instance
-    }
-    super.writeStartObject(g)
-  }
-
-  override fun writeEndObject(g: JsonGenerator, nrOfEntries: Int) {
-    super.writeEndObject(g, nrOfEntries)
-    objectLevel--
-    if (objectLevel <= 1) {
-      _objectIndenter = UNIX_LINE_FEED_INSTANCE
-    }
-  }
-}
-
-internal fun compareTime(o1: ActivityImpl, o2: ActivityImpl): Int {
-  return when {
-    o1.start > o2.start -> 1
-    o1.start < o2.start -> -1
-    else -> {
-      when {
-        o1.end > o2.end -> -1
-        o1.end < o2.end -> 1
-        else -> 0
-      }
-    }
-  }
 }
 
 private fun generateJarAccessLog(outFile: Path) {

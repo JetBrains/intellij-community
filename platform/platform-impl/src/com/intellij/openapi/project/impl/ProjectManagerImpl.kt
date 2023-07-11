@@ -29,6 +29,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -64,8 +65,6 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.attachToProjectAsync
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.intellij.platform.jps.model.diagnostic.JpsMetrics
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.serviceContainer.ComponentManagerImpl
@@ -557,31 +556,38 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return null
     }
 
-    val activity = StartUpMeasurer.startActivity("project opening preparation")
-
-    if (!checkTrustedState(projectStoreBaseDir)) {
-      LOG.info("Project is not trusted, aborting")
-      activity.end()
-      if (options.showWelcomeScreen) {
-        WelcomeFrame.showIfNoProjectOpened()
+    subtask("checkTrustedState") {
+      if (!checkTrustedState(projectStoreBaseDir)) {
+        LOG.info("Project is not trusted, aborting")
+        if (options.showWelcomeScreen) {
+          WelcomeFrame.showIfNoProjectOpened()
+        }
+        ProcessCanceledException()
       }
-      throw ProcessCanceledException()
+      else {
+        null
+      }
+    }?.let {
+      throw it
     }
 
-    if (ApplicationManagerEx.isInIntegrationTest()) {
-      // write current PID to file to kill the process if it hangs
-      if (IS_CHILD_PROCESS) {
-        val pid = ProcessHandle.current().pid()
+    val continueOpen = subtask("checkChildProcess") {
+      if (ApplicationManagerEx.isInIntegrationTest()) {
+        // write current PID to file to kill the process if it hangs
+        if (IS_CHILD_PROCESS) {
+          val pid = ProcessHandle.current().pid()
 
-        @Suppress("SpellCheckingInspection")
-        val file = PathManager.getSystemDir().resolve("pids.txt")
-        withContext(Dispatchers.IO) {
-          Files.writeString(file, pid.toString())
+          @Suppress("SpellCheckingInspection")
+          val file = PathManager.getSystemDir().resolve("pids.txt")
+          withContext(Dispatchers.IO) {
+            Files.writeString(file, pid.toString())
+          }
         }
       }
-    }
 
-    if (checkChildProcess(projectStoreBaseDir, activity)) {
+      !checkChildProcess(projectStoreBaseDir)
+    }
+    if (!continueOpen) {
       return null
     }
 
@@ -605,10 +611,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
     }
 
-    return doOpenAsync(options, projectStoreBaseDir, activity)
+    return subtask("ProjectManager.openAsync") {
+      doOpenAsync(options, projectStoreBaseDir)
+    }
   }
 
-  private suspend fun doOpenAsync(options: OpenProjectTask, projectStoreBaseDir: Path, activity: Activity): Project? {
+  private suspend fun doOpenAsync(options: OpenProjectTask, projectStoreBaseDir: Path): Project? {
     val app = ApplicationManager.getApplication()
     val frameAllocator = if (app.isHeadlessEnvironment || app.isUnitTestMode) {
       ProjectFrameAllocator(options)
@@ -620,10 +628,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()
     var module: Module? = null
     var result: Project? = null
-    var projectOpenActivity: Activity? = null
     try {
       frameAllocator.run { saveTemplateJob, projectInitObserver ->
-        activity.end()
         val initFrameEarly = !options.isNewProject && options.beforeOpen == null && options.project == null
         val project = when {
           options.project != null -> options.project!!
@@ -665,7 +671,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           projectInitObserver.rawProjectDeferred.complete(project)
         }
 
-        projectOpenActivity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity("project opening") else null
         subtask("project startup") {
           runInitProjectActivities(project)
         }
@@ -726,8 +731,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
     finally {
       disableAutoSaveToken.finish()
-
-      projectOpenActivity?.end()
     }
 
     val project = result!!
@@ -955,8 +958,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 }
 
-private val tracer by lazy { TelemetryManager.getInstance().getTracer(ProjectManagerScope) }
-
 @NlsSafe
 private fun message(e: Throwable): String {
   var message = e.message ?: e.localizedMessage
@@ -971,15 +972,13 @@ private fun message(e: Throwable): String {
 @Internal
 @VisibleForTesting
 fun CoroutineScope.runInitProjectActivities(project: Project) {
-  launch {
-    (StartupManager.getInstance(project) as StartupManagerImpl).initProject()
+  launch(CoroutineName("run init project activities")) {
+    (project.serviceAsync<StartupManager>() as StartupManagerImpl).initProject()
   }
 
   launch(CoroutineName("projectOpened event executing") + Dispatchers.EDT) {
-    tracer.spanBuilder("projectOpened event executing").useWithScope2 {
-      @Suppress("DEPRECATION", "removal")
-      ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
-    }
+    @Suppress("DEPRECATION", "removal")
+    ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
   }
 
   @Suppress("DEPRECATION")
@@ -990,14 +989,14 @@ fun CoroutineScope.runInitProjectActivities(project: Project) {
   }
 
   launch(CoroutineName("projectOpened component executing") + Dispatchers.EDT) {
-    blockingContext {
-      for (component in projectComponents) {
-        runCatching {
-          val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER)
+    for (component in projectComponents) {
+      runCatching {
+        val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER)
+        blockingContext {
           component.projectOpened()
-          componentActivity.end()
-        }.getOrLogException(LOG)
-      }
+        }
+        componentActivity.end()
+      }.getOrLogException(LOG)
     }
   }
 }

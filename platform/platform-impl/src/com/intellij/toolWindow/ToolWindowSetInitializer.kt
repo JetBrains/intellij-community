@@ -4,7 +4,6 @@
 package com.intellij.toolWindow
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.runActivity
 import com.intellij.diagnostic.subtask
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.plugins.PluginManagerCore
@@ -140,7 +139,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
     if (list.size != entries.size) {
       reopeningEditorJob.join()
       postEntryProcessing(withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        runActivity("secondary frames toolwindow creation") {
+        subtask("secondary frames toolwindow creation") {
           registerToolWindows(list, manager, manager.getLayout()) { it != WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID }
         }
       }, suffix = " (secondary)")
@@ -151,11 +150,11 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
 
   private suspend fun postEntryProcessing(entries: List<ToolWindowEntry>, suffix: String = "") {
     // dispatch event not in EDT
-    runActivity("toolWindowsRegistered event executing$suffix") {
+    subtask("toolWindowsRegistered event executing$suffix") {
       manager.project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries.map { it.id }, manager)
     }
 
-    runActivity("ensureToolWindowActionRegistered executing$suffix") {
+    subtask("ensureToolWindowActionRegistered executing$suffix") {
       val actionManager = ApplicationManager.getApplication().serviceAsync<ActionManager>()
       for (entry in entries) {
         ActivateToolWindowAction.ensureToolWindowActionRegistered(entry.toolWindow, actionManager)

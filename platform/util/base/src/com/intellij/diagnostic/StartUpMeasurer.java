@@ -7,7 +7,6 @@ import org.jetbrains.annotations.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +41,19 @@ public final class StartUpMeasurer {
 
   private static long startTime = System.nanoTime();
 
-  private static final Queue<ActivityImpl> items = new ConcurrentLinkedQueue<>();
+  @ApiStatus.Internal
+  public static long getStartTime() {
+    return startTime;
+  }
+
+  private static long startTimeUnixMillis = System.currentTimeMillis();
+
+  @ApiStatus.Internal
+  public static long getStartTimeUnixMillis() {
+    return startTimeUnixMillis;
+  }
+
+  private static final ConcurrentLinkedQueue<ActivityImpl> items = new ConcurrentLinkedQueue<>();
 
   private static boolean isEnabled = true;
 
@@ -56,11 +67,7 @@ public final class StartUpMeasurer {
   }
 
   @ApiStatus.Internal
-  public static final Map<String, Object2LongMap<String>> pluginCostMap = new ConcurrentHashMap<>();
-
-  @ApiStatus.Internal
-  @SuppressWarnings("StaticNonFinalField")
-  public volatile static Activity appInitPreparationActivity;
+  public static final Map<String, Object2LongOpenHashMap<String>> pluginCostMap = new ConcurrentHashMap<>();
 
   public static long getCurrentTime() {
     return System.nanoTime();
@@ -82,7 +89,7 @@ public final class StartUpMeasurer {
 
     ActivityImpl activity = new ActivityImpl(name, getCurrentTime(), null, null);
     activity.setEnd(-1);
-    addActivity(activity);
+    items.add(activity);
   }
 
   public static @NotNull Activity startActivity(@NonNls @NotNull String name, @NotNull ActivityCategory category) {
@@ -93,18 +100,47 @@ public final class StartUpMeasurer {
     return new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* pluginId = */ null, ActivityCategory.DEFAULT);
   }
 
-  public static @NotNull Activity startActivity(@NonNls @NotNull String name, @NotNull ActivityCategory category, @Nullable String pluginId) {
+  public static @NotNull Activity startActivity(@NonNls @NotNull String name, @Nullable Activity parent) {
+    return new ActivityImpl(name, getCurrentTime(), /* parent = */ (ActivityImpl)parent, /* pluginId = */ null, ActivityCategory.DEFAULT);
+  }
+
+  public static @NotNull Activity startActivity(@NonNls @NotNull String name,
+                                                @NotNull ActivityCategory category,
+                                                @Nullable String pluginId) {
     return new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* pluginId = */ pluginId, category);
   }
 
   /**
-   * Default threshold is applied.
+   * The default threshold is applied.
    */
-  public static long addCompletedActivity(long start, @NotNull Class<?> clazz, @NotNull ActivityCategory category, @Nullable String pluginId) {
+  public static long addCompletedActivity(long start,
+                                          @NotNull Class<?> clazz,
+                                          @NotNull ActivityCategory category,
+                                          @Nullable String pluginId) {
     return addCompletedActivity(start, clazz, category, pluginId, -1);
   }
 
-  public static long addCompletedActivity(long start, @NotNull Class<?> clazz, @NotNull ActivityCategory category, @Nullable String pluginId, long threshold) {
+  public static void addCompletedActivity(long start, @NonNls @NotNull String name, @Nullable Activity parent) {
+    if (!isEnabled) {
+      return;
+    }
+
+    long end = getCurrentTime();
+    long duration = end - start;
+    if (duration <= MEASURE_THRESHOLD) {
+      return;
+    }
+
+    ActivityImpl item = new ActivityImpl(name, start, /* parent = */ (ActivityImpl)parent, null, ActivityCategory.DEFAULT);
+    item.setEnd(end);
+    items.add(item);
+  }
+
+  public static long addCompletedActivity(long start,
+                                          @NotNull Class<?> clazz,
+                                          @NotNull ActivityCategory category,
+                                          @Nullable String pluginId,
+                                          long threshold) {
     if (!isEnabled) {
       return -1;
     }
@@ -120,7 +156,7 @@ public final class StartUpMeasurer {
   }
 
   /**
-   * Default threshold is applied.
+   * The default threshold is applied.
    */
   public static long addCompletedActivity(long start, @NonNls @NotNull String name, @NotNull ActivityCategory category, String pluginId) {
     long end = getCurrentTime();
@@ -133,14 +169,18 @@ public final class StartUpMeasurer {
     return duration;
   }
 
-  public static void addCompletedActivity(long start, long end, @NonNls @NotNull String name, @NotNull ActivityCategory category, String pluginId) {
+  public static void addCompletedActivity(long start,
+                                          long end,
+                                          @NonNls @NotNull String name,
+                                          @NotNull ActivityCategory category,
+                                          String pluginId) {
     if (!isEnabled) {
       return;
     }
 
     ActivityImpl item = new ActivityImpl(name, start, /* parent = */ null, pluginId, category);
     item.setEnd(end);
-    addActivity(item);
+    items.add(item);
   }
 
   public static void setCurrentState(@NotNull LoadingState state) {
@@ -151,17 +191,13 @@ public final class StartUpMeasurer {
         errorHandler.accept("New state " + state + " cannot precede old " + old, new Throwable());
       }
     }
-    stateSet(state);
+    addInstantEvent(state.displayName);
   }
 
   public static void compareAndSetCurrentState(@NotNull LoadingState expectedState, @NotNull LoadingState newState) {
     if (currentState.compareAndSet(expectedState, newState)) {
-      stateSet(newState);
+      addInstantEvent(newState.displayName);
     }
-  }
-
-  private static void stateSet(@NotNull LoadingState state) {
-    addInstantEvent(state.displayName);
   }
 
   @ApiStatus.Internal
@@ -178,11 +214,6 @@ public final class StartUpMeasurer {
     }
   }
 
-  @ApiStatus.Internal
-  public static long getStartTime() {
-    return startTime;
-  }
-
   static void addActivity(@NotNull ActivityImpl activity) {
     if (isEnabled) {
       items.add(activity);
@@ -190,7 +221,7 @@ public final class StartUpMeasurer {
   }
 
   @ApiStatus.Internal
-  public static void addTimings(@NotNull List<Object> timings, @NotNull String groupName) {
+  public static void addTimings(List<Object> timings, String parentName, long startTimeUnixMillis) {
     if (!items.isEmpty()) {
       throw new IllegalStateException("addTimings must be not called if some events were already added using API");
     }
@@ -199,13 +230,14 @@ public final class StartUpMeasurer {
       return;
     }
 
-    ActivityImpl parent = new ActivityImpl(groupName, (long)timings.get(1), null, null);
+    ActivityImpl parent = new ActivityImpl(parentName, (long)timings.get(1), null, null);
     parent.setEnd(getCurrentTime());
 
     for (int i = 0; i < timings.size(); i += 2) {
       long start = (long)timings.get(i + 1);
       if (start < startTime) {
         startTime = start;
+        StartUpMeasurer.startTimeUnixMillis = startTimeUnixMillis;
       }
 
       ActivityImpl activity = new ActivityImpl((String)timings.get(i), start, parent, null);
@@ -230,9 +262,8 @@ public final class StartUpMeasurer {
   public static void doAddPluginCost(@NonNls @NotNull String pluginId,
                                      @NonNls @NotNull String phase,
                                      long time,
-                                     @NotNull Map<String, Object2LongMap<String>> pluginCostMap) {
+                                     @NotNull Map<String, Object2LongOpenHashMap<String>> pluginCostMap) {
     Object2LongMap<String> costPerPhaseMap = pluginCostMap.computeIfAbsent(pluginId, __ -> new Object2LongOpenHashMap<>());
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (costPerPhaseMap) {
       costPerPhaseMap.mergeLong(phase, time, Math::addExact);
     }

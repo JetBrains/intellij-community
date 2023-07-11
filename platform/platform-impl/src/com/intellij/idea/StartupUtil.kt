@@ -96,7 +96,8 @@ internal var shellEnvDeferred: Deferred<Boolean?>? = null
 fun CoroutineScope.startApplication(args: List<String>,
                                     appStarterDeferred: Deferred<AppStarter>,
                                     mainScope: CoroutineScope,
-                                    busyThread: Thread) {
+                                    busyThread: Thread,
+                                    appInitPreparationActivity: Activity) {
   val appInfoDeferred = async(CoroutineName("app info")) {
     // required for DisabledPluginsState and EUA
     ApplicationInfoImpl.getShadowInstance()
@@ -216,9 +217,9 @@ fun CoroutineScope.startApplication(args: List<String>,
         euaDocumentDeferred = euaDocumentDeferred,
       )
 
-      if (ConfigImportHelper.isNewUser() && System.getProperty(NewUiValue.KEY) == null) {
+      if (ConfigImportHelper.isNewUser() && System.getProperty("ide.experimental.ui") == null) {
         runCatching {
-          EarlyAccessRegistryManager.setAndFlush(mapOf(NewUiValue.KEY to "true"))
+          EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true"))
         }.getOrLogException(log)
       }
     }
@@ -307,8 +308,8 @@ fun CoroutineScope.startApplication(args: List<String>,
     appRegisteredJob.join()
     initServiceContainerJob.join()
 
+    appInitPreparationActivity.end()
     initApplicationImpl(args = args.filterNot { CommandLineArgs.isKnownArgument(it) },
-                        initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization"),
                         app = app,
                         preloadCriticalServicesJob = preloadCriticalServicesJob,
                         asyncScope = asyncScope)
@@ -322,7 +323,7 @@ fun CoroutineScope.startApplication(args: List<String>,
       appStarterDeferred.await()
     }
 
-    withContext(mainScope.coroutineContext) {
+    withContext(mainScope.coroutineContext + CoroutineName("appStarter set")) {
       appStarter.prepareStart(args)
     }
 
@@ -431,7 +432,7 @@ fun addExternalInstanceListener(processor: (List<String>) -> Deferred<CliResult>
 private suspend fun runPreAppClass(args: List<String>, logDeferred: Deferred<Logger>) {
   val classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY) ?: return
   logDeferred.join()
-  runActivity("pre app class running") {
+  subtask("pre app class running") {
     try {
       val aClass = AppStarter::class.java.classLoader.loadClass(classBeforeAppProperty)
       MethodHandles.lookup()
@@ -448,30 +449,28 @@ private suspend fun importConfig(args: List<String>,
                                  log: Logger,
                                  appStarter: AppStarter,
                                  euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
-  var activity = StartUpMeasurer.startActivity("screen reader checking")
-  try {
-    withContext(RawSwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
-  }
-  catch (e: Throwable) {
-    log.error(e)
+  subtask("screen reader checking") {
+    runCatching {
+      withContext(RawSwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
+    }.getOrLogException(log)
   }
 
-  activity = activity.endAndStart("config importing")
-  appStarter.beforeImportConfigs()
-  val newConfigDir = customTargetDirectoryToImportConfig ?: PathManager.getConfigDir()
+  subtask("config importing") {
+    appStarter.beforeImportConfigs()
+    val newConfigDir = customTargetDirectoryToImportConfig ?: PathManager.getConfigDir()
 
-  withContext(RawSwingDispatcher) {
-    UIManager.setLookAndFeel(IntelliJLaf())
-  }
+    withContext(RawSwingDispatcher) {
+      UIManager.setLookAndFeel(IntelliJLaf())
+    }
 
-  val veryFirstStartOnThisComputer = euaDocumentDeferred.await() != null
-  withContext(RawSwingDispatcher) {
-    ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, newConfigDir, args, log)
+    val veryFirstStartOnThisComputer = euaDocumentDeferred.await() != null
+    withContext(RawSwingDispatcher) {
+      ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, newConfigDir, args, log)
+    }
+    appStarter.importFinished(newConfigDir)
+    EarlyAccessRegistryManager.invalidate()
+    IconLoader.clearCache()
   }
-  appStarter.importFinished(newConfigDir)
-  EarlyAccessRegistryManager.invalidate()
-  IconLoader.clearCache()
-  activity.end()
 }
 
 private fun CoroutineScope.configureJavaUtilLogging(): Job {
@@ -491,7 +490,7 @@ private fun CoroutineScope.checkSystemDirs(lockSystemDirJob: Job): Job {
     lockSystemDirJob.join()
 
     val (configPath, systemPath) = PathManager.getConfigDir() to PathManager.getSystemDir()
-    runActivity("system dirs checking") {
+    subtask("system dirs checking") {
       if (!doCheckSystemDirs(configPath, systemPath)) {
         exitProcess(AppExitCodes.DIR_CHECK_FAILED)
       }
@@ -666,7 +665,7 @@ private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob:
     consoleLoggerJob.join()
     checkSystemDirJob.join()
 
-    runActivity("file logger configuration") {
+    subtask("file logger configuration") {
       try {
         Logger.setFactory(LoggerFactory())
       }

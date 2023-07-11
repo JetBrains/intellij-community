@@ -24,7 +24,7 @@ public final class ActivityImpl implements Activity {
 
   private final @Nullable String pluginId;
 
-  ActivityImpl(@Nullable String name, long start, @Nullable ActivityImpl parent) {
+  public ActivityImpl(@Nullable String name, long start, @Nullable ActivityImpl parent) {
     this(name, start, parent, null);
   }
 
@@ -46,7 +46,7 @@ public final class ActivityImpl implements Activity {
     return threadName;
   }
 
-  // Not clear - should we always set it on end of activity or not. Method maybe called in a such rare cases.
+  // Not clear - should we always set it on end of activity or not. Method maybe called in such rare cases.
   private void updateThreadName() {
     Thread thread = Thread.currentThread();
     threadId = thread.getId();
@@ -65,13 +65,14 @@ public final class ActivityImpl implements Activity {
     return category;
   }
 
-  // and how do we can sort correctly, when parent item equals to child (start and end), also there is another child with start equals to end?
+  // and how can we sort correctly, when parent item equals to child (start and end); also there is another child with start equals to end?
   // so, parent added to API but as it was not enough, decided to measure time in nanoseconds instead of ms to mitigate such situations
   @Override
   public @NotNull ActivityImpl startChild(@NotNull String name) {
     return new ActivityImpl(name, StartUpMeasurer.getCurrentTime(), this, pluginId, category);
   }
 
+  @Override
   public @NotNull String getName() {
     return name;
   }
@@ -102,7 +103,8 @@ public final class ActivityImpl implements Activity {
     end(StartUpMeasurer.getCurrentTime());
   }
 
-  void end(long time) {
+  @Override
+  public void end(long time) {
     assert end == 0 : "not started or already ended";
     end = time;
     StartUpMeasurer.addActivity(this);
@@ -120,7 +122,7 @@ public final class ActivityImpl implements Activity {
 
   @NotNull ActivityImpl endAndStart(long time, @NotNull String name) {
     end(time);
-    return new ActivityImpl(name, /* start = */end, parent, /* level = */ pluginId, category);
+    return new ActivityImpl(name, /* start = */end, parent, /* pluginId = */ pluginId, category);
   }
 
   @Override

@@ -63,6 +63,7 @@ import java.util.function.Function;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 
+@SuppressWarnings("NonDefaultConstructor")
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance(PersistentFSImpl.class);
 

@@ -4,6 +4,7 @@
 package com.intellij.diagnostic
 
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
 import kotlin.coroutines.CoroutineContext
@@ -31,6 +32,7 @@ fun rootTask(): CoroutineContext = MeasureCoroutineTime
  * This function is designed to be used instead of `withContext(CoroutineName("subtask")) { ... }`.
  * See https://github.com/Kotlin/kotlinx.coroutines/issues/3414
  */
+@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 suspend fun <X> subtask(
   name: String,
   context: CoroutineContext = EmptyCoroutineContext,
@@ -46,31 +48,41 @@ suspend fun <X> subtask(
   }
 }
 
+@Internal
+suspend fun getTraceActivity(): Activity? = coroutineContext[CoroutineTimeMeasurerKey]?.getActivity()
+
 private val noActivity: Activity = object : Activity {
+  override fun getName(): String = error("must not be invoked")
+
   override fun end(): Unit = error("must not be invoked")
+
+  override fun end(end: Long): Unit = error("must not be invoked")
+
   override fun setDescription(description: String): Unit = error("must not be invoked")
+
   override fun endAndStart(name: String): Activity = error("must not be invoked")
+
   override fun startChild(name: String): Activity = error("must not be invoked")
 }
 
 private object CoroutineTimeMeasurerKey : CoroutineContext.Key<CoroutineTimeMeasurer>
 
 private object MeasureCoroutineTime : CopyableThreadContextElement<Unit> {
+  override val key: CoroutineContext.Key<*>
+    get() = CoroutineTimeMeasurerKey
 
-  override val key: CoroutineContext.Key<*> get() = CoroutineTimeMeasurerKey
+  override fun updateThreadContext(context: CoroutineContext) = error("must not be invoked")
 
-  override fun updateThreadContext(context: CoroutineContext): Unit = error("must not be invoked")
-  override fun restoreThreadContext(context: CoroutineContext, oldState: Unit): Unit = error("must not be invoked")
+  override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) = error("must not be invoked")
+
   override fun copyForChild(): CopyableThreadContextElement<Unit> = CoroutineTimeMeasurer(null)
+
   override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext = error("must not be invoked")
 
   override fun toString(): String = "MeasureCoroutineTime"
 }
 
-private class CoroutineTimeMeasurer(
-  private val parentActivity: ActivityImpl?,
-) : CopyableThreadContextElement<Unit> {
-
+private class CoroutineTimeMeasurer(private val parentActivity: Activity?) : CopyableThreadContextElement<Unit> {
   companion object {
     private val CURRENT_ACTIVITY: VarHandle
     private val LAST_SUSPENSION_TIME: VarHandle
@@ -82,9 +94,10 @@ private class CoroutineTimeMeasurer(
     }
   }
 
-  override val key: CoroutineContext.Key<*> get() = CoroutineTimeMeasurerKey
+  override val key: CoroutineContext.Key<*>
+    get() = CoroutineTimeMeasurerKey
 
-  private val creationTime: Long = StartUpMeasurer.getCurrentTime()
+  private val creationTime: Long = System.nanoTime()
 
   @Suppress("unused")
   private var currentActivity: Activity? = null
@@ -96,7 +109,7 @@ private class CoroutineTimeMeasurer(
     val activity = CURRENT_ACTIVITY.getVolatile(this) as Activity?
     return when {
       activity === noActivity -> "no parent and no name"
-      activity != null -> (activity as ActivityImpl).name
+      activity != null -> activity.name
       parentActivity != null -> "uninitialized child of ${parentActivity.name}"
       else -> "uninitialized"
     }
@@ -123,32 +136,27 @@ private class CoroutineTimeMeasurer(
     }
 
     // report time between scheduling and start of the execution
-    val activity = ActivityImpl("${coroutineName}: scheduled", creationTime, parentActivity)
-      // start main activity right away
-      .endAndStart(coroutineName)
+    val activity = reporter.start(coroutineName = coroutineName, scheduleTime = creationTime, parentActivity = parentActivity)
     CURRENT_ACTIVITY.setVolatile(this, activity)
 
     val job = context.job
     job.invokeOnCompletion {
-      val end = StartUpMeasurer.getCurrentTime()
+      val end = System.nanoTime()
       val lastSuspensionTime = LAST_SUSPENSION_TIME.getVolatile(this) as Long
-      if (lastSuspensionTime != -1L) {
-        // after the last suspension, the coroutine was waiting for its children => end main activity
-        ActivityImpl("${coroutineName}: completing", lastSuspensionTime, activity).end(end)
-      }
-      // This invokeOnCompletion handler is executed after all children are completed => end 'completing' activity
-      activity.end(end)
+      // this invokeOnCompletion handler is executed after all children are completed => end 'completing' activity
+      reporter.end(activity = activity, coroutineName = coroutineName, end = end, lastSuspensionTime = lastSuspensionTime)
     }
   }
 
   override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {
-    LAST_SUSPENSION_TIME.setVolatile(this, StartUpMeasurer.getCurrentTime())
+    LAST_SUSPENSION_TIME.setVolatile(this, System.nanoTime())
   }
 
   override fun copyForChild(): CopyableThreadContextElement<Unit> {
     val activity = checkNotNull(CURRENT_ACTIVITY.getVolatile(this)) {
       "updateThreadContext was never called"
     }
+    // don't format into one line - complicates debugging
     if (activity === noActivity) {
       return CoroutineTimeMeasurer(null)
     }
@@ -157,7 +165,35 @@ private class CoroutineTimeMeasurer(
     }
   }
 
-  override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext {
-    return overwritingElement
+  override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext = overwritingElement
+
+  fun getActivity() = CURRENT_ACTIVITY.getVolatile(this) as Activity?
+}
+
+private val reporter: TraceReporter = DefaultTraceReporter()
+
+private class DefaultTraceReporter : TraceReporter {
+  override fun start(coroutineName: String, scheduleTime: Long, parentActivity: Activity?): Activity {
+    val start = StartUpMeasurer.getCurrentTime()
+
+    // the main activity cannot be a parent for meta "scheduled" activity since it is outside it (preceding the main activity)
+    ActivityImpl("${coroutineName}: scheduled", scheduleTime, parentActivity as ActivityImpl?).end(start)
+
+    // start main activity right away
+    return ActivityImpl(coroutineName, /* start = */start, parentActivity)
   }
+
+  override fun end(activity: Activity, coroutineName: String, end: Long, lastSuspensionTime: Long) {
+    if (lastSuspensionTime != -1L) {
+      // after the last suspension, the coroutine was waiting for its children => end main activity
+      ActivityImpl("${coroutineName}: completing", lastSuspensionTime, activity as ActivityImpl?).end(end)
+    }
+    activity.end(end)
+  }
+}
+
+internal interface TraceReporter {
+  fun start(coroutineName: String, scheduleTime: Long, parentActivity: Activity?): Activity
+
+  fun end(activity: Activity, coroutineName: String, end: Long, lastSuspensionTime: Long)
 }

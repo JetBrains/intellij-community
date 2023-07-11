@@ -179,7 +179,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
 
         val start = startOfWaitingForReadyFrame.get()
         if (start != -1L) {
-          StartUpMeasurer.addCompletedActivity(start, "editor reopening and frame waiting", ActivityCategory.DEFAULT, null)
+          StartUpMeasurer.addCompletedActivity(start, "editor reopening and frame waiting", getTraceActivity())
         }
       }
 
