@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -24,8 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ShowPluginManagerAction extends AnAction implements DumbAware {
-
+final class ShowPluginManagerAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -49,8 +48,7 @@ public class ShowPluginManagerAction extends AnAction implements DumbAware {
     FileEditorManager.getInstance(project).openFile(file, true);
   }
 
-  private static class PluginVirtualFile extends UIComponentVirtualFile {
-
+  private static final class PluginVirtualFile extends UIComponentVirtualFile {
     PluginVirtualFile() {
       super("Plugins", AllIcons.Nodes.Plugin);
     }
@@ -61,8 +59,7 @@ public class ShowPluginManagerAction extends AnAction implements DumbAware {
     }
   }
 
-  private static class Content implements UIComponentVirtualFile.Content {
-
+  private static final class Content implements UIComponentVirtualFile.Content {
     PluginManagerConfigurable configurable;
 
     @Override
