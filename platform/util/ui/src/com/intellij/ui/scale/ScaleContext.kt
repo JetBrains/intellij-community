@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale
 
 import com.intellij.ui.JreHiDpiUtil
@@ -15,8 +15,6 @@ import java.util.function.Function
  * The context is created via a context provider. If the provider is [Component], the context's
  * system scale can be updated via a call to [.update], reflecting the current component's
  * system scale (which may change as the component moves b/w devices).
- *
- * @see ScaleContextAware
  *
  * @author tav
  */

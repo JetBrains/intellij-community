@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale;
 
 import com.intellij.openapi.util.Pair;
@@ -46,8 +46,7 @@ public abstract class CompositeIconPaintTestHelper {
 
     CachedImageIcon[] cellIcons = new CachedImageIcon[count];
     for (int i = 0; i < count; i++) {
-      cellIcons[i] = CachedImageIconKt.createCachedIcon(Path.of(cellIconsPaths[i]));
-      cellIcons[i].updateScaleContext(ctx_noObjScale);
+      cellIcons[i] = CachedImageIconKt.createCachedIcon(Path.of(cellIconsPaths[i]), ctx_noObjScale);
     }
 
     Icon scaledIcon = createCompositeIcon(ctx_noObjScale, cellIcons).scale((float)ctx.getScale(OBJ_SCALE));

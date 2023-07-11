@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.ide.PowerSaveMode
@@ -20,6 +20,7 @@ import com.intellij.util.ui.JBScalableIcon
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Component
 import java.awt.Graphics
@@ -28,7 +29,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.Icon
 import javax.swing.JTree
-import org.jetbrains.annotations.TestOnly
 
 private val repaintScheduler = DeferredIconRepaintScheduler()
 
@@ -321,7 +321,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   override fun equals(other: Any?): Boolean = when {
     this === other -> true
     other === null -> false
-    else -> scaledDelegateIcon == (other as? DeferredIconImpl<*>)?.scaledDelegateIcon ?: other
+    else -> scaledDelegateIcon == ((other as? DeferredIconImpl<*>)?.scaledDelegateIcon ?: other)
   }
 
   override fun hashCode(): Int = Objects.hash(param, scaledDelegateIcon)

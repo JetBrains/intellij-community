@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale;
 
 import com.intellij.testFramework.PlatformTestUtil;
@@ -37,8 +37,8 @@ public class SvgIconScaleAndPaintTest {
     JBUIScale.setUserScaleFactor(1f);
     TestScaleHelper.overrideJreHiDPIEnabled(true);
 
-    CachedImageIcon icon = CachedImageIconKt.createCachedIcon(Path.of(getSvgIconPath()));
-    icon.updateScaleContext(ScaleContext.create(ScaleType.SYS_SCALE.of(SYSTEM_SCALE)));
+    CachedImageIcon icon = CachedImageIconKt.createCachedIcon(Path.of(getSvgIconPath()),
+                                                              ScaleContext.create(ScaleType.SYS_SCALE.of(SYSTEM_SCALE)));
 
     Icon scaledIcon = icon.scale(OBJECT_SCALE);
     Image realImage = ScaledIconCacheKt.getRealImage(scaledIcon);

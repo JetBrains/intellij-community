@@ -117,8 +117,8 @@ internal fun convertImage(image: Image,
     // when the image is painted on a scaled (hidpi) screen graphics, see
     // StartupUiUtil.drawImage(Graphics, Image, Rectangle, Rectangle, BufferedImageOp, ImageObserver).
     //
-    // To avoid that, we instead directly use the provided ScaleContext which contains correct ScaleContext.SYS_SCALE,
-    // the image user space size will then be derived by JBHiDPIScaledImage (it is assumed the derived size is equal to
+    // To avoid that, we instead directly use the provided ScaleContext, which contains, correct ScaleContext.SYS_SCALE,
+    // JBHiDPIScaledImage will then derive the image user space size (it is assumed the derived size is equal to
     // {originalUserSize} * DerivedScaleType.EFF_USR_SCALE, taking into account calculation accuracy).
     return JBHiDPIScaledImage(image = result, sysScale = sysScale)
   }
@@ -371,26 +371,6 @@ fun loadImageFromStream(stream: InputStream,
       return loadPng(stream = stream)
     }
   }
-}
-
-/**
- * Overrides the provided scale in the icon's scale context and in the composited icon's scale contexts (when applicable).
- *
- * @see UserScaleContext.overrideScale
- */
-fun overrideIconScale(icon: Icon, scale: Scale?): Icon {
-  if (icon is CompositeIcon) {
-    for (i in 0 until icon.iconCount) {
-      val subIcon = icon.getIcon(i)
-      if (subIcon != null) {
-        overrideIconScale(icon = subIcon, scale = scale)
-      }
-    }
-  }
-  if (icon is ScaleContextAware) {
-    icon.scaleContext.overrideScale(scale!!)
-  }
-  return icon
 }
 
 @Internal

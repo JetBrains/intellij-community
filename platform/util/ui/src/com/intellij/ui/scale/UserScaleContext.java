@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale;
 
 import com.intellij.util.SmartList;
@@ -15,7 +15,6 @@ import static com.intellij.ui.scale.ScaleType.*;
  * The context can be associated with a UI object (see {@link ScaleContextAware}) to define its HiDPI behavior.
  * Unlike {@link ScaleContext}, UserScaleContext is device scale independent and is thus used for vector-based painting.
  *
- * @see ScaleContextAware
  * @see ScaleContext
  * @author tav
  */

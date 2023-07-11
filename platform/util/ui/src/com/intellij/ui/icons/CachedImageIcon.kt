@@ -7,17 +7,15 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.ui.scale.*
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleType
 import com.intellij.util.SVGLoader
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.MultiResolutionImageProvider
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.awt.Component
-import java.awt.Graphics
-import java.awt.GraphicsEnvironment
-import java.awt.Image
+import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
 import java.awt.image.RGBImageFilter
@@ -56,24 +54,24 @@ internal val iconToStrokeIcon: ConcurrentMap<CachedImageIcon, CachedImageIcon> =
 
 @TestOnly
 @ApiStatus.Internal
-fun createCachedIcon(file: Path): CachedImageIcon {
+fun createCachedIcon(file: Path, scaleContext: ScaleContext): CachedImageIcon {
   val path = file.toUri().toString()
-  return CachedImageIcon(originalPath = path, resolver = ImageDataByFilePathLoader(path), toolTip = null)
+  return CachedImageIcon(originalPath = path, resolver = ImageDataByFilePathLoader(path), scaleContext = scaleContext)
 }
 
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
-open class CachedImageIcon protected constructor(
+open class CachedImageIcon internal constructor(
   val originalPath: String?,
   // make not-null as soon as deprecated IconLoader.CachedImageIcon will be removed
   resolver: ImageDataLoader?,
-  private val isDarkOverridden: Boolean?,
+  private val isDarkOverridden: Boolean? = null,
   private val localFilterSupplier: (() -> RGBImageFilter)? = null,
   private val colorPatcher: SVGLoader.SvgElementColorPatcherProvider? = null,
   private val useStroke: Boolean = false,
   private val toolTip: Supplier<String?>? = null,
-  private val scaleContext: ScaleContext = ScaleContext.create(),
-) : CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider, IconWithToolTip, ScaleContextAware {
+  private val scaleContext: ScaleContext? = null,
+) : CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider, IconWithToolTip {
   @Suppress("CanBePrimaryConstructorProperty")
   @Volatile
   var resolver: ImageDataLoader? = resolver
@@ -86,12 +84,8 @@ open class CachedImageIcon protected constructor(
   @Volatile
   private var darkVariant: CachedImageIcon? = null
 
-  constructor(url: URL, useCacheOnLoad: Boolean) : this(originalPath = null,
-                                                        resolver = ImageDataByUrlLoader(url = url,
-                                                                                        classLoader = null,
-                                                                                        useCacheOnLoad = useCacheOnLoad),
-                                                        isDarkOverridden = null,
-                                                        colorPatcher = null) {
+  constructor(url: URL, useCacheOnLoad: Boolean, scaleContext: ScaleContext? = null) :
+    this(originalPath = null, resolver = ImageDataByUrlLoader(url = url, useCacheOnLoad = useCacheOnLoad), scaleContext = scaleContext) {
 
     // if url is explicitly specified, it means that path should be not transformed
     pathTransformModCount = pathTransformGlobalModCount.get()
@@ -100,20 +94,15 @@ open class CachedImageIcon protected constructor(
   constructor(originalPath: String?, resolver: ImageDataLoader, toolTip: Supplier<String?>?) :
     this(originalPath = originalPath, resolver = resolver, isDarkOverridden = null, colorPatcher = null, toolTip = toolTip)
 
-  final override fun getScaleContext(): ScaleContext = scaleContext
-
-  final override fun updateScaleContext(ctx: UserScaleContext?): Boolean = scaleContext.update(ctx)
-
-  final override fun getScale(type: ScaleType): Double = scaleContext.getScale(type)
-
-  final override fun getScale(type: DerivedScaleType): Double = scaleContext.getScale(type)
-
-  final override fun setScale(scale: Scale): Boolean = scaleContext.setScale(scale)
-
   override fun getToolTip(composite: Boolean): String? = toolTip?.get()
 
   final override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-    resolveActualIcon(scaleContext.copyIfNeeded(g)).paintIcon(c, g, x, y)
+    val scaleContext = when {
+      scaleContext != null -> scaleContext.copyIfNeeded(g)
+      c != null -> ScaleContext.create(c)
+      else -> ScaleContext.create(g as Graphics2D)
+    }
+    resolveActualIcon(scaleContext).paintIcon(c, g, x, y)
   }
 
   final override fun getIconWidth(): Int = resolveActualIcon().iconWidth
@@ -154,8 +143,13 @@ open class CachedImageIcon protected constructor(
     synchronized(scaledIconCache) {
       checkPathTransform()
 
-      scaleContext.update()
-      return scaledIconCache.getOrScaleIcon(host = this, scaleContext = scaleContext) ?: EMPTY_ICON
+      if (scaleContext == null) {
+        return scaledIconCache.getOrScaleIcon(host = this, scaleContext = ScaleContext.create()) ?: EMPTY_ICON
+      }
+      else {
+        scaleContext.update()
+        return scaledIconCache.getOrScaleIcon(host = this, scaleContext = scaleContext) ?: EMPTY_ICON
+      }
     }
   }
 
@@ -181,9 +175,16 @@ open class CachedImageIcon protected constructor(
     if (scale == 1.0f) {
       return this
     }
+    else if (scaleContext == null) {
+      return scaledIconCache.getOrScaleIcon(host = this, scaleContext = ScaleContext.create(ScaleType.OBJ_SCALE.of(scale))) ?: this
+    }
     else {
       return scaledIconCache.getOrScaleIcon(host = this, scaleContext = scaleContext.copyWithScale(ScaleType.OBJ_SCALE.of(scale))) ?: this
     }
+  }
+
+  fun scale(scaleContext: ScaleContext): Icon {
+    return scaledIconCache.getOrScaleIcon(host = this, scaleContext = scaleContext) ?: this
   }
 
   fun scale(scale: Float, ancestor: Component?): Icon {
@@ -191,7 +192,7 @@ open class CachedImageIcon protected constructor(
       return this
     }
 
-    val scaleContext = if (ancestor == null) ScaleContext.create(scaleContext) else ScaleContext.create(ancestor)
+    val scaleContext = if (ancestor == null && scaleContext != null) ScaleContext.create(scaleContext) else ScaleContext.create(ancestor)
     scaleContext.setScale(ScaleType.OBJ_SCALE.of(scale))
     return scaledIconCache.getOrScaleIcon(host = this, scaleContext = scaleContext) ?: this
   }
@@ -238,7 +239,7 @@ open class CachedImageIcon protected constructor(
                                  localFilterSupplier = localFilterSupplier,
                                  colorPatcher = colorPatcher,
                                  useStroke = useStroke,
-                                 scaleContext = scaleContext.copy())
+                                 scaleContext = scaleContext?.copy())
     result.pathTransformModCount = pathTransformModCount
     return result
   }
@@ -251,7 +252,7 @@ open class CachedImageIcon protected constructor(
                            localFilterSupplier = filterSupplier,
                            colorPatcher = colorPatcher,
                            useStroke = useStroke,
-                           scaleContext = scaleContext.copy())
+                           scaleContext = scaleContext?.copy())
   }
 
   internal fun createWithPatcher(colorPatcher: SVGLoader.SvgElementColorPatcherProvider): Icon {
@@ -262,7 +263,7 @@ open class CachedImageIcon protected constructor(
                            localFilterSupplier = localFilterSupplier,
                            colorPatcher = colorPatcher,
                            useStroke = useStroke,
-                           scaleContext = scaleContext.copy())
+                           scaleContext = scaleContext?.copy())
   }
 
   fun createStrokeIcon(): Icon {
@@ -274,7 +275,7 @@ open class CachedImageIcon protected constructor(
                       localFilterSupplier = localFilterSupplier,
                       colorPatcher = colorPatcher,
                       useStroke = true,
-                      scaleContext = scaleContext.copy())
+                      scaleContext = scaleContext?.copy())
     }
   }
 
@@ -292,7 +293,7 @@ open class CachedImageIcon protected constructor(
                            localFilterSupplier = useModificationsFrom.localFilterSupplier,
                            colorPatcher = useModificationsFrom.colorPatcher,
                            useStroke = useModificationsFrom.useStroke,
-                           scaleContext = scaleContext.copy())
+                           scaleContext = scaleContext?.copy())
   }
 
   val isDark: Boolean
