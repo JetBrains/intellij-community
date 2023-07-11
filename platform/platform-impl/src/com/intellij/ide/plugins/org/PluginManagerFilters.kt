@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.org
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -32,6 +33,14 @@ class PluginManagerFilters {
   fun isPluginAllowed(isLocalPlugin: Boolean, descriptor: IdeaPluginDescriptor): Boolean = allowInstallingPlugin(descriptor)
 
   fun allowInstallFromDisk(): Boolean = state.allowInstallFromDisk
+
+  /**
+   * Checks if the plugin is compatible with the current build of the IDE.
+   */
+  fun isPluginCompatible(descriptor: IdeaPluginDescriptor): Boolean {
+    val incompatibilityReason = PluginManagerCore.checkBuildNumberCompatibility(descriptor, PluginManagerCore.getBuildNumber())
+    return incompatibilityReason == null
+  }
 }
 
 @Service(Service.Level.APP)
