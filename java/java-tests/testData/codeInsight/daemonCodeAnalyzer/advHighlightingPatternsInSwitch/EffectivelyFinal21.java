@@ -99,7 +99,7 @@ class Test {
     // try-with-resources
     try (<error descr="Variable used as a try-with-resources resource should be final or effectively final">in</error>) {
       switch (o) {
-        case AutoCloseable ii when (<error descr="Variable used in guarded pattern should be final or effectively final">in</error> = ii) != null: break;
+        case AutoCloseable ii when (<error descr="Cannot assign a value to variable 'in', because it is declared outside the guard">in</error> = 1) != null: break;
         default: break;
       }
     } catch (Exception e) {
@@ -169,6 +169,16 @@ class Test {
         break;
       default:
         break;
+    }
+  }
+  public static void testWhenReassigned() {
+    Object object = "1234";
+    switch (object) {
+      case String s when <error descr="Variable used in guarded pattern should be final or effectively final">s</error>.length()==2 -> {
+        s = null;
+      }
+      default -> {
+      }
     }
   }
 }
