@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.clone
 
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
@@ -73,10 +74,19 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   private val _items: MutableStateFlow<List<GitLabCloneListItem>> = MutableStateFlow(emptyList())
   override val items: SharedFlow<List<GitLabCloneListItem>> = _items.asSharedFlow()
 
-  private val _searchValue: MutableStateFlow<SearchModel> = MutableStateFlow(SearchModel.Text)
-  override val searchValue: SharedFlow<SearchModel> = _searchValue.asSharedFlow()
+  private val _searchValue: MutableStateFlow<String> = MutableStateFlow("")
+  override val searchValue: SharedFlow<SearchModel> = _searchValue.mapState(cs) { text ->
+    // TODO: implement ssh "git@"
+    try {
+      URL(text) // Check URL correctness
+      SearchModel.Url(text)
+    }
+    catch (_: MalformedURLException) {
+      SearchModel.Text
+    }
+  }
 
-  private val _selectedUrl: StateFlow<String?> = combine(_searchValue, _selectedItem) { searchValue, selectedItem ->
+  private val _selectedUrl: StateFlow<String?> = combine(searchValue, _selectedItem) { searchValue, selectedItem ->
     when {
       searchValue is SearchModel.Url -> searchValue.url
       selectedItem != null && selectedItem is GitLabCloneListItem.Repository -> selectedItem.projectMember.project.httpUrlToRepo
@@ -124,14 +134,7 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   }
 
   override fun setSearchValue(text: String) {
-    // TODO: implement ssh "git@"
-    _searchValue.value = try {
-      URL(text) // Check URL correctness
-      SearchModel.Url(text)
-    }
-    catch (_: MalformedURLException) {
-      SearchModel.Text
-    }
+    _searchValue.value = text
   }
 
   override fun setDirectoryPath(path: String) {
