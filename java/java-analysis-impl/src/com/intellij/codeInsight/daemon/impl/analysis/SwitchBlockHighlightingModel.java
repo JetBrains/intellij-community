@@ -358,8 +358,8 @@ public class SwitchBlockHighlightingModel {
   }
 
   private boolean isEnhancedSwitch(@NotNull List<? extends PsiCaseLabelElement> labelElements) {
-    if (getSwitchSelectorKind() == SelectorKind.CLASS_OR_ARRAY) return true;
-    return ContainerUtil.exists(labelElements, st -> st instanceof PsiPattern || st instanceof PsiPatternGuard || isNullType(st));
+    boolean selectorIsTypeOrClass = getSwitchSelectorKind() == SelectorKind.CLASS_OR_ARRAY;
+    return JavaPsiSwitchUtil.isEnhancedSwitch(labelElements, selectorIsTypeOrClass);
   }
 
   private static boolean isNullType(@NotNull PsiElement element) {
