@@ -21,7 +21,7 @@ sealed class FeedbackSurveyType<T : FeedbackSurveyConfig> {
   }
 
   fun isSuitableToShow(project: Project): Boolean {
-    return CommonFeedbackSurveyService.checkIsFeedbackSurveyAnswerSent(feedbackSurveyConfig.surveyId) &&
+    return !CommonFeedbackSurveyService.checkIsFeedbackSurveyAnswerSent(feedbackSurveyConfig.surveyId) &&
            feedbackSurveyConfig.checkIdeIsSuitable() &&
            feedbackSurveyConfig.checkIsFeedbackCollectionDeadlineNotPast() &&
            feedbackSurveyConfig.checkIsIdeEAPIfRequired() &&
