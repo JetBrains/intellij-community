@@ -1,20 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MakeMethodFinalFix extends InspectionGadgetsFix {
+import static java.util.Objects.requireNonNullElse;
+
+public class MakeMethodFinalFix extends PsiUpdateModCommandQuickFix {
 
   private final String myMethodName;
 
@@ -35,56 +35,26 @@ public class MakeMethodFinalFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement().getParent();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
+    PsiElement element = startElement.getParent();
     PsiMethod method = findMethodToFix(element);
     if (method != null) {
-      WriteAction.run(() -> method.getModifierList().setModifierProperty(PsiModifier.FINAL, true));
-      if (isOnTheFly() && method.getContainingFile() != element.getContainingFile()) {
-        method.navigate(true);
+      method = updater.getWritable(method);
+      method.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+      if (method.getContainingFile() != element.getContainingFile()) {
+        updater.moveTo(requireNonNullElse(method.getNameIdentifier(), method));
       }
     }
-  }
-
-  @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    PsiElement parent = previewDescriptor.getPsiElement().getParent();
-    PsiMethod method = findMethodToFix(parent);
-    if (method == null) return IntentionPreviewInfo.EMPTY;
-    PsiFile file = method.getContainingFile();
-    if (parent.getContainingFile() == file) {
-      doMakeFinal(method);
-      return IntentionPreviewInfo.DIFF;
-    }
-    PsiMethod copy = (PsiMethod)method.copy();
-    doMakeFinal(copy);
-    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, file.getName(), method.getText(), copy.getText());
-  }
-
-  private static void doMakeFinal(PsiMethod method) {
-    method.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
   }
 
   private static @Nullable PsiMethod findMethodToFix(PsiElement element) {
-    if (element instanceof PsiMethod) {
-      if (!IntentionPreviewUtils.prepareElementForWrite(element)) {
-        return null;
-      }
-      return (PsiMethod)element;
+    if (element instanceof PsiMethod method) {
+      return method;
     }
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiMethodCallExpression methodCall) {
-      final PsiMethod method = methodCall.resolveMethod();
-      if (method == null || (element.isPhysical() && !FileModificationService.getInstance().preparePsiElementsForWrite(method))) {
-        return null;
-      }
-      return method;
+      return methodCall.resolveMethod();
     }
     return null;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 }
