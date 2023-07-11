@@ -21,7 +21,7 @@ import static com.intellij.internal.statistic.eventLog.events.EventFields.*;
 public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final int DURATION_THRESHOLD_MS = 100;
 
-  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 10);
+  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 11);
 
 
   /* ================== EVENT_INITIAL_REFRESH: ====================================================== */

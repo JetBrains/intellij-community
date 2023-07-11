@@ -24,15 +24,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
@@ -235,7 +232,7 @@ final class PersistentFSConnector {
       if (!findCauseAndSuppressed(e, CorruptedException.class).isEmpty()) {
         //'not closed properly' is the most likely explanation of corrupted enumerator -- but not the only one,
         // it could also be a code bug
-        throw new VFSNeedsRebuildException(NOT_CLOSED_PROPERLY, "Some of storages was corrupted", e);
+        throw new VFSNeedsRebuildException(NOT_CLOSED_PROPERLY, "Some of storages were corrupted", e);
       }
       if (!findCauseAndSuppressed(e, VersionUpdatedException.class).isEmpty()) {
         throw new VFSNeedsRebuildException(IMPL_VERSION_MISMATCH, "Some of storages versions were changed", e);
@@ -396,18 +393,22 @@ final class PersistentFSConnector {
 
 
     private LoadingState(@NotNull PersistentFSPaths persistentFSPaths,
-                         boolean hashes,
-                         @NotNull InvertedNameIndex fill) {
+                         boolean useContentHashes,
+                         @NotNull InvertedNameIndex invertedNameIndexToFill) {
+      recordsFile = persistentFSPaths.storagePath("records");
       namesFile = persistentFSPaths.storagePath("names");
       attributesFile = persistentFSPaths.storagePath("attributes");
       contentsFile = persistentFSPaths.storagePath("content");
       contentsHashesFile = persistentFSPaths.storagePath("contentHashes");
-      recordsFile = persistentFSPaths.storagePath("records");
       enumeratedAttributesFile = persistentFSPaths.storagePath("attributes_enums");
+
       corruptionMarkerFile = persistentFSPaths.getCorruptionMarkerFile();
+
       vfsPaths = persistentFSPaths;
-      useContentHashes = hashes;
-      invertedNameIndexToFill = fill;
+
+      this.useContentHashes = useContentHashes;
+
+      this.invertedNameIndexToFill = invertedNameIndexToFill;
     }
 
     public void failIfCorruptionMarkerPresent() throws IOException {
@@ -585,9 +586,11 @@ final class PersistentFSConnector {
 
         //if commonVersion > 0 => current VFS data has a consistent version, but != implVersion
         //                     => IMPL_VERSION_MISMATCH
-        //if commonVersion = -1 => VFS data has an inconsistent versions
-        //                      => DATA_INCONSISTENT
-        VFSNeedsRebuildException.RebuildCause rebuildCause = commonVersion > 0 ? IMPL_VERSION_MISMATCH : DATA_INCONSISTENT;
+        //if commonVersion = -1 => different VFS storages have inconsistent versions
+        //                      => UNRECOGNIZED (I guess it is a rare case, most probably happens for users playing
+        //                         hard with their IDE installations, most likely they are our QAs -- so the case
+        //                         doesn't worth dedicated enum constant)
+        VFSNeedsRebuildException.RebuildCause rebuildCause = commonVersion > 0 ? IMPL_VERSION_MISMATCH : UNRECOGNIZED;
         throw new VFSNeedsRebuildException(
           rebuildCause,
           "FS repository detected version(=" + commonVersion + ") != current version(=" + currentImplVersion + ") -> VFS needs rebuild"
@@ -607,75 +610,71 @@ final class PersistentFSConnector {
       int liveRecordsCount = contentsStorage.getRecordsCount();
       if (largestId != liveRecordsCount) {
         throw new VFSNeedsRebuildException(
-          DATA_INCONSISTENT,
+          CONTENT_STORAGES_NOT_MATCH,
           "Content storage & enumerator corrupted: " +
           "contents.records(=" + liveRecordsCount + ") != contentHashes.largestId(=" + largestId + ")"
         );
       }
 
-      try {
-        //VFS errors early on startup cause terrifying UX error messages -- it is much better to catch VFS
-        // corruption early on and rebuild VFS from 0.
-        // But we also don't want to always check each VFS file on startup, since it delays regular startup
-        // (i.e. without corruptions) quite a lot.
-        // A tradeoff between those two goals: check only fileId=1, 2, 4, 8... -- log(maxAllocatedID) total
-        // checks, i.e. always < 32 checks, given fileId is int32.
-        int maxAllocatedID = recordsStorage.maxAllocatedID();
-        for (int fileId = 1; fileId <= maxAllocatedID; fileId *= 2) {
-          int nameId = recordsStorage.getNameId(fileId);
-          int contentId = recordsStorage.getContentRecordId(fileId);
-          //Try to resolve few nameId/contentId against apt enumerators -- which is quite likely fails
-          //if enumerators' files are corrupted anyhow, hence serves as a self-check heuristic:
+      //VFS errors early on startup cause terrifying UX error messages -- it is much better to catch VFS
+      // corruption early on and rebuild VFS from 0.
+      // But we also don't want to always check each VFS file on startup, since it delays regular startup
+      // (i.e. without corruptions) quite a lot.
+      // A tradeoff between those two goals: check only fileId=1, 2, 4, 8... -- log(maxAllocatedID) total
+      // checks, i.e. always < 32 checks, given fileId is int32.
+      int maxAllocatedID = recordsStorage.maxAllocatedID();
+      for (int fileId = 1; fileId <= maxAllocatedID; fileId *= 2) {
+        int nameId = recordsStorage.getNameId(fileId);
+        int contentId = recordsStorage.getContentRecordId(fileId);
+        //Try to resolve few nameId/contentId against apt enumerators -- which is quite likely fails
+        //if enumerators' files are corrupted anyhow, hence serves as a self-check heuristic:
 
-          if (nameId != DataEnumeratorEx.NULL_ID) {
-            try {
-              String name = namesStorage.valueOf(nameId);
-              if (name == null) {
-                throw new IllegalStateException("file[#" + fileId + "].nameId(=" + nameId + ") is not present in namesEnumerator");
-              }
-              int reCheckNameId = namesStorage.tryEnumerate(name);
-              if (reCheckNameId != nameId) {
-                throw new IllegalStateException(
-                  "namesEnumerator is corrupted: file[#" + fileId + "]" +
-                  ".nameId(=" + nameId + ") -> [" + name + "] -> tryEnumerate() -> " + reCheckNameId
-                );
-              }
+        if (nameId != DataEnumeratorEx.NULL_ID) {
+          try {
+            String name = namesStorage.valueOf(nameId);
+            if (name == null) {
+              throw new IllegalStateException("file[#" + fileId + "].nameId(=" + nameId + ") is not present in namesEnumerator");
             }
-            catch (IOException e) {
-              throw new UncheckedIOException("file[#" + fileId + "].nameId(=" + nameId + ") failed resolution in namesEnumerator", e);
+            int reCheckNameId = namesStorage.tryEnumerate(name);
+            if (reCheckNameId != nameId) {
+              throw new IllegalStateException(
+                "namesEnumerator is corrupted: file[#" + fileId + "]" +
+                ".nameId(=" + nameId + ") -> [" + name + "] -> tryEnumerate() -> " + reCheckNameId
+              );
             }
           }
-
-          if (contentHashesEnumerator != null
-              && contentId != DataEnumeratorEx.NULL_ID) {
-            try {
-              byte[] contentHash = contentHashesEnumerator.valueOf(contentId);
-              if (contentHash == null) {
-                throw new IllegalStateException(
-                  "file[#" + fileId + "].contentId(=" + contentId + ") is not present in contentHashesEnumerator"
-                );
-              }
-              int reCheckContentId = contentHashesEnumerator.tryEnumerate(contentHash);
-              if (reCheckContentId != contentId) {
-                throw new IllegalStateException(
-                  "contentHashesEnumerator is corrupted: file[#" + fileId + "]" +
-                  ".contentId(=" + contentId + ") -> [" + Arrays.toString(contentHash) + "] -> tryEnumerate() -> " + reCheckContentId
-                );
-              }
-            }
-            catch (IOException e) {
-              throw new UncheckedIOException(
-                "file[#" + fileId + "].contentId(=" + contentId + ") failed resolution in contentHashesEnumerator", e);
-            }
+          catch (Throwable t) {
+            throw new VFSNeedsRebuildException(
+              NAME_STORAGE_INCOMPLETE,
+              "file[#" + fileId + "].nameId(=" + nameId + ") failed resolution in namesEnumerator", t);
           }
         }
-      }
-      catch (Throwable t) {
-        throw new VFSNeedsRebuildException(
-          DATA_INCONSISTENT,
-          "VFS self-check: failed",
-          t
-        );
+
+        if (contentHashesEnumerator != null
+            && contentId != DataEnumeratorEx.NULL_ID) {
+          try {
+            byte[] contentHash = contentHashesEnumerator.valueOf(contentId);
+            if (contentHash == null) {
+              throw new IllegalStateException(
+                "file[#" + fileId + "].contentId(=" + contentId + ") is not present in contentHashesEnumerator"
+              );
+            }
+            int reCheckContentId = contentHashesEnumerator.tryEnumerate(contentHash);
+            if (reCheckContentId != contentId) {
+              throw new VFSNeedsRebuildException(
+                CONTENT_STORAGES_INCOMPLETE,
+                "contentHashesEnumerator is corrupted: file[#" + fileId + "]" +
+                ".contentId(=" + contentId + ") -> [" + Arrays.toString(contentHash) + "] -> tryEnumerate() -> " + reCheckContentId
+              );
+            }
+          }
+          catch (Throwable t) {
+            throw new VFSNeedsRebuildException(
+              CONTENT_STORAGES_INCOMPLETE,
+              "file[#" + fileId + "].contentId(=" + contentId + ") failed resolution in contentHashesEnumerator", t
+            );
+          }
+        }
       }
     }
   }

@@ -16,8 +16,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind.*;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSNeedsRebuildException.RebuildCause.IMPL_VERSION_MISMATCH;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSNeedsRebuildException.RebuildCause.NOT_CLOSED_PROPERLY;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
 
@@ -140,10 +143,11 @@ public class VFSRebuildingTest {
       fail(
         "VFS opening must fail, since the supplied 'current' version is different from that was used to initialize on-disk structures before");
     }
-    catch (IOException e) {
-      assertTrue(
-        "Exception message must be something about VFS version mismatch",
-        e.getMessage().contains("VFS")
+    catch (VFSNeedsRebuildException e) {
+      assertEquals(
+        "rebuildCause must be IMPL_VERSION_MISMATCH",
+        e.rebuildCause(),
+        IMPL_VERSION_MISMATCH
       );
     }
   }
@@ -255,6 +259,7 @@ public class VFSRebuildingTest {
         final FSRecordsImpl records = FSRecordsImpl.connect(cachesDir);
         final long firstVfsCreationTimestamp = records.getCreationTimestamp();
 
+        //add something to VFS so it is not empty
         final int id = records.createRecord();
         records.setName(id, "test", PersistentFSRecordsStorage.NULL_ID);
         try (var stream = records.writeContent(id, false)) {
@@ -281,6 +286,13 @@ public class VFSRebuildingTest {
         final long reopenedVfsCreationTimestamp = reopenedRecords.getCreationTimestamp();
         if (reopenedVfsCreationTimestamp == firstVfsCreationTimestamp) {
           filesNotLeadingToVFSRebuild.add(fileToDelete.getFileName().toString());
+        }
+        else {
+          Optional<Throwable> rebuildCauseException = reopenedRecords.initializationFailures().stream()
+            .filter(ex -> ex instanceof VFSNeedsRebuildException)
+            .findFirst();
+          System.out.println(fileToDelete.getFileName().toString() + " removed -> " +
+                             rebuildCauseException.map(ex -> ((VFSNeedsRebuildException)ex).rebuildCause()));
         }
       }
 
@@ -344,6 +356,7 @@ public class VFSRebuildingTest {
       new InvertedNameIndex(),
       Collections.emptyList()
     );
+    connection.doForce();
     try {
       final PersistentFSRecordsStorage records = connection.getRecords();
       records.setConnectionStatus(PersistentFSHeaders.CONNECTED_MAGIC);
@@ -362,7 +375,12 @@ public class VFSRebuildingTest {
         fail("VFS init must fail with NOT_CLOSED_SAFELY");
       }
       catch (VFSNeedsRebuildException requestToRebuild) {
-        //OK, this is what we expect
+        //OK, this is what we expect:
+        assertEquals(
+          "rebuildCause must be NOT_CLOSED_PROPERLY",
+          NOT_CLOSED_PROPERLY,
+          requestToRebuild.rebuildCause()
+        );
       }
     }
     finally {
@@ -394,7 +412,6 @@ public class VFSRebuildingTest {
       .attempts(4)
       .assertTiming();
   }
-
 
   //==== infrastructure:
 

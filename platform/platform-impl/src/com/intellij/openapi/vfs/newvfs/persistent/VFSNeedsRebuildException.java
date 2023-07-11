@@ -27,20 +27,29 @@ public class VFSNeedsRebuildException extends IOException {
   }
 
   public enum RebuildCause {
+    /** No rebuild, VFS initialized and loaded just fine */
     NONE,
 
-    /** No VFS, build empty from scratch */
+    /** No VFS yet -> empty one was built from scratch */
     INITIAL,
 
-    /** Pieces of VFS data are inconsistent with each other (i.e. corrupted) */
-    DATA_INCONSISTENT,
+    /** Rebuild marker was found */
     SCHEDULED_REBUILD,
+
+    /** Application wasn't closed properly, VFS storages are fractured */
     NOT_CLOSED_PROPERLY,
 
-    /** Current VFS impl version != VFS on-disk format version */
+    /** Current VFS impl (code) version != VFS on-disk format version */
     IMPL_VERSION_MISMATCH,
 
-    /** Unrecognized errors during VFS initialization */
+    /** Name storage is not able to resolve existing reference */
+    NAME_STORAGE_INCOMPLETE,
+    /** Content and ContentHashes storages are not match with each other */
+    CONTENT_STORAGES_NOT_MATCH,
+    /** Content or ContentHashes storages are not able to resolve existing reference */
+    CONTENT_STORAGES_INCOMPLETE,
+
+    /** Everything else is not covered by the specific constants above */
     UNRECOGNIZED
   }
 }
