@@ -490,4 +490,18 @@ class Basic {
         }
       }
   }
+
+  class EmptyStatement(){
+    sealed class A {}
+    final class AA extends A {}
+    sealed class AB extends A {}
+    non-sealed class AC extends A {}
+    final class ABA extends AB {}
+    non-sealed class ABC extends AB {}
+
+      void test(A a) {
+        switch (<error descr="'switch' statement does not have any case clauses">a</error>) {
+        }
+    }
+  }
 }
