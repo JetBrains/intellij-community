@@ -16,7 +16,6 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.getInstance
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
-import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.ValueTag
 import com.intellij.openapi.vcs.history.VcsDiffUtil
@@ -320,7 +319,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     val diffPreviewController = editorDiffPreviewController
     val isWithEditorDiffPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject)
     if (isWithEditorDiffPreview && diffPreviewController == null) {
-      editorDiffPreviewController = VcsLogChangesBrowserDiffPreviewController()
+      editorDiffPreviewController = createDiffPreviewController()
     }
     else if (!isWithEditorDiffPreview && diffPreviewController != null) {
       diffPreviewController.activePreview.closePreview()
@@ -364,19 +363,10 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     fun onModelUpdated()
   }
 
-  private inner class VcsLogChangesBrowserDiffPreviewController : DiffPreviewControllerBase() {
-
-    init {
-      activePreview // should init combined diff preview (lazy in DiffPreviewControllerBase)
-    }
-
-    override val simplePreview: DiffPreview
-      get() = VcsLogEditorDiffPreview(myProject, this@VcsLogChangesBrowser)
-
-    override fun createCombinedDiffPreview(): CombinedDiffPreview {
-      return VcsLogCombinedDiffPreview(this@VcsLogChangesBrowser)
-    }
-  }
+  private fun createDiffPreviewController(): DiffPreviewController = DiffPreviewControllerImpl(
+    simpleDiffPreviewBuilder = { VcsLogEditorDiffPreview(myProject, this@VcsLogChangesBrowser)},
+    combinedDiffPreviewBuilder = { VcsLogCombinedDiffPreview(this@VcsLogChangesBrowser) },
+  )
 
   private class ParentTag(commit: Hash, private val text: @Nls String) : ValueTag<Hash>(commit) {
     override fun toString() = text

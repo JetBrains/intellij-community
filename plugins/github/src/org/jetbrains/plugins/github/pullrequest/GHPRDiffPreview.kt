@@ -16,7 +16,7 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.ChangeWra
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.DiffPreviewController
-import com.intellij.openapi.vcs.changes.DiffPreviewControllerBase
+import com.intellij.openapi.vcs.changes.DiffPreviewControllerImpl
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
@@ -137,11 +137,10 @@ internal abstract class GHPRCombinedDiffPreviewBase(private val dataProvider: GH
                                   producerFactory: ChangeDiffRequestProducerFactory,
                                   dataProvider: GHPRDataProvider?,
                                   filesManager: GHPRFilesManager): DiffPreviewController {
-      val diffPreviewHolder =
-        object : DiffPreviewControllerBase() {
-          override val simplePreview = GHPRDiffPreview(dataProvider?.id, filesManager)
-          override fun createCombinedDiffPreview() = GHPRCombinedDiffPreview(dataProvider, filesManager, producerFactory, tree)
-        }
+      val diffPreviewHolder = DiffPreviewControllerImpl(
+        simpleDiffPreviewBuilder = { GHPRDiffPreview(dataProvider?.id, filesManager) },
+        combinedDiffPreviewBuilder = { GHPRCombinedDiffPreview(dataProvider, filesManager, producerFactory, tree) }
+      )
 
       tree.apply {
         doubleClickHandler = Processor { e ->

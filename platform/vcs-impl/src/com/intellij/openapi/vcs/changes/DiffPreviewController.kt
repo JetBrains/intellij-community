@@ -3,43 +3,38 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.tools.combined.CombinedDiffRegistry
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview
-import com.intellij.openapi.vcs.changes.ui.ChangesTree
 
 interface DiffPreviewController {
-  /**
-   * see [DiffPreviewControllerBase]
-   */
   val activePreview: DiffPreview
 }
 
 /**
- * Base controller to choose between regular single-file diff preview ("simple") and combined diff preview ("combined").
+ * Controller to choose between regular single-file diff preview ("simple") and combined diff preview ("combined").
  *
- * Implementors should decide when to create the combined diff preview by calling [activePreview].
+ * Implementors should provide builders for the simple diff preview and combined preview if possible.
  * [CombinedDiffPreview] should be created together with the corresponding [ChangesTree] creation or customization,
  * but before its [javax.swing.JTree.TREE_MODEL_PROPERTY] change.
  */
-abstract class DiffPreviewControllerBase : DiffPreviewController {
+class DiffPreviewControllerImpl(
+  private val simpleDiffPreviewBuilder: () -> DiffPreview,
+  private val combinedDiffPreviewBuilder: () -> CombinedDiffPreview? = { null }
+) : DiffPreviewController {
 
-  protected abstract val simplePreview: DiffPreview
+  override val activePreview: DiffPreview
+    get() = chooseActivePreview()
 
-  private val combinedPreview: CombinedDiffPreview? by lazy {
-    if (CombinedDiffRegistry.isEnabled()) createCombinedDiffPreview() else null
-  }
+  private val simpleDiffPreview: DiffPreview by lazy { simpleDiffPreviewBuilder() }
 
-  protected abstract fun createCombinedDiffPreview(): CombinedDiffPreview
-
-  override val activePreview get() = chooseActivePreview()
+  private val combinedDiffPreview: CombinedDiffPreview? by lazy { combinedDiffPreviewBuilder() }
 
   private fun chooseActivePreview(): DiffPreview {
-    val combinedDiffLimit = CombinedDiffRegistry.getFilesLimit()
-    val combinedDiffPreview = combinedPreview
+    if (!CombinedDiffRegistry.isEnabled()) return simpleDiffPreview
+    val combinedDiff = combinedDiffPreview ?: return simpleDiffPreview
 
-    return if (combinedDiffPreview != null && (combinedDiffLimit == -1 || combinedDiffPreview.getFileSize() <= combinedDiffLimit)) {
-      combinedDiffPreview
+    val combinedDiffLimit = CombinedDiffRegistry.getFilesLimit()
+    if (combinedDiffLimit == -1 || combinedDiff.getFileSize() <= combinedDiffLimit) {
+      return combinedDiff
     }
-    else {
-      simplePreview
-    }
+    return simpleDiffPreview
   }
 }
