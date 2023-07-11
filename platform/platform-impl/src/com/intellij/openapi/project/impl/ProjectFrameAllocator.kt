@@ -42,7 +42,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.*
-import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.PsiManager
 import com.intellij.toolWindow.computeToolWindowBeans
@@ -50,8 +49,10 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
-import java.io.EOFException
+import java.awt.Dimension
+import java.awt.Frame
+import java.awt.GraphicsDevice
+import java.awt.Rectangle
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JFrame
@@ -164,9 +165,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
 
       val rawProjectDeferred = projectInitObserver.rawProjectDeferred
       async(CoroutineName("project frame creating")) {
-        createFrameManager(loadingScope = loadingScope,
-                           rawProjectDeferred = rawProjectDeferred,
-                           deferredProjectFrameHelper = deferredProjectFrameHelper)
+        createFrameManager(loadingScope = loadingScope, deferredProjectFrameHelper = deferredProjectFrameHelper)
       }
 
       val startOfWaitingForReadyFrame = AtomicLong(-1)
@@ -197,23 +196,12 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
   }
 
   private suspend fun createFrameManager(loadingScope: CoroutineScope,
-                                         rawProjectDeferred: CompletableDeferred<Project>,
                                          deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>) {
     val frame = options.frame
                 ?: (ApplicationManager.getApplication().serviceIfCreated<WindowManager>() as? WindowManagerImpl)?.removeAndGetRootFrame()
 
-    val finishScopeProvider = {
-      // if not completed, it means some error is occurred - no need to play finish animation
-      @Suppress("OPT_IN_USAGE", "DEPRECATION")
-      if (rawProjectDeferred.isCompleted) rawProjectDeferred.getCompleted().coroutineScope else null
-    }
-
     if (frame != null) {
-      val loadingState = MutableLoadingState(loadingScope = loadingScope,
-                                             finishScopeProvider = finishScopeProvider,
-                                             selfie = readProjectSelfie(projectWorkspaceId = options.projectWorkspaceId,
-                                                                        device = { frame.graphicsConfiguration.device })
-      )
+      val loadingState = MutableLoadingState(done = loadingScope.coroutineContext.job)
       withContext(Dispatchers.EDT) {
         val frameHelper = ProjectFrameHelper(frame = frame, loadingState = loadingState)
 
@@ -231,7 +219,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
 
     val preAllocated = getAndUnsetSplashProjectFrame() as IdeFrameImpl?
     if (preAllocated != null) {
-      val loadingState = MutableLoadingState(loadingScope = loadingScope, finishScopeProvider = finishScopeProvider, selfie = null)
+      val loadingState = MutableLoadingState(done = loadingScope.coroutineContext.job)
       val frameHelper = withContext(Dispatchers.EDT) {
         val frameHelper = ProjectFrameHelper(frame = preAllocated, loadingState = loadingState)
         frameHelper.init()
@@ -243,11 +231,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
 
     val frameInfo = getFrameInfo()
     val frameProducer = createNewProjectFrameProducer(frameInfo = frameInfo)
-    val loadingState = MutableLoadingState(loadingScope = loadingScope,
-                                           finishScopeProvider = finishScopeProvider,
-                                           selfie = readProjectSelfie(projectWorkspaceId = options.projectWorkspaceId,
-                                                                      device = { frameProducer.deviceOrDefault })
-    )
+    val loadingState = MutableLoadingState(done = loadingScope.coroutineContext.job)
     withContext(Dispatchers.EDT) {
       val frameHelper = ProjectFrameHelper(frameProducer.create(), loadingState = loadingState)
       // must be after preInit (frame decorator is required to set a full-screen mode)
@@ -422,9 +406,6 @@ private fun focusSelectedEditor(editorComponent: EditorsSplitters) {
 internal interface ProjectFrameProducer {
   val device: GraphicsDevice?
 
-  val deviceOrDefault: GraphicsDevice
-    get() = device ?: GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice
-
   fun create(): IdeFrameImpl
 }
 
@@ -489,24 +470,6 @@ internal fun createNewProjectFrameProducer(frameInfo: FrameInfo?): ProjectFrameP
   }
 }
 
-private suspend fun readProjectSelfie(projectWorkspaceId: String?, device: () -> GraphicsDevice): Image? {
-  if (projectWorkspaceId == null || !ProjectSelfieUtil.isEnabled) {
-    return null
-  }
-
-  try {
-    return withContext(Dispatchers.IO) {
-      ProjectSelfieUtil.readProjectSelfie(projectWorkspaceId, device())
-    }
-  }
-  catch (e: Throwable) {
-    if (e.cause !is EOFException) {
-      logger<ProjectFrameAllocator>().warn(e)
-    }
-    return null
-  }
-}
-
 internal val OpenProjectTask.frameInfo: FrameInfo?
   get() = (implOptions as OpenProjectImplOptions?)?.frameInfo
 
@@ -538,6 +501,4 @@ private suspend fun findAndOpenReadmeIfNeeded(project: Project) {
   }
 }
 
-private class MutableLoadingState(override val loadingScope: CoroutineScope,
-                                  override val finishScopeProvider: () -> CoroutineScope?,
-                                  override var selfie: Image?) : FrameLoadingState
+private class MutableLoadingState(override val done: Job) : FrameLoadingState

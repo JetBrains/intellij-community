@@ -1087,7 +1087,7 @@ open class FileEditorManagerImpl(
 
     // restore selected editor
     val provider = if (entry == null) {
-      FileEditorProviderManagerImpl.getInstanceImpl().getSelectedFileEditorProvider(composite, project)
+      getFileEditorProviderManager().getSelectedFileEditorProvider(composite, project)
     }
     else {
       entry.selectedProvider
@@ -2143,7 +2143,7 @@ open class FileEditorManagerImpl(
 
     // restore selected editor
     val provider = if (entry == null) {
-      FileEditorProviderManagerImpl.getInstanceImpl().getSelectedFileEditorProvider(composite, project)
+      getFileEditorProviderManager().getSelectedFileEditorProvider(composite, project)
     }
     else {
       entry.selectedProvider
@@ -2365,3 +2365,5 @@ internal inline fun <T> runBulkTabChangeInEdt(splitters: EditorsSplitters, task:
     }
   }
 }
+
+private fun getFileEditorProviderManager() = FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.openapi.fileEditor.impl
@@ -20,23 +20,18 @@ import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.TestOnly
 
+private val LOG: Logger
+  get() = logger<FileEditorProviderManagerImpl>()
+
+private fun computeKey(providers: List<FileEditorProvider>) = providers.joinToString(separator = ",") { it.editorTypeId }
+
+@Serializable
+data class FileEditorProviderManagerState(@JvmField val selectedProviders: Map<String, String> = emptyMap())
+
 @State(name = "FileEditorProviderManager",
        storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)])
 class FileEditorProviderManagerImpl : FileEditorProviderManager,
-                                      SerializablePersistentStateComponent<FileEditorProviderManagerImpl.FileEditorProviderManagerState>(
-                                        FileEditorProviderManagerState()) {
-  companion object {
-    fun getInstanceImpl(): FileEditorProviderManagerImpl = FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl
-
-    private val LOG: Logger
-      get() = logger<FileEditorProviderManagerImpl>()
-
-    private fun computeKey(providers: List<FileEditorProvider>) = providers.joinToString(separator = ",") { it.editorTypeId }
-  }
-
-  @Serializable
-  data class FileEditorProviderManagerState(val selectedProviders: Map<String, String> = emptyMap())
-
+                                      SerializablePersistentStateComponent<FileEditorProviderManagerState>(FileEditorProviderManagerState()) {
   private inline fun doGetProviders(providerChecker: (FileEditorProvider) -> Boolean): List<FileEditorProvider> {
     // collect all possible editors
     val sharedProviders = mutableListOf<FileEditorProvider>()
@@ -118,8 +113,7 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
   }
 
   internal fun getSelectedFileEditorProvider(composite: EditorComposite, project: Project): FileEditorProvider? {
-    val editorHistoryManager = EditorHistoryManager.getInstance(project)
-    val provider = editorHistoryManager.getSelectedProvider(composite.file)
+    val provider = EditorHistoryManager.getInstance(project).getSelectedProvider(composite.file)
     val providers = composite.allProviders
     if (provider != null || providers.size < 2) {
       return provider

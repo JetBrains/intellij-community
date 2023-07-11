@@ -117,8 +117,8 @@ internal suspend fun preInitApp(app: ApplicationImpl,
     asyncScope.launch {
       if (!app.isHeadlessEnvironment) {
         launch(CoroutineName("icons preloading") + Dispatchers.IO) {
-          AsyncProcessIcon.createBig("", this)
-          AsyncProcessIcon("", this)
+          AsyncProcessIcon.createBig(this)
+          AsyncProcessIcon(this)
           AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
           AnimatedIcon.FS()
         }

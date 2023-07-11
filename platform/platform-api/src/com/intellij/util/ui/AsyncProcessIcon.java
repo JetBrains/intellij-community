@@ -19,8 +19,8 @@ public class AsyncProcessIcon extends AnimatedIcon {
     this(name, SMALL_ICONS, AllIcons.Process.Step_passive);
   }
 
-  public AsyncProcessIcon(@NonNls String name, @NotNull CoroutineScope coroutineScope) {
-    this(name, SMALL_ICONS, AllIcons.Process.Step_passive, coroutineScope);
+  public AsyncProcessIcon(@NotNull CoroutineScope coroutineScope) {
+    this(null, SMALL_ICONS, AllIcons.Process.Step_passive, coroutineScope);
   }
 
   public AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive) {
@@ -56,8 +56,8 @@ public class AsyncProcessIcon extends AnimatedIcon {
     return new AsyncProcessIcon(name, com.intellij.ui.AnimatedIcon.Big.ICONS, AllIcons.Process.Big.Step_passive);
   }
 
-  public static @NotNull AnimatedIcon createBig(@NonNls String name, @NotNull CoroutineScope coroutineScope) {
-    return new AsyncProcessIcon(name, com.intellij.ui.AnimatedIcon.Big.ICONS, AllIcons.Process.Big.Step_passive, coroutineScope);
+  public static @NotNull AnimatedIcon createBig(@NotNull CoroutineScope coroutineScope) {
+    return new AsyncProcessIcon(null, com.intellij.ui.AnimatedIcon.Big.ICONS, AllIcons.Process.Big.Step_passive, coroutineScope);
   }
 
   public static class Big extends AsyncProcessIcon {

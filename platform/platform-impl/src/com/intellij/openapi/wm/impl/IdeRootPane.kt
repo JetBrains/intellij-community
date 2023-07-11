@@ -233,7 +233,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       }
     }
 
-    val glassPane = IdeGlassPaneImpl(rootPane = this, loadingState = loadingState)
+    val glassPane = IdeGlassPaneImpl(rootPane = this, loadingState = loadingState, coroutineScope.childScope())
     setGlassPane(glassPane)
     glassPaneInitialized = true
 

@@ -933,7 +933,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       }
     }
 
-    val progressIcon: AsyncProcessIcon = AsyncProcessIcon("Background process", host.coroutineScope)
+    val progressIcon: AsyncProcessIcon = AsyncProcessIcon(host.coroutineScope)
     var indicator: InfoAndProgressPanel.MyInlineProgressIndicator? = null
     private var processIconComponent: AsyncProcessIcon? = null
     private val multiProcessLink: ActionLink = object : ActionLink("", ActionListener { host.triggerPopupShowing() }) {

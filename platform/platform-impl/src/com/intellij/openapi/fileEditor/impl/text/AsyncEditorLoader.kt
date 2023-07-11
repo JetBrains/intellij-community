@@ -11,18 +11,21 @@ import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.AsyncLoadingDecorator
 import com.intellij.openapi.util.Key
 import com.intellij.ui.EditorNotifications
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
+import javax.swing.JComponent
 import javax.swing.event.ChangeEvent
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 private val ASYNC_LOADER = Key.create<AsyncEditorLoader>("ASYNC_LOADER")
@@ -69,24 +72,21 @@ class AsyncEditorLoader internal constructor(private val project: Project,
       return
     }
 
-    // don't show yet another loading indicator on project open - use 3-second delay
-    val loadingDecorator = AsyncLoadingDecorator(
-      startDelay = if (EditorsSplitters.isOpenedInBulk(textEditor.file)) 3_000.milliseconds else 300.milliseconds,
-    )
-    val editorComponent = textEditor.component
-    val indicatorJob = loadingDecorator.startLoading(scope = coroutineScope, addUi = editorComponent::addLoadingDecoratorUi)
-
     coroutineScope.launch(CoroutineName("AsyncEditorLoader.wait")) {
-      // await instead of joint to get errors here
+      // don't show yet another loading indicator on project open - use 3-second delay
+      val indicatorJob = showLoadingIndicator(
+        startDelay = if (EditorsSplitters.isOpenedInBulk(textEditor.file)) 3_000.milliseconds else 300.milliseconds,
+        addUi = textEditor.component::addLoadingDecoratorUi
+      )
+      // await instead of join to get errors here
       tasks.awaitAll()
+
       indicatorJob.cancel()
 
       withContext(Dispatchers.EDT + CoroutineName("execute delayed actions")) {
         editor.putUserData(ASYNC_LOADER, null)
         editor.scrollingModel.disableAnimation()
         try {
-          loadingDecorator.stopLoading(scope = this)
-
           while (true) {
             (delayedActions.pollFirst() ?: break).run()
           }
@@ -173,5 +173,27 @@ private fun restoreCaretPosition(editor: EditorEx, delayedScrollState: DelayedSc
       viewport.removeChangeListener(listener)
     }
     viewport.addChangeListener(listener)
+  }
+}
+
+private fun CoroutineScope.showLoadingIndicator(startDelay: Duration, addUi: (component: JComponent) -> Unit): Job {
+  require(startDelay >= Duration.ZERO)
+
+  val scheduleTime = System.currentTimeMillis()
+  return launch {
+    delay((startDelay.inWholeMilliseconds - (System.currentTimeMillis() - scheduleTime)).coerceAtLeast(0))
+
+    val processIcon = withContext(Dispatchers.EDT) {
+      val processIcon = AsyncProcessIcon.createBig(this@launch)
+      addUi(processIcon)
+      processIcon
+    }
+
+    awaitCancellationAndInvoke {
+      withContext(Dispatchers.EDT) {
+        processIcon.suspend()
+        processIcon.parent.remove(processIcon)
+      }
+    }
   }
 }
