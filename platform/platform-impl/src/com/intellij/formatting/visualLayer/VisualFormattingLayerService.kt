@@ -14,14 +14,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 
 val visualFormattingElementKey: Key<Boolean> = Key.create("visual.formatting.element")
 
-abstract class VisualFormattingLayerService {
-  private val EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS = Key.create<CodeStyleSettings>("visual.formatting.layer.info")
-  private val Editor.visualFormattingLayerEnabled: Boolean
-    get() = visualFormattingLayerCodeStyleSettings != null
-  var Editor.visualFormattingLayerCodeStyleSettings: CodeStyleSettings?
-    get() = getUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS)
-    private set(value) = putUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS, value)
+private val EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS = Key.create<CodeStyleSettings>("visual.formatting.layer.info")
 
+
+abstract class VisualFormattingLayerService {
   fun enabledForEditor(editor: Editor): Boolean = editor.visualFormattingLayerEnabled
 
   fun enableForEditor(editor: Editor, codeStyleSettings: CodeStyleSettings) {
@@ -45,6 +41,12 @@ abstract class VisualFormattingLayerService {
     @JvmStatic
     fun getInstance(): VisualFormattingLayerService =
       ApplicationManager.getApplication().getService(VisualFormattingLayerService::class.java)
+
+    private val Editor.visualFormattingLayerEnabled: Boolean
+      get() = visualFormattingLayerCodeStyleSettings != null
+    var Editor.visualFormattingLayerCodeStyleSettings: CodeStyleSettings?
+      get() = getUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS)
+      private set(value) = putUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS, value)
   }
 
 }

@@ -254,5 +254,8 @@
 
     <listener class="com.intellij.psi.search.scope.packageSet.UpdatingScopeOnProjectStructureChangeListener"
               topic="com.intellij.openapi.project.ModuleListener"/>
+
+    <listener class="com.intellij.formatting.visualLayer.CodeStyleBasedHighlighterRestartingListener"
+              topic="com.intellij.psi.codeStyle.CodeStyleSettingsListener"/>
   </projectListeners>
 </idea-plugin>
