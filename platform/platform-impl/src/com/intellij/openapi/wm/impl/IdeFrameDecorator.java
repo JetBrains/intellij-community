@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -11,14 +12,13 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.util.ui.EDT;
 import com.jetbrains.JBR;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Objects;
@@ -168,20 +168,9 @@ public abstract class IdeFrameDecorator {
 
   // Extended WM Hints-based decorator
   private static final class EWMHFrameDecorator extends IdeFrameDecorator {
-    private Boolean myRequestedState = null;
 
     private EWMHFrameDecorator(@NotNull IdeFrameImpl frame, @NotNull Disposable parentDisposable) {
       super(frame);
-
-      frame.addComponentListener(new ComponentAdapter() {
-        @Override
-        public void componentResized(ComponentEvent e) {
-          if (myRequestedState != null) {
-            notifyFrameComponents(myRequestedState);
-            myRequestedState = null;
-          }
-        }
-      });
 
       if (SystemInfo.isKDE && isDisableAutoRequestFocus()) {
         // KDE sends an unexpected MapNotify event if a window is deiconified.
@@ -211,12 +200,18 @@ public abstract class IdeFrameDecorator {
     @Override
     public @NotNull CompletableFuture<@Nullable Boolean> toggleFullScreen(boolean state) {
       if (frame != null) {
-        myRequestedState = state;
         X11UiUtil.toggleFullScreenMode(frame);
 
         if (frame.getJMenuBar() instanceof IdeMenuBar frameMenuBar) {
           frameMenuBar.onToggleFullScreen(state);
         }
+      }
+
+      if (EDT.isCurrentThreadEdt()) {
+        notifyFrameComponents(state);
+      }
+      else {
+        ApplicationManager.getApplication().invokeLater(() -> notifyFrameComponents(state));
       }
       return CompletableFuture.completedFuture(state);
     }

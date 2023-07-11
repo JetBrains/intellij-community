@@ -400,10 +400,13 @@ open class IdeRootPane internal constructor(frame: JFrame,
   }
 
   @RequiresEdt
-  internal fun preInit(isInFullScreen: () -> Boolean) {
+  internal fun preInit(fullScreen: Boolean) {
     if (isDecoratedMenu || isFloatingMenuBarSupported) {
-      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) { updateScreenState(isInFullScreen.invoke()) }
-      updateScreenState(isInFullScreen.invoke())
+      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) {
+        val fullScreenProperty = ClientProperty.isTrue(this, IdeFrameDecorator.FULL_SCREEN)
+        updateScreenState(fullScreenProperty)
+      }
+      updateScreenState(fullScreen)
     }
   }
 
