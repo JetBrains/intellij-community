@@ -104,6 +104,14 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       }
 
       @Override
+      public void visitVariable(@NotNull PsiVariable variable) {
+        PsiExpression initializer = variable.getInitializer();
+        if (initializer != null) {
+            checkExpression(initializer, variable, variable.getType(), holder);
+        }
+      }
+
+      @Override
       public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
         PsiExpression value = statement.getReturnValue();
         if (value == null) return;
