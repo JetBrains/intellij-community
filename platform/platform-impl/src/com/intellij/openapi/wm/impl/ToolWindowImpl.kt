@@ -15,6 +15,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl.ActionToolbarAppListener
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -191,8 +193,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     })
 
     ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(
-      ActionManagerListener.TOPIC,
-      object : ActionManagerListener {
+      ActionToolbarImpl.TOPIC,
+      object : ActionToolbarAppListener {
         override fun toolbarAdded(toolbar: ActionToolbar) {
           // Check if it's our toolbar to avoid traversing the whole hierarchy every time a toolbar is added somewhere.
           if (ComponentUtil.getParentOfType(InternalDecoratorImpl::class.java, toolbar.component) == decorator) {

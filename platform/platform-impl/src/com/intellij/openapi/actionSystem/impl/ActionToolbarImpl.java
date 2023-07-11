@@ -41,6 +41,7 @@ import com.intellij.util.animation.AlphaAnimationContext;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.MagicConstant;
@@ -69,6 +70,14 @@ import java.util.function.Supplier;
 
 public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickActionProvider, AlphaAnimated {
   private static final Logger LOG = Logger.getInstance(ActionToolbarImpl.class);
+
+  @Topic.AppLevel
+  public static final Topic<ActionToolbarAppListener> TOPIC = new Topic<>(ActionToolbarAppListener.class, Topic.BroadcastDirection.NONE);
+
+  public interface ActionToolbarAppListener {
+    default void toolbarAdded(@NotNull ActionToolbar toolbar) {
+    }
+  }
 
   private static final Set<ActionToolbarImpl> ourToolbars = new LinkedHashSet<>();
   private static final String RIGHT_ALIGN_KEY = "RIGHT_ALIGN";
@@ -319,6 +328,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return baseline;
   }
 
+  @Override
   public @NotNull String getPlace() {
     return myPlace;
   }
@@ -332,7 +342,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     ourToolbars.add(this);
 
     updateActionsOnAdd();
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(ActionManagerListener.TOPIC).toolbarAdded(this);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).toolbarAdded(this);
   }
 
   protected void updateActionsOnAdd() {
@@ -1272,6 +1282,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myOrientation = orientation;
   }
 
+  @Override
   @MagicConstant(intValues = {SwingConstants.HORIZONTAL, SwingConstants.VERTICAL})
   public int getOrientation() {
     return myOrientation;

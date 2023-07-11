@@ -154,11 +154,7 @@ open class NewToolbarRootPaneManager(private val project: Project) : SimpleModif
   private fun applyTo(actions: Map<String, ActionGroup?>, component: JComponent, layout: BorderLayout) {
     actions.mapValues { (_, actionGroup) ->
       if (actionGroup != null) {
-        val toolbar = MyActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, actionGroup, true, false, getToolbarGroup(),
-                                          mainGroupName())
-        ApplicationManager.getApplication().messageBus.syncPublisher(ActionManagerListener.TOPIC).toolbarCreated(ActionPlaces.MAIN_TOOLBAR,
-                                                                                                                 actionGroup, true, toolbar)
-        toolbar
+        MyActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, actionGroup, true, false, getToolbarGroup(), mainGroupName())
       }
       else {
         null

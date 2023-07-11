@@ -1446,10 +1446,6 @@ private fun publisher(): AnActionListener {
   return ApplicationManager.getApplication().messageBus.syncPublisher(AnActionListener.TOPIC)
 }
 
-private fun managerPublisher(): ActionManagerListener {
-  return ApplicationManager.getApplication().messageBus.syncPublisher(ActionManagerListener.TOPIC)
-}
-
 private fun <T> instantiate(stubClassName: String,
                             pluginDescriptor: PluginDescriptor,
                             expectedClass: Class<T>,
@@ -1638,9 +1634,7 @@ private fun createActionToolbarImpl(place: String,
                                     horizontal: Boolean,
                                     decorateButtons: Boolean,
                                     customizable: Boolean): ActionToolbarImpl {
-  val toolbar = ActionToolbarImpl(place, group, horizontal, decorateButtons, customizable)
-  managerPublisher().toolbarCreated(place, group, horizontal, toolbar)
-  return toolbar
+  return ActionToolbarImpl(place, group, horizontal, decorateButtons, customizable)
 }
 
 private fun obtainActionId(element: XmlElement, className: String?): String {
