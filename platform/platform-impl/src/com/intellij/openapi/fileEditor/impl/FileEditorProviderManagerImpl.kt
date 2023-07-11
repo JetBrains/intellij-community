@@ -93,10 +93,15 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
     val sharedProviders = coroutineScope {
       FileEditorProvider.EP_FILE_EDITOR_PROVIDER.filterableLazySequence().map { item ->
         async {
-          val provider = item.instance
-          if (provider == null || !readAction {
-              checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)
-            }) {
+          val provider = item.instance ?: return@async null
+          if (provider.acceptRequiresReadAction()) {
+            if (!readAction {
+                checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)
+              }) {
+              return@async null
+            }
+          }
+          else if (!checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)) {
             return@async null
           }
 

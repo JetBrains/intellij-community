@@ -35,9 +35,14 @@ class KtScratchFileEditorProvider : FileEditorProvider, DumbAware {
     override fun getEditorTypeId(): String = KTS_SCRATCH_EDITOR_PROVIDER
 
     override fun accept(project: Project, file: VirtualFile): Boolean {
-        if (!file.isValid) return false
-        if (!(file.isKotlinScratch || file.isKotlinWorksheet)) return false
-        val psiFile = PsiManager.getInstance(project).findFile(file) ?: return false
+        if (!file.isValid) {
+            return false
+        }
+        if (!file.isKotlinScratch && !file.isKotlinWorksheet) {
+            return false
+        }
+        val psiFile = ApplicationManager.getApplication().runReadAction(Computable { PsiManager.getInstance(project).findFile(file) })
+            ?: return false
         return ScratchFileLanguageProvider.get(psiFile.fileType) != null
     }
 
