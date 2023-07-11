@@ -9,7 +9,10 @@ import com.intellij.vcs.log.VcsLogBundle
 
 class VcsLogCombinedDiffPreview(private val browser: VcsLogChangesBrowser) : CombinedDiffPreview(browser.viewer, browser) {
 
-  override fun createModel(): CombinedDiffPreviewModel = VcsLogCombinedDiffPreviewModel(browser)
+  override fun createModel(): CombinedDiffPreviewModel = VcsLogCombinedDiffPreviewModel(browser).apply {
+    val blocks = CombinedDiffPreviewModel.prepareCombinedDiffModelRequests(browser.viewer.project, iterateAllChanges().toList())
+    setBlocks(blocks)
+  }
 
   override fun getCombinedDiffTabTitle(): String {
     val filePath = model.selected?.filePath
@@ -23,7 +26,7 @@ class VcsLogCombinedDiffPreviewModel(private val browser: VcsLogChangesBrowser) 
   CombinedDiffPreviewModel(browser.viewer, browser) {
 
   override fun iterateSelectedChanges(): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
-   return VcsLogChangeProcessor.wrap(browser, VcsTreeModelData.selected(tree))
+    return VcsLogChangeProcessor.wrap(browser, VcsTreeModelData.selected(tree))
   }
 
   override fun iterateAllChanges(): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
