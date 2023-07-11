@@ -3,7 +3,7 @@ package com.intellij.ui.codeFloatingToolbar
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -48,11 +48,11 @@ class CodeFloatingToolbar(
   }
 
   override fun hasIgnoredParent(element: PsiElement): Boolean {
-    return !element.isWritable || TemplateManagerImpl.getInstance(element.project).getActiveTemplate(editor) != null
+    return !element.isWritable || TemplateManager.getInstance(element.project).getActiveTemplate(editor) != null
   }
 
   override fun isEnabled(): Boolean {
-    return !AdvancedSettings.getBoolean("floating.codeToolbar.hide")
+    return editor.document.isWritable && !AdvancedSettings.getBoolean("floating.codeToolbar.hide")
   }
 
   override fun disableForDoubleClickSelection(): Boolean = true
