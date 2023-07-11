@@ -63,7 +63,7 @@ public abstract class AbstractPerformFixesTask extends PerformFixesModalTask {
     if (myResultCount.size() == 1) {
       BatchExecutionResult result = myResultCount.keySet().iterator().next();
       if (result == ModCommandExecutor.Result.SUCCESS) return null;
-      return LangBundle.message("executor.quick.fixes.cannot.be.executed") + "\n" + result.getMessage();
+      return result.getMessage();
     }
     @Nls String message = LangBundle.message("executor.error.some.actions.failed") + "\n";
     int total = myResultCount.values().stream().mapToInt(i -> i).sum();
