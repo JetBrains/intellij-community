@@ -15,12 +15,17 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class ActionUpdateEdtExecutor {
+
+  static final Executor EDT_EXECUTOR = runnable ->
+    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
+
   /**
    * Compute the supplied value on Swing thread, but try to avoid deadlocks by periodically performing {@link ProgressManager#checkCanceled()} in the current thread.
    * Makes sense to be used in background read actions running with a progress indicator that's canceled when a write action is about to occur.
@@ -32,7 +37,7 @@ public final class ActionUpdateEdtExecutor {
   }
 
   static <T> T computeOnEdt(@NotNull Supplier<? extends T> supplier,
-                            @Nullable Consumer<? super Runnable> laterInvocator) {
+                            @Nullable Executor edtExecutor) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
       return supplier.get();
@@ -54,12 +59,7 @@ public final class ActionUpdateEdtExecutor {
         semaphore.up();
       }
     };
-    if (laterInvocator != null) {
-      laterInvocator.accept(runnable);
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
-    }
+    Objects.requireNonNullElse(edtExecutor, EDT_EXECUTOR).execute(runnable);
 
     ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, indicator);
     ExceptionUtil.rethrowAllAsUnchecked(result.get().second);

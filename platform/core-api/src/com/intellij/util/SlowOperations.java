@@ -6,8 +6,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.Cancellation;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
@@ -30,13 +28,12 @@ public final class SlowOperations {
 
   public static final String ERROR_MESSAGE = "Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.";
 
-  public static final String ACTION_UPDATE = "action.update";     // action update in menus, toolbars and popups
+  public static final String ACTION_UPDATE = "action.update";     // action update in menus, toolbars, and popups
   public static final String ACTION_PERFORM = "action.perform";   // user triggered actions
   public static final String KNOWN_ISSUE = "known-issues";        // known YT issue
   public static final String GENERIC = "generic";                 // generic activity
 
   public static final String FORCE_ASSERT = "  force assert  ";   // assertion is thrown even if disabled
-  public static final String FAST_TRACK = "  fast track  ";       // assertion is turned into PCE
   public static final String RESET = "  reset  ";                 // resets the section stack in modal dialogs
 
   /**
@@ -91,14 +88,6 @@ public final class SlowOperations {
     if (!EDT.isCurrentThreadEdt()) {
       return;
     }
-    if (isInSection(FAST_TRACK)) {
-      if (Cancellation.isInNonCancelableSection()) {
-        reportNonCancellableSectionInFastTrack();
-      }
-      else {
-        throw new ProcessCanceledException();
-      }
-    }
     if (isAlwaysAllowed()) {
       return;
     }
@@ -127,10 +116,6 @@ public final class SlowOperations {
       return;
     }
     LOG.error(ERROR_MESSAGE);
-  }
-
-  private static void reportNonCancellableSectionInFastTrack() {
-    LOG.error("Non-cancellable section in FAST_TRACK");
   }
 
   @ApiStatus.Internal
@@ -220,7 +205,7 @@ public final class SlowOperations {
   /**
    * Starts a named logical section. Logical sections are a tool to tackle the frontend/backend splitting part-by-part,
    * and not to be overwhelmed by all that needs to be reworked all at once. Some sections have additional, hard-coded
-   * semantics, like {@link #FAST_TRACK}, {@link #FORCE_ASSERT}, and {@link #RESET}.
+   * semantics, like {@link #FORCE_ASSERT}, and {@link #RESET}.
    * <p/>
    * <b>This method is not for muting the assertion in places. It is intended for the common platform code.
    * USE DEPRECATED {@link #allowSlowOperations} METHODS IF YOUR INTENT IS TO POSTPONE FIXING THE ASSERTION FOR REAL.</b>

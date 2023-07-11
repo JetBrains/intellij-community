@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -37,7 +36,10 @@ import com.intellij.ui.GroupHeaderSeparator;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.ui.mac.screenmenu.MenuItem;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,7 +58,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,12 +65,11 @@ import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.Objects;
+import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -164,15 +164,17 @@ public final class Utils {
                                                                           @NotNull String place,
                                                                           boolean isToolbarAction,
                                                                           boolean fastTrack) {
-    LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + dumpDataContextClass(context));
-    ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction);
-    if (ActionGroupExpander.getInstance().allowsFastUpdate(CommonDataKeys.PROJECT.getData(context), group, place)) {
-      List<AnAction> actions = !fastTrack ? null : expandActionGroupFastTrack(place, updater, group, group instanceof CompactActionGroup, null);
-      if (actions != null) {
-        return Promises.resolvedCancellablePromise(actions);
-      }
+    boolean async = isAsyncDataContext(context);
+    if (!async) {
+      throw new AssertionError("Async data context required in '" + place + "': " + dumpDataContextClass(context));
     }
-    return updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
+    FastTrackAwareEdtExecutor edtExecutor = fastTrack ? newFastTrackAwareExecutor(place, true) : null;
+    ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction, edtExecutor, null);
+    CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
+    if (edtExecutor != null) {
+      edtExecutor.waitForFastTrack(promise);
+    }
+    return promise;
   }
 
   @ApiStatus.Internal
@@ -224,43 +226,43 @@ public final class Utils {
                                                                @Nullable JComponent menuItem) {
     boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     DataContext wrapped = wrapDataContext(context);
-    Project project = CommonDataKeys.PROJECT.getData(wrapped);
-    Component contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(wrapped);
-    ActionUpdater updater = new ActionUpdater(presentationFactory, wrapped, place, isContextMenu, false, null, null);
-    ActionGroupExpander expander = ActionGroupExpander.getInstance();
+    boolean async = isAsyncDataContext(wrapped) && !isUnitTestMode;
+    FastTrackAwareEdtExecutor edtExecutor = async ? newFastTrackAwareExecutor(place, false) : null;
+    ActionUpdater updater = new ActionUpdater(presentationFactory, wrapped, place, isContextMenu, false, edtExecutor, null);
     List<AnAction> list;
-    if (isAsyncDataContext(wrapped) && !isUnitTestMode) {
+    if (async) {
       if (isContextMenu) {
         ActionUpdater.cancelAllUpdates("context menu requested");
       }
-      if (expander.allowsFastUpdate(project, group, place) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt")) {
-        Set<String> missedKeys = new HashSet<>();
-        list = expandActionGroupFastTrack(place, updater, group, group instanceof CompactActionGroup, missedKeys::add);
-        if (list != null && missedKeys.isEmpty()) {
-          if (onProcessed != null) onProcessed.run();
-          return list;
-        }
-      }
       int maxLoops = Math.max(2, Registry.intValue("actionSystem.update.actions.async.max.nested.loops", 20));
       if (ourExpandActionGroupImplEDTLoopLevel >= maxLoops) {
-        LOG.warn("Maximum number of recursive EDT loops reached (" + maxLoops +") at '" + place + "'");
+        LOG.warn("Maximum number of recursive EDT loops reached (" + maxLoops + ") at '" + place + "'");
         if (onProcessed != null) onProcessed.run();
         ActionUpdater.cancelAllUpdates("recursive EDT loops limit reached at '" + place + "'");
         throw new ProcessCanceledException();
       }
-      IdeEventQueue queue = IdeEventQueue.getInstance();
       CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
+      if (edtExecutor != null) {
+        list = edtExecutor.waitForFastTrack(promise);
+        if (list != null) {
+          if (onProcessed != null) onProcessed.run();
+          return list;
+        }
+      }
       if (onProcessed != null) {
         promise.onSuccess(__ -> onProcessed.run());
         promise.onError(ex -> {
           if (!canRetryOnThisException(ex)) onProcessed.run();
         });
       }
+      IdeEventQueue queue = IdeEventQueue.getInstance();
+      Component contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(wrapped);
       try (AccessToken ignore = cancelOnUserActivityInside(promise, contextComponent, menuItem)) {
         ourExpandActionGroupImplEDTLoopLevel++;
         list = runLoopAndWaitForFuture(promise, Collections.emptyList(), true, () -> {
           AWTEvent event = queue.getNextEvent();
           queue.dispatchEvent(event);
+          return true;
         });
       }
       finally {
@@ -285,7 +287,7 @@ public final class Utils {
         if (onProcessed != null) onProcessed.run();
       }
     }
-    return list;
+    return Objects.requireNonNull(list);
   }
 
   private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise,
@@ -305,29 +307,12 @@ public final class Utils {
     });
   }
 
-  private static @Nullable List<AnAction> expandActionGroupFastTrack(@NotNull String place,
-                                                                     @NotNull ActionUpdater updater,
-                                                                     @NotNull ActionGroup group,
-                                                                     boolean hideDisabled,
-                                                                     @Nullable Consumer<? super String> missedKeys) {
-    boolean mainMenuOrToolbarFirstTime = ExperimentalUI.isNewUI() &&
-                                         (ActionPlaces.MAIN_MENU.equals(place) || ActionPlaces.MAIN_TOOLBAR.equals(place));
+  private static @Nullable FastTrackAwareEdtExecutor newFastTrackAwareExecutor(@NotNull String place, boolean checkMainMenuOrToolbarFirstTime) {
+    boolean mainMenuOrToolbarFirstTime = checkMainMenuOrToolbarFirstTime && (
+      ActionPlaces.MAIN_MENU.equals(place) || ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR.equals(place));
     int maxTime = mainMenuOrToolbarFirstTime ? 5_000 : Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 20);
     if (maxTime < 1) return null;
-    BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
-    ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(updater.asFastUpdateSession(missedKeys, queue::offer));
-    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.FAST_TRACK)) {
-      long start = System.currentTimeMillis();
-      CancellablePromise<List<AnAction>> promise = fastUpdater.expandActionGroupAsync(group, hideDisabled);
-      return runLoopAndWaitForFuture(promise, null, false, () -> {
-        Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
-        if (runnable != null) runnable.run();
-        long elapsed = System.currentTimeMillis() - start;
-        if (elapsed > maxTime) {
-          ActionUpdater.cancelPromise(promise, "fast-track timed out");
-        }
-      });
-    }
+    return new FastTrackAwareEdtExecutor(maxTime);
   }
 
   static void fillMenu(@NotNull ActionGroup group,
@@ -780,12 +765,12 @@ public final class Utils {
     BlockingQueue<Runnable> queue = async ? new LinkedBlockingQueue<>() : null;
     ActionUpdater actionUpdater = new ActionUpdater(
       factory, dataContext,
-      place, false, false, event -> {
+      place, false, false, async ? queue::offer : null, event -> {
         AnActionEvent transformed = actionProcessor.createEvent(
           inputEvent, event.getDataContext(), event.getPlace(), event.getPresentation(), event.getActionManager());
         if (eventTracker != null) eventTracker.accept(transformed);
         return transformed;
-    }, async ? queue::offer : null);
+    });
 
     T result;
     if (async) {
@@ -821,6 +806,7 @@ public final class Utils {
           Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
           if (runnable != null) runnable.run();
           if (parentIndicator != null) parentIndicator.checkCanceled();
+          return true;
         });
       }
       finally {
@@ -866,13 +852,15 @@ public final class Utils {
     }
   }
 
-  private static <T> T runLoopAndWaitForFuture(@NotNull Future<? extends T> promise,
+  private static <T> @Nullable T runLoopAndWaitForFuture(@NotNull Future<? extends T> promise,
                                                @Nullable T defValue,
                                                boolean rethrowCancellation,
-                                               @NotNull ThrowableRunnable<?> pumpRunnable) {
+                                               @NotNull EventPump eventPump) {
     while (!promise.isDone()) {
       try {
-        pumpRunnable.run();
+        if (!eventPump.run()) {
+          return null;
+        }
       }
       catch (ProcessCanceledException ignore) {
       }
@@ -931,6 +919,52 @@ public final class Utils {
     String reasonStr = reason instanceof String ? (String)reason : "";
     return reasonStr.contains("write-action") ||
            reasonStr.contains("fast-track") && StringUtil.containsIgnoreCase(reasonStr, "toolbar");
+  }
+
+  private interface EventPump {
+    boolean run() throws Throwable;
+  }
+
+  private static class FastTrackAwareEdtExecutor implements Executor {
+    final LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
+    final int maxTime;
+    volatile boolean fastTrack = true;
+
+    FastTrackAwareEdtExecutor(int maxTime) {
+      this.maxTime = maxTime;
+    }
+
+    @Override
+    public void execute(@NotNull Runnable runnable) {
+      if (fastTrack) {
+        queue.offer(runnable);
+      }
+      else {
+        ActionUpdateEdtExecutor.EDT_EXECUTOR.execute(runnable);
+      }
+    }
+
+    <T> T waitForFastTrack(Future<? extends T> promise) {
+      T result;
+      long start = System.nanoTime();
+      try {
+        fastTrack = true;
+        result = runLoopAndWaitForFuture(promise, null, false, () -> {
+          Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
+          if (runnable != null) runnable.run();
+          return TimeoutUtil.getDurationMillis(start) < maxTime;
+        });
+      }
+      finally {
+        fastTrack = false;
+      }
+      if (result == null) {
+        queue.forEach(ActionUpdateEdtExecutor.EDT_EXECUTOR::execute);
+        queue.clear();
+      }
+      LOG.assertTrue(queue.isEmpty(), "fast-track queue is not empty");
+      return result;
+    }
   }
 
   static class ProcessCanceledWithReasonException extends ProcessCanceledException {

@@ -41,6 +41,7 @@ import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.*;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.context.Context;
+import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -54,8 +55,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -69,9 +70,26 @@ final class ActionUpdater {
   private static final String NESTED_WA_REASON_PREFIX = "nested write-action requested by ";
   private static final String OLD_EDT_MSG_SUFFIX = ". Revise AnAction.getActionUpdateThread property";
 
-  static final Executor ourBeforePerformedExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Exclusive)", 1);
+  static final Executor ourBeforePerformedExecutor;
+  private static final Executor ourFastTrackExecutor;
   private static final Executor ourCommonExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
-  private static final Executor ourFastTrackExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Fast)", 1);
+  private static final AtomicInteger ourFastTrackToolbarsCount = new AtomicInteger();
+
+  static {
+    class MyExecutor implements Executor {
+      final String name;
+      MyExecutor(String name) { this.name = name; }
+      @Override
+      public void execute(@NotNull Runnable command) {
+        String threadName = name + (command instanceof NamedRunnable ? " (" + command + ")" : "");
+        AppExecutorUtil.getAppExecutorService().execute(() -> {
+          ConcurrencyUtil.runUnderThreadName(threadName, command);
+        });
+      }
+    }
+    ourBeforePerformedExecutor = new MyExecutor("Action Updater (Exclusive)");
+    ourFastTrackExecutor = new MyExecutor("Action Updater (Fast)");
+  }
 
   private static final Set<CancellablePromise<?>> ourPromises = ConcurrentCollectionFactory.createConcurrentSet();
   private static final Set<CancellablePromise<?>> ourToolbarPromises = ConcurrentCollectionFactory.createConcurrentSet();
@@ -95,7 +113,7 @@ final class ActionUpdater {
   private boolean myPreCacheSlowDataKeys;
   private ActionUpdateThread myForcedUpdateThread;
   private final Function<? super AnActionEvent, ? extends AnActionEvent> myEventTransform;
-  private final Consumer<? super Runnable> myLaterInvocator;
+  private final Executor myEDTExecutor;
   private final int myTestDelayMillis;
 
   private final ThreadDumpService myThreadDumpService = ThreadDumpService.getInstance();
@@ -117,8 +135,8 @@ final class ActionUpdater {
                 @NotNull String place,
                 boolean isContextMenuAction,
                 boolean isToolbarAction,
-                @Nullable Function<? super AnActionEvent, ? extends AnActionEvent> eventTransform,
-                @Nullable Consumer<? super Runnable> laterInvocator) {
+                @Nullable Executor edtExecutor,
+                @Nullable Function<? super AnActionEvent, ? extends AnActionEvent> eventTransform) {
     project = CommonDataKeys.PROJECT.getData(dataContext);
     myPresentationFactory = presentationFactory;
     myDataContext = dataContext;
@@ -126,7 +144,7 @@ final class ActionUpdater {
     myContextMenuAction = isContextMenuAction;
     myToolbarAction = isToolbarAction;
     myEventTransform = eventTransform;
-    myLaterInvocator = laterInvocator;
+    myEDTExecutor = edtExecutor;
     myPreCacheSlowDataKeys = Utils.isAsyncDataContext(dataContext) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
     myRealUpdateStrategy = new UpdateStrategy(
       action -> updateActionReal(action),
@@ -262,7 +280,7 @@ final class ActionUpdater {
           elapsedReport(myCurEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX, null, action.getClass());
         List<Throwable> edtTraces = edtTracesRef.get();
         // do not report pauses without EDT traces (e.g. due to debugging)
-        if (edtTraces != null && edtTraces.size() > 0 && edtTraces.get(0).getStackTrace().length > 0) {
+        if (edtTraces != null && !edtTraces.isEmpty() && edtTraces.get(0).getStackTrace().length > 0) {
           for (Throwable trace : edtTraces) {
             throwable.addSuppressed(trace);
           }
@@ -370,11 +388,20 @@ final class ActionUpdater {
     myEDTWaitNanos = 0;
     promise.onProcessed(__ -> {
       long edtWaitMillis = TimeUnit.NANOSECONDS.toMillis(myEDTWaitNanos);
-      if (myLaterInvocator == null && (myEDTCallsCount > 500 || edtWaitMillis > 3000)) {
+      if (myEDTExecutor == null && (myEDTCallsCount > 500 || edtWaitMillis > 3000)) {
         LOG.warn(edtWaitMillis + " ms total to grab EDT " + myEDTCallsCount + " times to expand " +
                  Utils.operationName(group, null, myPlace) + ". Use `ActionUpdateThread.BGT`.");
       }
     });
+    // only one toolbar fast-track at a time
+    boolean useFastTrack = myEDTExecutor != null && !(myToolbarAction && ourFastTrackToolbarsCount.get() > 0);
+    Executor executor = useFastTrack ? ourFastTrackExecutor : ourCommonExecutor;
+    if (useFastTrack && myToolbarAction) {
+      ourFastTrackToolbarsCount.incrementAndGet();
+    }
+    Set<CancellablePromise<?>> targetPromises = myToolbarAction ? ourToolbarPromises : ourPromises;
+    targetPromises.add(promise);
+
     Computable<Computable<Void>> computable = () -> {
       indicator.checkCanceled();
       if (myTestDelayMillis > 0) {
@@ -393,14 +420,7 @@ final class ActionUpdater {
         return null;
       };
     };
-    Set<CancellablePromise<?>> targetPromises = myToolbarAction ? ourToolbarPromises : ourPromises;
-    targetPromises.add(promise);
-    boolean isFastTrack = myLaterInvocator != null && SlowOperations.isInSection(SlowOperations.FAST_TRACK);
-    if (!isFastTrack && myLaterInvocator != null) {
-      throw new AssertionError("Fast-track EDT invocator must be employed in a FAST_TRACK section");
-    }
-    Executor executor = isFastTrack ? ourFastTrackExecutor : ourCommonExecutor;
-    executor.execute(Context.current().wrap(() -> {
+    Runnable runnable = () -> {
       Ref<Computable<Void>> applyRunnableRef = Ref.create();
       try (AccessToken ignored = ClientId.withClientId(clientId)) {
         BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () -> {
@@ -419,13 +439,25 @@ final class ActionUpdater {
         }
       }
       finally {
+        if (useFastTrack && myToolbarAction) {
+          ourFastTrackToolbarsCount.decrementAndGet();
+        }
         targetPromises.remove(promise);
         if (!promise.isDone()) {
           cancelPromise(promise, "unknown reason");
           LOG.error(new Throwable("'" + myPlace + "' update exited incorrectly (" + !applyRunnableRef.isNull() + ")"));
         }
       }
-    }));
+    };
+    Context current = Context.current();
+    executor.execute(new NamedRunnable(myPlace) {
+      @Override
+      public void run() {
+        try (Scope ignored = current.makeCurrent()) {
+          runnable.run();
+        }
+      }
+    });
     return promise;
   }
 
@@ -659,24 +691,12 @@ final class ActionUpdater {
   }
 
   private <T> T computeOnEdt(@NotNull Supplier<? extends T> supplier) {
-    return ActionUpdateEdtExecutor.computeOnEdt(supplier, myLaterInvocator);
+    return ActionUpdateEdtExecutor.computeOnEdt(supplier, myEDTExecutor);
   }
 
   @NotNull
   UpdateSession asUpdateSession() {
     return asUpdateSession(myRealUpdateStrategy);
-  }
-
-  @NotNull
-  UpdateSession asFastUpdateSession(@Nullable Consumer<? super String> missedKeys,
-                                    @Nullable Consumer<? super Runnable> laterInvocator) {
-    DataContext frozenContext = Utils.freezeDataContext(myDataContext, missedKeys);
-    Consumer<? super Runnable> invocator =
-      Objects.requireNonNull(ObjectUtils.<Consumer<? super Runnable>>coalesce(laterInvocator, myLaterInvocator));
-    ActionUpdater updater = new ActionUpdater(myPresentationFactory, frozenContext, myPlace, myContextMenuAction, myToolbarAction,
-                                              myEventTransform, invocator);
-    updater.myPreCacheSlowDataKeys = false;
-    return updater.asUpdateSession();
   }
 
   private @NotNull UpdateSession asUpdateSession(UpdateStrategy strategy) {
