@@ -116,26 +116,36 @@ public final class Registry  {
       return result;
     }
 
-    InputStream stream = Registry.class.getClassLoader().getResourceAsStream("misc/registry.properties");
-    if (stream == null) {
+    Map<String, String> map = new HashMap<>(1_800);
+    boolean mainFound = loadFromResource("misc/registry.properties", map);
+    boolean overrideFound = loadFromResource("misc/registry.override.properties", map);
+    if (!mainFound && !overrideFound) {
       return null;
     }
 
-    Map<String, String> map = new HashMap<>(1_800);
+    bundledRegistry = new SoftReference<>(map);
+    return map;
+  }
+
+  private static boolean loadFromResource(String sourceResourceName, Map<String, String> targetMap) throws IOException {
+    InputStream stream = Registry.class.getClassLoader().getResourceAsStream(sourceResourceName);
+    if (stream == null) {
+      return false;
+    }
+
     try {
       //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
       new Properties() {
         @Override
         public Object put(Object key, Object value) {
-          return map.put((String)key, (String)value);
+          return targetMap.put((String)key, (String)value);
         }
       }.load(stream);
     }
     finally {
       stream.close();
     }
-    bundledRegistry = new SoftReference<>(map);
-    return map;
+    return true;
   }
 
   public @NlsSafe @Nullable String getBundleValueOrNull(@NonNls @NotNull String key) {
