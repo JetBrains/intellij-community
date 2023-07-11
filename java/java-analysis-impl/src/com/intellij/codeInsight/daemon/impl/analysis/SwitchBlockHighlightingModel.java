@@ -529,37 +529,45 @@ public class SwitchBlockHighlightingModel {
     //Used to keep dependencies. The last dependency is one of the selector types.
     record ClassWithDependencies(PsiClass mainClass, List<PsiClass> dependencies) {
     }
+
     Set<PsiClass> coveredClasses = new HashSet<>();
+    Set<PsiClass> visitedNotCovered = new HashSet<>();
+    Set<PsiClass> missingClasses = new LinkedHashSet<>();
+
     LinkedHashMap<PsiClass, PsiType> permittedPatternClasses = findPermittedClasses(elements);
     HashSet<PsiType> usedTypes = new HashSet<>(permittedPatternClasses.values());
     //according JEP 440-441 only direct abstract sealed classes are allowed (14.11.1.1)
     Set<PsiClass> sealedUpperClasses = findSealedUpperClasses(permittedPatternClasses.keySet());
-    List<PatternTypeTestDescription> typeTestPatterns = StreamEx.of(elements)
+
+    List<PatternTypeTestDescription> typeTestPatternsOutOfSealed = StreamEx.of(elements)
       .select(PatternTypeTestDescription.class)
       .filter(pattern -> !usedTypes.contains(pattern.type()))
       .toList();
+
     Set<PsiClass> selectorClasses = StreamEx.of(getAllTypes(selectorType))
       .map(type -> PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(type)))
       .nonNull()
       .toSet();
     if (selectorClasses.isEmpty()) return new SealedResult(Collections.emptySet(), Collections.emptySet());
+
     Queue<ClassWithDependencies> nonVisited = new ArrayDeque<>();
-    Set<PsiClass> visitedNotCovered = new HashSet<>();
+    Set<ClassWithDependencies> visited = new SmartHashSet<>();
+
     for (PsiClass selectorClass : selectorClasses) {
       List<PsiClass> dependencies = new ArrayList<>();
       dependencies.add(selectorClass);
       nonVisited.add(new ClassWithDependencies(selectorClass, dependencies));
     }
-    Set<PsiClass> visited = new SmartHashSet<>();
-    Set<PsiClass> missingClasses = new LinkedHashSet<>();
+
     while (!nonVisited.isEmpty()) {
       ClassWithDependencies peeked = nonVisited.peek();
+      if (!visited.add(peeked)) continue;
       PsiClass psiClass = peeked.mainClass;
       PsiClass selectorClass = peeked.dependencies.get(peeked.dependencies.size() - 1);
-      coveredClasses.addAll(peeked.dependencies);
-      if (sealedUpperClasses.contains(psiClass) || selectorClasses.contains(psiClass)) {
+      if (sealedUpperClasses.contains(psiClass) ||
+          //used to generate missed classes when the switch is empty
+          (selectorClasses.contains(psiClass) && elements.isEmpty())) {
         for (PsiClass permittedClass : PatternsInSwitchBlockHighlightingModel.getPermittedClasses(psiClass)) {
-          if (!visited.add(permittedClass)) continue;
           PsiType patternType = permittedPatternClasses.get(permittedClass);
           PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(selectorClass, permittedClass, PsiSubstitutor.EMPTY);
           PsiType permittedType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, substitutor);
@@ -568,16 +576,21 @@ public class SwitchBlockHighlightingModel {
             List<PsiClass> dependentClasses = new ArrayList<>(peeked.dependencies);
             dependentClasses.add(permittedClass);
             nonVisited.add(new ClassWithDependencies(permittedClass, dependentClasses));
+          } else {
+            if (patternType != null) {
+              coveredClasses.addAll(peeked.dependencies);
+            }
           }
         }
       }
       else {
-        visited.add(psiClass);
         PsiClassType targetType = TypeUtils.getType(psiClass);
         //there is a chance, that tree goes away from a target type
-        if (oneOfUnconditional(selectorType, targetType)) {
+        if (TypeConversionUtil.areTypesConvertible(targetType, selectorType) ||
+            //we should consider items from the intersections in the usual way
+            oneOfUnconditional(targetType, selectorType)) {
           if (//check a case, when we have something, which not in sealed hierarchy, but covers some leaves
-            !ContainerUtil.exists(typeTestPatterns, pattern -> oneOfUnconditional(pattern.type(), targetType)) &&
+            !ContainerUtil.exists(typeTestPatternsOutOfSealed, pattern -> oneOfUnconditional(pattern.type(), targetType)) &&
             //check if it is an enum and it is covered by all enums
             !(psiClass.isEnum() && findMissingEnumConstant(psiClass, enumConstants).isEmpty()) &&
             //check if it is a record, and it is covered by record patterns (deconstruction)
@@ -586,14 +599,21 @@ public class SwitchBlockHighlightingModel {
             missingClasses.add(psiClass);
             visitedNotCovered.addAll(peeked.dependencies);
           }
-        }
-        else {
-          missingClasses.add(psiClass);
+          else {
+            coveredClasses.addAll(peeked.dependencies);
+          }
         }
       }
       nonVisited.poll();
     }
     coveredClasses.removeAll(visitedNotCovered);
+    for (PsiClass selectorClass : selectorClasses) {
+      if (coveredClasses.contains(selectorClass)) {
+        //one of the selector classes is covered, so the selector type is covered
+        missingClasses.clear();
+        break;
+      }
+    }
     return new SealedResult(missingClasses, coveredClasses) ;
   }
 
@@ -1097,7 +1117,7 @@ public class SwitchBlockHighlightingModel {
         checkEnumCompleteness(selectorClass, enumElements, results, !elements.isEmpty());
         return;
       }
-      List<PsiType> sealedTypes = getSealedTypes(selectorTypes);
+      List<PsiType> sealedTypes = getAbstractSealedTypes(selectorTypes);
       if (!sealedTypes.isEmpty()) {
         checkSealed(elements, results, selectorClass);
         return;
@@ -1128,7 +1148,7 @@ public class SwitchBlockHighlightingModel {
     }
 
     @NotNull
-    private static List<PsiType> getSealedTypes(@NotNull List<PsiType> selectorTypes) {
+    private static List<PsiType> getAbstractSealedTypes(@NotNull List<PsiType> selectorTypes) {
       return selectorTypes.stream()
         .filter(type -> {
           PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(type));
