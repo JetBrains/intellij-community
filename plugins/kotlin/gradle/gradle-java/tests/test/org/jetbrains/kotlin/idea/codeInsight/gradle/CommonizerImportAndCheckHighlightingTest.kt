@@ -223,7 +223,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                  */
                 run {
                     val withPosixLibraryNameRegex = Regex(
-                        """Gradle: project:p1-cinterop-withPosix.*\(linux_arm64, linux_x64, macos_x64, mingw_x64\).*"""
+                        """(Gradle: )?project:p1-cinterop-withPosix.*\(linux_arm64, linux_x64, macos_x64, mingw_x64\).*"""
                     )
 
                     val libraryOrderEntries = module.rootManager.orderEntries
@@ -282,7 +282,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                  */
                 run {
                     val withPosixLibraryNameRegex = Regex(
-                        """Gradle: project:p1-cinterop-withPosix( \| |:)linux_x64"""
+                        """(Gradle: )?project:p1-cinterop-withPosix( \| |:)linux_x64"""
                     )
 
                     val withPosixEntriesMatchingNamingScheme = module.rootManager.orderEntries

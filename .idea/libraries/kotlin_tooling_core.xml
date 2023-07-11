@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlin-tooling-core" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-tooling-core:1.8.20-dev-5742">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-tooling-core:1.9.20-dev-6566">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1.8.20-dev-5742/kotlin-tooling-core-1.8.20-dev-5742.jar">
-          <sha256sum>7a412677e73a59588cdad4cb9c7f8e3bb70bae5db66933b4b3f3ece0071b4cad</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1.9.20-dev-6566/kotlin-tooling-core-1.9.20-dev-6566.jar">
+          <sha256sum>8938eb97e36320daa3e6fb2a60fd2a05b232ff4a557173c5019f045b8832d9f4</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1.8.20-dev-5742/kotlin-tooling-core-1.8.20-dev-5742.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1.9.20-dev-6566/kotlin-tooling-core-1.9.20-dev-6566.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1.8.20-dev-5742/kotlin-tooling-core-1.8.20-dev-5742-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1.9.20-dev-6566/kotlin-tooling-core-1.9.20-dev-6566-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

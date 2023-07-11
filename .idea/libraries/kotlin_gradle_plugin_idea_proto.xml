@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlin-gradle-plugin-idea-proto" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-idea-proto:1.8.20-dev-5742">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-idea-proto:1.9.20-dev-6566">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.8.20-dev-5742/kotlin-gradle-plugin-idea-proto-1.8.20-dev-5742.jar">
-          <sha256sum>911f4da2a752a559acf63d96ea2d1a3bdf5e5a175c4fecc69d79cca2d303c62d</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.9.20-dev-6566/kotlin-gradle-plugin-idea-proto-1.9.20-dev-6566.jar">
+          <sha256sum>71449d1584b454af41ff75c40b96a9b9cc0ddae13fc4fef77ff283577adaa990</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.8.20-dev-5742/kotlin-gradle-plugin-idea-proto-1.8.20-dev-5742.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.9.20-dev-6566/kotlin-gradle-plugin-idea-proto-1.9.20-dev-6566.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.8.20-dev-5742/kotlin-gradle-plugin-idea-proto-1.8.20-dev-5742-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.9.20-dev-6566/kotlin-gradle-plugin-idea-proto-1.9.20-dev-6566-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
