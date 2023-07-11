@@ -35,17 +35,17 @@ import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.idea.base.projectStructure.getBinaryAndSourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleBeforeFileEventListener
+import org.jetbrains.kotlin.idea.util.toKtModulesForModificationEvents
 
 open class KotlinModuleStateModificationService(val project: Project) : Disposable {
     protected open fun mayBuiltinsHaveChanged(events: List<VFileEvent>): Boolean { return false }
 
     private fun invalidateSourceModule(module: Module, isRemoval: Boolean = false) {
-        // A test source `KtModule` will be invalidated together with its production source `KtModule` because it is a direct dependent from
-        // friend dependencies. See `IdeKotlinModuleDependentsProvider`.
-        module.productionOrTestSourceModuleInfo?.let { project.publishModuleStateModification(it.toKtModule(), isRemoval) }
+        module.toKtModulesForModificationEvents().forEach { ktModule ->
+            project.publishModuleStateModification(ktModule, isRemoval)
+        }
     }
 
     private fun invalidateLibraryModule(library: Library, isRemoval: Boolean = false) {

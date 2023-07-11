@@ -11,8 +11,7 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
-import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
+import org.jetbrains.kotlin.idea.util.toKtModulesForModificationEvents
 
 /**
  * [FirIdeOutOfBlockModificationService] increments modification trackers and publishes subscription events on out-of-block modification
@@ -38,12 +37,10 @@ internal class FirIdeOutOfBlockModificationService(val project: Project) : Dispo
     }
 
     /**
-     * Publishes out-of-block modification for [module]. Must be called in a write action.
+     * Publishes out-of-block modification for [module]'s production and test source [KtModule]s. Must be called in a write action.
      */
     fun publishModuleOutOfBlockModification(module: Module) {
-        // A test source `KtModule` will be invalidated together with its production source `KtModule` because it is a direct dependent from
-        // friend dependencies. See `IdeKotlinModuleDependentsProvider`.
-        module.productionOrTestSourceModuleInfo?.let { publishModuleOutOfBlockModification(it.toKtModule()) }
+        module.toKtModulesForModificationEvents().forEach { publishModuleOutOfBlockModification(it) }
     }
 
     /**
