@@ -28,7 +28,11 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
   public void testDefaultConstructor() { runTest("03", null); }
   public void testDefaultConstructorWithTypeParams() { runTest("TypeParams", null); }
 
-  public void testInnerClass() { runTest("04", "OuterClass"); }
+  public void testInnerClass() { runTest("04", null); }
+  
+  public void testNestedClass() { runTest("NestedClass", "OuterClass"); }
+  
+  public void testNestedClass2() { runTest("NestedClass2", "InnerClass"); }
 
   public void testSubclassVisibility() { runTest("05", null); }
 

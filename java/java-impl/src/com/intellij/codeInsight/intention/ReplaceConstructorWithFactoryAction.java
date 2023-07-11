@@ -52,7 +52,8 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
     if (constructorOrClass == null) return ModCommands.nop();
 
     List<PsiClass> targets = StreamEx.iterate(constructorOrClass, Objects::nonNull, PsiMember::getContainingClass)
-      .select(PsiClass.class).toList();
+      .select(PsiClass.class).filter(cls -> cls.hasModifierProperty(PsiModifier.STATIC) || cls.getContainingClass() == null)
+      .toList();
     SmartPsiElementPointer<PsiMember> constructorOrClassPtr = SmartPointerManager.createPointer(constructorOrClass);
     List<ModCommandAction> options =
       ContainerUtil.map(targets, target -> ModCommands.psiUpdateStep(
@@ -91,7 +92,7 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
     PsiClass wrContainingClass = updater.getWritable(
       constructorOrClass instanceof PsiClass cls ? cls : Objects.requireNonNull(constructorOrClass.getContainingClass()));
     PsiReferenceExpression classReferenceExpression = factory.createReferenceExpression(targetClass);
-    String factoryName = suggestName(wrContainingClass);
+    String factoryName = suggestName(targetClass, Objects.requireNonNull(wrContainingClass.getName()));
     PsiReferenceExpression qualifiedMethodReference = (PsiReferenceExpression)factory.createExpressionFromText("A." + factoryName, null);
     PsiMethod constructor = ObjectUtils.tryCast(constructorOrClass, PsiMethod.class);
 
@@ -128,11 +129,10 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
     }
   }
 
-  private static String suggestName(PsiClass psiClass) {
+  private static String suggestName(@NotNull PsiClass psiClass, @NotNull String baseName) {
     int i = 0;
-    String className = psiClass.getName();
     String[] baseNames =
-      {"create" + className, "new" + className, "get" + className, "createInstance", "getInstance", "newInstance", "create"};
+      {"create" + baseName, "new" + baseName, "get" + baseName, "createInstance", "getInstance", "newInstance", "create"};
     while (true) {
       for (String name : baseNames) {
         String finalName = name + (i == 0 ? "" : i);
