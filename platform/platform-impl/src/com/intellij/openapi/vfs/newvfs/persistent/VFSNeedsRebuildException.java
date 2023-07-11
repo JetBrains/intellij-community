@@ -38,6 +38,9 @@ public class VFSNeedsRebuildException extends IOException {
     NOT_CLOSED_PROPERLY,
 
     /** Current VFS impl version != VFS on-disk format version */
-    IMPL_VERSION_MISMATCH
+    IMPL_VERSION_MISMATCH,
+
+    /** Unrecognized errors during VFS initialization */
+    UNRECOGNIZED
   }
 }

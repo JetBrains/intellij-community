@@ -3,6 +3,7 @@ package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.StorageLockContext;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -120,8 +121,9 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
   public int getRecordsCount() throws IOException {
     int recordsLength = (int)myStorage.length() - getHeaderSize();
     if ((recordsLength % getRecordSize()) != 0) {
-      throw new IOException(MessageFormat.format("Corrupted records: storageLength={0} recordsLength={1} recordSize={2}",
-                                                 myStorage.length() + " " + myStorage, recordsLength, getRecordSize()));
+      throw new CorruptedException(
+        "Corrupted records: storageLength="+myStorage.length()+" recordsLength="+recordsLength+" recordSize="+getRecordSize()
+      );
     }
     return recordsLength / getRecordSize();
   }

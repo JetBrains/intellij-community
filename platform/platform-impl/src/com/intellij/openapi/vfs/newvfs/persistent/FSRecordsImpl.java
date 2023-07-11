@@ -217,7 +217,7 @@ public final class FSRecordsImpl {
         connectionInterceptors
       );
       LOG.info("VFS initialized: " + NANOSECONDS.toMillis(initializationResult.totalInitializationDurationNs) + " ms, " +
-               initializationResult.attemptsFailures + " failed attempts");
+               initializationResult.attemptsFailures.size() + " failed attempts");
       PersistentFSConnection connection = initializationResult.connection;
       PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(USE_CONTENT_HASHES, connection);
       PersistentFSAttributeAccessor attributeAccessor = new PersistentFSAttributeAccessor(connection);

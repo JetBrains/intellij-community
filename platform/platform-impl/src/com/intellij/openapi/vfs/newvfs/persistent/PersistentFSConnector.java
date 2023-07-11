@@ -41,6 +41,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor.hasDeletedFlag;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSNeedsRebuildException.RebuildCause.*;
+import static com.intellij.util.ExceptionUtil.findCauseAndSuppressed;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -217,30 +218,30 @@ final class PersistentFSConnector {
         loadingState.closeAndDeleteEverything();
       }
       catch (IOException cleanEx) {
-        cleanEx.addSuppressed(e);
+        e.addSuppressed(cleanEx);
         LOG.warn("Cannot clean filesystem storage", cleanEx);
-        throw cleanEx;
       }
 
-      //noinspection InstanceofCatchParameter
-      if (e instanceof InterruptedException) {
-        InterruptedIOException iex = new InterruptedIOException();
-        iex.addSuppressed(e);
-        throw iex;
-      }
-      else if (e instanceof ExecutionException) {
-        Throwable cause = e.getCause();
-        if (cause instanceof IOException) {
-          throw (IOException)cause;
+      //Try to unwrap exception, so the real cause appears, we could throw VFSNeedsRebuildException with it:
+
+      List<VFSNeedsRebuildException> vfsNeedsRebuildExceptions = findCauseAndSuppressed(e, VFSNeedsRebuildException.class);
+      if (!vfsNeedsRebuildExceptions.isEmpty()) {
+        VFSNeedsRebuildException mainEx = vfsNeedsRebuildExceptions.get(0);
+        for (VFSNeedsRebuildException suppressed : vfsNeedsRebuildExceptions.subList(1, vfsNeedsRebuildExceptions.size())) {
+          mainEx.addSuppressed(suppressed);
         }
-        throw new IOException(cause);
+        throw mainEx;
       }
-      else if (e instanceof IOException) {
-        throw (IOException)e;
+      if (!findCauseAndSuppressed(e, CorruptedException.class).isEmpty()) {
+        //'not closed properly' is the most likely explanation of corrupted enumerator -- but not the only one,
+        // it could also be a code bug
+        throw new VFSNeedsRebuildException(NOT_CLOSED_PROPERLY, "Some of storages was corrupted", e);
       }
-      else {
-        throw new IOException(e);
+      if (!findCauseAndSuppressed(e, VersionUpdatedException.class).isEmpty()) {
+        throw new VFSNeedsRebuildException(IMPL_VERSION_MISMATCH, "Some of storages versions were changed", e);
       }
+
+      throw new VFSNeedsRebuildException(UNRECOGNIZED, "Can't find specific cause of VFS init failure", e);
     }
   }
 
@@ -607,7 +608,8 @@ final class PersistentFSConnector {
       if (largestId != liveRecordsCount) {
         throw new VFSNeedsRebuildException(
           DATA_INCONSISTENT,
-          "Content storage & enumerator corrupted: contents.records(=" + liveRecordsCount + ") != contentHashes.largestId(=" + largestId + ")"
+          "Content storage & enumerator corrupted: " +
+          "contents.records(=" + liveRecordsCount + ") != contentHashes.largestId(=" + largestId + ")"
         );
       }
 
