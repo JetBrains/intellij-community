@@ -13,6 +13,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -170,7 +171,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       }
       @SuppressWarnings("MagicConstant") String weakestAccess = PsiUtil.getAccessModifier(minLevel);
       if (!weakestAccess.equals(refElement.getAccessModifier())) {
-        return createDescriptions(refElement, weakestAccess, manager, globalContext);
+        return createDescriptions(refElement, weakestAccess, manager);
       }
     }
 
@@ -180,7 +181,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
     String access = getPossibleAccess(refElement, minLevel <= 0 ? PsiUtil.ACCESS_LEVEL_PRIVATE : minLevel);
     if (!access.equals(refElement.getAccessModifier())) {
-      return createDescriptions(refElement, access, manager, globalContext);
+      return createDescriptions(refElement, access, manager);
     }
     return null;
   }
@@ -192,8 +193,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   }
 
   private static CommonProblemDescriptor @NotNull [] createDescriptions(RefElement refElement, String access,
-                                                                        @NotNull InspectionManager manager,
-                                                                        @NotNull GlobalInspectionContext globalContext) {
+                                                                        @NotNull InspectionManager manager) {
     final PsiElement element = refElement.getPsiElement();
     final PsiElement nameIdentifier = element != null ? IdentifierUtil.getNameIdentifier(element) : null;
     if (nameIdentifier != null) {
@@ -201,7 +201,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       final String message = JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", targetVisibility);
       final String elementDescription = ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE);
       final String quickFixName = JavaAnalysisBundle.message("change.visibility.level", elementDescription, targetVisibility);
-      final AcceptSuggestedAccess fix = new AcceptSuggestedAccess(globalContext.getRefManager(), access, quickFixName);
+      final AcceptSuggestedAccess fix = new AcceptSuggestedAccess(access, quickFixName);
       return new ProblemDescriptor[] {
         manager.createProblemDescriptor(nameIdentifier, message, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)
       };
@@ -517,7 +517,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   @NotNull
   @Override
   public QuickFix<?> getQuickFix(final String hint) {
-    return new AcceptSuggestedAccess(null, hint, null);
+    return new AcceptSuggestedAccess(hint, null);
   }
 
   @Override
@@ -559,14 +559,11 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     myExtensions.put(entryPointId, enabled);
   }
 
-  private static final class AcceptSuggestedAccess implements LocalQuickFix {
-    @SafeFieldForPreview
-    private final RefManager myManager;
+  private static final class AcceptSuggestedAccess extends PsiUpdateModCommandQuickFix {
     @PsiModifier.ModifierConstant private final String myHint;
     private final @IntentionName String myName;
 
-    private AcceptSuggestedAccess(final RefManager manager, @PsiModifier.ModifierConstant String hint, @IntentionName String name) {
-      myManager = manager;
+    private AcceptSuggestedAccess(@PsiModifier.ModifierConstant String hint, @IntentionName String name) {
       myHint = hint;
       myName = name;
     }
@@ -584,15 +581,11 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiModifierListOwner element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiModifierListOwner.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
+      final PsiModifierListOwner element = PsiTreeUtil.getParentOfType(startElement, PsiModifierListOwner.class);
       if (element != null) {
-        RefElement refElement = null;
-        if (myManager != null) {
-          refElement = myManager.getReference(element);
-        }
-        if (element instanceof PsiVariable) {
-          ((PsiVariable)element).normalizeDeclaration();
+        if (element instanceof PsiVariable variable) {
+          variable.normalizeDeclaration();
         }
 
         PsiModifierList list = element.getModifierList();
@@ -609,9 +602,6 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
         }
 
         list.setModifierProperty(myHint, true);
-        if (refElement instanceof RefJavaElement) {
-          RefJavaUtil.getInstance().setAccessModifier((RefJavaElement)refElement, myHint);
-        }
       }
     }
   }
