@@ -65,6 +65,10 @@ abstract class NewSelectLesson : KLesson("Select", LessonsBundle.message("select
       test { actions(it) }
     }
 
+    continueLesson()
+  }
+
+  protected fun LessonContext.continueLesson() {
     task("EditorSelectWord") {
       proposeRestoreIfWrongPreviousSelection()
       text(LessonsBundle.message("new.selection.select.call", action(it), numberOfSelectsForWholeCall))
@@ -96,7 +100,7 @@ abstract class NewSelectLesson : KLesson("Select", LessonsBundle.message("select
     }
   }
 
-  private fun TaskContext.proposeRestoreIfWrongPreviousSelection() {
+  protected fun TaskContext.proposeRestoreIfWrongPreviousSelection() {
     proposeRestore {
       checkPositionOfEditor(previous.sample) l@{ s ->
         val previousSelection = s.selection ?: return@l true
@@ -106,7 +110,7 @@ abstract class NewSelectLesson : KLesson("Select", LessonsBundle.message("select
     }
   }
 
-  private fun TaskRuntimeContext.checkSelection(needSelection: String): Boolean {
+  protected fun TaskRuntimeContext.checkSelection(needSelection: String): Boolean {
     val selectionModel = editor.selectionModel
     val selection = editor.document.charsSequence.subSequence(selectionModel.selectionStart, selectionModel.selectionEnd)
     return selection.toString().trim() == needSelection.trim()
