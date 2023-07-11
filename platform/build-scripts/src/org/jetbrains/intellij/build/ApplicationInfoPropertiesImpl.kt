@@ -171,11 +171,11 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
     )
     val isEapOverride = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP)
     if (isEapOverride != null) {
-      patchedAppInfo = patchedAppInfo.replace("eap=\".+\"".toRegex(), "eap=\"$isEapOverride\"")
+      patchedAppInfo = patchedAppInfo.replace("eap=\"[^\"]\"".toRegex(), "eap=\"$isEapOverride\"")
     }
     val suffixOverride = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX)
     if (suffixOverride != null) {
-      patchedAppInfo = patchedAppInfo.replace("suffix=\".+\"".toRegex(), "eap=\"$suffixOverride\"")
+      patchedAppInfo = patchedAppInfo.replace("suffix=\"[^\"]+\"".toRegex(), "suffix=\"$suffixOverride\"")
     }
     return@lazy patchedAppInfo
   }
