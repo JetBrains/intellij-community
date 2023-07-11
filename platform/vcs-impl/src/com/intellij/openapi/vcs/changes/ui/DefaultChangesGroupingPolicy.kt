@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import javax.swing.tree.DefaultTreeModel
 
 object NoneChangesGroupingPolicy : ChangesGroupingPolicy {
@@ -39,6 +40,12 @@ class DefaultChangesGroupingPolicy(val project: Project, val model: DefaultTreeM
   }
 
   private fun isMergeConflict(nodePath: StaticFilePath, node: ChangesBrowserNode<*>): Boolean {
+    if (node is ChangesGroupingPolicy.CompatibilityPlaceholderChangesBrowserNode) {
+      val vFile = nodePath.resolve() ?: return false
+      val status = ChangeListManager.getInstance(project).getStatus(vFile)
+      return isMergeConflict(status)
+    }
+
     if (node is ChangesBrowserChangeNode) {
       return isMergeConflict(node.userObject.fileStatus)
     }
