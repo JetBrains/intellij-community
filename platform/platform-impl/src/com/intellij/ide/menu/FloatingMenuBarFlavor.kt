@@ -5,6 +5,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.IdeMenuBarState
 import com.intellij.openapi.wm.impl.status.ClockPanel
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.Animator
 import com.intellij.util.ui.MouseEventAdapter
@@ -45,11 +46,13 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
     }
 
   init {
-    updateFullScreenControls()
+    val frameHelper = ProjectFrameHelper.getFrameHelper(menuBar.frame)
+    updateFullScreenControls(frameHelper?.isInFullScreen == true)
 
     menuBar.addMouseListener(MyMouseListener())
     menuBar.addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) {
-      updateFullScreenControls()
+      val fullScreenProperty = ClientProperty.isTrue(menuBar, IdeFrameDecorator.FULL_SCREEN)
+      updateFullScreenControls(fullScreenProperty)
     }
 
     IdeEventQueue.getInstance().addDispatcher(dispatcher = { event ->
@@ -60,9 +63,8 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
     }, scope = menuBar.coroutineScope)
   }
 
-  private fun updateFullScreenControls() {
-    val frameHelper = ProjectFrameHelper.getFrameHelper(menuBar.frame)
-    if (frameHelper?.isInFullScreen == true) {
+  private fun updateFullScreenControls(fullScreen: Boolean) {
+    if (fullScreen) {
       state = IdeMenuBarState.COLLAPSING
       restartAnimator()
     }

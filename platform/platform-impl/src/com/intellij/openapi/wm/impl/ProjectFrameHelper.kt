@@ -117,7 +117,7 @@ open class ProjectFrameHelper internal constructor(
       frameDecorator.setStoredFullScreen()
     }
     frame.background = JBColor.PanelBackground
-    rootPane.preInit(isInFullScreen = { isInFullScreen })
+    rootPane.preInit(isInFullScreen)
 
     balloonLayout = ActionCenterBalloonLayout(rootPane, JBUI.insets(8))
   }

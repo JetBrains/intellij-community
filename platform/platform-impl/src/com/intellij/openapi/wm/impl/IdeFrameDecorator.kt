@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -16,11 +17,10 @@ import com.intellij.ui.mac.MacMainFrameDecorator
 import com.jetbrains.JBR
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.EventQueue
 import java.awt.Frame
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.util.concurrent.atomic.AtomicReference
@@ -173,25 +173,11 @@ private class WinMainFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(fra
 
 // Extended WM Hints-based decorator
 private class EWMHFrameDecorator(frame: IdeFrameImpl, coroutineScope: CoroutineScope) : IdeFrameDecorator(frame) {
-  private var requestedState: Boolean? = null
 
   override val isInFullScreen: Boolean
     get() = X11UiUtil.isInFullScreenMode(frame)
 
   init {
-    val frameResizeListener = object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent) {
-        if (requestedState != null) {
-          notifyFrameComponents(requestedState!!)
-          requestedState = null
-        }
-      }
-    }
-    frame.addComponentListener(frameResizeListener)
-    executeOnCancelInEdt(coroutineScope) {
-      frame.removeComponentListener(frameResizeListener)
-    }
-
     if (SystemInfo.isKDE && DialogWrapperPeerImpl.isDisableAutoRequestFocus()) {
       // KDE sends an unexpected MapNotify event if a window is deiconified.
       // suppress.focus.stealing fix handles the MapNotify event differently
@@ -209,11 +195,13 @@ private class EWMHFrameDecorator(frame: IdeFrameImpl, coroutineScope: CoroutineS
   }
 
   override suspend fun toggleFullScreen(state: Boolean): Boolean {
-    requestedState = state
     X11UiUtil.toggleFullScreenMode(frame)
     val menuBar = frame.jMenuBar
     if (menuBar is IdeMenuBar) {
       menuBar.onToggleFullScreen(state)
+    }
+    withContext(Dispatchers.EDT) {
+      notifyFrameComponents(state)
     }
     return state
   }

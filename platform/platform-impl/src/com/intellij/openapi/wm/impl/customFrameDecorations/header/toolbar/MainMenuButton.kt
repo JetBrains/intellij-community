@@ -187,7 +187,14 @@ private fun createMenuButton(action: AnAction): ActionButton {
   val button = object : ActionButton(action, PresentationFactory().getPresentation(action),
                                      ActionPlaces.MAIN_MENU, { ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
     override fun getDataContext(): DataContext {
-      return DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200) ?: super.getDataContext()
+      var result: DataContext?
+      try {
+        result = DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200)
+      }
+      catch (e: Exception) {
+        result = null
+      }
+      return result ?: super.getDataContext()
     }
   }
 

@@ -387,8 +387,8 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
 
   open fun getToolWindowPane(): ToolWindowPane = toolWindowPane!!
 
-  private fun updateScreenState(isInFullScreen: () -> Boolean) {
-    fullScreen = isInFullScreen()
+  private fun updateScreenState(fullScreen: Boolean) {
+    this.fullScreen = fullScreen
     if (helper is DecoratedHelper) {
       val isCustomFrameHeaderVisible = !fullScreen || (SystemInfoRt.isMac && !isCompactHeader {
         computeMainActionGroups(CustomActionsSchema.getInstance())
@@ -445,10 +445,13 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   }
 
   @RequiresEdt
-  internal fun preInit(isInFullScreen: () -> Boolean) {
+  internal fun preInit(fullScreen: Boolean) {
     if (helper is DecoratedHelper || helper.isFloatingMenuBarSupported) {
-      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) { updateScreenState(isInFullScreen) }
-      updateScreenState(isInFullScreen)
+      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) {
+        val fullScreenProperty = ClientProperty.isTrue(this, IdeFrameDecorator.FULL_SCREEN)
+        updateScreenState(fullScreenProperty)
+      }
+      updateScreenState(fullScreen)
     }
   }
 
@@ -651,7 +654,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     frame.background = JBColor.PanelBackground
     (frame.balloonLayout as? BalloonLayoutImpl)?.queueRelayout()
 
-    updateScreenState { fullScreen }
+    updateScreenState(fullScreen)
   }
 
   private inner class MyRootLayout : RootLayout() {
