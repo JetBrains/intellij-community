@@ -157,7 +157,7 @@ open class TestProjectManager : ProjectManagerImpl() {
     }
   }
 
-  override fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
+  override suspend fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
     val project = super.instantiateProject(projectStoreBaseDir, options)
     totalCreatedProjectCount++
     trackProject(project)

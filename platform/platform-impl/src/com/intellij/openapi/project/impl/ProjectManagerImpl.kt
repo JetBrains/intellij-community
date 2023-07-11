@@ -772,11 +772,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   override fun newProject(file: Path, options: OpenProjectTask): Project? {
     removeProjectConfigurationAndCaches(file)
 
-    val project = instantiateProject(file, options)
     try {
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
       @Suppress("DEPRECATION")
-      runUnderModalProgressIfIsEdt {
+      val project = runUnderModalProgressIfIsEdt {
+        val project = instantiateProject(file, options)
         initProject(
           file = file,
           project = project,
@@ -785,6 +785,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           template = template,
           isTrustCheckNeeded = false,
         )
+        project
       }
       project.setTrusted(true)
       return project
@@ -827,13 +828,17 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
   }
 
-  protected open fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
-    val activity = StartUpMeasurer.startActivity("project instantiation")
-    val project = ProjectImpl(filePath = projectStoreBaseDir,
-                              projectName = options.projectName,
-                              parent = ApplicationManager.getApplication() as ComponentManagerImpl)
-    activity.end()
-    options.beforeInit?.invoke(project)
+  protected open suspend fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
+    val project = subtask("project instantiation") {
+      ProjectImpl(filePath = projectStoreBaseDir,
+                  projectName = options.projectName,
+                  parent = ApplicationManager.getApplication() as ComponentManagerImpl)
+    }
+    options.beforeInit?.let { beforeInit ->
+      subtask("options.beforeInit") {
+        beforeInit(project)
+      }
+    }
     return project
   }
 

@@ -183,7 +183,7 @@ private suspend fun isConversionNeeded(context: ConversionContextImpl): List<Con
       LOG.debug("conversion will be performed because no information about project files")
     }
     else {
-      val newMap = subtask("project files collecting") { context.allProjectFiles }
+      val newMap = subtask("conversion: project files collecting") { context.allProjectFiles }
       LOG.debug("Checking project files")
       val iterator = Object2LongMaps.fastIterator(newMap)
       while (iterator.hasNext()) {

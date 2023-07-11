@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.ex
 
 import com.intellij.ide.impl.OpenProjectTask
@@ -66,7 +66,7 @@ abstract class ProjectManagerEx : ProjectManager() {
   }
 
   /**
-   * Creates project but not open it. Use this method only in a test mode or special cases like new project wizard.
+   * Creates a project but not open it. Use this method only in a test mode or special cases like the new project wizard.
    */
   abstract fun newProject(file: Path, options: OpenProjectTask): Project?
 

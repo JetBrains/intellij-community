@@ -45,6 +45,7 @@ internal fun writeInJaegerJsonFormat(unsortedActivities: List<ActivityImpl>, out
           val random = Random
 
           w.array("spans") {
+            val threadNameManager = IdeThreadNameManager()
             for (activity in activities) {
               w.obj {
                 val spanId = bytesToHex(random.nextBytes(8))
@@ -65,6 +66,27 @@ internal fun writeInJaegerJsonFormat(unsortedActivities: List<ActivityImpl>, out
                 w.writeStringField("processID", "p1")
                 w.writeNumberField("startTime", absoluteStartTime + TimeUnit.NANOSECONDS.toMicros(activity.start - javaStartTimeNano))
                 w.writeNumberField("duration", TimeUnit.NANOSECONDS.toMicros(activity.end - activity.start))
+
+                w.array("tags") {
+                  w.obj {
+                    w.writeStringField("key", "thread.name")
+                    w.writeStringField("type", "string")
+                    w.writeStringField("value", threadNameManager.getThreadName(activity))
+                  }
+                  w.obj {
+                    w.writeStringField("key", "thread.id")
+                    w.writeStringField("type", "long")
+                    w.writeNumberField("value", activity.threadId)
+                  }
+
+                  activity.pluginId?.let {
+                    w.obj {
+                      w.writeStringField("key", "pluginId")
+                      w.writeStringField("type", "string")
+                      w.writeStringField("value", it)
+                    }
+                  }
+                }
 
                 if (activity.parent != null) {
                   w.array("references") {
