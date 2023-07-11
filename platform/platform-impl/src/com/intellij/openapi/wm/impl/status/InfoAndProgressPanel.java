@@ -876,7 +876,7 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
     @Override
     public void finish(@NotNull TaskInfo task) {
       super.finish(task);
-      queueRunningUpdate(() -> removeProgress(this));
+      ApplicationManager.getApplication().invokeLater(() -> removeProgress(this));
     }
 
     @Override
