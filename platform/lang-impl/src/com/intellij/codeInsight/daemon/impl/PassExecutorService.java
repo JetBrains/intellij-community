@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
@@ -44,6 +45,7 @@ import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import kotlin.coroutines.CoroutineContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -334,6 +336,7 @@ final class PassExecutorService implements Disposable {
     private final List<ScheduledPass> mySuccessorsOnCompletion = new ArrayList<>();
     private final List<ScheduledPass> mySuccessorsOnSubmit = new ArrayList<>();
     private final @NotNull DaemonProgressIndicator myUpdateProgress;
+    private final @NotNull CoroutineContext myContext;
 
     private ScheduledPass(@NotNull FileEditor fileEditor,
                           @NotNull HighlightingPass pass,
@@ -343,6 +346,7 @@ final class PassExecutorService implements Disposable {
       myPass = pass;
       myThreadsToStartCountdown = threadsToStartCountdown;
       myUpdateProgress = progressIndicator;
+      myContext = ThreadContext.currentThreadContext().minusKey(kotlinx.coroutines.Job.Key);;
     }
 
     @Override
@@ -387,7 +391,9 @@ final class PassExecutorService implements Disposable {
                 Activity startupActivity = StartUpMeasurer.startActivity("running " + passClassName);
                 boolean cancelled = false;
                 try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(myFileEditor))) {
-                  myPass.collectInformation(myUpdateProgress);
+                  try (AccessToken ignored2 = ThreadContext.installThreadContext(myContext, true)) {
+                    myPass.collectInformation(myUpdateProgress);
+                  }
                 }
                 catch (ProcessCanceledException | CancellationException e) {
                   cancelled = true;
@@ -424,7 +430,7 @@ final class PassExecutorService implements Disposable {
       log(myUpdateProgress, myPass, "Finished. ");
 
       if (!myUpdateProgress.isCanceled()) {
-        applyInformationToEditorsLater(myFileEditor, myPass, myUpdateProgress, myThreadsToStartCountdown, ()-> {
+        applyInformationToEditorsLater(myFileEditor, myPass, myUpdateProgress, myThreadsToStartCountdown, myContext, ()-> {
           for (ScheduledPass successor : mySuccessorsOnCompletion) {
             int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
             if (predecessorsToRun == 0) {
@@ -455,6 +461,7 @@ final class PassExecutorService implements Disposable {
                                               @NotNull HighlightingPass pass,
                                               @NotNull DaemonProgressIndicator updateProgress,
                                               @NotNull AtomicInteger threadsToStartCountdown,
+                                              @NotNull CoroutineContext context,
                                               @NotNull Runnable callbackOnApplied) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (isDisposed() || !fileEditor.isValid()) {
@@ -465,16 +472,18 @@ final class PassExecutorService implements Disposable {
         return;
       }
       try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
-        if (UIUtil.isShowing(fileEditor.getComponent())) {
-          pass.applyInformationToEditor();
-          repaintErrorStripeAndIcon(fileEditor);
-          if (pass instanceof TextEditorHighlightingPass) {
-            FileStatusMap fileStatusMap = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap();
-            Document document = ((TextEditorHighlightingPass)pass).getDocument();
-            int passId = ((TextEditorHighlightingPass)pass).getId();
-            fileStatusMap.markFileUpToDate(document, passId);
+        try (AccessToken ignored2 = ThreadContext.installThreadContext(context, true)) {
+          if (UIUtil.isShowing(fileEditor.getComponent())) {
+            pass.applyInformationToEditor();
+            repaintErrorStripeAndIcon(fileEditor);
+            if (pass instanceof TextEditorHighlightingPass) {
+              FileStatusMap fileStatusMap = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap();
+              Document document = ((TextEditorHighlightingPass)pass).getDocument();
+              int passId = ((TextEditorHighlightingPass)pass).getId();
+              fileStatusMap.markFileUpToDate(document, passId);
+            }
+            log(updateProgress, pass, " Applied");
           }
-          log(updateProgress, pass, " Applied");
         }
       }
       catch (ProcessCanceledException e) {
