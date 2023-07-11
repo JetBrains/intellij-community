@@ -6,7 +6,6 @@ import com.intellij.ui.ClientProperty
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.conflate
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -65,76 +64,48 @@ object ComponentListPanelFactory {
                                componentFactory: (CoroutineScope, T) -> JComponent): JPanel {
     val cs = parentCs.childScope(Dispatchers.Main)
     val panel = VerticalListPanel(gap).apply(panelInitializer)
+    val keyList = LinkedList<Any>()
 
-    fun addComponent(idx: Int, ignored: Any, item: T) {
-      val componentCs = cs.childScope()
-      val component = componentFactory(componentCs, item).also {
-        ClientProperty.put(it, COMPONENT_SCOPE_KEY, componentCs)
+    suspend fun addComponent(idx: Int, key: Any, item: T) {
+      keyList.add(idx, key)
+      withContext(Dispatchers.Main.immediate) {
+        val scope = cs.childScope()
+        val component = componentFactory(scope, item).also {
+          ClientProperty.put(it, COMPONENT_SCOPE_KEY, scope)
+        }
+        panel.add(component, idx)
       }
-      panel.add(component, idx)
     }
 
     suspend fun removeComponent(idx: Int) {
-      val component = panel.getComponent(idx)
-      val componentCs = ClientProperty.get(component, COMPONENT_SCOPE_KEY)
-      cs.launch {
-        componentCs?.coroutineContext?.get(Job)?.cancelAndJoin()
-      }
-      panel.remove(idx)
-    }
-
-    fun moveComponent(oldIdx: Int, newIdx: Int) {
-      val component = panel.getComponent(oldIdx)
-      panel.remove(oldIdx)
-      panel.add(component, newIdx)
-    }
-
-    trackChanges(cs, itemKeyExtractor, items, { panel.removeAll() }, ::addComponent, ::removeComponent, ::moveComponent,
-                 { panel.revalidate(); panel.repaint() })
-
-    return panel
-  }
-
-  fun <T : Any> trackChanges(cs: CoroutineScope,
-                             itemKeyExtractor: (T) -> Any,
-                             itemsFlow: Flow<List<T>>,
-                             removeAll: suspend () -> Unit,
-                             addComponent: suspend (idx: Int, key: Any, item: T) -> Unit,
-                             removeComponent: suspend (idx: Int) -> Unit,
-                             moveComponent: suspend (oldIdx: Int, newIdx: Int) -> Unit,
-                             revalidateAndRepaint: suspend () -> Unit) {
-    val keyList = LinkedList<Any>()
-
-    suspend fun trackedAddComponent(idx: Int, key: Any, item: T) {
       withContext(Dispatchers.Main.immediate) {
-        keyList.add(idx, key)
-        addComponent(idx, key, item)
+        val component = panel.getComponent(idx)
+        val componentCs = ClientProperty.get(component, COMPONENT_SCOPE_KEY)
+        cs.launch {
+          componentCs?.coroutineContext?.get(Job)?.cancelAndJoin()
+        }
+        panel.remove(idx)
       }
+      keyList.removeAt(idx)
     }
 
-    suspend fun trackedRemoveComponent(idx: Int) {
+    suspend fun moveComponent(oldIdx: Int, newIdx: Int) {
+      val key = keyList.removeAt(oldIdx)
       withContext(Dispatchers.Main.immediate) {
-        removeComponent(idx)
-        keyList.removeAt(idx)
+        val component = panel.getComponent(oldIdx)
+        panel.remove(oldIdx)
+        panel.add(component, newIdx)
       }
-    }
-
-    suspend fun trackedMoveComponent(oldIdx: Int, newIdx: Int) {
-      withContext(Dispatchers.Main.immediate) {
-        val key = keyList.removeAt(oldIdx)
-        moveComponent(oldIdx, newIdx)
-        keyList.add(newIdx, key)
-      }
+      keyList.add(newIdx, key)
     }
 
     cs.launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
       var firstCollect = true
-      itemsFlow.conflate().collect { mutableItems ->
-        val items = mutableItems.toList()
+      items.collect { items ->
         var revalidate = firstCollect
         if (firstCollect) {
           withContext(Dispatchers.Main.immediate) {
-            removeAll()
+            panel.removeAll()
           }
           firstCollect = false
         }
@@ -145,7 +116,7 @@ object ComponentListPanelFactory {
         while (currentIdx < keyList.size) {
           val key = keyList[currentIdx]
           if (!itemsByKey.containsKey(key)) {
-            trackedRemoveComponent(currentIdx)
+            removeComponent(currentIdx)
             revalidate = true
           }
           else {
@@ -157,7 +128,7 @@ object ComponentListPanelFactory {
         for ((idx, item) in items.withIndex()) {
           val key = itemKeyExtractor(item)
           if (idx > keyList.size - 1) {
-            trackedAddComponent(idx, key, item)
+            addComponent(idx, key, item)
             revalidate = true
             continue
           }
@@ -171,11 +142,11 @@ object ComponentListPanelFactory {
               }
             }
             if (existingIdx > 0) {
-              trackedMoveComponent(existingIdx, idx)
+              moveComponent(existingIdx, idx)
               revalidate = true
             }
             else {
-              trackedAddComponent(idx, key, item)
+              addComponent(idx, key, item)
               revalidate = true
             }
           }
@@ -183,10 +154,12 @@ object ComponentListPanelFactory {
 
         if (revalidate) {
           withContext(Dispatchers.Main.immediate) {
-            revalidateAndRepaint()
+            panel.revalidate()
+            panel.repaint()
           }
         }
       }
     }
+    return panel
   }
 }
