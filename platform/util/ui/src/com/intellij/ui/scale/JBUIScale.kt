@@ -92,7 +92,7 @@ object JBUIScale {
       return Pair("Dialog", 12)
     }
 
-    if (uiDefaults == null) {
+    if (uiDefaults == null && !LoadingState.APP_STARTED.isOccurred) {
       thisLogger().error("Must be precomputed")
     }
 
