@@ -144,7 +144,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
         if (!isAutoConfigurationEnabled() || !isApplicable(baseModule)) return null
         if (project.isGradleSyncPending() || project.isGradleSyncInProgress()) return null
-        if (baseModule.getBuildScriptPsiFile() == null) return null
+        if (module.hasKotlinPluginEnabled() || baseModule.getBuildScriptPsiFile() == null) return null
 
         val gradleVersion = project.guessProjectDir()?.path?.let {
             val linkedSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(it)
@@ -153,7 +153,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
         val hierarchy = project.buildKotlinModuleHierarchy() ?: return null
         val moduleNode = hierarchy.getNodeForModule(baseModule) ?: return null
-        if (moduleNode.hasKotlinVersionConflict()) return null
+        if (moduleNode.definedKotlinVersion != null || moduleNode.hasKotlinVersionConflict()) return null
 
         val forcedKotlinVersion = moduleNode.getForcedKotlinVersion()
         val allConfigurableKotlinVersions = getAllConfigurableKotlinVersions()

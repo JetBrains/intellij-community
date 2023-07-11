@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
 internal class KotlinWithGradleModuleNode(
     private val module: ModuleSourceRootGroup,
     internal val parent: KotlinWithGradleModuleNode? = null,
-    private val definedKotlinVersion: IdeKotlinVersion? = null
+    internal val definedKotlinVersion: IdeKotlinVersion? = null
 ) {
 
     private val _children = mutableListOf<KotlinWithGradleModuleNode>()

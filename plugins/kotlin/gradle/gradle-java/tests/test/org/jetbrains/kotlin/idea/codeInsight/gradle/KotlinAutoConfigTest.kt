@@ -49,6 +49,13 @@ class KotlinAutoConfigTest : KotlinGradleImportingTestCase() {
 
     @Test
     @TargetVersions("7.6")
+    fun testKotlinAlreadyConfigured() {
+        importProjectFromTestData()
+        testConfigure("project", null)
+    }
+
+    @Test
+    @TargetVersions("7.6")
     fun testUnsupportedJvmTarget() {
         importProjectFromTestData()
         testConfigure("project", null)
