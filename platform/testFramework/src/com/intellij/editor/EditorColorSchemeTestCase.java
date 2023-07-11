@@ -12,6 +12,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.JavaXmlDocumentKt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.input.DOMBuilder;
@@ -24,7 +25,10 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public abstract class EditorColorSchemeTestCase extends LightPlatformTestCase {
   protected static EditorColorsScheme loadScheme(@NotNull String docText) throws ParserConfigurationException, IOException, SAXException {
@@ -83,6 +87,25 @@ public abstract class EditorColorSchemeTestCase extends LightPlatformTestCase {
           child.removeContent();
         }
       });
+    }
+    return root;
+  }
+
+
+  protected Element serializeWithSelectedMetaInfo(@NotNull EditorColorsScheme scheme, String... properties) {
+    Element root = new Element("scheme");
+    ((AbstractColorsScheme)scheme).writeExternal(root);
+    fixPlatformSpecificValues(root);
+    Element metaInfo = root.getChild("metaInfo");
+    if (metaInfo != null) {
+      List<Element> toRemove = new ArrayList<>();
+      metaInfo.getChildren().forEach((child) -> {
+        Attribute name = child.getAttribute("name");
+        if (!child.getName().equals("property") || name == null || !ContainerUtil.exists(properties, s -> s.equals(name.getValue()))) {
+          toRemove.add(child);
+        }
+      });
+      toRemove.forEach(child->metaInfo.removeContent(child));
     }
     return root;
   }
