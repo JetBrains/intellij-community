@@ -451,6 +451,10 @@ public final class ConfigImportHelper {
     }
   }
 
+  public static @NotNull List<Path> findConfigDirectoryCandidates(@NotNull Path newConfigDir) {
+    return findConfigDirectories(newConfigDir).getPaths();
+  }
+
   static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir) {
     return findConfigDirectories(newConfigDir, null, null);
   }

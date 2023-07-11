@@ -337,12 +337,22 @@ fun CoroutineScope.startApplication(args: List<String>,
 }
 
 fun isConfigImportNeeded(configPath: Path): Boolean {
+  val markerWasCreated = deleteNewConfigDirectoryMarkerIfCreated(configPath)
+  if (markerWasCreated) {
+    deleteMarkerFromAllConfigCandidates(configPath)
+  }
   return !Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME))
          || customTargetDirectoryToImportConfig != null
-         || newConfigDirectoryMarkerWasCreated(configPath)
+         || markerWasCreated
 }
 
-private fun newConfigDirectoryMarkerWasCreated(configPath: Path): Boolean {
+private fun deleteMarkerFromAllConfigCandidates(configPath: Path) {
+  for (path in ConfigImportHelper.findConfigDirectoryCandidates(configPath)) {
+    deleteNewConfigDirectoryMarkerIfCreated(path)
+  }
+}
+
+private fun deleteNewConfigDirectoryMarkerIfCreated(configPath: Path): Boolean {
   val autoCreatedMarker = configPath / ".config.directory.created.by.headless.or.external.app"
   return runCatching { autoCreatedMarker.deleteIfExists() }.getOrElse { false }
 }
