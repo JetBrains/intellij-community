@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="netty-handler-proxy" type="repository">
-    <properties maven-id="io.netty:netty-handler-proxy:4.1.91.Final">
+    <properties jar-repository-id="central-proxy" maven-id="io.netty:netty-handler-proxy:4.1.94.Final">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-handler-proxy/4.1.91.Final/netty-handler-proxy-4.1.91.Final.jar">
-          <sha256sum>60c736bec98087bc97fcd0097640966c57398d152f9aaa19e1a4618bbf74dbb9</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-handler-proxy/4.1.94.Final/netty-handler-proxy-4.1.94.Final.jar">
+          <sha256sum>378738bfeb84c81228ae5de209f964ca87849f9a720c916c77f7cba6494bb1ec</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-socks/4.1.91.Final/netty-codec-socks-4.1.91.Final.jar">
-          <sha256sum>cdd0feff044cbf0f76b6925cb3e5a103f01e3577438538c8c640f069bf8c47e6</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-socks/4.1.94.Final/netty-codec-socks-4.1.94.Final.jar">
+          <sha256sum>1c0b4ee0b623402dd5bb78fd4a69bf808da2510524f489a24b0f3cc58ded046e</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -18,13 +18,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler-proxy/4.1.91.Final/netty-handler-proxy-4.1.91.Final.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-socks/4.1.91.Final/netty-codec-socks-4.1.91.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler-proxy/4.1.94.Final/netty-handler-proxy-4.1.94.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-socks/4.1.94.Final/netty-codec-socks-4.1.94.Final.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler-proxy/4.1.91.Final/netty-handler-proxy-4.1.91.Final-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-socks/4.1.91.Final/netty-codec-socks-4.1.91.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler-proxy/4.1.94.Final/netty-handler-proxy-4.1.94.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-socks/4.1.94.Final/netty-codec-socks-4.1.94.Final-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

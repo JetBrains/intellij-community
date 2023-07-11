@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="jmh-core" type="repository">
-    <properties maven-id="org.openjdk.jmh:jmh-core:1.36">
+    <properties jar-repository-id="central-proxy" maven-id="org.openjdk.jmh:jmh-core:1.36">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/openjdk/jmh/jmh-core/1.36/jmh-core-1.36.jar">
           <sha256sum>f90974e37d0da8886b5c05e6e3e7e20556900d747c5a41c1023b47c3301ea73c</sha256sum>
