@@ -99,7 +99,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return event.getUpdateSession();
   }
 
-  public void buildGroupMappings() {
+  void buildGroupMappings() {
     if (!myActionGroups.isEmpty()) return;
     ActionGroup mainMenu = Objects.requireNonNull((ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU));
     ActionGroup keymapOthers = Objects.requireNonNull((ActionGroup)myActionManager.getActionOrStub("Other.KeymapGroup"));
