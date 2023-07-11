@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ExperimentalUI;
@@ -31,7 +32,7 @@ abstract class SEResultsListFactory {
   private static final JBInsets TOGGLE_BUTTON_RENDERER_INSETS =
     new JBInsets(0, RENDERER_INSETS.getUnscaled().left, 0, RENDERER_INSETS.getUnscaled().right);
 
-  abstract SearchListModel createModel();
+  abstract SearchListModel createModel(Computable<String> tabIDProvider);
 
   abstract JBList<Object> createList(SearchListModel model);
 
@@ -84,7 +85,7 @@ abstract class SEResultsListFactory {
     if (component == null) {
       SearchEverywhereContributor<Object> contributor = searchListModel.getContributorForIndex(index);
       assert contributor != null : "Null contributor is not allowed here";
-      ListCellRenderer<? super Object> renderer = renderersCache.computeIfAbsent(contributor.getClass().getSimpleName(), s -> contributor.getElementsRenderer());
+      ListCellRenderer<? super Object> renderer = renderersCache.computeIfAbsent(contributor.getSearchProviderId(), s -> contributor.getElementsRenderer());
       unselectedBackground = extractUnselectedBackground(selected, () ->
         detachParent(renderer.getListCellRendererComponent(list, value, index, false, true)));
       component = detachParent(renderer.getListCellRendererComponent(list, value, index, selected, true));

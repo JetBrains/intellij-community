@@ -80,7 +80,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
       null
     }
 
-    return if (isShowDiff() || contributor is SemanticSearchEverywhereContributor) {
+    return if (isShowDiff() || (contributor is SemanticSearchEverywhereContributor && contributor.isElementSemantic(element))) {
       SearchEverywhereFoundElementInfoBeforeDiff(element, priority, contributor, mlWeight, mlElementInfo.features)
     }
     else {

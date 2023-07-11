@@ -1,18 +1,14 @@
 package com.intellij.searchEverywhereMl.semantics.contributors
 
+import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory
-import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
-import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
 import com.intellij.ide.util.gotoByName.GotoActionModel
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.editor.Editor
+import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.semantics.providers.LocalSemanticActionsProvider
 import com.intellij.searchEverywhereMl.semantics.providers.SemanticActionsProvider
@@ -20,7 +16,6 @@ import com.intellij.searchEverywhereMl.semantics.providers.ServerSemanticActions
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettingsManager
 import com.intellij.ui.JBColor
 import com.intellij.util.Processor
-import java.awt.Component
 import javax.swing.ListCellRenderer
 
 
@@ -29,49 +24,30 @@ import javax.swing.ListCellRenderer
  * Delegates rendering and data retrieval functionality to [ActionSearchEverywhereContributor].
  * Can work with two types of action providers: server-based and local
  */
-class SemanticActionSearchEverywhereContributor(
-  project: Project?,
-  contextComponent: Component?,
-  editor: Editor?
-) : WeightedSearchEverywhereContributor<GotoActionModel.MatchedValue>, LightEditCompatible, SemanticSearchEverywhereContributor {
-
-  private val delegateContributor = ActionSearchEverywhereContributor(project, contextComponent, editor)
+class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearchEverywhereContributor)
+  : ActionSearchEverywhereContributor(defaultContributor), SemanticSearchEverywhereContributor, PossibleSlowContributor {
 
   private val semanticActionsProvider: SemanticActionsProvider
 
   init {
-    val actionModel = GotoActionModel(project, contextComponent, editor)
-    actionModel.buildGroupMappings()
-
     val settings = SemanticSearchSettingsManager.getInstance()
     semanticActionsProvider = if (settings.getUseRemoteActionsServer()) {
-      ServerSemanticActionsProvider(actionModel)
+      ServerSemanticActionsProvider(model)
     }
     else {
-      LocalSemanticActionsProvider(actionModel)
+      LocalSemanticActionsProvider(model)
     }
   }
 
-  override fun getSearchProviderId(): String = delegateContributor.searchProviderId
-
-  override fun getGroupName() = delegateContributor.groupName
-
-  override fun getSortWeight() = delegateContributor.sortWeight
-
-  override fun showInFindResults() = delegateContributor.showInFindResults()
-
-  override fun isShownInSeparateTab() = delegateContributor.isShownInSeparateTab
-
-  override fun processSelectedItem(selected: GotoActionModel.MatchedValue, modifiers: Int, searchText: String): Boolean {
-    return delegateContributor.processSelectedItem(selected, modifiers, searchText)
+  override fun isElementSemantic(element: Any): Boolean {
+    return (element is MatchedValue && element.type == GotoActionModel.MatchedValueType.SEMANTIC)
   }
 
-  override fun getElementsRenderer(): ListCellRenderer<in GotoActionModel.MatchedValue> {
-    val defaultRenderer = delegateContributor.elementsRenderer
-    return ListCellRenderer<GotoActionModel.MatchedValue> { list, element, index, isSelected, cellHasFocus ->
-      val panel = defaultRenderer.getListCellRendererComponent(list, element, index, isSelected, cellHasFocus)
+  override fun getElementsRenderer(): ListCellRenderer<in MatchedValue> {
+    return ListCellRenderer { list, element, index, isSelected, cellHasFocus ->
+      val panel = super.getElementsRenderer().getListCellRendererComponent(list, element, index, isSelected, cellHasFocus)
 
-      if (Registry.`is`("search.everywhere.ml.semantic.highlight.items")) {
+      if (Registry.`is`("search.everywhere.ml.semantic.highlight.items") && isElementSemantic(element)) {
         panel.background = JBColor.GREEN.darker().darker()
       }
       panel
@@ -80,35 +56,63 @@ class SemanticActionSearchEverywhereContributor(
 
   override fun fetchWeightedElements(pattern: String,
                                      progressIndicator: ProgressIndicator,
-                                     consumer: Processor<in FoundItemDescriptor<GotoActionModel.MatchedValue>>) {
-    if (pattern.isBlank()) {
-      return
-    }
+                                     consumer: Processor<in FoundItemDescriptor<MatchedValue>>) {
+    if (pattern.isBlank()) return
 
+    val knownItems = mutableSetOf<FoundItemDescriptor<MatchedValue>>()
+
+    val semanticSearchIndicatorWrapper = SensitiveProgressWrapper(progressIndicator)
     ProgressManager.getInstance().executeProcessUnderProgress(
       {
         for (descriptor in semanticActionsProvider.search(pattern)) {
-          if (progressIndicator.isCanceled) {
-            break
+          if (semanticSearchIndicatorWrapper.isCanceled) break
+          val descriptorToProcess: FoundItemDescriptor<MatchedValue>
+
+          val equal = knownItems.firstOrNull { checkActionsEqual(it.item, descriptor.item) }
+          if (equal != null) {
+            val mergedElement = equal.item.mergeWith(descriptor.item) as MatchedValue
+            descriptorToProcess = FoundItemDescriptor(mergedElement, equal.weight + 1)
           }
-          consumer.process(descriptor)
+          else {
+            knownItems.add(descriptor)
+            descriptorToProcess = descriptor
+          }
+          consumer.process(descriptorToProcess)
         }
       },
-      progressIndicator
+      semanticSearchIndicatorWrapper
     )
+
+    super.fetchWeightedElements(pattern, progressIndicator) { descriptor ->
+      val descriptorToProcess: FoundItemDescriptor<MatchedValue>
+      val equal = knownItems.firstOrNull { checkActionsEqual(it.item, descriptor.item) }
+      if (equal != null) {
+        if (equal.item.shouldBeMergedIntoAnother()) {
+          val mergedElement = descriptor.item.mergeWith(equal.item) as MatchedValue
+          descriptorToProcess = FoundItemDescriptor(mergedElement, descriptor.weight + 1)
+        }
+        else {
+          descriptorToProcess = descriptor
+        }
+      }
+      else {
+        knownItems.add(descriptor)
+        descriptorToProcess = descriptor
+      }
+      consumer.process(descriptorToProcess)
+    }
   }
 
-  override fun getDataForItem(element: GotoActionModel.MatchedValue, dataId: String) = delegateContributor.getDataForItem(element, dataId)
-
   companion object {
-    class Factory : SearchEverywhereContributorFactory<GotoActionModel.MatchedValue> {
-      override fun createContributor(initEvent: AnActionEvent): SemanticActionSearchEverywhereContributor {
-        return SemanticActionSearchEverywhereContributor(
-          initEvent.project,
-          initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT),
-          initEvent.getData(CommonDataKeys.EDITOR)
-        )
-      }
+    private fun extractAction(item: Any): AnAction? {
+      if (item is AnAction) return item
+      return ((if (item is MatchedValue) item.value else item) as? GotoActionModel.ActionWrapper)?.action
+    }
+
+    private fun checkActionsEqual(lhs: Any, rhs: Any): Boolean {
+      val lhsAction = extractAction(lhs)
+      val rhsAction = extractAction(rhs)
+      return lhsAction != null && rhsAction != null && lhsAction == rhsAction
     }
   }
 }

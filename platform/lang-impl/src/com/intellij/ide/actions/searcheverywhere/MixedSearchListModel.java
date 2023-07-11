@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +19,8 @@ class MixedSearchListModel extends SearchListModel {
 
   private final SearchEverywhereReorderingService myReorderingService = SearchEverywhereReorderingService.getInstance();
 
+  private Computable<String> tabIDProvider;
+
   private Comparator<? super SearchEverywhereFoundElementInfo> myElementsComparator = SearchEverywhereFoundElementInfo.COMPARATOR.reversed();
 
   // new elements cannot be added before this index when "more..." elements are loaded
@@ -25,6 +28,10 @@ class MixedSearchListModel extends SearchListModel {
 
   public void setElementsComparator(Comparator<? super SearchEverywhereFoundElementInfo> elementsComparator) {
     myElementsComparator = elementsComparator;
+  }
+
+  public void setTabIDProvider(Computable<String> provider) {
+    tabIDProvider = provider;
   }
 
   @Override
@@ -52,7 +59,6 @@ class MixedSearchListModel extends SearchListModel {
       listElements.clear();
       if (lastIndex >= 0) fireIntervalRemoved(this, 0, lastIndex);
       listElements.addAll(items);
-      reorderItemsIfApplicable();
       if (!listElements.isEmpty()) fireIntervalAdded(this, 0, listElements.size() - 1);
 
       resultsExpired = false;
@@ -71,16 +77,19 @@ class MixedSearchListModel extends SearchListModel {
                                                      ? listElements.subList(myMaxFrozenIndex + 1, listElements.size())
                                                      : listElements;
         lst.sort(myElementsComparator);
-        reorderItemsIfApplicable();
         int begin = myMaxFrozenIndex >= 0 ? myMaxFrozenIndex + 1 : 0;
         fireContentsChanged(this, begin, endIndex);
       }
     }
+
+    reorderItemsIfApplicable();
   }
 
   private void reorderItemsIfApplicable() {
-    if (myReorderingService != null) {
-      myReorderingService.reorder(listElements);
+    if (myReorderingService != null && myMaxFrozenIndex == -1) {
+      String tabID = tabIDProvider.compute();
+      myReorderingService.reorder(tabID, listElements);
+      fireContentsChanged(this, 0, listElements.size() - 1);
     }
   }
 

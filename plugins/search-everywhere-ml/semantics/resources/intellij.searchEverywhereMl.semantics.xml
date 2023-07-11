@@ -3,8 +3,8 @@
   <resource-bundle>messages.searchEverywhereMlSemanticsBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhereContributor
-      implementation="com.intellij.searchEverywhereMl.semantics.contributors.SemanticActionSearchEverywhereContributor$Companion$Factory" />
+    <searchEverywhereMlContributorReplacementService
+      implementation="com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereMlContributorReplacementServiceImpl" />
 
     <searchEverywhereReorderingService
       implementation="com.intellij.searchEverywhereMl.semantics.reordering.SearchEverywhereReorderingServiceImpl" />

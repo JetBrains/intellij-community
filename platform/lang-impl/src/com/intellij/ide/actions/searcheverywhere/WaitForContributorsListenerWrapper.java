@@ -119,7 +119,7 @@ public class WaitForContributorsListenerWrapper implements SearchListener, Dispo
   private void logNonFinished() {
     contributorsMap.forEach((contributor, finished) -> {
       if (!finished) {
-        LOG.warn("Contributor '" + contributor.getClass().getSimpleName() +
+        LOG.warn("Contributor '" + contributor.getSearchProviderId() +
                  "' did not finish search for '" + mySearchPattern.get() + "'" +
                  " in " + waitTimeoutMs +"ms. Maybe it should implement PossibleSlowContributor interface?");
       }

@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -179,52 +178,26 @@ public final class SearchEverywhereHeader {
     };
 
     if (contributors.size() > 1) {
-      var allTabContributors = contributors.stream().filter(c -> !(c instanceof AllTabExcludedSearchEverywhereContributor)).toList();
-      SETab allTab = createAllTab(allTabContributors, onChanged);
+      SETab allTab = createAllTab(contributors, onChanged);
       res.add(allTab);
     }
 
-    var separateTabContributors = TabsCustomizationStrategy.getInstance()
-      .getSeparateTabContributors(contributors);
-
-    var tabIdToTab = separateTabContributors
-      .stream()
-      .collect(Collectors.groupingBy(
-        SearchEverywhereContributor::getSearchProviderId,
-        Collectors.collectingAndThen(Collectors.toList(), contributorList -> {
-          return createMultipleContributorsTab(contributorList, onChanged);
-        })
-      ));
-
-    var addedTabs = new HashSet<String>();
-    for (var contributor : separateTabContributors) {
-      String tabId = contributor.getSearchProviderId();
-      if (!addedTabs.contains(tabId)) {
-        res.add(tabIdToTab.get(tabId));
-        addedTabs.add(tabId);
-      }
-    }
+    TabsCustomizationStrategy.getInstance()
+      .getSeparateTabContributors(contributors)
+      .forEach(contributor -> {
+        SETab tab = createTab(contributor, onChanged);
+        res.add(tab);
+      });
 
     return res;
   }
 
   private static PersistentSearchEverywhereContributorFilter<String> createContributorsFilter(List<? extends SearchEverywhereContributor<?>> contributors) {
-    var uniqueProviderIds = new HashSet<String>();
-    // If there are multiple contributors in the same tab with the same provider id, then do not duplicate filters checkbox for them
-    var filteredContributors = contributors.stream().filter(c -> {
-      var providerId = c.getSearchProviderId();
-      if (!uniqueProviderIds.contains(providerId)) {
-        uniqueProviderIds.add(providerId);
-        return true;
-      }
-      return false;
-    }).toList();
-
-    Map<String, @Nls String> namesMap = ContainerUtil.map2Map(filteredContributors, c -> Pair.create(c.getSearchProviderId(),
-                                                                                                     c.getFullGroupName()));
+    Map<String, @Nls String> namesMap =
+      ContainerUtil.map2Map(contributors, c -> Pair.create(c.getSearchProviderId(), c.getFullGroupName()));
 
     return new PersistentSearchEverywhereContributorFilter<>(
-      ContainerUtil.map(filteredContributors, c -> c.getSearchProviderId()),
+      ContainerUtil.map(contributors, c -> c.getSearchProviderId()),
       SearchEverywhereConfiguration.getInstance(),
       namesMap::get, c -> null);
   }
@@ -309,19 +282,8 @@ public final class SearchEverywhereHeader {
   }
 
   private static SETab createTab(@NotNull SearchEverywhereContributor<?> contributor, Runnable onChanged) {
-    return createMultipleContributorsTab(Collections.singletonList(contributor), onChanged);
-  }
-
-  @ApiStatus.Experimental
-  @NotNull
-  private static SETab createMultipleContributorsTab(List<? extends SearchEverywhereContributor<?>> contributors,
-                                                     @NotNull Runnable onChanged) {
-    var allActions = new ArrayList<AnAction>();
-    contributors.forEach(contributor -> {
-      allActions.addAll(contributor.getActions(onChanged));
-    });
-
-    return new SETab(contributors.get(0).getSearchProviderId(), contributors.get(0).getGroupName(), contributors, allActions, null);
+    return new SETab(contributor.getSearchProviderId(), contributor.getGroupName(), Collections.singletonList(contributor),
+                     contributor.getActions(onChanged), null);
   }
 
   @NotNull

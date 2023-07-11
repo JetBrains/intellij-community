@@ -267,7 +267,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   @NotNull
   @Override
   public JBList<Object> createList() {
-    myListModel = myListFactory.createModel();
+    myListModel = myListFactory.createModel(this::getSelectedTabID);
     addListDataListener(myListModel);
     return myListFactory.createList(myListModel);
   }

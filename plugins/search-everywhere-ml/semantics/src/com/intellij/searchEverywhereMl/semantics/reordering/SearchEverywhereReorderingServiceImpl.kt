@@ -1,21 +1,27 @@
 package com.intellij.searchEverywhereMl.semantics.reordering
 
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereReorderingService
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettingsManager
 
-class SearchEverywhereReorderingServiceImpl: SearchEverywhereReorderingService {
+class SearchEverywhereReorderingServiceImpl : SearchEverywhereReorderingService {
   override fun isEnabled(): Boolean {
     return SemanticSearchSettingsManager.getInstance().getIsEnabledInActionsTab()
   }
 
-  override fun reorder(items: MutableList<SearchEverywhereFoundElementInfo>) {
-    if (!isEnabled()) {
-      return
-    }
+  override fun isEnabledInTab(tabID: String): Boolean {
+    return tabID == ActionSearchEverywhereContributor::class.java.simpleName
+  }
 
-    val (semantic, classic) = items.partition { it.contributor is SemanticSearchEverywhereContributor }
+  override fun reorder(tabID: String, items: MutableList<SearchEverywhereFoundElementInfo>) {
+    if (!isEnabled() || !isEnabledInTab(tabID)) return
+
+    val (semantic, classic) = items.partition {
+      val contributor = it.contributor
+      contributor is SemanticSearchEverywhereContributor && contributor.isElementSemantic(it.element)
+    }
     if (classic.isEmpty() || semantic.isEmpty()) {
       return
     }

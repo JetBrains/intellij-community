@@ -54,11 +54,23 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
   private final GotoActionItemProvider myProvider;
   protected boolean myDisabledActions;
 
+  public ActionSearchEverywhereContributor(ActionSearchEverywhereContributor other) {
+    myProject = other.myProject;
+    myContextComponent = other.myContextComponent;
+    myModel = other.myModel;
+    myProvider = other.myProvider;
+    myDisabledActions = other.myDisabledActions;
+  }
+
   public ActionSearchEverywhereContributor(Project project, Component contextComponent, Editor editor) {
     myProject = project;
     myContextComponent = new WeakReference<>(contextComponent);
     myModel = new GotoActionModel(project, contextComponent, editor);
     myProvider = new GotoActionItemProvider(myModel);
+  }
+
+  protected GotoActionModel getModel()  {
+    return myModel;
   }
 
   @NotNull

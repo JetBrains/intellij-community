@@ -286,8 +286,16 @@ class MixedResultsSearcher implements SESearcher {
       hasMoreMap.put(contributor, hasMore);
     }
 
-    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, ProgressIndicator indicator) throws InterruptedException {
-      SearchEverywhereFoundElementInfo newElementInfo = prepareFoundElementInfo(element, contributor, priority);
+    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, ProgressIndicator indicator)
+      throws InterruptedException {
+      final var mlService = SearchEverywhereMlService.getInstance();
+      final SearchEverywhereFoundElementInfo newElementInfo;
+      if (mlService == null) {
+        newElementInfo = new SearchEverywhereFoundElementInfo(element, priority, contributor);
+      }
+      else {
+        newElementInfo = mlService.createFoundElementInfo(contributor, element, priority);
+      }
 
       Condition condition = conditionsMap.get(contributor);
       Collection<SearchEverywhereFoundElementInfo> section = mySections.get(contributor);
@@ -322,62 +330,23 @@ class MixedResultsSearcher implements SESearcher {
           return true;
         }
 
-        ArrayList<SearchEverywhereFoundElementInfo> toRemove = new ArrayList<>(
-          action instanceof SEEqualElementsActionType.Replace
-          ? ((SEEqualElementsActionType.Replace)action).getToBeReplaced()
-          : Collections.emptyList()
-        );
+        section.add(newElementInfo);
+        runInNotificationExecutor(() -> myListener.elementsAdded(Collections.singletonList(newElementInfo)));
 
-        ArrayList<SearchEverywhereFoundElementInfo> toAdd = new ArrayList<>();
-
-        if (action instanceof SEEqualElementsActionType.Merge mergeAction) {
-          var newElement = (MergeableElement)newElementInfo.element;
-          boolean isNewElementAdded = false;
-          for (SearchEverywhereFoundElementInfo oldElementInfo : mergeAction.getToBeMerged()) {
-            var oldElement = (MergeableElement)oldElementInfo.element;
-            toRemove.add(oldElementInfo);
-            if (newElement.shouldBeMergedIntoAnother()) {
-              oldElement.mergeWith(newElement);
-              // Here we cannot use true priority from oldElementInfo before applying ML because
-              // SearchEverywhereFoundElementInfoWithMl is not yet available in the Platform API
-              // TODO: replace priority with ((SearchEverywhereFoundElementInfoWithMl)oldElementInfo).sePriority
-              toAdd.add(prepareFoundElementInfo(oldElement, oldElementInfo.contributor, priority));
-            }
-            else {
-              newElement.mergeWith(oldElement);
-              // Do not add a new element more than once:
-              if (!isNewElementAdded) {
-                toAdd.add(prepareFoundElementInfo(newElement, newElementInfo.contributor, priority));
-                isNewElementAdded = true;
-              }
-            }
-          }
-        }
-        else {
-          toAdd.add(newElementInfo);
-        }
+        List<SearchEverywhereFoundElementInfo> toRemove = action instanceof SEEqualElementsActionType.Replace
+                                                          ? ((SEEqualElementsActionType.Replace)action).getToBeReplaced()
+                                                          : Collections.emptyList();
 
         toRemove.forEach(info -> {
           Collection<SearchEverywhereFoundElementInfo> list = mySections.get(info.getContributor());
           Condition listCondition = conditionsMap.get(info.getContributor());
           list.remove(info);
-          LOG.debug(String.format("Element %s for contributor %s is removed", info.getElement().toString(), info.getContributor().getSearchProviderId()));
+          LOG.debug(String.format("Element %s for contributor %s is removed", info.getElement().toString(),
+                                  info.getContributor().getSearchProviderId()));
           listCondition.signal();
         });
         runInNotificationExecutor(() -> myListener.elementsRemoved(toRemove));
-
-        boolean shouldStopSearch = false;
-        for (SearchEverywhereFoundElementInfo info: toAdd) {
-          Collection<SearchEverywhereFoundElementInfo> sectionToChange = mySections.get(info.contributor);
-          sectionToChange.add(info);
-          if (sectionToChange.size() >= limit) {
-            shouldStopSearch = true;
-          }
-        }
-
-        runInNotificationExecutor(() -> myListener.elementsAdded(toAdd));
-
-        if (shouldStopSearch) {
+        if (section.size() >= limit) {
           stopSearchIfNeeded();
         }
         return true;
@@ -394,16 +363,6 @@ class MixedResultsSearcher implements SESearcher {
         info -> !recentContributorID.equals(info.getContributor().getSearchProviderId())
       );
       return updatedList.isEmpty() ? SEEqualElementsActionType.Skip.INSTANCE : new SEEqualElementsActionType.Replace(updatedList);
-    }
-
-    private static SearchEverywhereFoundElementInfo prepareFoundElementInfo(Object element,
-                                                                            SearchEverywhereContributor<?> contributor,
-                                                                            int priority) {
-      final var mlService = SearchEverywhereMlService.getInstance();
-      if (mlService == null) {
-        return new SearchEverywhereFoundElementInfo(element, priority, contributor);
-      }
-      return mlService.createFoundElementInfo(contributor, element, priority);
     }
 
     public void contributorFinished(SearchEverywhereContributor<?> contributor) {

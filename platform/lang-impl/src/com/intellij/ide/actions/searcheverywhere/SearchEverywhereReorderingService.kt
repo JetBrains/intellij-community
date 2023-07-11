@@ -32,6 +32,8 @@ interface SearchEverywhereReorderingService {
   /** Indicates whether custom reordering should be used */
   fun isEnabled(): Boolean
 
+  fun isEnabledInTab(tabID: String): Boolean
+
   /** Performs custom reordering */
-  fun reorder(items: MutableList<SearchEverywhereFoundElementInfo>)
+  fun reorder(tabID: String, items: MutableList<SearchEverywhereFoundElementInfo>)
 }

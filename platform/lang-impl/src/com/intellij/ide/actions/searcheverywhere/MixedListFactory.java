@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +26,9 @@ class MixedListFactory extends SEResultsListFactory {
   }
 
   @Override
-  public SearchListModel createModel() {
+  public SearchListModel createModel(Computable<String> tabIDProvider) {
     MixedSearchListModel mixedModel = new MixedSearchListModel();
+    mixedModel.setTabIDProvider(tabIDProvider);
 
     Map<String, Integer> priorities = getContributorsPriorities();
     Comparator<SearchEverywhereFoundElementInfo> prioritizedContributorsComparator = (element1, element2) -> {

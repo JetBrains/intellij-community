@@ -1,7 +1,8 @@
 package com.intellij.searchEverywhereMl.semantics.contributors
 
-import com.intellij.ide.actions.searcheverywhere.AllTabExcludedSearchEverywhereContributor
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface SemanticSearchEverywhereContributor: AllTabExcludedSearchEverywhereContributor
+interface SemanticSearchEverywhereContributor {
+  fun isElementSemantic(element: Any): Boolean
+}

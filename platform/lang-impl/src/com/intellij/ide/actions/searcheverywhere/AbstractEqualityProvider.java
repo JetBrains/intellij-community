@@ -15,10 +15,6 @@ public abstract class AbstractEqualityProvider implements SEResultsEqualityProvi
     return alreadyFoundItems.stream()
       .map(alreadyFoundItem -> {
         if (areEqual(newItem, alreadyFoundItem)) {
-          if (canBeMerged(newItem, alreadyFoundItem)) {
-            return new SEEqualElementsActionType.Merge(alreadyFoundItem);
-          }
-
           return SearchEverywhereFoundElementInfo.COMPARATOR.compare(newItem, alreadyFoundItem) > 0
                  ? new SEEqualElementsActionType.Replace(alreadyFoundItem)
                  : SEEqualElementsActionType.Skip.INSTANCE;
@@ -31,12 +27,4 @@ public abstract class AbstractEqualityProvider implements SEResultsEqualityProvi
 
   protected abstract boolean areEqual(@NotNull SearchEverywhereFoundElementInfo newItem,
                                       @NotNull SearchEverywhereFoundElementInfo alreadyFoundItem);
-
-  private static boolean canBeMerged(@NotNull SearchEverywhereFoundElementInfo lhs,
-                                     @NotNull SearchEverywhereFoundElementInfo rhs) {
-    if (lhs.getElement() instanceof MergeableElement lhsElement && rhs.getElement() instanceof MergeableElement rhsElement) {
-      return lhsElement.shouldBeMergedIntoAnother() || rhsElement.shouldBeMergedIntoAnother();
-    }
-    return false;
-  }
 }

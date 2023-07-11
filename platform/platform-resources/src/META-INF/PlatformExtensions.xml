@@ -226,7 +226,7 @@
     <search.optionContributor implementation="com.intellij.ide.ui.search.PluginSearchableOptionContributor"/>
 
     <applicationService serviceInterface="com.intellij.ide.actions.searcheverywhere.TabsCustomizationStrategy"
-                        serviceImplementation="com.intellij.ide.actions.searcheverywhere.ContributorDefinedTabsCustomizationStrategy"/>
+                        serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlTabsCustomizationStrategy"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"/>
 
