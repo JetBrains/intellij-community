@@ -728,6 +728,8 @@
       "bottomRight1Color": "#00000009"
     },
 
+    "Notification.WelcomeScreen.separatorColor": "#323232",
+
     "WelcomeScreen.Projects.actions.selectionBackground": "#326FC1",
     "WelcomeScreen.Projects.actions.background": "#3C5C86",
 
