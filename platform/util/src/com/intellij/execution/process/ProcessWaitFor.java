@@ -19,7 +19,7 @@ public class ProcessWaitFor {
 
   public ProcessWaitFor(@NotNull Process process, @NotNull TaskExecutor executor, @NotNull String presentableName) {
     myWaitForThreadFuture = executor.executeTask(() -> {
-      String threadName = StringUtil.isEmptyOrSpaces(presentableName) ? Thread.currentThread().getName() : presentableName;
+      String threadName = StringUtil.isEmptyOrSpaces(presentableName) ? Thread.currentThread().getName() : "ProcessWaitFor: " + presentableName;
       ConcurrencyUtil.runUnderThreadName(threadName, () -> {
         int exitCode = 0;
         try {
