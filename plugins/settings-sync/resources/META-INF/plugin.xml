@@ -21,6 +21,8 @@
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncSettings"/>
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncEvents"/>
     <applicationService serviceImplementation="com.intellij.settingsSync.plugins.SettingsSyncPluginManager"/>
+    <applicationService serviceImplementation="com.intellij.settingsSync.notification.NotificationServiceImpl"
+                        serviceInterface="com.intellij.settingsSync.notification.NotificationService"/>
     <!--suppress PluginXmlDynamicPlugin -->
     <applicationInitializedListener implementation="com.intellij.settingsSync.SettingsSynchronizer"/>
     <applicationConfigurable id="settings.sync"

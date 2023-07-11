@@ -7,10 +7,10 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.util.io.*
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.OutputStream
+import java.lang.RuntimeException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
@@ -27,6 +27,8 @@ internal object SettingsSnapshotZipSerializer {
   private const val INFO = "info.json"
   private const val PLUGINS = "plugins.json"
 
+  private const val MAX_ZIP_SIZE = 524288 // bytes
+
   private val LOG = logger<SettingsSnapshotZipSerializer>()
 
   private val json = Json { prettyPrint = true }
@@ -34,6 +36,9 @@ internal object SettingsSnapshotZipSerializer {
   fun serializeToZip(snapshot: SettingsSnapshot): Path {
     val file = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT_ZIP, null)
     serialize(snapshot, Compressor.Zip(file))
+    if (file.length() > MAX_ZIP_SIZE) {
+      throw ZipSizeExceedException(file.length())
+    }
     return file.toPath()
   }
 
@@ -182,5 +187,11 @@ internal object SettingsSnapshotZipSerializer {
     var hostName: String = ""
     var configFolder: String = ""
     var isDeleted: Boolean = false
+  }
+
+  class ZipSizeExceedException(private val size: Long): RuntimeException() {
+    override fun toString(): String {
+      return "Zip size $size excesses maximum allowed zip size"
+    }
   }
 }

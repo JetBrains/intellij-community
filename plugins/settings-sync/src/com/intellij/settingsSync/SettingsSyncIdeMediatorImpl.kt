@@ -4,14 +4,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
-import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
@@ -21,11 +14,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
+import com.intellij.settingsSync.notification.NotificationService
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.io.*
-import org.jdom.Element
 import java.io.InputStream
-import java.lang.RuntimeException
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -35,8 +27,6 @@ import java.time.Instant
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Predicate
-import kotlin.collections.ArrayList
-import kotlin.collections.LinkedHashSet
 import kotlin.concurrent.withLock
 import kotlin.io.path.exists
 import kotlin.io.path.name
@@ -105,43 +95,9 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     notifyRestartNeeded()
   }
 
-
   private fun notifyRestartNeeded() {
-    if (restartRequiredReasons.isEmpty())
-      return
-    val notification = buildRestartNeededNotification()
-    notification.addAction(NotificationAction.create(
-      SettingsSyncBundle.message("sync.restart.notification.action", ApplicationNamesInfo.getInstance().fullProductName),
-      com.intellij.util.Consumer {
-        val app = ApplicationManager.getApplication() as ApplicationEx
-        app.restart(true)
-      }))
-    notification.notify(null)
-  }
-
-  private fun buildRestartNeededNotification(): Notification {
-    fun getMultiReasonRestartMessage(): String {
-      assert(restartRequiredReasons.size > 1)
-      val message = StringBuilder(SettingsSyncBundle.message("sync.restart.notification.message.subtitle")).append('\n')
-
-      val sortedRestartReasons = restartRequiredReasons.sorted()
-      for ((counter, reason) in sortedRestartReasons.withIndex()) {
-        message.append(reason.getMultiReasonNotificationListEntry(counter + 1))
-      }
-
-      message.dropLast(0) // we do not need the new line in the end
-      return message.toString()
-    }
-
-    val message = when {
-      restartRequiredReasons.isEmpty() -> throw RuntimeException("No restart reasons found")
-      restartRequiredReasons.size == 1 -> restartRequiredReasons.first().getSingleReasonNotificationMessage()
-      else -> getMultiReasonRestartMessage()
-    }
-    return NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
-      .createNotification(SettingsSyncBundle.message("sync.restart.notification.title"),
-                          message,
-                          NotificationType.INFORMATION)
+    if (restartRequiredReasons.isEmpty()) return
+    NotificationService.getInstance().notifyRestartNeeded(restartRequiredReasons)
   }
 
   override fun activateStreamProvider() {

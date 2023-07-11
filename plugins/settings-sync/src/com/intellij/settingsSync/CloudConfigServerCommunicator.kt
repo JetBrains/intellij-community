@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
+import com.intellij.settingsSync.notification.NotificationService
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.delete
 import com.intellij.util.io.inputStream
@@ -187,6 +188,11 @@ internal open class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicat
     LOG.info("Pushing setting snapshot to the cloud config server...")
     val zip = try {
       SettingsSnapshotZipSerializer.serializeToZip(snapshot)
+    }
+    catch (e: SettingsSnapshotZipSerializer.ZipSizeExceedException) {
+      LOG.warn(e)
+      NotificationService.getInstance().notifyZipSizeExceed()
+      return SettingsSyncPushResult.Error(e.message ?: "Couldn't prepare zip file")
     }
     catch (e: Throwable) {
       LOG.warn(e)
