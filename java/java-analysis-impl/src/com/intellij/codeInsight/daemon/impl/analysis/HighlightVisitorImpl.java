@@ -617,6 +617,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
       add(HighlightControlFlowUtil.checkMissingReturnStatement(codeBlock, returnType));
     }
+
+    if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_21) && type == JavaTokenType.SEMICOLON && token.getParent() instanceof PsiImportList) {
+      add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(token.getTextRange())
+        .descriptionAndTooltip(JavaErrorBundle.message("error.lone.semicolons.not.allowed.in.the.import.table")));
+    }
   }
 
   @Override
