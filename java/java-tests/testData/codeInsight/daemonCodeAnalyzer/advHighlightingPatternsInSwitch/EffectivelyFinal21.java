@@ -181,4 +181,13 @@ class Test {
       }
     }
   }
+
+  void testUnary(Object o, Integer in) {
+    switch (o) {
+      case Integer mode when -in == 1 && -mode == 2:
+        break;
+      default:
+        break;
+    }
+  }
 }
