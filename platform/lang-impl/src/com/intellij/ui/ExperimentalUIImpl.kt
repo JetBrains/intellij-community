@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
-import com.intellij.util.application
 
 /**
  * @author Konstantin Bulenkov
@@ -105,6 +104,10 @@ private class ExperimentalUIImpl : ExperimentalUI() {
       NewUIInfoService.getInstance().updateDisableNewUIDate()
     }
 
+    // On the client, onValueChanged will not be called again as there's no real registry value change.
+    // Set the override before calling  resetLafSettingsToDefault to ensure correct LaF is chosen.
+    if (PlatformUtils.isJetBrainsClient())
+      NewUiValue.overrideNewUiForOneRemDevSession(isEnabled)
     resetLafSettingsToDefault()
   }
 
@@ -117,6 +120,11 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     catch (e: Throwable) {
       logger.error(e)
     }
+  }
+
+  override fun saveCurrentValueAndReapplyDefaultLaf() {
+    saveNewValue(NewUiValue.isEnabled())
+    resetLafSettingsToDefault()
   }
 
   private fun setNewUiUsed() {
@@ -138,7 +146,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
       .noText(IdeBundle.message("dialog.newui.message.new.ui.revert"))
       .guessWindowAndAsk()
     if (shouldRestart) {
-      val delegate = application.service<ExperimentalUIJetBrainsClientDelegate>()
+      val delegate = ExperimentalUIJetBrainsClientDelegate.getInstance()
       delegate.changeUi(isEnabled, updateLocally = {
         onValueChanged(isEnabled)
         saveNewValue(isEnabled)
@@ -201,5 +209,10 @@ private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
 }
 
 interface ExperimentalUIJetBrainsClientDelegate {
+  companion object {
+    fun getInstance() = service<ExperimentalUIJetBrainsClientDelegate>()
+  }
+
+  fun shouldReactToRemoteUiChange(): Boolean
   fun changeUi(isEnabled: Boolean, updateLocally: (Boolean) -> Unit)
 }
