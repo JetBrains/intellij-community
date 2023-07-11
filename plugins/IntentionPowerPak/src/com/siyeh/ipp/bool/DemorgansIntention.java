@@ -36,7 +36,7 @@ public class DemorgansIntention extends MCIntention {
   }
 
   @Override
-  protected String getTextForElement(@NotNull PsiElement element) {
+  protected @NotNull String getTextForElement(@NotNull PsiElement element) {
     final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)element;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     if (tokenType.equals(JavaTokenType.ANDAND)) {

@@ -39,7 +39,7 @@ public class ConstantSubexpressionIntention extends MCIntention {
   }
 
   @Override
-  protected String getTextForElement(@NotNull PsiElement element) {
+  protected @NotNull String getTextForElement(@NotNull PsiElement element) {
     final PsiJavaToken token;
     if (element instanceof PsiJavaToken) {
       token = (PsiJavaToken)element;

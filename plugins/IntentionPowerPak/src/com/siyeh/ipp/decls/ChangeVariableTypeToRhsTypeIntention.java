@@ -25,7 +25,7 @@ public class ChangeVariableTypeToRhsTypeIntention extends MCIntention {
   }
 
   @Override
-  protected String getTextForElement(@NotNull PsiElement element) {
+  protected @NotNull String getTextForElement(@NotNull PsiElement element) {
     final PsiVariable variable = (PsiVariable)element.getParent();
     final PsiExpression initializer = variable.getInitializer();
     assert initializer != null;

@@ -38,7 +38,7 @@ public class FlipExpressionIntention extends MCIntention {
   }
 
   @Override
-  public String getTextForElement(@NotNull PsiElement element) {
+  public @NotNull String getTextForElement(@NotNull PsiElement element) {
     final PsiPolyadicExpression expression = (PsiPolyadicExpression)element.getParent();
     final PsiExpression[] operands = expression.getOperands();
     final PsiJavaToken sign = expression.getTokenBeforeOperand(operands[1]);

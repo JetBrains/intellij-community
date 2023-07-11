@@ -13,7 +13,6 @@ import com.siyeh.ipp.base.PsiElementContextPredicate;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.PsiSelectionSearcher;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -22,7 +21,7 @@ import java.util.List;
  */
 public class FlipSetterCallIntention extends MCIntention {
   @Override
-  protected @Nullable String getTextForElement(@NotNull PsiElement element) {
+  protected @NotNull String getTextForElement(@NotNull PsiElement element) {
     return getFamilyName();
   }
 

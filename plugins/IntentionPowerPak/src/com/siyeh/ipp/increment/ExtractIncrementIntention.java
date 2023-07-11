@@ -30,7 +30,7 @@ public class ExtractIncrementIntention extends MCIntention {
   }
 
   @Override
-  public String getTextForElement(@NotNull PsiElement element) {
+  public @NotNull String getTextForElement(@NotNull PsiElement element) {
     final String operatorText = IncrementUtil.getOperatorText(element);
     return IntentionPowerPackBundle.message(
       "extract.increment.intention.name", operatorText);

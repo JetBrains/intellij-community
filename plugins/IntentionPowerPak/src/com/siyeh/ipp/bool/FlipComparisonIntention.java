@@ -36,7 +36,7 @@ public class FlipComparisonIntention extends MCIntention {
   }
 
   @Override
-  public String getTextForElement(@NotNull PsiElement element) {
+  public @NotNull String getTextForElement(@NotNull PsiElement element) {
     final PsiBinaryExpression expression = (PsiBinaryExpression)element;
     final PsiJavaToken sign = expression.getOperationSign();
     String operatorText = sign.getText();

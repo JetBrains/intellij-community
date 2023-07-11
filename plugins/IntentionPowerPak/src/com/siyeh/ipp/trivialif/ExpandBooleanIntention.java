@@ -40,7 +40,7 @@ public class ExpandBooleanIntention extends MCIntention {
   }
 
   @Override
-  protected String getTextForElement(@NotNull PsiElement element) {
+  protected @NotNull String getTextForElement(@NotNull PsiElement element) {
     if (element instanceof PsiDeclarationStatement) {
       return IntentionPowerPackBundle.message("expand.boolean.declaration.intention.name");
     }
