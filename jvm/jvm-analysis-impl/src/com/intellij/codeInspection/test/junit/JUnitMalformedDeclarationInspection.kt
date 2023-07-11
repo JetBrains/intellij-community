@@ -123,7 +123,10 @@ private class JUnitMalformedSignatureVisitor(
   private val registeredExtensionProblem = AnnotatedSignatureProblem(
     annotations = listOf(ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION),
     shouldBeSubTypeOf = listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTENSION),
-    validVisibility = ::notPrivate
+    validVisibility = { decl ->
+      val junitVersion = getUJUnitVersion(decl) ?: return@AnnotatedSignatureProblem null
+      if (junitVersion < JUnitVersion.V_5_8_0) notPrivate(decl) else null
+    }
   )
 
   private val classRuleSignatureProblem = AnnotatedSignatureProblem(
