@@ -297,18 +297,17 @@ final class PsiUpdateImpl {
     private @Nullable TextRange getRange(@NotNull PsiElement element) {
       if (!element.isValid()) throw new IllegalArgumentException();
       if (!PsiTreeUtil.isAncestor(myTracker.myCopyFile, element, false)) {
-        if (element instanceof PsiFile file) {
-          // allow navigating to the beginning of files
-          if (file.getViewProvider().getVirtualFile() instanceof LightVirtualFile lvf &&
-              lvf.getParent() instanceof ChangedVirtualDirectory cvd) {
-            myNavigationFile = new FutureVirtualFile(cvd.getOriginalFile(), lvf.getName(), lvf.getFileType());
-          }
-          else {
-            myNavigationFile = file.getOriginalFile().getVirtualFile();
-          }
-          return TextRange.create(0, 0);
+        PsiFile file = element.getContainingFile();
+        // allow navigating to the beginning of files
+        if (file.getViewProvider().getVirtualFile() instanceof LightVirtualFile lvf &&
+            lvf.getParent() instanceof ChangedVirtualDirectory cvd) {
+          myNavigationFile = new FutureVirtualFile(cvd.getOriginalFile(), lvf.getName(), lvf.getFileType());
         }
-        throw new IllegalArgumentException();
+        else {
+          myNavigationFile = file.getOriginalFile().getVirtualFile();
+        }
+        // TODO: track new file
+        return element.getTextRange();
       }
       SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
       myTracker.unblock();
