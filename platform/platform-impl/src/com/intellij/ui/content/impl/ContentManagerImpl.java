@@ -202,6 +202,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       else {
         addSelectedContent(content);
       }
+      if (myComponent != null && myComponent.isFocusOwner() && myContents.size() == 1) {
+        requestFocus(content, true);
+      }
     }
 
     Disposer.register(this, content);
