@@ -33,9 +33,9 @@ private class ResetFontSizeEditorActionHandler : EditorColorsListener {
 
 private fun resetFontSizeAppInitListener(propertyManager: PropertiesComponent, editorColorManager: EditorColorsManager) {
   val globalScheme = editorColorManager.getGlobalScheme()
-  if (propertyManager.getValue(ResetFontSizeAction.PREVIOUS_COLOR_SCHEME, "") != globalScheme.getName()) {
-    propertyManager.setValue(ResetFontSizeAction.PREVIOUS_COLOR_SCHEME, globalScheme.getName())
-    propertyManager.setValue(ResetFontSizeAction.UNSCALED_FONT_SIZE_TO_RESET_CONSOLE, globalScheme.consoleFontSize2D, -1f)
-    propertyManager.setValue(ResetFontSizeAction.UNSCALED_FONT_SIZE_TO_RESET_EDITOR, globalScheme.editorFontSize2D, -1f)
+  if (propertyManager.getValue(ResetFontSizeActionBase.PREVIOUS_COLOR_SCHEME, "") != globalScheme.getName()) {
+    propertyManager.setValue(ResetFontSizeActionBase.PREVIOUS_COLOR_SCHEME, globalScheme.getName())
+    propertyManager.setValue(ResetFontSizeActionBase.UNSCALED_FONT_SIZE_TO_RESET_CONSOLE, globalScheme.consoleFontSize2D, -1f)
+    propertyManager.setValue(ResetFontSizeActionBase.UNSCALED_FONT_SIZE_TO_RESET_EDITOR, globalScheme.editorFontSize2D, -1f)
   }
 }

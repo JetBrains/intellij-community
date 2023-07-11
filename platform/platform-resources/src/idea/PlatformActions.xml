@@ -683,7 +683,7 @@
         <separator/>
         <reference ref="EditorIncreaseFontSizeGlobal"/>
         <reference ref="EditorDecreaseFontSizeGlobal"/>
-        <reference ref="EditorResetFontSize"/>
+        <action id="EditorResetFontSizeGlobal" class="com.intellij.openapi.editor.actions.ResetFontSizeGlobalAction"/>
 
         <action id="ToggleFocusMode" class="com.intellij.ide.actions.ToggleFocusViewModeAction" internal="true"/>
 

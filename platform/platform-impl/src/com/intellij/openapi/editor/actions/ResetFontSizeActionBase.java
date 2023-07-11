@@ -25,10 +25,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class ResetFontSizeAction extends EditorAction {
+class ResetFontSizeActionBase extends EditorAction {
   static final String UNSCALED_FONT_SIZE_TO_RESET_CONSOLE = "fontSizeToResetConsole";
   static final String UNSCALED_FONT_SIZE_TO_RESET_EDITOR = "fontSizeToResetEditor";
   public static final String PREVIOUS_COLOR_SCHEME = "previousColorScheme";
+  private final boolean myGlobal;
 
   @ApiStatus.Internal
   public interface Strategy {
@@ -125,8 +126,11 @@ public final class ResetFontSizeAction extends EditorAction {
   }
 
   @ApiStatus.Internal
-  public static Strategy getStrategy(EditorEx editor) {
+  public static Strategy getStrategy(EditorEx editor, boolean forceGlobal) {
     if (editor instanceof EditorImpl) {
+      if (forceGlobal) {
+        return new AllEditorsStrategy(editor);
+      }
       if (UISettings.getInstance().getPresentationMode()) {
         return new PresentationModeStrategy();
       }
@@ -137,8 +141,9 @@ public final class ResetFontSizeAction extends EditorAction {
     return new SingleEditorStrategy(editor);
   }
 
-  public ResetFontSizeAction() {
-    super(new MyHandler());
+  ResetFontSizeActionBase(boolean forceGlobal) {
+    super(new MyHandler(forceGlobal));
+    myGlobal = forceGlobal;
   }
 
   @Override
@@ -148,7 +153,7 @@ public final class ResetFontSizeAction extends EditorAction {
       if (!(editor instanceof EditorEx editorEx)) {
         return;
       }
-      Strategy strategy = getStrategy(editorEx);
+      Strategy strategy = getStrategy(editorEx, myGlobal);
       float toReset = strategy.getFontSize();
       //noinspection DialogTitleCapitalization
       e.getPresentation().setText(strategy.getText(toReset));
@@ -159,12 +164,19 @@ public final class ResetFontSizeAction extends EditorAction {
   }
 
   private static class MyHandler extends EditorActionHandler {
+    private final boolean myGlobal;
+
+    MyHandler(boolean forceGlobal) {
+      super();
+      myGlobal = forceGlobal;
+    }
+
     @Override
     public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       if (!(editor instanceof EditorEx)) {
         return;
       }
-      getStrategy((EditorEx)editor).reset();
+      getStrategy((EditorEx)editor, myGlobal).reset();
     }
   }
 }
