@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -323,15 +323,6 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
     }
   }
 
-  // null id means that instance was created and an extension element cleared
-  public final void processIdentifiableImplementations(@NotNull BiConsumer<? super @NotNull Supplier<? extends @Nullable T>, ? super @Nullable String> consumer) {
-    // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
-    for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
-      Supplier<@Nullable T> supplier = () -> adapter.createInstance(componentManager);
-      consumer.accept(supplier, adapter.getOrderId());
-    }
-  }
-
   private @NotNull Iterator<@Nullable T> createIterator() {
     int size;
     List<ExtensionComponentAdapter> adapters = getSortedAdapters();
@@ -480,7 +471,13 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
       }
 
       if (duplicates != null && !duplicates.add(extension)) {
-        T duplicate = ContainerUtil.find(duplicates, d -> d.equals(extension));
+        @Nullable T duplicate = null;
+        for (T value : duplicates) {
+          if (value.equals(extension)) {
+            duplicate = value;
+            break;
+          }
+        }
         assert result != null;
 
         LOG.error("Duplicate extension found:\n" +

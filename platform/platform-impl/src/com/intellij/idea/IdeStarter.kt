@@ -3,8 +3,10 @@
 
 package com.intellij.idea
 
-import com.intellij.diagnostic.*
-import com.intellij.diagnostic.StartUpMeasurer.startActivity
+import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.PerformanceWatcher
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.subtask
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
 import com.intellij.ide.impl.ProjectUtil
@@ -85,41 +87,41 @@ open class IdeStarter : ModernApplicationStarter() {
                                                  app: ApplicationEx,
                                                  asyncCoroutineScope: CoroutineScope,
                                                  lifecyclePublisher: AppLifecycleListener) {
-    val frameInitActivity = startActivity("frame initialization")
-    subtask("app frame created callback") {
-      lifecyclePublisher.appFrameCreated(args)
-    }
-
-    // must be after `AppLifecycleListener#appFrameCreated`, because some listeners can mutate the state of `RecentProjectsManager`
-    if (app.isHeadlessEnvironment) {
-      frameInitActivity.end()
-      LifecycleUsageTriggerCollector.onIdeStart()
-      return
-    }
-
-    asyncCoroutineScope.launch {
-      LifecycleUsageTriggerCollector.onIdeStart()
-    }
-
-    if (app.isInternal) {
-      asyncCoroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        UiInspectorAction.initGlobalInspector()
+    var willReopenRecentProjectOnStart = false
+    lateinit var recentProjectManager: RecentProjectsManager
+    val isOpenProjectNeeded = subtask("isOpenProjectNeeded") {
+      subtask("app frame created callback") {
+        lifecyclePublisher.appFrameCreated(args)
       }
+
+      // must be after `AppLifecycleListener#appFrameCreated`, because some listeners can mutate the state of `RecentProjectsManager`
+      if (app.isHeadlessEnvironment) {
+        LifecycleUsageTriggerCollector.onIdeStart()
+        return@subtask false
+      }
+
+      asyncCoroutineScope.launch {
+        LifecycleUsageTriggerCollector.onIdeStart()
+      }
+
+      if (app.isInternal) {
+        asyncCoroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          UiInspectorAction.initGlobalInspector()
+        }
+      }
+
+      if (uriToOpen != null || args.isNotEmpty() && args.first().contains(SCHEME_SEPARATOR)) {
+        processUriParameter(uri = uriToOpen ?: args.first(), lifecyclePublisher = lifecyclePublisher)
+        return@subtask false
+      }
+
+      recentProjectManager = serviceAsync<RecentProjectsManager>()
+      willReopenRecentProjectOnStart = recentProjectManager.willReopenProjectOnStart()
+      val willOpenProject = willReopenRecentProjectOnStart || !args.isEmpty() || !filesToLoad.isEmpty()
+      willOpenProject || showWelcomeFrame(lifecyclePublisher)
     }
 
-    if (uriToOpen != null || args.isNotEmpty() && args.first().contains(SCHEME_SEPARATOR)) {
-      frameInitActivity.end()
-      processUriParameter(uriToOpen ?: args.first(), lifecyclePublisher)
-      return
-    }
-
-    val recentProjectManager = ApplicationManager.getApplication().serviceAsync<RecentProjectsManager>()
-    val willReopenRecentProjectOnStart = recentProjectManager.willReopenProjectOnStart()
-    val willOpenProject = willReopenRecentProjectOnStart || !args.isEmpty() || !filesToLoad.isEmpty()
-    val needToOpenProject = willOpenProject || showWelcomeFrame(lifecyclePublisher)
-    frameInitActivity.end()
-
-    if (!needToOpenProject) {
+    if (!isOpenProjectNeeded) {
       return
     }
 
@@ -134,7 +136,9 @@ open class IdeStarter : ModernApplicationStarter() {
     }
 
     val isOpened = willReopenRecentProjectOnStart && try {
-      recentProjectManager.reopenLastProjectsOnStart()
+      subtask("reopenLastProjectsOnStart") {
+        recentProjectManager.reopenLastProjectsOnStart()
+      }
     }
     catch (e: CancellationException) {
       throw e
@@ -151,7 +155,8 @@ open class IdeStarter : ModernApplicationStarter() {
 
   private fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener): Boolean {
     val showWelcomeFrameTask = WelcomeFrame.prepareToShow() ?: return true
-    ApplicationManager.getApplication().invokeLater {
+    @Suppress("DEPRECATION")
+    ApplicationManager.getApplication().coroutineScope.launch(Dispatchers.EDT) {
       showWelcomeFrameTask.run()
       lifecyclePublisher.welcomeScreenDisplayed()
     }

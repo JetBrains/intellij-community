@@ -101,7 +101,7 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
         waitIndexInitialization()
       }
       val project = try {
-        importOrOpenProject(commandArgs, it)
+        importOrOpenProject(commandArgs)
       }
       catch(t: Throwable) {
         WarmupLogger.logError("Failed to load project", t)

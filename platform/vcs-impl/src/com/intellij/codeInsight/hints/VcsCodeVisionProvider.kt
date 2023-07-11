@@ -43,7 +43,7 @@ import javax.swing.JComponent
 
 class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
   companion object {
-    const val id: String = "vcs.code.vision"
+    internal const val id: String = "vcs.code.vision"
   }
 
   override fun isAvailableFor(project: Project): Boolean {

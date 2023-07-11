@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion;
 
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,21 +23,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class ConverterProvider {
   public static final ExtensionPointName<ConverterProvider> EP_NAME = new ExtensionPointName<>("com.intellij.project.converterProvider");
-  private String myId;
-
-  /**
-   * @deprecated Set id as part of extension definition.
-   */
-  @Deprecated
-  protected ConverterProvider(@NotNull @NonNls String id) {
-    myId = id;
-  }
 
   protected ConverterProvider() {
-  }
-
-  public final String getDeprecatedId() {
-    return myId;
   }
 
   @NlsContexts.DialogMessage

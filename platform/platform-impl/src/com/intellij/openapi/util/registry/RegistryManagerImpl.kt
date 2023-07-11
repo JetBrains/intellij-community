@@ -9,7 +9,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ArrayUtilRt
@@ -26,20 +26,16 @@ internal class RegistryManagerImpl : PersistentStateComponent<Element>, Registry
     }
     Registry.setValueChangeListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
-        ApplicationManager.getApplication().messageBus.syncPublisher(
-          RegistryManager.TOPIC).afterValueChanged(value)
+        ApplicationManager.getApplication().messageBus.syncPublisher(RegistryManager.TOPIC).afterValueChanged(value)
       }
     })
 
     // EarlyAccessRegistryManager cannot access AppLifecycleListener
     ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
       override fun appWillBeClosed(isRestart: Boolean) {
-        try {
+        runCatching {
           EarlyAccessRegistryManager.syncAndFlush()
-        }
-        catch (e: Throwable) {
-          Logger.getInstance(RegistryManagerImpl::class.java).error(e)
-        }
+        }.getOrLogException(logger<RegistryManagerImpl>())
       }
     })
   }
@@ -48,9 +44,7 @@ internal class RegistryManagerImpl : PersistentStateComponent<Element>, Registry
     Registry.setValueChangeListener(null)
   }
 
-  override fun `is`(key: String): Boolean {
-    return Registry._getWithoutStateCheck(key).asBoolean()
-  }
+  override fun `is`(key: String): Boolean = Registry._getWithoutStateCheck(key).asBoolean()
 
   override fun intValue(key: String): Int = Registry._getWithoutStateCheck(key).asInteger()
 

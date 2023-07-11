@@ -93,8 +93,8 @@ public final class PluginManagerCore {
   @ApiStatus.Internal
   private static final List<Supplier<? extends HtmlChunk>> pluginErrors = new ArrayList<>();
 
-  private static Set<PluginId> ourPluginsToDisable;
-  private static Set<PluginId> ourPluginsToEnable;
+  private static Set<PluginId> pluginsToDisable;
+  private static Set<PluginId> pluginsToEnable;
 
   /**
    * Bundled plugins that were updated.
@@ -399,9 +399,9 @@ public final class PluginManagerCore {
 
   @ApiStatus.Internal
   static synchronized boolean onEnable(boolean enabled) {
-    Set<PluginId> pluginIds = enabled ? ourPluginsToEnable : ourPluginsToDisable;
-    ourPluginsToEnable = null;
-    ourPluginsToDisable = null;
+    Set<PluginId> pluginIds = enabled ? pluginsToEnable : pluginsToDisable;
+    pluginsToEnable = null;
+    pluginsToDisable = null;
 
     boolean applied = pluginIds != null;
     if (applied) {
@@ -962,8 +962,8 @@ public final class PluginManagerCore {
     Activity activity = StartUpMeasurer.startActivity("plugin initialization");
     PluginManagerState initResult = initializePlugins(context, loadingResult, coreLoader, !isUnitTestMode, activity);
 
-    ourPluginsToDisable = Java11Shim.Companion.getINSTANCE().copyOf(initResult.pluginIdsToDisable);
-    ourPluginsToEnable = Java11Shim.Companion.getINSTANCE().copyOf(initResult.pluginIdsToEnable);
+    pluginsToDisable = Java11Shim.Companion.getINSTANCE().copyOf(initResult.pluginIdsToDisable);
+    pluginsToEnable = Java11Shim.Companion.getINSTANCE().copyOf(initResult.pluginIdsToEnable);
     shadowedBundledPlugins = Java11Shim.Companion.getINSTANCE().copyOf(loadingResult.shadowedBundledIds);
 
     activity.end();
