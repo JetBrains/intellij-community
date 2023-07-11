@@ -95,8 +95,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
         new BalloonImpl(pane, BORDER_COLOR, JBInsets.emptyInsets(), FILL_COLOR, true, false, false, true, false, true, 0, false, false,
                         null, false, 0, 0, 0, 0, false, null, null, false, false, true, null, false, null, -1);
       myPopupBalloon.setAnimationEnabled(false);
-      myPopupBalloon.setShadowBorderProvider(
-        new NotificationBalloonShadowBorderProvider(FILL_COLOR, BORDER_COLOR));
+      myPopupBalloon.setShadowBorderProvider(new NotificationBalloonRoundShadowBorderProvider(FILL_COLOR, BORDER_COLOR));
       myPopupBalloon.setHideListener(() -> {
         if (hideListener != null) {
           hideListener.run();
