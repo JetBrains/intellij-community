@@ -40,9 +40,15 @@ class DefaultChangesGroupingPolicy(val project: Project, val model: DefaultTreeM
 
   private fun isMergeConflict(nodePath: StaticFilePath, node: ChangesBrowserNode<*>): Boolean {
     if (node is ChangesBrowserChangeNode) {
-      return node.userObject.fileStatus == FileStatus.MERGED_WITH_CONFLICTS
+      return isMergeConflict(node.userObject.fileStatus)
     }
     return false
+  }
+
+  private fun isMergeConflict(status: FileStatus): Boolean {
+    return status === FileStatus.MERGED_WITH_CONFLICTS ||
+           status === FileStatus.MERGED_WITH_BOTH_CONFLICTS ||
+           status === FileStatus.MERGED_WITH_PROPERTY_CONFLICTS
   }
 
   companion object {
