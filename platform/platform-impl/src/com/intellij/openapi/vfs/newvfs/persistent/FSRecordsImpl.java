@@ -97,7 +97,7 @@ public final class FSRecordsImpl {
   };
 
 
-  public final @NotNull PersistentFSConnection connection;
+  private final @NotNull PersistentFSConnection connection;
   private final @NotNull PersistentFSContentAccessor contentAccessor;
   private final @NotNull PersistentFSAttributeAccessor attributeAccessor;
   private final @NotNull PersistentFSTreeAccessor treeAccessor;
