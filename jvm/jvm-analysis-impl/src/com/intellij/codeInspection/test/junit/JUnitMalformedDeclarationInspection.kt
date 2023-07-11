@@ -706,11 +706,16 @@ private class JUnitMalformedSignatureVisitor(
       val type = passedParameter.type
       if (type is PsiClassType) {
         val psiClass = type.resolve() ?: return
-        if (validEmptySource.any { it == psiClass.qualifiedName }) return
-        val constructors = psiClass.constructors.mapNotNull { it.toUElementOfType<UMethod>() }
-        val isCollectionOrMap = InheritanceUtil.isInheritor(psiClass, JAVA_UTIL_COLLECTION)
-                                || InheritanceUtil.isInheritor(psiClass, JAVA_UTIL_MAP)
-        if (isCollectionOrMap && constructors.any { it.visibility == UastVisibility.PUBLIC && it.isNoArg() }) return
+        val version = getUJUnitVersion(method) ?: return
+        if (version < JUnitVersion.V_5_10_0) {
+          if (validEmptySourceTypeBefore510.any { it == psiClass.qualifiedName }) return
+        } else {
+          if (validEmptySourceTypeAfter510.any { it == psiClass.qualifiedName }) return
+          val constructors = psiClass.constructors.mapNotNull { it.toUElementOfType<UMethod>() }
+          val isCollectionOrMap = InheritanceUtil.isInheritor(psiClass, JAVA_UTIL_COLLECTION)
+                                  || InheritanceUtil.isInheritor(psiClass, JAVA_UTIL_MAP)
+          if (isCollectionOrMap && constructors.any { it.visibility == UastVisibility.PUBLIC && it.isNoArg() }) return
+        }
       }
       if (type is PsiArrayType) return
       val message = JvmAnalysisBundle.message(
@@ -1241,7 +1246,14 @@ private class JUnitMalformedSignatureVisitor(
       "org.junit.experimental.categories.Enclosed"
     )
 
-    private val validEmptySource = listOf(
+    private val validEmptySourceTypeBefore510 = listOf(
+      JAVA_LANG_STRING,
+      JAVA_UTIL_LIST,
+      JAVA_UTIL_SET,
+      JAVA_UTIL_MAP
+    )
+
+    private val validEmptySourceTypeAfter510 = listOf(
       JAVA_LANG_STRING,
       JAVA_UTIL_LIST,
       JAVA_UTIL_SET,

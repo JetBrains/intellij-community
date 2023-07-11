@@ -29,6 +29,7 @@ class JUnitVersion(val asString: String) : Comparable<JUnitVersion> {
 
   companion object {
     val V_5_8_0 = JUnitVersion("5.8.0")
+    val V_5_10_0 = JUnitVersion("5.10.0")
   }
 }
 
@@ -46,11 +47,14 @@ internal fun getJUnitVersion(elem: PsiElement): JUnitVersion? {
   return getJUnitVersion(module)
 }
 
+/**
+ * Gets latest available JUnit version in the class path.
+ */
 internal fun getJUnitVersion(module: Module): JUnitVersion? {
   if (module.isDisposed() || module.getProject().isDefault) return null
-  val junit3Or4Version = JavaLibraryUtil.getLibraryVersion(module, JUNIT_3_AND_4_COORDINATES)
-  if (junit3Or4Version != null) return JUnitVersion(junit3Or4Version)
-  val junit5Version = JavaLibraryUtil.getLibraryVersion(module, JUNIT_5_COORDINATES)
+  val junit5Version = JavaLibraryUtil.getLibraryVersion(module, JUNIT_5_COORDINATES)?.substringBeforeLast("-")
   if (junit5Version != null) return JUnitVersion(junit5Version)
+  val junit3Or4Version = JavaLibraryUtil.getLibraryVersion(module, JUNIT_3_AND_4_COORDINATES)?.substringBeforeLast("-")
+  if (junit3Or4Version != null) return JUnitVersion(junit3Or4Version)
   return null
 }

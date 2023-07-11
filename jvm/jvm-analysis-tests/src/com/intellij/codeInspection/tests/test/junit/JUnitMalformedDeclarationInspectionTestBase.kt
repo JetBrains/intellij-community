@@ -19,19 +19,22 @@ import com.intellij.testFramework.utils.vfs.createFile
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.jps.model.java.JavaResourceRootType
 
-abstract class JUnitMalformedDeclarationInspectionTestBase : JvmInspectionTestBase() {
+abstract class JUnitMalformedDeclarationInspectionTestBase(protected val junit5Version: String = JUNIT5_LATEST) : JvmInspectionTestBase() {
   override val inspection = JUnitMalformedDeclarationInspection()
 
-  protected open class JUnitProjectDescriptor(languageLevel: LanguageLevel) : ProjectDescriptor(languageLevel) {
+  protected open class JUnitProjectDescriptor(
+    languageLevel: LanguageLevel,
+    private val junit5Version: String
+  ) : ProjectDescriptor(languageLevel) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
       model.addJUnit3Library()
       model.addJUnit4Library()
-      model.addJUnit5Library()
+      model.addJUnit5Library(junit5Version)
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(sdkLevel)
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(sdkLevel, junit5Version)
 
   protected fun addAutomaticExtension(service: String) {
     val servicesDir = createServiceResourceDir()
@@ -48,5 +51,10 @@ abstract class JUnitMalformedDeclarationInspectionTestBase : JvmInspectionTestBa
       val metaInf = resourceRoot.createDirectory("META-INF")
       metaInf.createDirectory("services")
     }
+  }
+
+  protected companion object {
+    const val JUNIT5_7_0 = "5.7.0"
+    const val JUNIT5_LATEST = "5.10.0-RC1"
   }
 }

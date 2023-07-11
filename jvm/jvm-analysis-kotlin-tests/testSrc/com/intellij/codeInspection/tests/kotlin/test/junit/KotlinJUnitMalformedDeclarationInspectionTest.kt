@@ -8,40 +8,27 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.PathUtil
+import org.junit.experimental.runners.Enclosed
+import org.junit.runner.RunWith
 import java.io.File
 
-class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationInspectionTestBase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = object : JUnitProjectDescriptor(sdkLevel) {
-    override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-      super.configureModule(module, model, contentEntry)
-      val jar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))
-      PsiTestUtil.addLibrary(model, "kotlin-stdlib", jar.parent, jar.name)
+@RunWith(Enclosed::class)
+class KotlinJUnitMalformedDeclarationInspectionTest {
+  abstract class KotlinJUnitMalformedDeclarationInspectionTestBase(
+    junit5Version: String
+  ) : JUnitMalformedDeclarationInspectionTestBase(junit5Version) {
+    override fun getProjectDescriptor(): LightProjectDescriptor = object : JUnitProjectDescriptor(sdkLevel, junit5Version) {
+      override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
+        super.configureModule(module, model, contentEntry)
+        val jar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))
+        PsiTestUtil.addLibrary(model, "kotlin-stdlib", jar.parent, jar.name)
+      }
     }
   }
-
-  /* Malformed extensions */
-  fun `test malformed extension no highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
-      class A {
-        @JvmField
-        @org.junit.jupiter.api.extension.RegisterExtension
-        val myRule5 = Rule5()
-        class Rule5 : org.junit.jupiter.api.extension.Extension { }
-      }
-    """.trimIndent())
-  }
-  fun `test malformed extension subtype highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
-      class A {
-        @JvmField
-        @org.junit.jupiter.api.extension.RegisterExtension
-        val <error descr="Field 'myRule5' annotated with '@RegisterExtension' should be of type 'org.junit.jupiter.api.extension.Extension'">myRule5</error> = Rule5()
-        class Rule5 { }
-      }
-    """.trimIndent())
-  }
-  fun `test malformed extension make public quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
+  
+  class V57 : KotlinJUnitMalformedDeclarationInspectionTestBase(JUNIT5_7_0) {
+    fun `test malformed extension make public quickfix`() {
+      myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       class A {
         @org.junit.jupiter.api.extension.RegisterExtension
         val myRule<caret>5 = Rule5()
@@ -55,27 +42,51 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         class Rule5 { }
       }
     """.trimIndent(), "Fix 'myRule5' field signature", testPreview = true)
+    }
   }
+  
+  class Latest : KotlinJUnitMalformedDeclarationInspectionTestBase(JUNIT5_LATEST) {
+    /* Malformed extensions */
+    fun `test malformed extension no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      class A {
+        @JvmField
+        @org.junit.jupiter.api.extension.RegisterExtension
+        val myRule5 = Rule5()
+        class Rule5 : org.junit.jupiter.api.extension.Extension { }
+      }
+    """.trimIndent())
+    }
+    fun `test malformed extension subtype highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      class A {
+        @JvmField
+        @org.junit.jupiter.api.extension.RegisterExtension
+        val <error descr="Field 'myRule5' annotated with '@RegisterExtension' should be of type 'org.junit.jupiter.api.extension.Extension'">myRule5</error> = Rule5()
+        class Rule5 { }
+      }
+    """.trimIndent())
+    }
 
-  /* Malformed nested class */
-  fun `test malformed nested no highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    /* Malformed nested class */
+    fun `test malformed nested no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class A {
         @org.junit.jupiter.api.Nested
         inner class B { }
       }
     """.trimIndent())
-  }
-  fun `test malformed nested class highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed nested class highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class A {
         @org.junit.jupiter.api.Nested
         class <error descr="Tests in nested class will not be executed">B</error> { }
       }
     """.trimIndent())
-  }
-  fun `test malformed nested class quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed nested class quickfix`() {
+      myFixture.testQuickFix(JvmLanguage.KOTLIN, """
         class A {
             @org.junit.jupiter.api.Nested
             class B<caret> { }
@@ -86,9 +97,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
             inner class B { }
         }
     """.trimIndent(), "Fix 'B' class signature", testPreview = true)
-  }
-  fun `test highlighting non executable JUnit 4 nested class`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test highlighting non executable JUnit 4 nested class`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class A { 
         class <error descr="Tests in nested class will not be executed">B</error> { 
           @org.junit.Test
@@ -96,9 +107,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }  
     """.trimIndent())
-  }
-  fun `test highlighting executable JUnit 4 because enclosing is abstract`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test highlighting executable JUnit 4 because enclosing is abstract`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       abstract class A { 
         class B { 
           @org.junit.Test
@@ -106,9 +117,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }  
     """.trimIndent())
-  }
-  fun `test highlighting non executable JUnit 4 nested class top level abstract`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test highlighting non executable JUnit 4 nested class top level abstract`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       abstract class A {
         class B {
           class <error descr="Tests in nested class will not be executed">C</error> {
@@ -118,9 +129,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }  
     """.trimIndent())
-  }
-  fun `test quickfix no nested annotation in JUnit 4`() {
-    myFixture.testQuickFix(JvmLanguage.KOTLIN, """ 
+    }
+    fun `test quickfix no nested annotation in JUnit 4`() {
+      myFixture.testQuickFix(JvmLanguage.KOTLIN, """ 
       class A {
           class <caret>B { 
               @org.junit.Test
@@ -139,9 +150,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           }
       }
     """.trimIndent(), "Fix class signatures", testPreview = true)
-  }
-  fun `test highlighting no nested annotation in JUnit 5`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test highlighting no nested annotation in JUnit 5`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class A {
           class <error descr="Tests in nested class will not be executed">B</error> { 
               @org.junit.jupiter.api.Test
@@ -149,9 +160,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           }
       }  
     """.trimIndent())
-  }
-  fun `test quickfix no nested annotation in JUnit 5`() {
-    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
+    }
+    fun `test quickfix no nested annotation in JUnit 5`() {
+      myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       class A {
           inner class B<caret> { 
               @org.junit.jupiter.api.Test
@@ -169,11 +180,11 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           }
       }
     """.trimIndent(), "Fix 'B' class signature", testPreview = true)
-  }
+    }
 
-  /* Malformed parameterized */
-  fun `test malformed parameterized no highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    /* Malformed parameterized */
+    fun `test malformed parameterized no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       enum class TestEnum { FIRST, SECOND, THIRD }
       
       class ValueSourcesTest {
@@ -347,10 +358,10 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun testFooMap(input: Map<String, String>) {}  
       }
     """.trimIndent()
-    )
-  }
-  fun `test malformed parameterized value source wrong type`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      )
+    }
+    fun `test malformed parameterized value source wrong type`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(booleans = [
@@ -359,9 +370,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun testWithBooleanSource(argument: Int) { }
       }
     """.trimIndent())
-  }
-  fun `test malformed parameterized enum source wrong type`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed parameterized enum source wrong type`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       enum class TestEnum { FIRST, SECOND, THIRD }
       class ValueSourcesTest {
         @org.junit.jupiter.params.ParameterizedTest
@@ -369,9 +380,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun testWithEnumSource(i: Int) { }
       }
     """.trimIndent())
-  }
-  fun `test malformed parameterized multiple types`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed parameterized multiple types`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.<error descr="Exactly one type of input must be provided">ValueSource</error>(
@@ -380,28 +391,28 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun testWithMultipleValues(i: Int) { }
       }
     """.trimIndent())
-  }
-  fun `test malformed parameterized no value defined`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed parameterized no value defined`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest { 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.<error descr="No value source is defined">ValueSource</error>()
         fun testWithNoValues(i: Int) { }
       }
     """.trimIndent())
-  }
-  fun `test malformed parameterized no argument defined`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed parameterized no argument defined`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest { 
         @org.junit.jupiter.params.ParameterizedTest
         <error descr="'@NullSource' cannot provide an argument to method because method doesn't have parameters">@org.junit.jupiter.params.provider.NullSource</error>
         fun testWithNullSrcNoParam() {}
       }
     """.trimIndent())
-  }
-  
-  fun `test method source in another class`() {
-    myFixture.addFileToProject("SampleTest.kt", """"
+    }
+
+    fun `test method source in another class`() {
+      myFixture.addFileToProject("SampleTest.kt", """"
         open class SampleTest {
           companion object {
               @kotlin.jvm.JvmStatic
@@ -412,7 +423,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
               }
           }
       }""".trimIndent())
-    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
       import org.junit.jupiter.params.provider.MethodSource;
 
@@ -422,19 +433,19 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         void testSquares(int input, int expected) {}
       }
     """.trimIndent())
-  }
-  
-  fun `test malformed parameterized value source multiple parameters`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+
+    fun `test malformed parameterized value source multiple parameters`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest { 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(strings = ["foo"])
         fun <error descr="Multiple parameters are not supported by this source">testWithMultipleParams</error>(argument: String, i: Int) { }
       }
     """.trimIndent())
-  }
-  fun `test malformed parameterized and test annotation defined`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed parameterized and test annotation defined`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest { 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(ints = [1])
@@ -442,27 +453,27 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun <error descr="Suspicious combination of '@Test' and '@ParameterizedTest'">testWithTestAnnotation</error>(i: Int) { }
       }
     """.trimIndent())
-  }
-  fun `test malformed parameterized and value source defined`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed parameterized and value source defined`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest { 
         @org.junit.jupiter.params.provider.ValueSource(ints = [1])
         @org.junit.jupiter.api.Test
         fun <error descr="Suspicious combination of '@ValueSource' and '@Test'">testWithTestAnnotationNoParameterized</error>(i: Int) { }
       }
     """.trimIndent())
-  }
-  fun `test malformed parameterized no argument source provided`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed parameterized no argument source provided`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest {       
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ArgumentsSources()
         fun <error descr="No sources are provided, the suite would be empty">emptyArgs</error>(param: String) { }
       }        
     """.trimIndent())
-  }
-  fun `test malformed parameterized method source should be static`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed parameterized method source should be static`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest {       
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("<error descr="Method source 'a' must be static">a</error>")
@@ -471,9 +482,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun a(): Array<String> { return arrayOf("a", "b") }
       }        
     """.trimIndent())
-  }
-  fun `test malformed parameterized method source should have no parameters`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed parameterized method source should have no parameters`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest {       
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("<error descr="Method source 'a' should have no parameters">a</error>")
@@ -485,10 +496,10 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }        
     """.trimIndent())
-  }
+    }
 
-  fun `test malformed parameterized method source wrong return type`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    fun `test malformed parameterized method source wrong return type`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest {       
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource(
@@ -502,18 +513,18 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }        
     """.trimIndent())
-  }
-  fun `test malformed parameterized method source not found`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed parameterized method source not found`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest {       
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("<error descr="Cannot resolve target method source: 'a'">a</error>")
         fun foo(param: String) { }
       }        
     """.trimIndent())
-  }
-  fun `test malformed parameterized enum source unresolvable entry`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed parameterized enum source unresolvable entry`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class EnumSourceTest {
         private enum class Foo { AAA, AAX, BBB }
       
@@ -533,9 +544,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun invalidDefault() { }
       }
     """.trimIndent())
-  }
-  fun `test malformed parameterized add test instance quick fix`() {
-    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed parameterized add test instance quick fix`() {
+      myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import org.junit.jupiter.params.ParameterizedTest
       import org.junit.jupiter.params.provider.Arguments
       import org.junit.jupiter.params.provider.MethodSource
@@ -566,9 +577,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun foo(param: String) { }
       }
     """.trimIndent(), "Annotate as @TestInstance", testPreview = true)
-  }
-  fun `test malformed parameterized introduce method source quick fix`() {
-    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed parameterized introduce method source quick fix`() {
+      myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import org.junit.jupiter.params.ParameterizedTest
       import org.junit.jupiter.params.provider.MethodSource
       
@@ -596,25 +607,25 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           }
       }
     """.trimIndent(), "Add method 'parameters' to 'Test'") // TODO make createMethod preview work
-  }
-  fun `test malformed parameterized create csv source quick fix`() {
-    val file = myFixture.addFileToProject("CsvFile.kt", """
+    }
+    fun `test malformed parameterized create csv source quick fix`() {
+      val file = myFixture.addFileToProject("CsvFile.kt", """
         class CsvFile {
             @org.junit.jupiter.params.ParameterizedTest
             @org.junit.jupiter.params.provider.CsvFileSource(resources = "two-<caret>column.txt")
             fun testWithCsvFileSource(first: String, second: Int) { }
         }
     """.trimIndent())
-    myFixture.configureFromExistingVirtualFile(file.virtualFile)
-    val intention = myFixture.findSingleIntention("Create file two-column.txt")
-    assertNotNull(intention)
-    myFixture.launchAction(intention)
-    assertNotNull(myFixture.findFileInTempDir("two-column.txt"))
-  }
+      myFixture.configureFromExistingVirtualFile(file.virtualFile)
+      val intention = myFixture.findSingleIntention("Create file two-column.txt")
+      assertNotNull(intention)
+      myFixture.launchAction(intention)
+      assertNotNull(myFixture.findFileInTempDir("two-column.txt"))
+    }
 
-  /* Malformed repeated test*/
-  fun `test malformed repeated test no highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    /* Malformed repeated test*/
+    fun `test malformed repeated test no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       object WithRepeated {
         @org.junit.jupiter.api.RepeatedTest(1)
         fun repeatedTestNoParams() { }
@@ -653,18 +664,18 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun afterEach(testReporter: org.junit.jupiter.api.TestReporter, repetitionInfo: org.junit.jupiter.api.RepetitionInfo) {}
       }
     """.trimIndent())
-  }
-  fun `test malformed repeated test combination of @Test and @RepeatedTest`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed repeated test combination of @Test and @RepeatedTest`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class WithRepeatedAndTests {
         @org.junit.jupiter.api.Test
         @org.junit.jupiter.api.RepeatedTest(1)
         fun <error descr="Suspicious combination of '@Test' and '@RepeatedTest'">repeatedTestAndTest</error>() { }
       }
     """.trimIndent())
-  }
-  fun `test malformed repeated test with injected RepeatedInfo for @Test method`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed repeated test with injected RepeatedInfo for @Test method`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class WithRepeatedInfoAndTest {
         @org.junit.jupiter.api.BeforeEach
         fun beforeEach(repetitionInfo: org.junit.jupiter.api.RepetitionInfo) { }
@@ -673,9 +684,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun <error descr="Method 'nonRepeated' annotated with '@Test' should not declare parameter 'repetitionInfo'">nonRepeated</error>(repetitionInfo: org.junit.jupiter.api.RepetitionInfo) { }
       }      
     """.trimIndent() )
-  }
-  fun `test malformed repeated test with injected RepetitionInfo for @BeforeAll method`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed repeated test with injected RepetitionInfo for @BeforeAll method`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class WithBeforeEach {
         companion object {
           @JvmStatic
@@ -684,9 +695,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }
     """.trimIndent())
-  }
-  fun `test malformed repeated test with non-positive repetitions`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed repeated test with non-positive repetitions`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class WithRepeated {
         @org.junit.jupiter.api.RepeatedTest(<error descr="The number of repetitions must be greater than zero">-1</error>)
         fun repeatedTestNegative() { }
@@ -695,29 +706,29 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun repeatedTestBoundaryZero() { }
       }
     """.trimIndent())
-  }
+    }
 
-  /* Malformed before after */
-  fun `test malformed before highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    /* Malformed before after */
+    fun `test malformed before highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MainTest {
         @org.junit.Before
         fun <error descr="Method 'before' annotated with '@Before' should be of type 'void' and not declare parameter 'i'">before</error>(i: Int): String { return "${'$'}i" }
       }
     """.trimIndent())
-  }
-  fun `test malformed before each highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed before each highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MainTest {
         @org.junit.jupiter.api.BeforeEach
         fun <error descr="Method 'beforeEach' annotated with '@BeforeEach' should be of type 'void' and not declare parameter 'i'">beforeEach</error>(i: Int): String { return "" }
       }
     """.trimIndent())
-  }
+    }
 
-  // TODO: IDEA-319390
-  fun `_test malformed before each remove private quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
+    // TODO: IDEA-319390
+    fun `_test malformed before each remove private quickfix`() {
+      myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       class MainTest {
         @org.junit.jupiter.api.BeforeEach
         private fun bef<caret>oreEach() { }
@@ -730,9 +741,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun beforeEach(): Unit { }
       }
     """.trimIndent(), "Fix 'beforeEach' method signature", testPreview = true)
-  }
-  fun `test malformed before class no highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed before class no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class BeforeClassStatic {
         companion object {
           @JvmStatic
@@ -805,9 +816,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }
     """.trimIndent())
-  }
-  fun `test non-malformed with multiple extensions`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test non-malformed with multiple extensions`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class TestNonParameterResolver : org.junit.jupiter.api.extension.Extension { }
       
       class TestParameterResolver : org.junit.jupiter.api.extension.ParameterResolver {
@@ -832,17 +843,17 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }
     """.trimIndent())
-  }
-  fun `test malformed before class method that is non-static`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed before class method that is non-static`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MainTest {
         @org.junit.BeforeClass
         fun <error descr="Method 'beforeClass' annotated with '@BeforeClass' should be static">beforeClass</error>() { }
       }
     """.trimIndent())
-  }
-  fun `test malformed before class method that is not private`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed before class method that is not private`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MainTest {
         companion object {
           @JvmStatic
@@ -851,9 +862,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }
     """.trimIndent())
-  }
-  fun `test malformed before class method that has parameters`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed before class method that has parameters`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MainTest {
         companion object {
           @JvmStatic
@@ -862,9 +873,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }
     """.trimIndent())
-  }
-  fun `test malformed before class method with a non void return type`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed before class method with a non void return type`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MainTest {
         companion object {
           @JvmStatic
@@ -873,17 +884,17 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }
     """.trimIndent())
-  }
-  fun `test malformed before all method that is non-static`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed before all method that is non-static`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MainTest {
         @org.junit.jupiter.api.BeforeAll
         fun <error descr="Method 'beforeAll' annotated with '@BeforeAll' should be static">beforeAll</error>() { }
       }
     """.trimIndent())
-  }
-  fun `test malformed before all method that is not private`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed before all method that is not private`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MainTest {
         companion object {
           @JvmStatic
@@ -892,9 +903,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }
     """.trimIndent())
-  }
-  fun `test malformed before all method that has parameters`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed before all method that has parameters`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MainTest {
         companion object {
           @JvmStatic
@@ -903,9 +914,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }
     """.trimIndent())
-  }
-  fun `test malformed before all method with a non void return type`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed before all method with a non void return type`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MainTest {
         companion object {
           @JvmStatic
@@ -914,9 +925,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }
     """.trimIndent())
-  }
-  fun `test malformed before all quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed before all quickfix`() {
+      myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import org.junit.jupiter.api.BeforeAll
       
       class MainTest {
@@ -936,9 +947,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           }
       }
     """.trimIndent(), "Fix 'beforeAll' method signature", testPreview = true)
-  }
-  fun `test no highlighting when automatic registered parameter resolver is found`() {
-    myFixture.addFileToProject("com/intellij/testframework/ext/AutomaticExtension.kt", """
+    }
+    fun `test no highlighting when automatic registered parameter resolver is found`() {
+      myFixture.addFileToProject("com/intellij/testframework/ext/AutomaticExtension.kt", """
       package com.intellij.testframework.ext
       
       class AutomaticExtension : org.junit.jupiter.api.extension.ParameterResolver {
@@ -953,18 +964,18 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         ): Any = ""
       }    
     """.trimIndent())
-    addAutomaticExtension("com.intellij.testframework.ext.AutomaticExtension")
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      addAutomaticExtension("com.intellij.testframework.ext.AutomaticExtension")
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MainTest {
         @org.junit.jupiter.api.BeforeEach
         fun foo(x: Int) { }
       }
     """.trimIndent())
-  }
+    }
 
-  /* Malformed datapoint(s) */
-  fun `test malformed datapoint no highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    /* Malformed datapoint(s) */
+    fun `test malformed datapoint no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class Test {
         companion object {
           @JvmField
@@ -973,18 +984,18 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }
     """.trimIndent())
-  }
-  fun `test malformed datapoint non-static highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed datapoint non-static highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class Test {
          @JvmField
          @org.junit.experimental.theories.DataPoint
          val <error descr="Field 'f1' annotated with '@DataPoint' should be static">f1</error>: Any? = null
       }
     """.trimIndent())
-  }
-  fun `test malformed datapoint non-public highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed datapoint non-public highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class Test {
         companion object {
           @JvmStatic
@@ -993,33 +1004,33 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }
     """.trimIndent())
-  }
-  fun `test malformed datapoint field highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed datapoint field highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class Test {
          @org.junit.experimental.theories.DataPoint
          private val <error descr="Field 'f1' annotated with '@DataPoint' should be static and public">f1</error>: Any? = null
       }
     """.trimIndent())
-  }
-  fun `test malformed datapoint method highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed datapoint method highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class Test {
          @org.junit.experimental.theories.DataPoint
          private fun <error descr="Method 'f1' annotated with '@DataPoint' should be static and public">f1</error>(): Any? = null
       }
     """.trimIndent())
-  }
-  fun `test malformed datapoints method highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed datapoints method highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class Test {
          @org.junit.experimental.theories.DataPoints
          private fun <error descr="Method 'f1' annotated with '@DataPoints' should be static and public">f1</error>(): Any? = null
       }
     """.trimIndent())
-  }
-  fun `test malformed datapoint make field public quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed datapoint make field public quickfix`() {
+      myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       class Test {
           companion object {
               @org.junit.experimental.theories.DataPoint
@@ -1035,9 +1046,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           }
       }
     """.trimIndent(), "Fix 'f1' field signature", testPreview = true)
-  }
-  fun `test malformed datapoint make field public and static quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed datapoint make field public and static quickfix`() {
+      myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       class Test {
           @org.junit.experimental.theories.DataPoint
           val f<caret>1: Any? = null
@@ -1051,9 +1062,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           }
       }
     """.trimIndent(), "Fix 'f1' field signature", testPreview = true)
-  }
-  fun `test malformed datapoint make method public and static quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed datapoint make method public and static quickfix`() {
+      myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       class Test {
           @org.junit.experimental.theories.DataPoint
           private fun f<caret>1(): Any? = null
@@ -1067,25 +1078,25 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           }
       }
     """.trimIndent(), "Fix 'f1' method signature", testPreview = true)
-  }
+    }
 
-  /* Malformed setup/teardown */
-  fun `test malformed setup no highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    /* Malformed setup/teardown */
+    fun `test malformed setup no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class C : junit.framework.TestCase() {
         override fun setUp() { }
       }  
     """.trimIndent())
-  }
-  fun `test malformed setup highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed setup highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class C : junit.framework.TestCase() {
         private fun <error descr="Method 'setUp' should be non-private, non-static, have no parameters and of type void">setUp</error>(i: Int) { System.out.println(i) }
       }  
     """.trimIndent())
-  }
-  fun `test malformed setup quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed setup quickfix`() {
+      myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       class C : junit.framework.TestCase() {
         private fun set<caret>Up(i: Int) { }
       }  
@@ -1094,12 +1105,12 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun setUp(): Unit { }
       }  
     """.trimIndent(), "Fix 'setUp' method signature", testPreview = true)
-  }
+    }
 
 
-  /* Malformed rule */
-  fun `test malformed rule field non-public highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    /* Malformed rule */
+    fun `test malformed rule field non-public highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class SomeTestRule : org.junit.rules.TestRule {
         override fun apply(base: org.junit.runners.model.Statement, description: org.junit.runner.Description): org.junit.runners.model.Statement = base
       }
@@ -1109,9 +1120,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         var <error descr="Field 'x' annotated with '@Rule' should be public">x</error> = SomeTestRule()
       }
     """.trimIndent())
-  }
-  fun `test malformed rule object inherited rule highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed rule object inherited rule highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class SomeTestRule : org.junit.rules.TestRule {
         override fun apply(base: org.junit.runners.model.Statement, description: org.junit.runner.Description): org.junit.runners.model.Statement = base
       }  
@@ -1141,9 +1152,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         public fun <error descr="Method 'a' annotated with '@Rule' should be of type 'org.junit.rules.TestRule'">a</error>() = object { }
       }  
     """.trimIndent())
-  }
-  fun `test malformed rule method static highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed rule method static highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class SomeTestRule : org.junit.rules.TestRule {
         override fun apply(base: org.junit.runners.model.Statement, description: org.junit.runner.Description): org.junit.runners.model.Statement = base
       }
@@ -1153,17 +1164,17 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         private fun <error descr="Method 'x' annotated with '@Rule' should be public">x</error>() = SomeTestRule()
       }
     """.trimIndent())
-  }
-  fun `test malformed rule method non TestRule type highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed rule method non TestRule type highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class PrivateRule {
         @org.junit.Rule
         fun <error descr="Method 'x' annotated with '@Rule' should be of type 'org.junit.rules.TestRule'">x</error>() = 0
       }
     """.trimIndent())
-  }
-  fun `test malformed class rule field highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed class rule field highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class SomeTestRule : org.junit.rules.TestRule {
         override fun apply(base: org.junit.runners.model.Statement, description: org.junit.runner.Description): org.junit.runners.model.Statement = base
       }  
@@ -1176,9 +1187,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         private var <error descr="Field 'y' annotated with '@ClassRule' should be public and of type 'org.junit.rules.TestRule'">y</error> = 0
       }
     """.trimIndent())
-  }
-  fun `test malformed rule make field public quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed rule make field public quickfix`() {
+      myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       class PrivateRule {
         @org.junit.Rule
         var x<caret> = 0
@@ -1190,9 +1201,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         var x = 0
       }
     """.trimIndent(), "Fix 'x' field signature", testPreview = true)
-  }
-  fun `test malformed class rule make field public quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed class rule make field public quickfix`() {
+      myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       class SomeTestRule : org.junit.rules.TestRule {
           override fun apply(base: org.junit.runners.model.Statement, description: org.junit.runner.Description): org.junit.runners.model.Statement = base
       }
@@ -1212,11 +1223,11 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           var x = SomeTestRule()
       }
     """.trimIndent(), "Fix 'x' field signature", testPreview = true)
-  }
+    }
 
-  /* Malformed test */
-  fun `test malformed test for JUnit 3 highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    /* Malformed test */
+    fun `test malformed test for JUnit 3 highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       public class JUnit3TestMethodIsPublicVoidNoArg : junit.framework.TestCase() {
         fun testOne() { }
         public fun <error descr="Method 'testTwo' should be public, non-static, have no parameters and of type void">testTwo</error>(): Int { return 2 }
@@ -1229,13 +1240,13 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }
     """.trimIndent())
-  }
-  fun `test malformed test for JUnit 4 highlighting`() {
-    myFixture.addClass("""
+    }
+    fun `test malformed test for JUnit 4 highlighting`() {
+      myFixture.addClass("""
       package mockit;
       public @interface Mocked { }
     """.trimIndent())
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       public class JUnit4TestMethodIsPublicVoidNoArg {
         @org.junit.Test fun testOne() { }
         @org.junit.Test public fun <error descr="Method 'testTwo' annotated with '@Test' should be of type 'void'">testTwo</error>(): Int { return 2 }
@@ -1248,9 +1259,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
       }
     """.trimIndent())
-  }
-  fun `test no highlighting on custom runner`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test no highlighting on custom runner`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MyRunner : org.junit.runner.Runner() {
           override fun getDescription(): org.junit.runner.Description? { return null }
 
@@ -1262,19 +1273,19 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           public fun testMe(i: Int): Int { return -1 }
       }
     """.trimIndent())
-  }
-  fun `test highlighting on predefined runner`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test highlighting on predefined runner`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       @org.junit.runner.RunWith(org.junit.runners.JUnit4::class)
       class Foo {
           @org.junit.Test public fun <error descr="Method 'testMe' annotated with '@Test' should be of type 'void' and not declare parameter 'i'">testMe</error>(i: Int): Int { return -1 }
       }
     """.trimIndent())
-  }
+    }
 
-  /* Malformed suite */
-  fun `test malformed suite no highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    /* Malformed suite */
+    fun `test malformed suite no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class Junit3Suite : junit.framework.TestCase() {          
           companion object {
               @JvmStatic  
@@ -1282,16 +1293,16 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           }
       }
     """.trimIndent())
-  }
-  fun `test malformed suite highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed suite highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class Junit3Suite : junit.framework.TestCase() {          
           fun <error descr="Method 'suite' should be non-private, static and have no parameters">suite</error>() = junit.framework.TestSuite()
       }
     """.trimIndent())
-  }
-  fun `test malformed suite quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed suite quickfix`() {
+      myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       class Junit3Suite : junit.framework.TestCase() {          
           fun sui<caret>te() = junit.framework.TestSuite()
       }
@@ -1303,35 +1314,35 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           }
       }
     """.trimIndent(), "Fix 'suite' method signature", testPreview = true)
-  }
+    }
 
-  /* Suspending test function */
-  fun `test malformed suspending test JUnit 3 function`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    /* Suspending test function */
+    fun `test malformed suspending test JUnit 3 function`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class JUnit3Test : junit.framework.TestCase() {
           suspend fun <error descr="Method 'testFoo' should not be a suspending function">testFoo</error>() { }
       }    
     """.trimIndent())
-  }
-  fun `test malformed suspending test JUnit 4 function`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed suspending test JUnit 4 function`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class JUnit4Test {
           @org.junit.Test
           suspend fun <error descr="Method 'testFoo' annotated with '@Test' should not be a suspending function">testFoo</error>() { }
       }    
     """.trimIndent())
-  }
-  fun `test malformed suspending test JUnit 5 function`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun `test malformed suspending test JUnit 5 function`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class JUnit5Test {
           @org.junit.jupiter.api.Test
           suspend fun <error descr="Method 'testFoo' annotated with '@Test' should not be a suspending function">testFoo</error>() { }
       }    
     """.trimIndent())
-  }
+    }
 
-  fun `test extends with no highlighting`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    fun `test extends with no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MockitoExtension : org.junit.jupiter.api.extension.BeforeEachCallback, org.junit.jupiter.api.extension.AfterEachCallback, org.junit.jupiter.api.extension.ParameterResolver {
         override fun beforeEach(context: org.junit.jupiter.api.extension.ExtensionContext?) { } 
         override fun afterEach(context: org.junit.jupiter.api.extension.ExtensionContext?) { }
@@ -1345,65 +1356,65 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun testFoo(x: String) { }
       }
     """.trimIndent())
-  }
+    }
 
-  // Unconstructable test case
-  fun testPlain() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    // Unconstructable test case
+    fun testPlain() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class Plain { }
     """.trimIndent())
-  }
-  fun testUnconstructableJUnit3TestCase1() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun testUnconstructableJUnit3TestCase1() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
 
       class <error descr="Test class 'UnconstructableJUnit3TestCase1' is not constructable because it does not have a 'public' no-arg or single 'String' parameter constructor">UnconstructableJUnit3TestCase1</error> private constructor() : TestCase() {
       }
     """.trimIndent())
-  }
-  fun testUnconstructableJUnit3TestCase2() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun testUnconstructableJUnit3TestCase2() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
 
       class <error descr="Test class 'UnconstructableJUnit3TestCase2' is not constructable because it does not have a 'public' no-arg or single 'String' parameter constructor">UnconstructableJUnit3TestCase2</error>(val foo: Any) : TestCase() {
         fun bar() { }
       }
     """.trimIndent())
-  }
-  fun testUnconstructableJUnit3TestCase3() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun testUnconstructableJUnit3TestCase3() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
 
       class UnconstructableJUnit3TestCase3() : TestCase() { }
     """.trimIndent())
-  }
-  fun testUnconstructableJUnit3TestCase4() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun testUnconstructableJUnit3TestCase4() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
 
       class UnconstructableJUnit3TestCase4(val foo: String) : TestCase() { }
     """.trimIndent())
-  }
-  fun testUnconstructableJUnit3TestCaseAnynoymousObject() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun testUnconstructableJUnit3TestCaseAnynoymousObject() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
       
       class Test {
           private val testCase = object : TestCase() { }
       }
     """.trimIndent())
-  }
-  fun testUnconstructableJUnit3TestCaseLocalClass() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun testUnconstructableJUnit3TestCaseLocalClass() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
       
       fun main () {
         class LocalClass : TestCase() { }
       }
     """.trimIndent())
-  }
-  fun testUnconstructableJUnit4TestCase1() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun testUnconstructableJUnit4TestCase1() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.Test
       
       class <error descr="Test class 'UnconstructableJUnit4TestCase1' is not constructable because it should have exactly one 'public' no-arg constructor">UnconstructableJUnit4TestCase1</error>() {
@@ -1413,9 +1424,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun testMe() {}
       }
     """.trimIndent())
-  }
-  fun testUnconstructableJUnit4TestCase2() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun testUnconstructableJUnit4TestCase2() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.Test
 
       class UnconstructableJUnit4TestCase2() {
@@ -1425,9 +1436,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       	public fun testAssertion() { }
       }
     """.trimIndent())
-  }
-  fun testUnconstructableJUnit4TestCase3() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    }
+    fun testUnconstructableJUnit4TestCase3() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.Test
 
       private class <error descr="Test class 'UnconstructableJUnit4TestCase3' is not constructable because it is not 'public'">UnconstructableJUnit4TestCase3</error>() {
@@ -1436,5 +1447,6 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun testMe() {}
       }
     """.trimIndent())
+    }
   }
 }
