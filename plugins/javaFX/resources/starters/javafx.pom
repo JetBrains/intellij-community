@@ -5,11 +5,11 @@
   <version>1.0</version>
 
   <properties>
-    <gradle.version>8.0.2</gradle.version>
+    <gradle.version>8.2</gradle.version>
     <maven.version>3.8.5</maven.version>
     <maven.wrapper.version>3.1.0</maven.wrapper.version>
     <junit.version>5.9.2</junit.version>
-    <kotlin.version>1.8.10</kotlin.version>
+    <kotlin.version>1.8.22</kotlin.version>
     <javamodularity.version>1.8.12</javamodularity.version>
 
     <!-- OpenJFX release trains -->
@@ -23,8 +23,8 @@
     <fx17.version>17.0.6</fx17.version>
     <fx18.version>18.0.2</fx18.version>
     <fx19.version>19.0.2</fx19.version>
-    <fx20.version>20</fx20.version>
-    <fx21.version>21-ea+5</fx21.version>
+    <fx20.version>20.0.1</fx20.version>
+    <fx21.version>21-ea+24</fx21.version>
 
     <fxgl11.version>11.17</fxgl11.version>
     <fxgl17.version>17.2</fxgl17.version>
