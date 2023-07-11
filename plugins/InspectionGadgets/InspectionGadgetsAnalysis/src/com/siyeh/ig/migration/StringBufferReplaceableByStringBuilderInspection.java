@@ -139,8 +139,8 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
       if (typeElement == null) {
         return;
       }
-      final PsiJavaCodeReferenceElement oldReferenceElement = typeElement.getInnermostComponentReferenceElement();
       if (!typeElement.isInferredType()) {
+        final PsiJavaCodeReferenceElement oldReferenceElement = typeElement.getInnermostComponentReferenceElement();
         if (oldReferenceElement == null) {
           return;
         }
