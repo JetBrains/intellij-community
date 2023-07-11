@@ -53,6 +53,7 @@ import kotlin.io.path.name
 private val LOG = logger<UpdateIdeFromSourcesAction>()
 
 fun updateFromSources(project: Project, beforeRestart: () -> Unit, error: (@DialogMessage String) -> Unit, restartAutomatically: Boolean) {
+  LOG.debug("Update from sources requested")
   val state = UpdateFromSourcesSettings.getState()
   val devIdeaHome = project.basePath ?: return
   val workIdeHome = state.actualIdePath

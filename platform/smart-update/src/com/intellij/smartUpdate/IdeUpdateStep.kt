@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.updateSettings.impl.restartOrNotify
@@ -20,6 +21,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 const val IDE_UPDATE = "ide.update"
+private val LOG = logger<IdeUpdateStep>()
 
 class IdeUpdateStep: SmartUpdateStep {
   override val id = IDE_UPDATE
@@ -27,6 +29,7 @@ class IdeUpdateStep: SmartUpdateStep {
 
   override fun performUpdateStep(project: Project, e: AnActionEvent?, onSuccess: () -> Unit) {
     val updateAction = getUpdateAction()
+    LOG.debug("Update action: $updateAction")
     if (updateAction != null && e != null) {
       updateAction.actionPerformed(e)
       project.service<SmartUpdate>().restartRequested = true
