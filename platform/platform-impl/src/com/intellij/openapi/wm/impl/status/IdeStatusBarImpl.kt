@@ -442,7 +442,7 @@ open class IdeStatusBarImpl internal constructor(
   override fun getInfo(): @NlsContexts.StatusBarText String? = info
 
   override fun addProgress(indicator: ProgressIndicatorEx, info: TaskInfo) {
-    check(progressFlow.tryEmit(ProgressSetChangeEvent(newProgress = Triple(first = info, second = indicator, third = ClientId.current),
+    check(progressFlow.tryEmit(ProgressSetChangeEvent(newProgress = Triple(info, indicator, ClientId.currentOrNull),
                                                       existingProgresses = infoAndProgressPanel?.backgroundProcesses ?: emptyList())))
     createInfoAndProgressPanel().addProgress(indicator, info)
   }
@@ -989,7 +989,7 @@ private class StatusBarPanel(layout: LayoutManager) : JPanel(layout) {
 
 @ApiStatus.Internal
 class VisibleProgress(val title: @NlsContexts.ProgressTitle String,
-                      val clientId: ClientId,
+                      val clientId: ClientId?,
                       val canceler: (() -> Unit)?,
                       val state: Flow<ProgressState> /* finite */) {
   override fun toString(): String {
@@ -999,7 +999,7 @@ class VisibleProgress(val title: @NlsContexts.ProgressTitle String,
 
 private val EMPTY_PROGRESS = ProgressState(null, null, -1.0)
 
-private fun createVisibleProgress(indicator: ProgressIndicatorEx, info: TaskInfo, clientId: ClientId): VisibleProgress {
+private fun createVisibleProgress(indicator: ProgressIndicatorEx, info: TaskInfo, clientId: ClientId?): VisibleProgress {
   val stateFlow = MutableStateFlow(EMPTY_PROGRESS)
   val updater = {
     stateFlow.value = ProgressState(text = indicator.text,
@@ -1038,12 +1038,12 @@ private fun createVisibleProgress(indicator: ProgressIndicatorEx, info: TaskInfo
                          state = stateFlowTillCompletion)
 }
 
-private class ProgressSetChangeEvent(private val newProgress: Triple<TaskInfo, ProgressIndicatorEx, ClientId>?,
+private class ProgressSetChangeEvent(private val newProgress: Triple<TaskInfo, ProgressIndicatorEx, ClientId?>?,
                                      private val existingProgresses: List<Pair<TaskInfo, ProgressIndicatorEx>>) {
   val newVisibleProgress by lazy {
     newProgress?.let { createVisibleProgress(it.second, it.first, it.third) }
   }
   val existingVisibleProgresses by lazy {
-    existingProgresses.map { createVisibleProgress(it.second, it.first, ClientId.localId) }
+    existingProgresses.map { createVisibleProgress(it.second, it.first, null) }
   }
 }
