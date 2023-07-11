@@ -7,16 +7,20 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.util.PsiFormatUtil
+import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.refactoring.project
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.resolve.source.getPsi
-import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
+import org.jetbrains.kotlin.name.Name
 
 class RenameJavaSyntheticPropertyHandler : AbstractReferenceSubstitutionRenameHandler() {
     class Processor : RenamePsiElementProcessor() {
@@ -29,16 +33,16 @@ class RenameJavaSyntheticPropertyHandler : AbstractReferenceSubstitutionRenameHa
         override fun canProcessElement(element: PsiElement) = element is SyntheticPropertyWrapper
     }
 
-    internal class SyntheticPropertyWrapper(
+    class SyntheticPropertyWrapper(
         manager: PsiManager,
-        val descriptor: SyntheticJavaPropertyDescriptor
+        val getter: PsiMethod?,
+        val setter: PsiMethod?,
+        val name: Name
     ) : LightElement(manager, KotlinLanguage.INSTANCE), PsiNamedElement {
-        val getter: PsiMethod? get() = descriptor.getMethod.source.getPsi() as? PsiMethod
-        val setter: PsiMethod? get() = descriptor.setMethod?.source?.getPsi() as? PsiMethod
 
         override fun getContainingFile() = getter?.containingFile
 
-        override fun getName() = descriptor.name.asString()
+        override fun getName() = name.asString()
 
         override fun setName(name: String): PsiElement {
             getter?.name = JvmAbi.getterName(name)
@@ -47,14 +51,29 @@ class RenameJavaSyntheticPropertyHandler : AbstractReferenceSubstitutionRenameHa
         }
 
         override fun toString(): String {
-            val renderer = IdeDescriptorRenderers.SOURCE_CODE
-            return "${renderer.render(descriptor.getMethod)}|${descriptor.setMethod?.let { renderer.render(it) }}"
+            return (getter?.let {
+                PsiFormatUtil.formatMethod(it, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME, PsiFormatUtilBase.SHOW_NAME)
+            } ?: name.asString()) +
+                   "|" +
+                   (setter?.let {
+                       PsiFormatUtil.formatMethod(it, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME, PsiFormatUtilBase.SHOW_NAME)
+                   } ?: name.asString())
         }
     }
 
     override fun getElementToRename(dataContext: DataContext): PsiElement? {
         val refExpr = getReferenceExpression(dataContext) ?: return null
-        val descriptor = refExpr.resolveToCall()?.resultingDescriptor as? SyntheticJavaPropertyDescriptor ?: return null
-        return SyntheticPropertyWrapper(PsiManager.getInstance(dataContext.project), descriptor)
+        @OptIn(KtAllowAnalysisOnEdt::class)
+        allowAnalysisOnEdt {
+            analyze(refExpr) {
+              val symbol = refExpr.mainReference.resolveToSymbol() as? KtSyntheticJavaPropertySymbol
+                      ?: return null
+
+                return SyntheticPropertyWrapper(refExpr.manager,
+                                                symbol.javaGetterSymbol.psi as? PsiMethod,
+                                                symbol.javaSetterSymbol?.psi as? PsiMethod,
+                                                symbol.name)
+            }
+        }
     }
 }

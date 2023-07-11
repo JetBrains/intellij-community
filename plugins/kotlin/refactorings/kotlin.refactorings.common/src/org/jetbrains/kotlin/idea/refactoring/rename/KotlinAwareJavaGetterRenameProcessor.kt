@@ -7,16 +7,14 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor
-import org.jetbrains.kotlin.references.fe10.Fe10SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.asJava.canHaveSyntheticGetter
 import org.jetbrains.kotlin.asJava.canHaveSyntheticSetter
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.syntheticGetter
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
-import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
+import org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport.Companion.getInstance
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.utils.addToStdlib.cast
-import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 
 class KotlinAwareJavaGetterRenameProcessor : RenameJavaMethodProcessor() {
     override fun canProcessElement(element: PsiElement) =
@@ -42,16 +40,13 @@ class KotlinAwareJavaGetterRenameProcessor : RenameJavaMethodProcessor() {
         val containingClass = getter.containingClass ?: return null
         val setterName = JvmAbi.setterName(propertyName.asString())
         val restrictedToKotlinScope by lazy { searchScope.restrictToKotlinSources() }
+        val refactoringSupport = getInstance()
         return containingClass
             .findMethodsByName(setterName, false)
             .filter { it.canHaveSyntheticSetter }
             .asSequence()
             .flatMap {
-                super.findReferences(it, restrictedToKotlinScope, searchInCommentsAndStrings)
-                    .filterIsInstanceWithChecker<SyntheticPropertyAccessorReference> { accessor -> !accessor.getter }
-            }
-            .map {
-                Fe10SyntheticPropertyAccessorReference(it.expression, getter = true)
+                super.findReferences(it, restrictedToKotlinScope, searchInCommentsAndStrings).mapNotNull {  refactoringSupport.mapSetter(it) }
             }
             .toList()
     }

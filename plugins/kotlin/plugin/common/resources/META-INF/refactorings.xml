@@ -39,6 +39,13 @@
     <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticInheritorRenamerFactory"/>
     <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticOverloadsRenamerFactory"/>
 
+    <renamePsiElementProcessor id="KotlinAwareJavaGetter"
+                               implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinAwareJavaGetterRenameProcessor"
+                               order="first"/>
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameJavaSyntheticPropertyHandler"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameJavaSyntheticPropertyHandler$Processor"
+                               id="JavaSyntheticPropertyFromKotlin"/>
+
     <refactoring.moveMemberHandler
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.move.java.MoveKotlinMemberHandler"/>

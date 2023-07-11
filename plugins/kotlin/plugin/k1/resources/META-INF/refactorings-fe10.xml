@@ -111,12 +111,6 @@
             serviceInterface="org.jetbrains.kotlin.idea.references.KtReferenceMutateService"
             serviceImplementation="org.jetbrains.kotlin.idea.refactoring.rename.K1ReferenceMutateService"/>
 
-    <renamePsiElementProcessor id="KotlinAwareJavaGetter"
-                               implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinAwareJavaGetterRenameProcessor"
-                               order="first"/>
-    <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameJavaSyntheticPropertyHandler$Processor"
-                               id="JavaSyntheticPropertyFromKotlin"/>
-
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.rename.K1RenameRefactoringSupport"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport"/>
 
@@ -146,7 +140,6 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameDynamicMemberHandler"/>
-    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameJavaSyntheticPropertyHandler"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.JavaMemberByKotlinReferenceInplaceRenameHandler"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameJvmNameHandler"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameClassByCompanionObjectShortReferenceHandler"/>

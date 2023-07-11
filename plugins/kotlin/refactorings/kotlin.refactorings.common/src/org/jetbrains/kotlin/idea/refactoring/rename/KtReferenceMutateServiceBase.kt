@@ -2,24 +2,26 @@
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parents
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
 import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.references.*
+import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.plugin.references.SimpleNameReferenceExtension
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.astReplace
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
-import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.DataClassResolver
+import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
@@ -38,13 +40,96 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
             ?: simpleNameReference.expression
     }
 
+    protected fun KtSimpleReference<KtNameReferenceExpression>.renameToOrdinaryMethod(newElementName: String, getter: Boolean): KtElement? {
+        val psiFactory = KtPsiFactory(expression.project)
+
+        val newGetterName = if (getter) newElementName else JvmAbi.getterName(expression.getReferencedName())
+
+        if (expression.readWriteAccess(false) == ReferenceAccess.READ) {
+            return expression.replaced(expression.createCall(psiFactory, newGetterName))
+        }
+
+        val newSetterName = if (getter) JvmAbi.setterName(expression.getReferencedName()) else newElementName
+
+        val fullExpression = expression.getQualifiedExpressionForSelectorOrThis()
+        fullExpression.getAssignmentByLHS()?.let { assignment ->
+            val rhs = assignment.right ?: return expression
+            val operationToken = assignment.operationToken as? KtSingleValueToken ?: return expression
+            val counterpartOp = OperatorConventions.ASSIGNMENT_OPERATION_COUNTERPARTS[operationToken]
+            val setterArgument = if (counterpartOp != null) {
+                val getterCall = if (getter) fullExpression.createCall(psiFactory, newGetterName) else fullExpression
+                psiFactory.createExpressionByPattern("$0 ${counterpartOp.value} $1", getterCall, rhs)
+            } else {
+                rhs
+            }
+            val newSetterCall = fullExpression.createCall(psiFactory, newSetterName, setterArgument)
+            return assignment.replaced(newSetterCall).getQualifiedElementSelector()
+        }
+
+        fullExpression.getStrictParentOfType<KtUnaryExpression>()?.let { unaryExpr ->
+            val operationToken = unaryExpr.operationToken as? KtSingleValueToken ?: return expression
+            if (operationToken !in OperatorConventions.INCREMENT_OPERATIONS) return expression
+            val operationName = OperatorConventions.getNameForOperationSymbol(operationToken)
+            val originalValue = if (getter) fullExpression.createCall(psiFactory, newGetterName) else fullExpression
+            val incDecValue = psiFactory.createExpressionByPattern("$0.$operationName()", originalValue)
+            val parent = unaryExpr.parent
+            val context = parent.parents(true).firstOrNull { it is KtBlockExpression || it is KtDeclarationContainer }
+            if (context == parent || context == null) {
+                val newSetterCall = fullExpression.createCall(psiFactory, newSetterName, incDecValue)
+                return unaryExpr.replaced(newSetterCall).getQualifiedElementSelector()
+            } else {
+                val anchor = parent.parents(true).firstOrNull { it.parent == context }
+                val varName = suggestVariableName(unaryExpr, context)
+                val isPrefix = unaryExpr is KtPrefixExpression
+                val varInitializer = if (isPrefix) incDecValue else originalValue
+                val newVar = psiFactory.createDeclarationByPattern<KtProperty>("val $varName = $0", varInitializer)
+                val setterArgument = psiFactory.createExpression(if (isPrefix) varName else "$varName.$operationName()")
+                val newSetterCall = fullExpression.createCall(psiFactory, newSetterName, setterArgument)
+                val newLine = psiFactory.createNewLine()
+                context.addBefore(newVar, anchor)
+                context.addBefore(newLine, anchor)
+                context.addBefore(newSetterCall, anchor)
+                return unaryExpr.replaced(psiFactory.createExpression(varName))
+            }
+        }
+
+        return expression
+    }
+
+    abstract fun KtSimpleReference<KtNameReferenceExpression>.suggestVariableName(expr: KtExpression, context: PsiElement): String
+
+    private fun KtExpression.createCall(
+        psiFactory: KtPsiFactory,
+        newName: String? = null,
+        argument: KtExpression? = null
+    ): KtExpression {
+        return if (this is KtQualifiedExpression) {
+            copied().also {
+                val selector = it.getQualifiedElementSelector() as? KtExpression
+                selector?.replace(selector.createCall(psiFactory, newName, argument))
+            }
+        } else {
+            psiFactory.buildExpression {
+                if (newName != null) {
+                    appendFixedText(newName)
+                } else {
+                    appendExpression(this@createCall)
+                }
+                appendFixedText("(")
+                if (argument != null) {
+                    appendExpression(argument)
+                }
+                appendFixedText(")")
+            }
+        }
+    }
+
     override fun handleElementRename(ktReference: KtReference, newElementName: String): PsiElement? {
         return when (ktReference) {
             is KtArrayAccessReference -> ktReference.renameTo(newElementName)
             is KDocReference -> ktReference.renameTo(newElementName)
             is KtInvokeFunctionReference -> ktReference.renameTo(newElementName)
             is KtSimpleNameReference -> ktReference.renameTo(newElementName)
-            is SyntheticPropertyAccessorReference -> ktReference.renameTo(newElementName)
             is KtDefaultAnnotationArgumentReference -> ktReference.renameTo(newElementName)
             else -> throw IncorrectOperationException()
         }
@@ -80,7 +165,7 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
         return renameImplicitConventionalCall(newElementName)
     }
 
-    private fun KtSimpleNameReference.renameTo(newElementName: String): KtExpression {
+    protected fun KtSimpleNameReference.renameTo(newElementName: String): KtExpression {
         if (!canRename()) throw IncorrectOperationException()
 
         if (newElementName.unquoteKotlinIdentifier() == "") {
@@ -133,8 +218,6 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
         }
         return expression
     }
-
-    protected abstract fun SyntheticPropertyAccessorReference.renameTo(newElementName: String): KtElement?
 
     protected fun KtDefaultAnnotationArgumentReference.renameTo(newElementName: String): KtValueArgument {
         val psiFactory = KtPsiFactory(expression.project)
