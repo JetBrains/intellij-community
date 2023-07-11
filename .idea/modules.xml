@@ -1103,7 +1103,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/github/intellij.vcs.github.iml" filepath="$PROJECT_DIR$/plugins/github/intellij.vcs.github.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gitlab/intellij.vcs.gitlab.iml" filepath="$PROJECT_DIR$/plugins/gitlab/intellij.vcs.gitlab.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/hg4idea/intellij.vcs.hg.iml" filepath="$PROJECT_DIR$/plugins/hg4idea/intellij.vcs.hg.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/refactoring-detector/intellij.vcs.refactoring.detector.iml" filepath="$PROJECT_DIR$/plugins/refactoring-detector/intellij.vcs.refactoring.detector.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/intellij.vcs.svn.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/intellij.vcs.svn.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/intellij.vcs.svn.tests.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/intellij.vcs.svn.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/webp/intellij.webp.iml" filepath="$PROJECT_DIR$/plugins/webp/intellij.webp.iml" />

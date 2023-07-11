@@ -558,9 +558,6 @@ object CommunityLibraryLicenses {
                    libraryName = "kotlinx-serialization-protobuf",
                    url = "https://github.com/Kotlin/kotlinx.serialization")
       .apache("https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt"),
-    LibraryLicense(name = "Kotlin Refactoring Miner", libraryName = "jetbrains.research.refactorinsight.kotlin.impl",
-                   url = "https://github.com/JetBrains-Research/kotlinRMiner")
-      .apache("https://github.com/JetBrains-Research/kotlinRMiner"),
     LibraryLicense(name = "Kotlin reflection library",
                    libraryName = "kotlin-reflect",
                    url = "https://github.com/JetBrains/kotlin")
