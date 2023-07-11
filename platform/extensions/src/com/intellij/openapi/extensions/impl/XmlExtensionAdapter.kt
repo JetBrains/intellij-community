@@ -78,11 +78,19 @@ internal open class XmlExtensionAdapter(implementationClassName: String,
     return componentManager.instantiateClass(aClass, pluginDescriptor.pluginId)
   }
 
-  internal class SimpleConstructorInjectionAdapter(implementationClassName: String,
-                                                   pluginDescriptor: PluginDescriptor,
-                                                   descriptor: ExtensionDescriptor,
-                                                   implementationClassResolver: ImplementationClassResolver) : XmlExtensionAdapter(
-    implementationClassName, pluginDescriptor, descriptor.orderId, descriptor.order, descriptor.element, implementationClassResolver) {
+  internal class SimpleConstructorInjectionAdapter(
+    implementationClassName: String,
+    pluginDescriptor: PluginDescriptor,
+    descriptor: ExtensionDescriptor,
+    implementationClassResolver: ImplementationClassResolver,
+  ) : XmlExtensionAdapter(
+    implementationClassName = implementationClassName,
+    pluginDescriptor = pluginDescriptor,
+    orderId = descriptor.orderId,
+    order = descriptor.order,
+    extensionElement = descriptor.element,
+    implementationClassResolver = implementationClassResolver,
+  ) {
     override fun <T> instantiateClass(aClass: Class<T>, componentManager: ComponentManager): T {
       if (aClass.name != "org.jetbrains.kotlin.asJava.finder.JavaElementFinder") {
         try {

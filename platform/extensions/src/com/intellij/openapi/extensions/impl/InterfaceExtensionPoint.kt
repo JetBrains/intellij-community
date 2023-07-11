@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl
 
 import com.intellij.openapi.components.ComponentManager
@@ -17,8 +17,8 @@ internal class InterfaceExtensionPoint<T : Any>(
   public override fun createAdapter(descriptor: ExtensionDescriptor,
                                     pluginDescriptor: PluginDescriptor,
                                     componentManager: ComponentManager): ExtensionComponentAdapter {
-    // see comment in readExtensions WHY element maybe created for interface extension point adapter
-    // we cannot nullify element as part of readExtensions - in readExtensions not yet clear is it bean or interface extension
+    // see comment in readExtensions WHY an element maybe created for interface extension point adapter
+    // we cannot nullify an element as part of readExtensions - in readExtensions not yet clear is it bean or interface extension
     if (!descriptor.hasExtraAttributes && descriptor.element != null && descriptor.element!!.children.isEmpty()) {
       descriptor.element = null
     }
@@ -26,8 +26,10 @@ internal class InterfaceExtensionPoint<T : Any>(
                                   ?: throw componentManager.createError(
                                     "Attribute \"implementation\" is not specified for \"$name\" extension",
                                     pluginDescriptor.pluginId)
-    return SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, descriptor,
-                                             InterfaceExtensionImplementationClassResolver.INSTANCE)
+    return SimpleConstructorInjectionAdapter(implementationClassName = implementationClassName,
+                                             pluginDescriptor = pluginDescriptor,
+                                             descriptor = descriptor,
+                                             implementationClassResolver = InterfaceExtensionImplementationClassResolver.INSTANCE)
   }
 
   override fun unregisterExtensions(componentManager: ComponentManager,
