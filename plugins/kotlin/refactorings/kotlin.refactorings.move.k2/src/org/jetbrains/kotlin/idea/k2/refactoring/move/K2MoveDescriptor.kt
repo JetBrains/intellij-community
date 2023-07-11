@@ -66,7 +66,7 @@ sealed class K2MoveDescriptor {
      * be moved into a different location.
      */
     class Files(override val source: K2MoveSource.FileSource, override val target: K2MoveTarget.SourceDirectory) : K2MoveDescriptor() {
-        override val refactoringProcessor: BaseRefactoringProcessor get() = K2MoveFilesRefactoringProcessor(this)
+        override val refactoringProcessor: BaseRefactoringProcessor get() = K2MoveFilesOrDirectoriesRefactoringProcessor(this)
 
         val searchForText: Boolean get() = KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT
 

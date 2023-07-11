@@ -5,8 +5,11 @@ import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.refactoring.move.moveClassesOrPackages.CommonMoveUtil
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -17,26 +20,34 @@ class K2MoveFilesHandler : MoveFileHandler() {
     }
 
     override fun findUsages(
-        psiFile: PsiFile?,
-        newParent: PsiDirectory?,
+        psiFile: PsiFile,
+        newParent: PsiDirectory,
         searchInComments: Boolean,
         searchInNonJavaFiles: Boolean
     ): List<UsageInfo> {
-        return emptyList()
+        require(psiFile is KtFile) { "Can only find usages from Kotlin files" }
+        return K2MoveSource.ElementSource(psiFile).findUsages(searchInComments, searchInNonJavaFiles)
     }
 
-    override fun retargetUsages(usageInfos: MutableList<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
-
+    override fun prepareMovedFile(file: PsiFile, moveDestination: PsiDirectory, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
+        require(file is KtFile) { "Can only prepare Kotlin files" }
+        file.updatePackageDirective(moveDestination)
+        val declarations = file.declarations
+        declarations.forEach { oldToNewMap[it] = it }
     }
 
-    override fun prepareMovedFile(file: PsiFile?, moveDestination: PsiDirectory, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
-        require(file is KtFile) { "Can only process Kotlin files" }
-        val newPackageName = JavaDirectoryService.getInstance().getPackage(moveDestination)?.kotlinFqName ?: return
-        val newPackageDirective = KtPsiFactory(file.project).createPackageDirective(newPackageName)
-        file.packageDirective?.replace(newPackageDirective)
+    private fun KtFile.updatePackageDirective(destination: PsiDirectory) {
+        val newPackageName = JavaDirectoryService.getInstance().getPackage(destination)?.kotlinFqName ?: return
+        val newPackageDirective = KtPsiFactory(project).createPackageDirective(newPackageName)
+        packageDirective?.replace(newPackageDirective)
     }
 
-    override fun updateMovedFile(file: PsiFile) {
-        require(file is KtFile) { "Can only process Kotlin files" }
+    override fun updateMovedFile(file: PsiFile) { }
+
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    override fun retargetUsages(usageInfos: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
+        allowAnalysisOnEdt {
+            CommonMoveUtil.retargetUsages(usageInfos.toTypedArray(), oldToNewMap)
+        }
     }
 }

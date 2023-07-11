@@ -3,7 +3,9 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.Align
@@ -11,9 +13,11 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.list.createTargetPresentationRenderer
+import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -60,6 +64,15 @@ sealed interface K2MoveSource<T : KtElement> {
         override var elements: Set<KtNamedDeclaration> = declarations
             private set
 
+        fun findUsages(searchInComments: Boolean, searchForText: Boolean): List<UsageInfo> {
+            return elements.flatMap { member ->
+                val references = ReferencesSearch.search(member).findAll().filter { reference ->
+                    reference.element.getNonStrictParentOfType<KtImportDirective>() == null
+                }
+                references.map { reference -> MoveRenameUsageInfo(reference, member) }
+            }
+        }
+
         context(Panel)
         override fun buildPanel(onError: (String?, JComponent) -> Unit) {
             fun getSourceFiles(elementsToMove: Collection<KtNamedDeclaration>): List<KtFile> = elementsToMove
@@ -94,6 +107,12 @@ sealed interface K2MoveSource<T : KtElement> {
             onApply {
                 elements = memberSelectionPanel.table.selectedMemberInfos.map { it.member }.toSet()
             }
+        }
+    }
+
+    companion object {
+        fun ElementSource(file: KtFile): ElementSource {
+            return ElementSource(file.declarations.filterIsInstance<KtNamedDeclaration>().toSet())
         }
     }
 }

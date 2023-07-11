@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
 
-class K2MoveFilesRefactoringProcessor(val descriptor: K2MoveDescriptor.Files) : MoveFilesOrDirectoriesProcessor(
+class K2MoveFilesOrDirectoriesRefactoringProcessor(val descriptor: K2MoveDescriptor.Files) : MoveFilesOrDirectoriesProcessor(
     descriptor.target.pkg.project,
     descriptor.source.elements.toTypedArray(),
     descriptor.target.directory,
@@ -13,7 +13,4 @@ class K2MoveFilesRefactoringProcessor(val descriptor: K2MoveDescriptor.Files) : 
     descriptor.searchForText,
     MoveCallback {  },
     Runnable {  }
-) {
-
-
-}
+)
