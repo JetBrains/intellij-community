@@ -56,6 +56,10 @@ class MiniDetailsGetter internal constructor(project: Project,
     }
 
     val toLoad = IntOpenHashSet(commitsToLoad.iterator())
+    if (toLoad.isEmpty()) {
+      return cache.getIfPresent(commit) ?: createPlaceholderCommit(commit, 0 /*not used as this commit is not cached*/)
+    }
+
     val taskNumber = currentTaskIndex++
     toLoad.forEach(IntConsumer { cacheCommit(it, taskNumber) })
     loader.queue(TaskDescriptor(toLoad))
