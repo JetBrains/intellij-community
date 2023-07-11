@@ -106,6 +106,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   private static final @NonNls String META_INFO_IDE           = "ide";
   private static final @NonNls String META_INFO_IDE_VERSION   = "ideVersion";
   private static final @NonNls String META_INFO_ORIGINAL      = "originalScheme";
+  private static final @NonNls String META_INFO_PARTIAL       = "partialSave";
 
   //endregion
 
@@ -536,6 +537,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
     if (myParentScheme != null && myParentScheme != EmptyColorScheme.INSTANCE) {
       parentNode.setAttribute(PARENT_SCHEME_ATTR, myParentScheme.getName());
+    }
+
+    if (!(this instanceof ReadOnlyColorsScheme) && getBaseScheme() != myParentScheme) {
+      myMetaInfo.setProperty(META_INFO_PARTIAL, String.valueOf(true));
     }
 
     if (!myMetaInfo.isEmpty()) {
@@ -1062,7 +1067,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
     else {
       String originalSchemeName = getMetaProperties().getProperty(META_INFO_ORIGINAL);
-      if (originalSchemeName != null) {
+      String isPartial = getMetaProperties().getProperty(META_INFO_PARTIAL);
+      if (originalSchemeName != null && isPartial != null && Boolean.parseBoolean(isPartial)) {
         EditorColorsScheme original = nameResolver.apply(originalSchemeName);
         if (original == null) {
           throw new InvalidDataException(originalSchemeName);
