@@ -17,8 +17,8 @@ class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCas
   fun testSwitchExpressionsEnumResolve() = doTest()
   fun testSwitchNumericPromotion() = doTest()
   fun testSimpleInferenceCases() = doTest()
-  fun testEnhancedSwitchDefinitelyAssigned() = doTest()
-  fun testEnhancedSwitchUnreachable() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_20_PREVIEW) { doTest() }
+  fun testEnhancedSwitchDefinitelyAssigned() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
+  fun testEnhancedSwitchUnreachable() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
   fun testSwitchExpressionHasResult() = doTest()
   fun testYieldStatements() = doTest()
   fun testAssignToFinalInSwitchExpression() = doTest()

@@ -36,7 +36,7 @@ class Test {
       case Second s:
         throw new IllegalArgumentException();
     }
-    System.out.println();
+    <error descr="Unreachable statement">System.out.println();</error>
   }
 
   void testSealedClassUnreachable1(I i) {
