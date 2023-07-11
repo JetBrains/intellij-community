@@ -771,15 +771,8 @@ public final class HighlightControlFlowUtil {
 
     if (refGuardedPattern == null) return null;
     LanguageLevel level = PsiUtil.getLanguageLevel(refGuardedPattern);
-    //assigment is covered in com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.checkOutsideDeclaredCantBeAssignmentInGuard
-    boolean isAssignment = false;
-    PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(context, PsiAssignmentExpression.class);
-    if (assignmentExpression != null && PsiTreeUtil.isAncestor(assignmentExpression.getLExpression(), context, false)) {
-      isAssignment = true;
-    }
-    if (!isAssignment && PsiTreeUtil.getParentOfType(context, PsiUnaryExpression.class) != null) {
-      isAssignment = true;
-    }
+    //this assigment is covered by com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.checkOutsideDeclaredCantBeAssignmentInGuard
+    boolean isAssignment = context instanceof PsiReferenceExpression psiExpression && PsiUtil.isAccessedForWriting(psiExpression);
     if (((level == LanguageLevel.JDK_20_PREVIEW && refGuardedPattern != PsiTreeUtil.getParentOfType(variable, PsiPatternGuard.class)) ||
          (level != LanguageLevel.JDK_20_PREVIEW && !isAssignment &&
           !PsiTreeUtil.isAncestor(refGuardedPattern.getGuardingExpression(), variable, false))) &&
