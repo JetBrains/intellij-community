@@ -8,6 +8,7 @@ import com.intellij.util.text.NameUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,6 +29,14 @@ public class ClassFinder {
     this.includeUnconventionallyNamedTests = includeUnconventionallyNamedTests;
     String directoryOffset = rootPackage.replace(".", classPathRoot.getFileSystem().getSeparator());
     classNameList = findAndStoreTestClasses(classPathRoot.resolve(directoryOffset));
+  }
+
+  /**
+   * @deprecated Use {@linkplain ClassFinder#ClassFinder(Path, String, boolean)} instead.
+   */
+  @Deprecated(forRemoval = true)
+  public ClassFinder(final File classPathRoot, final String rootPackage, boolean includeUnconventionallyNamedTests) {
+    this(classPathRoot.toPath(), rootPackage, includeUnconventionallyNamedTests);
   }
 
   @Nullable
