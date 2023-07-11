@@ -96,6 +96,9 @@ public abstract class ExperimentalUI {
     }
   }
 
+  // used by the JBClient for cases where a link overrides new UI mode
+  public abstract void saveCurrentValueAndReapplyDefaultLaf();
+
   public static boolean isNewNavbar() {
     return isNewUI() && Registry.is("ide.experimental.ui.navbar.scroll");
   }
