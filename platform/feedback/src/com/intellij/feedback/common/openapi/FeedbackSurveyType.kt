@@ -3,7 +3,6 @@ package com.intellij.feedback.common.openapi
 
 import com.intellij.feedback.common.state.CommonFeedbackSurveyService
 import com.intellij.feedback.common.state.DontShowAgainFeedbackService
-import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.project.Project
 
@@ -18,11 +17,11 @@ sealed class FeedbackSurveyType<T : FeedbackSurveyConfig> {
   abstract fun getRespondNotificationAction(project: Project, forTest: Boolean): () -> Unit
 
   fun updateCommonFeedbackSurveysStateAfterSent() {
-    CommonFeedbackSurveyService.feedbackSurveySent(feedbackSurveyConfig.surveyId)
+    CommonFeedbackSurveyService.feedbackSurveyAnswerSent(feedbackSurveyConfig.surveyId)
   }
 
   fun isSuitableToShow(project: Project): Boolean {
-    return CommonFeedbackSurveyService.checkIsFeedbackSurveySent(feedbackSurveyConfig.surveyId) &&
+    return CommonFeedbackSurveyService.checkIsFeedbackSurveyAnswerSent(feedbackSurveyConfig.surveyId) &&
            feedbackSurveyConfig.checkIdeIsSuitable() &&
            feedbackSurveyConfig.checkIsFeedbackCollectionDeadlineNotPast() &&
            feedbackSurveyConfig.checkIsIdeEAPIfRequired() &&
@@ -35,7 +34,7 @@ sealed class FeedbackSurveyType<T : FeedbackSurveyConfig> {
     notification.addAction(
       NotificationAction.createSimpleExpiring(feedbackSurveyConfig.getRespondNotificationActionLabel()) {
         if (!forTest) {
-          FeedbackNotificationCountCollector.logRespondNotificationActionInvoked(feedbackSurveyConfig.surveyId)
+          CommonFeedbackSurveyService.feedbackSurveyRespondActionInvoked(feedbackSurveyConfig.surveyId)
         }
         getRespondNotificationAction(project, forTest)()
       }
@@ -44,14 +43,13 @@ sealed class FeedbackSurveyType<T : FeedbackSurveyConfig> {
       NotificationAction.createSimpleExpiring(feedbackSurveyConfig.getCancelNotificationActionLabel()) {
         if (!forTest) {
           DontShowAgainFeedbackService.dontShowFeedbackInCurrentVersion()
-          FeedbackNotificationCountCollector.logDisableNotificationActionInvoked(feedbackSurveyConfig.surveyId)
+          CommonFeedbackSurveyService.feedbackSurveyDisableActionInvoked(feedbackSurveyConfig.surveyId)
         }
         feedbackSurveyConfig.getCancelNotificationAction(project)()
       }
     )
     notification.notify(project)
     if (!forTest) {
-      FeedbackNotificationCountCollector.logRequestNotificationShown(feedbackSurveyConfig.surveyId)
       CommonFeedbackSurveyService.feedbackSurveyShowed(feedbackSurveyConfig.surveyId)
       feedbackSurveyConfig.updateStateAfterNotificationShowed(project)
     }

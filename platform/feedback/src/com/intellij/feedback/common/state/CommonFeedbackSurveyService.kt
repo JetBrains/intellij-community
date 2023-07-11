@@ -5,27 +5,58 @@ import com.intellij.openapi.components.*
 import kotlinx.serialization.Serializable
 
 @Service(Service.Level.APP)
-@State(name = "CommonFeedbackSurveyService", storages = [Storage("CommonFeedbackSurveyService.xml")])
+@State(name = "CommonFeedbackSurveyService", storages = [Storage("CommonFeedbackSurveyService.xml", roamingType = RoamingType.DISABLED)])
 class CommonFeedbackSurveyService : PersistentStateComponent<CommonFeedbackSurveysState> {
   companion object {
 
     @JvmStatic
     fun getNumberShowsOfFeedbackSurvey(surveyId: String): Int {
-      return getInstance().state.feedbackSurveyToNumberShows.getOrDefault(surveyId, 0)
+      return getInstance().state.feedbackSurveyToNumberNotificationShows.getOrDefault(surveyId, 0)
     }
 
     @JvmStatic
     fun feedbackSurveyShowed(surveyId: String) {
-      getInstance().state.feedbackSurveyToNumberShows.increment(surveyId)
+      getInstance().state.feedbackSurveyToNumberNotificationShows.increment(surveyId)
     }
 
     @JvmStatic
-    fun feedbackSurveySent(surveyId: String) {
-      getInstance().state.sentFeedbackSurveys.add(surveyId)
+    fun getNumberShowsForAllSurveys(): Map<String, Int> {
+      return getInstance().state.feedbackSurveyToNumberNotificationShows
     }
 
-    fun checkIsFeedbackSurveySent(surveyId: String): Boolean {
-      return getInstance().state.sentFeedbackSurveys.contains(surveyId)
+    @JvmStatic
+    fun feedbackSurveyRespondActionInvoked(surveyId: String) {
+      getInstance().state.feedbackSurveyToNumberRespondActionInvoked.increment(surveyId)
+    }
+
+    @JvmStatic
+    fun getNumberRespondActionInvokedForAllSurveys(): Map<String, Int> {
+      return getInstance().state.feedbackSurveyToNumberRespondActionInvoked
+    }
+
+    @JvmStatic
+    fun feedbackSurveyDisableActionInvoked(surveyId: String) {
+      getInstance().state.feedbackSurveyToNumberDisableActionInvoked.increment(surveyId)
+    }
+
+    @JvmStatic
+    fun getNumberDisableActionInvokedForAllSurveys(): Map<String, Int> {
+      return getInstance().state.feedbackSurveyToNumberDisableActionInvoked
+    }
+
+    @JvmStatic
+    fun feedbackSurveyAnswerSent(surveyId: String) {
+      getInstance().state.answeredFeedbackSurveys.add(surveyId)
+    }
+
+    @JvmStatic
+    fun checkIsFeedbackSurveyAnswerSent(surveyId: String): Boolean {
+      return getInstance().state.answeredFeedbackSurveys.contains(surveyId)
+    }
+
+    @JvmStatic
+    fun getAllAnsweredFeedbackSurveys(): Set<String> {
+      return getInstance().state.answeredFeedbackSurveys
     }
 
     private fun getInstance(): CommonFeedbackSurveyService = service()
@@ -48,6 +79,8 @@ class CommonFeedbackSurveyService : PersistentStateComponent<CommonFeedbackSurve
 
 @Serializable
 data class CommonFeedbackSurveysState(
-  val feedbackSurveyToNumberShows: MutableMap<String, Int> = mutableMapOf(),
-  val sentFeedbackSurveys: MutableSet<String> = mutableSetOf()
+  val feedbackSurveyToNumberNotificationShows: MutableMap<String, Int> = mutableMapOf(),
+  val feedbackSurveyToNumberRespondActionInvoked: MutableMap<String, Int> = mutableMapOf(),
+  val feedbackSurveyToNumberDisableActionInvoked: MutableMap<String, Int> = mutableMapOf(),
+  val answeredFeedbackSurveys: MutableSet<String> = mutableSetOf()
 )

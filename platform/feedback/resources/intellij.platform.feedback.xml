@@ -21,6 +21,7 @@
     <registryKey key="platform.feedback.time.to.show.notification" defaultValue="600"
                  description="Explicitly sets the number of seconds until the feedback notification is displayed."/>
     <statistics.applicationUsagesCollector implementation="com.intellij.feedback.common.statistics.DontShowAgainValueCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.feedback.common.statistics.FeedbackSurveysStateCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector"/>
 
     <feedback.idleFeedbackSurvey survey_id="demo_survey" implementation="com.intellij.feedback.demo.DemoInIdeFeedbackSurvey"/>
