@@ -9,10 +9,10 @@ internal abstract class ScrollBarAnimationBehavior(@JvmField protected val track
                                                    @JvmField protected val thumbAnimator: TwoWayAnimator) {
 
   val trackFrame: Float
-    get() = trackAnimator.myValue
+    get() = trackAnimator.value
 
   val thumbFrame: Float
-    get() = thumbAnimator.myValue
+    get() = thumbAnimator.value
 
   open fun onToggle(isOn: Boolean?) {}
   abstract fun onTrackHover(hovered: Boolean)
@@ -75,7 +75,7 @@ internal class MacScrollBarAnimationBehavior(private val scrollBarComputable: Co
   override fun onThumbMove() {
     val scrollBar = scrollBarComputable.compute()
     if (scrollBar != null && scrollBar.isShowing() && !DefaultScrollBarUI.isOpaque(scrollBar)) {
-      if (!isTrackHovered && thumbAnimator.myValue == 0f) trackAnimator.rewind(false)
+      if (!isTrackHovered && thumbAnimator.value == 0f) trackAnimator.rewind(false)
       thumbAnimator.rewind(true)
       hideThumbAlarm.cancelAllRequests()
       if (!isTrackHovered) {

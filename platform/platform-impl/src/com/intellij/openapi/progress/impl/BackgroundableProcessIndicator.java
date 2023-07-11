@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.progress.impl;
 
@@ -13,7 +13,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -55,7 +55,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     myInfo = info;
     myStatusBar = statusBarOverride;
     myBackgrounded = true;
-    UIUtil.invokeLaterIfNeeded(() -> initializeStatusBar());
+    EdtInvocationManager.invokeLaterIfNeeded(this::initializeStatusBar);
   }
 
   @RequiresEdt

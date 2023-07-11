@@ -132,9 +132,11 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
   ScrollBarPainter(@NotNull Supplier<? extends Component> supplier) {
     animator = new TwoWayAnimator(getClass().getName(), 11, 150, 125, 300, 125) {
       @Override
-      void onValueUpdate() {
+      public void onValueUpdate() {
         Component component = supplier.get();
-        if (component != null) component.repaint();
+        if (component != null) {
+          component.repaint();
+        }
       }
     };
   }
