@@ -2,6 +2,7 @@
 package com.intellij.cucumber;
 
 import com.intellij.TestCaseLoader;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.UITestUtil;
@@ -70,34 +71,37 @@ public final class CucumberMain {
     try {
       UITestUtil.replaceIdeEventQueueSafely();
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
-        try {
-          RuntimeOptions runtimeOptions = new RuntimeOptions(new ArrayList<>(Arrays.asList(argv)));
-          MultiLoader resourceLoader = new MultiLoader(classLoader) {
-            @Override
-            public Iterable<Resource> resources(String path, String suffix) {
-              Iterable<Resource> resources = super.resources(path, suffix);
-              if (!TestCaseLoader.shouldBucketTests() || !".feature".equals(suffix)) {
-                return resources;
-              }
-
-              List<Resource> result = new ArrayList<>();
-              for (Resource resource : resources) {
-                if (TestCaseLoader.matchesCurrentBucket(resource.getPath())) {
-                  result.add(resource);
+        IdeEventQueue.getInstance().getRwLockHolder().runWriteIntentReadAction(() -> {
+          try {
+            RuntimeOptions runtimeOptions = new RuntimeOptions(new ArrayList<>(Arrays.asList(argv)));
+            MultiLoader resourceLoader = new MultiLoader(classLoader) {
+              @Override
+              public Iterable<Resource> resources(String path, String suffix) {
+                Iterable<Resource> resources = super.resources(path, suffix);
+                if (!TestCaseLoader.shouldBucketTests() || !".feature".equals(suffix)) {
+                  return resources;
                 }
+
+                List<Resource> result = new ArrayList<>();
+                for (Resource resource : resources) {
+                  if (TestCaseLoader.matchesCurrentBucket(resource.getPath())) {
+                    result.add(resource);
+                  }
+                }
+                return result;
               }
-              return result;
-            }
-          };
-          ResourceLoaderClassFinder classFinder = new ResourceLoaderClassFinder(resourceLoader, classLoader);
-          Runtime runtime = new Runtime(resourceLoader, classFinder, classLoader, runtimeOptions);
-          runtimeRef.set(runtime);
-          runtime.run();
-        }
-        catch (Throwable throwable) {
-          errorRef.set(throwable);
-          Logger.getInstance(CucumberMain.class).error(throwable);
-        }
+            };
+            ResourceLoaderClassFinder classFinder = new ResourceLoaderClassFinder(resourceLoader, classLoader);
+            Runtime runtime = new Runtime(resourceLoader, classFinder, classLoader, runtimeOptions);
+            runtimeRef.set(runtime);
+            runtime.run();
+          }
+          catch (Throwable throwable) {
+            errorRef.set(throwable);
+            Logger.getInstance(CucumberMain.class).error(throwable);
+          }
+          return null;
+        });
       });
     }
     catch (Throwable t) {
