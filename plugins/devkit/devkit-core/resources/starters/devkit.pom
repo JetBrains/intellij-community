@@ -7,9 +7,9 @@
   <properties>
     <java.version>17</java.version>
     <kotlin.target>17</kotlin.target>
-    <gradle.version>8.1.1</gradle.version>
-    <kotlin.version>1.8.22</kotlin.version>
-    <gradle.intellij.version>1.14.1</gradle.intellij.version>
+    <gradle.version>8.2</gradle.version>
+    <kotlin.version>1.9.0</kotlin.version>
+    <gradle.intellij.version>1.15.0</gradle.intellij.version>
 
     <intellij.version>2022.2.5</intellij.version>
     <intellij.since.build>222</intellij.since.build>
