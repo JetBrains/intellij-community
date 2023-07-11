@@ -76,18 +76,12 @@ public class KotlinFindFunctionUsagesDialog extends FindMethodUsagesDialog {
         super.addUsagesOptions(optionsPanel);
 
         Utils.removeCheckbox(optionsPanel, JavaBundle.message("find.options.include.overloaded.methods.checkbox"));
-        /*if (!Utils.renameCheckbox(
-                optionsPanel,
-                JavaBundle.message("find.options.include.overloaded.methods.checkbox"),
-                KotlinBundle.message("find.declaration.include.overloaded.methods.checkbox")
-        )) {*/
         myCbIncludeOverloadedAndExtensions = addCheckboxToPanel(
                 KotlinBundle.message("find.declaration.include.overloaded.methods.checkbox"),
                 FindSettings.getInstance().isSearchOverloadedMethods(),
                 optionsPanel,
-                true
+                false
         );
-        /*}*/
         PsiElement element = LightClassUtilsKt.getUnwrapped(getPsiElement());
         //noinspection ConstantConditions
         KtDeclaration function = element instanceof KtNamedDeclaration
