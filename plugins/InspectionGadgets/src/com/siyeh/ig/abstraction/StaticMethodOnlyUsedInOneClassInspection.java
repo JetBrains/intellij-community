@@ -14,11 +14,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.util.ObjectUtils;
@@ -220,9 +222,9 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
   }
 
   private static boolean isInGeneratedSource(PsiClass containingClass) {
-    if (containingClass.getContainingFile() != null && containingClass.getContainingFile().getVirtualFile() != null) {
-      boolean isGeneratedSource = JavaProjectRootsUtil.isInGeneratedCode(containingClass.getContainingFile().getVirtualFile(),
-                                                                         containingClass.getProject());
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(containingClass);
+    if (virtualFile != null) {
+      boolean isGeneratedSource = JavaProjectRootsUtil.isInGeneratedCode(virtualFile, containingClass.getProject());
       if (isGeneratedSource) {
         return true;
       }
