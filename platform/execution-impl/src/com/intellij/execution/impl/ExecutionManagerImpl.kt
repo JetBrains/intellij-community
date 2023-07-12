@@ -81,6 +81,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     val EXECUTION_SKIP_RUN = ExecutionManager.EXECUTION_SKIP_RUN
 
     internal val TERMINATING_FOR_RERUN = Key.create<Boolean>("TERMINATING_FOR_RERUN")
+    internal val REPORT_NEXT_START_AS_RERUN = Key.create<Boolean>("REPORT_NEXT_START_AS_RERUN")
 
     @JvmStatic
     fun getInstance(project: Project) = project.service<ExecutionManager>() as ExecutionManagerImpl
@@ -517,6 +518,10 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         descriptor?.processHandler?.putUserData(TERMINATING_FOR_RERUN, true)
         stopProcess(descriptor)
       }
+
+      // This ExecutionEnvironment might be a fresh new object, so, technically, it hasn't been started yet,
+      // but it is going to be started because of the 'Rerun' action, so, need to report to FUS as rerun.
+      environment.putUserData(REPORT_NEXT_START_AS_RERUN, true)
     }
 
     if (awaitingRunProfiles[environment.runProfile] === environment) {
@@ -860,7 +865,14 @@ fun RunnerAndConfigurationSettings.isOfSameType(runnerAndConfigurationSettings: 
 private fun triggerUsage(environment: ExecutionEnvironment): StructuredIdeActivity? {
   val runConfiguration = environment.runnerAndConfigurationSettings?.configuration
   val configurationFactory = runConfiguration?.factory ?: return null
-  return RunConfigurationUsageTriggerCollector.trigger(environment.project, configurationFactory, environment.executor, runConfiguration)
+  val isRerun = environment.getUserData(ExecutionManagerImpl.REPORT_NEXT_START_AS_RERUN) == true
+
+  // The 'Rerun' button in the Run tool window will reuse the same ExecutionEnvironment object again.
+  // If there are no processes to stop, the REPORT_NEXT_START_AS_RERUN won't be set in restartRunProfile(), so need to set it here.
+  if (!isRerun) environment.putUserData(ExecutionManagerImpl.REPORT_NEXT_START_AS_RERUN, true)
+
+  return RunConfigurationUsageTriggerCollector
+    .trigger(environment.project, configurationFactory, environment.executor, runConfiguration, isRerun)
 }
 
 private fun createEnvironmentBuilder(project: Project,
