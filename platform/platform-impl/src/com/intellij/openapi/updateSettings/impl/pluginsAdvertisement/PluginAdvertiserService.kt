@@ -130,7 +130,8 @@ open class PluginAdvertiserServiceImpl(
         .map { it.pluginId }
         .mapNotNull { descriptorsById[it] }
         .filterNot { it.isEnabled }
-        .filter { pluginManagerFilters.allowInstallingPlugin(it) && pluginManagerFilters.isPluginCompatible(it) }
+        .filter { pluginManagerFilters.allowInstallingPlugin(it) }
+        .filter { pluginManagerFilters.isPluginCompatible(it) }
         .toList()
 
       val suggestToInstall = if (plugins.isEmpty())
