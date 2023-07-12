@@ -46,23 +46,25 @@ class ChangeProjectColorAction(val projectPath: String, val name: @NlsSafe Strin
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.text = transformToCurrentIfNeeded(name)
+    val project = e.project ?: return
+    e.presentation.text = transformToCurrentIfNeeded(name, project)
   }
 
   @NlsActions.ActionText
-  private fun transformToCurrentIfNeeded(@NlsActions.ActionText name: String): String {
+  private fun transformToCurrentIfNeeded(@NlsActions.ActionText name: String, project: Project): String {
     val customizer = ProjectWindowCustomizerService.getInstance()
-    if (index == customizer.getCurrentProjectColorIndex(projectPath)) {
+    if (index == customizer.getCurrentProjectColorIndex(project)) {
       return IdeBundle.message("action.ChangeProjectColorAction.Current.title", name)
     }
     return name
   }
 
   override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
     val customizer = ProjectWindowCustomizerService.getInstance()
-    e.project?.let { customizer.clearToolbarColorsAndInMemoryCache(it) }
-    customizer.setAssociatedColorsIndex(projectPath, index)
-    e.project?.repaintFrame()
+    customizer.clearToolbarColorsAndInMemoryCache(project)
+    customizer.setAssociatedColorsIndex(project, index)
+    project.repaintFrame()
   }
 }
 
