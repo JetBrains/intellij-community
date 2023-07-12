@@ -219,8 +219,8 @@ class KtSymbolBasedClassDescriptor(override val ktSymbol: KtNamedClassOrObjectSy
     override fun isValue(): Boolean = ktSymbol.isInline
     override fun isFun(): Boolean = ktSymbol.isFun
 
-    override fun isExpect(): Boolean = implementationPostponed()
-    override fun isActual(): Boolean = implementationPostponed()
+    override fun isExpect(): Boolean = ktSymbol.isExpect
+    override fun isActual(): Boolean = ktSymbol.isActual
     override fun isExternal(): Boolean = ktSymbol.isExternal
 
     override fun getVisibility(): DescriptorVisibility = ktSymbol.visibility.toDescriptorVisibility()
