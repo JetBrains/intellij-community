@@ -31,8 +31,19 @@ interface JetBrainsClientDownloaderConfigurationProvider {
 
   companion object {
     const val ClientUrlVar = "THIN_CLIENT_URL"
+    val getThinClientUrlVar: String?
+      get() = System.getenv()[ClientUrlVar]
+
     const val CheckClientSignature = "THIN_CLIENT_CHECK_SIGNATURE"
+    val getCheckClientSignature: Boolean?
+      get() = System.getenv()[CheckClientSignature]?.toBoolean()
+
     const val DownloadLatestForSnapshot = "THIN_CLIENT_DOWNLOAD_LATEST_FOR_SNAPSHOT"
+    val getDownloadLatestForSnapshot: Boolean?
+      get() = System.getenv()[DownloadLatestForSnapshot]?.toBoolean()
+
+    val customPropertiesAreSet
+      get() = getThinClientUrlVar != null && getDownloadLatestForSnapshot != null && getCheckClientSignature != null
   }
 
   fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine)
@@ -60,7 +71,7 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   override val clientDownloadUrl: URI
     get() {
-      val envVar = System.getenv()[JetBrainsClientDownloaderConfigurationProvider.ClientUrlVar]
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.getThinClientUrlVar
       return envVar?.let { URI(it) } ?: RemoteDevSystemSettings.getClientDownloadUrl().value
     }
   override val jreDownloadUrl: URI
@@ -81,8 +92,8 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     get() = IntellijClientDownloaderSystemSettings.isModifiedDateInManifestIncluded()
   override val verifySignature: Boolean
     get() {
-      val envVar = System.getenv()[JetBrainsClientDownloaderConfigurationProvider.CheckClientSignature]
-      return envVar?.let { it.toBoolean() } ?: true
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.getCheckClientSignature
+      return envVar ?: true
     }
 
   override fun patchVmOptions(vmOptionsFile: Path, connectionUri: URI) {
@@ -93,8 +104,8 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   override val downloadLatestBuildFromCDNForSnapshotHost: Boolean
     get() {
-      val envVar = System.getenv()[JetBrainsClientDownloaderConfigurationProvider.DownloadLatestForSnapshot]
-      return envVar?.let { it.toBoolean() } ?: true
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.getDownloadLatestForSnapshot
+      return envVar ?: true
     }
 }
 
@@ -128,8 +139,8 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   override val downloadLatestBuildFromCDNForSnapshotHost: Boolean
     get() {
-      val envVar = System.getenv()[JetBrainsClientDownloaderConfigurationProvider.DownloadLatestForSnapshot]
-      return envVar?.let { it.toBoolean() } ?: false
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.getDownloadLatestForSnapshot
+      return envVar ?: false
     }
 
   override fun patchVmOptions(vmOptionsFile: Path, connectionUri: URI) {
