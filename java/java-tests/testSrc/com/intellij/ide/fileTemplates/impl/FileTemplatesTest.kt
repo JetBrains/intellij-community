@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.ide.fileTemplates.impl
+package com.intellij.ide.fileTemplates.impl
 
 import com.intellij.ide.fileTemplates.*
-import com.intellij.ide.fileTemplates.impl.CustomFileTemplate
-import com.intellij.ide.fileTemplates.impl.FTManager
-import com.intellij.ide.fileTemplates.impl.FileTemplateBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -19,7 +16,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.registerExtension
 import com.intellij.util.io.delete
-import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions
 import java.io.File
 import java.io.FileReader
 import java.io.IOException
@@ -60,7 +57,7 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
       templateManager.setTemplates(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, allIncludes)
       val txt = ".txt"
       val children = testsDir.listFiles { dir: File?, name: String -> name.endsWith(".out$txt") }
-      assertThat(children).isNotEmpty()
+      Assertions.assertThat(children).isNotEmpty()
       for (resultFile in children) {
         val name = resultFile.name
         val base = name.substring(0, name.length - txt.length - ".out".length)
@@ -88,7 +85,7 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     val result = FileTemplateUtil.mergeTemplate(properties, inputString, false)
     assertEquals(expected, result)
     val attrs = FileTemplateUtil.calculateAttributes(inputString, Properties(), false, project).asList()
-    assertThat(properties.size - 1 <= attrs.size).isTrue()
+    Assertions.assertThat(properties.size - 1 <= attrs.size).isTrue()
     val e = properties.propertyNames()
     while (e.hasMoreElements()) {
       val s = e.nextElement() as String
@@ -105,7 +102,7 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     val template = addTestTemplate("my_class", "\${ABC} \${DEF} \${NAME}")
     val properties = Properties()
     properties["NAME"] = "zzz"
-    assertThat(template.getUnsetAttributes(properties, project)).containsOnly("ABC", "DEF")
+    Assertions.assertThat(template.getUnsetAttributes(properties, project)).containsOnly("ABC", "DEF")
   }
 
   fun test_collect_undefined_attribute_names_from_included_templates() {
@@ -114,7 +111,7 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     val template = addTestTemplate("my_class", "#parse(\"included.java\") \${DEF} \${NAME}")
     val properties = Properties()
     properties["NAME"] = "zzz"
-    assertThat(template.getUnsetAttributes(properties, project)).contains("ABC", "DEF")
+    Assertions.assertThat(template.getUnsetAttributes(properties, project)).contains("ABC", "DEF")
   }
 
   fun testDefaultPackage() {
