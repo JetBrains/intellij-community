@@ -157,9 +157,11 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   }
 
   private void layoutPopup() {
-    if (myLayoutBaseComponent == null) {
+    if (myLayoutBaseComponent == null || myPopupBalloon == null) {
       // if no component set - use default location on the LayeredPane
-      myPopupBalloon.setBounds(null);
+      if (myPopupBalloon != null) {
+        myPopupBalloon.setBounds(null);
+      }
       return;
     }
 
