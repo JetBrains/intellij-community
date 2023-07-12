@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.clone
 
+import com.intellij.collaboration.auth.ui.login.LoginModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -27,7 +27,7 @@ internal interface GitLabCloneUISelectorViewModel {
 internal class GitLabCloneUISelectorViewModelImpl(
   project: Project,
   parentCs: CoroutineScope,
-  private val accountManager: GitLabAccountManager
+  accountManager: GitLabAccountManager
 ) : GitLabCloneUISelectorViewModel {
   private val cs: CoroutineScope = parentCs.childScope()
 
@@ -42,18 +42,14 @@ internal class GitLabCloneUISelectorViewModelImpl(
   init {
     cs.launch {
       accounts.collectLatest { accounts ->
-        if (accounts.isNotEmpty()) {
-          switchToRepositoryList()
-        }
+        if (accounts.isNotEmpty()) switchToRepositoryList() else switchToLoginPanel(null)
+      }
+    }
 
-        coroutineScope {
-          accounts.forEach { account ->
-            launch {
-              accountManager.getCredentialsFlow(account).collectLatest {
-                switchToRepositoryList()
-              }
-            }
-          }
+    cs.launch {
+      loginVm.tokenLoginModel.loginState.collectLatest { loginState ->
+        if (loginState is LoginModel.LoginState.Connected) {
+          switchToRepositoryList()
         }
       }
     }
