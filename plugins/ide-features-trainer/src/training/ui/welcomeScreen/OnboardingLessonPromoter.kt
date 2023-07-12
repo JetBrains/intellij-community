@@ -19,6 +19,8 @@ import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.OpenLessonActivities
+import training.learn.lesson.LessonState
+import training.learn.lesson.LessonStateManager
 import training.util.enableLessonsAndPromoters
 import training.util.resetPrimaryLanguage
 import javax.swing.Icon
@@ -43,7 +45,8 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
   override fun canCreatePromo(isEmptyState: Boolean): Boolean =
     enableLessonsAndPromoters &&
     !PropertiesComponent.getInstance().getBoolean(PROMO_HIDDEN, false) &&
-    RecentProjectsManagerBase.getInstanceEx().getRecentPaths().size < 5
+    RecentProjectsManagerBase.getInstanceEx().getRecentPaths().size < 5 &&
+    LessonStateManager.getStateFromBase(lessonId) == LessonState.NOT_PASSED
 
   override val headerLabel: String
     get() = LearnBundle.message("welcome.promo.header")
