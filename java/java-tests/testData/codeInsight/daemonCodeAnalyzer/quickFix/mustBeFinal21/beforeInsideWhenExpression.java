@@ -1,4 +1,4 @@
-// "Move 'x' into anonymous object" "true-preview"
+// "Move 'x' into anonymous object" "false"
 class Test {
     void test(Object o) {
         int x = 42;
