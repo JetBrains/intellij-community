@@ -2,6 +2,7 @@
 package com.intellij.webSymbols.query.impl
 
 import com.intellij.model.Pointer
+import com.intellij.model.Symbol
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
@@ -126,6 +127,15 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
       .firstOrNull()
     ?: super.getDocumentationTarget(location)
 
+  override fun isEquivalentTo(symbol: Symbol): Boolean =
+    super.isEquivalentTo(symbol)
+    || nameSegments.filter { it.start != it.end }
+      .let { nonEmptySegments ->
+        nonEmptySegments.size == 1
+        && nonEmptySegments[0].symbols.any { it.isEquivalentTo(symbol) }
+      }
+
+
   override fun equals(other: Any?): Boolean =
     other is WebSymbolMatch
     && other.name == name
@@ -221,6 +231,9 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
 
     override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
       super<WebSymbolMatchImpl>.getNavigationTargets(project)
+
+    override fun isEquivalentTo(symbol: Symbol): Boolean =
+      super<WebSymbolMatchImpl>.isEquivalentTo(symbol)
 
   }
 
