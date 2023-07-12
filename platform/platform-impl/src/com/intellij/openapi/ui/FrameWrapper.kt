@@ -99,11 +99,6 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
     else {
       (frame as JDialog).defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
     }
-    frame.addWindowListener(object : WindowAdapter() {
-      override fun windowClosing(e: WindowEvent) {
-        close()
-      }
-    })
 
     ComponentUtil.decorateWindowHeader((frame as RootPaneContainer).rootPane)
     if (frame is JFrame) {
@@ -117,21 +112,25 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
       )
     }
 
-    val focusListener = object : WindowAdapter() {
+    val windowListener = object : WindowAdapter() {
       override fun windowOpened(e: WindowEvent) {
         val focusManager = IdeFocusManager.getInstance(project)
         val toFocus = preferredFocusedComponent ?: focusManager.getLastFocusedFor(e.window) ?: focusManager.getFocusTargetFor(component!!)
         toFocus?.requestFocusInWindow()
       }
+
+      override fun windowClosing(e: WindowEvent) {
+        close()
+      }
     }
-    frame.addWindowListener(focusListener)
+    frame.addWindowListener(windowListener)
+    Disposer.register(this, Disposable {
+      frame.removeWindowListener(windowListener)
+    })
 
     if (Registry.`is`("ide.perProjectModality", false)) {
       frame.isAlwaysOnTop = true
     }
-    Disposer.register(this, Disposable {
-      frame.removeWindowListener(focusListener)
-    })
 
     if (isCloseOnEsc) {
       addCloseOnEsc(frame as RootPaneContainer)
@@ -160,8 +159,7 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
     }
 
     if (SystemInfoRt.isLinux && frame is JFrame && GlobalMenuLinux.isAvailable()) {
-      val parentFrame = WindowManager.getInstance().getFrame(project)
-      if (parentFrame != null) {
+      WindowManager.getInstance().getFrame(project)?.let { parentFrame ->
         doBindAppMenuOfParent(frame, parentFrame)
       }
     }
@@ -382,6 +380,8 @@ private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeF
     }
 
     owner.isDisposing = true
+    // must be called in addition to the `dispose`, otherwise not removed from `Window.allWindows` list.
+    isVisible = false
     Disposer.dispose(owner)
     super.dispose()
     rootPane = null
