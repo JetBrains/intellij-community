@@ -12,7 +12,7 @@ class PyRunConfigurationTargetOptions : PyRunConfigurationEditorExtension {
   override fun accepts(configuration: AbstractPythonRunConfiguration<out AbstractPythonRunConfiguration<*>>): PyRunConfigurationEditorFactory? {
     if (!Registry.`is`("python.use.targets.api")) return null
     val sdk = configuration.sdk ?: return null
-    val adjuster = RunConfigurationTargetEnvironmentAdjuster.findTargetEnvironmentRequestAdjuster(sdk) ?: return null
+    val adjuster = RunConfigurationTargetEnvironmentAdjuster.Factory.findTargetEnvironmentRequestAdjuster(sdk) ?: return null
     return if (adjuster.providesAdditionalRunConfigurationUI()) {
       factoriesCache.computeIfAbsent(adjuster) { RunConfigurationsTargetOptionsFactory(adjuster) }
     }
@@ -23,7 +23,7 @@ class PyRunConfigurationTargetOptions : PyRunConfigurationEditorExtension {
 
   private class RunConfigurationsTargetOptionsFactory(private val adjuster: RunConfigurationTargetEnvironmentAdjuster) : PyRunConfigurationEditorFactory {
     override fun createEditor(configuration: AbstractPythonRunConfiguration<*>): SettingsEditor<AbstractPythonRunConfiguration<*>> {
-      val adjuster = RunConfigurationTargetEnvironmentAdjuster.findTargetEnvironmentRequestAdjuster(configuration.sdk!!)!!
+      val adjuster = RunConfigurationTargetEnvironmentAdjuster.Factory.findTargetEnvironmentRequestAdjuster(configuration.sdk!!)!!
       val runConfigurationEditor = adjuster.createAdditionalRunConfigurationUI(configuration) { configuration.sdk }
       return runConfigurationEditor as SettingsEditor<AbstractPythonRunConfiguration<*>>
     }

@@ -317,7 +317,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Sdk sdk = getSdk();
     if (sdk != null) {
       RunConfigurationTargetEnvironmentAdjuster adjuster =
-        RunConfigurationTargetEnvironmentAdjuster.findTargetEnvironmentRequestAdjuster(sdk);
+        RunConfigurationTargetEnvironmentAdjuster.Factory.findTargetEnvironmentRequestAdjuster(sdk);
       if (adjuster != null) {
         adjuster.adjust(helpersAwareTargetRequest.getTargetEnvironmentRequest(), myConfig);
       }
