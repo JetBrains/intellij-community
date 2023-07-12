@@ -2333,7 +2333,7 @@ private class BalloonHyperlinkListener(private val listener: HyperlinkListener?)
   override fun hyperlinkUpdate(e: HyperlinkEvent) {
     val balloon = balloon
     if (balloon != null && e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-      balloon.hide()
+      SwingUtilities.invokeLater { balloon.hide() }
     }
     listener?.hyperlinkUpdate(e)
   }
