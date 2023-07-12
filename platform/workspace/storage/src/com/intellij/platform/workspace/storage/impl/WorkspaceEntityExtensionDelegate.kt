@@ -8,7 +8,7 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.isSubclassOf
 
-val calculatedCache = mutableMapOf<String, PropertyMetadata>()
+val calculatedCache = mutableMapOf<KProperty<*>, PropertyMetadata>()
 data class PropertyMetadata(val returnTypeClass: Class<out WorkspaceEntity>, val isCollection: Boolean, val isNullable: Boolean)
 
 class WorkspaceEntityExtensionDelegate<T> {
@@ -38,12 +38,11 @@ class WorkspaceEntityExtensionDelegate<T> {
   }
 
   private fun computeOrGetCachedMetadata(property: KProperty<*>): PropertyMetadata {
-    val key = property.toString()
-    val cachesMetadata = calculatedCache[key]
+    val cachesMetadata = calculatedCache[property]
     if (cachesMetadata != null) return cachesMetadata
     val returnType = property.returnType
     val metadata = PropertyMetadata(property.returnTypeKClass.java, returnType.isCollection, returnType.isMarkedNullable)
-    calculatedCache[key] = metadata
+    calculatedCache[property] = metadata
     return metadata
   }
 
