@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
@@ -166,24 +165,14 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
 
   private static void exec(GeneralCommandLine command, @Nls @Nullable String prompt) throws IOException, ExecutionException {
     command.setRedirectErrorStream(true);
-    ProcessOutput result = prompt != null ? execAndGetOutputWithWizardSupport(ExecUtil.sudoCommand(command, prompt)): execAndGetOutputWithWizardSupport(command);
+    ProcessOutput result = new CapturingProcessHandler(prompt != null ? ExecUtil.sudoCommand(command, prompt) : command).runProcess();
     int exitCode = result.getExitCode();
     if (exitCode != 0) {
       String message = "Command '" + (prompt != null ? "sudo " : "") + command.getCommandLineString() + "' returned " + exitCode;
       String output = result.getStdout();
-      if (!StringUtil.isEmptyOrSpaces(output)) message += "\nOutput: " + output.trim();
+      if (!output.isBlank()) message += "\nOutput: " + output.trim();
       throw new RuntimeException(message);
     }
-  }
-
-  private static ProcessOutput execAndGetOutputWithWizardSupport(GeneralCommandLine cmd) throws ExecutionException {
-    return new CapturingProcessHandler(cmd) {
-      @Override
-      public boolean hasPty() {
-        if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) return false;
-        return super.hasPty();
-      }
-    }.runProcess();
   }
 
   public static class CreateDesktopEntryDialog extends DialogWrapper {
