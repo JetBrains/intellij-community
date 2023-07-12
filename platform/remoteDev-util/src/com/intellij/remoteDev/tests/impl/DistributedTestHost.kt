@@ -118,6 +118,8 @@ open class DistributedTestHost {
           testClassObject.performInit(testMethod)
           testMethod.invoke(testClassObject)
 
+          session.isResponding.set { _, _ -> RdTask.fromResult(true) }
+
           // Advice for processing events
           session.runNextAction.set { _, _ ->
             var actionTitle: String? = null
