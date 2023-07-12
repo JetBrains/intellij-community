@@ -5,6 +5,7 @@
 package com.intellij.execution.configuration;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
+import com.intellij.execution.EnvFilesOptions;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -73,11 +74,17 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   public void reset(CommonProgramRunConfigurationParameters s) {
     setEnvs(s.getEnvs());
     setPassParentEnvs(s.isPassParentEnvs());
+    if (s instanceof EnvFilesOptions) {
+      myEnvVars.setEnvFilePaths(((EnvFilesOptions)s).getEnvFilePaths());
+    }
   }
 
   public void apply(CommonProgramRunConfigurationParameters s) {
     s.setEnvs(getEnvs());
     s.setPassParentEnvs(isPassParentEnvs());
+    if (s instanceof EnvFilesOptions) {
+      ((EnvFilesOptions)s).setEnvFilePaths(myEnvVars.getEnvFilePaths());
+    }
   }
 
   /**

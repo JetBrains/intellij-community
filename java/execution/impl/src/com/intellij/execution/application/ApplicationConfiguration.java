@@ -44,7 +44,7 @@ import java.util.*;
 
 public class ApplicationConfiguration extends JavaRunConfigurationBase
   implements SingleClassConfiguration, RefactoringListenerProvider, InputRedirectAware, TargetEnvironmentAwareRunProfile,
-             FusAwareRunConfiguration {
+             FusAwareRunConfiguration, EnvFilesOptions {
   /* deprecated, but 3rd-party used variables */
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   @Deprecated public String MAIN_CLASS_NAME;
@@ -177,6 +177,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     }
     final JavaRunConfigurationModule configurationModule = checkClass();
     ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), configurationModule.getModule());
+    ProgramParametersUtil.checkEnvFiles(this);
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 
@@ -245,6 +246,16 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   @Override
   public boolean isPassParentEnvs() {
     return getOptions().isPassParentEnv();
+  }
+
+  @Override
+  public @NotNull List<String> getEnvFilePaths() {
+    return getOptions().getEnvFilePaths();
+  }
+
+  @Override
+  public void setEnvFilePaths(@NotNull List<String> paths) {
+    getOptions().setEnvFilePaths(paths);
   }
 
   @Override

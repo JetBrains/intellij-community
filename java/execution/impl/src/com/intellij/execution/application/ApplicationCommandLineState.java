@@ -13,6 +13,7 @@ import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -38,7 +39,12 @@ public abstract class ApplicationCommandLineState<T extends
     T configuration = getConfiguration();
 
     params.setMainClass(ReadAction.compute(() -> myConfiguration.getRunClass()));
-    JavaParametersUtil.configureConfiguration(params, myConfiguration);
+    try {
+      JavaParametersUtil.configureConfiguration(params, myConfiguration);
+    }
+    catch (ProgramParametersConfigurator.ParametersConfiguratorException e) {
+      throw new ExecutionException(e);
+    }
 
     final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
     ReadAction.run(() -> {
