@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.ui.clone
 
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
@@ -15,6 +16,7 @@ import com.intellij.util.childScope
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -52,6 +54,7 @@ internal interface GitLabCloneRepositoriesViewModel : GitLabCloneViewModel {
   }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class GitLabCloneRepositoriesViewModelImpl(
   private val project: Project,
   parentCs: CoroutineScope,
@@ -64,15 +67,29 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   private val taskLauncher: SingleCoroutineLauncher = SingleCoroutineLauncher(cs)
   override val isLoading: Flow<Boolean> = taskLauncher.busy
 
-  private val accounts: Flow<Set<GitLabAccount>> = accountManager.accountsState
-
-  private val _accountsUpdatedRequest: MutableSharedFlow<Set<GitLabAccount>> = MutableSharedFlow(replay = 1)
-  override val accountsUpdatedRequest: SharedFlow<Set<GitLabAccount>> = _accountsUpdatedRequest.asSharedFlow()
+  override val accountsUpdatedRequest: SharedFlow<Set<GitLabAccount>> = accountManager.accountsState.transformLatest { accounts ->
+    emit(accounts)
+    coroutineScope {
+      accounts.forEach { account ->
+        launch {
+          accountManager.getCredentialsFlow(account).collectLatest {
+            emit(accounts)
+          }
+        }
+      }
+    }
+  }.modelFlow(cs, thisLogger())
 
   private val _selectedItem: MutableStateFlow<GitLabCloneListItem?> = MutableStateFlow(null)
 
-  private val _items: MutableStateFlow<List<GitLabCloneListItem>> = MutableStateFlow(emptyList())
-  override val items: SharedFlow<List<GitLabCloneListItem>> = _items.asSharedFlow()
+  override val items: SharedFlow<List<GitLabCloneListItem>> = accountsUpdatedRequest.transformLatest { accounts ->
+    taskLauncher.launch {
+      val repositories = accounts.flatMap { account ->
+        collectRepositoriesByAccount(account)
+      }
+      emit(repositories)
+    }
+  }.modelFlow(cs, thisLogger())
 
   private val _searchValue: MutableStateFlow<String> = MutableStateFlow("")
   override val searchValue: SharedFlow<SearchModel> = _searchValue.mapState(cs) { text ->
@@ -100,33 +117,6 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   override val accountDetailsProvider = GitLabAccountsDetailsProvider(cs) { account ->
     val token = accountManager.findCredentials(account) ?: return@GitLabAccountsDetailsProvider null
     GitLabApiImpl { token }
-  }
-
-  init {
-    cs.launch {
-      accounts.collectLatest { accounts ->
-        _accountsUpdatedRequest.emit(accounts)
-        coroutineScope {
-          accounts.forEach { account ->
-            launch {
-              accountManager.getCredentialsFlow(account).collectLatest {
-                _accountsUpdatedRequest.emit(accounts)
-              }
-            }
-          }
-        }
-      }
-    }
-
-    cs.launch {
-      _accountsUpdatedRequest.collectLatest { accounts ->
-        taskLauncher.launch {
-          _items.value = accounts.flatMap { account ->
-            collectRepositoriesByAccount(account)
-          }
-        }
-      }
-    }
   }
 
   override fun selectItem(item: GitLabCloneListItem?) {
