@@ -8,7 +8,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -24,9 +23,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
 import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
@@ -386,13 +383,11 @@ abstract class ScriptClassRootsUpdater(
         }
         if (ktFiles.isNotEmpty()) {
             scope.launch {
-                withContext(Dispatchers.EDT) {
-                    blockingContext {
-                        ktFiles.forEach {
-                            val ktFile = it.element ?: return@forEach
-                            DaemonCodeAnalyzer.getInstance(project)
-                                .restart(ktFile)
-                        }
+                readAction {
+                    val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
+                    for (it in ktFiles) {
+                        val ktFile = it.element ?: continue
+                        daemonCodeAnalyzer.restart(ktFile) // only requires read action, do not move to EDT
                     }
                 }
             }
