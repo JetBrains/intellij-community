@@ -2,9 +2,11 @@ package org.jetbrains.plugins.notebooks.ui.editor
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.ui.NewUiValue
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.currentMode
 import org.jetbrains.plugins.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSizes
@@ -14,8 +16,24 @@ import java.awt.Color
 
 
 object DefaultNotebookEditorAppearance: NotebookEditorAppearance, NotebookEditorAppearanceSizes by DefaultNotebookEditorAppearanceSizes {
-  val CODE_CELL_BACKGROUND = ColorKey.createColorKey("JUPYTER.CODE_CELL_BACKGROUND")
-  override fun getCodeCellBackground(scheme: EditorColorsScheme): Color? = scheme.getColor(CODE_CELL_BACKGROUND)
+  override fun getCodeCellBackground(scheme: EditorColorsScheme): Color? {
+    return if (NewUiValue.isEnabled()) {
+      scheme.getColor(NotebookEditorAppearance.CODE_CELL_BACKGROUND_NEW_UI)
+    }
+    else {
+      scheme.getColor(NotebookEditorAppearance.CODE_CELL_BACKGROUND)
+    }
+  }
+
+  private val CARET_ROW_COLOR_NEW_UI = ColorKey.createColorKey("JUPYTER.CARET_ROW_COLOR_NEW_UI")
+  override fun getCaretRowColor(scheme: EditorColorsScheme): Color? {
+    return if (NewUiValue.isEnabled()) {
+      scheme.getColor(CARET_ROW_COLOR_NEW_UI)
+    }
+    else {
+      scheme.getColor(EditorColors.CARET_ROW_COLOR)
+    }
+  }
 
   val GUTTER_INPUT_EXECUTION_COUNT = ColorKey.createColorKey("JUPYTER.GUTTER_INPUT_EXECUTION_COUNT")
   override fun getGutterInputExecutionCountForegroundColor(scheme: EditorColorsScheme): Color? =
