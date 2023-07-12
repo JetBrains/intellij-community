@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public interface FloatingToolbarCustomizer {
+interface FloatingToolbarCustomizer {
   companion object {
     private val EP = LanguageExtension<FloatingToolbarCustomizer>("com.intellij.lang.floatingToolbarCustomizer")
 
@@ -17,4 +17,10 @@ public interface FloatingToolbarCustomizer {
   }
 
   fun getActionGroup(): String?
+
+  class DefaultGroup: FloatingToolbarCustomizer {
+    override fun getActionGroup(): String {
+      return "Floating.CodeToolbar"
+    }
+  }
 }

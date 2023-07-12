@@ -1,5 +1,7 @@
 package org.intellij.plugins.markdown.ui.floating
 
+import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.impl.FloatingToolbar
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -13,7 +15,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 internal class MarkdownFloatingToolbar(
   editor: Editor,
   coroutineScope: CoroutineScope
-): FloatingToolbar(editor, coroutineScope, "Markdown.Toolbar.Floating") {
+): FloatingToolbar(editor, coroutineScope) {
   private val elementsToIgnore = listOf(
     MarkdownElementTypes.CODE_FENCE,
     MarkdownElementTypes.CODE_BLOCK,
@@ -31,5 +33,9 @@ internal class MarkdownFloatingToolbar(
 
   override fun isEnabled(): Boolean {
     return !AdvancedSettings.getBoolean("markdown.hide.floating.toolbar")
+  }
+
+  override fun createActionGroup(): ActionGroup? {
+    return CustomActionsSchema.getInstance().getCorrectedAction("Markdown.Toolbar.Floating") as? ActionGroup
   }
 }

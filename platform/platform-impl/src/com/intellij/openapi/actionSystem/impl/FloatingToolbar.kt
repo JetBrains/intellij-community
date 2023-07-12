@@ -4,7 +4,6 @@ package com.intellij.openapi.actionSystem.impl
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -42,13 +41,12 @@ import kotlin.properties.Delegates
 import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
-open class FloatingToolbar(
+abstract class FloatingToolbar(
   val editor: Editor,
   /**
    * This scope will be canceled on dispose.
    */
-  private val coroutineScope: CoroutineScope,
-  protected val defaultActionGroupId: String
+  private val coroutineScope: CoroutineScope
 ): Disposable {
   protected var hint: LightweightHint? = null
   private var buttonSize: Int by Delegates.notNull()
@@ -82,6 +80,8 @@ open class FloatingToolbar(
       document.addDocumentListener(DocumentChangeListener(), this@FloatingToolbar)
     }
   }
+
+  protected abstract fun createActionGroup(): ActionGroup?
 
   open fun hideByOtherHints(): Boolean = false
 
@@ -152,10 +152,6 @@ open class FloatingToolbar(
   override fun dispose() {
     coroutineScope.cancel()
     hide()
-  }
-
-  protected open fun createActionGroup(): ActionGroup? {
-    return CustomActionsSchema.getInstance().getCorrectedAction(defaultActionGroupId) as? ActionGroup
   }
 
   private suspend fun createUpdatedActionToolbar(targetComponent: JComponent): ActionToolbar {

@@ -11,7 +11,9 @@ import java.util.List;
  * Extension point to enable floating code toolbar for specific language.
  * @see CodeFloatingToolbar
  * @see FloatingToolbarFilter.ENABLED
+ * @deprecated Use {@link FloatingToolbarCustomizer} instead.
  */
+@Deprecated
 public interface FloatingToolbarFilter {
 
   LanguageExtension<FloatingToolbarFilter> EP = new LanguageExtension<>("com.intellij.lang.floatingToolbarFilter");
@@ -24,6 +26,10 @@ public interface FloatingToolbarFilter {
     return ContainerUtil.all(supporters, supporter -> supporter.isEnabled());
   }
 
+  /**
+   * @deprecated Use {@link FloatingToolbarCustomizer.DefaultGroup} instead.
+   */
+  @Deprecated
   class ENABLED implements FloatingToolbarFilter {
     @Override
     public boolean isEnabled() {

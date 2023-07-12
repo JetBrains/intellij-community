@@ -31,7 +31,7 @@ import javax.swing.JComponent
 class CodeFloatingToolbar(
   editor: Editor,
   coroutineScope: CoroutineScope
-): FloatingToolbar(editor, coroutineScope, "Floating.CodeToolbar") {
+): FloatingToolbar(editor, coroutineScope) {
 
   companion object {
     private val FLOATING_TOOLBAR = Key<CodeFloatingToolbar>("floating.codeToolbar")
@@ -118,20 +118,21 @@ class CodeFloatingToolbar(
     return editor.visualToLogicalPosition(lineStartPosition).line
   }
 
-  override fun createActionGroup(): ActionGroup? {
-    val contextAwareActionGroupId = getContextAwareGroupId()
-    val mainActionGroup = CustomActionsSchema.getInstance().getCorrectedAction(contextAwareActionGroupId) as? ActionGroup ?: return super.createActionGroup()
-    val showIntentionsAction = CustomActionsSchema.getInstance().getCorrectedAction("ShowIntentionActions") ?: error("Can't find ShowIntentionActions action")
+  override fun createActionGroup(): ActionGroup {
+    val contextAwareActionGroupId = getContextAwareGroupId(editor) ?: FloatingToolbarCustomizer.DefaultGroup().getActionGroup()
+    val mainActionGroup = CustomActionsSchema.getInstance().getCorrectedAction(contextAwareActionGroupId) ?: error("Can't find groupId action")
+    val showIntentionsAction = CustomActionsSchema.getInstance().getCorrectedAction("ShowIntentionActions")
+                               ?: error("Can't find ShowIntentionActions action")
     val configurationGroup = createConfigureGroup(contextAwareActionGroupId)
     return DefaultActionGroup(showIntentionsAction, Separator.create(), mainActionGroup, Separator.create(), configurationGroup)
   }
 
-  private fun getContextAwareGroupId(): String {
-    val project = editor.project ?: return defaultActionGroupId
+  private fun getContextAwareGroupId(editor: Editor): String? {
+    val project = editor.project ?: return null
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
     val elementAtOffset = psiFile?.findElementAt(editor.caretModel.primaryCaret.offset)
-    val targetLanguage = elementAtOffset?.language ?: return defaultActionGroupId
-    return FloatingToolbarCustomizer.findActionGroupFor(targetLanguage) ?: defaultActionGroupId
+    val targetLanguage = elementAtOffset?.language ?: return null
+    return FloatingToolbarCustomizer.findActionGroupFor(targetLanguage)
   }
 
   private fun createConfigureGroup(customizableGroupId: String): ActionGroup {
