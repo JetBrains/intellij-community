@@ -374,7 +374,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
   }
 
   /**
-   * @return true iff default configuration options should be shown for the tool. E.g., scope-severity settings.
+   * @return true iff default configuration options should be shown for the tool (Scope, Severity, Highlighting in editor).
    * @apiNote if {@code false} returned, only panel provided by {@link #getOptionsPane()} is shown if any.
    */
   public boolean showDefaultConfigurationOptions() {

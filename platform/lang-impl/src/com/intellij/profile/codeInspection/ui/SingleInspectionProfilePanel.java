@@ -882,11 +882,6 @@ public class SingleInspectionProfilePanel extends JPanel {
         severityPanel = scopesPanel.panel;
 
         if (toolState != null) {
-          if (!showDefaultConfigurationOptions) {
-            scopesPanel.setSeverityLevelVisible(false);
-            scopesPanel.setScopesChooserVisible(false);
-          }
-
           setConfigPanel(configPanelAnchor, toolState);
           myOptionsLabel.setText(AnalysisBundle.message("inspections.settings.options.title"));
         }
@@ -968,7 +963,9 @@ public class SingleInspectionProfilePanel extends JPanel {
       final GridBag constraint = new GridBag()
         .setDefaultWeightX(1.0)
         .setDefaultWeightY(1.0);
-      myOptionsPanel.add(severityPanel, constraint.nextLine().weighty(severityPanelWeightY).fillCell().insetTop(SECTION_GAP));
+      if(showDefaultConfigurationOptions){
+        myOptionsPanel.add(severityPanel, constraint.nextLine().weighty(severityPanelWeightY).fillCell().insetTop(SECTION_GAP));
+      }
 
       GuiUtils.enableChildren(myOptionsPanel, isThoughOneNodeEnabled(nodes));
       if (showOptionPanel) {
