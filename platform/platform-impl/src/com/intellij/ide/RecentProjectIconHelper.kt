@@ -283,7 +283,7 @@ object ProjectIconPalette : ColorPalette {
 
   override fun gradient(seed: String?): Pair<Color, Color> {
     seed ?: return gradients[0]
-    return ProjectWindowCustomizerService.getInstance().getProjectIconColor(seed)
+    return ProjectWindowCustomizerService.getInstance().getRecentProjectIconColor(seed)
   }
 }
 

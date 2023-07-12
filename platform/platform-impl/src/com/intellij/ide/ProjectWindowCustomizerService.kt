@@ -15,7 +15,6 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
@@ -29,7 +28,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
-import java.io.File
+import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -53,6 +52,14 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
     busConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
       cachedIcon.drop()
     })
+
+    // Save into the project workspace whatever was generated on Welcome screen if project workspace doesn't have info
+    project.basePath?.let {
+      val migrated = WorkspaceProjectColorStorage(project).getDataIfEmptyFrom(RecentProjectColorStorage(it))
+      if (!migrated) {
+        ProjectWindowCustomizerService.getInstance().clearToolbarColorsAndInMemoryCache(project)
+      }
+    }
   }
 
   private fun getIconRaw(): Icon {
@@ -114,10 +121,11 @@ class ProjectWindowCustomizerService : Disposable {
   private var ourSettingsValue = UISettings.getInstance().differentiateProjects
   private val colorCache = mutableMapOf<String, ProjectColors>()
   private val listeners = mutableListOf<(Boolean) -> Unit>()
-  private val defaultColors = ProjectColors(gradientColors[0],
-                                            backgroundColors[0],
-                                            ProjectIconPalette.gradients[0].first,
-                                            ProjectIconPalette.gradients[0].second)
+  private val defaultColors = ProjectColors(background = backgroundColors[0],
+                                            gradient = gradientColors[0],
+                                            iconColorStart = ProjectIconPalette.gradients[0].first,
+                                            iconColorEnd = ProjectIconPalette.gradients[0].second,
+                                            index = 0)
 
   @Suppress("UnregisteredNamedColor")
   private val gradientColors: Array<Color>
@@ -153,18 +161,16 @@ class ProjectWindowCustomizerService : Disposable {
 
   private fun getGradientProjectColor(project: Project): Color {
     return getDeprecatedCustomToolbarColor(project)
-           ?: project.basePath?.let { getProjectColor(it).gradient }
-           ?: defaultColors.gradient
+           ?: getProjectColor(storageFor(project)).gradient
   }
 
   fun getBackgroundProjectColor(project: Project): Color {
     return getDeprecatedCustomToolbarColor(project)
-           ?: project.basePath?.let { getProjectColor(it).background }
-           ?: defaultColors.background
+           ?: getProjectColor(storageFor(project)).background
   }
 
-  fun getProjectIconColor(projectPath: String): Pair<Color, Color> {
-    val projectColors = getProjectColor(projectPath)
+  fun getRecentProjectIconColor(projectPath: String): Pair<Color, Color> {
+    val projectColors = getProjectColor(storageFor(projectPath))
     return Pair(projectColors.iconColorStart, projectColors.iconColorEnd)
   }
 
@@ -174,22 +180,25 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   @Internal
-  fun getCurrentProjectColorIndex(projectPath: String): Int? =  getProjectColor(projectPath).index
+  fun getCurrentProjectColorIndex(project: Project): Int? =  getProjectColor(storageFor(project)).index
 
-  private fun getProjectColor(projectPath: String): ProjectColors {
+  private fun getProjectColor(colorStorage: ProjectColorStorage): ProjectColors {
+    val projectPath = colorStorage.projectPath ?: return defaultColors
+
     // Get calculated earlier color or calculate next color
     return colorCache.computeIfAbsent(projectPath) {
       // Get custom project color and transform it for toolbar
-      val customColors = ProjectColorReader(projectPath).getCustomColor()?.let {
-        val toolbarColor = ColorUtil.toAlpha(it, 90)
-        ProjectColors(toolbarColor, toolbarColor, it, it)
+      val customColors = colorStorage.customColor?.takeIf { it.isNotEmpty() }?.let {
+        val color = ColorUtil.fromHex(it)
+        val toolbarColor = ColorUtil.toAlpha(color, 90)
+        ProjectColors(toolbarColor, toolbarColor, color, color)
       }
 
       if (customColors != null) {
         customColors
       }
       else {
-        val associatedIndex = getOrGenerateAssociatedColorIndex(projectPath)
+        val associatedIndex = getOrGenerateAssociatedColorIndex(colorStorage)
         ProjectColors(background = backgroundColors[associatedIndex],
                       gradient = gradientColors[associatedIndex],
                       iconColorStart = ProjectIconPalette.gradients[associatedIndex].first,
@@ -199,47 +208,58 @@ class ProjectWindowCustomizerService : Disposable {
     }
   }
 
-  private fun getOrGenerateAssociatedColorIndex(projectPath: String): Int {
-    getAssociatedColorIndex(projectPath)?.let { return it }
+  private fun getOrGenerateAssociatedColorIndex(colorStorage: ProjectColorStorage): Int {
+    getAssociatedColorIndex(colorStorage)?.let { return it }
 
     // Calculate next colors by incrementing (and saving the new value) color index
     val index = PropertiesComponent.getInstance().nextColorIndex(minOf(backgroundColors.size, gradientColors.size))
 
     // Save calculated colors and clear customized colors for the project
-    setAssociatedColorsIndex(projectPath, index)
+    setAssociatedColorsIndex(colorStorage, index)
 
     return index
   }
 
-  private fun getAssociatedColorIndex(projectPath: String): Int? {
-    val index = ProjectColorReader(projectPath).getAssociatedColorIndex() ?: return null
+  private fun getAssociatedColorIndex(colorStorage: ProjectColorStorage): Int? {
+    val index = colorStorage.associatedIndex ?: return null
     if (index >= 0 && index < backgroundColors.size && index < gradientColors.size) return index
     return null
   }
 
   @Internal
-  fun setAssociatedColorsIndex(projectPath: String, index: Int) {
-    ProjectColorReader(projectPath).setAssociatedColorIndex(index)
+  fun setAssociatedColorsIndex(project: Project, index: Int) {
+    setAssociatedColorsIndex(storageFor(project), index)
+  }
+
+  private fun setAssociatedColorsIndex(colorStorage: ProjectColorStorage, index: Int) {
+    colorStorage.associatedIndex = index
+    if (index >= 0) colorStorage.customColor = null
   }
 
   @Internal
   fun setProjectCustomColor(project: Project, color: Color?) {
-    val projectPath = project.basePath ?: return
-    clearToolbarColorsAndInMemoryCache(project)
+    setProjectCustomColor(storageFor(project), color)
+  }
 
-    if (color == null) {
-      ProjectColorReader(projectPath).clean()
-    }
-    else {
-      ProjectColorReader(projectPath).setCustomColor(color)
+  private fun setProjectCustomColor(colorStorage: ProjectColorStorage, color: Color?) {
+    clearToolbarColorsAndInMemoryCache(colorStorage)
+    colorStorage.customColor = color?.let {
+      ColorUtil.toHex(color, true)
     }
   }
 
   @Internal
   fun clearToolbarColorsAndInMemoryCache(project: Project) {
-    // Remove toolbar color for those users who set it up before it's removal
-    PropertiesComponent.getInstance(project).unsetValue(TOOLBAR_BACKGROUND_KEY)
-    project.basePath?.let { colorCache.remove(it) }
+    clearToolbarColorsAndInMemoryCache(storageFor(project))
+  }
+
+  private fun clearToolbarColorsAndInMemoryCache(colorStorage: ProjectColorStorage) {
+    colorStorage.projectPath?.let { colorCache.remove(it) }
+
+    if (colorStorage is WorkspaceProjectColorStorage) {
+      // Remove toolbar color for those users who set it up before it's removal
+      PropertiesComponent.getInstance(colorStorage.project).unsetValue(TOOLBAR_BACKGROUND_KEY)
+    }
   }
 
   private fun PropertiesComponent.nextColorIndex(colorsCount: Int): Int {
@@ -248,6 +268,9 @@ class ProjectWindowCustomizerService : Disposable {
     setValue(LAST_CALCULATED_COLOR_INDEX_KEY, result, -1)
     return result
   }
+
+  private fun storageFor(projectPath: String) = RecentProjectColorStorage(projectPath)
+  private fun storageFor(project: Project) = WorkspaceProjectColorStorage(project)
 
   internal fun getPaintingType(): MainToolbarCustomizationType {
     return when (Registry.get("ide.colorful.toolbar.gradient.type").selectedOption) {
@@ -383,52 +406,66 @@ private class ProjectWindowCustomizerListener : ProjectActivity, UISettingsListe
   }
 }
 
-private class ProjectColorReader(private val projectPath: String) {
-  companion object {
-    fun of(project: Project): ProjectColorReader? {
-      project.basePath?.let { return ProjectColorReader(it) }
-      return null
+private interface ProjectColorStorage {
+  var customColor: String?
+  var associatedIndex: Int?
+  val projectPath: String?
+}
+
+private class WorkspaceProjectColorStorage(val project: Project): ProjectColorStorage {
+  override var customColor: String?
+    get() = manager.customColor
+    set(value) {
+      manager.customColor = value
+      if (!isMigrating) RecentProjectsManagerBase.getInstanceEx().updateProjectColor(project)
     }
-  }
 
-  private fun getFile(): File? {
-    val dotIdeaPath = RecentProjectIconHelper.getDotIdeaPath(projectPath) ?: return null
-    return dotIdeaPath.resolve("project-color").toFile()
-  }
-
-  fun setAssociatedColorIndex(index: Int) {
-    val file = getFile() ?: return
-    FileUtil.writeToFile(file, index.toString())
-  }
-
-  fun getAssociatedColorIndex(): Int? {
-    val file = getFile()?.takeIf { it.exists() } ?: return null
-    val str = file.readText()
-    try {
-      return str.toInt()
+  override var associatedIndex: Int?
+    get() = manager.associatedIndex
+    set(value) {
+      manager.associatedIndex = value
+      if (!isMigrating) RecentProjectsManagerBase.getInstanceEx().updateProjectColor(project)
     }
-    catch (e: NumberFormatException) {
-      return null
+
+  private var isMigrating = false
+
+  override val projectPath: String? get() = project.basePath
+  private val manager: ProjectColorInfoManager get() = ProjectColorInfoManager.getInstance(project)
+
+  val isEmpty: Boolean get() = (customColor?.isNotEmpty() != true) && (associatedIndex?.let { it >= 0 } != true)
+
+  fun getDataIfEmptyFrom(storage: ProjectColorStorage): Boolean {
+    if (!isEmpty) return false
+
+    isMigrating = true
+    customColor = storage.customColor
+    associatedIndex = storage.associatedIndex
+    isMigrating = false
+
+    return true
+  }
+}
+
+private class RecentProjectColorStorage(override val projectPath: String): ProjectColorStorage {
+  override var customColor: String?
+    get() = info?.customColor
+    set(value) {
+      update { info -> info.customColor = value }
     }
+
+  override var associatedIndex: Int?
+    get() = info?.associatedIndex
+    set(value) {
+      update { info -> info.associatedIndex = value ?: -1 }
+    }
+
+  private fun update(block: (RecentProjectColorInfo) -> Unit) {
+    var info = info
+    if (info == null) info = RecentProjectColorInfo()
+    block(info)
+    RecentProjectsManagerBase.getInstanceEx().updateProjectColor(Path.of(projectPath), info)
   }
 
-  fun setCustomColor(color: Color) {
-    val file = getFile() ?: return
-    FileUtil.writeToFile(file, ColorUtil.toHex(color, true))
-  }
-
-  fun getCustomColor(): Color? {
-    val file = getFile()?.takeIf { it.exists() } ?: return null
-    try {
-      return ColorUtil.fromHex(file.readText())
-    }
-    catch (e: IllegalArgumentException) {
-      return null
-    }
-  }
-
-  fun clean() {
-    val file = getFile() ?: return
-    FileUtil.writeToFile(file, "")
-  }
+  private val info: RecentProjectColorInfo? get() =
+    RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(Path.of(projectPath))?.colorInfo
 }

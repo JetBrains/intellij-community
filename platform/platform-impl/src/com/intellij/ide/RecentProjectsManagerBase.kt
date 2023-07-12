@@ -676,6 +676,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
         info.displayName = getProjectDisplayName(project)
         info.projectWorkspaceId = workspaceId
         info.frameTitle = frame.title
+        info.colorInfo = ProjectColorInfoManager.getInstance(project).recentProjectColorInfo
       }
     }
 
@@ -774,6 +775,21 @@ int32 "extendedState"
           }
         }
       }
+      modCounter.increment()
+    }
+  }
+
+  @Internal
+  fun updateProjectColor(project: Project) {
+    val info = ProjectColorInfoManager.getInstance(project).recentProjectColorInfo
+    val baseDir = project.basePath ?: return
+    updateProjectColor(Path.of(baseDir), info)
+  }
+
+  @Internal
+  fun updateProjectColor(projectBasePath: Path, info: RecentProjectColorInfo) {
+    synchronized(stateLock) {
+      getProjectMetaInfo(projectBasePath)?.colorInfo = info
       modCounter.increment()
     }
   }
