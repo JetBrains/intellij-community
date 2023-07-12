@@ -924,6 +924,15 @@ open class FileEditorManagerImpl(
     return openFileImpl4(window = window, _file = file, entry = null, options = options)
   }
 
+  internal suspend fun checkForbidSplitAndOpenFile(window: EditorWindow,
+                                                   file: VirtualFile,
+                                                   options: FileEditorOpenOptions): FileEditorComposite {
+    if (forbidSplitFor(file) && !window.isFileOpen(file)) {
+      closeFile(file)
+    }
+    return openFileAsync(window = window, file = file, entry = null, options = options)
+  }
+
   /**
    * Unlike the openFile method, file can be invalid.
    * For example, all files were invalidated, and they're being removed one by one.
