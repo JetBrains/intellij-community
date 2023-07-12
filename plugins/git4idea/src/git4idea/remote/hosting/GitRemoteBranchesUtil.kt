@@ -37,7 +37,11 @@ object GitRemoteBranchesUtil {
    */
   fun isRemoteBranchCheckedOut(repository: GitRepository, remote: HostedGitRepositoryRemote, branchName: String): Boolean {
     val existingRemote = findRemote(repository, remote) ?: return false
-    val localBranch = findLocalBranchTrackingRemote(repository, GitStandardRemoteBranch(existingRemote, branchName)) ?: return false
+    return isRemoteBranchCheckedOut(repository, GitStandardRemoteBranch(existingRemote, branchName))
+  }
+
+  fun isRemoteBranchCheckedOut(repository: GitRepository, branch: GitRemoteBranch): Boolean {
+    val localBranch = findLocalBranchTrackingRemote(repository, branch) ?: return false
     return repository.currentBranchName == localBranch.name
   }
 
@@ -53,21 +57,40 @@ object GitRemoteBranchesUtil {
       CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")
     ) {
       withRawProgressReporter {
-        getBranchToCheckout(repository, remote, remoteBranch)
+        withContext(Dispatchers.Default) {
+          findRemoteBranch(repository, remote, remoteBranch)?.takeIf {
+            fetchRemoteBranch(repository, it)
+          }
+        }
       }
     } ?: return
 
-    val existingLocalBranch = findLocalBranchTrackingRemote(repository, branchToCheckout)
-    val suggestedName = existingLocalBranch?.name ?: newLocalBranchPrefix?.let { "$it/$remoteBranch" } ?: remoteBranch
     withContext(Dispatchers.Main) {
-      GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction
-        .checkoutRemoteBranch(repository.project, listOf(repository), branchToCheckout.name, suggestedName)
+      checkoutRemoteBranch(repository, branchToCheckout, newLocalBranchPrefix)
     }
   }
 
-  private suspend fun getBranchToCheckout(repository: GitRepository,
-                                          remote: HostedGitRepositoryRemote,
-                                          remoteBranch: String): GitRemoteBranch? {
+  suspend fun fetchAndCheckoutRemoteBranch(repository: GitRepository, branch: GitRemoteBranch, newLocalBranchPrefix: String? = null) {
+    val fetchOk = withBackgroundProgress(
+      repository.project,
+      CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")
+    ) {
+      withRawProgressReporter {
+        withContext(Dispatchers.Default) {
+          fetchRemoteBranch(repository, branch)
+        }
+      }
+    }
+    if (!fetchOk) return
+
+    withContext(Dispatchers.Main) {
+      checkoutRemoteBranch(repository, branch, newLocalBranchPrefix)
+    }
+  }
+
+  private suspend fun findRemoteBranch(repository: GitRepository,
+                                       remote: HostedGitRepositoryRemote,
+                                       remoteBranch: String): GitRemoteBranch? {
     val headRemote = coroutineToIndicator {
       Git.getInstance().findOrCreateRemote(repository, remote)
     }
@@ -77,18 +100,25 @@ object GitRemoteBranchesUtil {
       }
       return null
     }
+    return GitStandardRemoteBranch(headRemote, remoteBranch)
+  }
+
+  private suspend fun fetchRemoteBranch(repository: GitRepository, branch: GitRemoteBranch): Boolean {
     val fetchResult = coroutineToIndicator {
-      GitFetchSupport.fetchSupport(repository.project).fetch(repository, headRemote, remoteBranch)
+      GitFetchSupport.fetchSupport(repository.project).fetch(repository, branch.remote, branch.nameForRemoteOperations)
     }
     return withContext(Dispatchers.Main) {
-      val fetchOk = fetchResult.showNotificationIfFailed(GitBundle.message("notification.title.fetch.failure"))
-      if (fetchOk) {
-        GitStandardRemoteBranch(headRemote, remoteBranch)
-      }
-      else {
-        null
-      }
+      fetchResult.showNotificationIfFailed(GitBundle.message("notification.title.fetch.failure"))
     }
+  }
+
+  private fun checkoutRemoteBranch(repository: GitRepository, branch: GitRemoteBranch, newLocalBranchPrefix: String? = null) {
+    val existingLocalBranch = findLocalBranchTrackingRemote(repository, branch)
+    val suggestedName = existingLocalBranch?.name
+                        ?: newLocalBranchPrefix?.let { "$it/${branch.nameForRemoteOperations}" }
+                        ?: branch.nameForRemoteOperations
+    GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction
+      .checkoutRemoteBranch(repository.project, listOf(repository), branch.name, suggestedName)
   }
 
   private fun notifyRemoteError(project: Project, remote: HostedGitRepositoryRemote) {
