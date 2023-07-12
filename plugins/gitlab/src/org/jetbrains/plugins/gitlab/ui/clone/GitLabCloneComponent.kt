@@ -19,6 +19,9 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneLoginViewModel
+import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneRepositoriesViewModel
+import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneViewModelImpl
 import javax.swing.JComponent
 
 internal class GitLabCloneComponent(

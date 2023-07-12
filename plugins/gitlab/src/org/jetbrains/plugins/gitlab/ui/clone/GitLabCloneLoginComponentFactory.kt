@@ -26,6 +26,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.authentication.GitLabSecurityUtil
+import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneLoginViewModel
+import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JButton
 import javax.swing.JComponent

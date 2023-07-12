@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.ui.clone
+package org.jetbrains.plugins.gitlab.ui.clone.model
 
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
@@ -25,7 +25,9 @@ import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
-import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneRepositoriesViewModel.SearchModel
+import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneListItem
+import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneRepositoriesViewModel.SearchModel
+import org.jetbrains.plugins.gitlab.ui.clone.presentation
 import java.net.MalformedURLException
 import java.net.URL
 import java.nio.file.Paths

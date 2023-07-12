@@ -36,7 +36,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
-import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneRepositoriesViewModel.SearchModel
+import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneRepositoriesViewModel
+import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneRepositoriesViewModel.SearchModel
+import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneViewModel
 import javax.swing.JSeparator
 import javax.swing.ListCellRenderer
 import javax.swing.ListModel
