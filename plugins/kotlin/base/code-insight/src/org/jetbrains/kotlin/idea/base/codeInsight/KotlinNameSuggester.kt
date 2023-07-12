@@ -8,6 +8,8 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.text.NameUtilCore
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
@@ -21,8 +23,11 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.*
+import org.jetbrains.kotlin.util.match
 
 @DslMarker
 private annotation class NameSuggesterDsl
@@ -120,15 +125,50 @@ class KotlinNameSuggester(
     }
 
     /**
-     * Returns names based on the expression type.
+     * Returns names based on the name of the value parameter, the expression PSI and the expression type.
+     * Examples:
+     *  - `print(<selection>5</selection>)` -> {message, i, n}
+     *  - `print(<selection>intArrayOf(5)</selection>)` -> {message, intArrayOf, ints}
+     *  - `print(<selection>listOf(User("Mary"), User("John"))</selection>)` -> {message, listOf, users}
+     */
+    fun KtAnalysisSession.suggestExpressionNames(expression: KtExpression): Sequence<String> {
+        return LinkedHashSet<String>().apply {
+            addNameByValueArgument(expression)
+            addNamesByExpressionPSI(expression, validator = { true })
+            addNamesByType(expression)
+        }.asSequence()
+    }
+
+    /**
+     * Adds names based on the expression type.
      * Examples:
      *  - `5` -> {int, i, n}
      *  - `intArrayOf(5)` -> {ints}
      *  - listOf(User("Mary"), User("John")) -> {users}
      */
-    fun KtAnalysisSession.suggestExpressionNames(expression: KtExpression): Sequence<String> {
-        val type = expression.getKtType() ?: return emptySequence()
-        return suggestTypeNames(type)
+    context(KtAnalysisSession)
+    private fun MutableCollection<String>.addNamesByType(expression: KtExpression) {
+        val type = expression.getKtType() ?: return
+        suggestTypeNames(type).forEach { name -> addName(name, validator = { true }) }
+    }
+
+    /**
+     * Adds the name of the value parameter.
+     * Examples:
+     *  - `print(<selection>5</selection>)` -> message
+     *  - `listOf(<selection>5</selection>)` -> element
+     *  - `listOf(1, 2, 3).get(<selection>0</selection>)` -> index
+     */
+    context(KtAnalysisSession)
+    private fun MutableCollection<String>.addNameByValueArgument(expression: KtExpression) {
+        val argumentExpression = expression.getOutermostParenthesizerOrThis()
+        val valueArgument = argumentExpression.parent as? KtValueArgument ?: return
+        val callElement = valueArgument.parents.match(KtValueArgumentList::class, last = KtCallElement::class) ?: return
+        val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return
+        if (resolvedCall.symbol.hasStableParameterNames) {
+            val parameter = resolvedCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return
+            addName(parameter.name.asString(), validator = { true })
+        }
     }
 
     /**
