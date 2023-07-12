@@ -7,12 +7,13 @@ import com.intellij.ide.RecentProjectIconHelper
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.ColorChooserService
 import com.intellij.ui.awt.RelativePoint
-import java.awt.Point
+import com.intellij.util.ui.JBPoint
 
 class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
@@ -45,15 +46,16 @@ class ChangeProjectColorAction(val projectPath: String, val name: @NlsSafe Strin
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.text = "$name$nameSuffix"
+    e.presentation.text = transformToCurrentIfNeeded(name)
   }
 
-  private val nameSuffix: String get() {
+  @NlsActions.ActionText
+  private fun transformToCurrentIfNeeded(@NlsActions.ActionText name: String): String {
     val customizer = ProjectWindowCustomizerService.getInstance()
     if (index == customizer.getCurrentProjectColorIndex(projectPath)) {
-      return " (${IdeBundle.message("action.ChangeProjectColorAction.Current.title")})"
+      return IdeBundle.message("action.ChangeProjectColorAction.Current.title", name)
     }
-    return ""
+    return name
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -70,7 +72,7 @@ class ChooseCustomProjectColorAction: AnAction(IdeBundle.message("action.ChooseC
     val ideFrame = IdeFocusManager.getInstance(project).lastFocusedFrame
     var relativePoint: RelativePoint? = null
     if (ideFrame != null) {
-      relativePoint = RelativePoint(ideFrame.component, Point(200, 30))
+      relativePoint = RelativePoint(ideFrame.component, JBPoint(200, 30))
     }
 
     ColorChooserService.instance.showPopup(project = project,

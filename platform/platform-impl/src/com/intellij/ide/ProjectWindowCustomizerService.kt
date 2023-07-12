@@ -83,8 +83,8 @@ private fun isForceColorfulToolbar() = Registry.`is`("ide.colorful.toolbar.force
 
 private fun conditionToEnable() = isForceColorfulToolbar() || ProjectManagerEx.getOpenProjects().size > 1
 
-private data class ProjectColors(@JvmField val gradient: Color,
-                                 @JvmField val background: Color,
+private data class ProjectColors(val gradient: Color,
+                                 val background: Color,
                                  val iconColorStart: Color,
                                  val iconColorEnd: Color,
                                  val index: Int? = null)
