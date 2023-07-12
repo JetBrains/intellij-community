@@ -59,9 +59,10 @@ private object ScriptCompilationConfigurationForExtensionAndIdeConsoleRoots : Sc
                 kotlincLibraryName,
                 wholeClasspath = true
             )
-            PluginManagerCore.getPlugins().forEach {
-                dependenciesFromClassloader(classLoader = it.classLoader, wholeClasspath = true)
-            }
+            // todo commented out until we figure out why it is needed and how to implement it safely
+            //PluginManagerCore.getPlugins().forEach {
+            //    dependenciesFromClassloader(classLoader = it.classLoader, wholeClasspath = true)
+            //}
         }
         ide {
             acceptedLocations(ScriptAcceptedLocation.Everywhere)
