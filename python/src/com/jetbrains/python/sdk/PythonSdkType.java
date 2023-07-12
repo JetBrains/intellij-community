@@ -502,7 +502,8 @@ public final class PythonSdkType extends SdkType {
 
   public static boolean isRunAsRootViaSudo(@NotNull Sdk sdk) {
     SdkAdditionalData data = sdk.getSdkAdditionalData();
-    return data instanceof PyRemoteSdkAdditionalDataBase && ((PyRemoteSdkAdditionalDataBase)data).isRunAsRootViaSudo();
+    return data instanceof PyRemoteSdkAdditionalDataBase pyRemoteSdkAdditionalData && pyRemoteSdkAdditionalData.isRunAsRootViaSudo() ||
+           data instanceof PyTargetAwareAdditionalData pyTargetAwareAdditionalData && pyTargetAwareAdditionalData.isRunAsRootViaSudo();
   }
 
   public static boolean hasInvalidRemoteCredentials(@NotNull Sdk sdk) {
