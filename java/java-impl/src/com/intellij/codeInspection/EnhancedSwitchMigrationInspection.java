@@ -31,7 +31,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
-  @SuppressWarnings("WeakerAccess") public boolean myWarnOnlyOnExpressionConversion;
+  @SuppressWarnings("WeakerAccess") public boolean myWarnOnlyOnExpressionConversion = true;
   @SuppressWarnings("WeakerAccess") public int myMaxNumberStatementsForBranch = 2;
 
   @Override
@@ -470,6 +470,9 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       if (!isConvertibleBranch(branch, i != size - 1)) return null;
       if (branch.isFallthrough()) continue;
       PsiStatement[] statements = branch.getStatements();
+      if (statements.length == 1 && statements[0] instanceof PsiBlockStatement psiCodeBlock) {
+        statements = psiCodeBlock.getCodeBlock().getStatements();
+      }
       if (statements.length == 0) {
         return null;
       }
@@ -480,12 +483,20 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         isInfo = true;
       }
       int lastIndex = statements.length - 1;
+      if (ContainerUtil.exists(statements,
+                               st -> !PsiTreeUtil.findChildrenOfAnyType(st, PsiContinueStatement.class, PsiBreakStatement.class).isEmpty())) {
+        return null;
+      }
       PsiReturnStatement returnStmt = tryCast(statements[lastIndex], PsiReturnStatement.class);
       SwitchRuleResult result;
       if (returnStmt == null) {
         PsiThrowStatement throwStatement = tryCast(statements[lastIndex], PsiThrowStatement.class);
         if (throwStatement == null) return null;
-        result = new SwitchStatementBranch(statements);
+        PsiStatement[]psiStatements = replaceAllReturnWithYield(statements);
+        if (psiStatements == null) {
+          return null;
+        }
+        result = new SwitchStatementBranch(psiStatements);
       }
       else {
         PsiExpression returnExpr = returnStmt.getReturnValue();
@@ -494,7 +505,11 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
           result = new SwitchRuleExpressionResult(returnExpr);
         }
         else {
-          result = new SwitchStatementBranch(withLastStatementReplacedWithYield(statements, returnExpr));
+          PsiStatement[] psiStatements = replaceAllReturnWithYield(statements);
+          if (psiStatements == null) {
+            return null;
+          }
+          result = new SwitchStatementBranch(psiStatements);
         }
         hasReturningBranch = true;
       }
@@ -529,6 +544,32 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       }
     }
     return new ReturningSwitchReplacer(statement, newBranches, returnAfterSwitch, statementsToDelete, isInfo, maxLines);
+  }
+
+  private static PsiStatement @Nullable [] replaceAllReturnWithYield(PsiStatement[] statements) {
+    PsiStatement[] result = ArrayUtil.copyOf(statements);
+    for (int i = 0; i < statements.length; i++) {
+      PsiStatement statement = result[i];
+      if (statement instanceof PsiReturnStatement returnStatement) {
+        PsiExpression returnValue = returnStatement.getReturnValue();
+        if (returnValue == null) {
+          return null;
+        }
+        result[i] = createYieldStatement(returnValue);
+        continue;
+      }
+      PsiStatement copy = (PsiStatement)statement.copy();
+      result[i] = copy;
+      Collection<PsiReturnStatement> returnStatements = PsiTreeUtil.findChildrenOfType(copy, PsiReturnStatement.class);
+      for (PsiReturnStatement returnStatement : returnStatements) {
+        PsiExpression returnValue = returnStatement.getReturnValue();
+        if (returnValue == null) {
+          return null;
+        }
+        returnStatement.replace(createYieldStatement(returnValue));
+      }
+    }
+    return result;
   }
 
   private static PsiStatement[] withLastStatementReplacedWithYield(PsiStatement[] statements, @NotNull PsiExpression expr) {
