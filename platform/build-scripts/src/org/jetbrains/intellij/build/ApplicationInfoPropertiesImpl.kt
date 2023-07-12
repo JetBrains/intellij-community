@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xml.dom.readXmlAsModel
+import org.jdom.Namespace
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
@@ -165,13 +167,18 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
       ),
       marker = "__"
     )
+
     val isEapOverride = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP)
-    if (isEapOverride != null) {
-      patchedAppInfo = patchedAppInfo.replace("eap=\"[^\"]\"".toRegex(), "eap=\"$isEapOverride\"")
-    }
     val suffixOverride = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX)
-    if (suffixOverride != null) {
-      patchedAppInfo = patchedAppInfo.replace("suffix=\"[^\"]+\"".toRegex(), "suffix=\"$suffixOverride\"")
+    if (isEapOverride != null || suffixOverride != null) {
+      val element = JDOMUtil.load(patchedAppInfo)
+      @Suppress("HttpUrlsUsage")
+      val version = element.getChildren("version",
+                                        Namespace.getNamespace("http://jetbrains.org/intellij/schema/application-info"))
+                      .singleOrNull() ?: error("Could not find child element 'version' under root of '$appInfoXmlPath'")
+      isEapOverride?.let { version.setAttribute("eap", it) }
+      suffixOverride?.let { version.setAttribute("suffix", it) }
+      patchedAppInfo = JDOMUtil.write(element)
     }
     return@lazy patchedAppInfo
   }
