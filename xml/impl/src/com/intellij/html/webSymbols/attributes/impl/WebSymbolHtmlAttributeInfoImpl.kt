@@ -45,9 +45,10 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
           WebSymbolHtmlAttributeValue.Type.NUMBER -> typeSupport.createNumberType(symbol)
           WebSymbolHtmlAttributeValue.Type.ENUM -> {
             val valuesSymbols = queryExecutor.runCodeCompletionQuery(
-              symbol.namespace, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0, virtualSymbols = false, scope = symbols)
+              WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0, virtualSymbols = false, scope = symbols)
             typeSupport.createEnumType(symbol, valuesSymbols)
           }
+          WebSymbolHtmlAttributeValue.Type.SYMBOL -> null
           WebSymbolHtmlAttributeValue.Type.OF_MATCH -> symbol.type
           WebSymbolHtmlAttributeValue.Type.COMPLEX -> attrValue?.langType
         }?.let { typeSupport.resolve(symbol, it) }
@@ -66,7 +67,7 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
         else if (kind == WebSymbolHtmlAttributeValue.Kind.PLAIN) {
           when (type) {
             WebSymbolHtmlAttributeValue.Type.ENUM -> {
-              queryExecutor.runCodeCompletionQuery(symbol.namespace, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0, scope = symbols)
+              queryExecutor.runCodeCompletionQuery(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0, scope = symbols)
                 .filter { !it.completeAfterInsert }
             }
             WebSymbolHtmlAttributeValue.Type.COMPLEX,

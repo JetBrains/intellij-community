@@ -676,6 +676,11 @@
                                  implementationClass="com.intellij.html.webSymbols.attributes.WebSymbolInAttributeNameRefProvider"
                                  referenceClass="com.intellij.webSymbols.references.WebSymbolReference"
                                  targetClass="com.intellij.webSymbols.WebSymbol"/>
+    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
+                                 hostLanguage="HtmlCompatible"
+                                 implementationClass="com.intellij.html.webSymbols.attributeValues.WebSymbolHtmlAttributeValueReferenceProvider"
+                                 referenceClass="com.intellij.webSymbols.references.WebSymbolReference"
+                                 targetClass="com.intellij.webSymbols.WebSymbol"/>
     <vetoRenameCondition implementation="com.intellij.html.webSymbols.HtmlWebSymbolRenameHandlerVeto"/>
     <xml.xmlExtension implementation="com.intellij.html.webSymbols.WebSymbolsXmlExtension" id="web-symbols"
                       order="before html, after react"/>

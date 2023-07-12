@@ -10,7 +10,7 @@ import com.intellij.webSymbols.query.WebSymbolMatch
  *
  * It can provide information about:
  * - kind ([WebSymbolHtmlAttributeValue.Kind]: `PLAIN`, `EXPRESSION`, `NO_VALUE`),
- * - type ([WebSymbolHtmlAttributeValue.Type]: `BOOLEAN`, `NUMBER`, `STRING`, `ENUM`, `COMPLEX`, `OF_MATCH`),
+ * - type ([WebSymbolHtmlAttributeValue.Type]: `BOOLEAN`, `NUMBER`, `STRING`, `ENUM`, `SYMBOL`, `COMPLEX`, `OF_MATCH`),
  * - whether the attribute value is required,
  * - a default value
  * - the expected result type of value expression in the appropriate language. If `COMPLEX` type is set,
@@ -62,6 +62,7 @@ interface WebSymbolHtmlAttributeValue {
     NUMBER,
     STRING,
     ENUM,
+    SYMBOL,
     COMPLEX,
     OF_MATCH
   }
