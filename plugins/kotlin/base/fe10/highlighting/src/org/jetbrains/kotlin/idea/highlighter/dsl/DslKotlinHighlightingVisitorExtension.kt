@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.highlighter.dsl
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
@@ -16,11 +17,11 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
 class DslKotlinHighlightingVisitorExtension : KotlinHighlightingVisitorExtension() {
-    override fun highlightDeclaration(elementToHighlight: PsiElement, descriptor: DeclarationDescriptor): TextAttributesKey? {
+    override fun highlightDeclaration(elementToHighlight: PsiElement, descriptor: DeclarationDescriptor): HighlightInfoType? {
         return null
     }
 
-    override fun highlightCall(elementToHighlight: PsiElement, resolvedCall: ResolvedCall<*>): TextAttributesKey? {
+    override fun highlightCall(elementToHighlight: PsiElement, resolvedCall: ResolvedCall<*>): HighlightInfoType? {
         return dslCustomTextStyle(resolvedCall.resultingDescriptor)
     }
 
@@ -37,13 +38,13 @@ class DslKotlinHighlightingVisitorExtension : KotlinHighlightingVisitorExtension
             return DslStyleUtils.styleIdByFQName(markerAnnotation.fqNameSafe)
         }
 
-        fun dslCustomTextStyle(callableDescriptor: CallableDescriptor): TextAttributesKey? {
+        fun dslCustomTextStyle(callableDescriptor: CallableDescriptor): HighlightInfoType? {
             val markerAnnotation = callableDescriptor.annotations.find { annotation ->
                 annotation.annotationClass?.isDslHighlightingMarker() ?: false
             }?.annotationClass ?: return null
 
             val styleId = styleIdByMarkerAnnotation(markerAnnotation)
-            return DslStyleUtils.styleById(styleId)
+            return DslStyleUtils.typeById(styleId)
         }
     }
 }

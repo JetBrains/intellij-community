@@ -337,22 +337,21 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.configureByText(
             "UnknownContext.kt",
             """
-                <info descr="null">import</info> kotlinx.coroutines.<info descr="null">Dispatchers</info>
-                <info descr="null">import</info> kotlinx.coroutines.withContext
-                <info descr="null">import</info> kotlin.coroutines.<info descr="null">CoroutineContext</info>
-                
-                class <info descr="null">CustomContext</info>: <info descr="null">CoroutineContext</info> {
-                    <info descr="null">override</info> fun <<info descr="null">R</info>> <info descr="null">fold</info>(<info descr="null">initial</info>: <info descr="null">R</info>, <info descr="null">operation</info>: (<info descr="null">R</info>, <info descr="null">CoroutineContext</info>.<info descr="null">Element</info>) -> <info descr="null">R</info>): <info descr="null">R</info> = <info descr="TODO()"><info descr="null">TODO</info>()</info>
-                    <info descr="null">override</info> fun <<info descr="null">E</info> : <info descr="null">CoroutineContext</info>.<info descr="null">Element</info>> <info descr="null">get</info>(<info descr="null">key</info>: <info descr="null">CoroutineContext</info>.<info descr="null">Key</info><<info descr="null">E</info>>): <info descr="null">E</info>? = <info descr="TODO()"><info descr="null">TODO</info>()</info>
-                    <info descr="null">override</info> fun <info descr="null">minusKey</info>(<info descr="null">key</info>: <info descr="null">CoroutineContext</info>.<info descr="null">Key</info><*>): <info descr="null">CoroutineContext</info> = <info descr="TODO()"><info descr="null">TODO</info>()</info>
-                }
-                
-                <info descr="null">suspend</info> fun <info descr="null">unknownContext</info>() {
-                    <info descr="null">withContext</info>(<info descr="null">CustomContext</info>()) {
-                        <info descr="null"><info descr="Consider unknown contexts non-blocking">blo<caret>ck</info></info>()
-                    }
-                }
-        """.trimIndent()
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
+
+class CustomContext: CoroutineContext {
+    override fun <R> fold(initial: R, operation: (R, CoroutineContext.Element) -> R): R = <info descr="TODO()" textAttributesKey="TODO_DEFAULT_ATTRIBUTES">TODO()</info>
+    override fun <E : CoroutineContext.Element> get(key: CoroutineContext.Key<E>): E? = <info descr="TODO()" textAttributesKey="TODO_DEFAULT_ATTRIBUTES">TODO()</info>
+    override fun minusKey(key: CoroutineContext.Key<*>): CoroutineContext = <info descr="TODO()" textAttributesKey="TODO_DEFAULT_ATTRIBUTES">TODO()</info>
+}
+
+suspend fun unknownContext() {
+    withContext(CustomContext()) {
+        <info descr="Consider unknown contexts non-blocking" textAttributesKey="INFORMATION_ATTRIBUTES">blo<caret>ck</info>()
+    }
+}        """.trimIndent()
         )
         myFixture.checkHighlighting(false, true, false)
         val action = myFixture.getAvailableIntention("Consider unknown contexts non-blocking")

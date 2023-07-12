@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.k2.highlighting
 
 import com.intellij.diff.DiffContentFactory
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.testFramework.ExpectedHighlightingData
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
@@ -22,7 +24,7 @@ class OrphanOutsiderHighlightingTest : NewLightKotlinCodeInsightFixtureTestCase(
 
         val documentText = """
             package test
-            <info>abstract</info> <info>sealed</info> class <info>Foo</info>
+            <symbolName>abstract</symbolName> <symbolName>sealed</symbolName> class <symbolName>Foo</symbolName>
         """.trimIndent()
 
         val diffContentFactory = DiffContentFactory.getInstance()
@@ -31,7 +33,11 @@ class OrphanOutsiderHighlightingTest : NewLightKotlinCodeInsightFixtureTestCase(
 
         val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)!!
         myFixture.openFileInEditor(psiFile.virtualFile)
-        myFixture.checkHighlighting(true, true, true, false)
+      val data = ExpectedHighlightingData(
+        editor.getDocument(), true, false, false, false)
+      data.checkSymbolNames()
+      data.init()
+      (myFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(data)
     }
 
     override fun getProjectDescriptor() = KotlinJvmLightProjectDescriptor.DEFAULT

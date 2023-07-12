@@ -9,14 +9,15 @@ import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors.*
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.resolve.calls.tasks.isDynamic
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.serialization.deserialization.KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME
 
@@ -47,26 +48,29 @@ internal class FunctionsHighlightingVisitor(holder: HighlightInfoHolder, binding
 
         val extensions = KotlinHighlightingVisitorExtension.EP_NAME.extensionList
 
-        (extensions.firstNotNullOfOrNull { extension ->
+        val attributesKey = extensions.firstNotNullOfOrNull { extension ->
             extension.highlightCall(callee, resolvedCall)
-        } ?: when {
-            calleeDescriptor.fqNameOrNull() == KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME -> KEYWORD
-            calleeDescriptor.isDynamic() -> DYNAMIC_FUNCTION_CALL
-            calleeDescriptor is FunctionDescriptor && calleeDescriptor.isSuspend -> SUSPEND_FUNCTION_CALL
+        } ?:
+        when {
+            calleeDescriptor.fqNameOrNull() == KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME -> KotlinNameHighlightInfoTypes.KEYWORD
+            calleeDescriptor.isDynamic() -> KotlinNameHighlightInfoTypes.DYNAMIC_FUNCTION_CALL
+            calleeDescriptor is FunctionDescriptor && calleeDescriptor.isSuspend -> KotlinNameHighlightInfoTypes.SUSPEND_FUNCTION_CALL
             resolvedCall is VariableAsFunctionResolvedCall -> {
                 val container = calleeDescriptor.containingDeclaration
                 val containedInFunctionClassOrSubclass = container is ClassDescriptor && container.defaultType.isFunctionTypeOrSubtype
                 if (containedInFunctionClassOrSubclass)
-                    VARIABLE_AS_FUNCTION_CALL
+                    KotlinNameHighlightInfoTypes.VARIABLE_AS_FUNCTION_CALL
                 else
-                    VARIABLE_AS_FUNCTION_LIKE_CALL
+                    KotlinNameHighlightInfoTypes.VARIABLE_AS_FUNCTION_LIKE_CALL
             }
-            calleeDescriptor is ConstructorDescriptor -> CONSTRUCTOR_CALL
+
+            calleeDescriptor is ConstructorDescriptor -> KotlinNameHighlightInfoTypes.CONSTRUCTOR_CALL
             calleeDescriptor !is FunctionDescriptor -> null
-            calleeDescriptor.extensionReceiverParameter != null -> EXTENSION_FUNCTION_CALL
-            DescriptorUtils.isTopLevelDeclaration(calleeDescriptor) -> PACKAGE_FUNCTION_CALL
-            else -> FUNCTION_CALL
-        })?.let { key ->
+            calleeDescriptor.extensionReceiverParameter != null -> KotlinNameHighlightInfoTypes.EXTENSION_FUNCTION_CALL
+            DescriptorUtils.isTopLevelDeclaration(calleeDescriptor) -> KotlinNameHighlightInfoTypes.PACKAGE_FUNCTION_CALL
+            else -> KotlinNameHighlightInfoTypes.FUNCTION_CALL
+        }
+        attributesKey?.let { key ->
             highlightName(callee, key)
         }
     }
