@@ -493,7 +493,7 @@ public class PyDebugValue extends XNamedValue {
 
         restoreChildrenRenderers(values);
 
-        if (!node.isObsolete()) {
+        if (values != null && !node.isObsolete()) {
           updateLengthIfIsCollection(values);
 
           if (isLargeCollection()) {
@@ -645,7 +645,7 @@ public class PyDebugValue extends XNamedValue {
     return myCollectionLength > MAX_ITEMS_TO_HANDLE;
   }
 
-  private void updateLengthIfIsCollection(final XValueChildrenList values) {
+  private void updateLengthIfIsCollection(@NotNull final XValueChildrenList values) {
     if (myCollectionLength > 0 && values.size() == 0) return;
 
     final int lastIndex = values.size() - 1;
@@ -664,7 +664,8 @@ public class PyDebugValue extends XNamedValue {
     }
   }
 
-  private XValueChildrenList processLargeCollection(final XValueChildrenList values) {
+  @NotNull
+  private XValueChildrenList processLargeCollection(@NotNull final XValueChildrenList values) {
     if (values.size() > 0 && isLargeCollection()) {
       if (myOffset + Math.min(MAX_ITEMS_TO_HANDLE, values.size()) < myCollectionLength) {
         XValueChildrenList newValues = new XValueChildrenList();
@@ -677,7 +678,7 @@ public class PyDebugValue extends XNamedValue {
     return values;
   }
 
-  private void updateOffset(final XCompositeNode node, final XValueChildrenList values) {
+  private void updateOffset(final XCompositeNode node, final @NotNull XValueChildrenList values) {
     if (myContainer && isLargeCollection()) {
       if (myOffset + Math.min(values.size(), MAX_ITEMS_TO_HANDLE) >= myCollectionLength) {
         myOffset = myCollectionLength;
@@ -698,7 +699,7 @@ public class PyDebugValue extends XNamedValue {
     myDescriptor = descriptor;
   }
 
-  private void restoreChildrenRenderers(XValueChildrenList values) {
+  private void restoreChildrenRenderers(@Nullable XValueChildrenList values) {
     PyDebugValueDescriptor descriptor = getDescriptor();
     Map<String, PyDebugValueDescriptor> childrenDescriptors = descriptor.getChildrenDescriptors();
 
