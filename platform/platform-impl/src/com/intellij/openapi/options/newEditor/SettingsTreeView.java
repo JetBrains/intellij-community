@@ -9,6 +9,9 @@ import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.*;
@@ -275,13 +278,14 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         if (bounds == null || bounds.y > y) return;
         bounds.y += bounds.height;
         if (bounds.y < y) return;
-        super.show(invoker, x, bounds.y);
-      }
 
-      {
+        DefaultActionGroup group = new DefaultActionGroup();
         for (Action action : CopySettingsPathAction.createSwingActions(() -> names)) {
-          add(action);
+          group.add(ActionUtil.createActionFromSwingAction(action));
         }
+
+        JPopupMenu popup = ActionManager.getInstance().createActionPopupMenu("settings", group).getComponent();
+        popup.show(invoker, x, bounds.y);
       }
     });
   }

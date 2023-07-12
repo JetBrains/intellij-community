@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.util.List;
@@ -617,5 +618,31 @@ public final class ActionUtil {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(place, group, horizontal);
     toolbar.setTargetComponent(target);
     return toolbar.getComponent();
+  }
+
+  public static @NotNull AnAction createActionFromSwingAction(@NotNull Action action) {
+    AnAction anAction = new AnAction((String)action.getValue(Action.NAME)) {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(action.isEnabled());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, null));
+      }
+    };
+
+    Object value = action.getValue(Action.ACCELERATOR_KEY);
+    if (value instanceof KeyStroke keys) {
+      anAction.setShortcutSet(new CustomShortcutSet(keys));
+    }
+
+    return anAction;
   }
 }
