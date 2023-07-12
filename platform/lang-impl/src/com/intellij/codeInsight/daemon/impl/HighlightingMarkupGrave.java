@@ -133,7 +133,7 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
         highlighter = markupModel.addRangeHighlighter(attributesKey, state.start(), state.end(), state.layer(), state.target());
       }
       if (state.gutterIcon() != null) {
-        highlighter.setGutterIconRenderer(new GutterIconRenderer() {
+        GutterIconRenderer fakeIcon = new GutterIconRenderer() {
           @Override
           public boolean equals(Object obj) {
             return false;
@@ -148,7 +148,8 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
           public @NotNull Icon getIcon() {
             return state.gutterIcon();
           }
-        });
+        };
+        highlighter.setGutterIconRenderer(fakeIcon);
       }
       markZombieMarkup(highlighter);
       if (LOG.isDebugEnabled()) {
@@ -203,8 +204,8 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
       if (attributes.isEmpty()) attributes = null;
       int start = Integer.parseInt(state.getAttributeValue("start", ""));
       int end = Integer.parseInt(state.getAttributeValue("end", ""));
-      int layer = Integer.parseInt(state.getAttributeValue("layer", ""));
-      HighlighterTargetArea target = HighlighterTargetArea.values()[Integer.parseInt(state.getAttributeValue("target", ""))];
+      int layer = Integer.parseInt(state.getAttributeValue("layer", String.valueOf(HighlighterLayer.ADDITIONAL_SYNTAX)));
+      HighlighterTargetArea target = HighlighterTargetArea.values()[Integer.parseInt(state.getAttributeValue("target", "0"))];
       String gutterIconUrl = state.getAttributeValue("gutterIconUrl", "");
       Icon icon = null;
       if (!StringUtil.isEmpty(gutterIconUrl)) {
@@ -236,8 +237,13 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
       }
       element.setAttribute("start", Integer.toString(start));
       element.setAttribute("end", Integer.toString(end));
-      element.setAttribute("layer", Integer.toString(layer));
-      element.setAttribute("target", Integer.toString(target.ordinal()));
+      if (layer != HighlighterLayer.ADDITIONAL_SYNTAX) {
+        // there are more HighlighterLayer.ADDITIONAL_SYNTAX highlighters than anything else
+        element.setAttribute("layer", Integer.toString(layer));
+      }
+      if (target != HighlighterTargetArea.EXACT_RANGE) {
+        element.setAttribute("target", Integer.toString(target.ordinal()));
+      }
       Icon icon = gutterIcon();
       if (icon instanceof CachedImageIcon cii) {
         URL url = cii.getUrl();
@@ -314,6 +320,7 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
     }
 
     List<Element> markupElements = markup.entrySet().stream()
+      .filter(e -> !e.getValue().highlighters.isEmpty())
       .sorted(Comparator.comparing(e -> e.getKey().getUrl()))
       .map(e -> e.getValue().bury())
       .toList();
