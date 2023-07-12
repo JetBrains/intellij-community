@@ -51,7 +51,7 @@ class PsiBuilderDiagnosticsImpl(val collectTraces: Boolean = false, ignoreMatchi
       .joinToString("\n") { entry -> "${entry.key};${entry.value.rollbacks};${entry.value.tokens}" }
 
     return """Summary:
-      
+
           Passes: $builders
     Tokens count: $lexemeCount
  Total rollbacks: $totalRollbacks
