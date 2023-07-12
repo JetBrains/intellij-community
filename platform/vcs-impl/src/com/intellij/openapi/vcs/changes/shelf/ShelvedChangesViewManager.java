@@ -633,10 +633,13 @@ public class ShelvedChangesViewManager implements Disposable {
   @Nls
   private static String constructDeleteSuccessfullyMessage(int fileNum, int listNum, @Nullable ShelvedChangeList first) {
     String filesMessage = fileNum != 0 ? VcsBundle.message("shelve.delete.files.successful.message", fileNum) : "";
-    String changelistsMessage = listNum != 0 ? VcsBundle
-      .message("shelve.delete.changelists.message", listNum, listNum == 1 && first != null ? first.DESCRIPTION : "") : "";
-    return StringUtil.capitalize(
-      VcsBundle.message("shelve.delete.successful.message", filesMessage, fileNum > 0 && listNum > 0 ? 1 : 0, changelistsMessage));
+    String listDescription = listNum == 1 && first != null ? first.DESCRIPTION : "";
+    String changelistsMessage = listNum != 0
+                                ? VcsBundle.message("shelve.delete.changelists.message",
+                                                    listNum, listDescription, listDescription.isEmpty() ? 0 : 1)
+                                : "";
+    return StringUtil.capitalize(VcsBundle.message("shelve.delete.successful.message",
+                                                   filesMessage, fileNum > 0 && listNum > 0 ? 1 : 0, changelistsMessage));
   }
 
   private static final class MyShelveDeleteProvider implements DeleteProvider {
