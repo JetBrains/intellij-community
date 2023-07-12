@@ -6,6 +6,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.MoveRenameUsageInfo
+import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.Align
@@ -16,6 +17,7 @@ import com.intellij.ui.list.createTargetPresentationRenderer
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import javax.swing.Icon
@@ -24,12 +26,29 @@ import javax.swing.JComponent
 sealed interface K2MoveSource<T : KtElement> {
     val elements: Set<T>
 
+    fun findusages(searchInCommentsAndStrings: Boolean, searchForText: Boolean, pkgName: FqName): List<UsageInfo> {
+        return findReferenceUsages() + findNonCodeUsages(searchForText, searchForText, pkgName)
+    }
+
+    fun findReferenceUsages(): List<UsageInfo>
+
+    fun findNonCodeUsages(searchInCommentsAndStrings: Boolean, searchForText: Boolean, pkgName: FqName): List<UsageInfo>
+
     context(Panel)
     fun buildPanel(onError: (String?, JComponent) -> Unit)
+
 
     class FileSource(files: Set<KtFile>) : K2MoveSource<KtFile> {
         override var elements: Set<KtFile> = files
             private set
+
+        override fun findReferenceUsages(): List<UsageInfo> {
+            return elements.flatMap { ElementSource(it).findReferenceUsages() }
+        }
+
+        override fun findNonCodeUsages(searchInCommentsAndStrings: Boolean, searchForText: Boolean, pkgName: FqName): List<UsageInfo> {
+            return elements.flatMap { file -> ElementSource(file).findNonCodeUsages(searchInCommentsAndStrings, searchForText, pkgName) }
+        }
 
         context(Panel)
         override fun buildPanel(onError: (String?, JComponent) -> Unit) {
@@ -64,13 +83,30 @@ sealed interface K2MoveSource<T : KtElement> {
         override var elements: Set<KtNamedDeclaration> = declarations
             private set
 
-        fun findUsages(searchInComments: Boolean, searchForText: Boolean): List<UsageInfo> {
-            return elements.flatMap { member ->
-                val references = ReferencesSearch.search(member).findAll().filter { reference ->
+        override fun findReferenceUsages(): List<UsageInfo> {
+            return elements.flatMap { namedDeclaration ->
+                val references = ReferencesSearch.search(namedDeclaration).findAll().filter { reference ->
                     reference.element.getNonStrictParentOfType<KtImportDirective>() == null
                 }
-                references.map { reference -> MoveRenameUsageInfo(reference, member) }
+                references.map { reference -> MoveRenameUsageInfo(reference, namedDeclaration) }
             }
+        }
+
+        override fun findNonCodeUsages(searchInCommentsAndStrings: Boolean, searchForText: Boolean, pkgName: FqName): List<UsageInfo> {
+            val usages = mutableListOf<UsageInfo>()
+            elements.forEach { element ->
+                val newName = FqName("${pkgName.asString()}.${element.name}")
+                TextOccurrencesUtil.findNonCodeUsages(
+                    element,
+                    element.resolveScope,
+                    element.fqName?.asString(),
+                    searchInCommentsAndStrings,
+                    searchForText,
+                    newName.asString(),
+                    usages
+                )
+            }
+            return usages
         }
 
         context(Panel)
@@ -111,6 +147,8 @@ sealed interface K2MoveSource<T : KtElement> {
     }
 
     companion object {
+        fun FileSource(file: KtFile): FileSource = FileSource(setOf(file))
+
         fun ElementSource(file: KtFile): ElementSource {
             return ElementSource(file.declarations.filterIsInstance<KtNamedDeclaration>().toSet())
         }

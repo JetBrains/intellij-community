@@ -6,8 +6,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import com.intellij.refactoring.move.moveClassesOrPackages.CommonMoveUtil
+import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.base.psi.deleteSingle
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 class K2MoveMembersRefactoringProcessor(
@@ -22,22 +26,24 @@ class K2MoveMembersRefactoringProcessor(
 
     override fun findUsages(): Array<UsageInfo> {
         return if (descriptor.searchReferences) {
-             descriptor.source.findUsages(descriptor.searchInComments, descriptor.searchForText).toTypedArray()
+             descriptor.source.findusages(descriptor.searchInComments, descriptor.searchForText, descriptor.target.file.packageFqName)
+                 .toTypedArray()
         } else emptyArray()
     }
 
-    override fun performRefactoring(usages: Array<out UsageInfo>) {
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    override fun performRefactoring(usages: Array<out UsageInfo>) = allowAnalysisOnEdt {
         val targetFile = descriptor.target.file
 
-        val oldToNewMap = descriptor.source.elements.associate { declaration ->
-            targetFile.add(declaration) to targetFile.add(declaration)
-        }
-        CommonMoveUtil.retargetUsages(usages, oldToNewMap)
-        oldToNewMap.values.forEach(PsiElement::delete)
-
-        val sourceFiles = descriptor.source.elements.map { it.containingKtFile }.distinct()
+        val oldToNewMap = descriptor.source.elements.associateWith {
+            declaration -> targetFile.add(declaration)
+        }.toMutableMap<PsiElement, PsiElement>()
+        val nonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewMap)
+        RenameUtil.renameNonCodeUsages(myProject, nonCodeUsages)
+        descriptor.source.elements.forEach(PsiElement::deleteSingle)
 
         if (descriptor.deleteEmptySourceFiles) {
+            val sourceFiles = descriptor.source.elements.map { it.containingKtFile }.distinct()
             for (sourceFile in sourceFiles) {
                 if (sourceFile.declarations.isEmpty()) sourceFile.delete()
             }

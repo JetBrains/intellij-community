@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.move.moveClassesOrPackages.CommonMoveUtil
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler
+import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -26,7 +27,8 @@ class K2MoveFilesHandler : MoveFileHandler() {
         searchInNonJavaFiles: Boolean
     ): List<UsageInfo> {
         require(psiFile is KtFile) { "Can only find usages from Kotlin files" }
-        return K2MoveSource.ElementSource(psiFile).findUsages(searchInComments, searchInNonJavaFiles)
+        val newPkgName = JavaDirectoryService.getInstance().getPackage(newParent)?.kotlinFqName ?: return emptyList()
+        return K2MoveSource.FileSource(psiFile).findusages(searchInComments, searchInNonJavaFiles, newPkgName)
     }
 
     override fun prepareMovedFile(file: PsiFile, moveDestination: PsiDirectory, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
@@ -45,9 +47,9 @@ class K2MoveFilesHandler : MoveFileHandler() {
     override fun updateMovedFile(file: PsiFile) { }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
-    override fun retargetUsages(usageInfos: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
-        allowAnalysisOnEdt {
-            CommonMoveUtil.retargetUsages(usageInfos.toTypedArray(), oldToNewMap)
-        }
+    override fun retargetUsages(usageInfos: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>): Unit = allowAnalysisOnEdt {
+        val nonCodeUsages = CommonMoveUtil.retargetUsages(usageInfos.toTypedArray(), oldToNewMap)
+        val project = oldToNewMap.values.firstOrNull()?.project ?: return@allowAnalysisOnEdt
+        RenameUtil.renameNonCodeUsages(project, nonCodeUsages)
     }
 }
