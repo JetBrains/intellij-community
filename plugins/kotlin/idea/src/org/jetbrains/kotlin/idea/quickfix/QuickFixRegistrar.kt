@@ -682,7 +682,7 @@ class QuickFixRegistrar : QuickFixContributor {
         OPT_IN_OVERRIDE_ERROR.registerFactory(OptInFileLevelFixesFactory)
         OPT_IN_IS_NOT_ENABLED.registerFactory(MakeModuleOptInFix)
         OPT_IN_MARKER_ON_WRONG_TARGET.registerFactory(OptInAnnotationWrongTargetFixesFactory)
-        OPT_IN_MARKER_WITH_WRONG_TARGET.registerFactory(RemoveWrongOptInAnnotationTargetFactory)
+        OPT_IN_MARKER_WITH_WRONG_TARGET.registerFactory(RemoveWrongOptInAnnotationTargetFix)
         OPT_IN_MARKER_WITH_WRONG_RETENTION.registerFactory(RemoveAnnotationFix.RemoveForbiddenOptInRetention)
         OPT_IN_MARKER_ON_OVERRIDE.registerFactory(RemoveAnnotationFix)
         OPT_IN_MARKER_ON_OVERRIDE_WARNING.registerFactory(RemoveAnnotationFix)
