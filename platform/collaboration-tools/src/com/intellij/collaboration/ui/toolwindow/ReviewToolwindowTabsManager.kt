@@ -6,7 +6,9 @@ import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.*
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -19,7 +21,7 @@ import org.jetbrains.annotations.Nls
  * Manages review toolwindow tabs and their content.
  * If [reviewToolwindowViewModel.projectContext] is [null] UI for acquiring this context is shown (by [ReviewTabsComponentFactory.createEmptyTabContent]).
  *
- * When [reviewToolwindowViewModel.projectContext] appears Review List will be shown (by [ReviewTabsComponentFactory.createReviewListComponentDescriptor]),
+ * When [reviewToolwindowViewModel.projectContext] appears Review List will be shown (by [ReviewTabsComponentFactory.createReviewListComponent]),
  * and requests in [reviewTabsController] will be handled, according to described in [ReviewTab] [ReviewTab.id] logic.
  * So, new tabs will be shown using [ReviewTabsComponentFactory.createTabComponent].
  *
@@ -39,7 +41,7 @@ fun <T : ReviewTab, C : ReviewToolwindowProjectContext> manageReviewToolwindowTa
 
 private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowProjectContext>(
   parentCs: CoroutineScope,
-  toolwindow: ToolWindow,
+  private val toolwindow: ToolWindow,
   private val reviewToolwindowViewModel: ReviewToolwindowViewModel<C>,
   private val reviewTabsController: ReviewTabsController<T>,
   private val tabComponentFactory: ReviewTabsComponentFactory<T, C>,
@@ -57,12 +59,6 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
   }
 
   init {
-    toolwindow.refreshReviewListOnSelection { content ->
-      val reviewListVm = content.getUserData(REVIEW_LIST_VIEW_MODEL) ?: return@refreshReviewListOnSelection
-
-      reviewListVm.refresh()
-    }
-
     contentManager.addDataProvider {
       when {
         ReviewToolwindowDataKeys.REVIEW_TABS_CONTROLLER.`is`(it) -> reviewTabsController
@@ -84,6 +80,8 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
         val newContent = createReviewListContent(contextState)
         contentManager.addContent(newContent)
         contentManager.setSelectedContent(newContent)
+        refreshReviewListOnTabSelection(contextState.listVm, contentManager, newContent)
+        refreshListOnToolwindowShow(contextState.listVm, toolwindow, newContent)
       }
     }
 
@@ -146,9 +144,7 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
     content.isCloseable = false
     content.displayName = context.projectName
 
-    val reviewListDescriptor = tabComponentFactory.createReviewListComponentDescriptor(contentCs, context)
-    content.component = reviewListDescriptor.component
-    content.putUserData(REVIEW_LIST_VIEW_MODEL, reviewListDescriptor.viewModel)
+    content.component = tabComponentFactory.createReviewListComponent(contentCs, context)
   }
 
   private fun createTabContent(context: C, reviewTab: T): Content = createDisposableContent { content, contentCs ->
@@ -184,8 +180,34 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
   companion object {
     @JvmStatic
     private val REVIEW_TAB: Key<ReviewTab> = Key.create("com.intellij.collaboration.toolwindow.review.tab")
-
-    @JvmStatic
-    private val REVIEW_LIST_VIEW_MODEL: Key<ReviewListViewModel> = Key.create("com.intellij.collaboration.toolwindow.review.tab.list.vm")
   }
+}
+
+private fun refreshReviewListOnTabSelection(listVm: ReviewListViewModel, contentManager: ContentManager, content: Content) {
+  val listener = object : ContentManagerListener {
+    override fun selectionChanged(event: ContentManagerEvent) {
+      if (event.operation == ContentManagerEvent.ContentOperation.add && event.content === content) {
+        // tab selected
+        listVm.refresh()
+      }
+    }
+  }
+  contentManager.addContentManagerListener(listener)
+  Disposer.register(content) {
+    contentManager.removeContentManagerListener(listener)
+  }
+}
+
+private fun refreshListOnToolwindowShow(listVm: ReviewListViewModel, toolwindow: ToolWindow, content: Content) {
+  toolwindow.project.messageBus.connect(content)
+    .subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun toolWindowShown(shownToolwindow: ToolWindow) {
+        if (shownToolwindow.id == toolwindow.id) {
+          val selectedContent = shownToolwindow.contentManager.selectedContent
+          if (selectedContent === content) {
+            listVm.refresh()
+          }
+        }
+      }
+    })
 }

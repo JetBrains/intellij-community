@@ -6,10 +6,11 @@ import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowProjectContext
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -19,10 +20,17 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesController
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesControllerImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsPersistentFiltersHistory
+import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModelImpl
 
-class GitLabProjectUIContext
-private constructor(cs: CoroutineScope, project: Project, connection: GitLabProjectConnection)
+internal class GitLabProjectUIContext
+private constructor(parentCs: CoroutineScope, project: Project, connection: GitLabProjectConnection)
   : ReviewToolwindowProjectContext {
+
+  private val cs = parentCs.childScope()
 
   val connectionId: String = connection.id
   override val projectName: @Nls String = connection.repo.repository.projectPath.name
@@ -40,7 +48,26 @@ private constructor(cs: CoroutineScope, project: Project, connection: GitLabProj
 
   // should not be here
   val account: GitLabAccount = connection.account
-  val tokenRefreshFlow: Flow<Unit> = connection.tokenRefreshFlow
+
+  override val listVm: GitLabMergeRequestsListViewModel = run {
+    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(
+      cs,
+      project,
+      currentUser = currentUser,
+      historyModel = GitLabMergeRequestsFiltersHistoryModel(project.service<GitLabMergeRequestsPersistentFiltersHistory>()),
+      avatarIconsProvider = avatarIconProvider,
+      projectData = projectData
+    )
+
+    GitLabMergeRequestsListViewModelImpl(
+      cs,
+      filterVm = filterVm,
+      repository = projectName,
+      avatarIconsProvider = avatarIconProvider,
+      tokenRefreshFlow = connection.tokenRefreshFlow,
+      loaderSupplier = { filtersValue -> projectData.mergeRequests.getListLoader(filtersValue.toSearchQuery()) }
+    )
+  }
 
   fun getDiffBridge(mr: GitLabMergeRequestId): GitLabMergeRequestDiffBridge =
     diffBridgeStore.get(GitLabMergeRequestId.Simple(mr)) {
@@ -52,7 +79,7 @@ private constructor(cs: CoroutineScope, project: Project, connection: GitLabProj
   }
 
   companion object {
-    internal fun CoroutineScope.GitLabProjectUIContext(project: Project, connection: GitLabProjectConnection) =
+    internal fun CoroutineScope.GitLabReviewToolwindowContext(project: Project, connection: GitLabProjectConnection) =
       GitLabProjectUIContext(this, project, connection)
   }
 }

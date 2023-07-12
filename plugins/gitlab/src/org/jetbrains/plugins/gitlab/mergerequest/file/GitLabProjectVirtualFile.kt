@@ -4,19 +4,16 @@
 package org.jetbrains.plugins.gitlab.mergerequest.file
 
 import com.intellij.collaboration.file.ComplexPathVirtualFileWithoutContent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContextHolder
 
-abstract class GitLabProjectVirtualFile(override val connectionId: String,
-                                        val project: Project,
-                                        val glProject: GitLabProjectCoordinates)
+internal abstract class GitLabProjectVirtualFile(override val connectionId: String,
+                                                 val project: Project,
+                                                 val glProject: GitLabProjectCoordinates)
   : ComplexPathVirtualFileWithoutContent(connectionId), GitLabVirtualFile {
 
   override fun getFileSystem(): ComplexPathVirtualFileSystem<*> = GitLabVirtualFileSystem.getInstance()

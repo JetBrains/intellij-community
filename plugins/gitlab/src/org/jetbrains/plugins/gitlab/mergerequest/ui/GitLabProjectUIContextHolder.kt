@@ -20,7 +20,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.createSingleProjectAndAccountState
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext.Companion.GitLabProjectUIContext
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext.Companion.GitLabReviewToolwindowContext
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 @Service(Service.Level.PROJECT)
@@ -28,7 +28,7 @@ internal class GitLabProjectUIContextHolder(
   private val project: Project,
   parentCs: CoroutineScope
 ) : ReviewToolwindowViewModel<GitLabProjectUIContext> {
-  private val cs = parentCs.childScope(Dispatchers.Main)
+  private val cs = parentCs.childScope(Dispatchers.Default)
 
   val connectionManager: GitLabProjectConnectionManager = project.service<GitLabProjectConnectionManager>()
   val projectsManager: GitLabProjectsManager = project.service<GitLabProjectsManager>()
@@ -36,7 +36,7 @@ internal class GitLabProjectUIContextHolder(
 
   override val projectContext: StateFlow<GitLabProjectUIContext?> =
     connectionManager.connectionState.mapScoped { connection ->
-      connection?.let { GitLabProjectUIContext(project, it) }
+      connection?.let { GitLabReviewToolwindowContext(project, it) }
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
   private val singleProjectAndAccountState: StateFlow<Pair<GitLabProjectMapping, GitLabAccount>?> =

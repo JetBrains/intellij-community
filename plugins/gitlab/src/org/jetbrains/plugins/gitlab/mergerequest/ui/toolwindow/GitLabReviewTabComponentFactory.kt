@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
-import com.intellij.collaboration.ui.toolwindow.ReviewListTabComponentDescriptor
 import com.intellij.collaboration.ui.toolwindow.ReviewTabsComponentFactory
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
@@ -14,6 +13,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.childScope
 import com.intellij.util.ui.UIUtil
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.*
@@ -34,6 +34,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContextHolder
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestDetailsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsPanelFactory
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -45,12 +46,21 @@ internal class GitLabReviewTabComponentFactory(
   private val project: Project,
   private val toolwindowViewModel: GitLabProjectUIContextHolder,
 ) : ReviewTabsComponentFactory<GitLabReviewTab, GitLabProjectUIContext> {
-  override fun createReviewListComponentDescriptor(
+  override fun createReviewListComponent(
     cs: CoroutineScope,
     projectContext: GitLabProjectUIContext
-  ): ReviewListTabComponentDescriptor {
+  ): JComponent {
     GitLabStatistics.logMrListOpened(project)
-    return GitLabReviewListTabComponentDescriptor(project, cs, toolwindowViewModel.accountManager, projectContext)
+    val accountVm = GitLabAccountViewModelImpl(project, cs, projectContext.account, toolwindowViewModel.accountManager)
+    return GitLabMergeRequestsPanelFactory()
+      .create(cs, accountVm, projectContext.listVm).also { panel ->
+        DataManager.registerDataProvider(panel) { dataId ->
+          when {
+            GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> projectContext.filesController
+            else -> null
+          }
+        }
+      }
   }
 
   override fun createTabComponent(cs: CoroutineScope,
