@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.project.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.launch
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
@@ -19,7 +18,6 @@ class AddFileAsMavenProjectAction : MavenAction() {
   }
 
   suspend fun actionPerformedAsync(e: AnActionEvent) {
-    FileDocumentManager.getInstance().saveAllDocuments()
     val context = e.dataContext
     val project = MavenActionUtil.getProject(context)
     val file = getSelectedFile(context)

@@ -3,16 +3,16 @@ package org.jetbrains.idea.maven.project.actions
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.MapDataContext
-import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.TestActionEvent
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.utils.MavenUtil
+import kotlinx.coroutines.withContext
 import org.junit.Test
 
 class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
@@ -43,10 +43,11 @@ class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
     context.put(CommonDataKeys.PROJECT, myProject)
     context.put(CommonDataKeys.VIRTUAL_FILE, projectPom)
     val event = TestActionEvent.createTestEvent(context)
-    AddFileAsMavenProjectAction().actionPerformedAsync(event)
+    withContext(Dispatchers.EDT) {
+      AddFileAsMavenProjectAction().actionPerformedAsync(event)
+    }
 
     val promise = myProjectsManager.waitForImportCompletion()
-    //myProjectsManager.performScheduledImportInTests()
     waitForImportCompletion()
     assertTrue("Import did not succeed", promise.isSucceeded)
     assertModules("project-new")
