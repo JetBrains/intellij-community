@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighter
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiFile
 import it.unimi.dsi.fastutil.Hash
@@ -11,10 +12,10 @@ import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration.DescriptionRenderingOption
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration.SeverityRenderingOption
-import java.io.File
-import java.util.*
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
+import java.io.File
+import java.util.*
 
 abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
     protected val HIGHLIGHTING_EXTENSION = "highlighting"
@@ -28,7 +29,8 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
         val highlightingRenderConfiguration = HighlightingConfiguration(
             descriptionRenderingOption = DescriptionRenderingOption.IF_NOT_NULL,
             renderSeverityOption = SeverityRenderingOption.ONLY_NON_INFO,
-            renderHighlightingAttributesKey = HIGHLIGHTER_ATTRIBUTES_KEY in globalDirectives
+            renderHighlightingAttributesKey = HIGHLIGHTER_ATTRIBUTES_KEY in globalDirectives,
+            severityLevel = if (CHECK_SYMBOL_NAMES in globalDirectives) HighlightInfoType.SYMBOL_TYPE_SEVERITY else HighlightSeverity.INFORMATION
         )
 
         val codeMetaInfoTestCase = CodeMetaInfoTestCase(
@@ -104,5 +106,6 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
         private const val ALLOW_ERRORS = "ALLOW_ERRORS"
         private const val HIGHLIGHT_WARNINGS = "HIGHLIGHT_WARNINGS"
         private const val HIGHLIGHTER_ATTRIBUTES_KEY = "HIGHLIGHTER_ATTRIBUTES_KEY"
+        private const val CHECK_SYMBOL_NAMES = "CHECK_SYMBOL_NAMES"
     }
 }

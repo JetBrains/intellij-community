@@ -67,9 +67,9 @@ class KotlinWebReferenceContributorTest : KotlinLightCodeInsightFixtureTestCase(
         myFixture.configureByText(
             "Main.kt",
             """
-                val <info>normalString</info> = "https//doesNotLookLikeUrl"
-                val <info>single</info> = "<info>https://example.com</info> Not URL text"
-                val <info>multiple</info> = "   <info>https://example-one.com</info>  <info>https://example-two.com</info>"
+                val normalString = "https//doesNotLookLikeUrl"
+                val single = "<info>https://example.com</info> Not URL text"
+                val multiple = "   <info>https://example-one.com</info>  <info>https://example-two.com</info>"
             """.trimIndent()
         )
 

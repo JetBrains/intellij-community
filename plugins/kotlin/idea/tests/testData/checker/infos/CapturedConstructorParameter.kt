@@ -1,28 +1,28 @@
 // FIR_IDENTICAL
-<info>import</info> kotlin.reflect.KProperty
+<symbolName descr="null" textAttributesKey="KOTLIN_KEYWORD">import</symbolName> kotlin.reflect.<symbolName descr="null" textAttributesKey="KOTLIN_TRAIT">KProperty</symbolName>
 
-interface T
-class T1(<warning>t</warning>: Int): T
+interface <symbolName descr="null" textAttributesKey="KOTLIN_TRAIT">T</symbolName>
+class <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">T1</symbolName>(<warning descr="[UNUSED_PARAMETER] Parameter 't' is never used" textAttributesKey="NOT_USED_ELEMENT_ATTRIBUTES"><symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">t</symbolName></warning>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>): <symbolName descr="null" textAttributesKey="KOTLIN_TRAIT">T</symbolName>
 
-<info descr="null">inline</info> fun <T> run(f: () -> T) = f()
+<symbolName descr="null" textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">inline</symbolName> fun <<symbolName descr="null" textAttributesKey="KOTLIN_TYPE_PARAMETER">T</symbolName>> <symbolName descr="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">run</symbolName>(<symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">f</symbolName>: () -> <symbolName descr="null" textAttributesKey="KOTLIN_TYPE_PARAMETER">T</symbolName>) = <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="null" textAttributesKey="KOTLIN_VARIABLE_AS_FUNCTION">f</symbolName></symbolName>()
 
 
-class Delegate(<warning>d</warning>: Int) {
-    <info>operator</info> fun getValue(k: Any, m: KProperty<*>) {}
+class <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Delegate</symbolName>(<warning descr="[UNUSED_PARAMETER] Parameter 'd' is never used" textAttributesKey="NOT_USED_ELEMENT_ATTRIBUTES"><symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">d</symbolName></warning>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>) {
+    <symbolName descr="null" textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">operator</symbolName> fun <symbolName descr="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">getValue</symbolName>(<symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">k</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName>, <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">m</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_TRAIT">KProperty</symbolName><*>) {}
 }
 
-class A(y: Int, t: Int, d: Int): T <info>by</info> T1(t) {
-    val a = y
-    val b <info>by</info> Delegate(d)
+class <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">A</symbolName>(<symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">y</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>, <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">t</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>, <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">d</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>): <symbolName descr="null" textAttributesKey="KOTLIN_TRAIT">T</symbolName> <symbolName descr="null" textAttributesKey="KOTLIN_KEYWORD">by</symbolName> <symbolName descr="null" textAttributesKey="KOTLIN_CONSTRUCTOR">T1</symbolName>(<symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">t</symbolName>) {
+    val <symbolName descr="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY">a</symbolName> = <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">y</symbolName>
+    val <symbolName descr="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION"><symbolName descr="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION">b</symbolName></symbolName> <symbolName descr="null" textAttributesKey="KOTLIN_KEYWORD">by</symbolName> <symbolName descr="null" textAttributesKey="KOTLIN_CONSTRUCTOR">Delegate</symbolName>(<symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">d</symbolName>)
 }
 
-class A2<T>(x: Int, y: Int, t: T) {
-    val t1: T = t
+class <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">A2</symbolName><<symbolName descr="null" textAttributesKey="KOTLIN_TYPE_PARAMETER">T</symbolName>>(<symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">x</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>, <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">y</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>, <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">t</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_TYPE_PARAMETER">T</symbolName>) {
+    val <symbolName descr="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY">t1</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_TYPE_PARAMETER">T</symbolName> = <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">t</symbolName>
 
-    val x1 = run { x }
-    <info>init</info> {
-        run {
-            y
+    val <symbolName descr="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY">x1</symbolName> = <symbolName descr="null" textAttributesKey="KOTLIN_PACKAGE_FUNCTION_CALL">run</symbolName> { <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">x</symbolName> }
+    <symbolName descr="null" textAttributesKey="KOTLIN_KEYWORD">init</symbolName> {
+        <symbolName descr="null" textAttributesKey="KOTLIN_PACKAGE_FUNCTION_CALL">run</symbolName> {
+            <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">y</symbolName>
         }
     }
 }
@@ -30,26 +30,26 @@ class A2<T>(x: Int, y: Int, t: T) {
 
 //captured
 
-class B(
-        x: Int,
-        y: Int,
-        t: Int,
-        d: Int
+class <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>(
+        <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">x</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>,
+        <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">y</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>,
+        <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">t</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>,
+        <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">d</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>
 ) {
-    <info>init</info> {
-        class C(<warning>a</warning>: Int = <info>x</info>): T <info>by</info> T1(<info>t</info>) {
-            val a = <info>y</info>
-            val b <info>by</info> Delegate(<info>d</info>)
+    <symbolName descr="null" textAttributesKey="KOTLIN_KEYWORD">init</symbolName> {
+        class <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">C</symbolName>(<warning descr="[UNUSED_PARAMETER] Parameter 'a' is never used" textAttributesKey="NOT_USED_ELEMENT_ATTRIBUTES"><symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName></warning>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName> = <symbolName descr="Value captured in a closure" textAttributesKey="KOTLIN_WRAPPED_INTO_REF">x</symbolName>): <symbolName descr="null" textAttributesKey="KOTLIN_TRAIT">T</symbolName> <symbolName descr="null" textAttributesKey="KOTLIN_KEYWORD">by</symbolName> <symbolName descr="null" textAttributesKey="KOTLIN_CONSTRUCTOR">T1</symbolName>(<symbolName descr="Value captured in a closure" textAttributesKey="KOTLIN_WRAPPED_INTO_REF">t</symbolName>) {
+            val <symbolName descr="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY">a</symbolName> = <symbolName descr="Value captured in a closure" textAttributesKey="KOTLIN_WRAPPED_INTO_REF">y</symbolName>
+            val <symbolName descr="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION"><symbolName descr="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION">b</symbolName></symbolName> <symbolName descr="null" textAttributesKey="KOTLIN_KEYWORD">by</symbolName> <symbolName descr="null" textAttributesKey="KOTLIN_CONSTRUCTOR">Delegate</symbolName>(<symbolName descr="Value captured in a closure" textAttributesKey="KOTLIN_WRAPPED_INTO_REF">d</symbolName>)
         }
     }
 }
 
-class B2(x: Int, y: Int) {
+class <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">B2</symbolName>(<symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">x</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>, <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">y</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>) {
 
-    val x1 =  { <info>x</info> }()
-    <info>init</info> {
+    val <symbolName descr="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY">x1</symbolName> =  { <symbolName descr="Value captured in a closure" textAttributesKey="KOTLIN_WRAPPED_INTO_REF">x</symbolName> }()
+    <symbolName descr="null" textAttributesKey="KOTLIN_KEYWORD">init</symbolName> {
         {
-            <info>y</info>
+            <symbolName descr="Value captured in a closure" textAttributesKey="KOTLIN_WRAPPED_INTO_REF">y</symbolName>
         }()
     }
 }

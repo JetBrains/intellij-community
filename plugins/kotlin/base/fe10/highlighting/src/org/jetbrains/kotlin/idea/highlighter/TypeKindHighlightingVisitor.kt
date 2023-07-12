@@ -2,18 +2,17 @@
 
 package org.jetbrains.kotlin.idea.highlighter
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
-import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.highlighting.isNameHighlightingEnabled
-import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.FakeCallableDescriptorForObject
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.util.unwrapIfTypeAlias
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -35,11 +34,12 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
         if (!expression.project.isNameHighlightingEnabled) return
 
         val referenceTarget = computeReferencedDescriptor(expression) ?: return
+        val textRange = computeHighlightingRangeForUsage(expression, referenceTarget)
         val key = attributeKeyForObjectAccess(expression) ?: calculateDeclarationReferenceAttributes(referenceTarget) ?: return
-        highlightName(expression.project, computeHighlightingRangeForUsage(expression, referenceTarget), key)
+        highlightName(expression.project, textRange, key)
     }
 
-    private fun attributeKeyForObjectAccess(expression: KtSimpleNameExpression): TextAttributesKey? {
+    private fun attributeKeyForObjectAccess(expression: KtSimpleNameExpression): HighlightInfoType? {
         val resolvedCall = expression.getResolvedCall(bindingContext)
         return if (resolvedCall?.resultingDescriptor is FakeCallableDescriptorForObject)
             attributeKeyForCallFromExtensions(expression, resolvedCall)
@@ -63,17 +63,15 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
 
 
     private fun computeHighlightingRangeForUsage(expression: KtSimpleNameExpression, referenceTarget: DeclarationDescriptor): TextRange {
-        val expressionRange = expression.textRange
-
         val target = referenceTarget.unwrapIfTypeAlias() as? ClassDescriptor
-        if (target?.kind != ClassKind.ANNOTATION_CLASS) return expressionRange
+        if (target?.kind != ClassKind.ANNOTATION_CLASS) return expression.textRange
 
         // include '@' symbol if the reference is the first segment of KtAnnotationEntry
         // if "Deprecated" is highlighted then '@' should be highlighted too in "@Deprecated"
         val annotationEntry = PsiTreeUtil.getParentOfType(
             expression, KtAnnotationEntry::class.java, /* strict = */false, KtValueArgumentList::class.java
         )
-        val atSymbol = annotationEntry?.atSymbol ?: return expressionRange
+        val atSymbol = annotationEntry?.atSymbol ?: return expression.textRange
         return TextRange(atSymbol.textRange.startOffset, expression.textRange.endOffset)
     }
 
@@ -108,29 +106,29 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
 
     override fun visitIntersectionType(type: KtIntersectionType) {
         // Currently, the only kind of intersection types is definitely non-nullable type, so highlight it without further analysis
-        type.parent?.safeAs<KtTypeReference>()?.run { highlightName(this, TYPE_PARAMETER) }
+        type.parent?.safeAs<KtTypeReference>()?.run { highlightName(this, KotlinNameHighlightInfoTypes.TYPE_PARAMETER) }
         super.visitIntersectionType(type)
     }
 
-    private fun calculateClassReferenceAttributes(target: ClassDescriptor): TextAttributesKey {
+    private fun calculateClassReferenceAttributes(target: ClassDescriptor): HighlightInfoType {
         return when (target.kind) {
-            ClassKind.ANNOTATION_CLASS -> ANNOTATION
-            ClassKind.INTERFACE -> TRAIT
-            ClassKind.OBJECT -> OBJECT
-            ClassKind.ENUM_CLASS -> ENUM
-            ClassKind.ENUM_ENTRY -> ENUM_ENTRY
-            else -> if (target.modality === Modality.ABSTRACT) ABSTRACT_CLASS else CLASS
+            ClassKind.ANNOTATION_CLASS -> KotlinNameHighlightInfoTypes.ANNOTATION
+            ClassKind.INTERFACE -> KotlinNameHighlightInfoTypes.TRAIT
+            ClassKind.OBJECT -> KotlinNameHighlightInfoTypes.OBJECT
+            ClassKind.ENUM_CLASS -> KotlinNameHighlightInfoTypes.ENUM
+            ClassKind.ENUM_ENTRY -> KotlinNameHighlightInfoTypes.ENUM_ENTRY
+            else -> if (target.modality === Modality.ABSTRACT) KotlinNameHighlightInfoTypes.ABSTRACT_CLASS else KotlinNameHighlightInfoTypes.CLASS
         }
     }
 
-    private fun calculateTypeAliasReferenceAttributes(target: TypeAliasDescriptor): TextAttributesKey {
+    private fun calculateTypeAliasReferenceAttributes(target: TypeAliasDescriptor): HighlightInfoType {
         val aliasedTarget = target.expandedType.constructor.declarationDescriptor
-        return if (aliasedTarget is ClassDescriptor && aliasedTarget.kind == ClassKind.ANNOTATION_CLASS) ANNOTATION else TYPE_ALIAS
+        return if (aliasedTarget is ClassDescriptor && aliasedTarget.kind == ClassKind.ANNOTATION_CLASS) KotlinNameHighlightInfoTypes.ANNOTATION else KotlinNameHighlightInfoTypes.TYPE_ALIAS
     }
 
-    private fun calculateDeclarationReferenceAttributes(target: DeclarationDescriptor): TextAttributesKey? {
+    private fun calculateDeclarationReferenceAttributes(target: DeclarationDescriptor): HighlightInfoType? {
         return when (target) {
-            is TypeParameterDescriptor -> TYPE_PARAMETER
+            is TypeParameterDescriptor -> KotlinNameHighlightInfoTypes.TYPE_PARAMETER
             is TypeAliasDescriptor -> calculateTypeAliasReferenceAttributes(target)
             is ClassDescriptor -> calculateClassReferenceAttributes(target)
             else -> null

@@ -1,3 +1,5 @@
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
 @DslMarker
 @Target(AnnotationTarget.TYPE)
 annotation class Dsl3

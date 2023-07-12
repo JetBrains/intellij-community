@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,6 +26,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -622,11 +624,11 @@ public class ExpectedHighlightingData {
       .filter(p -> p.first != null)
       .collect(Collectors.toList());
     boolean showAttributesKeys =
-      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(i -> i.forcedTextAttributesKey != null);
+      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(info -> info.forcedTextAttributesKey != null || info.type != HighlightInfoType.INFORMATION);
 
     String anyWrappedInHtml = XmlStringUtil.wrapInHtml(ANY_TEXT);
     boolean showTooltips =
-      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(i -> !anyWrappedInHtml.equals(i.getToolTip()));
+      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(info -> !anyWrappedInHtml.equals(info.getToolTip()));
 
     // sort filtered highlighting data by end offset in descending order
     list.sort((o1, o2) -> {
@@ -713,7 +715,7 @@ public class ExpectedHighlightingData {
         }
       }
       if (showAttributesKeys) {
-        str.append(" textAttributesKey=\"").append(info.forcedTextAttributesKey).append('"');
+        str.append(" textAttributesKey=\"").append(ObjectUtils.notNull(info.forcedTextAttributesKey, info.type.getAttributesKey()).getExternalName()).append('"');
       }
       str.append('>');
       sb.insert(0, str);
@@ -778,8 +780,8 @@ public class ExpectedHighlightingData {
   private static boolean matchTooltips(boolean strictMatch, String t1, String t2) {
     if (Comparing.strEqual(t1, t2)) return true;
     if (strictMatch) return false;
-    t1 = t1 != null ? XmlStringUtil.stripHtml(t1) : null;
-    t2 = t2 != null ? XmlStringUtil.stripHtml(t2) : null;
+    t1 = t1 != null ? Strings.unescapeXmlEntities(XmlStringUtil.stripHtml(t1)) : null;
+    t2 = t2 != null ? Strings.unescapeXmlEntities(XmlStringUtil.stripHtml(t2)) : null;
     return matchDescriptions(false, t1, t2);
   }
 

@@ -1,13 +1,15 @@
 // FIR_IDENTICAL
-interface <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>TheInterface<!> {
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
+interface <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TRAIT'")!>TheInterface<!> {
 }
 
-class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>TheClass<!> : <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>TheInterface<!> {
+class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>TheClass<!> : <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TRAIT'")!>TheInterface<!> {
 }
 
-<!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>annotation<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>magnificent<!>
-<!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>annotation<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>Deprecated<!>
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>annotation<!> class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>magnificent<!>
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>annotation<!> class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>Deprecated<!>
 
-<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Deprecated<!>
-<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@magnificent<!> <!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>abstract<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_ABSTRACT_CLASS'")!>AbstractClass<!><<!HIGHLIGHTING("textAttributesKey='KOTLIN_TYPE_PARAMETER'")!>T<!>> {
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>@Deprecated<!>
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>@magnificent<!> <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>abstract<!> class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ABSTRACT_CLASS'")!>AbstractClass<!><<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TYPE_PARAMETER'")!>T<!>> {
 }

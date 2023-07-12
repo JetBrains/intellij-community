@@ -1,34 +1,34 @@
 // EXPECTED_DUPLICATED_HIGHLIGHTING
 
-var <info textAttributesKey="KOTLIN_MUTABLE_VARIABLE"><info textAttributesKey="KOTLIN_PACKAGE_PROPERTY">x</info></info> = 5
+var <symbolName textAttributesKey="KOTLIN_MUTABLE_VARIABLE"><symbolName textAttributesKey="KOTLIN_PACKAGE_PROPERTY">x</symbolName></symbolName> = 5
 
-val <info textAttributesKey="KOTLIN_CLASS">Int</info>.<info textAttributesKey="KOTLIN_EXTENSION_PROPERTY">sq</info> : <info textAttributesKey="KOTLIN_CLASS">Int</info>
-<info textAttributesKey="KOTLIN_KEYWORD">get</info>() {
+val <symbolName textAttributesKey="KOTLIN_CLASS">Int</symbolName>.<symbolName textAttributesKey="KOTLIN_EXTENSION_PROPERTY">sq</symbolName> : <symbolName textAttributesKey="KOTLIN_CLASS">Int</symbolName>
+<symbolName textAttributesKey="KOTLIN_KEYWORD">get</symbolName>() {
   return this * this
 }
 
-val <info textAttributesKey="KOTLIN_PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION">y</info> : <info textAttributesKey="KOTLIN_CLASS">Int</info> = 1
-<info textAttributesKey="KOTLIN_KEYWORD">get</info>() {
-  return 5.<info textAttributesKey="KOTLIN_EXTENSION_PROPERTY">sq</info> + <info textAttributesKey="KOTLIN_BACKING_FIELD_VARIABLE">field</info> + <info textAttributesKey="KOTLIN_PACKAGE_PROPERTY"><info textAttributesKey="KOTLIN_MUTABLE_VARIABLE">x</info></info>
+val <symbolName textAttributesKey="KOTLIN_PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION">y</symbolName> : <symbolName textAttributesKey="KOTLIN_CLASS">Int</symbolName> = 1
+<symbolName textAttributesKey="KOTLIN_KEYWORD">get</symbolName>() {
+  return 5.<symbolName textAttributesKey="KOTLIN_EXTENSION_PROPERTY">sq</symbolName> + <symbolName textAttributesKey="KOTLIN_BACKING_FIELD_VARIABLE">field</symbolName> + <symbolName textAttributesKey="KOTLIN_PACKAGE_PROPERTY"><symbolName textAttributesKey="KOTLIN_MUTABLE_VARIABLE">x</symbolName></symbolName>
 }
 
-class <info textAttributesKey="KOTLIN_CLASS">Foo</info>(
-    val <info textAttributesKey="KOTLIN_INSTANCE_PROPERTY">a</info> : <info textAttributesKey="KOTLIN_CLASS">Int</info>,
-    <info textAttributesKey="KOTLIN_PARAMETER">b</info> : <info textAttributesKey="KOTLIN_CLASS">String</info>,
-    var <info textAttributesKey="KOTLIN_MUTABLE_VARIABLE"><info textAttributesKey="KOTLIN_INSTANCE_PROPERTY">c</info></info> : <info textAttributesKey="KOTLIN_CLASS">String</info>
+class <symbolName textAttributesKey="KOTLIN_CLASS">Foo</symbolName>(
+    val <symbolName textAttributesKey="KOTLIN_INSTANCE_PROPERTY">a</symbolName> : <symbolName textAttributesKey="KOTLIN_CLASS">Int</symbolName>,
+    <symbolName textAttributesKey="KOTLIN_PARAMETER">b</symbolName> : <symbolName textAttributesKey="KOTLIN_CLASS">String</symbolName>,
+    var <symbolName textAttributesKey="KOTLIN_MUTABLE_VARIABLE"><symbolName textAttributesKey="KOTLIN_INSTANCE_PROPERTY">c</symbolName></symbolName> : <symbolName textAttributesKey="KOTLIN_CLASS">String</symbolName>
 ) {
-  <info textAttributesKey="KOTLIN_KEYWORD">init</info> {
-    <info textAttributesKey="KOTLIN_PARAMETER">b</info>
+  <symbolName textAttributesKey="KOTLIN_KEYWORD">init</symbolName> {
+    <symbolName textAttributesKey="KOTLIN_PARAMETER">b</symbolName>
   }
 
-  fun <info textAttributesKey="KOTLIN_FUNCTION_DECLARATION">f</info>(<info textAttributesKey="KOTLIN_PARAMETER">p</info> : <info textAttributesKey="KOTLIN_CLASS">Int</info> = <info textAttributesKey="KOTLIN_INSTANCE_PROPERTY">a</info>) {}
+  fun <symbolName textAttributesKey="KOTLIN_FUNCTION_DECLARATION">f</symbolName>(<symbolName textAttributesKey="KOTLIN_PARAMETER">p</symbolName> : <symbolName textAttributesKey="KOTLIN_CLASS">Int</symbolName> = <symbolName textAttributesKey="KOTLIN_INSTANCE_PROPERTY">a</symbolName>) {}
 
-  var <info textAttributesKey="KOTLIN_MUTABLE_VARIABLE"><info textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION">v</info></info> : <info textAttributesKey="KOTLIN_CLASS">Int</info>
-  <info textAttributesKey="KOTLIN_KEYWORD">get</info>() {
+  var <symbolName textAttributesKey="KOTLIN_MUTABLE_VARIABLE"><symbolName textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION">v</symbolName></symbolName> : <symbolName textAttributesKey="KOTLIN_CLASS">Int</symbolName>
+  <symbolName textAttributesKey="KOTLIN_KEYWORD">get</symbolName>() {
     return 1;
   }
-  <info textAttributesKey="KOTLIN_KEYWORD">set</info>(<info textAttributesKey="KOTLIN_PARAMETER">value</info>) {
-    <info textAttributesKey="KOTLIN_PARAMETER">value</info>
+  <symbolName textAttributesKey="KOTLIN_KEYWORD">set</symbolName>(<symbolName textAttributesKey="KOTLIN_PARAMETER">value</symbolName>) {
+    <symbolName textAttributesKey="KOTLIN_PARAMETER">value</symbolName>
   }
 }
 

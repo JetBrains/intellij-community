@@ -99,6 +99,7 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
             withCustomCompilerOptions(fileText, project, module) {
                 (myFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(false)
                 val data = ExpectedHighlightingData(DocumentImpl(fileText), true, true, true)
+                data.checkSymbolNames()
                 data.init()
                 (myFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(data)
             }
