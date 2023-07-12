@@ -830,6 +830,7 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
         val event = divider.getTargetEvent(e)
         divider.processMouseMotionEvent(event)
         if (event.isConsumed) {
+          e.consume()
           break
         }
       }
@@ -840,6 +841,7 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
         val event = divider.getTargetEvent(e)
         divider.processMouseEvent(event)
         if (event.isConsumed) {
+          e.consume()
           break
         }
       }
