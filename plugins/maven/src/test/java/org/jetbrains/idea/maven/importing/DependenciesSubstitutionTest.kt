@@ -2,8 +2,6 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.maven.testFramework.utils.importMavenProjects
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.project.MavenProjectResolver
@@ -54,26 +52,11 @@ open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
   }
 
   protected fun importNewProjectLegacyWay(file: VirtualFile) {
-
     val files = listOf(file)
 
     myProjectsManager.initForTests()
     myProjectResolver = MavenProjectResolver.getInstance(myProject)
 
     myProjectsManager.addManagedFiles(files)
-
-    ApplicationManager.getApplication().invokeAndWait {
-      try {
-        myProjectsManager.waitForReadingCompletion()
-      }
-      catch (e: Exception) {
-        throw RuntimeException(e)
-      }
-    }
-
-    ApplicationManager.getApplication().invokeAndWait {
-      myProjectsManager.waitForReadingCompletion()
-    }
-    importMavenProjects(myProjectsManager, files)
   }
 }

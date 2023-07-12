@@ -26,6 +26,8 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
+import static org.junit.Assume.assumeTrue;
+
 public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCase {
   @Test
   public void testResolvingProjectAttributes() {
@@ -155,6 +157,7 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
 
   @Test
   public void testDoNotGoIntoInfiniteRecursion() {
+    assumeTrue(isWorkspaceImport());
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

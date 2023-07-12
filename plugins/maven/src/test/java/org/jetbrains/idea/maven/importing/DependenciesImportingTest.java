@@ -139,7 +139,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                            <scope>system</scope>
                          </dependency>
                        </dependencies>""");
-    importProjectWithErrors();
+    doImportProjects(List.of(myProjectPom), false);
 
     assertModules("project");
     assertModuleLibDeps("project"); // dependency was not added due to reported pom model problem.
@@ -234,7 +234,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        </dependencies>
                        """);
 
-    importProjectWithErrors();
+    doImportProjects(List.of(myProjectPom), false);
     assertModuleLibDeps("project", "Maven: group:lib:1");
   }
 
@@ -1015,7 +1015,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                            <systemPath>${java.home}/lib/tools.jar</systemPath>
                          </dependency>
                        </dependencies>""");
-    importProjectWithErrors();
+    doImportProjects(List.of(myProjectPom), false);
 
     assertModules("project");
     assertModuleLibDep("project",
@@ -1041,7 +1041,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                      "    <systemPath>${env." + getEnvVar() + "}/lib/tools.jar</systemPath>\n" +
                      "  </dependency>\n" +
                      "</dependencies>\n");
-    importProjectWithErrors();
+    doImportProjects(List.of(myProjectPom), false);
 
     assertModules("project");
     assertModuleLibDep("project",
@@ -1299,7 +1299,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
         </dependency>
       </dependencies>""");
 
-    importProjectWithErrors();
+    doImportProjects(List.of(myProjectPom), false);
 
     assertModules("project", mn("project", "m"));
     assertModuleLibDeps(mn("project", "m"));
@@ -1395,7 +1395,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                            </plugin>
                          </plugins>
                        </build>""");
-    importProjectWithErrors();
+    doImportProjects(List.of(myProjectPom), false);
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0");
   }
@@ -1613,7 +1613,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                          <module>m1</module>
                          <module>m2</module>
                        </modules>""");
-    importProjectWithErrors();
+    doImportProjects(List.of(myProjectPom), false);
 
     //    assertProjectLibraries("Maven: xxx:yyy:1");
     assertModuleLibDep("m1", "Maven: xxx:yyy:1", "jar://" + getRoot() + "/m1/foo.jar!/");
@@ -1729,7 +1729,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                      "    <systemPath>\n" + getRoot() + "/foo/bar.jar</systemPath>\n" +
                      "  </dependency>\n" +
                      "</dependencies>\n");
-    importProjectWithErrors();
+    doImportProjects(List.of(myProjectPom), false);
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://" + getRoot() + "/foo/bar.jar!/"),
@@ -1764,7 +1764,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                      "    <systemPath>\n" + getProjectPath() + "/foo/bar.jar</systemPath>\n" +
                      "  </dependency>\n" +
                      "</dependencies>\n");
-    importProjectWithErrors();
+    doImportProjects(List.of(myProjectPom), false);
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://" + getProjectPath() + "/foo/bar.jar!/"),
@@ -1785,7 +1785,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                      "  </dependency>\n" +
                      "</dependencies>\n");
 
-    importProjectWithErrors();
+    doImportProjects(List.of(myProjectPom), false);
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://" + getProjectPath() + "/foo/xxx.jar!/"),
@@ -2405,7 +2405,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                            <version>4.0</version>
                          </dependency>
                        </dependencies>""");
-    importProjectWithErrors();
+    doImportProjects(List.of(myProjectPom), false);
 
     WriteAction.runAndWait(() -> {
       ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();

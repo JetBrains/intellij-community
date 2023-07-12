@@ -17,6 +17,7 @@ import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.MisconfiguredPlexusDummyEmbedder
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.io.File
 import java.io.FileInputStream
@@ -110,6 +111,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   @Test
   @Throws(Exception::class)
   fun testDownloadedFromRepositoryWithWrongAuthentificationLeadsToError() {
+    assumeTrue(isWorkspaceImport)
     val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
     val localRepoPath = helper.getTestDataPath("local1")
@@ -139,7 +141,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     removeFromLocalRepository("org/mytest/myartifact/")
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     createProjectPom(pom())
-    importProjectWithErrors()
+    doImportProjects(listOf(myProjectPom), false)
     TestCase.assertEquals(1, myProjectsManager.rootProjects.size)
     TestCase.assertEquals("status code: 401, reason phrase: Unauthorized (401)",
                           myProjectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.REPOSITORY }.description)

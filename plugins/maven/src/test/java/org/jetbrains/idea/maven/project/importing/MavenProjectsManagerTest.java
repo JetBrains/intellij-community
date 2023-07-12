@@ -1068,7 +1068,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void testIgnoringProjectsForRemovedInUiModules() throws ConfigurationException {
-    configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
 
     createProjectPom("""
                        <groupId>test</groupId>

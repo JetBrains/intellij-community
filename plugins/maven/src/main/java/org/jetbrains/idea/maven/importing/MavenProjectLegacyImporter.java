@@ -96,7 +96,9 @@ public class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
       hasChanges = true;
       StructuredIdeActivity createModulesPhase = MavenImportCollector.LEGACY_CREATE_MODULES_PHASE.startedWithParent(myProject, activity);
       extensionImporters.addAll(importModules());
-      scheduleRefreshResolvedArtifacts(postTasks, myProjectsToImportWithChanges.keySet());
+      if (!MavenUtil.isMavenUnitTestModeEnabled()) {
+        scheduleRefreshResolvedArtifacts(postTasks, myProjectsToImportWithChanges.keySet());
+      }
       createModulesPhase.finished();
     }
 

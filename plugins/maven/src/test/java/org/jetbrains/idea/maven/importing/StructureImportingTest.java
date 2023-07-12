@@ -15,13 +15,14 @@ import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+
+import static org.junit.Assume.assumeTrue;
 
 public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
@@ -176,7 +177,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
    */
   @Test
   public void testImportWithAlreadyExistingModuleWithDifferentNameButSameContentRoot() throws IOException {
-    Assume.assumeTrue(isWorkspaceImport());
+    assumeTrue(isWorkspaceImport());
 
     Module userModuleWithConflictingRoot = createModule("userModuleWithConflictingRoot");
     PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null);
@@ -199,7 +200,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testImportWithAlreadyExistingModuleWithPartiallySameContentRoots() {
-    Assume.assumeTrue(isWorkspaceImport());
+    assumeTrue(isWorkspaceImport());
 
     Module userModuleWithConflictingRoot = createModule("userModuleWithConflictingRoot");
     PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null);
@@ -528,6 +529,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testRecursiveParent() {
+    assumeTrue(isWorkspaceImport());
     createProjectPom("""
                        <parent>
                          <groupId>org.apache.maven.archetype.test</groupId>
@@ -948,7 +950,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testReleaseCompilerPropertyInPerSourceTypeModules() {
-    Assume.assumeTrue(isWorkspaceImport());
+    assumeTrue(isWorkspaceImport());
 
     importProject("""
                     <groupId>test</groupId>

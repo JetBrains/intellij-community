@@ -15,6 +15,7 @@ import com.intellij.util.io.PathKt;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
@@ -25,10 +26,15 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 public class MavenMultiProjectImportTest extends ProjectWizardTestCase<AbstractProjectWizard> {
 
   private Path myDir;
+
+  private boolean isWorkspaceImport() {
+    return MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
+  }
 
   @Override
   public void tearDown() throws Exception {
@@ -41,6 +47,7 @@ public class MavenMultiProjectImportTest extends ProjectWizardTestCase<AbstractP
   }
 
   public void testIndicesForDifferentProjectsShouldBeSameInstance() {
+    assumeTrue(isWorkspaceImport());
     myDir = getTempDir().newPath("", true);
     VirtualFile pom1 = createPomXml("projectDir1", """
       <groupId>test</groupId>

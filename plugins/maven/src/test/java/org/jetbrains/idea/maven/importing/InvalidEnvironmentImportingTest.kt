@@ -8,14 +8,12 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerCMDState
 import org.jetbrains.idea.maven.server.MavenServerManager
-import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
 
 class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
@@ -112,6 +110,6 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>test</artifactId>" +
                      "<version>1.0</version>")
-    importProjectWithErrors()
+    doImportProjects(listOf(myProjectPom), false)
   }
 }

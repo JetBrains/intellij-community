@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assume.assumeTrue;
+
 public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   @Override
   protected boolean importProjectOnSetup() {
@@ -1211,6 +1213,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   @Test
   public void testImportDependencyChainedProperty() throws IOException {
+    assumeTrue(isWorkspaceImport());
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

@@ -131,7 +131,7 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
                          </extensions>
                        </build>
                        """);
-    importProjectWithErrors();
+    doImportProjects(List.of(myProjectPom), false);
 
     List<MavenProject> projects = getProjectsTree().getProjects();
     assertEquals(1, projects.size());

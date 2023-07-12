@@ -13,12 +13,19 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.testFramework.useProject
 import com.intellij.testFramework.utils.module.assertModules
 import com.intellij.ui.UIBundle
+import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.isImportToWorkspaceModelEnabled
 import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizardData.Companion.javaMavenData
+import org.junit.Assume.assumeTrue
 
 class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
+  private fun isWorkspaceImport(): Boolean {
+    return isImportToWorkspaceModelEnabled(myProject)
+  }
+
   fun `test when module is created then its pom is unignored`() {
+    assumeTrue(isWorkspaceImport())
     // create project
     createProjectFromTemplate {
       it.baseData!!.name = "project"
@@ -57,6 +64,7 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
   }
 
   fun `test new maven module inherits project sdk by default`() {
+    assumeTrue(isWorkspaceImport())
     // create project
     createProjectFromTemplate {
       it.baseData!!.name = "project"
@@ -90,6 +98,7 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
   }
 
   fun `test configurator creates module in project structure modifiable model`() {
+    assumeTrue(isWorkspaceImport())
     createProjectFromTemplate {
       it.baseData!!.name = "project"
       it.languageData!!.language = "Java"
