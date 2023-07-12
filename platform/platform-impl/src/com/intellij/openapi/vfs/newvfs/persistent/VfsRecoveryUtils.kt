@@ -484,6 +484,7 @@ object VfsRecoveryUtils {
     superRootValidChildren.forEach {
       fileStates.setState(it, RecoveryState.CONNECTED)
     }
+    var duplicateChildrenLogged = 0
     while (recoveryQueueIds.isNotEmpty()) {
       val fileId = recoveryQueueIds.pop()
       val validChildren: List<Int> = childrenOf(fileId)
@@ -511,8 +512,13 @@ object VfsRecoveryUtils {
                 if (childrenByAttr == null) null
                 else {
                   val intersection = childrenIds.intersect(childrenByAttr.toSet())
-                  LOG.warn("duplicate children: fileId=$fileId, nameId=$nameId, children=$childrenIds, " +
-                           "childrenByAttr=$childrenByAttr, intersection=${intersection.toList()}")
+                  duplicateChildrenLogged++
+                  if (duplicateChildrenLogged <= 10) {
+                    LOG.warn("duplicate children: fileId=$fileId, nameId=$nameId, children=$childrenIds, " +
+                             "childrenByAttr=$childrenByAttr, intersection=${intersection.toList()}")
+                  } else if (duplicateChildrenLogged == 11) {
+                    LOG.warn("there are more duplicate children")
+                  }
                   if (intersection.size == 1) intersection.first()
                   else null // empty || size > 1
                 }
