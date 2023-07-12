@@ -439,8 +439,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       editorOffset = -1;
     }
     AsyncPromise<TreePath> result = myCurrentFocusPromise = new AsyncPromise<>();
-    int[] stage = {1, 0, 0}; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
-    TreePath[] deepestPath = {null};
+    var state = new StructureViewSelectVisitorState();
     TreeVisitor visitor = new TreeVisitor() {
       @Override
       public @NotNull TreeVisitor.VisitThread visitThread() {
@@ -453,7 +452,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
           result.setError("rejected");
           return TreeVisitor.Action.INTERRUPT;
         }
-        return visitPathForElementSelection(path, element, editorOffset, stage, deepestPath);
+        return visitPathForElementSelection(path, element, editorOffset, state);
       }
     };
     Function<TreePath, Promise<TreePath>> action = path -> {
@@ -477,14 +476,14 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
           result.setError("rejected");
           return Promises.rejectedPromise();
         }
-        else if (path == null && stage[0] == 2) {
+        else if (path == null && state.isOptimizationUsed()) {
           // Some structure views merge unrelated psi elements into a structure node (MarkdownStructureViewModel).
           // So turn off the isAncestor() optimization and retry once.
-          stage[0] = 3;
+          state.disableOptimization();
           return myAsyncTreeModel.accept(visitor).thenAsync(this);
         }
         else {
-          TreePath adjusted = path == null ? deepestPath[0] : path;
+          TreePath adjusted = path == null ? state.getDeepestMatch() : path;
           return adjusted == null ? Promises.rejectedPromise() : action.fun(adjusted);
         }
       }
@@ -521,8 +520,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     @NotNull TreePath path,
     Object element,
     int editorOffset,
-    int[] stage,
-    TreePath[] deepestPath
+    @NotNull StructureViewSelectVisitorState state
   ) {
     Object last = path.getLastPathComponent();
     Object userObject = unwrapNavigatable(last);
@@ -537,15 +535,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     boolean isAncestor = isGoodMatch ||
       value instanceof PsiElement valPsi && element instanceof PsiElement elPsi && PsiTreeUtil.isAncestor(valPsi, elPsi, true);
     if (isAncestor) {
-      int count = path.getPathCount();
-      if (stage[1] == 0 || stage[1] < count) {
-        stage[1] = count;
-        stage[2] = isGoodMatch ? 1 : 0;
-        deepestPath[0] = path;
-      }
+      state.updateIfBetterMatch(path, isGoodMatch);
     }
-    else if (stage[0] != 3) {
-      stage[0] = 2;
+    else if (state.canUseOptimization()) {
+      state.usedOptimization();
       return TreeVisitor.Action.SKIP_CHILDREN;
     }
     return TreeVisitor.Action.CONTINUE;

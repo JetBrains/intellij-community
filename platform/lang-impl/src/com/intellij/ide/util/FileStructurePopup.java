@@ -12,10 +12,7 @@ import com.intellij.ide.structureView.SearchableTextProvider;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
-import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.ide.structureView.newStructureView.TreeActionWrapper;
-import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
-import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
+import com.intellij.ide.structureView.newStructureView.*;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -378,9 +375,8 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     else {
       editorOffset = -1;
     }
-    int[] stage = {1, 0, 0}; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
-    TreePath[] deepestPath = {null};
-    TreeVisitor visitor = path -> StructureViewComponent.visitPathForElementSelection(path, element, editorOffset, stage, deepestPath);
+    var state = new StructureViewSelectVisitorState();
+    TreeVisitor visitor = path -> StructureViewComponent.visitPathForElementSelection(path, element, editorOffset, state);
     Function<TreePath, Promise<TreePath>> action = path -> {
       myTree.expandPath(path);
       TreeUtil.selectPath(myTree, path);
@@ -390,15 +386,15 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     Function<TreePath, Promise<TreePath>> fallback = new Function<>() {
       @Override
       public Promise<TreePath> fun(TreePath path) {
-        if (path == null && stage[0] == 2) {
+        if (path == null && state.isOptimizationUsed()) {
           // Some structure views merge unrelated psi elements into a structure node (MarkdownStructureViewModel).
           // So turn off the isAncestor() optimization and retry once.
-          stage[0] = 3;
+          state.disableOptimization();
           return myAsyncTreeModel.accept(visitor).thenAsync(this);
         }
         else {
-          TreePath adjusted = path == null ? deepestPath[0] : path;
-          if (path == null && adjusted != null && stage[2] == 0 && element instanceof PsiElement) {
+          TreePath adjusted = path == null ? state.getDeepestMatch() : path;
+          if (path == null && adjusted != null && !state.isExactMatch() && element instanceof PsiElement) {
             Object minChild = findClosestPsiElement((PsiElement)element, adjusted, myAsyncTreeModel);
             if (minChild != null) adjusted = adjusted.pathByAddingChild(minChild);
           }
