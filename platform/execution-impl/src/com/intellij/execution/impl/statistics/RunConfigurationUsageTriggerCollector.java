@@ -102,7 +102,8 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
       if (effectiveTargetConfiguration != null) {
         return effectiveTargetConfiguration.getTypeId();
       }
-    } else if (runConfiguration instanceof ImplicitTargetAwareRunProfile) {
+    }
+    else if (runConfiguration instanceof ImplicitTargetAwareRunProfile) {
       TargetEnvironmentType<?> targetType = ((ImplicitTargetAwareRunProfile)runConfiguration).getTargetType();
       if (targetType != null) {
         return targetType.getId();
@@ -163,5 +164,5 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     }
   }
 
-  public enum RunConfigurationFinishType {FAILED_TO_START, UNKNOWN, TERMINATED}
+  public enum RunConfigurationFinishType {FAILED_TO_START, UNKNOWN, TERMINATED_BY_STOP, TERMINATED_DUE_TO_RERUN}
 }
