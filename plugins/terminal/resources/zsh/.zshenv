@@ -52,9 +52,7 @@ if [[ -o 'aliases' ]]; then
   _jedi_restore_aliases=1
 fi
 
-# This function will be called after all rc files are processed
-# and before the first prompt is displayed.
-function _jedi_precmd_hook() {
+function _jedi_update_environment() {
   builtin setopt local_options unset # to treat unset JEDITERM_SOURCE as empty
   if [[ -n "$JEDITERM_SOURCE" ]]; then
     # TODO: Is it correct to split JEDITERM_SOURCE_ARGS on IFS and
@@ -80,10 +78,17 @@ function _jedi_precmd_hook() {
     builtin export $name=${(P)var}${(P)name}
     builtin unset $var
   done
+}
 
-  # Remove the hook and the function.
+# This function will be called after all rc files are processed
+# and before the first prompt is displayed.
+function _jedi_precmd_hook() {
+  _jedi_update_environment()
+
+  # Remove the hook and the functions.
   builtin typeset -ga precmd_functions
   precmd_functions=(${precmd_functions:#_jedi_precmd_hook})
+  builtin unset -f _jedi_update_environment
   builtin unset -f _jedi_precmd_hook
 
   [ -n "$INTELLIJ_TERMINAL_COMMAND_BLOCKS" ] && [ -r "$_INTELLIJ_ZDOTDIR/hooks.zsh" ] && source "$_INTELLIJ_ZDOTDIR/hooks.zsh"
@@ -92,11 +97,6 @@ function _jedi_precmd_hook() {
 
 builtin typeset -ga precmd_functions
 precmd_functions+=(_jedi_precmd_hook)
-
-if [[ -n "$INTELLIJ_TERMINAL_COMMAND_BLOCKS" ]]; then
-  # always show new prompt after completion list
-  builtin unsetopt ALWAYS_LAST_PROMPT
-fi
 
 (( _jedi_restore_aliases )) && builtin setopt aliases
 'builtin' 'unset' '_jedi_restore_aliases'
