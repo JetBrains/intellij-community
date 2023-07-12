@@ -133,7 +133,8 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
 
     private fun isPsiElementClass(cls: PsiClass?): Boolean {
       if (cls == null) return false
-      return getDimIfPsiElementType(PsiType.getTypeByName(cls.qualifiedName!!, cls.project, cls.resolveScope)) != NOT_PSI_ELEMENT
+      val qualifiedName = cls.qualifiedName ?: return false
+      return getDimIfPsiElementType(PsiType.getTypeByName(qualifiedName, cls.project, cls.resolveScope)) != NOT_PSI_ELEMENT
     }
 
     private fun getDimIfUElementType(type: PsiType?): Int {
@@ -142,7 +143,9 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
     }
   }
 
-  private fun psiClassType(fqn: String, searchScope: GlobalSearchScope): PsiClassType? =
-    PsiType.getTypeByName(fqn, searchScope.project!!, searchScope).takeIf { it.resolve() != null }
+  private fun psiClassType(fqn: String, searchScope: GlobalSearchScope): PsiClassType? {
+    val project = searchScope.project ?: return null
+    return PsiType.getTypeByName(fqn, project, searchScope).takeIf { it.resolve() != null }
+  }
 
 }
