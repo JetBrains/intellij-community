@@ -78,8 +78,8 @@ enum class MainToolbarCustomizationType {
 private const val TOOLBAR_BACKGROUND_KEY = "PROJECT_TOOLBAR_COLOR"
 private const val LAST_CALCULATED_COLOR_INDEX_KEY = "LAST_CALCULATED_COLOR_INDEX_KEY"
 
-private data class ProjectColors(@JvmField val gradient: Color,
-                                 @JvmField val background: Color,
+private data class ProjectColors(val gradient: Color,
+                                 val background: Color,
                                  val iconColorStart: Color,
                                  val iconColorEnd: Color,
                                  val index: Int? = null)
