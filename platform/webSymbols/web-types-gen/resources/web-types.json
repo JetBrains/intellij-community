@@ -460,7 +460,7 @@
       "oneOf": [
         {
           "type": "string",
-          "description": "Provide one of special attribute value types:  \"enum\", \"of-match\", or a simple JavaScript type according to the specified type format."
+          "description": "Provide one of special attribute value types:  \"enum\", \"symbol\", \"of-match\", or a simple JavaScript type according to the specified type format."
         },
         {
           "$ref": "#/definitions/type-reference"

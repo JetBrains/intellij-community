@@ -17,12 +17,9 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.MultiMap
-import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbolApiStatus.Companion.getMessage
 import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
-import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.inspections.WebSymbolsInspectionsPass.Companion.getDefaultProblemMessage
 import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.query.WebSymbolMatch
