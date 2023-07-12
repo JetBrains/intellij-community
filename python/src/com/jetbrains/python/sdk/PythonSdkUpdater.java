@@ -170,9 +170,10 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
       catch (InvalidSdkException | ExecutionException e) {
         LOG.warn("Update for SDK " + mySdk.getName() + " failed", e);
       }
-
-      // restart code analysis
-      ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
+      finally {
+        // restart code analysis
+        ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
+      }
     }
 
     private void refreshPackages(@NotNull Sdk sdk, @NotNull ProgressIndicator indicator) {

@@ -350,8 +350,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     //noinspection deprecation
     myDispatcher.getMulticaster().applicationExiting();
 
-    ShutDownTracker.getInstance().ensureStopperThreadsFinished();
-
     super.dispose();
     // Remove IW lock from EDT as EDT might be re-created, which might lead to deadlock if anybody uses this disposed app
     if (!IMPLICIT_READ_ON_EDT_DISABLED || isUnitTestMode()) {

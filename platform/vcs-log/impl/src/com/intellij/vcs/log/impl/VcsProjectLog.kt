@@ -76,7 +76,7 @@ class VcsProjectLog(private val project: Project) : Disposable {
         }
       }
     })
-    ShutDownTracker.getInstance().registerShutdownTask({ shutDown() }, disposable)
+    ShutDownTracker.getInstance().registerShutdownTask({ shutDown() })
   }
 
   private fun shutDown() {

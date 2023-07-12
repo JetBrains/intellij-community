@@ -217,9 +217,11 @@ class Outer {
 
   private void stripTrailingSpaces() {
     DocumentImpl document = (DocumentImpl)getEditor().getDocument()
+    def manager = PsiDocumentManager.getInstance(getProject())
+    manager.commitDocument(document)
     document.setStripTrailingSpacesEnabled(true)
     document.stripTrailingSpaces(getProject())
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    manager.commitAllDocuments()
   }
 
   void testAsListToar() {

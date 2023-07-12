@@ -466,7 +466,7 @@ public final class ExternalProjectSerializationService implements SerializationS
                                      DefaultExternalProject project) {
     reader.next();
     reader.stepIn();
-    Map<String, DefaultExternalSourceSet> sourceSets = new HashMap<>();
+    Map<String, DefaultExternalSourceSet> sourceSets = new LinkedHashMap<>();
     DefaultExternalSourceSet sourceSet;
     while ((sourceSet = readSourceSet(reader, context)) != null) {
       sourceSets.put(sourceSet.getName(), sourceSet);

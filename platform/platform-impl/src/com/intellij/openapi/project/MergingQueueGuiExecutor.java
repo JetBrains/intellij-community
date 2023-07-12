@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import org.jetbrains.annotations.ApiStatus;
@@ -205,17 +204,15 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     }
 
     try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, mySuspendedText)) {
-      ShutDownTracker.getInstance().executeWithStopperThread(Thread.currentThread(), ()-> {
-        try {
-          processTasksWithProgress(suspender, visibleIndicator, null);
-        }
-        catch (ProcessCanceledException pce) {
-          throw pce;
-        }
-        catch (Throwable unexpected) {
-          LOG.error(unexpected);
-        }
-      });
+      try {
+        processTasksWithProgress(suspender, visibleIndicator, null);
+      }
+      catch (ProcessCanceledException pce) {
+        throw pce;
+      }
+      catch (Throwable unexpected) {
+        LOG.error(unexpected);
+      }
     }
   }
 

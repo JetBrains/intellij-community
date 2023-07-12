@@ -37,10 +37,14 @@ object VmOptionsGenerator {
   )
 
   fun computeVmOptions(isEAP: Boolean, productProperties: ProductProperties): List<String> {
-    return computeVmOptions(isEAP, productProperties.customJvmMemoryOptions)
+    return computeVmOptions(isEAP, productProperties.customJvmMemoryOptions, productProperties.additionalVmOptions)
   }
 
-  fun computeVmOptions(isEAP: Boolean, customJvmMemoryOptions: Map<String, String>?): List<String> {
+  fun computeVmOptions(
+    isEAP: Boolean,
+    customJvmMemoryOptions: Map<String, String>?,
+    additionalVmOptions: List<String>? = null
+  ): List<String> {
     val result = ArrayList<String>()
 
     if (customJvmMemoryOptions != null) {
@@ -51,6 +55,10 @@ object VmOptionsGenerator {
     }
 
     result.addAll(COMMON_VM_OPTIONS)
+
+    if (additionalVmOptions != null) {
+      result.addAll(additionalVmOptions)
+    }
 
     if (isEAP) {
       var place = result.indexOf("-ea")

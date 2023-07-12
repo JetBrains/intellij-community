@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -694,7 +694,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     @Override
     public void visitParameter(String name, int access) {
       int paramIndex = myParamNameIndex++ - myParamIgnoreCount;
-      if (!isSet(access, Opcodes.ACC_SYNTHETIC) && paramIndex >= 0 && paramIndex < myParamCount) {
+      if (name != null && !isSet(access, Opcodes.ACC_SYNTHETIC) && paramIndex >= 0 && paramIndex < myParamCount) {
         setParameterName(name, paramIndex);
       }
     }
@@ -711,7 +711,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       }
     }
 
-    private void setParameterName(String name, int paramIndex) {
+    private void setParameterName(@NotNull String name, int paramIndex) {
       if (ClsParsingUtil.isJavaIdentifier(name, LanguageLevel.HIGHEST)) {
         myParamStubs[paramIndex].setName(name);
       }

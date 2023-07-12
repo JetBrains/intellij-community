@@ -17,6 +17,7 @@ import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
@@ -35,16 +36,18 @@ import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.MessageReporter
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
-import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider
 import static org.jetbrains.plugins.gradle.tooling.builder.ModelBuildersDataProviders.TASKS_PROVIDER
+import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.*
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
 /**
@@ -290,7 +293,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def projectSourceCompatibility = getSourceCompatibility(project)
     def projectTargetCompatibility = getTargetCompatibility(project)
 
-    def result = [:] as Map<String, DefaultExternalSourceSet>
+    def result = new LinkedHashMap<String, DefaultExternalSourceSet>();
     def sourceSets = JavaPluginUtil.getSourceSetContainer(project)
     if (sourceSets == null) {
       return result
@@ -342,17 +345,13 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         externalSourceSet.targetCompatibility = projectTargetCompatibility
       }
 
-      def jarTask = project.tasks.findByName(sourceSet.jarTaskName)
-      if (jarTask instanceof AbstractArchiveTask) {
-        externalSourceSet.artifacts = [ is67OrBetter ?
-                                        ReflectionUtil.reflectiveGetProperty(jarTask, "getArchiveFile", RegularFile.class).getAsFile() :
-                                        jarTask.archivePath ]
-      }
-
       project.tasks.withType(AbstractArchiveTask) { AbstractArchiveTask task ->
-        if (containsAllSourceSetOutput(task, sourceSet)) {
+        def isOwnJarTask = task.name == sourceSet.jarTaskName
+        if (isOwnJarTask ||
+          (isCustomJarTask(task, sourceSets) && containsAllSourceSetOutput(task, sourceSet))
+        ) {
           externalSourceSet.artifacts.add(is67OrBetter ?
-                                          ReflectionUtil.reflectiveGetProperty(task, "getArchiveFile", RegularFile.class).getAsFile() :
+                                          reflectiveGetProperty(task, "getArchiveFile", RegularFile.class).getAsFile() :
                                           task.archivePath)
         }
       }
@@ -767,6 +766,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   private static boolean containsAllSourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull SourceSet sourceSet) {
     def outputFiles = new HashSet<>(sourceSet.output.files)
+    def project = archiveTask.project
+
     try {
       final Method mainSpecGetter = AbstractCopyTask.class.getDeclaredMethod("getMainSpec");
       mainSpecGetter.setAccessible(true);
@@ -778,14 +779,9 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         Set<Object> sourcePaths = (Set<Object>)sourcePathGetters.get(0).doMethodInvoke(mainSpec, new Object[]{});
         if (sourcePaths != null) {
           for (Object path : sourcePaths) {
-            if (path instanceof String) {
-              File file = new File((String)path);
-              if (file.isAbsolute()) {
-                outputFiles.remove(file);
-              }
-            }
-            else if (path instanceof SourceSetOutput) {
-              outputFiles.removeAll(((SourceSetOutput)path).getFiles());
+            if (isSafeToResolve(path)) {
+              def files = project.files(path).files
+              outputFiles.removeAll(files)
             }
           }
         }
@@ -794,6 +790,69 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+
     return outputFiles.isEmpty()
+  }
+
+  /**
+   * Checks that object can be safely resolved using {@link Project#files(java.lang.Object...)} API.
+   *
+   * @param object
+   * @return true if object is safe to resolve using {@link Project#files(java.lang.Object...)}
+   * @see org.jetbrains.plugins.gradle.tooling.builder.ExternalProjectBuilderImpl#unpackPresentProvider
+   */
+  private static boolean isSafeToResolve(Object param) {
+    Object object = unpackPresentProvider(param)
+    boolean isDirectoryOrRegularFile = dynamicCheckInstanceOf(object,
+                                                              "org.gradle.api.file.Directory",
+                                                              "org.gradle.api.file.RegularFile")
+
+    return object instanceof CharSequence
+      || object instanceof File || object instanceof Path
+      || isDirectoryOrRegularFile
+      || object instanceof SourceSetOutput
+  }
+
+  /**
+   * Some Gradle {@link org.gradle.api.provider.Provider} implementations can not be resolved during sync,
+   * causing {@link org.gradle.api.InvalidUserCodeException}
+   * and {@link org.gradle.api.InvalidUserDataException}.
+   *
+   * @return provided value or current if value isn't present or cannot be evaluated
+   */
+  private static Object unpackPresentProvider(Object object) {
+    if (!dynamicCheckInstanceOf(object, "org.gradle.api.provider.Provider")) {
+      return object
+    }
+    try {
+      def providerClass = object.getClass()
+      def isPresentMethod = providerClass.getMethod("isPresent")
+      def getterMethod = providerClass.getMethod("get")
+      if ((Boolean)isPresentMethod.invoke(object)) {
+        return getterMethod.invoke(object)
+      }
+      return object
+    }
+    catch (InvocationTargetException exception) {
+      Throwable targetException = exception.targetException
+      boolean isCodeException = dynamicCheckInstanceOf(targetException, "org.gradle.api.InvalidUserCodeException")
+      boolean isDataException = dynamicCheckInstanceOf(targetException, "org.gradle.api.InvalidUserDataException")
+      if (isCodeException || isDataException) {
+        return object
+      }
+      throw exception
+    }
+  }
+
+  private static boolean isCustomJarTask(@NotNull AbstractArchiveTask archiveTask,
+                                         @NotNull SourceSetContainer sourceSets) {
+    for (final SourceSet sourceSet in sourceSets) {
+      if (archiveTask.name == sourceSet.jarTaskName) {
+        // there is a sourceSet that 'owns' this task
+        return false;
+      }
+    }
+    // name of this task is not associated with any source set
+    return true;
   }
 }
