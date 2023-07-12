@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.openapi.project.projectsDataDir
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
@@ -41,7 +42,15 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
   private val cacheFile by lazy { initCacheFile() }
   private val unloadedEntitiesCacheFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve("unloaded-entities-cache.data") }
   private val invalidateProjectCacheMarkerFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate") }
-  private val cacheSerializer = WorkspaceModelCacheSerializer(VirtualFileUrlManager.getInstance(project))
+
+  private val urlRelativizer =
+    if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", false)) {
+      JpsProjectUrlRelativizer(project)
+    } else {
+      null
+    }
+
+  private val cacheSerializer = WorkspaceModelCacheSerializer(VirtualFileUrlManager.getInstance(project), urlRelativizer)
 
   init {
     if (enabled) {

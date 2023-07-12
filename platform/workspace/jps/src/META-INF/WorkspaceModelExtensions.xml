@@ -19,6 +19,8 @@
                  description="Enable new method of workspace model caching"/>
     <registryKey key="ide.workspace.model.separate.component.for.roots" defaultValue="true" restartRequired="true"
                  description="Enables storing of additional roots in the separate iml component"/>
+    <registryKey key="ide.workspace.model.store.relative.paths.in.cache" defaultValue="false" restartRequired="true"
+                 description="Enables storing of relative paths instead of absolute paths in the workspace model cache"/>
     <workspaceModel.customFacetRelatedEntitySerializer implementation="com.intellij.platform.workspace.jps.serialization.impl.DefaultFacetEntitySerializer" />
   </extensions>
 </idea-plugin>

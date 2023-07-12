@@ -25,7 +25,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.readText
-import com.intellij.platform.workspace.jps.UnloadedModulesNameHolder
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation

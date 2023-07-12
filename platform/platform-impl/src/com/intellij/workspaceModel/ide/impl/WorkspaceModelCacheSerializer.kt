@@ -7,16 +7,17 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.backend.workspace.WorkspaceModelCacheVersion
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
+import com.intellij.platform.workspace.storage.url.UrlRelativizer
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.platform.backend.workspace.WorkspaceModelCacheVersion
-import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
@@ -26,9 +27,14 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.exists
 
-class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
-  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, vfuManager,
-                                                                                ::collectExternalCacheVersions)
+class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelativizer: UrlRelativizer?) {
+  private val serializer: EntityStorageSerializer =
+    EntityStorageSerializerImpl(
+      PluginAwareEntityTypesResolver,
+      vfuManager,
+      ::collectExternalCacheVersions,
+      urlRelativizer
+    )
 
   internal fun loadCacheFromFile(file: Path, invalidateGlobalCachesMarkerFile: Path, invalidateCachesMarkerFile: Path): EntityStorage? {
     val start = System.currentTimeMillis()
@@ -136,7 +142,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
     private val loadCacheFromFileTimeMs: AtomicLong = AtomicLong()
     private val saveCacheToFileTimeMs: AtomicLong = AtomicLong()
 
-    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+    private fun setupOpenTelemetryReporting(meter: Meter) {
       val loadCacheFromFileTimeGauge = meter.gaugeBuilder("workspaceModel.load.cache.from.file.ms")
         .ofLongs().setDescription("Total time spent in method").buildObserver()
 

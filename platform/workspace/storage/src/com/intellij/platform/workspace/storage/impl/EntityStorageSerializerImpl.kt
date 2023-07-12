@@ -19,9 +19,6 @@ import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.ReflectionUtil
-import com.intellij.util.SmartList
-import com.intellij.util.containers.*
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.containers.*
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalMap
@@ -31,8 +28,12 @@ import com.intellij.platform.workspace.storage.impl.references.ImmutableOneToAbs
 import com.intellij.platform.workspace.storage.impl.references.ImmutableOneToManyContainer
 import com.intellij.platform.workspace.storage.impl.references.ImmutableOneToOneContainer
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
+import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.ReflectionUtil
+import com.intellij.util.SmartList
+import com.intellij.util.containers.*
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.*
@@ -44,7 +45,6 @@ import java.util.*
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 import java.util.function.ToIntFunction
-import kotlin.collections.HashMap
 import kotlin.reflect.KClass
 import kotlin.system.measureNanoTime
 
@@ -87,9 +87,10 @@ class EntityStorageSerializerImpl(
   private val typesResolver: EntityTypesResolver,
   private val virtualFileManager: VirtualFileUrlManager,
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
+  private val urlRelativizer: UrlRelativizer? = null
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v51"
+    const val SERIALIZER_VERSION = "v52"
   }
 
   private val interner = HashSetInterner<SerializableEntityId>()
@@ -108,7 +109,7 @@ class EntityStorageSerializerImpl(
     kryo.references = true
     kryo.instantiatorStrategy = StdInstantiatorStrategy()
 
-    kryo.addDefaultSerializer(VirtualFileUrl::class.java, VirtualFileUrlSerializer())
+    kryo.addDefaultSerializer(VirtualFileUrl::class.java, VirtualFileUrlSerializer(urlRelativizer))
     kryo.addDefaultSerializer(List::class.java, DefaultListSerializer::class.java)
     kryo.addDefaultSerializer(Set::class.java, DefaultSetSerializer::class.java)
     kryo.addDefaultSerializer(Map::class.java, DefaultMapSerializer::class.java)
@@ -582,7 +583,7 @@ class EntityStorageSerializerImpl(
         return false
       }
       if (currentVersion != version) {
-        LOG.info("Cache isn't loaded. For cache id '$id' cache version is '$version' and current versioni is '$currentVersion'")
+        LOG.info("Cache isn't loaded. For cache id '$id' cache version is '$version' and current version is '$currentVersion'")
         return false
       }
     }
@@ -751,16 +752,28 @@ class EntityStorageSerializerImpl(
     }
   }
 
-  private inner class VirtualFileUrlSerializer : Serializer<VirtualFileUrl>(false, true) {
+  private inner class VirtualFileUrlSerializer(private val urlRelativizer: UrlRelativizer?) : Serializer<VirtualFileUrl>(false, true) {
     override fun write(kryo: Kryo, output: Output, obj: VirtualFileUrl) {
       // TODO Write IDs only
-      kryo.writeObject(output, (obj as VirtualFileUrlImpl).getUrlSegments())
+
+      obj as VirtualFileUrlImpl
+      val urlToWrite = urlRelativizer?.toRelativeUrl(obj.url) ?: obj.getUrlSegments()
+      kryo.writeObject(output, urlToWrite)
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun read(kryo: Kryo, input: Input, type: Class<out VirtualFileUrl>): VirtualFileUrl {
-      val url = kryo.readObject(input, List::class.java) as List<String>
-      return virtualFileManager.fromUrlSegments(url)
+      // TODO consider the case when the saved cache had relative paths, and now we are expecting absolute paths
+      //  (because of the Registry key value change)
+
+      if (urlRelativizer == null) {
+        val url = kryo.readObject(input, List::class.java) as List<String>
+        return virtualFileManager.fromUrlSegments(url)
+      } else {
+        val serializedUrl = kryo.readObject(input, String::class.java) as String
+        val convertedUrl = urlRelativizer.toAbsoluteUrl(serializedUrl)
+        return virtualFileManager.fromUrl(convertedUrl)
+      }
     }
   }
 
