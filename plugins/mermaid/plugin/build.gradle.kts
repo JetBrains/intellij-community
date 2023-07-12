@@ -213,7 +213,7 @@ tasks {
   }
 
   test {
-//    finalizedBy(modernTests)
+    finalizedBy(modernTests)
     useJUnit()
   }
 
