@@ -2,7 +2,7 @@
 package com.intellij.cce.evaluable.completion
 
 import com.intellij.cce.core.Language
-import com.intellij.cce.evaluable.EvaluableFeature
+import com.intellij.cce.evaluable.EvaluableFeatureBase
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.evaluation.step.SetupCompletionStep
@@ -11,8 +11,7 @@ import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.openapi.project.Project
 
 
-class TokenCompletionFeature : EvaluableFeature<CompletionStrategy> {
-  override val name = "token-completion"
+class TokenCompletionFeature : EvaluableFeatureBase<CompletionStrategy>("token-completion") {
 
   override fun getGenerateActionsProcessor(strategy: CompletionStrategy): GenerateActionsProcessor =
     CompletionGenerateActionsProcessor(strategy)

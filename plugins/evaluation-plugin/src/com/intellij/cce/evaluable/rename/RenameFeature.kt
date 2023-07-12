@@ -3,8 +3,9 @@ package com.intellij.cce.evaluable.rename
 
 
 import com.intellij.cce.core.Language
-import com.intellij.cce.evaluable.EvaluableFeature
+import com.intellij.cce.evaluable.EvaluableFeatureBase
 import com.intellij.cce.evaluable.StrategySerializer
+import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.interpreter.ActionsInvoker
 import com.intellij.cce.metric.EditSimilarity
 import com.intellij.cce.metric.Metric
@@ -12,8 +13,7 @@ import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.openapi.project.Project
 
 
-class RenameFeature : EvaluableFeature<RenameStrategy> {
-  override val name = "rename"
+class RenameFeature : EvaluableFeatureBase<RenameStrategy>("rename") {
 
   override fun getGenerateActionsProcessor(strategy: RenameStrategy): GenerateActionsProcessor =
     RenameGenerateActionsProcessor(strategy)
@@ -24,4 +24,6 @@ class RenameFeature : EvaluableFeature<RenameStrategy> {
   override fun getStrategySerializer(): StrategySerializer<RenameStrategy> = RenameStrategySerializer()
 
   override fun getMetrics(): List<Metric> = listOf(EditSimilarity(showByDefault = true)) + super.getMetrics()
+
+  override fun getEvaluationSteps(language: Language, strategy: RenameStrategy): List<EvaluationStep> = emptyList()
 }

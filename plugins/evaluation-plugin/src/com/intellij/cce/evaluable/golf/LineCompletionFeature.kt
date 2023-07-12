@@ -4,7 +4,7 @@ package com.intellij.cce.evaluable.golf
 import com.intellij.cce.core.Language
 import com.intellij.cce.core.Suggestion
 import com.intellij.cce.core.SuggestionKind
-import com.intellij.cce.evaluable.EvaluableFeature
+import com.intellij.cce.evaluable.EvaluableFeatureBase
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.evaluation.step.SetupFullLineStep
@@ -19,8 +19,7 @@ import com.intellij.cce.workspace.storages.FeaturesStorage
 import com.intellij.cce.workspace.storages.FullLineLogsStorage
 import com.intellij.openapi.project.Project
 
-class LineCompletionFeature : EvaluableFeature<CompletionGolfStrategy> {
-  override val name = "line-completion"
+class LineCompletionFeature : EvaluableFeatureBase<CompletionGolfStrategy>("line-completion") {
 
   override fun getGenerateActionsProcessor(strategy: CompletionGolfStrategy): GenerateActionsProcessor = LineCompletionProcessor()
 
