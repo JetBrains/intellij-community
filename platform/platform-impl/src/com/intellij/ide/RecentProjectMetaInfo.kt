@@ -38,6 +38,7 @@ class RecentProjectMetaInfo : BaseState() {
   var buildTimestamp: Long by property(0L)
   var activationTimestamp: Long by property(0L)
   var metadata: String? by string()
+  var colorInfo: RecentProjectColorInfo by property(RecentProjectColorInfo())
 
   @get:Attribute
   var projectWorkspaceId: String? by string()
