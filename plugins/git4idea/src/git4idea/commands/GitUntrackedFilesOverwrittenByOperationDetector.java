@@ -40,7 +40,9 @@ public class GitUntrackedFilesOverwrittenByOperationDetector extends GitMessageW
   private static final Event NEW_UNTRACKED_FILES_OVERWRITTEN_BY = new Event(
     "UntrackedFileDetector",
     List.of(Pattern.compile(".*The following untracked working tree files would be overwritten by.*")),
-    List.of(Pattern.compile(".*Please move or remove them before.*"))
+    List.of(Pattern.compile(".*Please move or remove them before.*"),
+            Pattern.compile(".*Merge with strategy .* failed.*"),
+            Pattern.compile(".*No merge strategy handled the merge.*"))
   );
 
   public GitUntrackedFilesOverwrittenByOperationDetector(VirtualFile root) {

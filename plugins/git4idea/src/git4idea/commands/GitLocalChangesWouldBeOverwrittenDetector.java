@@ -53,7 +53,9 @@ public class GitLocalChangesWouldBeOverwrittenDetector extends GitMessageWithFil
   public static final Event NEW_PATTERN = new Event(
     "LocalChangesDetector",
     List.of(Pattern.compile(".*Your local changes to the following files would be overwritten by.*")),
-    List.of(Pattern.compile(".*commit your changes or stash them before.*"))
+    List.of(Pattern.compile(".*commit your changes or stash them before.*"),
+            Pattern.compile(".*Merge with strategy .* failed.*"),
+            Pattern.compile(".*No merge strategy handled the merge.*"))
   );
 
   @NotNull private final Operation myOperation;
