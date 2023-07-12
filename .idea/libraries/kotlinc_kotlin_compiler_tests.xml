@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-tests-for-ide:1.9.0-Beta-27" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-tests-for-ide:1.9.0-release-358" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/1.9.0-Beta-27/kotlin-compiler-tests-for-ide-1.9.0-Beta-27.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/1.9.0-release-358/kotlin-compiler-tests-for-ide-1.9.0-release-358.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/1.9.0-Beta-27/kotlin-compiler-tests-for-ide-1.9.0-Beta-27-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/1.9.0-release-358/kotlin-compiler-tests-for-ide-1.9.0-release-358-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
