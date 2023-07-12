@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="lucene-queries" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-queries:9.6.0">
+    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.apache.lucene:lucene-queries:9.7.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/9.6.0/lucene-queries-9.6.0.jar">
-          <sha256sum>7c3d67d2450fabde77e550e11b4ed75a27cf13b3fffe6ec51df4482742107b25</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/9.7.0/lucene-queries-9.7.0.jar">
+          <sha256sum>1ef397f798888ed8a0bbe9d5d0f2d76cd72bfa2c1bafe3b0f9a5c849dda91acb</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/9.6.0/lucene-queries-9.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/9.7.0/lucene-queries-9.7.0.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/9.6.0/lucene-queries-9.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/9.7.0/lucene-queries-9.7.0-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/9.6.0/lucene-queries-9.6.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/9.7.0/lucene-queries-9.7.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
