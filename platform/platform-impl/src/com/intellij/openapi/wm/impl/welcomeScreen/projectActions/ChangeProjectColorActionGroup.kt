@@ -4,11 +4,12 @@ package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.RecentProjectIconHelper
-import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.ColorChooserService
 import com.intellij.ui.awt.RelativePoint
 import java.awt.Point
@@ -59,7 +60,7 @@ class ChangeProjectColorAction(val projectPath: String, val name: @NlsSafe Strin
     val customizer = ProjectWindowCustomizerService.getInstance()
     e.project?.let { customizer.clearToolbarColorsAndInMemoryCache(it) }
     customizer.setAssociatedColorsIndex(projectPath, index)
-    LafManager.getInstance().updateUI()
+    e.project?.repaintFrame()
   }
 }
 
@@ -76,7 +77,7 @@ class ChooseCustomProjectColorAction: AnAction(IdeBundle.message("action.ChooseC
                                            currentColor = ProjectWindowCustomizerService.getInstance().getToolbarBackground(project),
                                            listener = { color, _ ->
                                              ProjectWindowCustomizerService.getInstance().setProjectCustomColor(project, color)
-                                             LafManager.getInstance().updateUI()
+                                             e.project?.repaintFrame()
                                            },
                                            location = relativePoint)
   }
@@ -86,4 +87,8 @@ class ChooseCustomProjectColorAction: AnAction(IdeBundle.message("action.ChooseC
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.project != null
   }
+}
+
+private fun Project.repaintFrame() {
+  WindowManager.getInstance().getIdeFrame(this)?.component?.repaint()
 }
