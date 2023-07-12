@@ -5,6 +5,7 @@ import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LexerTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaLexerTest extends LexerTestCase {
   public void testClassicNumericLiterals() {
@@ -426,7 +427,7 @@ public class JavaLexerTest extends LexerTestCase {
   }
 
   @Override
-  protected Lexer createLexer() {
+  protected @NotNull Lexer createLexer() {
     if (getTestName(false).endsWith("JDK21_Preview")) {
       return JavaParserDefinition.createLexer(LanguageLevel.JDK_21_PREVIEW);
     }
@@ -434,7 +435,7 @@ public class JavaLexerTest extends LexerTestCase {
   }
 
   @Override
-  protected String getDirPath() {
+  protected @NotNull String getDirPath() {
     return "";
   }
 }
