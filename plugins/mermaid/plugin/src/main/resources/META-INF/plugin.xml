@@ -102,6 +102,15 @@
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="com.intellij.mermaid.lang.intention.UndeclaredGenericUsageInspection"/>
 
+    <localInspection language="Mermaid" shortName="ThemeInspection"
+                     groupKey="theme.inspection"
+                     bundle="messages.MermaidBundle"
+                     key="theme.inspection"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     implementationClass="com.intellij.mermaid.lang.intention.ThemeInspection"/>
+
     <spellchecker.support language="Mermaid" implementationClass="com.intellij.mermaid.lang.MermaidSpellcheckingStrategy"/>
 
     <todoIndexer filetype="Mermaid" implementationClass="com.intellij.mermaid.lang.highlighting.MermaidTodoIndexer"/>
