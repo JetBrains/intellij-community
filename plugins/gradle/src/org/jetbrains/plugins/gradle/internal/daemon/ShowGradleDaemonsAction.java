@@ -37,8 +37,7 @@ public class ShowGradleDaemonsAction extends DumbAwareAction {
         myUi = null;
       }
     };
-    List<DaemonState> daemonsStatus = GradleDaemonServices.getDaemonsStatus();
-    myUi.show(daemonsStatus);
+    myUi.show();
   }
 
   @Override
