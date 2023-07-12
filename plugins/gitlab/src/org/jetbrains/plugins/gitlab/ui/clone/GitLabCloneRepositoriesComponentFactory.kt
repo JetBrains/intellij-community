@@ -47,7 +47,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
     project: Project,
     cs: CoroutineScope,
     repositoriesVm: GitLabCloneRepositoriesViewModel,
-    uiSelectorVm: GitLabCloneUISelectorViewModel
+    cloneVm: GitLabCloneViewModel
   ): DialogPanel {
     val searchField = createSearchField(repositoriesVm)
     val directoryField = createDirectoryField(project, cs, repositoriesVm)
@@ -58,9 +58,9 @@ internal object GitLabCloneRepositoriesComponentFactory {
     val accountsPanel = CompactAccountsPanelFactory(accountsModel).create(
       repositoriesVm.accountDetailsProvider,
       VcsCloneDialogUiSpec.Components.avatarSize,
-      AccountsPopupConfig(uiSelectorVm)
+      AccountsPopupConfig(cloneVm)
     )
-    val repositoryList = createRepositoryList(cs, repositoriesVm, uiSelectorVm, accountsModel, repositoriesModel)
+    val repositoryList = createRepositoryList(cs, repositoriesVm, cloneVm, accountsModel, repositoriesModel)
     CollaborationToolsUIUtil.attachSearch(repositoryList, searchField) { cloneItem ->
       when (cloneItem) {
         is GitLabCloneListItem.Error -> ""
@@ -98,12 +98,12 @@ internal object GitLabCloneRepositoriesComponentFactory {
   private fun createRepositoryList(
     cs: CoroutineScope,
     repositoriesVm: GitLabCloneRepositoriesViewModel,
-    uiSelectorVm: GitLabCloneUISelectorViewModel,
+    cloneVm: GitLabCloneViewModel,
     accountsModel: ListModel<GitLabAccount>,
     repositoriesModel: ListModel<GitLabCloneListItem>
   ): JBList<GitLabCloneListItem> {
     return JBList(repositoriesModel).apply {
-      cellRenderer = createRepositoryRenderer(accountsModel, repositoriesModel, uiSelectorVm::switchToLoginPanel)
+      cellRenderer = createRepositoryRenderer(accountsModel, repositoriesModel, cloneVm::switchToLoginPanel)
       isFocusable = false
       selectionModel.addListSelectionListener {
         repositoriesVm.selectItem(selectedValue)
@@ -219,10 +219,10 @@ internal object GitLabCloneRepositoriesComponentFactory {
     return directoryField
   }
 
-  private class AccountsPopupConfig(uiSelectorVm: GitLabCloneUISelectorViewModel) : CompactAccountsPanelFactory.PopupConfig<GitLabAccount> {
+  private class AccountsPopupConfig(cloneVm: GitLabCloneViewModel) : CompactAccountsPanelFactory.PopupConfig<GitLabAccount> {
     private val loginWithTokenAction: AccountMenuItem.Action = AccountMenuItem.Action(
       CollaborationToolsBundle.message("clone.dialog.login.with.token.action"),
-      { uiSelectorVm.switchToLoginPanel(account = null) },
+      { cloneVm.switchToLoginPanel(account = null) },
       showSeparatorAbove = true
     )
 

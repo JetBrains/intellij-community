@@ -32,7 +32,7 @@ import javax.swing.JComponent
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal object GitLabCloneLoginComponentFactory {
-  fun create(cs: CoroutineScope, loginVm: GitLabCloneLoginViewModel, uiSelectorVm: GitLabCloneUISelectorViewModel): JComponent {
+  fun create(cs: CoroutineScope, loginVm: GitLabCloneLoginViewModel, cloneVm: GitLabCloneViewModel): JComponent {
     val loginModel = loginVm.tokenLoginModel
     val titlePanel = JBUI.Panels.simplePanel().apply {
       @Suppress("DialogTitleCapitalization")
@@ -44,7 +44,7 @@ internal object GitLabCloneLoginComponentFactory {
     val loginButton = JButton(CollaborationToolsBundle.message("clone.dialog.button.login.mnemonic")).apply {
       bindDisabledIn(cs, loginModel.loginState.map { it is LoginModel.LoginState.Connecting })
     }
-    val backLink = LinkLabel<Unit>(IdeBundle.message("button.back"), null) { _, _ -> uiSelectorVm.switchToRepositoryList() }.apply {
+    val backLink = LinkLabel<Unit>(IdeBundle.message("button.back"), null) { _, _ -> cloneVm.switchToRepositoryList() }.apply {
       bindVisibilityIn(cs, loginVm.accounts.map { it.isNotEmpty() })
     }
     val loginInputPanel = TokenLoginInputPanelFactory(loginModel).create(

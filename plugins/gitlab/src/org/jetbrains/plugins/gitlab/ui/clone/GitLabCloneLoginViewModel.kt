@@ -12,7 +12,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
 
-internal interface GitLabCloneLoginViewModel : GitLabCloneViewModel {
+internal interface GitLabCloneLoginViewModel : GitLabClonePanelViewModel {
   val accounts: SharedFlow<Set<GitLabAccount>>
   val tokenLoginModel: GitLabTokenLoginPanelModel
 }

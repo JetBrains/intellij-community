@@ -30,7 +30,7 @@ import java.net.MalformedURLException
 import java.net.URL
 import java.nio.file.Paths
 
-internal interface GitLabCloneRepositoriesViewModel : GitLabCloneViewModel {
+internal interface GitLabCloneRepositoriesViewModel : GitLabClonePanelViewModel {
   val isLoading: Flow<Boolean>
   val accountsUpdatedRequest: SharedFlow<Set<GitLabAccount>>
 

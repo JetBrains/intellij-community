@@ -29,27 +29,27 @@ internal class GitLabCloneComponent(
   private val cs: CoroutineScope = disposingScope() + modalityState.asContextElement() + Dispatchers.Default
   private val uiCs: CoroutineScope = cs.childScope(Dispatchers.Main)
 
-  private val uiSelectorVm = GitLabCloneUISelectorViewModelImpl(project, cs, accountManager)
+  private val cloneVm = GitLabCloneViewModelImpl(project, cs, accountManager)
 
   private val wrapper: Wrapper = Wrapper().apply {
-    bindContentIn(uiCs, uiSelectorVm.vm) { vm ->
+    bindContentIn(uiCs, cloneVm.panelVm) { panelVm ->
       val innerCs = this
-      when (vm) {
-        is GitLabCloneLoginViewModel -> GitLabCloneLoginComponentFactory.create(innerCs, vm, uiSelectorVm)
+      when (panelVm) {
+        is GitLabCloneLoginViewModel -> GitLabCloneLoginComponentFactory.create(innerCs, panelVm, cloneVm)
         is GitLabCloneRepositoriesViewModel -> GitLabCloneRepositoriesComponentFactory.create(
-          project, innerCs, vm, uiSelectorVm
+          project, innerCs, panelVm, cloneVm
         ).also { panel ->
           panel.registerValidators(innerCs.nestedDisposable())
 
           innerCs.launchNow {
-            vm.selectedUrl.collectLatest { selectedUrl ->
+            panelVm.selectedUrl.collectLatest { selectedUrl ->
               val isUrlSelected = selectedUrl != null
               dialogStateListener.onOkActionEnabled(isUrlSelected)
             }
           }
 
           innerCs.launchNow {
-            vm.accountsUpdatedRequest.collectLatest {
+            panelVm.accountsUpdatedRequest.collectLatest {
               dialogStateListener.onListItemChanged()
             }
           }
@@ -68,7 +68,7 @@ internal class GitLabCloneComponent(
   }
 
   override fun doClone(checkoutListener: CheckoutProvider.Listener) {
-    uiSelectorVm.doClone(checkoutListener)
+    cloneVm.doClone(checkoutListener)
   }
 
   override fun doValidateAll(): List<ValidationInfo> {
