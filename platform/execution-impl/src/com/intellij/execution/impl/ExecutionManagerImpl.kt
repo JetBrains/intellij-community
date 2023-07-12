@@ -12,6 +12,7 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.impl.ExecutionManagerImpl.Companion.DELEGATED_RUN_PROFILE_KEY
+import com.intellij.execution.impl.ExecutionManagerImpl.Companion.TERMINATING_FOR_RERUN
 import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector
 import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector.RunConfigurationFinishType
 import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector.UI_SHOWN_STAGE
@@ -40,10 +41,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Condition
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
@@ -81,6 +79,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
     @JvmField
     val EXECUTION_SKIP_RUN = ExecutionManager.EXECUTION_SKIP_RUN
+
+    internal val TERMINATING_FOR_RERUN = Key.create<Boolean>("TERMINATING_FOR_RERUN")
 
     @JvmStatic
     fun getInstance(project: Project) = project.service<ExecutionManager>() as ExecutionManagerImpl
@@ -265,7 +265,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
                 inProgress.remove(InProgressEntry(executor.id, environment.runner.runnerId))
                 project.messageBus.syncPublisher(EXECUTION_TOPIC).processStarted(executor.id, environment, processHandler)
 
-                val listener = ProcessExecutionListener(project, executor.id, environment, processHandler, descriptor, activity)
+                val listener = ProcessExecutionListener(project, executor.id, environment, descriptor, activity)
                 processHandler.addProcessListener(listener)
 
                 // Since we cannot guarantee that the listener is added before process handled is start notified,
@@ -514,6 +514,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       }
 
       for (descriptor in runningToStop) {
+        descriptor?.processHandler?.putUserData(TERMINATING_FOR_RERUN, true)
         stopProcess(descriptor)
       }
     }
@@ -955,7 +956,6 @@ private fun userApprovesStopForIncompatibleConfigurations(project: Project,
 private class ProcessExecutionListener(private val project: Project,
                                        private val executorId: String,
                                        private val environment: ExecutionEnvironment,
-                                       private val processHandler: ProcessHandler,
                                        private val descriptor: RunContentDescriptor,
                                        private val activity: StructuredIdeActivity?) : ProcessAdapter() {
   private val willTerminateNotified = AtomicBoolean()
@@ -973,11 +973,15 @@ private class ProcessExecutionListener(private val project: Project,
       }
     }, ModalityState.any(), project.disposed)
 
-    project.messageBus.syncPublisher(ExecutionManager.EXECUTION_TOPIC).processTerminated(executorId, environment, processHandler, event.exitCode)
+    val processHandler = event.processHandler
+    project.messageBus.syncPublisher(ExecutionManager.EXECUTION_TOPIC)
+      .processTerminated(executorId, environment, processHandler, event.exitCode)
 
-    val runConfigurationFinishType =
-      if (event.processHandler.getUserData(ProcessHandler.TERMINATION_REQUESTED) == true) RunConfigurationFinishType.TERMINATED
-      else RunConfigurationFinishType.UNKNOWN
+    val runConfigurationFinishType = when {
+      processHandler.getUserData(TERMINATING_FOR_RERUN) == true -> RunConfigurationFinishType.TERMINATED_DUE_TO_RERUN
+      processHandler.getUserData(ProcessHandler.TERMINATION_REQUESTED) == true -> RunConfigurationFinishType.TERMINATED_BY_STOP
+      else -> RunConfigurationFinishType.UNKNOWN
+    }
     RunConfigurationUsageTriggerCollector.logProcessFinished(activity, runConfigurationFinishType)
 
     processHandler.removeProcessListener(this)
@@ -989,7 +993,7 @@ private class ProcessExecutionListener(private val project: Project,
       return
     }
 
-    project.messageBus.syncPublisher(ExecutionManager.EXECUTION_TOPIC).processTerminating(executorId, environment, processHandler)
+    project.messageBus.syncPublisher(ExecutionManager.EXECUTION_TOPIC).processTerminating(executorId, environment, event.processHandler)
   }
 }
 
