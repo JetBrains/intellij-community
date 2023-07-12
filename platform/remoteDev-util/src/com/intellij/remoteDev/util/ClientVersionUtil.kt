@@ -5,5 +5,5 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object ClientVersionUtil {
-  fun isJBCSeparateConfigSupported(clientVersion: String) = VersionComparatorUtil.compare(clientVersion, "233.173") >= 0
+  fun isJBCSeparateConfigSupported(clientVersion: String) = VersionComparatorUtil.compare(clientVersion, "233.173") >= 0 || clientVersion == "233.SNAPSHOT"
 }

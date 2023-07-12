@@ -23,4 +23,19 @@ class ClientVersionUtilTest {
   fun `241_1 is supported`() {
     Assert.assertTrue(ClientVersionUtil.isJBCSeparateConfigSupported("241.1"))
   }
+
+  @Test
+  fun `241_SNAPSHOT is supported`() {
+    Assert.assertTrue(ClientVersionUtil.isJBCSeparateConfigSupported("241.SNAPSHOT"))
+  }
+
+  @Test
+  fun `233_SNAPSHOT is supported`() {
+    Assert.assertTrue(ClientVersionUtil.isJBCSeparateConfigSupported("233.SNAPSHOT"))
+  }
+
+  @Test
+  fun `232_SNAPSHOT is not supported`() {
+    Assert.assertFalse(ClientVersionUtil.isJBCSeparateConfigSupported("232.SNAPSHOT"))
+  }
 }
