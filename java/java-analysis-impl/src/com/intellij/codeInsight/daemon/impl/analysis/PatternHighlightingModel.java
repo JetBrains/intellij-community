@@ -36,6 +36,7 @@ final class PatternHighlightingModel {
 
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
   private static final int MAX_ITERATION_COVERAGE = 1_000;
+  private static final int MAX_GENERATED_PATTERN_NUMBER = 10;
 
   static void createDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern, @NotNull HighlightInfoHolder holder) {
     if (deconstructionPattern == null) return;
@@ -247,11 +248,18 @@ final class PatternHighlightingModel {
           }
         }
         TestCovered testCovered = new TestCovered();
-        reduceInLoop(selectorType, context, new HashSet<>(patterns), testCovered, new HashMap<>());
+        HashMap<ReduceResultCacheContext, ReduceResult> cache = new HashMap<>();
+        ReduceResult result = reduceInLoop(selectorType, context, new HashSet<>(patterns), testCovered, cache);
         if (testCovered.covered) {
           return RecordExhaustivenessResult.createExhaustiveResult();
         }
-        return RecordExhaustivenessResult.createNotBeAdded();
+        List<? extends PatternDescription> missedRecordPatterns = findMissedRecordPatterns(selectorType, result.patterns, context, cache);
+        if (missedRecordPatterns == null) {
+          return RecordExhaustivenessResult.createNotBeAdded();
+        }
+        RecordExhaustivenessResult exhaustiveResult = RecordExhaustivenessResult.createNotExhaustiveResult();
+        exhaustiveResult.addBranches(missedRecordPatterns);
+        return exhaustiveResult;
       });
       return CachedValueProvider.Result.create(cacheResult, PsiModificationTracker.MODIFICATION_COUNT);
     }).get(new ReduceResultCacheContext(targetType, new HashSet<>(descriptions)));
@@ -591,6 +599,144 @@ final class PatternHighlightingModel {
     return changed;
   }
 
+
+  /**
+   * Try to find the missed record patterns for the given selector type and patterns.
+   * This method works only with relatively simple cases: components must not have generic types,
+   * nested record patterns are ignored.
+   * How it works:
+   * Record(q0...qi...qn).
+   * The method finds a set of records for i components, such that (q0..qr..qn), where r!=i equivalent,
+   * and try to find missing classes for i components. After each iteration, reducing is applied.
+   * Used patterns will be deleted, if something was reduced
+   * After all steps, coverage is checked.
+   *
+   * @param selectorType The selector type to find missed record patterns for.
+   * @param patterns     The set of patterns to analyze.
+   * @param context      The context element.
+   * @param cache        The cache of previously calculated reduce results.
+   * @return The list of missed record patterns, or null if none are found.
+   */
+  @Nullable
+  private static List<? extends PatternDescription> findMissedRecordPatterns(@NotNull PsiType selectorType,
+                                                                             @NotNull Set<? extends PatternDescription> patterns,
+                                                                             @NotNull PsiElement context,
+                                                                             @NotNull Map<ReduceResultCacheContext, ReduceResult> cache) {
+    PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
+    if (selectorClass == null) {
+      return null;
+    }
+    List<PsiType> componentTypes = getComponentTypes(context, selectorType);
+    if (componentTypes == null) {
+      return null;
+    }
+    for (PsiType componentType : componentTypes) {
+      PsiClass componentClass = PsiUtil.resolveClassInClassTypeOnly(componentType);
+      if ((componentClass == null || componentClass.hasTypeParameters()) && !TypeConversionUtil.isPrimitiveAndNotNull(componentType)) {
+        return null;
+      }
+    }
+    for (PatternDescription pattern : patterns) {
+      if (pattern instanceof PatternTypeTestDescription) {
+        return null;
+      }
+    }
+
+    Map<PsiType, Set<PatternDeconstructionDescription>> groupedByType =
+      StreamEx.of(patterns)
+        .select(PatternDeconstructionDescription.class)
+        .groupingBy(t -> t.type(), Collectors.toSet());
+    if (groupedByType.size() != 1) {
+      return null;
+    }
+
+    Set<PatternDeconstructionDescription> descriptions = groupedByType.values().iterator().next();
+    if (descriptions.isEmpty()) {
+      return null;
+    }
+    PatternDeconstructionDescription sample = descriptions.iterator().next();
+    if (!(sample.type().equals(selectorType))) {
+      return null;
+    }
+    LinkedHashSet<PatternDeconstructionDescription> missingRecordPatterns = new LinkedHashSet<>();
+    Set<PatternDeconstructionDescription> filtered = getDeconstructionPatternOnlyWithTestPatterns(descriptions);
+    if (filtered.isEmpty()) {
+      return List.of(
+        new PatternDeconstructionDescription(selectorType, ContainerUtil.map(componentTypes, t -> new PatternTypeTestDescription(t))));
+    }
+    Set<PatternDescription> combinedPatterns = new HashSet<>(filtered);
+
+    for (int i = 0; i < sample.list().size(); i++) {
+      List<PatternDeconstructionDescription> missingRecordPatternsForThisIteration = new ArrayList<>();
+
+      //limit the depth
+      if (missingRecordPatterns.size() > MAX_GENERATED_PATTERN_NUMBER) {
+        return null;
+      }
+      MultiMap<List<PatternDescription>, PatternDeconstructionDescription> groupWithoutOneComponent =
+        getGroupWithoutOneComponent(combinedPatterns, i);
+      for (Map.Entry<List<PatternDescription>, Collection<PatternDeconstructionDescription>> value :
+        groupWithoutOneComponent.entrySet()) {
+        Collection<PatternDeconstructionDescription> setWithOneDifferentElement = value.getValue();
+        if (setWithOneDifferentElement.isEmpty()) {
+          return null;
+        }
+        List<PatternTypeTestDescription> nestedTypeDescriptions = getNestedTypeTestDescriptions(setWithOneDifferentElement, i);
+        Set<PatternTypeTestDescription> missedComponentTypeDescription = new HashSet<>();
+        if (componentTypes.size() <= i) {
+          return null;
+        }
+        PsiType componentType = componentTypes.get(i);
+        if (nestedTypeDescriptions.isEmpty()) {
+          missedComponentTypeDescription.add(new PatternTypeTestDescription(componentType));
+        }
+        else {
+          Set<PsiType> existedTypes = nestedTypeDescriptions.stream().map(t -> t.type()).collect(Collectors.toSet());
+          Set<PsiClass> sealedResult =
+            findMissedClasses(componentType, nestedTypeDescriptions, new ArrayList<>(), context).missedClasses();
+          if (!sealedResult.isEmpty()) {
+            addNewClasses(componentType, sealedResult, existedTypes, missedComponentTypeDescription);
+          }
+          else {
+            combinedPatterns.removeAll(setWithOneDifferentElement);
+            Collection<PatternDeconstructionDescription> topLevelPattern =
+              createPatternsFrom(i, Set.of(new PatternTypeTestDescription(componentType)), setWithOneDifferentElement.iterator().next());
+            combinedPatterns.addAll(topLevelPattern);
+          }
+        }
+        Collection<PatternDeconstructionDescription> newPatterns =
+          createPatternsFrom(i, missedComponentTypeDescription, setWithOneDifferentElement.iterator().next());
+        for (PatternDeconstructionDescription pattern : newPatterns) {
+          if (ContainerUtil.exists(filtered, existedPattern -> oneOfUnconditional(existedPattern, pattern))) {
+            continue;
+          }
+          missingRecordPatternsForThisIteration.add(pattern);
+        }
+        missingRecordPatterns.addAll(missingRecordPatternsForThisIteration);
+      }
+      combinedPatterns.addAll(missingRecordPatternsForThisIteration);
+      ReduceResult reduceResult = reduce(selectorType, context, combinedPatterns, cache);
+      //work only with reduced patterns to speed up
+      Set<? extends PatternDescription> newPatterns = reduceResult.patterns();
+      if (reduceResult.changed()) {
+        newPatterns.removeAll(combinedPatterns);
+        combinedPatterns.clear();
+        combinedPatterns.addAll(newPatterns);
+      }
+    }
+    ReduceResult reduceResult = reduce(selectorType, context, combinedPatterns, cache);
+    return coverSelectorType(reduceResult.patterns(), selectorType) ? new ArrayList<>(missingRecordPatterns) : null;
+  }
+
+  @NotNull
+  private static List<PatternTypeTestDescription> getNestedTypeTestDescriptions(@NotNull Collection<PatternDeconstructionDescription> setWithOneDifferentElement,
+                                                                                int i) {
+    return StreamEx.of(setWithOneDifferentElement)
+      .map(t -> t.list().get(i))
+      .select(PatternTypeTestDescription.class)
+      .toList();
+  }
+
   @NotNull
   private static MultiMap<List<PatternDescription>, PatternDeconstructionDescription> getGroupWithoutOneComponent(
     @NotNull Set<? extends PatternDescription> combinedPatterns,
@@ -606,6 +752,32 @@ final class PatternHighlightingModel {
       groupWithoutOneComponent.putValue(getWithoutComponent(deconstructionDescription, i), deconstructionDescription);
     }
     return groupWithoutOneComponent;
+  }
+
+  @NotNull
+  private static Set<PatternDeconstructionDescription> getDeconstructionPatternOnlyWithTestPatterns(Set<PatternDeconstructionDescription> descriptions) {
+    Set<PatternDeconstructionDescription> filtered = new HashSet<>();
+    for (PatternDeconstructionDescription description : descriptions) {
+      if (ContainerUtil.and(description.list(), t -> t instanceof PatternTypeTestDescription)) {
+        filtered.add(description);
+      }
+    }
+    return filtered;
+  }
+
+  private static boolean oneOfUnconditional(PatternDeconstructionDescription whoType, PatternDeconstructionDescription overWhom) {
+    if (!whoType.type().equals(overWhom.type())) {
+      return false;
+    }
+    if (whoType.list().size() != overWhom.list().size()) {
+      return false;
+    }
+    for (int i = 0; i < whoType.list().size(); i++) {
+      if (!SwitchBlockHighlightingModel.oneOfUnconditional(whoType.list().get(i).type(), overWhom.list().get(i).type())) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static boolean coverSelectorType(@NotNull Set<? extends PatternDescription> patterns,
@@ -743,6 +915,25 @@ final class PatternHighlightingModel {
                                         set.addAll(lists2);
                                         return set;
                                       });
+    }
+
+    void addBranches(List<? extends PatternDescription> patterns) {
+      for (PatternDescription pattern : patterns) {
+        if (!(pattern instanceof PatternDeconstructionDescription deconstructionDescription)) {
+          continue;
+        }
+        Set<List<PsiType>> deconstructions = new HashSet<>();
+        List<PsiType> componentTypes = new ArrayList<>(ContainerUtil.map(deconstructionDescription.list(), t -> t.type()));
+        //requires by fix
+        Collections.reverse(componentTypes);
+        deconstructions.add(componentTypes);
+        missedBranchesByType.merge(pattern.type(), deconstructions, (lists1, lists2) -> {
+          Set<List<PsiType>> results = new HashSet<>();
+          results.addAll(lists1);
+          results.addAll(lists2);
+          return results;
+        });
+      }
     }
 
     static RecordExhaustivenessResult createExhaustiveResult() {
