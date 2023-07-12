@@ -107,7 +107,7 @@ class KotlinLineBreakpointType :
 
         val pos = SourcePosition.createFromLine(file, position.line)
         val lambdas = getLambdasAtLineIfAny(pos)
-        val condRet = findSingleConditionalReturn(file, position.line)
+        val condRet = if (canStopOnConditionalReturn(file)) findSingleConditionalReturn(file, position.line) else null
 
         if (lambdas.isEmpty() && condRet == null) return emptyList()
 

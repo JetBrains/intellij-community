@@ -7,9 +7,12 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.PositionManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
+import com.intellij.facet.FacetManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -21,6 +24,7 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -114,7 +118,9 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
     PsiElement startMethod = DebuggerUtilsEx.getContainingMethod(pos);
     List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(pos, true);
-    PsiElement condRet = findSingleConditionalReturn(project, document, position.getLine());
+    PsiElement condRet = canStopOnConditionalReturn(pos.getFile())
+                         ? findSingleConditionalReturn(project, document, position.getLine())
+                         : null;
 
     if ((lambdas.isEmpty() || (lambdas.contains(startMethod) && lambdas.size() == 1)) && condRet == null) {
       return Collections.emptyList();
@@ -222,6 +228,13 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   public static boolean isReturnKeyword(@NotNull PsiElement element) {
     // Don't check for PsiKeyword to cover many languages at once.
     return element instanceof LeafElement && element.getText().equals("return");
+  }
+
+  public static boolean canStopOnConditionalReturn(@NotNull PsiFile file) {
+    // We haven't implemented Dalvik bytecode parsing yet.
+    Module module = ModuleUtilCore.findModuleForFile(file);
+    return module != null &&
+           !ContainerUtil.exists(FacetManager.getInstance(module).getAllFacets(), f -> f.getName().equals("Android"));
   }
 
   public boolean matchesPosition(@NotNull LineBreakpoint<?> breakpoint, @NotNull SourcePosition position) {
