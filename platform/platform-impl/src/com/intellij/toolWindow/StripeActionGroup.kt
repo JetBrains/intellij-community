@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -223,7 +224,10 @@ private open class TogglePinActionBase(val toolWindowId: String): DumbAwareActio
 private class TogglePinAction(toolWindowId: String): TogglePinActionBase(toolWindowId), KeepingPopupOpenAction {
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.icon = getPinIcon(Toggleable.isSelected(e.presentation))
+    val pinned = Toggleable.isSelected(e.presentation)
+    e.presentation.icon = AllIcons.Toolbar.Pin
+    e.presentation.selectedIcon = getPinIcon(pinned)
+    e.presentation.putClientProperty(ActionMenu.ALWAYS_VISIBLE, pinned)
   }
 }
 
