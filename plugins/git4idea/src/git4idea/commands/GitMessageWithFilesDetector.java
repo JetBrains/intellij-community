@@ -19,19 +19,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * The listener of {@link GitLineHandler} which watches Git output and detects some message in console,
  * captures the following list of files and stops saving them when another message occurs.
- *
+ * <p>
  * For example, the situation, when local changes would be overwritten by checkout.
  *
  * @see GitSimpleEventDetector
@@ -53,18 +52,21 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
 
   @Override
   public void onLineAvailable(@NotNull String line, @NotNull Key outputType) {
-    if (line.contains(myEvent.messageStartMarker)) {
+    if (ContainerUtil.exists(myEvent.messageStartMarkers, marker -> marker.matcher(line).matches())) {
       LOG.debug("|" + myEvent.name + "| message start marker detected in [" + line + "]" + "of type " + outputType);
       myMessageDetected = true;
       myMessageOutputType = outputType;
+      return;
     }
-    else if (line.contains(myEvent.messageEndMarker)) {
+    if (ContainerUtil.exists(myEvent.messageEndMarkers, marker -> marker.matcher(line).matches())) {
       LOG.debug("|" + myEvent.name + "| message end marker detected in [" + line + "]" + "of type " + outputType);
       myMessageOutputType = null;
+      return;
     }
-    else if (outputType.equals(myMessageOutputType)) {
+    if (outputType.equals(myMessageOutputType)) {
       LOG.debug("|" + myEvent.name + "| Treating as a file: [" + line + "]" + "of type " + outputType);
       myAffectedFiles.add(line.trim());
+      return;
     }
     else {
       LOG.debug("|" + myEvent.name + "| Plain message: [" + line + "]" + "of type " + outputType);
@@ -85,7 +87,7 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
   public Set<String> getRelativeFilePaths() {
     return myAffectedFiles;
   }
-  
+
   @NotNull
   public Collection<VirtualFile> getFiles() {
     Collection<VirtualFile> files = new ArrayList<>(myAffectedFiles.size());
@@ -100,13 +102,15 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
 
   public static class Event {
     @NotNull private final @NonNls String name;
-    @NotNull private final @NonNls String messageStartMarker;
-    @NotNull private final @NonNls String messageEndMarker;
+    @NotNull private final List<Pattern> messageStartMarkers;
+    @NotNull private final List<Pattern> messageEndMarkers;
 
-    Event(@NotNull @NonNls String eventName, @NotNull @NonNls String messageStartMarker, @NotNull @NonNls String messageEndMarker) {
+    Event(@NotNull @NonNls String eventName,
+          @NotNull List<Pattern> messageStartMarkers,
+          @NotNull List<Pattern> messageEndMarkers) {
       name = eventName;
-      this.messageStartMarker = messageStartMarker;
-      this.messageEndMarker = messageEndMarker;
+      this.messageStartMarkers = messageStartMarkers;
+      this.messageEndMarkers = messageEndMarkers;
     }
   }
 }
