@@ -378,7 +378,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     else {
       editorOffset = -1;
     }
-    int[] stage = {1, 0}; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
+    int[] stage = {1, 0, 0}; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
     TreePath[] deepestPath = {null};
     TreeVisitor visitor = path -> StructureViewComponent.visitPathForElementSelection(path, element, editorOffset, stage, deepestPath);
     Function<TreePath, Promise<TreePath>> action = path -> {
@@ -398,7 +398,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
         }
         else {
           TreePath adjusted = path == null ? deepestPath[0] : path;
-          if (path == null && adjusted != null && element instanceof PsiElement) {
+          if (path == null && adjusted != null && stage[2] == 0 && element instanceof PsiElement) {
             Object minChild = findClosestPsiElement((PsiElement)element, adjusted, myAsyncTreeModel);
             if (minChild != null) adjusted = adjusted.pathByAddingChild(minChild);
           }

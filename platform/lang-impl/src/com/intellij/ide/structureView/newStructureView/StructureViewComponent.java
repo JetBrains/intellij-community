@@ -439,7 +439,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       editorOffset = -1;
     }
     AsyncPromise<TreePath> result = myCurrentFocusPromise = new AsyncPromise<>();
-    int[] stage = {1, 0}; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
+    int[] stage = {1, 0, 0}; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
     TreePath[] deepestPath = {null};
     TreeVisitor visitor = new TreeVisitor() {
       @Override
@@ -500,11 +500,13 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
    * its children are skipped. However, some structure views (MarkdownStructureViewModel)
    * actually have custom grouping that can group unrelated PSI elements into a common node,
    * so a second pass is done if no element was found during the first pass. To indicate the current
-   * stage, the {@code stage} parameter is passed, containing two values: the first is the current
+   * stage, the {@code stage} parameter is passed, containing three values: the first is the current
    * stage (1 - first pass, but no skipped children yet; 2 - first pass, and some children were skipped;
-   * 3 - the second pass with optimization disabled), and the second value is used to store the length
-   * of the longest tree path found so far. The corresponding value is stored into the {@code deepestPath}
-   * parameter.
+   * 3 - the second pass with optimization disabled), the second value is used to store the length
+   * of the longest tree path found so far, and the last value indicates whether it's a good match
+   * (equal to the element we're looking for, or its canRepresent method returns true, etc.)
+   * or just the closest ancestor (1 - good match, 0 - ancestor).
+   * The corresponding value itself is stored into the {@code deepestPath} parameter.
    * </p>
    *
    * @param path         the path to visit
@@ -528,15 +530,17 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     // Even if they are equal, or node.canRepresent(element), we still need to go deeper,
     // because there may be a better match down there that's not a PSI element,
     // for example, a folding region inside the class represented by the element.
-    boolean isAncestor =
+    boolean isGoodMatch =
       Comparing.equal(value, element) ||
       userObject instanceof AbstractTreeNode<?> node && node.canRepresent(element) ||
-      value instanceof PsiElement valPsi && element instanceof PsiElement elPsi && PsiTreeUtil.isAncestor(valPsi, elPsi, true) ||
       value instanceof CustomRegionTreeElement region && region.containsOffset(editorOffset);
+    boolean isAncestor = isGoodMatch ||
+      value instanceof PsiElement valPsi && element instanceof PsiElement elPsi && PsiTreeUtil.isAncestor(valPsi, elPsi, true);
     if (isAncestor) {
       int count = path.getPathCount();
       if (stage[1] == 0 || stage[1] < count) {
         stage[1] = count;
+        stage[2] = isGoodMatch ? 1 : 0;
         deepestPath[0] = path;
       }
     }
