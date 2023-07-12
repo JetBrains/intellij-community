@@ -30,13 +30,12 @@ import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.findMissedClasses;
-import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.oneOfUnconditional;
 
 final class PatternHighlightingModel {
   private static final Logger LOG = Logger.getInstance(PatternHighlightingModel.class);
 
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
-  public static final int MAX_ITERATION_COVERAGE = 1_000;
+  private static final int MAX_ITERATION_COVERAGE = 1_000;
 
   static void createDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern, @NotNull HighlightInfoHolder holder) {
     if (deconstructionPattern == null) return;
@@ -223,11 +222,13 @@ final class PatternHighlightingModel {
    * This method tries to rewrite the existing set of patterns to equivalent
    */
   @NotNull
-  static RecordExhaustivenessResult checkRecordPatternExhaustivenessForDescription(@NotNull List<PatternDescription> elements,
+  static RecordExhaustivenessResult checkRecordPatternExhaustivenessForDescription(@NotNull List<? extends PatternDescription> elements,
                                                                                    @NotNull PsiType targetType,
                                                                                    @NotNull PsiElement context) {
     List<PatternDeconstructionDescription> descriptions =
-      ContainerUtil.filterIsInstance(elements, PatternDeconstructionDescription.class);
+      StreamEx.of(elements).select(PatternDeconstructionDescription.class)
+        .filter(element -> TypeConversionUtil.areTypesConvertible(element.type(), targetType))
+        .toList();
 
     if (descriptions.isEmpty()) {
       return RecordExhaustivenessResult.createNotBeAdded();
@@ -279,6 +280,29 @@ final class PatternHighlightingModel {
     }
     LOG.error("The number of iteration is exceeded, length of set patterns: " + patterns.size());
     return new ReduceResult(currentPatterns, changed);
+  }
+
+  @NotNull
+  static List<PatternTypeTestDescription> reduceToTypeTest(@NotNull List<? extends PatternDescription> elements,
+                                                           @NotNull PsiElement context) {
+    List<PatternTypeTestDescription> reducedToTypeTest = new ArrayList<>();
+    List<PatternDeconstructionDescription> deconstructionDescriptions = new ArrayList<>();
+    for (PatternDescription element : elements) {
+      if (element instanceof PatternTypeTestDescription typeTestDescription) {
+        reducedToTypeTest.add(typeTestDescription);
+      }
+      if(element instanceof PatternDeconstructionDescription deconstructionDescription) {
+        deconstructionDescriptions.add(deconstructionDescription);
+      }
+    }
+    Map<PsiType, List<PatternDeconstructionDescription>> groupedByType =
+      deconstructionDescriptions.stream().collect(Collectors.groupingBy(t -> t.type()));
+    for (Map.Entry<PsiType, List<PatternDeconstructionDescription>> entry : groupedByType.entrySet()) {
+      if (checkRecordPatternExhaustivenessForDescription(entry.getValue(), entry.getKey(), context).isExhaustive()) {
+        reducedToTypeTest.add(new PatternTypeTestDescription(entry.getKey()));
+      }
+    }
+    return reducedToTypeTest;
   }
 
   record ReduceResultCacheContext(@NotNull PsiType selectorType,
@@ -347,6 +371,7 @@ final class PatternHighlightingModel {
       .groupingBy(t -> t.type(), Collectors.toSet());
     Set<PatternDescription> toRemove = new HashSet<>();
     Set<PatternDescription> toAdd = new HashSet<>();
+    Map<PsiType, List<PsiType>> componentCaches = new HashMap<>();
     for (Map.Entry<PsiType, Set<PatternDeconstructionDescription>> entry : byType.entrySet()) {
       Set<PatternDeconstructionDescription> descriptions = entry.getValue();
       if (descriptions.isEmpty()) {
@@ -354,13 +379,7 @@ final class PatternHighlightingModel {
       }
       PatternDeconstructionDescription first = descriptions.iterator().next();
       for (int i = 0; i < first.list().size(); i++) {
-        MultiMap<List<PatternDescription>, PatternDeconstructionDescription> groupWithoutOneComponent = new MultiMap<>();
-        for (PatternDeconstructionDescription description : descriptions) {
-          if (description.list().size() <= i) {
-            return new ReduceResult(patterns, false);
-          }
-          groupWithoutOneComponent.putValue(getWithoutComponent(description, i), description);
-        }
+        MultiMap<List<PatternDescription>, PatternDeconstructionDescription> groupWithoutOneComponent = getGroupWithoutOneComponent(descriptions, i);
 
         for (Map.Entry<List<PatternDescription>, Collection<PatternDeconstructionDescription>> value :
           groupWithoutOneComponent.entrySet()) {
@@ -372,11 +391,16 @@ final class PatternHighlightingModel {
           Set<PatternDescription> nestedDescriptions = setWithOneDifferentElement.stream()
             .map(t -> t.list().get(finalI))
             .collect(Collectors.toSet());
-          List<PsiType> types = getComponentTypes(context, entry.getKey());
-          if (types == null || types.size() <= i) {
+          PsiType recordType = entry.getKey();
+          List<PsiType> componentTypes = componentCaches.get(recordType);
+          if (componentTypes == null) {
+            componentTypes = getComponentTypes(context, recordType);
+            componentCaches.put(recordType, componentTypes);
+          }
+          if (componentTypes == null || componentTypes.size() <= i) {
             continue;
           }
-          ReduceResult result = reduceInLoop(types.get(i), context, nestedDescriptions, (set, type) -> false, cache);
+          ReduceResult result = reduceInLoop(componentTypes.get(i), context, nestedDescriptions, (set, type) -> false, cache);
           if (result.changed()) {
             changed = true;
             toRemove.addAll(setWithOneDifferentElement);
@@ -451,7 +475,7 @@ final class PatternHighlightingModel {
         for (int i = 0; i < recordComponentTypes.size(); i++) {
           PsiType recordComponentType = recordComponentTypes.get(i);
           PsiType descriptionComponentType = descriptionTypes.get(i);
-          if (!oneOfUnconditional(descriptionComponentType, recordComponentType)) {
+          if (!SwitchBlockHighlightingModel.oneOfUnconditional(descriptionComponentType, recordComponentType)) {
             allCovered = false;
             break;
           }
@@ -527,28 +551,13 @@ final class PatternHighlightingModel {
   private static ReduceResult reduceClassesInner(@NotNull Set<? extends PatternDescription> patterns,
                                                  @NotNull PsiType selectorType,
                                                  @NotNull PsiElement context) {
-    boolean changed = false;
     Set<PatternTypeTestDescription> typeTestDescriptions =
       StreamEx.of(patterns).select(PatternTypeTestDescription.class).collect(Collectors.toSet());
     Set<PatternTypeTestDescription> toAdd = new HashSet<>();
     Set<PsiType> existedTypes = typeTestDescriptions.stream().map(t -> t.type()).collect(Collectors.toSet());
     Set<PsiClass> visitedCovered =
       findMissedClasses(selectorType, new ArrayList<>(typeTestDescriptions), new ArrayList<>(), context).coveredClasses();
-    for (PsiClass covered : visitedCovered) {
-      PsiClassType classType = TypeUtils.getType(covered);
-      if (!existedTypes.contains(classType)) {
-        if (oneOfUnconditional(selectorType, classType)) {
-          toAdd.add(new PatternTypeTestDescription(classType));
-          changed = true;
-        }
-        //find something upper. let's change to selectorType
-        if (oneOfUnconditional(classType, selectorType)) {
-          toAdd.add(new PatternTypeTestDescription(selectorType));
-          changed = true;
-          break;
-        }
-      }
-    }
+    boolean changed = addNewClasses(selectorType, visitedCovered, existedTypes, toAdd);
     if (!changed) {
       return new ReduceResult(patterns, false);
     }
@@ -559,10 +568,50 @@ final class PatternHighlightingModel {
     return new ReduceResult(newPatterns, true);
   }
 
+  private static boolean addNewClasses(@NotNull PsiType selectorType,
+                                       @NotNull Set<PsiClass> visitedCovered,
+                                       @NotNull Set<PsiType> existedTypes,
+                                       @NotNull Collection<PatternTypeTestDescription> toAdd) {
+    boolean changed = false;
+    for (PsiClass covered : visitedCovered) {
+      PsiClassType classType = TypeUtils.getType(covered);
+      if (!existedTypes.contains(classType)) {
+        if (SwitchBlockHighlightingModel.oneOfUnconditional(selectorType, classType)) {
+          toAdd.add(new PatternTypeTestDescription(classType));
+          changed = true;
+        }
+        //find something upper. let's change to selectorType
+        if (SwitchBlockHighlightingModel.oneOfUnconditional(classType, selectorType)) {
+          toAdd.add(new PatternTypeTestDescription(selectorType));
+          changed = true;
+          break;
+        }
+      }
+    }
+    return changed;
+  }
+
+  @NotNull
+  private static MultiMap<List<PatternDescription>, PatternDeconstructionDescription> getGroupWithoutOneComponent(
+    @NotNull Set<? extends PatternDescription> combinedPatterns,
+    int i) {
+    MultiMap<List<PatternDescription>, PatternDeconstructionDescription> groupWithoutOneComponent = new MultiMap<>();
+    for (PatternDescription description : combinedPatterns) {
+      if (!(description instanceof PatternDeconstructionDescription deconstructionDescription)) {
+        continue;
+      }
+      if (deconstructionDescription.list().size() <= i) {
+        continue;
+      }
+      groupWithoutOneComponent.putValue(getWithoutComponent(deconstructionDescription, i), deconstructionDescription);
+    }
+    return groupWithoutOneComponent;
+  }
+
   private static boolean coverSelectorType(@NotNull Set<? extends PatternDescription> patterns,
                                            @NotNull PsiType selectorType) {
     for (PatternDescription pattern : patterns) {
-      if (pattern instanceof PatternTypeTestDescription && oneOfUnconditional(pattern.type(), selectorType)) {
+      if (pattern instanceof PatternTypeTestDescription && SwitchBlockHighlightingModel.oneOfUnconditional(pattern.type(), selectorType)) {
         return true;
       }
     }
@@ -594,7 +643,7 @@ final class PatternHighlightingModel {
   }
 
   record PatternDeconstructionDescription(@NotNull PsiType type,
-                                          @NotNull List<PatternDescription> list)
+                                          @NotNull List<? extends PatternDescription> list)
     implements PatternDescription {
     PatternDeconstructionDescription createFor(int element, PatternDescription pattern) {
       ArrayList<PatternDescription> descriptions = new ArrayList<>(list);
@@ -614,7 +663,7 @@ final class PatternHighlightingModel {
       canBeAdded = added;
     }
 
-    public Map<PsiType, Set<List<PsiType>>> getMissedBranchesByType() {
+    Map<PsiType, Set<List<PsiType>>> getMissedBranchesByType() {
       Map<PsiType, Set<List<PsiType>>> result = new HashMap<>();
       for (Map.Entry<PsiType, Set<List<PsiType>>> missedBranches : missedBranchesByType.entrySet()) {
         Set<List<PsiType>> branchSet = new HashSet<>();
@@ -628,15 +677,15 @@ final class PatternHighlightingModel {
       return result;
     }
 
-    public boolean isExhaustive() {
+    boolean isExhaustive() {
       return isExhaustive;
     }
 
-    public boolean canBeAdded() {
+    boolean canBeAdded() {
       return canBeAdded;
     }
 
-    public void merge(RecordExhaustivenessResult result) {
+    void merge(RecordExhaustivenessResult result) {
       if (!this.isExhaustive && !this.canBeAdded) {
         return;
       }
@@ -660,7 +709,7 @@ final class PatternHighlightingModel {
       }
     }
 
-    public void addNextType(PsiType recordType, PsiType nextClass) {
+    void addNextType(PsiType recordType, PsiType nextClass) {
       if (!this.canBeAdded) {
         return;
       }
@@ -673,9 +722,9 @@ final class PatternHighlightingModel {
       }
     }
 
-    public void addNewBranch(@NotNull PsiType recordType,
-                             @Nullable PsiType classForNextBranch,
-                             @NotNull List<? extends PsiType> types) {
+    void addNewBranch(@NotNull PsiType recordType,
+                      @Nullable PsiType classForNextBranch,
+                      @NotNull List<? extends PsiType> types) {
       if (!this.canBeAdded) {
         return;
       }

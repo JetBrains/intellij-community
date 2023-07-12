@@ -454,19 +454,16 @@ public class SwitchBlockHighlightingModel {
     return sealedUpperClasses;
   }
 
-  private static @NotNull LinkedHashMap<PsiClass, PsiType> findPermittedClasses(@NotNull List<PatternDescription> elements) {
-    LinkedHashMap<PsiClass, PsiType> patternClasses = new LinkedHashMap<>();
+  private static @NotNull MultiMap<PsiClass, PsiType> findPermittedClasses(@NotNull List<PatternTypeTestDescription> elements) {
+    MultiMap<PsiClass, PsiType> patternClasses = new MultiMap<>();
     for (PatternDescription element : elements) {
-      if (element instanceof PatternDeconstructionDescription) {
-        continue;
-      }
       PsiType patternType = element.type();
       PsiClass patternClass = PsiUtil.resolveClassInClassTypeOnly(patternType);
       if (patternClass != null) {
-        patternClasses.put(patternClass, patternType);
+        patternClasses.putValue(patternClass, element.type());
         Set<PsiClass> classes = returnAllPermittedClasses(patternClass);
         for (PsiClass aClass : classes) {
-          patternClasses.put(aClass, patternType);
+          patternClasses.putValue(aClass, element.type());
         }
       }
     }
@@ -524,7 +521,7 @@ public class SwitchBlockHighlightingModel {
    * @return the container of missed and covered classes (may contain classes outside the selector type hierarchy)
    */
   static @NotNull SealedResult findMissedClasses(@NotNull PsiType selectorType,
-                                                 @NotNull List<PatternDescription> elements,
+                                                 @NotNull List<? extends PatternDescription> elements,
                                                  @NotNull List<PsiEnumConstant> enumConstants,
                                                  @NotNull PsiElement context) {
     //Used to keep dependencies. The last dependency is one of the selector types.
@@ -535,8 +532,8 @@ public class SwitchBlockHighlightingModel {
     Set<PsiClass> visitedNotCovered = new HashSet<>();
     Set<PsiClass> missingClasses = new LinkedHashSet<>();
 
-    LinkedHashMap<PsiClass, PsiType> permittedPatternClasses = findPermittedClasses(elements);
-    //according JEP 440-441 only direct abstract sealed classes are allowed (14.11.1.1)
+    MultiMap<PsiClass, PsiType> permittedPatternClasses = findPermittedClasses(reduceToTypeTest(elements, context));
+    //according JEP 440-441 only direct abstract-sealed classes are allowed (14.11.1.1)
     Set<PsiClass> sealedUpperClasses = findSealedUpperClasses(permittedPatternClasses.keySet());
 
     List<PatternTypeTestDescription> typeTestPatterns = ContainerUtil.filterIsInstance(elements, PatternTypeTestDescription.class);
@@ -563,16 +560,19 @@ public class SwitchBlockHighlightingModel {
           //used to generate missed classes when the switch is empty
           (selectorClasses.contains(psiClass) && elements.isEmpty())) {
         for (PsiClass permittedClass : PatternsInSwitchBlockHighlightingModel.getPermittedClasses(psiClass)) {
-          PsiType patternType = permittedPatternClasses.get(permittedClass);
+          Collection<PsiType> patternTypes = permittedPatternClasses.get(permittedClass);
           PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(selectorClass, permittedClass, PsiSubstitutor.EMPTY);
           PsiType permittedType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, substitutor);
-          if (patternType == null && TypeConversionUtil.areTypesConvertible(selectorType, permittedType) ||
-              patternType != null && !oneOfUnconditional(patternType, TypeUtils.getType(permittedClass))) {
+          //if we don't have patternType and tree goes away from a target type, let's skip it
+          if (patternTypes.isEmpty() && TypeConversionUtil.areTypesConvertible(selectorType, permittedType) ||
+              //if permittedClass is covered by existed patternType, we don't have to go further
+              !patternTypes.isEmpty() && !ContainerUtil.exists(patternTypes,
+                                    patternType -> oneOfUnconditional(patternType, TypeUtils.getType(permittedClass)))) {
             List<PsiClass> dependentClasses = new ArrayList<>(peeked.dependencies);
             dependentClasses.add(permittedClass);
             nonVisited.add(new ClassWithDependencies(permittedClass, dependentClasses));
           } else {
-            if (patternType != null) {
+            if (!patternTypes.isEmpty()) {
               coveredClasses.addAll(peeked.dependencies);
             }
           }
@@ -586,8 +586,7 @@ public class SwitchBlockHighlightingModel {
             oneOfUnconditional(targetType, selectorType)) {
           if (//check if it is an enum and it is covered by all enums
             !(psiClass.isEnum() && findMissingEnumConstant(psiClass, enumConstants).isEmpty()) &&
-            //check if it is a record, and it is covered by record patterns (deconstruction)
-            !(psiClass.isRecord() && checkRecordPatternExhaustivenessForDescription(elements, targetType, context).isExhaustive()) &&
+            //check if it is a record, and it is covered by record patterns was done before
             //check a case, when we have something, which not in sealed hierarchy, but covers some leaves
             !ContainerUtil.exists(typeTestPatterns, pattern -> oneOfUnconditional(pattern.type(), targetType))) {
             missingClasses.add(psiClass);

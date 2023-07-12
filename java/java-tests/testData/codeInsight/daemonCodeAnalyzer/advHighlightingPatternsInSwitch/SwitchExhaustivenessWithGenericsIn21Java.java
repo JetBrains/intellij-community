@@ -77,4 +77,29 @@ class Main {
       case E e -> 43;
     };
   }
+
+  class NestedGenerics {
+
+    sealed interface JB {
+    }
+
+    record A<X>(X x) implements JB {
+    }
+
+    record Wrap(A<String> a) implements JB {
+      static void main(JB jb) {
+        switch (jb) {
+          case A<?>(var x) -> System.out.println(x);
+          case Wrap(A(String s)) -> System.out.println(s);
+        }
+      }
+
+      static void main2(JB jb) {
+        switch (<error descr="'switch' statement does not cover all possible input values">jb</error>) {
+          case A<?>(var x) -> System.out.println(x);
+          case Wrap(A<?>(String s)) -> System.out.println(s);
+        }
+      }
+    }
+  }
 }
