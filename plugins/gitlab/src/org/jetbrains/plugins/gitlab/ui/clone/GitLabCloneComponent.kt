@@ -14,14 +14,10 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
-import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.childScope
-import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.plus
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import javax.swing.JComponent
 
@@ -40,8 +36,10 @@ internal class GitLabCloneComponent(
       val innerCs = this
       when (vm) {
         is GitLabCloneLoginViewModel -> GitLabCloneLoginComponentFactory.create(innerCs, vm, uiSelectorVm)
-        is GitLabCloneRepositoriesViewModel -> GitLabCloneRepositoriesComponentFactory.create(project, innerCs, vm, uiSelectorVm).apply {
-          registerValidators(innerCs.nestedDisposable())
+        is GitLabCloneRepositoriesViewModel -> GitLabCloneRepositoriesComponentFactory.create(
+          project, innerCs, vm, uiSelectorVm
+        ).also { panel ->
+          panel.registerValidators(innerCs.nestedDisposable())
 
           innerCs.launchNow {
             vm.selectedUrl.collectLatest { selectedUrl ->
@@ -54,6 +52,11 @@ internal class GitLabCloneComponent(
             vm.accountsUpdatedRequest.collectLatest {
               dialogStateListener.onListItemChanged()
             }
+          }
+
+          innerCs.launch {
+            yield()
+            CollaborationToolsUIUtil.focusPanel(panel)
           }
         }
       }
@@ -83,9 +86,6 @@ internal class GitLabCloneComponent(
 
   override fun onComponentSelected() {
     dialogStateListener.onOkActionNameChanged(DvcsBundle.message("clone.button"))
-  }
-
-  override fun getPreferredFocusedComponent(): JComponent? {
-    return UIUtil.findComponentOfType(wrapper.targetComponent, SearchTextField::class.java)
+    CollaborationToolsUIUtil.focusPanel(wrapper.targetComponent)
   }
 }
