@@ -32,7 +32,7 @@ public interface BrowsableTargetEnvironmentType {
   /**
    * @param textComponentAccessor where path should be set. See {@link TextComponentAccessor#TEXT_FIELD_WHOLE_TEXT}
    * @param component             text field component
-   * @param configurationSupplier returns environment configuration
+   * @param configurationSupplier returns environment configuration that must be supported by this configuration type
    * @param targetBrowserHints    various hints target may or may not obey
    * @return Action listener should be installed on "browse" button you want to show target FS browser.
    */

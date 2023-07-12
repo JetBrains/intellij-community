@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("Foo")
+
 package com.intellij.execution.wsl.ui
 
 import com.intellij.execution.wsl.WSLDistribution
@@ -11,6 +13,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
 
+private val logger = Logger.getInstance("WslPathBrowser")
 
 /**
  * User enters [linuxPath] on [distro] and this function returns Windows to open in file browser.
@@ -22,7 +25,6 @@ fun getBestWindowsPathFromLinuxPath(distro: WSLDistribution, linuxPath: String):
 
   @Suppress("NAME_SHADOWING")
   val linuxPath = linuxPath.trim()
-  val logger = Logger.getInstance(WslPathBrowser::class.java)
   logger.info("Open $linuxPath in ${distro.getUNCRootPath()}${FileUtil.toSystemDependentName(FileUtil.normalize(linuxPath))}")
   distro.getWindowsPath(linuxPath).let {
     var fileName: String? = it
