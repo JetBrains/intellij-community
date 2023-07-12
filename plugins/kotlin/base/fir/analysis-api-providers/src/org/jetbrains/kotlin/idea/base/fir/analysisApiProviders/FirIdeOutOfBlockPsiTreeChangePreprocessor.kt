@@ -12,6 +12,7 @@ import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.getNonLocalReanalyzableContainingDeclaration
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.invalidateAfterInBlockModification
+import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.util.module
@@ -28,7 +29,7 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
         }
 
         if (event.isGlobalChange()) {
-            FirIdeOutOfBlockModificationService.getInstance(project).publishGlobalOutOfBlockModification()
+            FirIdeOutOfBlockModificationService.getInstance(project).publishGlobalSourceOutOfBlockModification()
             return
         }
 
@@ -105,11 +106,18 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
         }
     }
 
-    // Copy logic from PsiModificationTrackerImpl.treeChanged(). Some out-of-code-block events are written to language modification
-    // tracker in PsiModificationTrackerImpl but don't have correspondent PomModelEvent. Increase kotlinOutOfCodeBlockTracker
-    // manually if needed.
+    /**
+     * The logic for detecting global changes is taken from [PsiModificationTrackerImpl], with the following difference.
+     *
+     * We don't want to publish any global out-of-block modification on roots changes, because relevant roots changes already cause module
+     * state modification events. Such a module state modification event includes the exact module that was affected by the roots change,
+     * instead of a less specific global out-of-block modification event. This allows a consumer such as session invalidation to invalidate
+     * sessions more granularly. Additionally, many roots changes don't require any event to be published because a corresponding [KtModule]
+     * does not exist for the changed module (e.g. when no content roots have been added yet), so roots changes [PsiTreeChangeEvent]s are
+     * overzealous, while the module state modification service can handle such cases gracefully.
+     */
     private fun PsiTreeChangeEventImpl.isGlobalChange() = when (code) {
-        PsiEventType.PROPERTY_CHANGED -> propertyName === PsiTreeChangeEvent.PROP_UNLOADED_PSI || propertyName === PsiTreeChangeEvent.PROP_ROOTS
+        PsiEventType.PROPERTY_CHANGED -> propertyName === PsiTreeChangeEvent.PROP_UNLOADED_PSI
         PsiEventType.CHILD_MOVED -> oldParent is PsiDirectory || newParent is PsiDirectory
         else -> parent is PsiDirectory
     }

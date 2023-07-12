@@ -60,7 +60,7 @@ internal class FirIdeOutOfBlockModificationService(val project: Project) : Dispo
         projectOutOfBlockModificationTracker.incModificationCount()
     }
 
-    fun publishGlobalOutOfBlockModification() {
+    fun publishGlobalSourceOutOfBlockModification() {
         projectOutOfBlockModificationTracker.incModificationCount()
 
         // We should not invalidate binary module content here, because global PSI tree changes have no effect on binary modules.
