@@ -62,7 +62,6 @@ public final class ThreadLeakTracker {
       "AWT-EventQueue-",
       "AWT-Shutdown",
       "AWT-Windows",
-      "BaseDataReader", // com.intellij.util.io.BaseDataReader.start
       "BatchSpanProcessor_WorkerThread", // io.opentelemetry.sdk.trace.export.BatchSpanProcessor.WORKER_THREAD_NAME
       "Batik CleanerThread",
       "BC Entropy Daemon",
@@ -93,7 +92,6 @@ public final class ThreadLeakTracker {
       "OkHttp ConnectionPool", // Dockers okhttp3.internal.connection.RealConnectionPool
       "Okio Watchdog", // Dockers "okio.AsyncTimeout.Watchdog"
       "Periodic tasks thread", // com.intellij.util.concurrency.AppDelayQueue.TransferThread
-      "ProcessWaitFor",
       "rd throttler", // daemon thread created by com.jetbrains.rd.util.AdditionalApiKt.getTimer
       "Reference Handler",
       "RMI GC Daemon",
