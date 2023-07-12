@@ -5,7 +5,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampl
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.openapi.observable.util.bindBooleanStorage
@@ -34,7 +33,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
     override fun createStep(parent: KotlinNewProjectWizard.Step): NewProjectWizardStep =
         Step(parent)
-            .nextStep(::AssetsStep)
+            //.nextStep(::AssetsStep)
 
     class Step(parent: KotlinNewProjectWizard.Step) :
         GradleNewProjectWizardStep<KotlinNewProjectWizard.Step>(parent),
@@ -121,6 +120,11 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         }
     }
 
+    /* This step is temporarily disabled due to the Kotlin multiplatform wizard not using this step.
+     * Instead, we will add the GradleW assets in a pipeline phase that is used by both the Kotlin new project
+     * and Multiplatform wizard.
+     * This should be reverted once the Kotlin Multiplatform wizard has been removed.
+     */
     private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
 
         override fun setupAssets(project: Project) {

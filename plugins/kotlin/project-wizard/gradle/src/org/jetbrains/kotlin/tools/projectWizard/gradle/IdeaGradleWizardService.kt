@@ -44,7 +44,7 @@ internal class IdeaGradleWizardService(private val project: Project) : ProjectIm
             settings.distributionType = DistributionType.LOCAL
             settings.gradleHome = gradleHome
         } else {
-            settings.distributionType = DistributionType.WRAPPED
+            settings.distributionType = DistributionType.DEFAULT_WRAPPED
         }
 
         try {
