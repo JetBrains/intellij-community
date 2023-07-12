@@ -32,15 +32,15 @@ interface JetBrainsClientDownloaderConfigurationProvider {
   companion object {
     const val THIN_CLIENT_DOWNLOAD_URL_KEY = "THIN_CLIENT_DOWNLOAD_URL"
     val thinClientDownloadUrlValue: String?
-      get() = System.getenv()[THIN_CLIENT_DOWNLOAD_URL_KEY]
+      get() = System.getenv(THIN_CLIENT_DOWNLOAD_URL_KEY)
 
     const val THIN_CLIENT_VERIFY_SIGNATURE_KEY = "THIN_CLIENT_VERIFY_SIGNATURE"
     val thinClientVerifySignatureValue: Boolean?
-      get() = System.getenv()[THIN_CLIENT_VERIFY_SIGNATURE_KEY]?.toBoolean()
+      get() = System.getenv(THIN_CLIENT_VERIFY_SIGNATURE_KEY)?.toBoolean()
 
     const val THIN_CLIENT_DOWNLOAD_LATEST_BUILD_FROM_CDN_FOR_SNAPSHOT_KEY = "THIN_CLIENT_DOWNLOAD_LATEST_BUILD_FROM_CDN_FOR_SNAPSHOT"
     val thinClientDownloadLatestBuildFromCDNForSnapshotValue: Boolean?
-      get() = System.getenv()[THIN_CLIENT_DOWNLOAD_LATEST_BUILD_FROM_CDN_FOR_SNAPSHOT_KEY]?.toBoolean()
+      get() = System.getenv(THIN_CLIENT_DOWNLOAD_LATEST_BUILD_FROM_CDN_FOR_SNAPSHOT_KEY)?.toBoolean()
 
     val customPropertiesAreSet
       get() = thinClientDownloadUrlValue != null && thinClientDownloadLatestBuildFromCDNForSnapshotValue != null && thinClientVerifySignatureValue != null
