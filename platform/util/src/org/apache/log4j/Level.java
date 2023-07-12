@@ -18,7 +18,15 @@
 // Contributors:  Kitching Simon <Simon.Kitching@orange.ch>
 //                Nicholas Wolff
 
+// Copied from http://svn.apache.org/repos/asf/logging/log4j/tags/v1_2_17/src/main/java/org/apache/log4j/Level.java
+// Modified by JetBrains s.r.o.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.apache.log4j;
+
+import com.intellij.openapi.diagnostic.LogLevel;
+import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -26,6 +34,13 @@ import java.io.ObjectStreamException;
 import java.io.Serializable;
 
 /**
+ * @deprecated IntelliJ Platform no longer uses Log4j as the logging framework
+ * <p>
+ * Copy of {@code org.apache.log4j.Level} to let clients use {@link Logger#setLevel(LogLevel)}
+ * without explicit dependency on Log4J library.
+ * Otherwise, as {@link Logger#setLevel(LogLevel)} is an overload of {@link Logger#setLevel(Level)},
+ * clients calling {@link Logger#setLevel(LogLevel)} would need to have {@code org.apache.log4j.Level} in classpath.
+
    Defines the minimum set of levels recognized by the system, that is
    <code>OFF</code>, <code>FATAL</code>, <code>ERROR</code>,
    <code>WARN</code>, <code>INFO</code, <code>DEBUG</code> and
@@ -37,6 +52,10 @@ import java.io.Serializable;
    @author Ceki G&uuml;lc&uuml;
 
  */
+@Deprecated
+@ApiStatus.ScheduledForRemoval
+@SuppressWarnings({"UnstableApiUsage", "UnnecessarilyQualifiedStaticUsage", "SerialVersionUIDWithWrongSignature",
+  "StringToUpperCaseOrToLowerCaseWithoutLocale", "UnnecessaryUnicodeEscape", "ConstantValue"})
 public class Level extends Priority implements Serializable {
 
    /**
