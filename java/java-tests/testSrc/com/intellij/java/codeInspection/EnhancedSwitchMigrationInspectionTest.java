@@ -12,8 +12,10 @@ import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTes
 public class EnhancedSwitchMigrationInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
+    EnhancedSwitchMigrationInspection inspection = new EnhancedSwitchMigrationInspection();
+    inspection.myMaxNumberStatementsForBranch = 20;
     return new LocalInspectionTool[]{
-      new EnhancedSwitchMigrationInspection()
+      inspection
     };
   }
 
