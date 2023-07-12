@@ -4,15 +4,20 @@ package com.jetbrains.python.console;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 public final class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll {
   public static final String CONSOLE_SETTINGS_HELP_REFERENCE = "reference.project.settings.console";
@@ -21,6 +26,22 @@ public final class PyConsoleOptionsConfigurable extends SearchableConfigurable.P
   private PyConsoleOptionsPanel myPanel;
 
   private final Project myProject;
+
+  public enum CodeCompletionOption {
+    RUNTIME("Runtime"),
+    STATIC("Static");
+
+    CodeCompletionOption(@NlsSafe @NotNull String displayName) {
+      myDisplayNameSupplier = () -> displayName;
+    }
+
+    @Override
+    public @Nls String toString() {
+      return myDisplayNameSupplier.get();
+    }
+
+    private final Supplier<@Nls String> myDisplayNameSupplier;
+  }
 
   public PyConsoleOptionsConfigurable(@NotNull Project project) {
     myProject = project;
@@ -138,11 +159,13 @@ public final class PyConsoleOptionsConfigurable extends SearchableConfigurable.P
     private JBCheckBox myShowsVariablesByDefault;
     private JBCheckBox myUseExistingConsole;
     private JBCheckBox myCommandQueueEnabledCheckbox;
-    private JBCheckBox myAutoCompletionEnabledCheckbox;
+    private ComboBox<CodeCompletionOption> myCodeCompletionComboBox;
+    private JBLabel myCodeCompletionLabel;
     private PyConsoleOptions myOptionsProvider;
 
     public JPanel createPanel(PyConsoleOptions optionsProvider) {
       myOptionsProvider = optionsProvider;
+      Arrays.stream(CodeCompletionOption.values()).forEach(e -> myCodeCompletionComboBox.addItem(e));
 
       return myWholePanel;
     }
@@ -153,7 +176,10 @@ public final class PyConsoleOptionsConfigurable extends SearchableConfigurable.P
       myOptionsProvider.setShowVariablesByDefault(myShowsVariablesByDefault.isSelected());
       myOptionsProvider.setUseExistingConsole(myUseExistingConsole.isSelected());
       myOptionsProvider.setCommandQueueEnabled(myCommandQueueEnabledCheckbox.isSelected());
-      myOptionsProvider.setAutoCompletionEnabled(myAutoCompletionEnabledCheckbox.isSelected());
+      Object selectedCodeCompletion = myCodeCompletionComboBox.getSelectedItem();
+      if (selectedCodeCompletion instanceof CodeCompletionOption) {
+        myOptionsProvider.setCodeCompletionOption((CodeCompletionOption)selectedCodeCompletion);
+      }
     }
 
     public void reset() {
@@ -162,7 +188,7 @@ public final class PyConsoleOptionsConfigurable extends SearchableConfigurable.P
       myShowsVariablesByDefault.setSelected(myOptionsProvider.isShowVariableByDefault());
       myUseExistingConsole.setSelected(myOptionsProvider.isUseExistingConsole());
       myCommandQueueEnabledCheckbox.setSelected(myOptionsProvider.isCommandQueueEnabled());
-      myAutoCompletionEnabledCheckbox.setSelected(myOptionsProvider.isAutoCompletionEnabled());
+      myCodeCompletionComboBox.setSelectedItem(myOptionsProvider.getCodeCompletionOption());
     }
 
     public boolean isModified() {
@@ -171,7 +197,7 @@ public final class PyConsoleOptionsConfigurable extends SearchableConfigurable.P
              myShowsVariablesByDefault.isSelected() != myOptionsProvider.isShowVariableByDefault() ||
              myUseExistingConsole.isSelected() != myOptionsProvider.isUseExistingConsole() ||
              myCommandQueueEnabledCheckbox.isSelected() != myOptionsProvider.isCommandQueueEnabled() ||
-             myAutoCompletionEnabledCheckbox.isSelected() != myOptionsProvider.isAutoCompletionEnabled();
+             myCodeCompletionComboBox.getSelectedItem() != myOptionsProvider.getCodeCompletionOption();
     }
   }
 }

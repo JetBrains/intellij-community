@@ -5,8 +5,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.python.console.PyConsoleOptions;
+import com.jetbrains.python.console.PyConsoleOptionsConfigurable;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
@@ -334,6 +335,35 @@ public class PythonConsoleTest extends PyEnvTestCase {
       @Override
       public boolean reportThreadLeaks() {
         return true;
+      }
+    });
+  }
+
+  @Test
+  public void testStaticCodeInside() {
+    runPythonTest(new PyConsoleTask() {
+      @Override
+      public void before() {
+        PyConsoleOptions.getInstance(getProject()).setCodeCompletionOption(PyConsoleOptionsConfigurable.CodeCompletionOption.STATIC);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        exec("def foo():\n" +
+             "  pass");
+        exec("x = 42");
+        exec("s = 'str'");
+
+        getStaticCompletion("x", "foo", "s");
+      }
+
+      private void getStaticCompletion(String... completionVariants) {
+        myFixture.configureFromExistingVirtualFile(getConsoleView().getVirtualFile());
+        myFixture.completeBasic();
+        List<String> completions = myFixture.getLookupElementStrings();
+        for (String variant : completionVariants) {
+          assertTrue(completions.contains(variant));
+        }
       }
     });
   }

@@ -154,7 +154,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, PySdkUtil.getLanguageLevelForSdk(sdk));
     virtualFile.putUserData(CONSOLE_KEY, true);
     // Mark editor as console one, to prevent autopopup completion if runtime completion is enabled
-    if (PyConsoleOptions.getInstance(getProject()).isAutoCompletionEnabled()) {
+    if (PyConsoleOptions.getInstance(getProject()).isRuntimeCodeCompletion()) {
       getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
     }
     getHistoryViewer().putUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW, true);

@@ -109,7 +109,7 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
 
   @Override
   public Object @NotNull [] getVariants() {
-    if (!PyConsoleOptions.getInstance(getElement().getProject()).isAutoCompletionEnabled()) {
+    if (!PyConsoleOptions.getInstance(getElement().getProject()).isRuntimeCodeCompletion()) {
       return ArrayUtils.EMPTY_OBJECT_ARRAY;
     }
 

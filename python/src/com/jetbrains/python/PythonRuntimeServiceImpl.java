@@ -62,7 +62,7 @@ public class PythonRuntimeServiceImpl extends PythonRuntimeService {
     PsiFile file = element.getContainingFile();
     if (file != null) {
       final ConsoleCommunication communication = file.getCopyableUserData(PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY);
-      if (communication != null && PyConsoleOptions.getInstance(element.getProject()).isAutoCompletionEnabled()) {
+      if (communication != null && PyConsoleOptions.getInstance(element.getProject()).isRuntimeCodeCompletion()) {
           PyExpression qualifier = element.getQualifier();
           final String prefix = qualifier == null ? "" : qualifier.getText() + ".";
           return new PydevConsoleReference(element, communication, prefix, context.allowRemote());
