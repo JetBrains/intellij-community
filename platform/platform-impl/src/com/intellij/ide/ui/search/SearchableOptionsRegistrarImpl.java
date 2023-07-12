@@ -173,33 +173,33 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-
-      // process additional locations
-      LOCATION_EP_NAME.forEachExtensionSafe(provider -> {
-        Path additionalLocation = provider.getAdditionalLocation();
-        if (additionalLocation == null) {
-          return;
-        }
-        if (Files.isDirectory(additionalLocation)) {
-          try (var stream = Files.list(additionalLocation)) {
-            stream
-              .filter(path -> fileNameFilter.test(path.getFileName().toString()))
-              .forEach(path -> {
-                String fileName = path.getFileName().toString();
-                try {
-                  consumer.accept(fileName, JDOMUtil.load(path));
-                }
-                catch (IOException | JDOMException e) {
-                  throw new RuntimeException(String.format("Can't parse searchable options '%s'", fileName), e);
-                }
-              });
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-        }
-      });
     }
+
+    // process additional locations
+    LOCATION_EP_NAME.forEachExtensionSafe(provider -> {
+      Path additionalLocation = provider.getAdditionalLocation();
+      if (additionalLocation == null) {
+        return;
+      }
+      if (Files.isDirectory(additionalLocation)) {
+        try (var stream = Files.list(additionalLocation)) {
+          stream
+            .filter(path -> fileNameFilter.test(path.getFileName().toString()))
+            .forEach(path -> {
+              String fileName = path.getFileName().toString();
+              try {
+                consumer.accept(fileName, JDOMUtil.load(path));
+              }
+              catch (IOException | JDOMException e) {
+                throw new RuntimeException(String.format("Can't parse searchable options '%s'", fileName), e);
+              }
+            });
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   /**
