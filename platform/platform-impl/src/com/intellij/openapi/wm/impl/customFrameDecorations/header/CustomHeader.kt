@@ -149,8 +149,6 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
   private fun updateWinControlsTheme() {
     customTitleBar?.putProperty("controls.dark", ColorUtil.isDark(background))
-    customTitleBar?.putProperty("controls.foreground.normal", UIManager.getColor("WindowControls.foreground"))
-    customTitleBar?.putProperty("controls.foreground.inactive", UIManager.getColor("WindowControls.inactiveForeground"))
   }
 
   protected open fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)
