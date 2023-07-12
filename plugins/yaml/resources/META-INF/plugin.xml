@@ -19,6 +19,8 @@
     <lang.formatter language="yaml" implementationClass="org.jetbrains.yaml.formatter.YAMLFormattingModelBuilder"/>
     <enterHandlerDelegate implementation="org.jetbrains.yaml.smart.YAMLEnterAtIndentHandler" order="first"/>
     <enterHandlerDelegate implementation="org.jetbrains.yaml.smart.YAMLInjectedElementEnterHandler" order="last"/>
+    <registryKey key="yaml.injection.async.indent" defaultValue="true"
+                 description="Performs asynchronous indent when typing 'enter' in code injected into YAML"/>
     <typedHandler implementation="org.jetbrains.yaml.formatter.YAMLHyphenTypedHandler"/>
     <quoteHandler fileType="YAML" className="org.jetbrains.yaml.smart.YamlQuoteHandler"/>
     <copyPastePreProcessor implementation="org.jetbrains.yaml.smart.YAMLCopyPasteProcessor"/>
