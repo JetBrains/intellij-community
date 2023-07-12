@@ -96,7 +96,9 @@ public abstract class AbstractValueHint {
     myCurrentRange = textRange;
   }
 
-  protected abstract boolean canShowHint();
+  protected boolean canShowHint() {
+    return true;
+  }
 
   protected abstract void evaluateAndShowHint();
 

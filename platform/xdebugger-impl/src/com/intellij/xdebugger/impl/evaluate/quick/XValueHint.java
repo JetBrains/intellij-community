@@ -119,11 +119,6 @@ public class XValueHint extends AbstractValueHint {
   }
 
   @Override
-  protected boolean canShowHint() {
-    return true;
-  }
-
-  @Override
   protected void onHintHidden() {
     disposeVisibleHint();
   }
