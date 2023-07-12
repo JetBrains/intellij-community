@@ -366,6 +366,8 @@ class LibraryInfoCache(project: Project) : Disposable {
 
     fun removedLibraryInfoTracker(): ModificationTracker = libraryInfoCache.removedLibraryInfoTracker
 
+    fun values(): Collection<List<LibraryInfo>> = libraryInfoCache.values()
+
     companion object {
         fun getInstance(project: Project): LibraryInfoCache = project.service()
     }
