@@ -66,23 +66,24 @@ object ConfigFactory {
 
   private fun deserializeActionsInterpretation(map: Map<String, Any>?, builder: Config.Builder) {
     if (map == null) return
-    if (map.containsKey("experimentGroup"))
+    if (map.containsKey("experimentGroup")) {
       builder.experimentGroup = map.getAs<Double?>("experimentGroup")?.toInt()
-    if (map.containsKey("sessionsLimit"))
+    }
+    if (map.containsKey("sessionsLimit")) {
       builder.sessionsLimit = map.getAs<Double?>("sessionsLimit")?.toInt()
+    }
     builder.sessionProbability = map.getAs("sessionProbability")
     builder.sessionSeed = map.getAs<Double?>("sessionSeed")?.toLong()
-    //if (map.containsKey("emulationSettings"))
-    //  builder.emulationSettings = gson.fromJson(gson.toJson(map["emulationSettings"]), UserEmulator.Settings::class.java)
-    //if (map.containsKey("completionGolfSettings"))
-    //  builder.completionGolfSettings = gson.fromJson(gson.toJson(map["completionGolfSettings"]), CompletionGolfEmulation.Settings::class.java)
     builder.saveLogs = map.getAs("saveLogs")
-    if (map.containsKey("saveFeatures"))
+    if (map.containsKey("saveFeatures")) {
       builder.saveFeatures = map.getAs("saveFeatures")
-    if (map.containsKey("saveContent"))
+    }
+    if (map.containsKey("saveContent")) {
       builder.saveContent = map.getAs("saveContent")
-    if (map.containsKey("logLocationAndItemText"))
+    }
+    if (map.containsKey("logLocationAndItemText")) {
       builder.logLocationAndItemText = map.getAs("logLocationAndItemText")
+    }
     builder.trainTestSplit = map.getAs<Double>("trainTestSplit").toInt()
   }
 

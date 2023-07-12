@@ -14,7 +14,7 @@ class PythonCompletionEvaluationVisitor : EvaluationVisitor, PyRecursiveElementV
   private val tokenSetContributor = PythonTokenSetContributor()
 
   override val language: Language = Language.PYTHON
-  override val feature: String = "completion"
+  override val feature: String = "token-completion"
 
   override fun getFile(): CodeFragment = _codeFragment
                                          ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")

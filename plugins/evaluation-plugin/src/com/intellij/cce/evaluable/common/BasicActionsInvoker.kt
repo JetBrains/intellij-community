@@ -106,10 +106,7 @@ abstract class BasicActionsInvoker(protected val project: Project, protected val
     editor = null
   }
 
-  override fun isOpen(file: String): Boolean {
-    val isOpen = FileEditorManager.getInstance(project).openFiles.any { it.path == file }
-    return isOpen
-  }
+  override fun isOpen(file: String): Boolean = FileEditorManager.getInstance(project).openFiles.any { it.path == file }
 
   override fun save() {
     val document = editor?.document ?: throw IllegalStateException("No open editor")

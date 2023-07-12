@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isCompanionObject
 class KotlinCompletionEvaluationVisitor : EvaluationVisitor, KtTreeVisitorVoid() {
   private var _codeFragment: CodeFragment? = null
 
-  override val feature: String = "completion"
+  override val feature: String = "token-completion"
   override val language: Language = Language.KOTLIN
 
   override fun getFile(): CodeFragment = _codeFragment

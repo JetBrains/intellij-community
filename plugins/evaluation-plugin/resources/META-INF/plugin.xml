@@ -49,12 +49,10 @@
 
   <extensions defaultExtensionNs="com.intellij.cce">
     <evaluableFeature implementation="com.intellij.cce.evaluable.rename.RenameFeature"/>
-    <evaluableFeature implementation="com.intellij.cce.evaluable.completion.CompletionFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.evaluable.completion.TokenCompletionFeature"/>
     <evaluableFeature implementation="com.intellij.cce.evaluable.golf.LineCompletionGolfFeature"/>
     <evaluableFeature implementation="com.intellij.cce.evaluable.golf.LineCompletionFeature"/>
   </extensions>
-
-  <resource-bundle>messages.EvaluationPluginBundle</resource-bundle>
 
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.completion.ml.ranking</depends>

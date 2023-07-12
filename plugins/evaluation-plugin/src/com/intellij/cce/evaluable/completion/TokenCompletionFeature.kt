@@ -11,8 +11,8 @@ import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.openapi.project.Project
 
 
-class CompletionFeature : EvaluableFeature<CompletionStrategy> {
-  override val name = "completion"
+class TokenCompletionFeature : EvaluableFeature<CompletionStrategy> {
+  override val name = "token-completion"
 
   override fun getGenerateActionsProcessor(strategy: CompletionStrategy): GenerateActionsProcessor =
     CompletionGenerateActionsProcessor(strategy)

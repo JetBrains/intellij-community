@@ -12,7 +12,7 @@ class JavaCompletionVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
   private var codeFragment: CodeFragment? = null
 
   override val language: Language = Language.JAVA
-  override val feature: String = "completion"
+  override val feature: String = "token-completion"
 
   override fun getFile(): CodeFragment = codeFragment
                                          ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")
