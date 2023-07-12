@@ -11,7 +11,7 @@ app/src/commonMain/kotlin/Common.kt:5:5
 Common doc fun bar
 
 app/src/jvmMain/kotlin/Jvm.kt:3:8
-null
+Common documentation for DumbLib
 
 app/src/jvmMain/kotlin/Jvm.kt:3:14
 JVM doc for foo
@@ -26,7 +26,7 @@ app/src/linuxX64Main/kotlin/Linux.kt:3:8
 NATIVE doc for DumbLib
 
 app/src/linuxX64Main/kotlin/Linux.kt:3:14
-null
+Common doc for foo
 
 app/src/linuxX64Main/kotlin/Linux.kt:4:5
 Linux doc for object Bar
