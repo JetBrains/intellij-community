@@ -38,7 +38,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 
 public final class CreateDesktopEntryAction extends DumbAwareAction {
@@ -85,6 +84,10 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
         }
       }
     }.queue();
+  }
+
+  public static @NotNull String getDesktopEntryName() {
+    return AppUIUtil.getFrameClass() + ".desktop";
   }
 
   public static void createDesktopEntry(boolean globalEntry) throws Exception {
@@ -137,7 +140,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
     String wmClass = AppUIUtil.getFrameClass();
     Map<String, String> vars = Map.of("$NAME$", name, "$SCRIPT$", execPath, "$ICON$", iconPath, "$COMMENT$", comment, "$WM_CLASS$", wmClass);
     String content = ExecUtil.loadTemplate(CreateDesktopEntryAction.class.getClassLoader(), "entry.desktop", vars);
-    Path entryFile = Paths.get(PathManager.getTempPath(), wmClass + ".desktop");
+    Path entryFile = Path.of(PathManager.getTempPath(), getDesktopEntryName());
     Files.writeString(entryFile, content);
     return entryFile;
   }
@@ -185,6 +188,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
 
   public static class CreateDesktopEntryDialog extends DialogWrapper {
     private static final @NlsSafe String APP_NAME_PLACEHOLDER = "$APP_NAME$";
+
     private JPanel myContentPane;
     private JLabel myLabel;
     private JCheckBox myGlobalEntryCheckBox;

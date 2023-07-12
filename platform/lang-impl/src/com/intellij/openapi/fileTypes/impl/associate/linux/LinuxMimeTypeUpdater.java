@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl.associate.linux;
 
 import com.intellij.execution.ExecutionException;
@@ -7,6 +7,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationException;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.PlatformUtils;
@@ -58,7 +59,8 @@ class LinuxMimeTypeUpdater {
       createMimeFile(mimeTypeDescriptions);
       runCommand(OS_MIME_UTIL,
                  makeParamList(OS_MIME_UTIL_INSTALL_PARAMS, System.getProperty("user.home") + File.separator + LOCAL_MIME_DIR));
-      String desktopEntry = LocalDesktopEntryCreator.createDesktopEntry();
+      String desktopEntry = CreateDesktopEntryAction.getDesktopEntryName();
+      CreateDesktopEntryAction.createDesktopEntry(false);
       List<String> defaultAppParams = makeParamList(OS_MIME_UTIL_DEFAULT_APP_PARAMS, desktopEntry);
       defaultAppParams.addAll(
         ContainerUtil.map(mimeTypeDescriptions, description -> description.getType())
