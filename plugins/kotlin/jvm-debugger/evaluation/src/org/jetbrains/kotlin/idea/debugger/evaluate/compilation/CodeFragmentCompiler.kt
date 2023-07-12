@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.kotlin.analysis.api.components.KtCompiledFile
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
@@ -337,7 +338,15 @@ private class EvaluatorModuleDescriptor(
 }
 
 internal val OutputFile.internalClassName: String
-    get() = relativePath.removeSuffix(".class").replace('/', '.')
+    get() = computeInternalClassName(relativePath)
+
+internal val KtCompiledFile.internalClassName: String
+    get() = computeInternalClassName(path)
+
+private fun computeInternalClassName(path: String): String {
+    require(path.endsWith(".class", ignoreCase = true))
+    return path.dropLast(".class".length).replace('/', '.')
+}
 
 class CodeFragmentCompilationStats {
     var analysisTimeMs: Long = -1L
