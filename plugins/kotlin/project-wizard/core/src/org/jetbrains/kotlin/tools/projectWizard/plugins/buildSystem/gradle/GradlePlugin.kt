@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle
 
 
+import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.starters.local.generator.AssetsProcessor
 import kotlinx.collections.immutable.toPersistentList
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.tools.projectWizard.Versions
@@ -110,6 +112,13 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
                             "version" to gradleVersion.settingValue
                         )
                     )
+                ).andThen(
+                    // This is here temporarily until the Kotlin Multiplatform wizard has been removed
+                    compute {
+                        val assets = StandardAssetsProvider().getGradlewAssets() + StandardAssetsProvider().getGradleIgnoreAssets()
+                        AssetsProcessor.getInstance().generateSources(projectPath, assets, emptyMap())
+                        Unit
+                    }
                 )
             }
         }

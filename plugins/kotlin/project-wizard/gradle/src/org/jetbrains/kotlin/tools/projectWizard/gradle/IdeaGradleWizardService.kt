@@ -34,7 +34,7 @@ internal class IdeaGradleWizardService(private val project: Project) : ProjectIm
     private fun withGradleWrapperEnabled(action: () -> Unit) {
         val settings = GradleDefaultProjectSettings.getInstance()
         val oldGradleDistributionType = settings.distributionType
-        settings.distributionType = DistributionType.WRAPPED
+        settings.distributionType = DistributionType.DEFAULT_WRAPPED
         try {
             action()
         } finally {
