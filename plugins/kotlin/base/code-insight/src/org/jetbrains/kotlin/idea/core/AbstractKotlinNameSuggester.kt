@@ -177,7 +177,6 @@ abstract class AbstractKotlinNameSuggester {
     }
 
     companion object {
-        private const val MAX_NUMBER_OF_SUGGESTED_NAME_CHECKS = 1000
         private val COMMON_TYPE_PARAMETER_NAMES = listOf("T", "U", "V", "W", "X", "Y", "Z")
         private val ACCESSOR_PREFIXES = arrayOf("get", "is", "set")
     }
