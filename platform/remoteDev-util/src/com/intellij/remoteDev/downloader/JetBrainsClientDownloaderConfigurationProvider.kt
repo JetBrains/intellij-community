@@ -30,20 +30,20 @@ import kotlin.io.path.*
 interface JetBrainsClientDownloaderConfigurationProvider {
 
   companion object {
-    const val ClientUrlVar = "THIN_CLIENT_URL"
-    val getThinClientUrlVar: String?
-      get() = System.getenv()[ClientUrlVar]
+    const val THIN_CLIENT_DOWNLOAD_URL_KEY = "THIN_CLIENT_DOWNLOAD_URL"
+    val thinClientDownloadUrlValue: String?
+      get() = System.getenv()[THIN_CLIENT_DOWNLOAD_URL_KEY]
 
-    const val CheckClientSignature = "THIN_CLIENT_CHECK_SIGNATURE"
-    val getCheckClientSignature: Boolean?
-      get() = System.getenv()[CheckClientSignature]?.toBoolean()
+    const val THIN_CLIENT_VERIFY_SIGNATURE_KEY = "THIN_CLIENT_VERIFY_SIGNATURE"
+    val thinClientVerifySignatureValue: Boolean?
+      get() = System.getenv()[THIN_CLIENT_VERIFY_SIGNATURE_KEY]?.toBoolean()
 
-    const val DownloadLatestForSnapshot = "THIN_CLIENT_DOWNLOAD_LATEST_FOR_SNAPSHOT"
-    val getDownloadLatestForSnapshot: Boolean?
-      get() = System.getenv()[DownloadLatestForSnapshot]?.toBoolean()
+    const val THIN_CLIENT_DOWNLOAD_LATEST_BUILD_FROM_CDN_FOR_SNAPSHOT_KEY = "THIN_CLIENT_DOWNLOAD_LATEST_BUILD_FROM_CDN_FOR_SNAPSHOT"
+    val thinClientDownloadLatestBuildFromCDNForSnapshotValue: Boolean?
+      get() = System.getenv()[THIN_CLIENT_DOWNLOAD_LATEST_BUILD_FROM_CDN_FOR_SNAPSHOT_KEY]?.toBoolean()
 
     val customPropertiesAreSet
-      get() = getThinClientUrlVar != null && getDownloadLatestForSnapshot != null && getCheckClientSignature != null
+      get() = thinClientDownloadUrlValue != null && thinClientDownloadLatestBuildFromCDNForSnapshotValue != null && thinClientVerifySignatureValue != null
   }
 
   fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine)
@@ -71,7 +71,7 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   override val clientDownloadUrl: URI
     get() {
-      val envVar = JetBrainsClientDownloaderConfigurationProvider.getThinClientUrlVar
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.thinClientDownloadUrlValue
       return envVar?.let { URI(it) } ?: RemoteDevSystemSettings.getClientDownloadUrl().value
     }
   override val jreDownloadUrl: URI
@@ -92,7 +92,7 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     get() = IntellijClientDownloaderSystemSettings.isModifiedDateInManifestIncluded()
   override val verifySignature: Boolean
     get() {
-      val envVar = JetBrainsClientDownloaderConfigurationProvider.getCheckClientSignature
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.thinClientVerifySignatureValue
       return envVar ?: true
     }
 
@@ -104,7 +104,7 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   override val downloadLatestBuildFromCDNForSnapshotHost: Boolean
     get() {
-      val envVar = JetBrainsClientDownloaderConfigurationProvider.getDownloadLatestForSnapshot
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.thinClientDownloadLatestBuildFromCDNForSnapshotValue
       return envVar ?: true
     }
 }
@@ -139,7 +139,7 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   override val downloadLatestBuildFromCDNForSnapshotHost: Boolean
     get() {
-      val envVar = JetBrainsClientDownloaderConfigurationProvider.getDownloadLatestForSnapshot
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.thinClientDownloadLatestBuildFromCDNForSnapshotValue
       return envVar ?: false
     }
 
