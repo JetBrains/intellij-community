@@ -128,10 +128,8 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
     List<JavaBreakpointVariant> res = new SmartList<>();
 
-    boolean baseMethodWasAdded = false;
     int lambdaCount = 0;
     if (!(startMethod instanceof PsiLambdaExpression)) {
-      baseMethodWasAdded = true;
       res.add(new LineJavaBreakpointVariant(position, startMethod, -1));
     }
 
@@ -142,7 +140,6 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
         XSourcePositionImpl elementPosition = XSourcePositionImpl.createByElement(firstElem);
         if (elementPosition != null) {
           if (lambda == startMethod) {
-            baseMethodWasAdded = true;
             res.add(0, new LineJavaBreakpointVariant(elementPosition, lambda, ordinal++));
           }
           else {
@@ -152,7 +149,6 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
         }
       }
     }
-    assert baseMethodWasAdded;
 
     if (lambdaCount > 0) {
       res.add(new JavaBreakpointVariant(position, lambdaCount)); //all
@@ -163,8 +159,6 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       int ordinal = lambdas.indexOf(method);
       res.add(new ConditionalReturnJavaBreakpointVariant(position, condRet, ordinal)); //conditional return
     }
-
-    assert lambdaCount > 0 || condRet != null;
 
     return res;
   }
