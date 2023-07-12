@@ -35,7 +35,6 @@ import static com.intellij.notification.impl.NotificationsManagerImpl.FILL_COLOR
 public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   public static final Topic<BalloonNotificationListener> BALLOON_NOTIFICATION_TOPIC =
     Topic.create("balloon notification changed", BalloonNotificationListener.class);
-  private static final int NOTIFICATION_BORDER = 5;
   private static final String TYPE_KEY = "Type";
 
   private @Nullable Component myLayoutBaseComponent;
@@ -167,9 +166,8 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
 
     Dimension layeredSize = Objects.requireNonNull(layeredPane).getSize();
     Dimension size = new Dimension(myPopupBalloon.getPreferredSize());
-    Point point = SwingUtilities.convertPoint(myLayoutBaseComponent, 0, 0, layeredPane);
-    Point location = new Point(point.x, point.y + 5);
-    int x = layeredSize.width - size.width - 5;
+    Point location = SwingUtilities.convertPoint(myLayoutBaseComponent, 0, 0, layeredPane);
+    int x = layeredSize.width - size.width;
     int fullHeight = location.y;
 
     if (x > location.x) {
@@ -179,7 +177,17 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       size.height = fullHeight;
     }
 
-    myPopupBalloon.setBounds(new Rectangle(x, fullHeight - size.height, size.width - JBUI.scale(NOTIFICATION_BORDER), size.height));
+    int locationX = x;
+    int locationY = fullHeight - size.height;
+
+    if (ShadowJava2DPainter.Companion.enabled()) {
+      locationX -= JBUI.scale(10);
+      if (size.height < fullHeight) {
+        locationY -= JBUI.scale(5);
+      }
+    }
+
+    myPopupBalloon.setBounds(new Rectangle(locationX, locationY, size.width, size.height));
   }
 
   private void updatePopup() {
