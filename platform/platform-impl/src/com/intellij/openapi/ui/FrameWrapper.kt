@@ -34,6 +34,7 @@ import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.ActionListener
@@ -54,12 +55,14 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
   private var isCloseOnEsc = false
   private var onCloseHandler: BooleanSupplier? = null
   private var frame: Window? = null
-  private var isDisposing = false
+  @JvmField
+  internal var isDisposing: Boolean = false
 
   var isDisposed: Boolean = false
     private set
 
-  protected var statusBar: StatusBar? = null
+  @JvmField
+  internal var statusBar: StatusBar? = null
 
   init {
     if (project != null) {
@@ -73,6 +76,9 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
       })
     }
   }
+
+  @Obsolete
+  protected fun getStatusBar(): StatusBar? = statusBar
 
   @Deprecated("Pass project to constructor")
   fun setProject(@Suppress("UNUSED_PARAMETER") project: Project) {
@@ -248,13 +254,13 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
 
   protected open fun createJDialog(parent: IdeFrame): JDialog = MyJDialog(this, parent)
 
-  protected open fun getNorthExtension(key: String?): JComponent? = null
+  internal open fun getNorthExtension(key: String?): JComponent? = null
 
   override fun getData(@NonNls dataId: String): Any? {
     return if (CommonDataKeys.PROJECT.`is`(dataId)) project else null
   }
 
-  private fun getDataInner(@NonNls dataId: String): Any? {
+  internal fun getDataInner(@NonNls dataId: String): Any? {
     return when {
       CommonDataKeys.PROJECT.`is`(dataId) -> project
       else -> getData(dataId)
@@ -291,104 +297,6 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
     (frame as RootPaneContainer).rootPane.revalidate()
   }
 
-  private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeFrame) : JFrame(), DataProvider, IdeFrame.Child, IdeFrameEx {
-    private var frameTitle: String? = null
-    private var fileTitle: String? = null
-    private var file: Path? = null
-
-    init {
-      FrameState.setFrameStateListener(this)
-      glassPane = IdeGlassPaneImpl(rootPane = getRootPane(), installPainters = true)
-      if (SystemInfoRt.isMac && !Menu.isJbScreenMenuEnabled()) {
-        @Suppress("DEPRECATION")
-        jMenuBar = createMenuBar(coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope(), this)
-      }
-      MouseGestureManager.getInstance().add(this)
-      focusTraversalPolicy = IdeFocusTraversalPolicy()
-    }
-
-    override fun isInFullScreen() = false
-
-    override fun toggleFullScreen(state: Boolean): Job = CompletableDeferred(value = Unit)
-
-    override fun addNotify() {
-      if (IdeFrameDecorator.isCustomDecorationActive()) {
-        CustomHeader.enableCustomHeader(this)
-      }
-      super.addNotify()
-    }
-
-    override fun getComponent(): JComponent = getRootPane()
-
-    override fun getStatusBar(): StatusBar? {
-      return (if (owner.isDisposing) null else owner.statusBar) ?: parent.statusBar
-    }
-
-    override fun suggestChildFrameBounds(): Rectangle = parent.suggestChildFrameBounds()
-
-    override fun getProject() = parent.project
-
-    override fun notifyProjectActivation() = parent.notifyProjectActivation()
-
-    override fun setFrameTitle(title: String) {
-      frameTitle = title
-      updateTitle()
-    }
-
-    override fun setFileTitle(fileTitle: String?, ioFile: Path?) {
-      this.fileTitle = fileTitle
-      file = ioFile
-      updateTitle()
-    }
-
-    override fun getNorthExtension(key: String): JComponent? = owner.getNorthExtension(key)
-
-    override fun getBalloonLayout(): BalloonLayout? {
-      return null
-    }
-
-    private fun updateTitle() {
-      if (AdvancedSettings.getBoolean("ide.show.fileType.icon.in.titleBar")) {
-        // this property requires java.io.File
-        rootPane.putClientProperty("Window.documentFile", file?.toFile())
-      }
-
-      val builder = StringBuilder()
-      ProjectFrameHelper.appendTitlePart(builder, frameTitle)
-      ProjectFrameHelper.appendTitlePart(builder, fileTitle)
-      title = builder.toString()
-      if (title.isNullOrEmpty()) {
-        project?.let { title = FrameTitleBuilder.getInstance().getProjectTitle(it) }
-      }
-    }
-
-    override fun dispose() {
-      val owner = owner
-      if (owner.isDisposing) {
-        return
-      }
-
-      owner.isDisposing = true
-      Disposer.dispose(owner)
-      super.dispose()
-      rootPane = null
-      menuBar = null
-    }
-
-    override fun getData(dataId: String): Any? {
-      return when {
-        IdeFrame.KEY.`is`(dataId) -> this
-        owner.isDisposing -> null
-        else -> owner.getDataInner(dataId)
-      }
-    }
-
-    override fun paint(g: Graphics) {
-      setupAntialiasing(g)
-      super.paint(g)
-    }
-  }
-
   fun setLocation(location: Point) {
     getFrame().location = location
   }
@@ -396,55 +304,152 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
   fun setSize(size: Dimension?) {
     getFrame().size = size
   }
+}
 
-  private class MyJDialog(private val owner: FrameWrapper, private val parent: IdeFrame) : JDialog(ComponentUtil.getWindow(parent.component)), DataProvider, IdeFrame.Child {
-    override fun getComponent(): JComponent = getRootPane()
+private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeFrame) : JFrame(), DataProvider, IdeFrame.Child, IdeFrameEx {
+  private var frameTitle: String? = null
+  private var fileTitle: String? = null
+  private var file: Path? = null
 
-    override fun getStatusBar(): StatusBar? = null
+  init {
+    FrameState.setFrameStateListener(this)
+    glassPane = IdeGlassPaneImpl(rootPane = getRootPane(), installPainters = true)
+    if (SystemInfoRt.isMac && !Menu.isJbScreenMenuEnabled()) {
+      @Suppress("DEPRECATION")
+      jMenuBar = createMenuBar(coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope(), this)
+    }
+    MouseGestureManager.getInstance().add(this)
+    focusTraversalPolicy = IdeFocusTraversalPolicy()
+  }
 
-    override fun getBalloonLayout(): BalloonLayout? = null
+  override fun isInFullScreen() = false
 
-    override fun suggestChildFrameBounds(): Rectangle = parent.suggestChildFrameBounds()
+  override fun toggleFullScreen(state: Boolean): Job = CompletableDeferred(value = Unit)
 
-    override fun getProject(): Project? = parent.project
+  override fun addNotify() {
+    if (IdeFrameDecorator.isCustomDecorationActive()) {
+      CustomHeader.enableCustomHeader(this)
+    }
+    super.addNotify()
+  }
 
-    override fun notifyProjectActivation() = parent.notifyProjectActivation()
+  override fun getComponent(): JComponent = getRootPane()
 
-    init {
-      glassPane = IdeGlassPaneImpl(getRootPane())
-      getRootPane().putClientProperty("Window.style", "small")
-      background = UIUtil.getPanelBackground()
-      MouseGestureManager.getInstance().add(this)
-      focusTraversalPolicy = IdeFocusTraversalPolicy()
+  override fun getStatusBar(): StatusBar? {
+    return (if (owner.isDisposing) null else owner.statusBar) ?: parent.statusBar
+  }
+
+  override fun suggestChildFrameBounds(): Rectangle = parent.suggestChildFrameBounds()
+
+  override fun getProject() = parent.project
+
+  override fun notifyProjectActivation() = parent.notifyProjectActivation()
+
+  override fun setFrameTitle(title: String) {
+    frameTitle = title
+    updateTitle()
+  }
+
+  override fun setFileTitle(fileTitle: String?, ioFile: Path?) {
+    this.fileTitle = fileTitle
+    file = ioFile
+    updateTitle()
+  }
+
+  override fun getNorthExtension(key: String): JComponent? = owner.getNorthExtension(key)
+
+  override fun getBalloonLayout(): BalloonLayout? = null
+
+  private fun updateTitle() {
+    if (AdvancedSettings.getBoolean("ide.show.fileType.icon.in.titleBar")) {
+      // this property requires java.io.File
+      rootPane.putClientProperty("Window.documentFile", file?.toFile())
     }
 
-    override fun setFrameTitle(title: String) {
-      setTitle(title)
+    val builder = StringBuilder()
+    ProjectFrameHelper.appendTitlePart(builder, frameTitle)
+    ProjectFrameHelper.appendTitlePart(builder, fileTitle)
+    title = builder.toString()
+    if (title.isNullOrEmpty()) {
+      project?.let { title = FrameTitleBuilder.getInstance().getProjectTitle(it) }
+    }
+  }
+
+  override fun dispose() {
+    val owner = owner
+    if (owner.isDisposing) {
+      return
     }
 
-    override fun dispose() {
-      if (owner.isDisposing) {
-        return
-      }
+    owner.isDisposing = true
+    Disposer.dispose(owner)
+    super.dispose()
+    rootPane = null
+    menuBar = null
+  }
 
-      owner.isDisposing = true
-      Disposer.dispose(owner)
-      super.dispose()
-      rootPane = null
+  override fun getData(dataId: String): Any? {
+    return when {
+      IdeFrame.KEY.`is`(dataId) -> this
+      owner.isDisposing -> null
+      else -> owner.getDataInner(dataId)
+    }
+  }
+
+  override fun paint(g: Graphics) {
+    setupAntialiasing(g)
+    super.paint(g)
+  }
+}
+
+private class MyJDialog(private val owner: FrameWrapper, private val parent: IdeFrame) :
+  JDialog(ComponentUtil.getWindow(parent.component)), DataProvider, IdeFrame.Child {
+  override fun getComponent(): JComponent = getRootPane()
+
+  override fun getStatusBar(): StatusBar? = null
+
+  override fun getBalloonLayout(): BalloonLayout? = null
+
+  override fun suggestChildFrameBounds(): Rectangle = parent.suggestChildFrameBounds()
+
+  override fun getProject(): Project? = parent.project
+
+  override fun notifyProjectActivation() = parent.notifyProjectActivation()
+
+  init {
+    glassPane = IdeGlassPaneImpl(getRootPane())
+    getRootPane().putClientProperty("Window.style", "small")
+    background = UIUtil.getPanelBackground()
+    MouseGestureManager.getInstance().add(this)
+    focusTraversalPolicy = IdeFocusTraversalPolicy()
+  }
+
+  override fun setFrameTitle(title: String) {
+    setTitle(title)
+  }
+
+  override fun dispose() {
+    if (owner.isDisposing) {
+      return
     }
 
-    override fun getData(dataId: String): Any? {
-      return when {
-        IdeFrame.KEY.`is`(dataId) -> this
-        owner.isDisposing -> null
-        else -> owner.getDataInner(dataId)
-      }
-    }
+    owner.isDisposing = true
+    Disposer.dispose(owner)
+    super.dispose()
+    rootPane = null
+  }
 
-    override fun paint(g: Graphics) {
-      setupAntialiasing(g)
-      super.paint(g)
+  override fun getData(dataId: String): Any? {
+    return when {
+      IdeFrame.KEY.`is`(dataId) -> this
+      owner.isDisposing -> null
+      else -> owner.getDataInner(dataId)
     }
+  }
+
+  override fun paint(g: Graphics) {
+    setupAntialiasing(g)
+    super.paint(g)
   }
 }
 
