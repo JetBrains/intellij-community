@@ -183,6 +183,9 @@ public final class IntentionPreviewUtils {
       else if (command instanceof ModChooseAction target) {
         return getChoosePreview(context, target);
       }
+      else if (command instanceof ModChooseMember target) {
+        return getModCommandPreview(target.nextCommand().apply(target.defaultSelection()), context);
+      }
       else if (command instanceof ModShowConflicts showConflicts) {
         return getModCommandPreview(showConflicts.nextStep(), context);
       }

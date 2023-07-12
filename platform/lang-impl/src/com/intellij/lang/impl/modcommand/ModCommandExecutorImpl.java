@@ -3,6 +3,7 @@ package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
+import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -15,8 +16,10 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.ide.util.MemberChooser;
 import com.intellij.lang.LangBundle;
 import com.intellij.modcommand.*;
+import com.intellij.modcommand.ModChooseMember.SelectionMode;
 import com.intellij.modcommand.ModCommandAction.ActionContext;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.openapi.application.ApplicationManager;
@@ -47,6 +50,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +61,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+
+import static java.util.Objects.requireNonNullElse;
 
 public class ModCommandExecutorImpl implements ModCommandExecutor {
   @RequiresEdt
@@ -104,8 +110,15 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (command instanceof ModChooseAction chooser) {
       return executeChooseInBatch(context, chooser);
     }
+    if (command instanceof ModChooseMember member) {
+      ModCommand nextCommand = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> ReadAction.nonBlocking(() -> member.nextCommand().apply(member.defaultSelection())).executeSynchronously(),
+        member.title(), true, context.project());
+      executeInBatch(context, nextCommand);
+    }
     if (command instanceof ModNavigate || command instanceof ModHighlight ||
-        command instanceof ModCopyToClipboard || command instanceof ModRenameSymbol) {
+        command instanceof ModCopyToClipboard || command instanceof ModRenameSymbol ||
+        command instanceof ModStartTemplate) {
       return Result.INTERACTIVE;
     }
     if (command instanceof ModShowConflicts showConflicts) {
@@ -130,21 +143,12 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
 
     String name = chooser.title();
     ModCommand next = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.nonBlocking((Callable<? extends ModCommand>)() -> {
+      () -> ReadAction.nonBlocking(() -> {
       if (action.getPresentation(context) == null) return null;
       return action.perform(context);
     }).executeSynchronously(), name, true, context.project());
     if (next == null) return Result.ABORT;
-    var nextStep = new Runnable() {
-      BatchExecutionResult myResult = Result.NOTHING;
-      
-      @Override
-      public void run() {
-        myResult = executeInBatch(context, next);
-      }
-    };
-    CommandProcessor.getInstance().executeCommand(context.project(), nextStep, name, null);
-    return nextStep.myResult;
+    return executeInBatch(context, next);
   }
 
   private boolean doExecuteInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @Nullable Editor editor) {
@@ -170,11 +174,14 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (command instanceof ModChooseAction chooser) {
       return executeChoose(context, chooser, editor);
     }
+    if (command instanceof ModChooseMember chooser) {
+      return executeChooseMember(context, chooser, editor);
+    }
     if (command instanceof ModDisplayMessage message) {
       return executeMessage(project, message);
     }
     if (command instanceof ModRenameSymbol rename) {
-      return executeRename(project, rename);
+      return executeRename(project, rename, editor);
     }
     if (command instanceof ModCreateFile create) {
       return executeCreate(project, create);
@@ -185,7 +192,76 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (command instanceof ModShowConflicts showConflicts) {
       return executeShowConflicts(context, showConflicts, editor);
     }
+    if (command instanceof ModStartTemplate startTemplate) {
+      return executeStartTemplate(context, startTemplate, editor);
+    }
     throw new IllegalArgumentException("Unknown command: " + command);
+  }
+
+  private boolean executeChooseMember(@NotNull ActionContext context, @NotNull ModChooseMember modChooser, @Nullable Editor editor) {
+    List<? extends @NotNull MemberChooserElement> result;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      result = modChooser.defaultSelection();
+    }
+    else {
+      ClassMember[] members = ContainerUtil.map2Array(modChooser.elements(), ClassMember.EMPTY_ARRAY, ClassMember::from);
+      SelectionMode mode = modChooser.mode();
+      boolean allowEmptySelection = mode == SelectionMode.SINGLE_OR_EMPTY ||
+                                    mode == SelectionMode.MULTIPLE_OR_EMPTY;
+      boolean allowMultiSelection = mode == SelectionMode.MULTIPLE ||
+                                    mode == SelectionMode.MULTIPLE_OR_EMPTY;
+      MemberChooser<ClassMember> chooser = new MemberChooser<>(members, allowEmptySelection, allowMultiSelection, context.project());
+      ClassMember[] selected = IntStreamEx.ofIndices(modChooser.elements(), modChooser.defaultSelection()::contains)
+        .elements(members).toArray(ClassMember.EMPTY_ARRAY);
+      chooser.selectElements(selected);
+      chooser.setTitle(modChooser.title());
+      chooser.setCopyJavadocVisible(false);
+      if (!chooser.showAndGet()) return false;
+      List<ClassMember> elements = chooser.getSelectedElements();
+      result = elements == null ? List.of() :
+               IntStreamEx.ofIndices(members, elements::contains).elements(modChooser.elements()).toList();
+    }
+    ModCommand nextCommand = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.nonBlocking(() -> modChooser.nextCommand().apply(result)).executeSynchronously(),
+      modChooser.title(), true, context.project());
+    executeInteractively(context, nextCommand, editor);
+    return true;
+  }
+
+  private boolean executeStartTemplate(@NotNull ActionContext context, @NotNull ModStartTemplate template, @Nullable Editor editor) {
+    VirtualFile file = actualize(template.file());
+    if (file == null) return false;
+    Editor finalEditor = getEditor(context.project(), editor, file);
+    if (finalEditor == null) return false;
+    PsiFile psiFile = PsiManagerEx.getInstanceEx(context.project()).findFile(file);
+    if (psiFile == null) return false;
+    String name = requireNonNullElse(CommandProcessor.getInstance().getCurrentCommandName(),
+                                     LangBundle.message("command.title.finishing.template"));
+    WriteAction.run(() -> {
+      TemplateBuilderImpl builder = new TemplateBuilderImpl(psiFile);
+      for (ModStartTemplate.TemplateField field : template.fields()) {
+        if (field instanceof ModStartTemplate.ExpressionField expr) {
+          builder.replaceElement(psiFile, expr.range(), expr.expression());
+        }
+        else if (field instanceof ModStartTemplate.DependantVariableField variableField) {
+          builder.replaceElement(psiFile, variableField.range(), variableField.varName(),
+                                 variableField.dependantVariableName(), variableField.alwaysStopAt());
+        }
+      }
+
+      final Template tmpl = builder.buildInlineTemplate();
+      finalEditor.getCaretModel().moveToOffset(0);
+      TemplateManager.getInstance(context.project()).startTemplate(finalEditor, tmpl, new TemplateEditingAdapter() {
+        @Override
+        public void templateFinished(@NotNull Template tmpl, boolean brokenOff) {
+          ModCommand next = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+            return ReadAction.nonBlocking(() -> template.templateFinishFunction().apply(psiFile)).executeSynchronously();
+          }, name, true, context.project());
+          CommandProcessor.getInstance().executeCommand(context.project(), () -> executeInteractively(context, next, editor), name, null);
+        }
+      });
+    });
+    return true;
   }
 
   private boolean executeShowConflicts(@NotNull ActionContext context, @NotNull ModShowConflicts conflicts, @Nullable Editor editor) {
@@ -237,7 +313,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     }
   }
 
-  private static boolean executeRename(Project project, ModRenameSymbol rename) {
+  private static boolean executeRename(@NotNull Project project, @NotNull ModRenameSymbol rename, @Nullable Editor editor) {
     VirtualFile file = actualize(rename.file());
     if (file == null) return false;
     PsiFile psiFile = PsiManagerEx.getInstanceEx(project).findFile(file);
@@ -245,9 +321,8 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     PsiNameIdentifierOwner element =
       PsiTreeUtil.getNonStrictParentOfType(psiFile.findElementAt(rename.symbolRange().getStartOffset()), PsiNameIdentifierOwner.class);
     if (element == null) return false;
-    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-    final Editor editor = fileEditorManager.getSelectedTextEditor();
-    if (editor == null || !editor.getVirtualFile().equals(file)) return false;
+    Editor finalEditor = getEditor(project, editor, file);
+    if (finalEditor == null) return false;
     PsiElement nameIdentifier = element.getNameIdentifier();
     if (nameIdentifier == null) return false;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -271,7 +346,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
         return new RenameData(references, scope, owner);
       }
     }
-    ReadAction.nonBlocking(() -> RenameData.create(pointer)).expireWhen(() -> editor.isDisposed())
+    ReadAction.nonBlocking(() -> RenameData.create(pointer)).expireWhen(() -> finalEditor.isDisposed())
       .finishOnUiThread(ModalityState.defaultModalityState(), renameData -> {
         final TextRange textRange = renameData.scope().getTextRange();
         final int startOffset = textRange.getStartOffset();
@@ -284,13 +359,20 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
         }
         CommandProcessor.getInstance().executeCommand(project, () -> {
           final Template template = WriteAction.compute(builder::buildInlineTemplate);
-          editor.getCaretModel().moveToOffset(startOffset);
+          finalEditor.getCaretModel().moveToOffset(startOffset);
           final TemplateManager templateManager = TemplateManager.getInstance(project);
-          templateManager.startTemplate(editor, template);
+          templateManager.startTemplate(finalEditor, template);
         }, LangBundle.message("action.rename.text"), null);
       })
       .submit(AppExecutorUtil.getAppExecutorService());
     return true;
+  }
+
+  @Nullable
+  private static Editor getEditor(@NotNull Project project, @Nullable Editor editor, VirtualFile file) {
+    Editor finalEditor = editor == null || !editor.getVirtualFile().equals(file) ? getEditor(project, file) : editor;
+    if (finalEditor == null) return null;
+    return finalEditor;
   }
 
   static class NameExpression extends Expression {
@@ -386,7 +468,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
         return ReadAction.nonBlocking(supplier).expireWhen(context.project()::isDisposed).executeSynchronously();
       }, name, true, context.project());
     if (next == null) return;
-    CommandProcessor.getInstance().executeCommand(context.project(), () -> executeInteractively(context, next, editor), name, null);
+    executeInteractively(context, next, editor);
   }
 
   private static VirtualFile actualize(@NotNull VirtualFile file) {
@@ -426,7 +508,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     return true;
   }
 
-  private static Editor getEditor(@NotNull Project project, VirtualFile file) {
+  private static @Nullable Editor getEditor(@NotNull Project project, VirtualFile file) {
     return FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
   }
 

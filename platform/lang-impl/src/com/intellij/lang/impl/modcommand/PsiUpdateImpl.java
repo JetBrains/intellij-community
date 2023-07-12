@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl.modcommand;
 
+import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInspection.ModCommands;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -212,6 +213,7 @@ final class PsiUpdateImpl {
     private int myCaretOffset;
     private @NotNull TextRange mySelection;
     private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
+    private final List<ModStartTemplate.TemplateField> myTemplateFields = new ArrayList<>();
     private @Nullable ModRenameSymbol myRenameSymbol;
     private boolean myPositionUpdated = false;
     private @NlsContexts.Tooltip String myErrorMessage;
@@ -338,6 +340,39 @@ final class PsiUpdateImpl {
     }
 
     @Override
+    public @NotNull ModTemplateBuilder templateBuilder() {
+      if (!myTemplateFields.isEmpty()) {
+        throw new IllegalStateException("Template was already created");
+      }
+      return new ModTemplateBuilder() {
+        @Override
+        public @NotNull ModTemplateBuilder field(@NotNull PsiElement element, @NotNull Expression expression) {
+          TextRange elementRange = getRange(element);
+          if (elementRange == null) {
+            throw new IllegalStateException("Unable to restore element for template");
+          }
+          TextRange range = mapRange(elementRange);
+          myTemplateFields.add(new ModStartTemplate.ExpressionField(range, expression));
+          return this;
+        }
+
+        @Override
+        public @NotNull ModTemplateBuilder field(@NotNull PsiElement element,
+                                                 @NotNull String varName,
+                                                 @NotNull String dependantVariableName,
+                                                 boolean alwaysStopAt) {
+          TextRange elementRange = getRange(element);
+          if (elementRange == null) {
+            throw new IllegalStateException("Unable to restore element for template");
+          }
+          TextRange range = mapRange(elementRange);
+          myTemplateFields.add(new ModStartTemplate.DependantVariableField(range, varName, dependantVariableName, alwaysStopAt));
+          return this;
+        }
+      };
+    }
+
+    @Override
     public void moveTo(int offset) {
       myPositionUpdated = true;
       PsiLanguageInjectionHost host = myTracker.myHostCopy;
@@ -434,6 +469,7 @@ final class PsiUpdateImpl {
       myCaretOffset = updateOffset(event, myCaretOffset, myCaretOffset == mySelection.getStartOffset() && mySelection.getLength() > 0);
       mySelection = updateRange(event, mySelection);
       myHighlightInfos.replaceAll(info -> info.withRange(updateRange(event, info.range())));
+      myTemplateFields.replaceAll(info -> info.withRange(updateRange(event, info.range())));
       if (myRenameSymbol != null) {
         myRenameSymbol = myRenameSymbol.withRange(updateRange(event, myRenameSymbol.symbolRange()));
       }
@@ -460,6 +496,9 @@ final class PsiUpdateImpl {
     }
 
     private @NotNull ModCommand getCommand() {
+      if (myRenameSymbol != null && !myTemplateFields.isEmpty()) {
+        throw new IllegalStateException("Cannot have both rename and template commands");
+      }
       if (myErrorMessage != null) {
         return error(myErrorMessage);
       }
@@ -467,7 +506,8 @@ final class PsiUpdateImpl {
         .andThen(myChangedDirectories.values().stream()
                    .flatMap(info -> info.createFileCommands(myTracker.myProject))
                    .reduce(nop(), ModCommand::andThen))
-        .andThen(getNavigateCommand()).andThen(getHighlightCommand()).andThen(myRenameSymbol == null ? nop() : myRenameSymbol)
+        .andThen(getNavigateCommand()).andThen(getHighlightCommand()).andThen(getTemplateCommand())
+        .andThen(myRenameSymbol == null ? nop() : myRenameSymbol)
         .andThen(myInfoMessage == null ? nop() : ModCommands.info(myInfoMessage));
     }
 
@@ -491,6 +531,12 @@ final class PsiUpdateImpl {
     private ModCommand getHighlightCommand() {
       if (myHighlightInfos.isEmpty()) return nop();
       return new ModHighlight(myNavigationFile, myHighlightInfos);
+    }
+
+    @NotNull
+    private ModCommand getTemplateCommand() {
+      if (myTemplateFields.isEmpty()) return nop();
+      return new ModStartTemplate(myNavigationFile, myTemplateFields, f -> nop());
     }
   }
 }

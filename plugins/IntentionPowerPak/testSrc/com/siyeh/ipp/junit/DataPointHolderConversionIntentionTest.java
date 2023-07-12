@@ -1,12 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.junit;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModRenameSymbol;
+import com.intellij.modcommand.ModUpdateFileText;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Dmitry Batkovich
@@ -55,13 +61,24 @@ public class DataPointHolderConversionIntentionTest extends LightQuickFixTestCas
   public void testNameTyping() {
     configureByFile(getBasePath() + "/beforeNameTyping.java");
     TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doAction("Replace by @DataPoint method");
-    final TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
-    assertNotNull(state);
-    type("typedMethodNameFromTemplates");
-    state.nextTab();
-    assertTrue(state.isFinished());
-    checkResultByFile(getBasePath() + "/afterNameTyping.java");
+    IntentionAction intentionAction = findActionWithText("Replace by @DataPoint method");
+    ModCommandAction mc = ModCommandAction.unwrap(intentionAction);
+    assertNotNull(mc);
+    List<ModCommand> commands = mc.perform(ModCommandAction.ActionContext.from(getEditor(), getFile())).unpack();
+    assertEquals(2, commands.size());
+    assertInstanceOf(commands.get(0), ModUpdateFileText.class);
+    String actualText = ((ModUpdateFileText)commands.get(0)).newText();
+    assertEquals("""
+                   // "Replace by @DataPoint method" "true"
+                   class Foo {
+                                      
+                       @org.junit.experimental.theories.DataPoint
+                       public static String bar() {
+                           return null;
+                       }
+                                      
+                   }""", actualText);
+    assertInstanceOf(commands.get(1), ModRenameSymbol.class);
   }
 
   @NotNull

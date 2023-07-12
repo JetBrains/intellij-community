@@ -66,6 +66,11 @@ public interface ModPsiUpdater extends ModPsiNavigator {
   void rename(@NotNull PsiNameIdentifierOwner element, @NotNull List<@NotNull String> suggestedNames);
 
   /**
+   * @return a builder that allows you to create a template
+   */
+  @NotNull ModTemplateBuilder templateBuilder();
+  
+  /**
    * Cancels any changes done previously, displaying an error message with the given text instead.
    * The subsequent updates will be ignored.
    *

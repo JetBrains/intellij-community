@@ -6,6 +6,10 @@ import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.template.PsiElementResult;
+import com.intellij.codeInsight.template.TemplateBuilderFactory;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
@@ -120,7 +124,22 @@ public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntent
     Document doc = Objects.requireNonNull(field.getContainingFile().getViewProvider().getDocument());
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
     List<PsiExpression> rExpressions = ContainerUtil.mapNotNull(rExprPointers, SmartPsiElementPointer::getElement);
-    AddVariableInitializerFix.runAssignmentTemplate(rExpressions, suggestedInitializers, editor);
+    runAssignmentTemplate(rExpressions, suggestedInitializers, editor);
+  }
+  
+  private static void runAssignmentTemplate(@NotNull final List<? extends PsiExpression> initializers,
+                                    final LookupElement @NotNull [] suggestedInitializers,
+                                    @Nullable Editor editor) {
+    if (editor == null) return;
+    LOG.assertTrue(!initializers.isEmpty());
+    final PsiExpression initializer = Objects.requireNonNull(ContainerUtil.getFirstItem(initializers));
+    PsiElement context = initializers.size() == 1 ? initializer : PsiTreeUtil.findCommonParent(initializers);
+    if (context == null) return;
+    final TemplateBuilderImpl builder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(context);
+    for (PsiExpression e : initializers) {
+      builder.replaceElement(e, new ConstantNode(new PsiElementResult(suggestedInitializers[0].getPsiElement())).withLookupItems(suggestedInitializers));
+    }
+    builder.run(editor, false);
   }
 
   @NotNull

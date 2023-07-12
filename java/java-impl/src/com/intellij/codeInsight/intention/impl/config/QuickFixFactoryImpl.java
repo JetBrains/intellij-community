@@ -582,7 +582,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddVariableInitializerFix(@NotNull PsiVariable variable) {
-    return new AddVariableInitializerFix(variable);
+    return new AddVariableInitializerFix(variable).asIntention();
   }
 
   @NotNull
@@ -823,7 +823,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createAddMissingRequiredAnnotationParametersFix(@NotNull final PsiAnnotation annotation,
                                                                          final PsiMethod @NotNull [] annotationMethods,
                                                                          @NotNull final Collection<String> missedElements) {
-    return new AddMissingRequiredAnnotationParametersFix(annotation, annotationMethods, missedElements);
+    return new AddMissingRequiredAnnotationParametersFix(annotation, annotationMethods, missedElements).asIntention();
   }
 
   @NotNull
