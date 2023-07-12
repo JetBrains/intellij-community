@@ -4,6 +4,8 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.OffsetBasedNonStrictStringsEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeSizeStreamlinedBlobStorage;
@@ -11,8 +13,10 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocatio
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.hash.ContentHashEnumerator;
@@ -29,9 +33,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
@@ -48,6 +50,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 final class PersistentFSConnector {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnector.class);
 
+  //FIXME RC: temporary, 'false' is not really an long-term alternative -- decide shortly about it
+  private static final boolean PARALLELIZE_VFS_INITIALIZATION = SystemProperties.getBooleanProperty("vfs.parallelize-initialization", true);
+
   private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
 
   private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT = new StorageLockContext(false, true);
@@ -58,11 +63,11 @@ final class PersistentFSConnector {
   public static @NotNull PersistentFSConnector.InitializationResult connect(@NotNull Path cachesDir,
                                                                             int version,
                                                                             boolean useContentHashes,
-                                                                            @NotNull /*OutParam*/ InvertedNameIndex invertedNameIndex,
+                                                                            @NotNull /*OutParam*/ Ref<NotNullLazyValue<InvertedNameIndex>> invertedNameIndexRef,
                                                                             List<ConnectionInterceptor> interceptors) {
     connectDisconnectLock.lock();
     try {
-      return init(cachesDir, version, useContentHashes, invertedNameIndex, interceptors);
+      return init(cachesDir, version, useContentHashes, invertedNameIndexRef, interceptors);
     }
     finally {
       connectDisconnectLock.unlock();
@@ -84,7 +89,7 @@ final class PersistentFSConnector {
   private static @NotNull InitializationResult init(@NotNull Path cachesDir,
                                                     int expectedVersion,
                                                     boolean useContentHashes,
-                                                    @NotNull /*OutParam*/ InvertedNameIndex invertedNameIndexToFill,
+                                                    @NotNull /*OutParam*/ Ref<NotNullLazyValue<InvertedNameIndex>> invertedNameIndexRef,
                                                     List<ConnectionInterceptor> interceptors) {
     List<Throwable> attemptsFailures = new ArrayList<>();
     long initializationStartedNs = System.nanoTime();
@@ -94,7 +99,7 @@ final class PersistentFSConnector {
           cachesDir,
           expectedVersion,
           useContentHashes,
-          invertedNameIndexToFill,
+          invertedNameIndexRef,
           interceptors
         );
         //heuristics: just created VFS contains only 1 record (=super-root)
@@ -125,7 +130,7 @@ final class PersistentFSConnector {
   static @NotNull PersistentFSConnection tryInit(@NotNull Path cachesDir,
                                                  int currentImplVersion,
                                                  boolean useContentHashes,
-                                                 @NotNull /* @OutParam */ InvertedNameIndex invertedNameIndexToFill,
+                                                 @NotNull /* @OutParam */ Ref<NotNullLazyValue<InvertedNameIndex>> invertedNameIndexRef,
                                                  List<ConnectionInterceptor> interceptors) throws IOException {
     //RC: Mental model behind VFS initialization:
     //   VFS consists of few different storages: records, attributes, content... Each storage has its own on-disk
@@ -171,7 +176,7 @@ final class PersistentFSConnector {
     Files.createDirectories(basePath);
 
     PersistentFSPaths persistentFSPaths = new PersistentFSPaths(cachesDir);
-    LoadingState loadingState = new LoadingState(persistentFSPaths, useContentHashes, invertedNameIndexToFill);
+    LoadingState loadingState = new LoadingState(persistentFSPaths, useContentHashes);
     try {
       loadingState.failIfCorruptionMarkerPresent();
 
@@ -179,7 +184,9 @@ final class PersistentFSConnector {
 
       //TODO RC: use Dispatchers.IO-kind pool, with many threads (appExecutor has 1 core thread, so needs time to inflate)
       //TODO RC: looks like it all could be much easier with coroutines
-      loadingState.initializeStorages(AppExecutorUtil.getAppExecutorService());
+      ExecutorService pool = PARALLELIZE_VFS_INITIALIZATION ? AppExecutorUtil.getAppExecutorService()
+                                                            : ConcurrencyUtil.newSameThreadExecutorService();
+      loadingState.initializeStorages(pool);
 
       LOG.info("VFS: impl (expected) version=" + currentImplVersion +
                ", " + loadingState.recordsStorage.recordsCount() + " file records" +
@@ -206,6 +213,8 @@ final class PersistentFSConnector {
       if (needInitialization) {//make just-initialized connection dirty (i.e. it must be saved)
         connection.markDirty();
       }
+
+      invertedNameIndexRef.set(loadingState.invertedNameIndexLazy);
 
       return connection;
     }
@@ -360,6 +369,15 @@ final class PersistentFSConnector {
       this.attemptsFailures = attemptsFailures;
       this.totalInitializationDurationNs = totalInitializationDurationNs;
     }
+
+    @Override
+    public String toString() {
+      return "InitializationResult{" +
+             "durationNs: " + totalInitializationDurationNs +
+             ", attemptsFailures: " + attemptsFailures +
+             ", createdAnew: " + storagesCreatedAnew +
+             '}';
+    }
   }
 
   /**
@@ -388,13 +406,13 @@ final class PersistentFSConnector {
     private ContentHashEnumerator contentHashesEnumerator = null;
     private SimpleStringPersistentEnumerator attributesEnumerator = null;
 
-    private final IntList reusableFileIds = new IntArrayList();
-    private final @NotNull InvertedNameIndex invertedNameIndexToFill;
+    private Future<Void> scanRecordsTask;
+    private NotNullLazyValue<IntList> reusableFileIdsLazy = null;
+    private NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy = null;
 
 
     private LoadingState(@NotNull PersistentFSPaths persistentFSPaths,
-                         boolean useContentHashes,
-                         @NotNull InvertedNameIndex invertedNameIndexToFill) {
+                         boolean useContentHashes) {
       recordsFile = persistentFSPaths.storagePath("records");
       namesFile = persistentFSPaths.storagePath("names");
       attributesFile = persistentFSPaths.storagePath("attributes");
@@ -407,8 +425,6 @@ final class PersistentFSConnector {
       vfsPaths = persistentFSPaths;
 
       this.useContentHashes = useContentHashes;
-
-      this.invertedNameIndexToFill = invertedNameIndexToFill;
     }
 
     public void failIfCorruptionMarkerPresent() throws IOException {
@@ -420,13 +436,13 @@ final class PersistentFSConnector {
     }
 
     public void initializeStorages(@NotNull ExecutorService pool) throws Exception {
-      final Future<ScannableDataEnumeratorEx<String>> namesStorageFuture = pool.submit(
+      Future<ScannableDataEnumeratorEx<String>> namesStorageFuture = pool.submit(
         () -> createFileNamesEnumerator(namesFile)
       );
-      final Future<AbstractAttributesStorage> attributesStorageFuture = pool.submit(
+      Future<AbstractAttributesStorage> attributesStorageFuture = pool.submit(
         () -> createAttributesStorage(attributesFile)
       );
-      final Future<RefCountingContentStorage> contentsStorageFuture = pool.submit(
+      Future<RefCountingContentStorage> contentsStorageFuture = pool.submit(
         () -> new RefCountingContentStorageImpl(
           contentsFile,
           CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
@@ -434,26 +450,54 @@ final class PersistentFSConnector {
           useContentHashes
         )
       );
+      Future<PersistentFSRecordsStorage> recordsStorageFuture = pool.submit(
+        () -> PersistentFSRecordsStorageFactory.createStorage(recordsFile)
+      );
 
-      final Future<PersistentFSRecordsStorage> recordsStorageFuture = pool.submit(() -> {
-        PersistentFSRecordsStorage records = PersistentFSRecordsStorageFactory.createStorage(recordsFile);
+      //Initiate async scanning of the recordsStorage to fill both invertedNameIndex and reusableFileIds,
+      //  and create lazy-accessors for both.
+      IntList reusableFileIds = new IntArrayList(1024);
+      InvertedNameIndex invertedNameIndex = new InvertedNameIndex();
+      scanRecordsTask = pool.submit(() -> {
         //fill up reusable records & nameId->fileId indexes:
-        records.processAllRecords((fileId, nameId, flags, parentId, attributeRecordId, contentId, corrupted) -> {
+        PersistentFSRecordsStorage storage = recordsStorageFuture.get();
+        storage.processAllRecords((fileId, nameId, flags, parentId, attributeRecordId, contentId, corrupted) -> {
           if (hasDeletedFlag(flags)) {
             reusableFileIds.add(fileId);
             return;
           }
 
           if (nameId != InvertedNameIndex.NULL_NAME_ID) {
-            invertedNameIndexToFill.updateDataInner(fileId, nameId);
+            invertedNameIndex.updateDataInner(fileId, nameId);
           }
         });
-        return records;
+        LOG.info("VFS scanned: " + reusableFileIds.size() + " deleted files to reuse");
+        return null;
+      });
+      //RC: we don't need volatile/atomicLazy, since computation is idempotent: same instance returned always.
+      //    So _there is_ a data race, but it is a benign race.
+      invertedNameIndexLazy = NotNullLazyValue.lazy(() -> {
+        try {
+          scanRecordsTask.get();
+        }
+        catch (Throwable e) {
+          throw new IllegalStateException("Lazy invertedNameIndex computation is failed", e);
+        }
+        return invertedNameIndex;
+      });
+      reusableFileIdsLazy = NotNullLazyValue.lazy(() -> {
+        try {
+          scanRecordsTask.get();
+        }
+        catch (Throwable e) {
+          throw new IllegalStateException("Lazy reusableFileIds computation is failed", e);
+        }
+        return reusableFileIds;
       });
 
-      // sources usually zipped with 4x ratio
 
-      final Future<ContentHashEnumerator> contentHashesEnumeratorFuture;
+      // sources usually zipped with 4x ratio
+      Future<ContentHashEnumerator> contentHashesEnumeratorFuture;
       if (useContentHashes) {
         contentHashesEnumeratorFuture = pool.submit(() -> new ContentHashEnumerator(contentsHashesFile, PERSISTENT_FS_STORAGE_CONTEXT));
       }
@@ -461,15 +505,16 @@ final class PersistentFSConnector {
         contentHashesEnumeratorFuture = CompletableFuture.completedFuture(null);
       }
 
-      //MAYBE RC: I'd like to have completely new Enumerator here:
-      //          1. Without legacy issues with null vs 'null' strings
-      //          2. With explicit 'id' stored in a file (instead of implicit id=row num)
-      //          3. With CopyOnWrite concurrent strategy (hence very cheap .enumerate() for already enumerated values)
-      //          ...next time we bump FSRecords version
-      attributesEnumerator = new SimpleStringPersistentEnumerator(enumeratedAttributesFile);
-
       ExceptionUtil.runAllAndRethrowAllExceptions(
         new IOException(),
+        () -> {
+          //MAYBE RC: I'd like to have completely new Enumerator here:
+          //          1. Without legacy issues with null vs 'null' strings
+          //          2. With explicit 'id' stored in a file (instead of implicit id=row num)
+          //          3. With CopyOnWrite concurrent strategy (hence very cheap .enumerate() for already enumerated values)
+          //          ...next time we bump FSRecords version
+          attributesEnumerator = new SimpleStringPersistentEnumerator(enumeratedAttributesFile);
+        },
         () -> {
           recordsStorage = recordsStorageFuture.get();
         },
@@ -489,7 +534,14 @@ final class PersistentFSConnector {
     }
 
     public void closeAndDeleteEverything() throws IOException {
-      invertedNameIndexToFill.clear();
+      // Must wait for scanRecords task to finish, since the task uses mapped file, and we can't remove
+      //  the mapped file (on Win) while there are usages.
+      try {
+        scanRecordsTask.get();
+      }
+      catch (Throwable t) {
+        LOG.trace(t);
+      }
 
       PersistentFSConnection.closeStorages(recordsStorage, namesStorage, attributesStorage, contentHashesEnumerator, contentsStorage);
 
@@ -558,7 +610,7 @@ final class PersistentFSConnector {
         contentsStorage,
         contentHashesEnumerator,
         attributesEnumerator,
-        reusableFileIds,
+        reusableFileIdsLazy,
         interceptors
       );
     }

@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IntRef;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.GentleFlusherBase;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
@@ -74,7 +75,7 @@ public final class PersistentFSConnection {
   private static final int INSIST_TO_RESTART_AFTER_ERRORS_COUNT = getIntProperty("vfs.insist-to-restart-after-n-errors", 1000);
 
 
-  private final IntList myFreeRecords;
+  private final NotNullLazyValue<IntList> freeRecords;
 
   @NotNull
   private final PersistentFSPaths myPersistentFSPaths;
@@ -109,7 +110,7 @@ public final class PersistentFSConnection {
                          @NotNull RefCountingContentStorage contents,
                          @Nullable ContentHashEnumerator contentHashesEnumerator,
                          @NotNull SimpleStringPersistentEnumerator enumeratedAttributes,
-                         @NotNull IntList freeRecords,
+                         @NotNull NotNullLazyValue<IntList> freeRecords,
                          @NotNull List<ConnectionInterceptor> interceptors) throws IOException {
     if (!(names instanceof Forceable) || !(names instanceof Closeable)) {
       //RC: there is no simple way to specify type like DataEnumerator & Forceable & Closeable in java,
@@ -124,7 +125,7 @@ public final class PersistentFSConnection {
     myContents = wrapContents(contents, interceptors);
     myContentHashesEnumerator = contentHashesEnumerator;
     myPersistentFSPaths = paths;
-    myFreeRecords = freeRecords;
+    this.freeRecords = freeRecords;
     myEnumeratedAttributes = enumeratedAttributes;
 
     if (FSRecords.BACKGROUND_VFS_FLUSH) {
@@ -195,8 +196,8 @@ public final class PersistentFSConnection {
 
   @NotNull
   IntList getFreeRecords() {
-    synchronized (myFreeRecords) {
-      return new IntArrayList(myFreeRecords);
+    synchronized (freeRecords) {
+      return new IntArrayList(freeRecords.getValue());
     }
   }
 
@@ -208,8 +209,14 @@ public final class PersistentFSConnection {
    * @return id of record to re-use, or -1 if no records for reuse remain
    */
   int reserveFreeRecord() {
-    synchronized (myFreeRecords) {
-      return myFreeRecords.isEmpty() ? -1 : myFreeRecords.removeInt(myFreeRecords.size() - 1);
+    if (!freeRecords.isComputed()) {
+      //do not wait until all deleted records are collected -- just allocate new record at the
+      // end of the file
+      return -1;
+    }
+    synchronized (freeRecords) {
+      IntList records = freeRecords.getValue();
+      return records.isEmpty() ? -1 : records.removeInt(records.size() - 1);
     }
   }
 
@@ -255,6 +262,8 @@ public final class PersistentFSConnection {
     if (flushingTask != null) {
       flushingTask.close();
     }
+    //ensure async loading is finished
+    ExceptionUtil.runAndCatch(() -> freeRecords.getValue());
 
     doForce();
     closeStorages(myRecords,

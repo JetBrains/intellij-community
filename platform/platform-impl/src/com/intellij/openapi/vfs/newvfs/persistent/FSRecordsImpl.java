@@ -5,6 +5,8 @@ import com.intellij.ide.actions.cache.RecoverVfsFromLogService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
@@ -138,7 +140,7 @@ public final class FSRecordsImpl {
    * is a better way to identify strings if nameId is not unique. Such a version of index will require a name itself,
    * as String, which is less available inside PersistentFSConnection.
    */
-  private final @NotNull InvertedNameIndex invertedNameIndex;
+  private final @NotNull NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy;
   private final AtomicLong invertedNameIndexModCount = new AtomicLong();
 
 
@@ -167,7 +169,7 @@ public final class FSRecordsImpl {
     return nextMask(value ? 1 : 0, 1, prevMask);
   }
 
-  private static int calculateVersion() {
+  public static int currentImplementationVersion() {
     //bumped main version (59 -> 60) because of VfsDependentEnumerator removal, and filenames change
     final int mainVFSFormatVersion = 60;
     return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()), /* acceptable range is [0..255] */ 8,
@@ -207,13 +209,13 @@ public final class FSRecordsImpl {
       IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
     }
     try {
-      int currentVersion = calculateVersion();
-      InvertedNameIndex invertedNameIndex = new InvertedNameIndex();
+      int currentVersion = currentImplementationVersion();
+      Ref<NotNullLazyValue<InvertedNameIndex>> invertedNameIndexRef = new Ref<>(null);
       final PersistentFSConnector.InitializationResult initializationResult = PersistentFSConnector.connect(
         storagesDirectoryPath,
         currentVersion,
         USE_CONTENT_HASHES,
-        invertedNameIndex,
+        invertedNameIndexRef,
         connectionInterceptors
       );
       LOG.info("VFS initialized: " + NANOSECONDS.toMillis(initializationResult.totalInitializationDurationNs) + " ms, " +
@@ -232,7 +234,7 @@ public final class FSRecordsImpl {
         return new FSRecordsImpl(
           connection,
           contentAccessor, attributeAccessor, treeAccessor, recordAccessor,
-          invertedNameIndex,
+          invertedNameIndexRef.get(),
           currentVersion,
           errorHandler,
           initializationResult
@@ -255,7 +257,7 @@ public final class FSRecordsImpl {
                         @NotNull PersistentFSAttributeAccessor attributeAccessor,
                         @NotNull PersistentFSTreeAccessor treeAccessor,
                         @NotNull PersistentFSRecordAccessor recordAccessor,
-                        @NotNull InvertedNameIndex invertedNameIndex,
+                        @NotNull NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy,
                         int currentVersion,
                         @NotNull ErrorHandler errorHandler,
                         @NotNull PersistentFSConnector.InitializationResult initializationResult) {
@@ -265,7 +267,7 @@ public final class FSRecordsImpl {
     this.treeAccessor = treeAccessor;
     this.recordAccessor = recordAccessor;
     this.errorHandler = errorHandler;
-    this.invertedNameIndex = invertedNameIndex;
+    this.invertedNameIndexLazy = invertedNameIndexLazy;
 
     this.currentVersion = currentVersion;
     this.initializationResult = initializationResult;
@@ -282,7 +284,7 @@ public final class FSRecordsImpl {
         handleError(e);
       }
 
-      invertedNameIndex.clear();
+      invertedNameIndexLazy.getValue().clear();
       disposed = true;
       disposedStackTrace = new Exception("FSRecordsImpl dispose stacktrace");
     }
@@ -424,7 +426,7 @@ public final class FSRecordsImpl {
       }
       recordAccessor.markRecordAsDeleted(id);
 
-      invertedNameIndex.updateFileName(id, NULL_NAME_ID, nameId);
+      invertedNameIndexLazy.getValue().updateFileName(id, NULL_NAME_ID, nameId);
     }
     invertedNameIndexModCount.incrementAndGet();
   }
@@ -724,7 +726,7 @@ public final class FSRecordsImpl {
   boolean processFilesWithNames(@NotNull Set<String> names,
                                 @NotNull IntPredicate processor) {
     if (names.isEmpty()) return true;
-    return invertedNameIndex.processFilesWithNames(names, processor);
+    return invertedNameIndexLazy.getValue().processFilesWithNames(names, processor);
   }
 
 
@@ -853,7 +855,7 @@ public final class FSRecordsImpl {
       connection.getRecords().setNameId(fileId, nameId);
       connection.markDirty();
 
-      invertedNameIndex.updateFileName(fileId, nameId, oldNameId);
+      invertedNameIndexLazy.getValue().updateFileName(fileId, nameId, oldNameId);
       invertedNameIndexModCount.incrementAndGet();
     }
     catch (IOException e) {
@@ -962,7 +964,7 @@ public final class FSRecordsImpl {
       throw handleError(e);
     }
 
-    invertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
+    invertedNameIndexLazy.getValue().updateFileName(fileId, nameId, NULL_NAME_ID);
     invertedNameIndexModCount.incrementAndGet();
 
     return nameId;
@@ -1205,7 +1207,7 @@ public final class FSRecordsImpl {
 
   @TestOnly
   void checkFilenameIndexConsistency() {
-    invertedNameIndex.checkConsistency();
+    invertedNameIndexLazy.getValue().checkConsistency();
   }
 
   void checkSanity() {

@@ -533,10 +533,11 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
       }
     }
   }
+  
 
   @Override
   public boolean processAllRecords(final @NotNull PersistentFSRecordsStorage.FsRecordProcessor processor) throws IOException {
-    final int recordsCount = allocatedRecordsCount.get();
+    final int recordsCount = maxAllocatedID();
     for (int recordId = MIN_VALID_ID; recordId <= recordsCount; recordId++) {
       processor.process(
         recordId,
