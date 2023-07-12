@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.lang.java.lexer.JavaLexer
@@ -12,21 +12,17 @@ import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Case.CAMEL
+import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
+import org.jetbrains.kotlin.lexer.KotlinLexer
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFunctionType
-import org.jetbrains.kotlin.psi.KtNullableType
-import org.jetbrains.kotlin.psi.KtTypeElement
-import org.jetbrains.kotlin.psi.KtUserType
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.toUpperCaseAsciiOnly
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.*
 
 @DslMarker
 private annotation class NameSuggesterDsl
@@ -351,6 +347,78 @@ class KotlinNameSuggester(
     }
 
     companion object {
+        fun MutableCollection<String>.addCamelNames(name: String, validator: (String) -> Boolean, startLowerCase: Boolean = true) {
+            if (name === "" || !name.unquoteKotlinIdentifier().isIdentifier()) return
+            var s = extractIdentifiers(name)
+
+            for (prefix in ACCESSOR_PREFIXES) {
+                if (!s.startsWith(prefix)) continue
+
+                val len = prefix.length
+                if (len < s.length && Character.isUpperCase(s[len])) {
+                    s = s.substring(len)
+                    break
+                }
+            }
+
+            var upperCaseLetterBefore = false
+            for (i in s.indices) {
+                val c = s[i]
+                val upperCaseLetter = Character.isUpperCase(c)
+
+                if (i == 0) {
+                    addName(if (startLowerCase) s.decapitalizeSmart() else s, validator)
+                } else {
+                    if (upperCaseLetter && !upperCaseLetterBefore) {
+                        val substring = s.substring(i)
+                        addName(if (startLowerCase) substring.decapitalizeSmart() else substring, validator)
+                    }
+                }
+
+                upperCaseLetterBefore = upperCaseLetter
+            }
+        }
+
+        private fun extractIdentifiers(s: String): String {
+            return buildString {
+                val lexer = KotlinLexer()
+                lexer.start(s)
+                while (lexer.tokenType != null) {
+                    if (lexer.tokenType == KtTokens.IDENTIFIER) {
+                        append(lexer.tokenText)
+                    }
+                    lexer.advance()
+                }
+            }
+        }
+
+        /**
+         * Adds names based on an expression PSI and filtered by a validator function.
+         * Examples:
+         *  - `listOf(42)` -> {list, of}
+         *  - `point.x` -> {x}
+         *  - `collection.isEmpty()` -> {empty}
+         */
+        fun MutableCollection<String>.addNamesByExpressionPSI(expression: KtExpression?, validator: (String) -> Boolean) {
+            if (expression == null) return
+            when (val deparenthesized = KtPsiUtil.safeDeparenthesize(expression)) {
+                is KtSimpleNameExpression -> addCamelNames(deparenthesized.getReferencedName(), validator)
+                is KtQualifiedExpression -> addNamesByExpressionPSI(deparenthesized.selectorExpression, validator)
+                is KtCallExpression -> addNamesByExpressionPSI(deparenthesized.calleeExpression, validator)
+                is KtPostfixExpression -> addNamesByExpressionPSI(deparenthesized.baseExpression, validator)
+            }
+        }
+
+        fun MutableCollection<String>.addName(name: String?, validator: (String) -> Boolean) {
+            if (name == null) return
+            val correctedName = when {
+                name.isIdentifier() -> name
+                name == "class" -> "clazz"
+                else -> return
+            }
+            add(suggestNameByName(correctedName, validator))
+        }
+
         /**
          * Validates [name] and slightly improves it by adding a number suffix in case of conflicts.
          *
@@ -399,6 +467,7 @@ class KotlinNameSuggester(
         )
 
         private const val MAX_NUMBER_OF_SUGGESTED_NAME_CHECKS = 1000
+        private val ACCESSOR_PREFIXES = arrayOf("get", "is", "set")
 
         private val KOTLIN_HARD_KEYWORDS = KtTokens.KEYWORDS.types.filterIsInstance<KtKeywordToken>().map { it.value }
         private val KOTLIN_SOFT_KEYWORDS = KtTokens.SOFT_KEYWORDS.types.filterIsInstance<KtKeywordToken>().map { it.value }

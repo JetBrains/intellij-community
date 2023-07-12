@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration
 
 import com.intellij.openapi.application.ApplicationManager
@@ -8,6 +8,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.addCamelNames
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.addName
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.addNamesByExpressionPSI
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.KotlinBaseFe10CodeInsightBundle
 import org.jetbrains.kotlin.idea.core.AbstractKotlinNameSuggester
 import org.jetbrains.kotlin.idea.util.application.executeInBackgroundWithProgress
@@ -18,12 +21,12 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.util.getParentResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
-import org.jetbrains.kotlin.types.error.ErrorUtils
+import org.jetbrains.kotlin.resolve.calls.util.getParentResolvedCall
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 
 @Suppress("DEPRECATION")
@@ -82,7 +85,6 @@ object Fe10KotlinNameSuggester : AbstractKotlinNameSuggester() {
         result.addNamesByExpression(expression, bindingContext, validator)
 
         if (result.isEmpty()) {
-            @Suppress("SuspiciousPackagePrivateAccess")
             result.addName(defaultName, validator)
         }
 
@@ -105,7 +107,6 @@ object Fe10KotlinNameSuggester : AbstractKotlinNameSuggester() {
         result.addNamesByType(elementType, validator)
 
         if (result.isEmpty()) {
-            @Suppress("SuspiciousPackagePrivateAccess")
             result.addName(defaultName, validator)
         }
 
