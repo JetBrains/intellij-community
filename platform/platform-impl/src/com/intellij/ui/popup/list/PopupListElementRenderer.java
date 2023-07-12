@@ -393,10 +393,10 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     boolean isSelectable = step.isSelectable(value);
     java.util.List<JComponent> extraButtons;
-    if (!isSelected || !isSelectable) {
+    if (!isSelectable) {
       extraButtons = Collections.emptyList();
     } else {
-      extraButtons = myInlineActionsSupport.getExtraButtons(list, value, true);
+      extraButtons = myInlineActionsSupport.getExtraButtons(list, value, isSelected);
     }
 
     if (!extraButtons.isEmpty()) {

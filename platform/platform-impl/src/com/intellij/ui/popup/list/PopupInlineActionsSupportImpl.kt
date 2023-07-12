@@ -57,10 +57,15 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
     val inlineActions = myStep.getInlineActions(value)
 
     val res: MutableList<JComponent> = java.util.ArrayList()
-    val activeIndex = getActiveButtonIndex(list)
+    val activeIndex = if (isSelected) getActiveButtonIndex(list) else -1
 
-    for (i in 0 until inlineActions.size) res.add(createActionButton(inlineActions[i], i == activeIndex, isSelected))
-    if (hasMoreButton(value)) res.add(createSubmenuButton(value, res.size == activeIndex))
+    for (i in 0 until inlineActions.size) {
+      val action = inlineActions[i]
+      if (isSelected || action.isAlwaysVisible) {
+        res.add(createActionButton(action, i == activeIndex, isSelected))
+      }
+    }
+    if (hasMoreButton(value) && isSelected) res.add(createSubmenuButton(value, res.size == activeIndex))
 
     return res
   }
