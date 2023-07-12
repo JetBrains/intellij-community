@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.maven.testFramework.utils.MavenImportingTestCaseKt;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
@@ -123,10 +122,7 @@ public class IgnoresImportingTest extends MavenMultiVersionImportingTestCase {
       doImportProjects(myProjectsManager.getProjectsTree().getExistingManagedFiles(), true);
     }
     else {
-      waitForReadingCompletion();
-
-      MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager);
-      //myProjectsManager.performScheduledImportInTests();
+      updateAllProjects();
     }
   }
 }

@@ -4,11 +4,12 @@ package com.intellij.maven.testFramework.utils
 import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import org.jetbrains.idea.maven.project.MavenFolderResolver
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenTestCoroutineScopeProvider
 
 fun resolveFoldersAndImport(project: Project, mavenProjects: Collection<MavenProject>) {
   runWithModalProgressBlocking(project, "") {
@@ -16,13 +17,9 @@ fun resolveFoldersAndImport(project: Project, mavenProjects: Collection<MavenPro
   }
 }
 
-fun importMavenProjectsSync(mavenProjectsManager: MavenProjectsManager) {
-  runBlocking {
-    mavenProjectsManager.importMavenProjects(emptyMap())
-  }
-}
+fun importMavenProjects(mavenProjectsManager: MavenProjectsManager) = importMavenProjects(mavenProjectsManager, emptyList())
 
-fun importMavenProjectsSync(mavenProjectsManager: MavenProjectsManager, projectFiles: List<VirtualFile>) {
+fun importMavenProjects(mavenProjectsManager: MavenProjectsManager, projectFiles: List<VirtualFile>) {
   val toImport= mutableMapOf<MavenProject, MavenProjectChanges>()
   for (each in projectFiles) {
     val project = mavenProjectsManager.findProject(each)
@@ -30,9 +27,8 @@ fun importMavenProjectsSync(mavenProjectsManager: MavenProjectsManager, projectF
       toImport[project] = MavenProjectChanges.ALL
     }
   }
-  runBlocking {
-    mavenProjectsManager.importMavenProjects(toImport)
-  }
+  val cs = MavenTestCoroutineScopeProvider.getCoroutineScope(mavenProjectsManager.project)
+  cs.launch { mavenProjectsManager.importMavenProjects(toImport) }
 }
 
 

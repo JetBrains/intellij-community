@@ -940,7 +940,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
     waitForReadingCompletion();
     myProjectsManager.waitForReadingCompletion();
-    MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager);
+    MavenImportingTestCaseKt.importMavenProjects(myProjectsManager);
     //myProjectsManager.performScheduledImportInTests();
 
     assertSources("project", "src/main/java");
@@ -1099,8 +1099,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     moduleStructureExtension.moduleRemoved(module);
     moduleStructureExtension.apply();
     moduleStructureExtension.disposeUIResources();
-    //myProjectsManager.performScheduledImportInTests();
-    MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager);
+    updateAllProjects();
 
     assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"));
     assertTrue(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
@@ -1137,7 +1136,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
       ApplicationManager.getApplication().runWriteAction(action);
     }, ProjectBundle.message("module.remove.command"), null);
     //myProjectsManager.performScheduledImportInTests();
-    MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager);
+    MavenImportingTestCaseKt.importMavenProjects(myProjectsManager);
 
     assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"));
     assertTrue(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
@@ -1202,8 +1201,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     var action = new DeleteAction();
     action.actionPerformed(TestActionEvent.createTestEvent(action, createTestModuleDataContext(module1)));
 
-    //myProjectsManager.performScheduledImportInTests();
-    MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager);
+    updateAllProjects();
 
     assertModuleModuleDeps("m2");
     assertModuleLibDep("m2", "Maven: test:m1:1");
@@ -1258,8 +1256,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     moduleStructureExtension.apply();
     moduleStructureExtension.disposeUIResources();
 
-    //myProjectsManager.performScheduledImportInTests();
-    MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager);
+    updateAllProjects();
 
     assertModuleModuleDeps("m2");
     assertModuleLibDep("m2", "Maven: test:m1:1");

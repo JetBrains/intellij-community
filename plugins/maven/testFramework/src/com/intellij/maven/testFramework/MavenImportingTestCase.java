@@ -411,7 +411,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void importProjectWithErrors() {
     var files = Collections.singletonList(myProjectPom);
     doImportProjects(files, false);
-    MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager, files);
+    MavenImportingTestCaseKt.importMavenProjects(myProjectsManager, files);
   }
 
   protected void importProjectWithProfiles(String... profiles) {

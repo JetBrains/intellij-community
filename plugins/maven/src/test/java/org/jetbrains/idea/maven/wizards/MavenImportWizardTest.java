@@ -156,7 +156,7 @@ public class MavenImportWizardTest extends MavenProjectWizardTestCase {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
     if (!MavenUtil.isLinearImportEnabled()) {
       manager.waitForImportCompletion();
-      MavenImportingTestCaseKt.importMavenProjectsSync(manager, List.of(file));
+      MavenImportingTestCaseKt.importMavenProjects(manager, List.of(file));
     }
 
     Promise<?> promise = manager.waitForImportCompletion();

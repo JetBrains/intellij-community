@@ -1747,7 +1747,10 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
   }
 
   @Test
-  public void testRemovingPreviousSystemPathForForSystemLibraries() {
+  public void testRemovingPreviousSystemPathForForSystemLibraries() throws IOException {
+    createProjectSubFile("foo/bar.jar");
+    createProjectSubFile("foo/xxx.jar");
+
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
                      "<version>1</version>\n" +
@@ -1758,13 +1761,13 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                      "    <artifactId>yyy</artifactId>\n" +
                      "    <version>1</version>\n" +
                      "    <scope>system</scope>\n" +
-                     "    <systemPath>\n" + getRoot() + "/foo/bar.jar</systemPath>\n" +
+                     "    <systemPath>\n" + getProjectPath() + "/foo/bar.jar</systemPath>\n" +
                      "  </dependency>\n" +
                      "</dependencies>\n");
     importProjectWithErrors();
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
-                       Arrays.asList("jar://" + getRoot() + "/foo/bar.jar!/"),
+                       Arrays.asList("jar://" + getProjectPath() + "/foo/bar.jar!/"),
                        Collections.emptyList(),
                        Collections.emptyList());
 
@@ -1778,14 +1781,14 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                      "    <artifactId>yyy</artifactId>\n" +
                      "    <version>1</version>\n" +
                      "    <scope>system</scope>\n" +
-                     "    <systemPath>\n" + getRoot() + "/foo/xxx.jar</systemPath>\n" +
+                     "    <systemPath>\n" + getProjectPath() + "/foo/xxx.jar</systemPath>\n" +
                      "  </dependency>\n" +
                      "</dependencies>\n");
 
     importProjectWithErrors();
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
-                       Arrays.asList("jar://" + getRoot() + "/foo/xxx.jar!/"),
+                       Arrays.asList("jar://" + getProjectPath() + "/foo/xxx.jar!/"),
                        Collections.emptyList(),
                        Collections.emptyList());
   }
