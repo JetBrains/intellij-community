@@ -114,13 +114,13 @@ class IntentionPreviewComputable(private val project: Project,
     val settings = CodeStyle.getSettings(editorCopy)
     IntentionPreviewUtils.previewSession(editorCopy) {
       PostprocessReformattingAspect.getInstance(project).postponeFormattingInside {
-        info = SideEffectGuard.computeWithoutSideEffects<IntentionPreviewInfo?, Exception> {
+        info = SideEffectGuard.computeWithoutSideEffects {
           action.generatePreview(project, editorCopy, psiFileCopy)
         }
       }
     }
     if (info == IntentionPreviewInfo.FALLBACK_DIFF && fileToCopy == origFile) {
-      info = SideEffectGuard.computeWithoutSideEffects<IntentionPreviewInfo?, Exception> { generateFallbackDiff(editorCopy, psiFileCopy) }
+      info = SideEffectGuard.computeWithoutSideEffects { generateFallbackDiff(editorCopy, psiFileCopy) }
     }
     Reference.reachabilityFence(settings)
     val manager = PsiDocumentManager.getInstance(project)
@@ -156,8 +156,9 @@ class IntentionPreviewComputable(private val project: Project,
 
   private fun getModActionPreview(origFile: PsiFile, origEditor: Editor): IntentionPreviewInfo {
     val unwrapped = ModCommandAction.unwrap(action) ?: return IntentionPreviewInfo.EMPTY
-    val info = SideEffectGuard.computeWithoutSideEffects<IntentionPreviewInfo, Exception> 
-      { unwrapped.generatePreview(ActionContext.from(origEditor, origFile)) }
+    val info = SideEffectGuard.computeWithoutSideEffects {
+      unwrapped.generatePreview(ActionContext.from(origEditor, origFile))
+    }
     return convertResult(info, origFile, origFile, false) ?: IntentionPreviewInfo.EMPTY
   }
 
