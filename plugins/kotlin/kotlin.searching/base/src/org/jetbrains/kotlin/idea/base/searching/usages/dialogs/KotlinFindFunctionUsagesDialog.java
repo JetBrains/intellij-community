@@ -40,7 +40,7 @@ public class KotlinFindFunctionUsagesDialog extends FindMethodUsagesDialog {
     }
 
     @Override
-    public boolean calculateMyIncludeOverloadedMethodsAvailable() {
+    public boolean isIncludeOverloadedMethodsAvailable() {
         return true;
     }
 
