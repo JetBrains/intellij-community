@@ -1,4 +1,5 @@
 // "Opt in for 'A' in containing file 'appendFileAnnotationWithAnnotationList.kt'" "true"
+// IGNORE_FIR
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 @file:[

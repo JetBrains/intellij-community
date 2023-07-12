@@ -1,4 +1,5 @@
 // "Opt in for 'AliasMarker' on 'AliasMarkerUsage'" "true"
+// IGNORE_FIR
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 // ACTION: Add '-opt-in=AliasMarker' to module light_idea_test_case compiler arguments

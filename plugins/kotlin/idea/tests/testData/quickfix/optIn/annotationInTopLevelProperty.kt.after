@@ -1,4 +1,5 @@
 // "Propagate 'TopMarker' opt-in requirement to 'topUserVal'" "true"
+// IGNORE_FIR
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 

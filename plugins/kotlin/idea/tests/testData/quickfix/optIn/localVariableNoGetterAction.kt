@@ -1,4 +1,5 @@
 // "Move '@SomeOptInAnnotation' annotation from getter to property" "false"
+// IGNORE_FIR
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 // ACTION: Remove annotation
