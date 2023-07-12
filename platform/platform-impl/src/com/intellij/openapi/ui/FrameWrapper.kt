@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.StatusBar
@@ -44,7 +44,7 @@ import java.nio.file.Path
 import java.util.function.BooleanSupplier
 import javax.swing.*
 
-open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
+open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
                                                   @param:NonNls protected open val dimensionKey: String? = null,
                                                   private val isDialog: Boolean = false,
                                                   @NlsContexts.DialogTitle var title: String = "",
@@ -120,7 +120,7 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
     }
     frame.addWindowListener(focusListener)
 
-    if (RegistryManager.getInstance().`is`("ide.perProjectModality")) {
+    if (Registry.`is`("ide.perProjectModality", false)) {
       frame.isAlwaysOnTop = true
     }
     Disposer.register(this, Disposable {
@@ -183,12 +183,12 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
     }
 
     // The order matters here: dispose() may need to access some properties of the still visible frame,
-    // for example windowed tool windows need to remember their bounds,
+    // for example, windowed tool windows need to remember their bounds,
     // and that must be done while the frame is still visible (otherwise the bounds are 0,0,0,0).
     Disposer.dispose(this)
     // The following no longer seems to be reproducible, but keeping that line won't hurt anyway:
     // if you remove this line, problems will start happen on Mac OS X
-    // 2 projects opened, call Cmd+D on the second opened project and then Esc.
+    // 2 project opening, call Cmd+D on the second opened project and then Esc.
     // Weird situation: 2nd IdeFrame will be active, but focus will be somewhere inside the 1st IdeFrame
     // App is unusable until Cmd+Tab, Cmd+tab
     frame?.isVisible = false
@@ -202,7 +202,6 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
     val frame = frame
     this.frame = null
     preferredFocusedComponent = null
-    project = null
     component = null
     images = emptyList()
     isDisposed = true

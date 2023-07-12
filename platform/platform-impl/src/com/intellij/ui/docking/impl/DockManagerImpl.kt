@@ -3,9 +3,7 @@
 
 package com.intellij.ui.docking.impl
 
-import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
@@ -19,29 +17,19 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.*
 import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer.DockableEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BusyObject
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.*
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.executeOnCancelInEdt
-import com.intellij.toolWindow.ToolWindowButtonManager
-import com.intellij.toolWindow.ToolWindowPane
-import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
-import com.intellij.toolWindow.ToolWindowPaneOldButtonManager
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.components.panels.VerticalBox
 import com.intellij.ui.docking.*
 import com.intellij.ui.docking.DockContainer.ContentResponse
 import com.intellij.util.IconUtil
@@ -50,24 +38,20 @@ import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.update.Activatable
-import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
 import org.jdom.Element
 import org.jetbrains.annotations.Contract
-import java.awt.*
-import java.awt.event.KeyEvent
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Image
+import java.awt.Rectangle
 import java.awt.event.MouseEvent
-import java.awt.event.WindowAdapter
-import java.awt.event.WindowEvent
 import java.util.function.Predicate
 import javax.swing.*
 
 @State(name = "DockManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], getStateRequiresEdt = true)
-class DockManagerImpl(private val project: Project) : DockManager(), PersistentStateComponent<Element?> {
+class DockManagerImpl(@JvmField internal val project: Project) : DockManager(), PersistentStateComponent<Element?> {
   private val factories = HashMap<String, DockContainerFactory>()
   private val containers = HashSet<DockContainer>()
   private val containerToWindow = HashMap<DockContainer, DockWindow>()
@@ -114,6 +98,10 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
       }
       return defaultNorthPanelVisible
     }
+  }
+
+  internal fun removeContainer(container: DockContainer) {
+    containers.remove(container)
   }
 
   override fun register(container: DockContainer, parentDisposable: Disposable) {
@@ -190,20 +178,22 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
   }
 
   fun stopCurrentDragSession() {
-    if (currentDragSession != null) {
-      currentDragSession!!.cancelSession()
-      currentDragSession = null
-      busyObject.onReady()
-      for (each in getAllContainers()) {
-        if (!each.isEmpty) {
-          val window = containerToWindow.get(each)
-          window?.setTransparent(false)
-        }
+    if (currentDragSession == null) {
+      return
+    }
+
+    currentDragSession!!.cancelSession()
+    currentDragSession = null
+    busyObject.onReady()
+    for (each in getAllContainers()) {
+      if (!each.isEmpty) {
+        val window = containerToWindow.get(each)
+        window?.setTransparent(false)
       }
     }
   }
 
-  private val ready: ActionCallback
+  internal val ready: ActionCallback
     get() = busyObject.getReady(this)
 
   private inner class MyDragSession(mouseEvent: MouseEvent, content: DockableContent<*>) : DragSession {
@@ -436,17 +426,21 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
     return result
   }
 
-  private fun createWindowFor(dimensionKey: String?,
-                              id: String?,
-                              container: DockContainer,
-                              canReopenWindow: Boolean): DockWindow {
-    val window = DockWindow(dimensionKey = dimensionKey,
+  private fun createWindowFor(dimensionKey: String?, id: String?, container: DockContainer, canReopenWindow: Boolean): DockWindow {
+    @Suppress("DEPRECATION")
+    val coroutineScope = project.coroutineScope.childScope()
+    val window = DockWindow(dockManager = this,
+                            coroutineScope = coroutineScope,
+                            dimensionKey = dimensionKey,
                             id = id ?: (windowIdCounter++).toString(),
                             project = project,
                             container = container,
                             isDialog = container is DockContainer.Dialog,
                             supportReopen = canReopenWindow)
     containerToWindow.put(container, window)
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      containerToWindow.remove(container)
+    }
     return window
   }
 
@@ -464,232 +458,18 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
     return createWindowFor(dimensionKey = null, id = id, container = container, canReopenWindow = true)
   }
 
-  private inner class DockWindow(dimensionKey: String?,
-                                 val id: String,
-                                 project: Project,
-                                 private var container: DockContainer,
-                                 isDialog: Boolean,
-                                 val supportReopen: Boolean) : FrameWrapper(project, dimensionKey ?: "dock-window-$id", isDialog) {
-    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
-    var northPanelAvailable = false
-    private val northPanel = VerticalBox()
-    private val northExtensions = LinkedHashMap<String, JComponent>()
-    val uiContainer: NonOpaquePanel
-    private val centerPanel = JPanel(BorderLayout(0, 2))
-    val dockContentUiContainer: JPanel
-    var toolWindowPane: ToolWindowPane? = null
-
-    override val isDockWindow: Boolean
-      get() = true
-
-    init {
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment && container !is DockContainer.Dialog) {
-        val mainStatusBar = WindowManager.getInstance().getStatusBar(project)
-        if (mainStatusBar != null) {
-          val frame = getFrame()
-          if (frame is IdeFrame) {
-            statusBar = mainStatusBar.createChild(this@DockWindow, frame) {
-              (container as? DockableEditorTabbedContainer)?.splitters?.currentWindow?.selectedComposite?.selectedWithProvider?.fileEditor
-            }
-          }
-        }
-      }
-      uiContainer = NonOpaquePanel(BorderLayout())
-      centerPanel.isOpaque = false
-      dockContentUiContainer = JPanel(BorderLayout())
-      dockContentUiContainer.isOpaque = false
-      dockContentUiContainer.add(container.containerComponent, BorderLayout.CENTER)
-      centerPanel.add(dockContentUiContainer, BorderLayout.CENTER)
-      uiContainer.add(centerPanel, BorderLayout.CENTER)
-      statusBar?.let {
-        uiContainer.add(it.component!!, BorderLayout.SOUTH)
-      }
-      component = uiContainer
-      IdeEventQueue.getInstance().addPostprocessor({ e ->
-        if (e is KeyEvent) {
-          if (currentDragSession != null) {
-            stopCurrentDragSession()
-          }
-        }
-        false
-      }, this)
-      container.addListener(object : DockContainer.Listener {
-        override fun contentRemoved(key: Any) {
-          ready.doWhenDone(Runnable(::closeIfEmpty))
-        }
-      }, this)
-    }
-
-    fun setupToolWindowPane() {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        return
-      }
-      val frame = getFrame() as? JFrame ?: return
-      if (toolWindowPane != null) {
-        return
-      }
-
-      val paneId = dimensionKey!!
-      val buttonManager: ToolWindowButtonManager
-      if (ExperimentalUI.isNewUI()) {
-        buttonManager = ToolWindowPaneNewButtonManager(paneId, false)
-        buttonManager.add(dockContentUiContainer)
-        buttonManager.initMoreButton()
-      }
-      else {
-        buttonManager = ToolWindowPaneOldButtonManager(paneId)
-      }
-      val containerComponent = container.containerComponent
-      toolWindowPane = ToolWindowPane(frame = frame, coroutineScope = coroutineScope.childScope(), paneId = paneId, buttonManager = buttonManager)
-      val toolWindowManagerImpl = ToolWindowManager.getInstance(project) as ToolWindowManagerImpl
-      toolWindowManagerImpl.addToolWindowPane(toolWindowPane!!, this)
-
-      toolWindowPane!!.setDocumentComponent(containerComponent)
-      dockContentUiContainer.remove(containerComponent)
-      dockContentUiContainer.add(toolWindowPane!!, BorderLayout.CENTER)
-
-      // Close the container if it's empty, and we've just removed the last tool window
-      project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-        override fun stateChanged(toolWindowManager: ToolWindowManager, eventType: ToolWindowManagerEventType) {
-          // Various events can mean a tool window has been removed from the frame's stripes. The comments are not exhaustive
-          if (eventType == ToolWindowManagerEventType.HideToolWindow
-            || eventType == ToolWindowManagerEventType.SetSideToolAndAnchor   // The last tool window dragged to another stripe on another frame
-            || eventType == ToolWindowManagerEventType.SetToolWindowType      // Last tool window made floating
-            || eventType == ToolWindowManagerEventType.ToolWindowUnavailable  // Last tool window programmatically set unavailable
-            || eventType == ToolWindowManagerEventType.UnregisterToolWindow) {
-            ready.doWhenDone(Runnable(::closeIfEmpty))
-          }
-        }
-      })
-    }
-
-    fun replaceContainer(container: DockContainer): DockContainer {
-      val newContainerComponent = container.containerComponent
-      if (toolWindowPane != null) {
-        toolWindowPane!!.setDocumentComponent(newContainerComponent)
-      }
-      else {
-        dockContentUiContainer.remove(this.container.containerComponent)
-        dockContentUiContainer.add(newContainerComponent)
-      }
-      val oldContainer = this.container
-      this.container = container
-      if (container is Activatable && getFrame().isVisible) {
-        (container as Activatable).showNotify()
-      }
-      return oldContainer
-    }
-
-    private fun closeIfEmpty() {
-      if (container.isEmpty && (toolWindowPane == null || !toolWindowPane!!.buttonManager.hasButtons())) {
-        close()
-        containers.remove(container)
-      }
-    }
-
-    fun setupNorthPanel() {
-      if (northPanelAvailable) {
-        return
-      }
-      centerPanel.add(northPanel, BorderLayout.NORTH)
-      northPanelAvailable = true
-      project.messageBus.connect(this).subscribe(UISettingsListener.TOPIC, UISettingsListener { uiSettings ->
-        val visible = isNorthPanelVisible(uiSettings)
-        if (northPanel.isVisible != visible) {
-          updateNorthPanel(visible)
-        }
-      })
-      updateNorthPanel(isNorthPanelVisible(UISettings.getInstance()))
-    }
-
-    override fun getNorthExtension(key: String?): JComponent? = northExtensions.get(key)
-
-    private fun updateNorthPanel(visible: Boolean) {
-      if (ApplicationManager.getApplication().isUnitTestMode || !northPanelAvailable) {
-        return
-      }
-
-      northPanel.removeAll()
-      northExtensions.clear()
-
-      northPanel.isVisible = visible && container !is DockContainer.Dialog
-      for (extension in IdeRootPaneNorthExtension.EP_NAME.extensionList) {
-        val component = extension.createComponent(project, true) ?: continue
-        northExtensions.put(extension.key, component)
-        northPanel.add(component)
-      }
-
-      northPanel.revalidate()
-      northPanel.repaint()
-    }
-
-    fun setTransparent(transparent: Boolean) {
-      val windowManager = WindowManagerEx.getInstanceEx()
-      if (transparent) {
-        windowManager.setAlphaModeEnabled(getFrame(), true)
-        windowManager.setAlphaModeRatio(getFrame(), 0.5f)
-      }
-      else {
-        windowManager.setAlphaModeEnabled(getFrame(), true)
-        windowManager.setAlphaModeRatio(getFrame(), 0f)
-      }
-    }
-
-    override fun dispose() {
-      super.dispose()
-
-      containerToWindow.remove(container)
-      if (container is Disposable) {
-        Disposer.dispose((container as Disposable))
-      }
-      northExtensions.clear()
-
-      coroutineScope.cancel()
-    }
-
-    override fun createJFrame(parent: IdeFrame): JFrame {
-      val frame = super.createJFrame(parent)
-      installListeners(frame)
-      return frame
-    }
-
-    override fun createJDialog(parent: IdeFrame): JDialog {
-      val frame = super.createJDialog(parent)
-      installListeners(frame)
-      return frame
-    }
-
-    private fun installListeners(frame: Window) {
-      val uiNotifyConnector = if (container is Activatable) {
-        UiNotifyConnector.installOn((frame as RootPaneContainer).contentPane, (container as Activatable))
-      }
-      else {
-        null
-      }
-      frame.addWindowListener(object : WindowAdapter() {
-        override fun windowClosing(e: WindowEvent) {
-          container.closeAll()
-          if (uiNotifyConnector != null) {
-            Disposer.dispose(uiNotifyConnector)
-          }
-        }
-      })
-    }
-  }
-
   override fun getState(): Element {
     val root = Element("state")
-    for (each in getAllContainers()) {
-      val eachWindow = containerToWindow.get(each)
-      if (eachWindow != null && eachWindow.supportReopen && each is DockContainer.Persistent) {
+    for (container in getAllContainers()) {
+      val window = containerToWindow.get(container)
+      if (window != null && window.supportReopen && container is DockContainer.Persistent) {
         val eachWindowElement = Element("window")
-        eachWindowElement.setAttribute("id", eachWindow.id)
-        eachWindowElement.setAttribute("withNorthPanel", eachWindow.northPanelAvailable.toString())
-        eachWindowElement.setAttribute("withToolWindowPane", (eachWindow.toolWindowPane != null).toString())
+        eachWindowElement.setAttribute("id", window.id)
+        eachWindowElement.setAttribute("withNorthPanel", window.northPanelAvailable.toString())
+        eachWindowElement.setAttribute("withToolWindowPane", (window.toolWindowPane != null).toString())
         val content = Element("content")
-        content.setAttribute("type", each.dockContainerType)
-        content.addContent(each.state)
+        content.setAttribute("type", container.dockContainerType)
+        content.addContent(container.state)
         eachWindowElement.addContent(content)
         root.addContent(eachWindowElement)
       }
@@ -698,9 +478,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
   }
 
   private fun getAllContainers(): Sequence<DockContainer> {
-    return sequenceOfNotNull(getFileManagerContainer()) +
-           containers.asSequence() +
-           containerToWindow.keys
+    return sequenceOfNotNull(getFileManagerContainer()) + containers.asSequence() + containerToWindow.keys
   }
 
   private fun getFileManagerContainer(): DockContainer? {

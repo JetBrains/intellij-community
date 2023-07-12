@@ -46,11 +46,13 @@ import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.border.name
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.NotificationPopup
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.height
 import com.intellij.util.EventDispatcher
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
+import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -58,7 +60,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.MouseEvent
-import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
@@ -70,7 +71,9 @@ import kotlin.math.max
 
 private const val UI_CLASS_ID = "IdeStatusBarUI"
 private val WIDGET_ID = Key.create<String>("STATUS_BAR_WIDGET_ID")
-private val MIN_ICON_HEIGHT = JBUI.scale(18 + 1 + 1)
+
+private val minIconHeight: Int
+  get() = JBUIScale.scale(18 + 1 + 1)
 
 open class IdeStatusBarImpl internal constructor(
   private val coroutineScope: CoroutineScope,
@@ -98,7 +101,8 @@ open class IdeStatusBarImpl internal constructor(
 
   private var editorProvider: () -> FileEditor? = createDefaultEditorProvider(frameHelper)
 
-  private val children = LinkedHashSet<IdeStatusBarImpl>()
+  @Volatile
+  private var children = persistentHashSetOf<IdeStatusBarImpl>()
   private val listeners = EventDispatcher.create(StatusBarListener::class.java)
 
   private val progressFlow = MutableSharedFlow<ProgressSetChangeEvent>(replay = 1, extraBufferCapacity = Int.MAX_VALUE)
@@ -121,19 +125,25 @@ open class IdeStatusBarImpl internal constructor(
     return this
   }
 
-  private fun updateChildren(consumer: Consumer<IdeStatusBarImpl>) {
+  private fun updateChildren(consumer: (IdeStatusBarImpl) -> Unit) {
     for (child in children) {
-      consumer.accept(child)
+      consumer(child)
     }
   }
 
-  override fun createChild(disposable: Disposable, frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar {
+  override fun createChild(coroutineScope: CoroutineScope, frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar {
     EDT.assertIsEdt()
-    val bar = IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false, coroutineScope = coroutineScope.childScope())
+    val bar = IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false, coroutineScope = coroutineScope)
     bar.editorProvider = editorProvider
     bar.isVisible = isVisible
-    children.add(bar)
-    Disposer.register(disposable) { children.remove(bar) }
+    synchronized(this) {
+      children = children.add(bar)
+    }
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      synchronized(this) {
+        children = children.remove(bar)
+      }
+    }
     for (eachBean in widgetMap.values) {
       if (eachBean.widget is Multiframe) {
         bar.addWidget(widget = eachBean.widget.copy(), position = eachBean.position, anchor = eachBean.order)
@@ -207,7 +217,7 @@ open class IdeStatusBarImpl internal constructor(
   override fun getPreferredSize(): Dimension {
     val size = super.getPreferredSize()!!
     val insets = insets
-    val minHeight = insets.top + insets.bottom + max(MIN_ICON_HEIGHT, preferredTextHeight)
+    val minHeight = insets.top + insets.bottom + max(minIconHeight, preferredTextHeight)
     return Dimension(size.width, size.height.coerceAtLeast(minHeight))
   }
 
