@@ -39,6 +39,7 @@ import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.NewUI
 import com.intellij.ui.ToggleActionButton
 import com.intellij.ui.popup.KeepingPopupOpenAction
+import com.intellij.ui.popup.PopupFactoryImpl.InlineActionItem.ALWAYS_VISIBLE
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.ContainerUtil
@@ -225,7 +226,7 @@ private class TogglePinAction(toolWindowId: String): TogglePinActionBase(toolWin
     val pinned = Toggleable.isSelected(e.presentation)
     e.presentation.icon = AllIcons.Toolbar.Pin
     e.presentation.selectedIcon = getPinIcon(pinned)
-    e.presentation.putClientProperty(ActionMenu.ALWAYS_VISIBLE, pinned)
+    e.presentation.putClientProperty(ALWAYS_VISIBLE, pinned)
   }
 }
 

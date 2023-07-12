@@ -700,6 +700,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   public static class InlineActionItem implements AnActionHolder {
+    //backport of ActionMenu.ALWAYS_VISIBLE to 232
+    public static final Key<Boolean> ALWAYS_VISIBLE = Key.create("ALWAYS_VISIBLE_INLINE");
     private final AnAction myAction;
     private Icon myIcon;
     private Icon mySelectedIcon;
@@ -728,7 +730,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       if (icon == null) icon = selectedIcon != null ? selectedIcon : EmptyIcon.create(myMaxIconWidth, myMaxIconHeight);
       boolean disableIcon = Boolean.TRUE.equals(presentation.getClientProperty(DISABLE_ICON_IN_LIST));
       myIsKeepPopupOpen = myIsKeepPopupOpen || presentation.isMultiChoice() || myAction instanceof KeepingPopupOpenAction;
-      myIsAlwaysVisible = Boolean.TRUE.equals(presentation.getClientProperty(ActionMenu.ALWAYS_VISIBLE));
+      myIsAlwaysVisible = Boolean.TRUE.equals(presentation.getClientProperty(ALWAYS_VISIBLE));
 
       myIcon = disableIcon ? null : icon;
       mySelectedIcon = selectedIcon;
