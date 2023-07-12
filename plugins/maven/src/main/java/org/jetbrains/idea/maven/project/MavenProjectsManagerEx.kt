@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.project
 import com.intellij.build.SyncViewManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
@@ -470,19 +469,17 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     return toResolve
   }
 
-  private suspend fun logImportErrorIfNotControlFlow(e: Throwable) {
+  private fun logImportErrorIfNotControlFlow(e: Throwable) {
     if (e is ControlFlowException) {
       ExceptionUtil.rethrowAllAsUnchecked(e)
     }
-    readAction {
-      if (myProject.isDisposed) return@readAction
-      getInstance(myProject).showServerException(e)
-      if (ExceptionUtil.causedBy(e, BuildIssueException::class.java)) {
-        MavenLog.LOG.info(e)
-      }
-      else {
-        MavenLog.LOG.error(e)
-      }
+    if (myProject.isDisposed) return
+    showServerException(e)
+    if (ExceptionUtil.causedBy(e, BuildIssueException::class.java)) {
+      MavenLog.LOG.info(e)
+    }
+    else {
+      MavenLog.LOG.error(e)
     }
   }
 
