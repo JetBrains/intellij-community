@@ -128,7 +128,9 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
 
     String text = XmlStringUtil
       .wrapInHtml(IdeBundle.message("settings.required.plugins.title", ApplicationNamesInfo.getInstance().getFullProductName()));
-    return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP).addToCenter(dependenciesPanel).addToTop(new JBLabel(text));
+    JBLabel label = new JBLabel(text);
+    label.setBorder(JBUI.Borders.emptyBottom(5));
+    return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP).addToCenter(dependenciesPanel).addToTop(label);
   }
 
   public boolean editSelectedDependency(JBList dependenciesList) {
