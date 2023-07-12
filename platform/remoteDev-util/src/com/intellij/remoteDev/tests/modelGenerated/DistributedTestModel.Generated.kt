@@ -53,7 +53,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = 4932085754403062018L
+        const val serializationHash = 3947516050474036909L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -196,7 +196,8 @@ class RdTestSession private constructor(
     private val _closeProject: RdCall<Unit, Boolean>,
     private val _closeProjectIfOpened: RdCall<Unit, Boolean>,
     private val _runNextAction: RdCall<Unit, String?>,
-    private val _makeScreenshot: RdCall<String, Boolean>
+    private val _makeScreenshot: RdCall<String, Boolean>,
+    private val _isResponding: RdCall<Unit, Boolean>
 ) : RdBindableBase() {
     //companion
     
@@ -217,7 +218,8 @@ class RdTestSession private constructor(
             val _closeProjectIfOpened = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _runNextAction = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, __StringNullableSerializer)
             val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
-            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _closeProject, _closeProjectIfOpened, _runNextAction, _makeScreenshot).withId(_id)
+            val _isResponding = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
+            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _closeProject, _closeProjectIfOpened, _runNextAction, _makeScreenshot, _isResponding).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
@@ -233,6 +235,7 @@ class RdTestSession private constructor(
             RdCall.write(ctx, buffer, value._closeProjectIfOpened)
             RdCall.write(ctx, buffer, value._runNextAction)
             RdCall.write(ctx, buffer, value._makeScreenshot)
+            RdCall.write(ctx, buffer, value._isResponding)
         }
         
         private val __BoolNullableSerializer = FrameworkMarshallers.Bool.nullable()
@@ -247,6 +250,7 @@ class RdTestSession private constructor(
     val closeProjectIfOpened: RdCall<Unit, Boolean> get() = _closeProjectIfOpened
     val runNextAction: RdCall<Unit, String?> get() = _runNextAction
     val makeScreenshot: RdCall<String, Boolean> get() = _makeScreenshot
+    val isResponding: RdCall<Unit, Boolean> get() = _isResponding
     //methods
     //initializer
     init {
@@ -265,6 +269,7 @@ class RdTestSession private constructor(
         bindableChildren.add("closeProjectIfOpened" to _closeProjectIfOpened)
         bindableChildren.add("runNextAction" to _runNextAction)
         bindableChildren.add("makeScreenshot" to _makeScreenshot)
+        bindableChildren.add("isResponding" to _isResponding)
     }
     
     //secondary constructor
@@ -284,7 +289,8 @@ class RdTestSession private constructor(
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, String?>(FrameworkMarshallers.Void, __StringNullableSerializer),
-        RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool)
+        RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool),
+        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
     )
     
     //equals trait
@@ -304,6 +310,7 @@ class RdTestSession private constructor(
             print("closeProjectIfOpened = "); _closeProjectIfOpened.print(printer); println()
             print("runNextAction = "); _runNextAction.print(printer); println()
             print("makeScreenshot = "); _makeScreenshot.print(printer); println()
+            print("isResponding = "); _isResponding.print(printer); println()
         }
         printer.print(")")
     }
@@ -320,7 +327,8 @@ class RdTestSession private constructor(
             _closeProject.deepClonePolymorphic(),
             _closeProjectIfOpened.deepClonePolymorphic(),
             _runNextAction.deepClonePolymorphic(),
-            _makeScreenshot.deepClonePolymorphic()
+            _makeScreenshot.deepClonePolymorphic(),
+            _isResponding.deepClonePolymorphic()
         )
     }
     //contexts
