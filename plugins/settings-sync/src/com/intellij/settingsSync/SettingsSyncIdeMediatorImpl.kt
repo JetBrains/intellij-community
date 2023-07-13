@@ -7,10 +7,12 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.*
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.InputStream
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -34,6 +36,8 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
 
   private val appConfig: Path get() = rootConfig.resolve(OPTIONS_DIRECTORY)
   private val fileSpecsToLocks = ConcurrentCollectionFactory.createConcurrentMap<String, ReadWriteLock>()
+  @VisibleForTesting
+  internal val files2applyLast = mutableListOf(EditorColorsManagerImpl.STORAGE_NAME)
 
   override val isExclusive: Boolean
     get() = true
@@ -235,7 +239,13 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       }
     }
 
-    invokeAndWaitIfNeeded { componentStore.reloadComponents(changedFileSpecs, deletedFileSpecs) }
+    invokeAndWaitIfNeeded {
+      val (normalChanged, lastChanged) = changedFileSpecs.partition { !(files2applyLast.contains(it)) }
+      componentStore.reloadComponents(normalChanged, deletedFileSpecs)
+      if (lastChanged.isNotEmpty()) {
+        componentStore.reloadComponents(lastChanged, emptyList())
+      }
+    }
   }
 
   private fun <R> writeUnderLock(fileSpec: String, writingProcedure: () -> R): R {
