@@ -192,7 +192,7 @@ public final class IntentionPreviewUtils {
       else if (command instanceof ModDisplayMessage message) {
         if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {
           return new IntentionPreviewInfo.Html(new HtmlBuilder().append(
-            AnalysisBundle.message("preview.cannot.perform.action")).br().append(message.messageText()).toFragment());
+            AnalysisBundle.message("preview.cannot.perform.action")).br().append(message.messageText()).toFragment(), IntentionPreviewInfo.InfoKind.ERROR);
         }
       }
       else if (command instanceof ModCopyToClipboard copy) {

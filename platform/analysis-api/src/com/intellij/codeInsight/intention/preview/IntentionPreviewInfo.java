@@ -174,6 +174,20 @@ public interface IntentionPreviewInfo {
   }
 
   /**
+   * Kind of information displayed in HTML preview
+   */
+  enum InfoKind {
+    /**
+     * Informational preview (default)
+     */
+    INFORMATION,
+    /**
+     * Error
+     */
+    ERROR
+  }
+
+  /**
    * HTML description. Here are some advices:
    * <ul>
    *   <li>If you want to display icon, use {@link HtmlChunk#icon(String, Icon)}. Though be careful, as converting it to text
@@ -192,6 +206,7 @@ public interface IntentionPreviewInfo {
    */
   class Html implements IntentionPreviewInfo {
     private final @NotNull HtmlChunk myContent;
+    private final @NotNull InfoKind myInfoKind;
 
     /**
      * Construct description from HtmlChunk
@@ -199,7 +214,18 @@ public interface IntentionPreviewInfo {
      * @param content description content
      */
     public Html(@NotNull HtmlChunk content) {
+      this(content, InfoKind.INFORMATION);
+    }
+
+    /**
+     * Construct description from HtmlChunk
+     *
+     * @param content  description content
+     * @param infoKind kind of description box (may affect visual representation)
+     */
+    public Html(@NotNull HtmlChunk content, @NotNull InfoKind infoKind) {
       myContent = content;
+      myInfoKind = infoKind;
     }
 
     /**
@@ -216,6 +242,10 @@ public interface IntentionPreviewInfo {
      */
     public @NotNull HtmlChunk content() {
       return myContent;
+    }
+
+    public @NotNull InfoKind infoKind() {
+      return myInfoKind;
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.preview
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -76,7 +76,10 @@ internal class IntentionPreviewComponent(parent: Disposable) :
         .build()
       editor.text = content.toString()
       editor.size = Dimension(targetSize, Integer.MAX_VALUE)
-      editor.background = JBUI.CurrentTheme.Popup.BACKGROUND
+      editor.background = when (htmlInfo.infoKind()) {
+        IntentionPreviewInfo.InfoKind.INFORMATION -> JBUI.CurrentTheme.Popup.BACKGROUND
+        IntentionPreviewInfo.InfoKind.ERROR -> JBUI.CurrentTheme.Notification.Error.BACKGROUND
+      }
       return wrapToPanel(editor)
     }
   }
