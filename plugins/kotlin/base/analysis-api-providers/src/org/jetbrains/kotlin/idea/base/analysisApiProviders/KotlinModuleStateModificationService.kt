@@ -82,7 +82,7 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
 
         private val moduleStateModificationService: KotlinModuleStateModificationService get() = getInstance(project)
 
-        override fun after(events: List<VFileEvent>) {
+        override fun before(events: List<VFileEvent>) {
             if (moduleStateModificationService.mayBuiltinsHaveChanged(events)) {
                 KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
                 return
