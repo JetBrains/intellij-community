@@ -790,8 +790,7 @@ public class SwitchBlockHighlightingModel {
           return;
         }
         HighlightInfo.Builder infoIncompatibleTypes =
-          createError(expr, JavaErrorBundle.message("incompatible.label.types", JavaHighlightUtil.formatType(expr.getType()),
-                                                    JavaHighlightUtil.formatType(mySelectorType)));
+          createError(expr, JavaErrorBundle.message("switch.pattern.expected", JavaHighlightUtil.formatType(mySelectorType)));
         holder.add(infoIncompatibleTypes.create());
         return;
       }
