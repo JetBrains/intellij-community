@@ -400,7 +400,6 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     addVariant(result, "basedir", baseDir, prefix, RepositoryLibraryLogo);
     if (prefix == null) {
       result.add(createLookupElement(baseDir, "project.baseUri", RepositoryLibraryLogo));
-      result.add(createLookupElement(baseDir, "project.baseUri", RepositoryLibraryLogo));
       result.add(createLookupElement(baseDir, "pom.baseUri", RepositoryLibraryLogo));
       result.add(LookupElementBuilder.create(TIMESTAMP_PROP).withIcon(RepositoryLibraryLogo));
       result.add(LookupElementBuilder.create(MULTIPROJECT_DIR_PROP).withIcon(RepositoryLibraryLogo));

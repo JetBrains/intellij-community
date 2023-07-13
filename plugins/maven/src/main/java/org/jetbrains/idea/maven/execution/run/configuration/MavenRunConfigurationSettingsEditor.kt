@@ -115,7 +115,7 @@ class MavenRunConfigurationSettingsEditor(
       addLocalRepositoryFragment(distributionComponent, userSettingsComponent)
       addOutputLevelFragment()
       addThreadsFragment()
-      addMultimoduleDirFragment(distributionComponent, userSettingsComponent)
+      addMultimoduleDirFragment()
       addUsePluginRegistryTag()
       addPrintStacktracesTag()
       addUpdateSnapshotsTag()
@@ -567,8 +567,7 @@ class MavenRunConfigurationSettingsEditor(
       { generalSettingsOrDefault.threads = it }
     ).modifyLabeledComponentSize { columns(10) }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMultimoduleDirFragment(distributionComponent: DistributionComboBox,
-                                                                                          userSettingsComponent: TextFieldWithBrowseButton) =
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMultimoduleDirFragment() =
     addRemovableLabeledTextSettingsEditorFragment(
       JBTextField(),
       object : LabeledSettingsFragmentInfo {
@@ -577,7 +576,7 @@ class MavenRunConfigurationSettingsEditor(
         override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.name")
         override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
         override val settingsHint: String? = null
-        override val settingsActionHint: String = MavenConfigurableBundle.message("maven.settings.general.thread.count.tooltip")
+        override val settingsActionHint: String = MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.tooltip")
       },
       { runnerParameters.multimoduleDir },
       { runnerParameters.multimoduleDir = it },

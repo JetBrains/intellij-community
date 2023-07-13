@@ -168,11 +168,11 @@ public final class MavenRunnerParameters implements Cloneable {
   }
 
 
-  public @NlsSafe String getMultimoduleDir() {
+  public @NlsSafe @Nullable String getMultimoduleDir() {
     return myMultimoduleDir;
   }
 
-  public void setMultimoduleDir(String multimoduleDir) {
+  public void setMultimoduleDir(@Nullable String multimoduleDir) {
     myMultimoduleDir = multimoduleDir;
   }
 
