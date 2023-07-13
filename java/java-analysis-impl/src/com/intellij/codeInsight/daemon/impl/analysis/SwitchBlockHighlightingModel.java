@@ -383,7 +383,7 @@ public class SwitchBlockHighlightingModel {
   }
 
   @NotNull
-  private static LinkedHashSet<PsiEnumConstant> findMissingEnumConstant(@NotNull PsiClass selectorClass,
+  static LinkedHashSet<PsiEnumConstant> findMissingEnumConstant(@NotNull PsiClass selectorClass,
                                                                         @NotNull List<PsiEnumConstant> enumElements) {
     LinkedHashSet<PsiEnumConstant> missingConstants =
       StreamEx.of(selectorClass.getFields()).select(PsiEnumConstant.class).toCollection(LinkedHashSet::new);
@@ -512,7 +512,7 @@ public class SwitchBlockHighlightingModel {
 
   /**
    * Finds the missed and covered classes for a sealed selector type.
-   * If a selector type is not sealed classes, it will be checked if it is covered by one of elements or enumConstants
+   * If a selector type is not sealed classes, it will be checked if it is covered by one of the elements or enumConstants
    *
    * @param selectorType   the selector type
    * @param elements       the pattern descriptions, unconditional
@@ -532,8 +532,11 @@ public class SwitchBlockHighlightingModel {
     Set<PsiClass> visitedNotCovered = new HashSet<>();
     Set<PsiClass> missingClasses = new LinkedHashSet<>();
 
-    MultiMap<PsiClass, PsiType> permittedPatternClasses = findPermittedClasses(reduceToTypeTest(elements, context));
-    //according JEP 440-441 only direct abstract-sealed classes are allowed (14.11.1.1)
+    //reduce record patterns and enums to TypeTestDescription
+    List<PatternTypeTestDescription> reducedDescriptions = reduceToTypeTest(elements, context);
+    reducedDescriptions.addAll(reduceEnumConstantsToTypeTest(enumConstants));
+    MultiMap<PsiClass, PsiType> permittedPatternClasses = findPermittedClasses(reducedDescriptions);
+    //according JEP 440-441, only direct abstract-sealed classes are allowed (14.11.1.1)
     Set<PsiClass> sealedUpperClasses = findSealedUpperClasses(permittedPatternClasses.keySet());
 
     List<PatternTypeTestDescription> typeTestPatterns = ContainerUtil.filterIsInstance(elements, PatternTypeTestDescription.class);
@@ -584,10 +587,7 @@ public class SwitchBlockHighlightingModel {
         if (TypeConversionUtil.areTypesConvertible(targetType, selectorType) ||
             //we should consider items from the intersections in the usual way
             oneOfUnconditional(targetType, selectorType)) {
-          if (//check if it is an enum and it is covered by all enums
-            !(psiClass.isEnum() && findMissingEnumConstant(psiClass, enumConstants).isEmpty()) &&
-            //check if it is a record, and it is covered by record patterns was done before
-            //check a case, when we have something, which not in sealed hierarchy, but covers some leaves
+          if (//check a case, when we have something, which not in sealed hierarchy, but covers some leaves
             !ContainerUtil.exists(typeTestPatterns, pattern -> oneOfUnconditional(pattern.type(), targetType))) {
             missingClasses.add(psiClass);
             visitedNotCovered.addAll(peeked.dependencies);
@@ -1080,7 +1080,7 @@ public class SwitchBlockHighlightingModel {
      */
     private void checkCompleteness(@NotNull List<? extends PsiCaseLabelElement> elements, @NotNull HighlightInfoHolder results,
                                    boolean inclusiveUnconditionalAndDefault) {
-      //T is an intersection type T1& ... &Tn and P covers Ti, for one of the types Ti (1≤i≤n)
+      //T is an intersection type T1& ... &Tn, and P covers Ti, for one of the type Ti (1≤i≤n)
       List<PsiType> selectorTypes = getAllTypes(mySelectorType);
 
       if (inclusiveUnconditionalAndDefault) {
@@ -1105,7 +1105,7 @@ public class SwitchBlockHighlightingModel {
         }
         if (defaultElement != null || elementCoversType != null) return;
       }
-      //enums are final, checking intersections are not needed
+      //enums are final; checking intersections are not needed
       PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(mySelectorType));
       if (selectorClass != null && getSwitchSelectorKind() == SelectorKind.ENUM) {
         List<PsiEnumConstant> enumElements = new SmartList<>();
@@ -1121,7 +1121,7 @@ public class SwitchBlockHighlightingModel {
         checkSealed(elements, results, selectorClass);
         return;
       }
-      //records are final, checking intersections are not needed
+      //records are final; checking intersections are not needed
       if (selectorClass != null && selectorClass.isRecord()) {
         if (!checkRecordCaseSetNotEmpty(elements)) {
           results.add(createCompletenessInfoForSwitch(!elements.isEmpty()).create());
@@ -1333,7 +1333,7 @@ public class SwitchBlockHighlightingModel {
         List<PsiEnumConstant> enumConstants = StreamEx.of(labels).flatCollection(SwitchUtils::findEnumConstants).toList();
         switchModel.checkEnumCompleteness(selectorClass, enumConstants, holder, !labels.isEmpty());
       }
-      // if switch block is needed to check completeness and switch is incomplete, we let highlighting to inform about it as it's a compilation error
+      // if a switch block is needed to check completeness and switch is incomplete we let highlighting to inform about it as it's a compilation error
       if (needToCheckCompleteness) return holder.size() == 0 ? COMPLETE_WITHOUT_UNCONDITIONAL : UNEVALUATED;
       return holder.size() == 0 ? COMPLETE_WITHOUT_UNCONDITIONAL : INCOMPLETE;
     }
