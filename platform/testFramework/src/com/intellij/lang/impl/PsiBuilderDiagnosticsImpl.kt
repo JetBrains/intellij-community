@@ -24,11 +24,10 @@ class PsiBuilderDiagnosticsImpl(val collectTraces: Boolean = false, ignoreMatchi
     var totalRollbacks = 0
     var totalRolledback = 0
     var nonEmptyRollbacks = 0
-    rollbacks.forEach {
-      val rollbacks = it.value.get()
+    rollbacks.forEach { (length, rollbacksRef) ->
+      val rollbacks = rollbacksRef.get()
       totalRollbacks += rollbacks
-      val length = it.key
-      totalRolledback += length * rollbacks
+      totalRolledback += rollbacks * length
       if (length > 0) {
         nonEmptyRollbacks += rollbacks
       }
@@ -43,26 +42,22 @@ class PsiBuilderDiagnosticsImpl(val collectTraces: Boolean = false, ignoreMatchi
 
     val rollbacks = rollbacks.entries.asSequence()
       .sortedBy { it.key }
-      .joinToString("\n") {
-        val length = it.key
-        val rollbacks = it.value.get()
+      .joinToString("\n") { (length, rollbacksRef) ->
+        val rollbacks = rollbacksRef.get()
         val tokensRolled = length * rollbacks
-        listOf("$length;$rollbacks;$tokensRolled",
+        listOf(length, rollbacks, tokensRolled,
                percent(tokensRolled, lexemeCount),
                percent(rollbacks, totalRollbacks),
                percent(tokensRolled, totalRolledback)).joinToString(";")
       }
 
     val rollbackSources = traces.entries.asSequence()
-      .sortedBy { entry -> -entry.value.tokens }
-      .joinToString("\n") { entry ->
-        val entryRollbacks = entry.value.rollbacks
-        val entryTokens = entry.value.tokens
-        val entryNonEmptyRollbacks = entry.value.nonEmptyRollbacks
+      .sortedBy { (_, statEntry) -> -statEntry.tokens }
+      .joinToString("\n") { (stackFrame, statEntry) ->
+        val (entryRollbacks, entryTokens, entryNonEmptyRollbacks, entryMaxRollback) = statEntry
         val entryAvgRollback = avg(entryTokens, entryNonEmptyRollbacks)
         val entryPercentRolled = percent(entryTokens, totalRolledback)
-        val entryMaxRollback = entry.value.maxTokens
-        val invocationPoint = entry.key.toString()
+        val invocationPoint = stackFrame.toString()
           .replace(Regex("^((?:\\w+\\.(?=\\w+\\.))++)")) { match ->
             match.groupValues[0].split(".").joinToString(".") { chunk -> if (chunk.isEmpty()) "" else chunk[0].toString() }
           }
@@ -126,10 +121,10 @@ $rollbackSources
     }
   }
 
-  private data class StatEntry(var rollbacks: Int = 0) {
-    var tokens: Int = 0
-    var nonEmptyRollbacks: Int = 0
-    var maxTokens = 0
+  private data class StatEntry(var rollbacks: Int = 0,
+                               var tokens: Int = 0,
+                               var nonEmptyRollbacks: Int = 0,
+                               var maxTokens: Int = 0) {
     fun registerRollback(tokens: Int) {
       rollbacks++
       this.tokens += tokens
