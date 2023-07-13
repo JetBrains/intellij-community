@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-coroutines-test" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-test-jvm:1.7.1">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-test-jvm:1.7.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.7.1/kotlinx-coroutines-test-jvm-1.7.1.jar">
-          <sha256sum>bf88e8f0a8d88033d961d93435a132caf88fe35cee266bf71c48689eceddc72d</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.7.2/kotlinx-coroutines-test-jvm-1.7.2.jar">
+          <sha256sum>3ce50964c0f22c41be725f9294d8142c90d6e908f450bff6be38435396299a41</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.7.1/kotlinx-coroutines-test-jvm-1.7.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.7.2/kotlinx-coroutines-test-jvm-1.7.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.7.1/kotlinx-coroutines-test-jvm-1.7.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.7.2/kotlinx-coroutines-test-jvm-1.7.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

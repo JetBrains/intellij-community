@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-coroutines-debug" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.7.1">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.7.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-debug/1.7.1/kotlinx-coroutines-debug-1.7.1.jar">
-          <sha256sum>5333cbb9a17fd45642f3f05ff124006cd6743549413c2f53a35cf9acd1141e91</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-debug/1.7.2/kotlinx-coroutines-debug-1.7.2.jar">
+          <sha256sum>bdc50a02d2adaa1083980526a932f385af3fa30cab7d78ab16d8ae27e0769077</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-debug/1.7.1/kotlinx-coroutines-debug-1.7.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-debug/1.7.2/kotlinx-coroutines-debug-1.7.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-debug/1.7.1/kotlinx-coroutines-debug-1.7.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-debug/1.7.2/kotlinx-coroutines-debug-1.7.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
