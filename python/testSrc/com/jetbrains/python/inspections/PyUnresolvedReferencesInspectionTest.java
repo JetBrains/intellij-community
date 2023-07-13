@@ -901,14 +901,12 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-48166
   public void testDisabledNumpyPyiStubs() {
+    Registry.get("enable.numpy.pyi.stubs").setValue(false, getTestRootDisposable());
     doMultiFileTest();
   }
 
   // PY-48166
   public void testEnabledNumpyPyiStubs() {
-    if (!Registry.is("enable.numpy.pyi.stubs", false)) {
-      Registry.get("enable.numpy.pyi.stubs").setValue(true, getTestRootDisposable());
-    }
     doMultiFileTest();
   }
 
