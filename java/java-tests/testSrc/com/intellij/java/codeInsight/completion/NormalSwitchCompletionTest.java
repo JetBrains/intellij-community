@@ -79,6 +79,10 @@ public class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   public void testCompleteYieldInsideSwitch() { doTest(); }
   public void testWhenInSwitchRule() { doTest(); }
 
+  public void testQualifierEnumConstantInSwitch1() { doTest(); }
+  public void testQualifierEnumConstantInSwitch2() { doTest(); }
+  public void testClassPatternInSwitch1() { doTest(); }
+  public void testClassPatternInSwitch2() { doTest(); }
   private void doTestPostfixCompletion() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
     configure();
