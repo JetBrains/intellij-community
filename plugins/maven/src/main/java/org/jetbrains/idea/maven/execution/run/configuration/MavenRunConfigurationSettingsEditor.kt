@@ -7,7 +7,6 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.ui.*
-import com.intellij.ui.components.panels.ListLayout
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
 import com.intellij.openapi.externalSystem.service.execution.configuration.fragments.*
 import com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorLabeledComponent.Companion.modifyLabeledComponentSize
@@ -34,16 +33,19 @@ import com.intellij.openapi.roots.ui.distribution.DistributionComboBox
 import com.intellij.openapi.roots.ui.distribution.FileChooserInfo
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.getCanonicalPath
-import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparatorImpl
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
-import org.jetbrains.idea.maven.execution.*
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration
+import org.jetbrains.idea.maven.execution.MavenRunner
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings
+import org.jetbrains.idea.maven.execution.RunnerBundle
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asDistributionInfo
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asMavenHome
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
@@ -576,8 +578,8 @@ class MavenRunConfigurationSettingsEditor(
         override val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
         override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
       },
-      { runnerParameters.multimoduleDir?.let(::getPresentablePath) ?: "" },
-      { runnerParameters.multimoduleDir = getCanonicalPath(it).trim() },
+      { runnerParameters.multimoduleDir ?: "" },
+      { runnerParameters.multimoduleDir = it },
       { MavenServerUtil.findMavenBasedir(runnerParameters.workingDirFile).canonicalPath }
     )
 }
