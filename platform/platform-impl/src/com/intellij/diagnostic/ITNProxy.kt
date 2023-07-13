@@ -40,9 +40,10 @@ import java.util.zip.GZIPOutputStream
 import javax.net.ssl.*
 
 internal object ITNProxy {
+  @Suppress("DEPRECATION")
   @OptIn(ExperimentalCoroutinesApi::class)
-  internal val cs: CoroutineScope = ApplicationManager.getApplication().coroutineScope + SupervisorJob() +
-                                    Dispatchers.IO.limitedParallelism(2) + CoroutineName("ITNProxy call")
+  internal val cs: CoroutineScope =
+    ApplicationManager.getApplication().coroutineScope + SupervisorJob() + Dispatchers.IO.limitedParallelism(2) + CoroutineName("ITNProxy call")
 
   internal const val EA_PLUGIN_ID = "com.intellij.sisyphus"
 

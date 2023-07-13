@@ -1,31 +1,36 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.diagnostic
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.diagnostic;
 
-import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventId;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 
-class IdeErrorDialogUsageCollector : CounterUsagesCollector() {
+class IdeErrorDialogUsageCollector extends CounterUsagesCollector {
+  private static final EventLogGroup GROUP = new EventLogGroup("ide.error.dialog", 2);
 
-  override fun getGroup(): EventLogGroup = GROUP
+  private static final EventId CLEAR_ALL = GROUP.registerEvent("clear.all");
+  private static final EventId REPORT = GROUP.registerEvent("report");
+  private static final EventId REPORT_ALL = GROUP.registerEvent("report.all");
+  private static final EventId REPORT_AND_CLEAR_ALL = GROUP.registerEvent("report.and.clear.all");
 
-  companion object {
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
+  }
 
-    private val GROUP = EventLogGroup("ide.error.dialog", 2)
-    private val CLEAR_ALL = GROUP.registerEvent("clear.all")
-    private val REPORT = GROUP.registerEvent("report")
-    private val REPORT_ALL = GROUP.registerEvent("report.all")
-    private val REPORT_AND_CLEAR_ALL = GROUP.registerEvent("report.and.clear.all")
+  static void logClearAll() {
+    CLEAR_ALL.log();
+  }
 
-    @JvmStatic
-    fun logClearAll(): Unit = CLEAR_ALL.log()
+  static void logReport() {
+    REPORT.log();
+  }
 
-    @JvmStatic
-    fun logReport(): Unit = REPORT.log()
+  static void logReportAll() {
+    REPORT_ALL.log();
+  }
 
-    @JvmStatic
-    fun logReportAll(): Unit = REPORT_ALL.log()
-
-    @JvmStatic
-    fun logReportAndClearAll(): Unit = REPORT_AND_CLEAR_ALL.log()
+  static void logReportAndClearAll() {
+    REPORT_AND_CLEAR_ALL.log();
   }
 }
