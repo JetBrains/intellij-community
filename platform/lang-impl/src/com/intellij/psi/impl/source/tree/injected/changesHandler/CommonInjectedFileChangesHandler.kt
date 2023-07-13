@@ -14,7 +14,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.parents
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.util.*
 import kotlin.Pair
 import kotlin.math.max
 import kotlin.math.min
@@ -26,13 +25,9 @@ open class CommonInjectedFileChangesHandler(
   injectedFile: PsiFile
 ) : BaseInjectedFileChangesHandler(hostEditor, fragmentDocument, injectedFile) {
 
-  protected val markers: MutableList<MarkersMapping> =
-    LinkedList<MarkersMapping>().apply {
-      addAll(getMarkersFromShreds(shreds))
-    }
+  protected val markers: MutableList<MarkersMapping> = getMarkersFromShreds(shreds)
 
-
-  protected fun getMarkersFromShreds(shreds: List<PsiLanguageInjectionHost.Shred>): List<MarkersMapping> {
+  protected fun getMarkersFromShreds(shreds: List<PsiLanguageInjectionHost.Shred>): MutableList<MarkersMapping> {
     val result = ArrayList<MarkersMapping>(shreds.size)
 
     val smartPointerManager = SmartPointerManager.getInstance(myProject)
