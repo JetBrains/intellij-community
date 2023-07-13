@@ -11,7 +11,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm
-import com.intellij.util.Consumer
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
@@ -67,12 +66,12 @@ class ToolboxSettingsActionRegistryActionProvider : SettingsEntryPointAction.Act
   override fun getUpdateActions(context: DataContext) = service<ToolboxSettingsActionRegistry>().getActions()
 }
 
-internal class ToolboxUpdateAction(
+class ToolboxUpdateAction(
   val actionId: String,
   val lifetime: Disposable,
   text: @Nls String,
   description: @Nls String,
-  private val actionHandler: Consumer<AnActionEvent>,
+  private val actionHandler: Runnable,
   val restartRequired: Boolean
 ) : SettingsEntryPointAction.UpdateAction(text) {
   lateinit var registry : ToolboxSettingsActionRegistry
@@ -96,7 +95,11 @@ internal class ToolboxUpdateAction(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    actionHandler.consume(e)
+    perform()
+  }
+
+  fun perform() {
+    actionHandler.run()
   }
 
   override fun update(e: AnActionEvent) {

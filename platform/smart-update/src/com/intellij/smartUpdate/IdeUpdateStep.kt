@@ -3,12 +3,10 @@ package com.intellij.smartUpdate
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.actions.AboutDialog
-import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -17,6 +15,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.updateSettings.impl.restartOrNotify
 import org.jetbrains.annotations.Nls
 import org.jetbrains.ide.ToolboxSettingsActionRegistry
+import org.jetbrains.ide.ToolboxUpdateAction
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -30,8 +29,8 @@ class IdeUpdateStep: SmartUpdateStep {
   override fun performUpdateStep(project: Project, e: AnActionEvent?, onSuccess: () -> Unit) {
     val updateAction = getUpdateAction()
     LOG.debug("Update action: $updateAction")
-    if (updateAction != null && e != null) {
-      updateAction.actionPerformed(e)
+    if (updateAction != null) {
+      updateAction.perform()
       project.service<SmartUpdate>().restartRequested = true
     }
     else onSuccess()
@@ -49,13 +48,12 @@ class IdeUpdateStep: SmartUpdateStep {
   }
 }
 
-private fun getUpdateAction() = service<ToolboxSettingsActionRegistry>().getActions().find { it.isIdeUpdate }
+private fun getUpdateAction() = service<ToolboxSettingsActionRegistry>().getActions().find { it is ToolboxUpdateAction } as? ToolboxUpdateAction
 
-fun restartIde(project: Project, updateAction: SettingsEntryPointAction.UpdateAction) {
+fun restartIde(project: Project, updateAction: ToolboxUpdateAction) {
     restartOrNotify(project, true) {
       beforeRestart()
-      val event = AnActionEvent.createFromDataContext("", null, SimpleDataContext.getProjectContext(project))
-      updateAction.actionPerformed(event)
+      updateAction.perform()
     }
 }
 

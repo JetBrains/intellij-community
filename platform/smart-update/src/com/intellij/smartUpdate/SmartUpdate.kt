@@ -18,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import org.jetbrains.ide.ToolboxUpdateAction
 import org.jetbrains.ide.UpdateActionsListener
 import java.time.Duration
 import java.time.LocalTime
@@ -44,7 +45,7 @@ class SmartUpdate(val project: Project, private val coroutineScope: CoroutineSco
   init {
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(UpdateActionsListener.TOPIC, object : UpdateActionsListener {
       override fun actionReceived(action: UpdateAction) {
-        if (restartRequested && action.isRestartRequired) {
+        if (restartRequested && action.isRestartRequired && action is ToolboxUpdateAction) {
           restartRequested = false
           restartIde(project, action)
         }
