@@ -569,6 +569,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
     super.visitClassInitializer(initializer);
+    if (!myHolder.hasErrorResults()) add(checkUnnamedClassMember(initializer));
     if (!myHolder.hasErrorResults()) add(HighlightClassUtil.checkIllegalInstanceMemberInRecord(initializer));
     if (!myHolder.hasErrorResults()) add(HighlightControlFlowUtil.checkInitializerCompleteNormally(initializer));
     if (!myHolder.hasErrorResults()) add(HighlightControlFlowUtil.checkUnreachableStatement(initializer.getBody()));
@@ -735,6 +736,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitField(@NotNull PsiField field) {
     super.visitField(field);
+    if (!myHolder.hasErrorResults()) add(checkUnnamedClassMember(field));
     if (!myHolder.hasErrorResults()) add(HighlightClassUtil.checkIllegalInstanceMemberInRecord(field));
     if (!myHolder.hasErrorResults()) add(HighlightControlFlowUtil.checkFinalFieldInitialized(field));
   }
@@ -993,6 +995,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitMethod(@NotNull PsiMethod method) {
     super.visitMethod(method);
+    if (!myHolder.hasErrorResults()) add(checkUnnamedClassMember(method));
     if (!myHolder.hasErrorResults()) add(HighlightControlFlowUtil.checkUnreachableStatement(method.getBody()));
     if (!myHolder.hasErrorResults()) add(HighlightMethodUtil.checkConstructorHandleSuperClassExceptions(method));
     if (!myHolder.hasErrorResults()) add(HighlightMethodUtil.checkRecursiveConstructorInvocation(method));
@@ -2201,10 +2204,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
-  @Override
-  public void visitUnnamedPattern(@NotNull PsiUnnamedPattern pattern) {
-    super.visitUnnamedPattern(pattern);
-    add(checkFeature(pattern, HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES));
+  private HighlightInfo.Builder checkUnnamedClassMember(@NotNull PsiMember member) {
+    if (!(member.getContainingClass() instanceof PsiUnnamedClass)) {
+      return null;
+    }
+    return checkFeature(member, HighlightingFeature.UNNAMED_CLASSES);
   }
 
   private HighlightInfo.Builder checkFeature(@NotNull PsiElement element, @NotNull HighlightingFeature feature) {
