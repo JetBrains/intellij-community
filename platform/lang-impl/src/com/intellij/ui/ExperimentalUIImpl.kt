@@ -213,6 +213,5 @@ interface ExperimentalUIJetBrainsClientDelegate {
     fun getInstance() = service<ExperimentalUIJetBrainsClientDelegate>()
   }
 
-  fun shouldReactToRemoteUiChange(): Boolean
   fun changeUi(isEnabled: Boolean, updateLocally: (Boolean) -> Unit)
 }
