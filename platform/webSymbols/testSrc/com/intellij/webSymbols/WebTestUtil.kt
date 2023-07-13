@@ -46,7 +46,6 @@ import com.intellij.testFramework.fixtures.TestLookupElementPresentation
 import com.intellij.usages.Usage
 import com.intellij.util.ObjectUtils.coalesce
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.declarations.WebSymbolDeclaration
 import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
 import com.intellij.webSymbols.query.WebSymbolMatch
@@ -84,21 +83,25 @@ fun CodeInsightTestFixture.checkDocumentationAtCaret() {
   checkDocumentation(renderDocAtCaret())
 }
 
-fun CodeInsightTestFixture.checkLookupElementDocumentationAtCaret(
+fun CodeInsightTestFixture.checkLookupItems(
   renderPriority: Boolean = false,
   renderTypeText: Boolean = false,
   renderTailText: Boolean = false,
   renderProximity: Boolean = false,
   renderPresentedText: Boolean = false,
+  checkDocumentation: Boolean = false,
+  containsCheck: Boolean = false,
+  locations: List<String> = emptyList(),
   fileName: String = InjectedLanguageManager.getInstance(project).getTopLevelFile(file).virtualFile.nameWithoutExtension,
-  lookupFilter: (item: LookupElement) -> Boolean = { true }) {
+  expectedDataLocation: String = "",
+  renderedItemFilter: (item: String) -> Boolean = { true },
+  lookupItemFilter: (item: LookupElement) -> Boolean = { true },
+) {
+  val hasDir = expectedDataLocation.isNotEmpty()
 
-  noAutoComplete {
-    completeBasic()
-    checkListByFile(renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderPresentedText, lookupFilter),
-                    "$fileName.list.txt", false)
-
-    val lookupsToCheck = renderLookupItems(false, false, lookupFilter = lookupFilter).filter { it.isNotBlank() }
+  fun checkDocumentation(fileSuffix: String = "") {
+    if (!checkDocumentation) return
+    val lookupsToCheck = renderLookupItems(false, false, lookupFilter = lookupItemFilter).filter { it.isNotBlank() }
     val lookupElements = lookupElements!!.asSequence().associateBy { it.lookupString }
     for (lookupString in lookupsToCheck) {
       val lookupElement = lookupElements[lookupString]
@@ -110,17 +113,44 @@ fun CodeInsightTestFixture.checkLookupElementDocumentationAtCaret(
         ?.trim()
 
       val sanitizedLookupString = lookupString.replace(Regex("[*\"?<>/\\[\\]:;|,#]"), "_")
-      checkDocumentation(doc ?: "<no documentation>", "#$sanitizedLookupString")
+      checkDocumentation(doc ?: "<no documentation>", "$fileSuffix#$sanitizedLookupString", expectedDataLocation)
     }
   }
 
+  noAutoComplete {
+    if (locations.isEmpty()) {
+      completeBasic()
+      checkListByFile(
+        renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderPresentedText, lookupItemFilter)
+          .filter(renderedItemFilter),
+        expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".txt",
+        containsCheck
+      )
+      checkDocumentation()
+    }
+    else {
+      locations.forEachIndexed { index, location ->
+        moveToOffsetBySignature(location)
+        completeBasic()
+        checkListByFile(
+          renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderPresentedText, lookupItemFilter)
+            .filter(renderedItemFilter),
+          expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".${index + 1}.txt",
+          containsCheck
+        )
+        checkDocumentation(".${index + 1}")
+      }
+    }
+  }
 }
 
-private fun CodeInsightTestFixture.checkDocumentation(actualDocumentation: String?, fileSuffix: String = ".expected") {
+private fun CodeInsightTestFixture.checkDocumentation(actualDocumentation: String?,
+                                                      fileSuffix: String = ".expected",
+                                                      directory: String = "") {
   assertNotNull("No documentation rendered", actualDocumentation)
   val expectedFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file)
                        .virtualFile.nameWithoutExtension + fileSuffix + ".html"
-  val path = "$testDataPath/$expectedFile"
+  val path = "$testDataPath/$directory/$expectedFile"
   val file = File(path)
   if (!file.exists()) {
     file.createNewFile()
@@ -147,45 +177,48 @@ fun CodeInsightTestFixture.renderLookupItems(renderPriority: Boolean,
                                              renderTailText: Boolean = false,
                                              renderProximity: Boolean = false,
                                              renderPresentedText: Boolean = false,
-                                             lookupFilter: (item: LookupElement) -> Boolean = { true }): List<String> {
-  return ContainerUtil.mapNotNull(lookupElements?.filter(lookupFilter) ?: return emptyList()) { el ->
-    val result = StringBuilder()
-    val presentation = TestLookupElementPresentation.renderReal(el)
-    if (renderPriority && presentation.isItemTextBold) {
-      result.append('!')
+                                             lookupFilter: (item: LookupElement) -> Boolean = { true }): List<String> =
+  lookupElements?.asSequence()?.filter(lookupFilter)
+    ?.mapNotNull { el ->
+      val result = StringBuilder()
+      val presentation = TestLookupElementPresentation.renderReal(el)
+      if (renderPriority && presentation.isItemTextBold) {
+        result.append('!')
+      }
+      if (renderPriority && presentation.isStrikeout) {
+        result.append('~')
+      }
+      result.append(el.lookupString)
+      if (renderPresentedText) {
+        result.append('[')
+        result.append(presentation.itemText)
+        result.append(']')
+      }
+      if (renderTailText) {
+        result.append('%')
+        result.append(presentation.tailText)
+      }
+      if (renderTypeText) {
+        result.append('#')
+        result.append(presentation.typeText)
+      }
+      if (renderPriority) {
+        result.append('#')
+          .append(((el as? PrioritizedLookupElement<*>)?.priority ?: 0.0).toInt())
+      }
+      if (renderProximity) {
+        result.append("+")
+          .append((el as? PrioritizedLookupElement<*>)?.explicitProximity ?: 0)
+      }
+      Pair(el, result.toString())
     }
-    if (renderPriority && presentation.isStrikeout) {
-      result.append('~')
-    }
-    result.append(el.lookupString)
-    if (renderPresentedText) {
-      result.append('[')
-      result.append(presentation.itemText)
-      result.append(']')
-    }
-    if (renderTailText) {
-      result.append('%')
-      result.append(presentation.tailText)
-    }
-    if (renderTypeText) {
-      result.append('#')
-      result.append(presentation.typeText)
-    }
-    if (renderPriority) {
-      result.append('#')
-        .append(((el as? PrioritizedLookupElement<*>)?.priority ?: 0.0).toInt())
-    }
-    if (renderProximity) {
-      result.append("+")
-        .append((el as? PrioritizedLookupElement<*>)?.explicitProximity ?: 0)
-    }
-    Pair(el, result.toString())
-  }
-    .sortedWith(Comparator.comparing { it: Pair<LookupElement, String> -> -((it.first as? PrioritizedLookupElement<*>)?.priority ?: 0.0) }
-                  .thenComparingInt { -((it.first as? PrioritizedLookupElement<*>)?.explicitProximity ?: 0) }
-                  .thenComparing { it: Pair<LookupElement, String> -> it.first.lookupString })
-    .map { it.second }
-}
+    ?.sortedWith(
+      Comparator.comparing { it: Pair<LookupElement, String> -> -((it.first as? PrioritizedLookupElement<*>)?.priority ?: 0.0) }
+        .thenComparingInt { -((it.first as? PrioritizedLookupElement<*>)?.explicitProximity ?: 0) }
+        .thenComparing { it: Pair<LookupElement, String> -> it.first.lookupString })
+    ?.map { it.second }
+    ?.toList()
+  ?: emptyList()
 
 fun CodeInsightTestFixture.moveToOffsetBySignature(signature: String) {
   PsiDocumentManager.getInstance(project).commitAllDocuments()
