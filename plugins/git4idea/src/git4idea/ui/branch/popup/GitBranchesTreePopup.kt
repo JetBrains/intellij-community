@@ -64,6 +64,7 @@ import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectFirstLeaf
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectLastLeaf
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectNextLeaf
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectPrevLeaf
+import git4idea.ui.branch.tree.recentCheckoutBranches
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -223,7 +224,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         val nodeToExpand = when {
           node is GitBranch && isChild() && treeStep.affectedRepositories.any { it.currentBranch == node } -> node
           node is GitBranch && !isChild() && treeStep.affectedRepositories.all { it.currentBranch == node } -> node
-          node is GitBranch && treeStep.affectedRepositories.any { node in it.branches.recentCheckoutBranches } -> node
+          node is GitBranch && treeStep.affectedRepositories.any { node in it.recentCheckoutBranches } -> node
           node is BranchUnderRepository && node.repository.currentBranch == node.branch -> node
           node is BranchTypeUnderRepository -> node
           else -> null
