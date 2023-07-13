@@ -15,6 +15,7 @@ import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
 import com.jetbrains.python.debugger.PyExceptionBreakpointType;
 import com.jetbrains.python.debugger.pydev.ProcessDebugger;
@@ -1705,6 +1706,34 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       private boolean hasPython2Tag() throws NullPointerException {
         return hasTag(PYTHON2_TAG);
+      }
+    });
+  }
+
+  @Test
+  public void testStringRepresentationInVariablesView() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_string_representation_in_variables_view.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 17);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        List<PyDebugValue> frameVariables = loadFrame();
+        checkVariableValue(frameVariables, "str", "foo_str");
+        checkVariableValue(frameVariables, "repr", "foo_repr");
+        String expected = eval("repr(foo_reprlib)").getValue().replaceAll("[\"']", "");
+        checkVariableValue(frameVariables, expected, "foo_reprlib");
+        resume();
+        waitForTerminate();
+      }
+
+      private void checkVariableValue(List<PyDebugValue> frameVariables, String expected, String name) throws PyDebuggerException {
+        PyDebugValue value = findDebugValueByName(frameVariables, name);
+        loadVariable(value);
+        assertEquals(expected, value.getValue());
       }
     });
   }
