@@ -1632,7 +1632,16 @@ public final class JBUI {
           return 7;
         }
       }
+    }
 
+    public interface Window {
+      static Border getBorder(boolean useUndecoratedBorderIfNoBorder) {
+        Border result = UIManager.getBorder("Window.border");
+        if (result == null && useUndecoratedBorderIfNoBorder) {
+          result = UIManager.getBorder("Window.undecorated.border");
+        }
+        return result;
+      }
     }
 
     public static final class Link {

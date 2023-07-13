@@ -958,6 +958,7 @@
     "text": "foreground",
     "textText": "foreground",
     "window": "panel",
+    "Window.undecorated.border" : "1,1,1,1,#d1d1d1",
 
     "WelcomeScreen": {
       "Details.background": "white",

@@ -602,6 +602,8 @@
       "separatorColor": "Grey4"
     },
 
+    "Window.undecorated.border" : "1,1,1,1,#1E1F22",
+
     "Tree": {
       "collapsedIcon": "/expui/general/chevronRight.svg",
       "collapsedSelectedIcon": "/expui/general/chevronRight.svg",

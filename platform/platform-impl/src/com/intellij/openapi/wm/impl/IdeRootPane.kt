@@ -251,7 +251,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
 
     ComponentUtil.decorateWindowHeader(this)
 
-    border = UIManager.getBorder("Window.border")
+    installBorder()
 
     helper.init(frame, this, parentDisposable)
     updateMainMenuVisibility()
@@ -346,6 +346,15 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     return disposable
   }
 
+  override fun updateUI() {
+    super.updateUI()
+
+    @Suppress("SENSELESS_COMPARISON") // frame = null when called from init of super
+    if (frame != null && windowDecorationStyle == NONE) {
+      installBorder()
+    }
+  }
+
   /**
    * @return not-null action group or null to use [IdeActions.GROUP_MAIN_MENU] action group
    */
@@ -387,8 +396,13 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
 
   open fun getToolWindowPane(): ToolWindowPane = toolWindowPane!!
 
+  private fun installBorder() {
+    border = JBUI.CurrentTheme.Window.getBorder(!fullScreen && X11UiUtil.useUndecoratedBorder(frame))
+  }
+
   private fun updateScreenState(fullScreen: Boolean) {
     this.fullScreen = fullScreen
+    installBorder()
     if (helper is DecoratedHelper) {
       val isCustomFrameHeaderVisible = !fullScreen || (SystemInfoRt.isMac && !isCompactHeader {
         computeMainActionGroups(CustomActionsSchema.getInstance())

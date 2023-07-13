@@ -1841,6 +1841,10 @@
       "description": "Dialog border. Format: \"top,left,bottom,right,hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
     },
     {
+      "key": "Window.undecorated.border",
+      "description": "Used as window border in case the window has no border, decoration and shadow. Used on Linux in non-fullscreen mode only. Format: \"top,left,bottom,right,hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
+    },
+    {
       "key": "RunToolbar.Run.activeBackground",
       "description": "Background of the run toolbar widget when at least one of the run processes is active",
       "since": "2021.3"
