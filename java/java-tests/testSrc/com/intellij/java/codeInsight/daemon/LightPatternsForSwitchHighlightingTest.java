@@ -70,7 +70,12 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   public void testSwitchExhaustivenessForDirectClassesIn21Java() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
   }
+
   public void testSwitchExhaustivenessWithConcreteSealedClassesIn21Java() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+  }
+
+  public void testSwitchExhaustivenessForEnumsWithSealedClassesIn21Java() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
   }
 
