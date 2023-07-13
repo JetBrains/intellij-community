@@ -91,7 +91,7 @@ function _jedi_precmd_hook() {
   builtin unset -f _jedi_update_environment
   builtin unset -f _jedi_precmd_hook
 
-  [ -n "$INTELLIJ_TERMINAL_COMMAND_BLOCKS" ] && [ -r "$_INTELLIJ_ZDOTDIR/hooks.zsh" ] && source "$_INTELLIJ_ZDOTDIR/hooks.zsh"
+  [ -r "$_INTELLIJ_ZDOTDIR/command-block-support.zsh" ] && builtin source "$_INTELLIJ_ZDOTDIR/command-block-support.zsh"
   'builtin' 'unset' '_INTELLIJ_ZDOTDIR'
 }
 

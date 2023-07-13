@@ -205,8 +205,6 @@ object CommunityRepositoryModules {
     },
     javaFXPlugin("intellij.javaFX.community"),
     pluginAuto(listOf("intellij.terminal")) { spec ->
-      spec.withResource("resources/zsh/.zshenv", "zsh")
-      spec.withResource("resources/zsh/hooks.zsh", "zsh")
       spec.withResource("resources/shell-integrations", "shell-integrations")
     },
     plugin("intellij.emojipicker") { spec ->

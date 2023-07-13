@@ -80,7 +80,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static String findRCFile(@NotNull String shellName) {
     String rcfile = switch (shellName) {
       case BASH_NAME, SH_NAME -> "shell-integrations/bash/bash-integration.bash";
-      case ZSH_NAME -> "zsh/.zshenv";
+      case ZSH_NAME -> "shell-integrations/zsh/.zshenv";
       case FISH_NAME -> "shell-integrations/fish/fish-integration.fish";
       default -> null;
     };
