@@ -8,9 +8,11 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.*
+import com.intellij.psi.impl.java.stubs.PsiClassStub
 import com.intellij.psi.impl.source.PsiClassImpl
 import com.intellij.psi.impl.source.PsiFieldImpl
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.impl.source.PsiUnnamedClassImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
@@ -457,6 +459,18 @@ class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
     def clazz = myFixture.findClass("A")
     assert PsiFieldImpl.getDetachedInitializer(clazz.fields[0]) == null
     assert !(file as PsiFileImpl).contentsLoaded
+  }
+
+  void "test unnamed class"() {
+    def psiFile = myFixture.addFileToProject("a.java", """\
+      void test() {
+      }
+      
+      String s = "foo";
+      int i = 10;
+      static {} // not allowed by spec, but we parse
+      """.stripIndent())
+    PsiTestUtil.checkStubsMatchText(psiFile)
   }
 
   void "test array type use annotation stubbing"() {

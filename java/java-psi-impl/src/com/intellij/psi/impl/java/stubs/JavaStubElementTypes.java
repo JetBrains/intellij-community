@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.tree.IStubFileElementType;
 import org.jetbrains.annotations.ApiStatus;
@@ -39,6 +40,14 @@ public interface JavaStubElementTypes {
     @Override
     public ASTNode createCompositeNode() {
       return new ClassElement(this);
+    }
+  };
+
+  JavaClassElementType UNNAMED_CLASS = new JavaClassElementType("UNNAMED_CLASS") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new UnnamedClassElement();
     }
   };
   JavaClassElementType ANONYMOUS_CLASS = new JavaClassElementType("ANONYMOUS_CLASS") {

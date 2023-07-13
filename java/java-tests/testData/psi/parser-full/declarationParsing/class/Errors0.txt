@@ -8,19 +8,20 @@ PsiJavaFile:Errors0.java
   PsiErrorElement:Identifier expected
     <empty list>
   PsiWhiteSpace(' ')
-  PsiModifierList:
-    <empty list>
-  PsiErrorElement:'class' or 'interface' expected
-    <empty list>
-  PsiTypeParameterList
-    PsiJavaToken:LT('<')
-    PsiTypeParameter:caret
-      PsiIdentifier:caret('caret')
-      PsiReferenceList
-        <empty list>
-    PsiJavaToken:GT('>')
-  PsiErrorElement:'class' or 'interface' expected
+  PsiMethod:B
+    PsiModifierList:
+      <empty list>
+    PsiTypeParameterList
+      PsiJavaToken:LT('<')
+      PsiTypeParameter:caret
+        PsiIdentifier:caret('caret')
+        PsiReferenceList
+          <empty list>
+      PsiJavaToken:GT('>')
     PsiIdentifier:B('B')
+    PsiReferenceList
+      <empty list>
     PsiWhiteSpace(' ')
-    PsiJavaToken:LBRACE('{')
-    PsiJavaToken:RBRACE('}')
+    PsiCodeBlock
+      PsiJavaToken:LBRACE('{')
+      PsiJavaToken:RBRACE('}')

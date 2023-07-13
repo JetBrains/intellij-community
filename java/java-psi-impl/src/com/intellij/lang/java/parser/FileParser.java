@@ -25,6 +25,9 @@ public class FileParser {
     ElementType.MODIFIER_BIT_SET,
     TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD, JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT));
 
+  private static final TokenSet UNNAMED_CLASS_INDICATORS =
+    TokenSet.create(JavaElementType.METHOD, JavaElementType.FIELD, JavaElementType.CLASS_INITIALIZER);
+
   private final JavaParser myParser;
 
   public FileParser(@NotNull JavaParser javaParser) {
@@ -46,6 +49,7 @@ public class FileParser {
     PsiBuilder.Marker firstDeclaration = null;
 
     PsiBuilder.Marker invalidElements = null;
+    boolean isUnnamedClass = false;
     while (!builder.eof()) {
       if (builder.getTokenType() == JavaTokenType.SEMICOLON) {
         builder.advanceLexer();
@@ -65,6 +69,9 @@ public class FileParser {
             firstDeclaration = declaration;
           }
         }
+        if (!isUnnamedClass && UNNAMED_CLASS_INDICATORS.contains(exprType(declaration))) {
+          isUnnamedClass = true;
+        }
         continue;
       }
 
@@ -82,6 +89,10 @@ public class FileParser {
     if (impListInfo.second && firstDeclarationOk == Boolean.TRUE) {
       impListInfo.first.setCustomEdgeTokenBinders(PRECEDING_COMMENT_BINDER, null);  // pass comments behind fake import list
       firstDeclaration.setCustomEdgeTokenBinders(SPECIAL_PRECEDING_COMMENT_BINDER, null);
+    }
+    if (isUnnamedClass && firstDeclaration != null) {
+      PsiBuilder.Marker beforeFirst = firstDeclaration.precede();
+      done(beforeFirst, JavaElementType.UNNAMED_CLASS);
     }
   }
 

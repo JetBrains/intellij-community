@@ -71,4 +71,17 @@ public class ClassParsingTest extends JavaParsingTestCase {
   public void testProvidesList() {
     doTest(true);
   }
+
+  public void testUnnamedClass0() {
+    doTest(true);
+  }
+  public void testUnnamedClass1() {
+    doTest(true);
+  }
+  public void testUnnamedClass2() {
+    doTest(true);
+  }
+  public void testUnnamedClass3() {
+    doTest(true);
+  }
 }
