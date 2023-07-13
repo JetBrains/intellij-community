@@ -55,7 +55,14 @@ class GradleCommandLineInfo(project: Project, workingDirectoryField: WorkingDire
     }
 
     override suspend fun collectTableCompletionInfo(): List<TextCompletionInfo> {
-      return collectCompletionInfo()
+      return blockingContext {
+        val indices = GradleTasksIndices.getInstance(project)
+        indices.findTasks(workingDirectoryField.workingDirectory)
+          .filterNot { it.isInherited }
+          .groupBy { it.name }
+          .map { TextCompletionInfo(it.key, it.value.first().description) }
+          .sortedWith(Comparator.comparing({ it.text }, GRADLE_COMPLETION_COMPARATOR))
+      }
     }
   }
 
