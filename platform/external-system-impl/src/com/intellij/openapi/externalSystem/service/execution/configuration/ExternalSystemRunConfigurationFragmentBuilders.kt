@@ -52,8 +52,8 @@ fun <S> SettingsEditorFragmentContainer<S>.addCommandLineFragment(
   getCommandLine: S.() -> String,
   setCommandLine: S.(String) -> Unit
 ) = addSettingsEditorFragment(
-  CommandLineField(project, commandLineInfo),
   commandLineInfo,
+  { CommandLineField(project, commandLineInfo) },
   { it, c -> c.commandLine = it.getCommandLine() },
   { it, c -> it.setCommandLine(c.commandLine) },
 )
@@ -74,8 +74,8 @@ fun <S> SettingsEditorFragmentContainer<S>.addWorkingDirectoryFragment(
   getWorkingDirectory: S.() -> String,
   setWorkingDirectory: S.(String) -> Unit
 ) = addLabeledSettingsEditorFragment(
-  WorkingDirectoryField(project, workingDirectoryInfo),
   workingDirectoryInfo,
+  { WorkingDirectoryField(project, workingDirectoryInfo) },
   { it, c -> it.getWorkingDirectory().let { p -> if (p.isNotBlank()) c.workingDirectory = p } },
   { it, c -> it.setWorkingDirectory(c.workingDirectory) }
 ).addValidation {
@@ -90,11 +90,13 @@ fun <S> SettingsEditorFragmentContainer<S>.addDistributionFragment(
   getDistribution: S.() -> DistributionInfo?,
   setDistribution: S.(DistributionInfo?) -> Unit
 ) = addLabeledSettingsEditorFragment(
-  DistributionComboBox(project, distributionsInfo).apply {
-    specifyLocationActionName = distributionsInfo.comboBoxActionName
-    distributionsInfo.distributions.forEach(::addDistributionIfNotExists)
-  },
   distributionsInfo,
+  {
+    DistributionComboBox(project, distributionsInfo).apply {
+      specifyLocationActionName = distributionsInfo.comboBoxActionName
+      distributionsInfo.distributions.forEach(::addDistributionIfNotExists)
+    }
+  },
   { it, c -> c.selectedDistribution = it.getDistribution() },
   { it, c -> it.setDistribution(c.selectedDistribution) },
 )
@@ -114,14 +116,16 @@ fun <S : ExternalSystemRunConfiguration> SettingsEditorFragmentContainer<S>.addV
   )
 
 fun <S> SettingsEditorFragmentContainer<S>.addVmOptionsFragment(
-  info: LabeledSettingsFragmentInfo,
+  settingsFragmentInfo: LabeledSettingsFragmentInfo,
   getVmOptions: S.() -> String?,
   setVmOptions: S.(String?) -> Unit
 ) = addRemovableLabeledTextSettingsEditorFragment(
-  RawCommandLineEditor().apply {
-    MacrosDialog.addMacroSupport(editorField, MacrosDialog.Filters.ALL) { false }
+  settingsFragmentInfo,
+  {
+    RawCommandLineEditor().apply {
+      MacrosDialog.addMacroSupport(editorField, MacrosDialog.Filters.ALL) { false }
+    }
   },
-  info,
   getVmOptions,
   setVmOptions
 )
@@ -145,15 +149,15 @@ fun <C : ExternalSystemRunConfiguration> SettingsEditorFragmentContainer<C>.addE
   )
 
 fun <S> SettingsEditorFragmentContainer<S>.addEnvironmentFragment(
-  info: LabeledSettingsFragmentInfo,
+  settingsFragmentInfo: LabeledSettingsFragmentInfo,
   getEnvs: S.() -> Map<String, String>,
   setEnvs: S.(Map<String, String>) -> Unit,
   isPassParentEnvs: S.() -> Boolean,
   setPassParentEnvs: S.(Boolean) -> Unit,
   hideWhenEmpty: Boolean
 ) = addLabeledSettingsEditorFragment(
-  EnvironmentVariablesTextFieldWithBrowseButton(),
-  info,
+  settingsFragmentInfo,
+  { EnvironmentVariablesTextFieldWithBrowseButton() },
   { it, c ->
     c.envs = it.getEnvs()
     c.isPassParentEnvs = it.isPassParentEnvs()
@@ -172,21 +176,23 @@ fun <S> SettingsEditorFragmentContainer<S>.addPathFragment(
   setPath: S.(String) -> Unit,
   defaultPath: S.() -> String = { "" }
 ) = addRemovableLabeledTextSettingsEditorFragment(
-  textFieldWithBrowseButton(
-    project,
-    pathFragmentInfo.fileChooserTitle,
-    pathFragmentInfo.fileChooserDescription,
-    ExtendableTextField(10).apply {
-      val fileChooserMacroFilter = pathFragmentInfo.fileChooserMacroFilter
-      if (fileChooserMacroFilter != null) {
-        MacrosDialog.addMacroSupport(this, fileChooserMacroFilter) { false }
-      }
-    },
-    pathFragmentInfo.fileChooserDescriptor
-      .withPathToTextConvertor(::getPresentablePath)
-      .withTextToPathConvertor(::getCanonicalPath)
-  ),
   pathFragmentInfo,
+  {
+    textFieldWithBrowseButton(
+      project,
+      pathFragmentInfo.fileChooserTitle,
+      pathFragmentInfo.fileChooserDescription,
+      ExtendableTextField(10).apply {
+        val fileChooserMacroFilter = pathFragmentInfo.fileChooserMacroFilter
+        if (fileChooserMacroFilter != null) {
+          MacrosDialog.addMacroSupport(this, fileChooserMacroFilter) { false }
+        }
+      },
+      pathFragmentInfo.fileChooserDescriptor
+        .withPathToTextConvertor(::getPresentablePath)
+        .withTextToPathConvertor(::getCanonicalPath)
+    )
+  },
   { getPath().let(::getPresentablePath).nullize() },
   { setPath(it?.let(::getCanonicalPath) ?: "") },
   { defaultPath().let(::getPresentablePath).nullize() }

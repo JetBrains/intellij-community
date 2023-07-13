@@ -184,7 +184,6 @@ class MavenRunConfigurationSettingsEditor(
 
     override fun createChildren() = SettingsEditorFragmentContainer.fragments<S> {
       addSettingsEditorFragment(
-        checkBoxWithLink,
         object : SettingsFragmentInfo {
           override val settingsId: String = "$id.checkbox"
           override val settingsName: String? = null
@@ -194,6 +193,7 @@ class MavenRunConfigurationSettingsEditor(
           override val settingsHint: String? = null
           override val settingsActionHint: String? = null
         },
+        { checkBoxWithLink },
         { it, _ -> checkBox.isSelected = it.getSettings() == null },
         { it, _ -> it.setSettings(if (checkBox.isSelected) null else (it.getSettings() ?: it.getDefaultSettings())) }
       )
@@ -436,7 +436,6 @@ class MavenRunConfigurationSettingsEditor(
     SdkLookupProvider.getInstance(project, object : SdkLookupProvider.Id {})
       .let { sdkLookupProvider ->
         addRemovableLabeledSettingsEditorFragment(
-          SdkComboBox(createProjectJdkComboBoxModel(project, this@MavenRunConfigurationSettingsEditor)),
           object : LabeledSettingsFragmentInfo {
             override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.jre.label")
             override val settingsId: String = "maven.jre.fragment"
@@ -445,6 +444,7 @@ class MavenRunConfigurationSettingsEditor(
             override val settingsHint: String? = null
             override val settingsActionHint: String = MavenConfigurableBundle.message("maven.run.configuration.jre.action.hint")
           },
+          { SdkComboBox(createProjectJdkComboBoxModel(project, it)) },
           { getSelectedJdkReference(sdkLookupProvider) },
           { setSelectedJdkReference(sdkLookupProvider, it) },
           { runnerSettingsOrDefault.jreName },
@@ -455,13 +455,6 @@ class MavenRunConfigurationSettingsEditor(
 
   private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addPropertiesFragment() =
     addLabeledSettingsEditorFragment(
-      PropertiesFiled(project, object : PropertiesInfo {
-        override val dialogTitle: String = MavenConfigurableBundle.message("maven.run.configuration.properties.dialog.title")
-        override val dialogTooltip: String = MavenConfigurableBundle.message("maven.run.configuration.properties.dialog.tooltip")
-        override val dialogLabel: String = MavenConfigurableBundle.message("maven.run.configuration.properties.dialog.label")
-        override val dialogEmptyState: String = MavenConfigurableBundle.message("maven.run.configuration.properties.dialog.empty.state")
-        override val dialogOkButton: String = MavenConfigurableBundle.message("maven.run.configuration.properties.dialog.ok.button")
-      }),
       object : LabeledSettingsFragmentInfo {
         override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.properties.label")
         override val settingsId: String = "maven.properties.fragment"
@@ -469,6 +462,15 @@ class MavenRunConfigurationSettingsEditor(
         override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.runner.options.group")
         override val settingsHint: String? = null
         override val settingsActionHint: String? = null
+      },
+      {
+        PropertiesFiled(project, object : PropertiesInfo {
+          override val dialogTitle: String = MavenConfigurableBundle.message("maven.run.configuration.properties.dialog.title")
+          override val dialogTooltip: String = MavenConfigurableBundle.message("maven.run.configuration.properties.dialog.tooltip")
+          override val dialogLabel: String = MavenConfigurableBundle.message("maven.run.configuration.properties.dialog.label")
+          override val dialogEmptyState: String = MavenConfigurableBundle.message("maven.run.configuration.properties.dialog.empty.state")
+          override val dialogOkButton: String = MavenConfigurableBundle.message("maven.run.configuration.properties.dialog.ok.button")
+        })
       },
       { it, c -> c.properties = it.runnerSettingsOrDefault.mavenProperties.map { PropertiesTable.Property(it.key, it.value) } },
       { it, c -> it.runnerSettingsOrDefault.mavenProperties = c.properties.associate { it.name to it.value } },
@@ -478,7 +480,6 @@ class MavenRunConfigurationSettingsEditor(
   private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addProfilesFragment(
     workingDirectoryField: WorkingDirectoryField
   ) = addLabeledSettingsEditorFragment(
-    MavenProfilesFiled(project, workingDirectoryField),
     object : LabeledSettingsFragmentInfo {
       override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.label")
 
@@ -488,6 +489,7 @@ class MavenRunConfigurationSettingsEditor(
       override val settingsHint: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.hint")
       override val settingsActionHint: String? = null
     },
+    { MavenProfilesFiled(project, workingDirectoryField) },
     { it, c -> c.profiles = it.runnerParameters.profilesMap },
     { it, c -> it.runnerParameters.profilesMap = c.profiles }
   )
@@ -547,7 +549,6 @@ class MavenRunConfigurationSettingsEditor(
 
   private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addThreadsFragment() =
     addRemovableLabeledTextSettingsEditorFragment(
-      JBTextField(),
       object : LabeledSettingsFragmentInfo {
         override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.threads.label")
         override val settingsId: String = "maven.threads.fragment"
@@ -556,6 +557,7 @@ class MavenRunConfigurationSettingsEditor(
         override val settingsHint: String? = null
         override val settingsActionHint: String = MavenConfigurableBundle.message("maven.settings.general.thread.count.tooltip")
       },
+      { JBTextField() },
       { generalSettingsOrDefault.threads },
       { generalSettingsOrDefault.threads = it }
     ).modifyLabeledComponentSize { columns(10) }

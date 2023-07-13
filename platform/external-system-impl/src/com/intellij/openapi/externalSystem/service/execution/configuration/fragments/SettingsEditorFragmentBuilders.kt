@@ -2,9 +2,11 @@
 package com.intellij.openapi.externalSystem.service.execution.configuration.fragments
 
 import com.intellij.execution.ui.*
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
@@ -59,7 +61,7 @@ inline fun <S, reified V : Enum<V>> SettingsEditorFragmentContainer<S>.addVarian
 }
 
 inline fun <S, reified V : Enum<V>> SettingsEditorFragmentContainer<S>.addVariantFragment(
-  info: LabeledSettingsFragmentInfo,
+  settingsFragmentInfo: LabeledSettingsFragmentInfo,
   crossinline getter: S.() -> V,
   crossinline setter: S.(V) -> Unit,
   crossinline getText: (V) -> @Nls String
@@ -67,22 +69,22 @@ inline fun <S, reified V : Enum<V>> SettingsEditorFragmentContainer<S>.addVarian
   val component = ComboBox(CollectionComboBoxModel(EnumSet.allOf(V::class.java).toList()))
   component.setRenderer(SimpleListCellRenderer.create("") { getText(it) })
   return addLabeledSettingsEditorFragment(
-    component,
-    info,
+    settingsFragmentInfo,
+    { component },
     { it, c -> c.selectedItem = it.getter() },
     { it, c -> it.setter(c.selectedItem!! as V) },
   )
 }
 
 fun <S, C> SettingsEditorFragmentContainer<S>.addRemovableLabeledTextSettingsEditorFragment(
-  component: C,
-  info: LabeledSettingsFragmentInfo,
+  settingsFragmentInfo: LabeledSettingsFragmentInfo,
+  createComponent: (Disposable) -> C,
   getter: S.() -> String?,
   setter: S.(String?) -> Unit,
   default: S.() -> String? = { null }
 ) where C : JComponent, C : TextAccessor = addRemovableLabeledSettingsEditorFragment(
-  component,
-  info,
+  settingsFragmentInfo,
+  createComponent,
   TextAccessor::getText,
   TextAccessor::setText,
   getter,
@@ -91,8 +93,8 @@ fun <S, C> SettingsEditorFragmentContainer<S>.addRemovableLabeledTextSettingsEdi
 )
 
 fun <S, C : JComponent, V> SettingsEditorFragmentContainer<S>.addRemovableLabeledSettingsEditorFragment(
-  component: C,
-  info: LabeledSettingsFragmentInfo,
+  settingsFragmentInfo: LabeledSettingsFragmentInfo,
+  createComponent: (Disposable) -> C,
   getterC: C.() -> V,
   setterC: C.(V) -> Unit,
   getterS: S.() -> V?,
@@ -101,8 +103,8 @@ fun <S, C : JComponent, V> SettingsEditorFragmentContainer<S>.addRemovableLabele
 ): SettingsEditorFragment<S, SettingsEditorLabeledComponent<C>> {
   val ref = Ref<SettingsEditorFragment<S, SettingsEditorLabeledComponent<C>>>()
   val settingsEditorFragment = addLabeledSettingsEditorFragment(
-    component,
-    info,
+    settingsFragmentInfo,
+    createComponent,
     { it, c -> (it.getterS() ?: it.defaultS())?.let { c.setterC(it) } },
     { it, c -> it.setterS(if (ref.get().isSelected) c.getterC() else null) },
     { it.getterS() != null }
@@ -113,53 +115,57 @@ fun <S, C : JComponent, V> SettingsEditorFragmentContainer<S>.addRemovableLabele
 }
 
 fun <S, C : JComponent> SettingsEditorFragmentContainer<S>.addLabeledSettingsEditorFragment(
-  component: C,
   settingsFragmentInfo: LabeledSettingsFragmentInfo,
+  createComponent: (Disposable) -> C,
   reset: (S, C) -> Unit,
   apply: (S, C) -> Unit,
-) = addLabeledSettingsEditorFragment(component, settingsFragmentInfo, reset, apply) { true }
+) = addLabeledSettingsEditorFragment(settingsFragmentInfo, createComponent, reset, apply) { true }
   .apply { isRemovable = false }
 
 fun <S, C : JComponent> SettingsEditorFragmentContainer<S>.addSettingsEditorFragment(
-  component: C,
   settingsFragmentInfo: SettingsFragmentInfo,
+  createComponent: (Disposable) -> C,
   reset: (S, C) -> Unit,
   apply: (S, C) -> Unit,
-) = addSettingsEditorFragment(component, settingsFragmentInfo, reset, apply) { true }
+) = addSettingsEditorFragment(settingsFragmentInfo, createComponent, reset, apply) { true }
   .apply { isRemovable = false }
 
 fun <S, C : JComponent> SettingsEditorFragmentContainer<S>.addLabeledSettingsEditorFragment(
-  component: C,
-  info: LabeledSettingsFragmentInfo,
+  settingsFragmentInfo: LabeledSettingsFragmentInfo,
+  createComponent: (Disposable) -> C,
   reset: (S, C) -> Unit,
   apply: (S, C) -> Unit,
   initialSelection: (S) -> Boolean
 ) = addSettingsEditorFragment(
-  SettingsEditorLabeledComponent(info.editorLabel, component),
-  info,
+  settingsFragmentInfo,
+  { SettingsEditorLabeledComponent(settingsFragmentInfo.editorLabel, createComponent(it)) },
   { it, c -> reset(it, c.component) },
   { it, c -> apply(it, c.component) },
   initialSelection
 )
 
 fun <S, C : JComponent> SettingsEditorFragmentContainer<S>.addSettingsEditorFragment(
-  component: C,
   settingsFragmentInfo: SettingsFragmentInfo,
+  createComponent: (Disposable) -> C,
   reset: (S, C) -> Unit,
   apply: (S, C) -> Unit,
   initialSelection: (S) -> Boolean,
 ): SettingsEditorFragment<S, C> {
+  val settingsEditorDisposable = Disposer.newDisposable(settingsFragmentInfo.settingsId)
+  val settingsEditorComponent = createComponent(settingsEditorDisposable)
   val settingsEditorFragment = SettingsEditorFragment(
     settingsFragmentInfo.settingsId,
     settingsFragmentInfo.settingsName,
     settingsFragmentInfo.settingsGroup,
-    component,
+    settingsEditorComponent,
     settingsFragmentInfo.settingsPriority,
     settingsFragmentInfo.settingsType,
     reset,
     apply,
     initialSelection
   )
+
+  Disposer.register(settingsEditorFragment, settingsEditorDisposable)
 
   settingsEditorFragment.setHint(settingsFragmentInfo.settingsHint)
   settingsEditorFragment.actionHint = settingsFragmentInfo.settingsActionHint
