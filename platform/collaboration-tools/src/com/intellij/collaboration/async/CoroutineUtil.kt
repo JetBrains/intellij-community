@@ -156,16 +156,7 @@ fun <ID : Any, T, R> Flow<Iterable<T>>.associateBy(sourceIdentifier: (T) -> ID,
                                                    destroy: suspend R.() -> Unit,
                                                    update: (suspend R.(T) -> Unit)? = null,
                                                    customHashingStrategy: HashingStrategy<ID>? = null)
-  : Flow<Map<ID, R>> = associateIndexedBy(sourceIdentifier, { cs, item, -> mapper(cs, item) }, destroy, update, customHashingStrategy)
-
-fun <ID : Any, T, R> Flow<Iterable<T>>.associateIndexedBy(
-  sourceIdentifier: (T) -> ID,
-  mapper: (CoroutineScope, item: T) -> R,
-  destroy: suspend R.() -> Unit,
-  update: (suspend R.(T) -> Unit)? = null,
-  customHashingStrategy: HashingStrategy<ID>? = null
-): Flow<Map<ID, R>> =
-  channelFlow {
+  : Flow<Map<ID, R>> = channelFlow {
     val cs = this
     var initial = true
     var prevResult = createLinkedMap<ID, R>(customHashingStrategy)
@@ -214,7 +205,7 @@ fun <ID : Any, T, R> Flow<Iterable<T>>.associateIndexedBy(
         send(result)
       }
     }
-    awaitClose()
+  awaitClose()
   }
 
 private fun <ID : Any, R> createLinkedMap(customHashingStrategy: HashingStrategy<ID>?): MutableMap<ID, R> =
@@ -230,12 +221,6 @@ fun <ID : Any, T, R> Flow<Iterable<T>>.mapCaching(sourceIdentifier: (T) -> ID,
                                                   destroy: suspend R.() -> Unit,
                                                   update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> =
   associateBy(sourceIdentifier, mapper, destroy, update).map { it.values.toList() }
-
-fun <ID : Any, T, R> Flow<Iterable<T>>.mapCachingIndexed(sourceIdentifier: (T) -> ID,
-                                                         mapper: CoroutineScope.(T) -> R,
-                                                         destroy: suspend R.() -> Unit,
-                                                         update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> =
-  associateIndexedBy(sourceIdentifier, mapper, destroy, update).map { it.values.toList() }
 
 fun <T> Flow<Collection<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }
 
