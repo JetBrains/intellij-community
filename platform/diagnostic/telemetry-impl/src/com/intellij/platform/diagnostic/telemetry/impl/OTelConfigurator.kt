@@ -7,6 +7,7 @@ import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryDefaultConfigurator
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils.IDEA_DIAGNOSTIC_OTLP
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
+import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 
@@ -20,7 +21,13 @@ internal class OTelConfigurator(
                                      serviceName = ApplicationNamesInfo.getInstance().fullProductName,
                                      serviceVersion = appInfo.build.asStringWithoutProductCode(),
                                      serviceNamespace = appInfo.build.productCode,
-                                     enableMetricsByDefault = enableMetricsByDefault) {
+                                     enableMetricsByDefault = enableMetricsByDefault,
+                                     customResourceBuilder = {
+                                       // don't write username to file - it maybe private information
+                                       if (getOtlpEndpoint() != null) {
+                                         it.put(ResourceAttributes.PROCESS_OWNER, System.getProperty("user.name") ?: "unknown")
+                                       }
+                                     }) {
   @Suppress("SuspiciousCollectionReassignment")
   override fun createSpanExporters(): List<AsyncSpanExporter> {
     var spanExporters = emptyList<AsyncSpanExporter>()
@@ -31,9 +38,11 @@ internal class OTelConfigurator(
                                                serviceNamespace = serviceNamespace))
     }
 
-    System.getProperty(IDEA_DIAGNOSTIC_OTLP)?.let { traceEndpoint ->
+    getOtlpEndpoint()?.let { traceEndpoint ->
       spanExporters += OtlpSpanExporter(traceEndpoint)
     }
     return spanExporters
   }
 }
+
+private fun getOtlpEndpoint(): String? = System.getProperty(IDEA_DIAGNOSTIC_OTLP)

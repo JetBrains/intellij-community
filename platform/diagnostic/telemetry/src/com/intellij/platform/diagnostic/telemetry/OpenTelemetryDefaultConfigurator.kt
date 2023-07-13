@@ -8,6 +8,7 @@ import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedSpansPro
 import com.intellij.platform.diagnostic.telemetry.otExporters.CsvMetricsExporter
 import com.intellij.util.ConcurrencyUtil
 import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.common.AttributesBuilder
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import io.opentelemetry.sdk.metrics.SdkMeterProvider
 import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader
@@ -29,6 +30,7 @@ open class OpenTelemetryDefaultConfigurator(@JvmField protected val mainScope: C
                                             @JvmField protected val serviceName: String = "",
                                             @JvmField protected val serviceVersion: String = "",
                                             @JvmField protected val serviceNamespace: String = "",
+                                            customResourceBuilder: ((AttributesBuilder) -> Unit)? = null,
                                             enableMetricsByDefault: Boolean) {
   private val metricsReportingPath = if (enableMetricsByDefault) OpenTelemetryUtils.metricsReportingPath() else null
   private val shutdownCompletionTimeout: Long = 10
@@ -41,6 +43,9 @@ open class OpenTelemetryDefaultConfigurator(@JvmField protected val mainScope: C
       .put(ResourceAttributes.OS_VERSION, SystemInfoRt.OS_VERSION)
       .put(ResourceAttributes.HOST_ARCH, System.getProperty("os.arch"))
       .put(ResourceAttributes.SERVICE_INSTANCE_ID, DateTimeFormatter.ISO_INSTANT.format(Instant.now()))
+      .also {
+        customResourceBuilder?.invoke(it)
+      }
       .build()
   )
 
