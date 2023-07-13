@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
@@ -28,6 +27,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
@@ -41,6 +41,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
@@ -49,6 +51,7 @@ import java.util.function.ObjIntConsumer;
 import java.util.zip.ZipException;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor.hasDeletedFlag;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -210,17 +213,24 @@ public final class FSRecordsImpl {
     }
     try {
       int currentVersion = currentImplementationVersion();
-      Ref<NotNullLazyValue<InvertedNameIndex>> invertedNameIndexRef = new Ref<>(null);
-      final PersistentFSConnector.InitializationResult initializationResult = PersistentFSConnector.connect(
+      PersistentFSConnector.InitializationResult initializationResult = PersistentFSConnector.connect(
         storagesDirectoryPath,
         currentVersion,
         USE_CONTENT_HASHES,
-        invertedNameIndexRef,
         connectionInterceptors
       );
+
+      PersistentFSConnection connection = initializationResult.connection;
+
+      NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy = asyncFillInvertedNameIndex(
+        connection,
+        AppExecutorUtil.getAppExecutorService()
+      );
+
+
       LOG.info("VFS initialized: " + NANOSECONDS.toMillis(initializationResult.totalInitializationDurationNs) + " ms, " +
                initializationResult.attemptsFailures.size() + " failed attempts");
-      PersistentFSConnection connection = initializationResult.connection;
+
       PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(USE_CONTENT_HASHES, connection);
       PersistentFSAttributeAccessor attributeAccessor = new PersistentFSAttributeAccessor(connection);
       PersistentFSTreeAccessor treeAccessor = attributeAccessor.supportsRawAccess() && USE_RAW_ACCESS_TO_READ_CHILDREN ?
@@ -234,16 +244,31 @@ public final class FSRecordsImpl {
         return new FSRecordsImpl(
           connection,
           contentAccessor, attributeAccessor, treeAccessor, recordAccessor,
-          invertedNameIndexRef.get(),
+          invertedNameIndexLazy,
           currentVersion,
           errorHandler,
           initializationResult
         );
       }
-      catch (IOException e) {
+      catch (Throwable e) {
+        try {//ensure async task is finished:
+          invertedNameIndexLazy.getValue();
+        }
+        catch (Throwable scanningEx) {
+          e.addSuppressed(scanningEx);
+        }
         LOG.error(e);//because we need more details
-        //FIXME throw handleError(e);
-        throw new UncheckedIOException(e);
+        //FIXME throw handleError(e) ?
+
+        //noinspection InstanceofCatchParameter
+        if (e instanceof Error) {
+          throw (Error)e;
+        }
+        //noinspection InstanceofCatchParameter
+        if (e instanceof RuntimeException) {
+          throw (RuntimeException)e;
+        }
+        throw new UncheckedIOException((IOException)e);
       }
     }
     finally {
@@ -277,6 +302,14 @@ public final class FSRecordsImpl {
 
   synchronized void dispose() {
     if (!disposed) {
+      try {
+        //ensure async scanning is finished -- until that records file is still in use,
+        // which could cause e.g. problems with its deletion
+        invertedNameIndexLazy.get();
+      }
+      catch (Throwable t) {
+        LOG.warn("VFS: invertedNameIndex building is not terminated properly", t);
+      }
       try {
         PersistentFSConnector.disconnect(connection);
       }
@@ -1238,6 +1271,7 @@ public final class FSRecordsImpl {
   public int corruptionsDetected() {
     return connection.corruptionsDetected();
   }
+
   //========== accessors for diagnostics & sanity checks: ========================
 
 
@@ -1260,6 +1294,39 @@ public final class FSRecordsImpl {
   PersistentFSRecordAccessor recordAccessor() {
     return recordAccessor;
   }
+
+
+  @VisibleForTesting
+  public static @NotNull NotNullLazyValue<InvertedNameIndex> asyncFillInvertedNameIndex(@NotNull PersistentFSConnection connection,
+                                                                                        @NotNull ExecutorService pool) {
+    Future<InvertedNameIndex> fillUpInvertedNameIndexTask = pool.submit(() -> {
+      InvertedNameIndex invertedNameIndex = new InvertedNameIndex();
+      //fill up nameId->fileId index:
+      PersistentFSRecordsStorage records = connection.getRecords();
+      int maxAllocatedID = records.maxAllocatedID();
+      for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
+        int flags = records.getFlags(fileId);
+        int nameId = records.getNameId(fileId);
+        if (!hasDeletedFlag(flags) && nameId != NULL_NAME_ID) {
+          invertedNameIndex.updateDataInner(fileId, nameId);
+        }
+      }
+      LOG.info("VFS scanned: file names index filled");
+      return invertedNameIndex;
+    });
+
+    //We don't need volatile/atomicLazy, since computation is idempotent: same instance returned always.
+    // So _there could be_ a data race, but it is a benign race.
+    return NotNullLazyValue.lazy(() -> {
+      try {
+        return fillUpInvertedNameIndexTask.get();
+      }
+      catch (Throwable e) {
+        throw new IllegalStateException("Lazy invertedNameIndex computation is failed", e);
+      }
+    });
+  }
+
 
   public interface ErrorHandler {
 

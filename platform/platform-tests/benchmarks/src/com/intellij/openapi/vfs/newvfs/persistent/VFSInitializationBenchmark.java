@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -79,11 +78,11 @@ public class VFSInitializationBenchmark {
 
 
   @Benchmark
-  public void initEmptyVFS(Context context) throws IOException {
+  public void initEmptyVFS(Context context) throws Exception {
     int version = FSRecordsImpl.currentImplementationVersion();
     Path cachesDir = context.temporaryFolder;
 
-    context.connectionToClose = initVFS(cachesDir, version, new Ref<>());
+    context.connectionToClose = initVFS(cachesDir, version);
   }
 
   @Benchmark
@@ -91,35 +90,41 @@ public class VFSInitializationBenchmark {
     int version = FSRecordsImpl.currentImplementationVersion();
     Path cachesDir = context.realFolder;
     if (cachesDir != null) {
-      PersistentFSConnection connection = initVFS(cachesDir, version, new Ref<>());
+      PersistentFSConnection connection = initVFS(cachesDir, version);
       int maxAllocatedID = connection.getRecords().maxAllocatedID();
       assert maxAllocatedID > 100_000 : "maxAllocatedID" + maxAllocatedID + " is too low, probably already existing files are dummy?";
-      context.connectionToClose = initVFS(cachesDir, version, new Ref<>());
+      context.connectionToClose = initVFS(cachesDir, version);
     }
   }
 
   @Benchmark
-  public void initVFS_OverAlreadyExistingFiles_AndWaitForInvertedNamesIndex(Context context) throws IOException {
+  public void initVFS_OverAlreadyExistingFiles_AndWaitForInvertedNamesIndex(Context context) throws Exception {
     int version = FSRecordsImpl.currentImplementationVersion();
     Path cachesDir = context.realFolder;
     if (cachesDir != null) {
-      Ref<NotNullLazyValue<InvertedNameIndex>> invertedNameIndexRef = new Ref<>();
-      PersistentFSConnection connection = initVFS(cachesDir, version, invertedNameIndexRef);
-      invertedNameIndexRef.get().getValue();
+      PersistentFSConnection connection = initVFS(cachesDir, version);
+      
+      NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy = FSRecordsImpl.asyncFillInvertedNameIndex(
+        connection,
+        AppExecutorUtil.getAppExecutorService()
+      );
+
       int maxAllocatedID = connection.getRecords().maxAllocatedID();
       assert maxAllocatedID > 100_000 : "maxAllocatedID" + maxAllocatedID + " is too low, probably already existing files are dummy?";
+
+      //wait for index to fill up:
+      invertedNameIndexLazy.getValue();
+
       context.connectionToClose = connection;
     }
   }
 
   private static PersistentFSConnection initVFS(Path cachesDir,
-                                                int version,
-                                                Ref<NotNullLazyValue<InvertedNameIndex>> invertedNameIndexRef) {
+                                                int version) {
     PersistentFSConnector.InitializationResult initResult = PersistentFSConnector.connect(
       cachesDir,
       version,
       true,
-      invertedNameIndexRef,
       Collections.emptyList()
     );
     return initResult.connection;

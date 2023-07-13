@@ -5,7 +5,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.OffsetBasedNonStrictStringsEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeSizeStreamlinedBlobStorage;
@@ -63,11 +62,10 @@ final class PersistentFSConnector {
   public static @NotNull PersistentFSConnector.InitializationResult connect(@NotNull Path cachesDir,
                                                                             int version,
                                                                             boolean useContentHashes,
-                                                                            @NotNull /*OutParam*/ Ref<NotNullLazyValue<InvertedNameIndex>> invertedNameIndexRef,
                                                                             List<ConnectionInterceptor> interceptors) {
     connectDisconnectLock.lock();
     try {
-      return init(cachesDir, version, useContentHashes, invertedNameIndexRef, interceptors);
+      return init(cachesDir, version, useContentHashes, interceptors);
     }
     finally {
       connectDisconnectLock.unlock();
@@ -89,7 +87,6 @@ final class PersistentFSConnector {
   private static @NotNull InitializationResult init(@NotNull Path cachesDir,
                                                     int expectedVersion,
                                                     boolean useContentHashes,
-                                                    @NotNull /*OutParam*/ Ref<NotNullLazyValue<InvertedNameIndex>> invertedNameIndexRef,
                                                     List<ConnectionInterceptor> interceptors) {
     List<Throwable> attemptsFailures = new ArrayList<>();
     long initializationStartedNs = System.nanoTime();
@@ -99,7 +96,6 @@ final class PersistentFSConnector {
           cachesDir,
           expectedVersion,
           useContentHashes,
-          invertedNameIndexRef,
           interceptors
         );
         //heuristics: just created VFS contains only 1 record (=super-root)
@@ -130,7 +126,6 @@ final class PersistentFSConnector {
   static @NotNull PersistentFSConnection tryInit(@NotNull Path cachesDir,
                                                  int currentImplVersion,
                                                  boolean useContentHashes,
-                                                 @NotNull /* @OutParam */ Ref<NotNullLazyValue<InvertedNameIndex>> invertedNameIndexRef,
                                                  List<ConnectionInterceptor> interceptors) throws IOException {
     //RC: Mental model behind VFS initialization:
     //   VFS consists of few different storages: records, attributes, content... Each storage has its own on-disk
@@ -214,8 +209,6 @@ final class PersistentFSConnector {
         connection.markDirty();
       }
 
-      invertedNameIndexRef.set(loadingState.invertedNameIndexLazy);
-
       return connection;
     }
     catch (Throwable e) { // IOException, IllegalArgumentException, AssertionError
@@ -251,63 +244,6 @@ final class PersistentFSConnector {
     }
   }
 
-  private static AbstractAttributesStorage createAttributesStorage(@NotNull Path attributesFile) throws IOException {
-    if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
-      LOG.info("VFS uses new (streamlined) attributes storage");
-      //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
-      final DataLengthPlusFixedPercentStrategy allocationStrategy = new DataLengthPlusFixedPercentStrategy(128, 64, 30);
-      final StreamlinedBlobStorage blobStorage;
-      if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
-        blobStorage = new StreamlinedBlobStorageOverLockFreePagesStorage(
-          new PagedFileStorageLockFree(attributesFile, PERSISTENT_FS_STORAGE_CONTEXT, PageCacheUtils.DEFAULT_PAGE_SIZE, true),
-          allocationStrategy
-        );
-      }
-      else {
-        blobStorage = new LargeSizeStreamlinedBlobStorage(
-          new PagedFileStorage(attributesFile, PERSISTENT_FS_STORAGE_CONTEXT, PageCacheUtils.DEFAULT_PAGE_SIZE, true, true),
-          allocationStrategy
-        );
-      }
-      return new AttributesStorageOverBlobStorage(blobStorage);
-    }
-    else {
-      LOG.info("VFS uses regular attributes storage");
-      boolean bulkAttrReadSupport = false;
-      return new AttributesStorageOld(
-        bulkAttrReadSupport,
-        FSRecordsImpl.INLINE_ATTRIBUTES,
-        new Storage(attributesFile, PersistentFSConnection.REASONABLY_SMALL) {
-          @Override
-          protected AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext context,
-                                                            @NotNull Path recordsFile)
-            throws IOException {
-            return FSRecordsImpl.INLINE_ATTRIBUTES && FSRecordsImpl.USE_SMALL_ATTR_TABLE
-                   ? new CompactRecordsTable(recordsFile, context, false)
-                   : super.createRecordsTable(context, recordsFile);
-          }
-        });
-    }
-  }
-
-  @NotNull
-  private static ScannableDataEnumeratorEx<String> createFileNamesEnumerator(@NotNull Path namesFile) throws IOException {
-    if (FSRecordsImpl.USE_FAST_NAMES_IMPLEMENTATION) {
-      LOG.info("VFS uses non-strict names enumerator");
-      final ResizeableMappedFile mappedFile = new ResizeableMappedFile(
-        namesFile,
-        10 * IOUtil.MiB,
-        PERSISTENT_FS_STORAGE_CONTEXT,
-        IOUtil.MiB,
-        false
-      );
-      return new OffsetBasedNonStrictStringsEnumerator(mappedFile);
-    }
-    else {
-      LOG.info("VFS uses strict names enumerator");
-      return new PersistentStringEnumerator(namesFile, PERSISTENT_FS_STORAGE_CONTEXT);
-    }
-  }
 
   /** @return common version of all 3 storages, or -1, if their versions are differ (i.e. inconsistent) */
   private static int commonVersionIfExists(@NotNull PersistentFSRecordsStorage records,
@@ -353,6 +289,75 @@ final class PersistentFSConnector {
       }
     }
   }
+
+  private static @NotNull AbstractAttributesStorage createAttributesStorage(@NotNull Path attributesFile) throws IOException {
+    if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
+      LOG.info("VFS uses new (streamlined) attributes storage");
+      //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
+      final DataLengthPlusFixedPercentStrategy allocationStrategy = new DataLengthPlusFixedPercentStrategy(128, 64, 30);
+      final StreamlinedBlobStorage blobStorage;
+      if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
+        blobStorage = new StreamlinedBlobStorageOverLockFreePagesStorage(
+          new PagedFileStorageLockFree(attributesFile, PERSISTENT_FS_STORAGE_CONTEXT, PageCacheUtils.DEFAULT_PAGE_SIZE, true),
+          allocationStrategy
+        );
+      }
+      else {
+        blobStorage = new LargeSizeStreamlinedBlobStorage(
+          new PagedFileStorage(attributesFile, PERSISTENT_FS_STORAGE_CONTEXT, PageCacheUtils.DEFAULT_PAGE_SIZE, true, true),
+          allocationStrategy
+        );
+      }
+      return new AttributesStorageOverBlobStorage(blobStorage);
+    }
+    else {
+      LOG.info("VFS uses regular attributes storage");
+      boolean bulkAttrReadSupport = false;
+      return new AttributesStorageOld(
+        bulkAttrReadSupport,
+        FSRecordsImpl.INLINE_ATTRIBUTES,
+        new Storage(attributesFile, PersistentFSConnection.REASONABLY_SMALL) {
+          @Override
+          protected AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext context,
+                                                            @NotNull Path recordsFile)
+            throws IOException {
+            return FSRecordsImpl.INLINE_ATTRIBUTES && FSRecordsImpl.USE_SMALL_ATTR_TABLE
+                   ? new CompactRecordsTable(recordsFile, context, false)
+                   : super.createRecordsTable(context, recordsFile);
+          }
+        });
+    }
+  }
+
+
+  private static @NotNull ScannableDataEnumeratorEx<String> createFileNamesEnumerator(@NotNull Path namesFile) throws IOException {
+    if (FSRecordsImpl.USE_FAST_NAMES_IMPLEMENTATION) {
+      LOG.info("VFS uses non-strict names enumerator");
+      final ResizeableMappedFile mappedFile = new ResizeableMappedFile(
+        namesFile,
+        10 * IOUtil.MiB,
+        PERSISTENT_FS_STORAGE_CONTEXT,
+        IOUtil.MiB,
+        false
+      );
+      return new OffsetBasedNonStrictStringsEnumerator(mappedFile);
+    }
+    else {
+      LOG.info("VFS uses strict names enumerator");
+      return new PersistentStringEnumerator(namesFile, PERSISTENT_FS_STORAGE_CONTEXT);
+    }
+  }
+
+  private static @NotNull RefCountingContentStorageImpl createContentStorage(@NotNull Path contentsFile,
+                                                                             boolean useContentHashes) throws IOException {
+    return new RefCountingContentStorageImpl(
+      contentsFile,
+      CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
+      SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Content Write Pool"),
+      useContentHashes
+    );
+  }
+
 
   public static class InitializationResult {
     public final boolean storagesCreatedAnew;
@@ -406,9 +411,8 @@ final class PersistentFSConnector {
     private ContentHashEnumerator contentHashesEnumerator = null;
     private SimpleStringPersistentEnumerator attributesEnumerator = null;
 
-    private Future<Void> scanRecordsTask;
+    private Future<IntList> collectDeletedFileRecordsTask;
     private NotNullLazyValue<IntList> reusableFileIdsLazy = null;
-    private NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy = null;
 
 
     private LoadingState(@NotNull PersistentFSPaths persistentFSPaths,
@@ -443,12 +447,7 @@ final class PersistentFSConnector {
         () -> createAttributesStorage(attributesFile)
       );
       Future<RefCountingContentStorage> contentsStorageFuture = pool.submit(
-        () -> new RefCountingContentStorageImpl(
-          contentsFile,
-          CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
-          SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Content Write Pool"),
-          useContentHashes
-        )
+        () -> createContentStorage(contentsFile, useContentHashes)
       );
       Future<PersistentFSRecordsStorage> recordsStorageFuture = pool.submit(
         () -> PersistentFSRecordsStorageFactory.createStorage(recordsFile)
@@ -456,43 +455,27 @@ final class PersistentFSConnector {
 
       //Initiate async scanning of the recordsStorage to fill both invertedNameIndex and reusableFileIds,
       //  and create lazy-accessors for both.
-      IntList reusableFileIds = new IntArrayList(1024);
-      InvertedNameIndex invertedNameIndex = new InvertedNameIndex();
-      scanRecordsTask = pool.submit(() -> {
-        //fill up reusable records & nameId->fileId indexes:
+      collectDeletedFileRecordsTask = pool.submit(() -> {
+        IntList reusableFileIds = new IntArrayList(1024);
+        //fill up reusable (=deleted) records:
         PersistentFSRecordsStorage storage = recordsStorageFuture.get();
         storage.processAllRecords((fileId, nameId, flags, parentId, attributeRecordId, contentId, corrupted) -> {
           if (hasDeletedFlag(flags)) {
             reusableFileIds.add(fileId);
-            return;
-          }
-
-          if (nameId != InvertedNameIndex.NULL_NAME_ID) {
-            invertedNameIndex.updateDataInner(fileId, nameId);
           }
         });
         LOG.info("VFS scanned: " + reusableFileIds.size() + " deleted files to reuse");
-        return null;
+        return reusableFileIds;
       });
       //RC: we don't need volatile/atomicLazy, since computation is idempotent: same instance returned always.
-      //    So _there is_ a data race, but it is a benign race.
-      invertedNameIndexLazy = NotNullLazyValue.lazy(() -> {
-        try {
-          scanRecordsTask.get();
-        }
-        catch (Throwable e) {
-          throw new IllegalStateException("Lazy invertedNameIndex computation is failed", e);
-        }
-        return invertedNameIndex;
-      });
+      //    So _there could be_ a data race, but it is a benign race.
       reusableFileIdsLazy = NotNullLazyValue.lazy(() -> {
         try {
-          scanRecordsTask.get();
+          return collectDeletedFileRecordsTask.get();
         }
         catch (Throwable e) {
           throw new IllegalStateException("Lazy reusableFileIds computation is failed", e);
         }
-        return reusableFileIds;
       });
 
 
@@ -537,7 +520,7 @@ final class PersistentFSConnector {
       // Must wait for scanRecords task to finish, since the task uses mapped file, and we can't remove
       //  the mapped file (on Win) while there are usages.
       try {
-        scanRecordsTask.get();
+        collectDeletedFileRecordsTask.get();
       }
       catch (Throwable t) {
         LOG.trace(t);

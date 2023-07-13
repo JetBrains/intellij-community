@@ -1,10 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TemporaryDirectory;
 import com.intellij.util.io.PageCacheUtils;
@@ -15,7 +13,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,7 +41,6 @@ public class VFSRebuildingTest {
       cachesDir,
       version,
       true,
-      new Ref<>(),
       Collections.emptyList()
     );
     final PersistentFSRecordsStorage records = connection.getRecords();
@@ -63,7 +59,6 @@ public class VFSRebuildingTest {
       cachesDir,
       version,
       true,
-      new Ref<>(),
       Collections.emptyList()
     );
 
@@ -83,7 +78,6 @@ public class VFSRebuildingTest {
       cachesDir,
       version,
       true,
-      new Ref<>(),
       Collections.emptyList()
     );
     final PersistentFSRecordsStorage records = connection.getRecords();
@@ -104,7 +98,6 @@ public class VFSRebuildingTest {
       cachesDir,
       version,
       true,
-      new Ref<>(),
       Collections.emptyList()
     );
 
@@ -123,7 +116,6 @@ public class VFSRebuildingTest {
       cachesDir,
       version,
       true,
-      new Ref<>(),
       Collections.emptyList()
     );
     assertEquals(
@@ -140,7 +132,6 @@ public class VFSRebuildingTest {
         cachesDir,
         differentVersion,
         true,
-        new Ref<>(),
         Collections.emptyList()
       );
       fail(
@@ -166,7 +157,6 @@ public class VFSRebuildingTest {
       cachesDir,
       /*version: */ 1,
       true,
-      new Ref<>(),
       Collections.emptyList()
     );
     PersistentFSConnection connection = initializationResult.connection;
@@ -318,7 +308,6 @@ public class VFSRebuildingTest {
       cachesDir,
       version,
       true,
-      new Ref<>(),
       Collections.emptyList()
     );
     try {
@@ -334,7 +323,6 @@ public class VFSRebuildingTest {
       cachesDir,
       version,
       true,
-      new Ref<>(),
       Collections.emptyList()
     );
     try {
@@ -356,7 +344,6 @@ public class VFSRebuildingTest {
       cachesDir,
       version,
       true,
-      new Ref<>(),
       Collections.emptyList()
     );
     connection.doForce();
@@ -372,7 +359,6 @@ public class VFSRebuildingTest {
           cachesDir,
           version,
           true,
-          new Ref<>(),
           Collections.emptyList()
         );
         fail("VFS init must fail with NOT_CLOSED_SAFELY");
@@ -404,7 +390,6 @@ public class VFSRebuildingTest {
             cachesDir,
             version,
             true,
-            new Ref<>(),
             Collections.emptyList()
           );
           //PersistentFSConnector.disconnect(initResult.connection);
