@@ -10,8 +10,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Shows UI that displays conflicts and requires user confirmation to proceed.
+ * Not executed in batch; preview shows next step automatically (it must be computed before conflicts are shown).
+ * 
+ * @param conflicts conflicts to show
+ * @param nextStep next step to execute if user agrees; not executed if user cancels on conflict view
+ */
 public record ModShowConflicts(@NotNull Map<@NotNull PsiElement, @NotNull Conflict> conflicts,
                                @NotNull ModCommand nextStep) implements ModCommand {
+  /**
+   * Conflict description
+   * @param messages list of user-readable messages that describe the problem
+   */
   public record Conflict(@NotNull List<@NotNull @Nls String> messages) {
   }
 
