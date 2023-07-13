@@ -4,4 +4,5 @@ import com.intellij.driver.model.transport.Ref
 
 interface RefWrapper {
   fun getRef(): Ref
+  fun getRefPluginId(): String?
 }

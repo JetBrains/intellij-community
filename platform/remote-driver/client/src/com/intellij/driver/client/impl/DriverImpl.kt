@@ -85,6 +85,16 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     return convertResult(callResult, clazz.java, getPluginId(remote)) as T
   }
 
+  override fun <T : Any> cast(instance: Any, clazz: KClass<T>): T {
+    if (instance !is RefWrapper) throw IllegalArgumentException("instance not a Ref to remote instance")
+
+    val ref = instance.getRef()
+    val refPluginId = instance.getRefPluginId()
+
+    @Suppress("UNCHECKED_CAST")
+    return refBridge(clazz.java, ref, refPluginId) as T
+  }
+
   private fun convertArgsToPass(args: Array<out Any?>?): Array<Any?> {
     if (args == null) return emptyArray()
 
@@ -252,6 +262,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
         "hashCode" -> ref.identityHashCode
         "toString" -> ref.asString
         "getRef" -> ref
+        "getRefPluginId" -> pluginId
         else -> {
           val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
           val call = RefCall(

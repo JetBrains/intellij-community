@@ -31,6 +31,8 @@ interface Driver : AutoCloseable {
 
   fun <T : Any> new(clazz: KClass<T>, vararg args: Any?): T
 
+  fun <T : Any> cast(instance: Any, clazz: KClass<T>): T
+
   fun <T> withContext(dispatcher: OnDispatcher = OnDispatcher.DEFAULT,
                       semantics: LockSemantics = LockSemantics.NO_LOCK,
                       code: Driver.() -> T): T
