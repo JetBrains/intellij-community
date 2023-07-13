@@ -757,6 +757,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsages2.0.kt");
             }
 
+            @TestMetadata("kotlinOverloadAndExtensionUsages3.0.kt")
+            public void testKotlinOverloadAndExtensionUsages3() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsages3.0.kt");
+            }
+
             @TestMetadata("kotlinPrivateMethodUsages.0.kt")
             public void testKotlinPrivateMethodUsages() throws Exception {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinPrivateMethodUsages.0.kt");

@@ -125,11 +125,14 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
     override fun isUsageInContainingDeclaration(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
         analyze(declaration) {
-            val symbol = declaration.getSymbol()
-            val containerSymbol = symbol.getContainingSymbol() ?: return false
+            val symbol = declaration.getSymbol() as? KtCallableSymbol ?: return false
+            fun container(symbol: KtCallableSymbol): KtDeclarationSymbol? {
+                return symbol.receiverType?.expandedClassSymbol ?: symbol.getContainingSymbol()
+            }
+            val containerSymbol = container(symbol) ?: return false
             return reference.unwrappedTargets.filterIsInstance(KtDeclaration::class.java).any { candidateDeclaration ->
                 val candidateSymbol = candidateDeclaration.getSymbol()
-                candidateSymbol != symbol && candidateSymbol.getContainingSymbol() == containerSymbol
+                candidateSymbol is KtCallableSymbol && candidateSymbol != symbol && container(candidateSymbol) == containerSymbol
             }
         }
     }
