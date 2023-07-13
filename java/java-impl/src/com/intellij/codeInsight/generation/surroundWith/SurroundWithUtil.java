@@ -119,6 +119,9 @@ public final class SurroundWithUtil {
       return new TextRange(offset, offset);
     }
     PsiJavaToken rBrace = block.getRBrace();
+    if (rBrace == null) {
+      throw new IncorrectOperationException("Malformed block");
+    }
     PsiElement last = rBrace.getPrevSibling();
     if (last instanceof PsiWhiteSpace) {
       last = last.getPrevSibling();
