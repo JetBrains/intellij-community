@@ -52,7 +52,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.function.IntFunction;
 
-public final class EditorWindowTrackerImpl extends EditorWindowTracker {
+final class InjectedEditorWindowTrackerImpl extends InjectedEditorWindowTracker {
   private final Collection<EditorWindowImpl> allEditors = new UnsafeWeakList<>(); // guarded by allEditors
 
   @NotNull
@@ -82,18 +82,7 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
   }
 
   @Override
-  public @NotNull Editor getEditorForInjectedFile(@NotNull Editor hostEditor, @NotNull PsiFile injectedFile) {
-    if (!(injectedFile.getViewProvider().getDocument() instanceof DocumentWindowImpl dw)) {
-      throw new IllegalArgumentException("File is not injection");
-    }
-    if (!(hostEditor instanceof EditorImpl ed)) {
-      throw new IllegalArgumentException("Wrong editor implementation");
-    }
-    return createEditor(dw, ed, injectedFile);
-  }
-
-  @Override
-  public void disposeInvalidEditors() {
+  void disposeInvalidEditors() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     synchronized (allEditors) {
       Iterator<EditorWindowImpl> iterator = allEditors.iterator();
@@ -108,7 +97,7 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
   }
 
   @Override
-  public void disposeEditorFor(@NotNull DocumentWindow documentWindow) {
+  void disposeEditorFor(@NotNull DocumentWindow documentWindow) {
     synchronized (allEditors) {
       for (Iterator<EditorWindowImpl> iterator = allEditors.iterator(); iterator.hasNext(); ) {
         EditorWindowImpl editor = iterator.next();
@@ -560,7 +549,8 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
       }
     }
 
-    private EditorMouseEvent convertEvent(EditorMouseEvent originalEvent) {
+    @NotNull
+    private EditorMouseEvent convertEvent(@NotNull EditorMouseEvent originalEvent) {
       LogicalPosition logicalPosition = hostToInjected(originalEvent.getLogicalPosition());
       int offset = logicalPositionToOffset(logicalPosition);
       VisualPosition visualPosition = logicalToVisualPosition(logicalPosition);

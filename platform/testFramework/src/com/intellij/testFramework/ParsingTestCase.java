@@ -7,8 +7,6 @@ import com.intellij.ide.plugins.PluginUtilImpl;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
-import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.mock.*;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.EditorFactory;
@@ -24,7 +22,6 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -39,9 +36,6 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
-import com.intellij.psi.impl.source.tree.injected.EditorWindowTracker;
-import com.intellij.psi.impl.source.tree.injected.EditorWindowTrackerImpl;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
@@ -221,7 +215,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
   @NotNull
   // easy debug of not disposed extension
-  private PluginDescriptor getPluginDescriptor() {
+  protected PluginDescriptor getPluginDescriptor() {
     PluginDescriptor pluginDescriptor = this.pluginDescriptor;
     if (pluginDescriptor == null) {
       pluginDescriptor = new DefaultPluginDescriptor(PluginId.getId(getClass().getName() + "." + getName()), ParsingTestCase.class.getClassLoader());
@@ -542,14 +536,5 @@ public abstract class ParsingTestCase extends UsefulTestCase {
                                      });
 
     assertEquals(psiToStringDefault, DebugUtil.psiToString(file, true, false));
-  }
-
-  public void registerMockInjectedLanguageManager() {
-    registerExtensionPoint(project.getExtensionArea(), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);
-
-    registerExtensionPoint(app.getExtensionArea(), LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
-    project.registerService(DumbService.class, new MockDumbService(project));
-    getApplication().registerService(EditorWindowTracker.class, new EditorWindowTrackerImpl());
-    project.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(project));
   }
 }
