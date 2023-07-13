@@ -86,21 +86,26 @@ public final class LanguageConsoleBuilder {
   }
 
   @NotNull
-  public LanguageConsoleBuilder initActions(@NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
+  public LanguageConsoleBuilder initActions(@NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType, boolean moveCaretToTheFirstLine) {
     if (consoleView == null) {
       this.executeActionHandler = executeActionHandler;
       this.historyType = historyType;
     }
     else {
-      doInitAction(consoleView, executeActionHandler, historyType);
+      doInitAction(consoleView, executeActionHandler, historyType, moveCaretToTheFirstLine);
     }
     return this;
   }
 
-  private void doInitAction(@NotNull LanguageConsoleView console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
+  @NotNull
+  public LanguageConsoleBuilder initActions(@NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
+    return initActions(executeActionHandler, historyType, false);
+  }
+
+  private void doInitAction(@NotNull LanguageConsoleView console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType, boolean moveCaretToTheFirstLine) {
     ConsoleExecuteAction action = new ConsoleExecuteAction(console, executeActionHandler, executionEnabled);
     action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
-    new ConsoleHistoryController(new MyConsoleRootType(historyType), null, console).install();
+    new ConsoleHistoryController(new MyConsoleRootType(historyType), null, console, moveCaretToTheFirstLine).install();
   }
 
   /**
@@ -161,7 +166,7 @@ public final class LanguageConsoleBuilder {
     }
     if (executeActionHandler != null) {
       assert historyType != null;
-      doInitAction(consoleView, executeActionHandler, historyType);
+      doInitAction(consoleView, executeActionHandler, historyType, false);
     }
 
     if (processInputStateKey != null) {
