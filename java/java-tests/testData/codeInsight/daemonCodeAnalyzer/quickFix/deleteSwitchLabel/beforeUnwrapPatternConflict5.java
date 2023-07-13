@@ -5,7 +5,7 @@ class Test {
       int result = switch (n) {
         case <caret>Integer i when i == 1 -> i;
         case Long l -> l.intValue();
-        case default -> 1;
+        default -> 1;
       } + 10;
       int i = 5;
       System.out.println(result + i);

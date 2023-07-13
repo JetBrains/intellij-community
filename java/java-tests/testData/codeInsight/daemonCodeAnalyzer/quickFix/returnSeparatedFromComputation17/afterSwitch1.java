@@ -6,7 +6,7 @@ class T {
                 return 2;
             case 2:
                 return 4;
-            case default:
+            default:
                 return 0;
             case 3:
                 return 10;

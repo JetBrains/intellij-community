@@ -11,7 +11,7 @@ class Test {
       case "fsd":
         System.out.println(2);
         break;
-      case default:
+      default:
         System.out.println(3);
         break;
     }

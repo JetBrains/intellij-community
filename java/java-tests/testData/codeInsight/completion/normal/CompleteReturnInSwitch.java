@@ -18,7 +18,7 @@ class Main {
       default -> () -> {
         switch (o2) {
           case null -> { retu<caret> }
-          case default -> { retu<caret> }
+          default -> { retu<caret> }
         }
       };
     };
