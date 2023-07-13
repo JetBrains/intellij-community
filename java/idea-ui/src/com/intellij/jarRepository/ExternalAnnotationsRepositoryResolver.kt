@@ -27,6 +27,7 @@ import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolver {
   companion object {
     val LOG = Logger.getInstance(ExternalAnnotationsRepositoryResolver::class.java)
+    const val COMMIT_BATCH_SIZE = 100
   }
 
   override fun resolve(project: Project, library: Library, mavenId: String?): Boolean {
@@ -50,14 +51,20 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
         as MutableList<OrderRoot>?
     }
 
-    ApplicationManager.getApplication().invokeAndWait {
-      updateLibrary(roots, mavenLibDescriptor, library)
+    val commitRunnable = getUpdateLibraryRunnable(roots, mavenLibDescriptor, library)
+    if (commitRunnable != null) {
+      runCommitAction(commitRunnable)
     }
 
     return !roots.isNullOrEmpty()
   }
 
   override fun resolve(project: Project, library: Library, location: AnnotationsLocation): Boolean {
+    return resolve(project, library, location, ::runCommitAction)
+  }
+
+
+  fun resolve(project: Project, library: Library, location: AnnotationsLocation, consumer: (Runnable) -> Unit): Boolean {
     val descriptor = JpsMavenRepositoryLibraryDescriptor(location.groupId, location.artifactId, location.version, false)
     val repos = if (location.repositoryUrls.isNotEmpty()) {
       location.repositoryUrls.mapIndexed { index, url ->
@@ -70,14 +77,59 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
     }
 
     val roots = JarRepositoryManager
-                  .loadDependenciesSync(project, descriptor, setOf(ArtifactKind.ANNOTATIONS), repos, null)
+      .loadDependenciesSync(project, descriptor, setOf(ArtifactKind.ANNOTATIONS), repos, null)
 
     if (roots.isNullOrEmpty()) {
       return false
     }
 
-    ApplicationManager.getApplication().invokeAndWait { updateLibrary(roots, descriptor, library) }
+    val commitRunnable = getUpdateLibraryRunnable(roots, descriptor, library)
+    if (commitRunnable != null) {
+      consumer(commitRunnable)
+    }
+
     return true
+  }
+
+
+
+  override fun resolveBatch(project: Project,
+                            librariesWithLocations: MutableMap<Library, MutableCollection<AnnotationsLocation>>) {
+    val locationsToSkip: MutableList<AnnotationsLocation> = ArrayList()
+    val toCommit: MutableList<Runnable> = ArrayList(COMMIT_BATCH_SIZE)
+    librariesWithLocations.forEach { (lib, annotationsLocation) ->
+      annotationsLocation.forEach locations@ { location ->
+        if (locationsToSkip.contains(location)) return@locations
+        if (!resolve(project, lib, location) { toCommit.add(it) }) {
+          locationsToSkip.add(location)
+        }
+        if (toCommit.size == COMMIT_BATCH_SIZE) {
+          runCommitActions(toCommit)
+          toCommit.clear()
+        }
+      }
+    }
+    if (toCommit.isNotEmpty()) {
+      runCommitActions(toCommit)
+    }
+  }
+
+  private fun runCommitActions(toCommit: List<Runnable>) {
+    ApplicationManager.getApplication().invokeAndWait {
+      runWriteAction {
+        toCommit.forEach {
+          it.run()
+        }
+      }
+    }
+  }
+
+  private fun runCommitAction(toCommit: Runnable) {
+    ApplicationManager.getApplication().invokeAndWait {
+      runWriteAction {
+        toCommit.run()
+      }
+    }
   }
 
   override fun resolveAsync(project: Project, library: Library, mavenId: String?): Promise<Library> {
@@ -103,18 +155,23 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
         }
       }.thenAsync { roots ->
         val promise = AsyncPromise<Library>()
-        ApplicationManager.getApplication().invokeLater {
-          updateLibrary(roots, mavenLibDescriptor, library)
+        val commitAction = getUpdateLibraryRunnable(roots, mavenLibDescriptor, library)
+        if (commitAction != null) {
+          ApplicationManager.getApplication().invokeLater {
+            runCommitAction(commitAction)
+            promise.setResult(library)
+          }
+        } else {
           promise.setResult(library)
         }
         promise
       }
   }
 
-  private fun updateLibrary(roots: MutableList<OrderRoot>?,
-                    mavenLibDescriptor: JpsMavenRepositoryLibraryDescriptor,
-                    library: Library) {
-    if (library !is LibraryEx || library.isDisposed) return
+  private fun getUpdateLibraryRunnable(roots: MutableList<OrderRoot>?,
+                                       mavenLibDescriptor: JpsMavenRepositoryLibraryDescriptor,
+                                       library: Library): Runnable? {
+    if (library !is LibraryEx || library.isDisposed) return null
     if (roots.isNullOrEmpty()) {
       LOG.info("No annotations found for [$mavenLibDescriptor]")
     } else {
@@ -131,13 +188,12 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
         }
         if (!newUrls.isEmpty()) {
           editor.addRoots(roots.filter { newUrls.contains(it.file.url) })
-          runWriteAction {
-            editor.commit()
-          }
+          return Runnable { editor.commit() }
         } else {
           Disposer.dispose(editor)
         }
     }
+    return null
   }
 
   private fun extractDescriptor(mavenId: String?,
