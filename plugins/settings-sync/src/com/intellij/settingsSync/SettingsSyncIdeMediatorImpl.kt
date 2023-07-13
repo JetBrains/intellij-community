@@ -11,6 +11,7 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
@@ -38,6 +39,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
 
   private val appConfig: Path get() = rootConfig.resolve(OPTIONS_DIRECTORY)
   private val fileSpecsToLocks = ConcurrentCollectionFactory.createConcurrentMap<String, ReadWriteLock>()
+  internal val components2ApplyLast = mutableListOf(EditorColorsManagerImpl.COMPONENT_NAME)
 
   override val isExclusive: Boolean
     get() = true
@@ -310,7 +312,10 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     }
 
     val notReloadableComponents = componentStore.getNotReloadableComponents(changedComponentNames)
-    componentStore.reinitComponents(changedComponentNames, (changed + deleted).toSet(), notReloadableComponents)
+    val (normal, last) = changedComponentNames.partition { !components2ApplyLast.contains(it) }
+    for (changeList in arrayOf(normal, last)){
+      componentStore.reinitComponents(changeList.toSet(), (changed + deleted).toSet(), notReloadableComponents)
+    }
   }
 
   private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateStorages: Collection<StateStorage>, deleted: Boolean) {
