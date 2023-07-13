@@ -158,10 +158,12 @@ envs {
                "python3.11\nblack",
                true)
 
-  createPython("python3.12",
-               python312version,
-               [],
-               "python3\npython3.12")
+  if (isWindows) { //There is no py312 in pyenv
+    createPython("python3.12",
+                 python312version,
+                 [],
+                 "python3\npython3.12")
+  }
 
   // For tox
   createPython("py36",
