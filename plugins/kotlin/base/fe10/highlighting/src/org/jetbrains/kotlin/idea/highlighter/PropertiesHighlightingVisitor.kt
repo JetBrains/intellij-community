@@ -27,7 +27,7 @@ internal class PropertiesHighlightingVisitor(holder: HighlightInfoHolder, bindin
         }
         val target = bindingContext.get(BindingContext.REFERENCE_TARGET, expression)
         if (target is SyntheticFieldDescriptor) {
-            highlightName(expression, KotlinNameHighlightInfoTypes.BACKING_FIELD_VARIABLE)
+            highlightName(expression, KotlinHighlightInfoTypeSemanticNames.BACKING_FIELD_VARIABLE)
             return
         }
         if (target !is PropertyDescriptor) {
@@ -64,7 +64,7 @@ internal class PropertiesHighlightingVisitor(holder: HighlightInfoHolder, bindin
         val propertyDescriptor = bindingContext.get(BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER, parameter)
         if (propertyDescriptor != null) {
             if (propertyDescriptor.isVar) {
-                highlightName(nameIdentifier, KotlinNameHighlightInfoTypes.MUTABLE_VARIABLE)
+                highlightName(nameIdentifier, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)
             }
             highlightPropertyDeclaration(nameIdentifier, propertyDescriptor)
         }
@@ -88,19 +88,19 @@ internal class PropertiesHighlightingVisitor(holder: HighlightInfoHolder, bindin
             null
 
         hasExtensionReceiverParameter(descriptor) ->
-            if (descriptor.isSynthesized) KotlinNameHighlightInfoTypes.SYNTHETIC_EXTENSION_PROPERTY else KotlinNameHighlightInfoTypes.EXTENSION_PROPERTY
+            if (descriptor.isSynthesized) KotlinHighlightInfoTypeSemanticNames.SYNTHETIC_EXTENSION_PROPERTY else KotlinHighlightInfoTypeSemanticNames.EXTENSION_PROPERTY
 
         DescriptorUtils.isStaticDeclaration(descriptor) ->
             if (hasCustomPropertyDeclaration(descriptor))
-                KotlinNameHighlightInfoTypes.PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
+                KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
             else
-                KotlinNameHighlightInfoTypes.PACKAGE_PROPERTY
+                KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY
 
         else ->
             if (hasCustomPropertyDeclaration(descriptor))
-                KotlinNameHighlightInfoTypes.INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
+                KotlinHighlightInfoTypeSemanticNames.INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
             else
-                KotlinNameHighlightInfoTypes.INSTANCE_PROPERTY
+                KotlinHighlightInfoTypeSemanticNames.INSTANCE_PROPERTY
     }
 }
 

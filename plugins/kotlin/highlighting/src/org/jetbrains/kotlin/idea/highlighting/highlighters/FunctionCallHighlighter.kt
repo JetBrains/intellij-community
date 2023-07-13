@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.highlighting.HighlightingFactory
-import org.jetbrains.kotlin.idea.highlighter.KotlinNameHighlightInfoTypes
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
@@ -65,23 +65,23 @@ internal class FunctionCallHighlighter(
     private fun getTextAttributesForCall(call: KtCall): HighlightInfoType? {
         if (call !is KtSimpleFunctionCall) return null
         return when (val function = call.symbol) {
-            is KtConstructorSymbol -> KotlinNameHighlightInfoTypes.CONSTRUCTOR_CALL
+            is KtConstructorSymbol -> KotlinHighlightInfoTypeSemanticNames.CONSTRUCTOR_CALL
             is KtAnonymousFunctionSymbol -> null
             is KtFunctionSymbol -> when {
-                function.isSuspend -> KotlinNameHighlightInfoTypes.SUSPEND_FUNCTION_CALL
+                function.isSuspend -> KotlinHighlightInfoTypeSemanticNames.SUSPEND_FUNCTION_CALL
                 call.isImplicitInvoke -> if (function.isBuiltinFunctionInvoke) {
-                    KotlinNameHighlightInfoTypes.VARIABLE_AS_FUNCTION_CALL
+                    KotlinHighlightInfoTypeSemanticNames.VARIABLE_AS_FUNCTION_CALL
                 } else {
-                    KotlinNameHighlightInfoTypes.VARIABLE_AS_FUNCTION_LIKE_CALL
+                    KotlinHighlightInfoTypeSemanticNames.VARIABLE_AS_FUNCTION_LIKE_CALL
                 }
 
-                function.callableIdIfNonLocal == KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME_CALLABLE_ID -> KotlinNameHighlightInfoTypes.KEYWORD
-                function.isExtension -> KotlinNameHighlightInfoTypes.EXTENSION_FUNCTION_CALL
-                function.symbolKind == KtSymbolKind.TOP_LEVEL -> KotlinNameHighlightInfoTypes.PACKAGE_FUNCTION_CALL
-                else -> KotlinNameHighlightInfoTypes.FUNCTION_CALL
+                function.callableIdIfNonLocal == KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME_CALLABLE_ID -> KotlinHighlightInfoTypeSemanticNames.KEYWORD
+                function.isExtension -> KotlinHighlightInfoTypeSemanticNames.EXTENSION_FUNCTION_CALL
+                function.symbolKind == KtSymbolKind.TOP_LEVEL -> KotlinHighlightInfoTypeSemanticNames.PACKAGE_FUNCTION_CALL
+                else -> KotlinHighlightInfoTypeSemanticNames.FUNCTION_CALL
             }
 
-            else -> KotlinNameHighlightInfoTypes.FUNCTION_CALL //TODO ()
+            else -> KotlinHighlightInfoTypeSemanticNames.FUNCTION_CALL //TODO ()
         }
     }
 

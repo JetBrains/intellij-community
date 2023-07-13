@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.highlighting.HighlightingFactory
 import org.jetbrains.kotlin.idea.base.highlighting.isNameHighlightingEnabled
-import org.jetbrains.kotlin.idea.highlighter.KotlinNameHighlightInfoTypes
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 
@@ -48,22 +48,22 @@ internal class TypeHighlighter(
         }
 
         val color = when (symbol) {
-            is KtAnonymousObjectSymbol -> KotlinNameHighlightInfoTypes.CLASS
+            is KtAnonymousObjectSymbol -> KotlinHighlightInfoTypeSemanticNames.CLASS
             is KtNamedClassOrObjectSymbol -> when (symbol.classKind) {
                 KtClassKind.CLASS -> when (symbol.modality) {
-                    Modality.FINAL, Modality.SEALED , Modality.OPEN -> KotlinNameHighlightInfoTypes.CLASS
-                    Modality.ABSTRACT -> KotlinNameHighlightInfoTypes.ABSTRACT_CLASS
+                    Modality.FINAL, Modality.SEALED , Modality.OPEN -> KotlinHighlightInfoTypeSemanticNames.CLASS
+                    Modality.ABSTRACT -> KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
                 }
-                KtClassKind.ENUM_CLASS -> KotlinNameHighlightInfoTypes.ENUM
-                KtClassKind.ANNOTATION_CLASS -> KotlinNameHighlightInfoTypes.ANNOTATION
-                KtClassKind.OBJECT -> KotlinNameHighlightInfoTypes.OBJECT
-                KtClassKind.COMPANION_OBJECT -> KotlinNameHighlightInfoTypes.OBJECT
-                KtClassKind.INTERFACE -> KotlinNameHighlightInfoTypes.TRAIT
-                KtClassKind.ANONYMOUS_OBJECT -> KotlinNameHighlightInfoTypes.CLASS
+                KtClassKind.ENUM_CLASS -> KotlinHighlightInfoTypeSemanticNames.ENUM
+                KtClassKind.ANNOTATION_CLASS -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
+                KtClassKind.OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
+                KtClassKind.COMPANION_OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
+                KtClassKind.INTERFACE -> KotlinHighlightInfoTypeSemanticNames.TRAIT
+                KtClassKind.ANONYMOUS_OBJECT -> KotlinHighlightInfoTypeSemanticNames.CLASS
             }
 
-            is KtTypeAliasSymbol -> KotlinNameHighlightInfoTypes.TYPE_ALIAS
-            is KtTypeParameterSymbol -> KotlinNameHighlightInfoTypes.TYPE_PARAMETER
+            is KtTypeAliasSymbol -> KotlinHighlightInfoTypeSemanticNames.TYPE_ALIAS
+            is KtTypeParameterSymbol -> KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER
         }
 
         return listOfNotNull(HighlightingFactory.highlightName(expression, color))

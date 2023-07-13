@@ -52,23 +52,23 @@ internal class FunctionsHighlightingVisitor(holder: HighlightInfoHolder, binding
             extension.highlightCall(callee, resolvedCall)
         } ?:
         when {
-            calleeDescriptor.fqNameOrNull() == KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME -> KotlinNameHighlightInfoTypes.KEYWORD
-            calleeDescriptor.isDynamic() -> KotlinNameHighlightInfoTypes.DYNAMIC_FUNCTION_CALL
-            calleeDescriptor is FunctionDescriptor && calleeDescriptor.isSuspend -> KotlinNameHighlightInfoTypes.SUSPEND_FUNCTION_CALL
+            calleeDescriptor.fqNameOrNull() == KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME -> KotlinHighlightInfoTypeSemanticNames.KEYWORD
+            calleeDescriptor.isDynamic() -> KotlinHighlightInfoTypeSemanticNames.DYNAMIC_FUNCTION_CALL
+            calleeDescriptor is FunctionDescriptor && calleeDescriptor.isSuspend -> KotlinHighlightInfoTypeSemanticNames.SUSPEND_FUNCTION_CALL
             resolvedCall is VariableAsFunctionResolvedCall -> {
                 val container = calleeDescriptor.containingDeclaration
                 val containedInFunctionClassOrSubclass = container is ClassDescriptor && container.defaultType.isFunctionTypeOrSubtype
                 if (containedInFunctionClassOrSubclass)
-                    KotlinNameHighlightInfoTypes.VARIABLE_AS_FUNCTION_CALL
+                    KotlinHighlightInfoTypeSemanticNames.VARIABLE_AS_FUNCTION_CALL
                 else
-                    KotlinNameHighlightInfoTypes.VARIABLE_AS_FUNCTION_LIKE_CALL
+                    KotlinHighlightInfoTypeSemanticNames.VARIABLE_AS_FUNCTION_LIKE_CALL
             }
 
-            calleeDescriptor is ConstructorDescriptor -> KotlinNameHighlightInfoTypes.CONSTRUCTOR_CALL
+            calleeDescriptor is ConstructorDescriptor -> KotlinHighlightInfoTypeSemanticNames.CONSTRUCTOR_CALL
             calleeDescriptor !is FunctionDescriptor -> null
-            calleeDescriptor.extensionReceiverParameter != null -> KotlinNameHighlightInfoTypes.EXTENSION_FUNCTION_CALL
-            DescriptorUtils.isTopLevelDeclaration(calleeDescriptor) -> KotlinNameHighlightInfoTypes.PACKAGE_FUNCTION_CALL
-            else -> KotlinNameHighlightInfoTypes.FUNCTION_CALL
+            calleeDescriptor.extensionReceiverParameter != null -> KotlinHighlightInfoTypeSemanticNames.EXTENSION_FUNCTION_CALL
+            DescriptorUtils.isTopLevelDeclaration(calleeDescriptor) -> KotlinHighlightInfoTypeSemanticNames.PACKAGE_FUNCTION_CALL
+            else -> KotlinHighlightInfoTypeSemanticNames.FUNCTION_CALL
         }
         attributesKey?.let { key ->
             highlightName(callee, key)
