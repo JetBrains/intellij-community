@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
+import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
 import com.intellij.openapi.vfs.encoding.EncodingManager
@@ -14,7 +15,10 @@ import java.nio.charset.Charset
  */
 @ApiStatus.Experimental
 sealed class PythonExecution {
-  var workingDir: TargetEnvironmentFunction<out String?>? = null
+  /**
+   * Path to workdir on target
+   */
+  var workingDir: TargetEnvironmentFunction<out FullPathOnTarget?>? = null
 
   /** Parameters that return [SKIP_ARGUMENT] are removed from the resulting argument list. */
   val parameters: MutableList<TargetEnvironmentFunction<String>> = mutableListOf()
