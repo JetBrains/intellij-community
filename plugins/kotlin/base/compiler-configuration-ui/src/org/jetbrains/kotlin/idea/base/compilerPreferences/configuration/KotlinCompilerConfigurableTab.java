@@ -6,7 +6,7 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -62,7 +62,8 @@ import java.util.function.Consumer;
 import static com.intellij.openapi.options.Configurable.isCheckboxModified;
 import static com.intellij.openapi.options.Configurable.isFieldModified;
 
-public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Disposable {
+public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
+    private static final Logger LOG = Logger.getInstance(KotlinCompilerConfigurableTab.class);
     private static final Map<String, @NlsSafe String> moduleKindDescriptions = new LinkedHashMap<>();
     private static final Map<String, @NlsSafe String> sourceMapSourceEmbeddingDescriptions = new LinkedHashMap<>();
     private static final int MAX_WARNING_SIZE = 75;
@@ -124,6 +125,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     private JTextField sourceMapPrefix;
     private JComboBox<String> sourceMapEmbedSources;
     private boolean isEnabled = true;
+
+    private @Nullable Disposable validatorsDisposable = null;
 
     public KotlinCompilerConfigurableTab(
             Project project,
@@ -226,11 +229,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         }
 
         updateOutputDirEnabled();
-    }
-
-    @Override
-    public void dispose() {
-
     }
 
     private static int calculateNameCountToShowInWarning(List<String> allNames) {
@@ -545,6 +543,14 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     @Nullable
     @Override
     public JComponent createComponent() {
+        if (validatorsDisposable != null) {
+            LOG.error(new IllegalStateException("validatorsDisposable is not null. Disposing and rewriting it."));
+            Disposer.dispose(validatorsDisposable);
+        }
+        validatorsDisposable = Disposer.newDisposable();
+        createVersionValidator(languageVersionComboBox, "configuration.warning.text.language.version.unsupported", validatorsDisposable);
+        createVersionValidator(apiVersionComboBox, "configuration.warning.text.api.version.unsupported", validatorsDisposable);
+
         return contentPane;
     }
 
@@ -744,7 +750,13 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
     @Override
     public void disposeUIResources() {
-        Disposer.dispose(this);
+      if (validatorsDisposable == null) {
+          LOG.error(new IllegalStateException("validatorsDisposable is null"));
+          return;
+      }
+
+      Disposer.dispose(validatorsDisposable);
+      validatorsDisposable = null;
     }
 
     @Nls
@@ -875,9 +887,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         kotlinJpsPluginVersionComboBox = new ComboBox<>(jpsPluginComboBoxModel);
         apiVersionComboBox = new ComboBox<>(new MutableCollectionComboBoxModel<>());
 
-        createVersionValidator(languageVersionComboBox, "configuration.warning.text.language.version.unsupported");
-        createVersionValidator(apiVersionComboBox, "configuration.warning.text.api.version.unsupported");
-
         // Workaround: ThreeStateCheckBox doesn't send suitable notification on state change
         // TODO: replace with PropertyChangerListener after fix is available in IDEA
         copyRuntimeFilesCheckBox = new ThreeStateCheckBox() {
@@ -889,8 +898,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         };
     }
 
-    private void createVersionValidator(JComboBox<VersionView> component, String messageKey) {
-        new ComponentValidator(this)
+    private static void createVersionValidator(JComboBox<VersionView> component, String messageKey, Disposable parentDisposable) {
+        new ComponentValidator(parentDisposable)
                 .withValidator(() -> {
                     VersionView selectedItem = (VersionView) component.getSelectedItem();
                     if (selectedItem == null) return null;
