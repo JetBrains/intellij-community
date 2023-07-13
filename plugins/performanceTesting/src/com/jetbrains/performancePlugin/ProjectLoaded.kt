@@ -5,7 +5,6 @@ package com.jetbrains.performancePlugin
 import com.intellij.diagnostic.AbstractMessage
 import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.ThreadDumper
-import com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter.Companion.logStats
 import com.intellij.driver.impl.InvokerMBean
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ApplicationInitializedListener
@@ -29,6 +28,7 @@ import com.intellij.openapi.ui.playback.PlaybackRunner
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter.Companion.logStats
 import com.intellij.util.Alarm
 import com.intellij.util.SystemProperties
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand.Companion.shouldOpenInSmartMode

@@ -1,10 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diagnostic
+package com.intellij.platform.ide.diagnostic.startUpPerformanceReporter
 
-import com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter
 import kotlinx.coroutines.CoroutineScope
 
 private class IdeStartUpPerformanceService(coroutineScope: CoroutineScope) : StartUpPerformanceReporter(coroutineScope) {

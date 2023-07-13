@@ -2,8 +2,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
       serviceInterface="com.intellij.diagnostic.StartUpPerformanceService"
-      serviceImplementation="com.intellij.diagnostic.IdeStartUpPerformanceService"
-      headlessImplementation="com.intellij.diagnostic.startUpPerformanceReporter.HeadlessStartUpPerformanceService"
+      serviceImplementation="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.IdeStartUpPerformanceService"
+      headlessImplementation="com.intellij.platform.diagnostic.startUpPerformanceReporter.HeadlessStartUpPerformanceService"
     />
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -1265,8 +1265,8 @@
     <postStartupActivity implementation="com.intellij.ide.cds.CDSStartupActivity" order="last"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.cds.CDSFUSCollector"/>
 
-    <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.startUpPerformanceReporter.fus.StartupPerformanceCollector"/>
-    <postStartupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.fus.StartupMetricCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.StartupPerformanceCollector"/>
+    <postStartupActivity implementation="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.StartupMetricCollector"/>
 
     <postStartupActivity implementation="com.intellij.ide.startup.CheckProjectActivity" order="last"/>
     <postStartupActivity implementation="com.intellij.ide.startup.CheckKeysStartupActivity" order="first"/>
