@@ -75,6 +75,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       val repositoryMetric = REPOSITORY.metric(
         LOCAL_BRANCHES with branches.localBranches.size,
         REMOTE_BRANCHES with branches.remoteBranches.size,
+        RECENT_CHECKOUT_BRANCHES with branches.recentCheckoutBranches.size,
         REMOTES with repository.remotes.size,
         IS_WORKTREE_USED with repository.isWorkTreeUsed(),
         FS_MONITOR with repository.detectFsMonitor(),
@@ -143,7 +144,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("git.configuration", 12)
+    private val GROUP = EventLogGroup("git.configuration", 13)
 
     private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
     private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
@@ -169,6 +170,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
 
     private val LOCAL_BRANCHES = EventFields.RoundedInt("local_branches")
     private val REMOTE_BRANCHES = EventFields.RoundedInt("remote_branches")
+    private val RECENT_CHECKOUT_BRANCHES = EventFields.RoundedInt("recent_checkout_branches")
     private val REMOTES = EventFields.RoundedInt("remotes")
     private val IS_WORKTREE_USED = EventFields.Boolean("is_worktree_used")
     private val FS_MONITOR = EventFields.Enum<FsMonitor>("fs_monitor")
@@ -182,6 +184,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     private val REPOSITORY = GROUP.registerVarargEvent("repository",
                                                        LOCAL_BRANCHES,
                                                        REMOTE_BRANCHES,
+                                                       RECENT_CHECKOUT_BRANCHES,
                                                        REMOTES,
                                                        IS_WORKTREE_USED,
                                                        FS_MONITOR,
