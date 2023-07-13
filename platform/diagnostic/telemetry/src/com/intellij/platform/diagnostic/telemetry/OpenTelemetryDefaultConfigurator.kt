@@ -2,6 +2,7 @@
 package com.intellij.platform.diagnostic.telemetry
 
 import com.intellij.openapi.util.ShutDownTracker
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedSpansProcessor
 import com.intellij.platform.diagnostic.telemetry.otExporters.CsvMetricsExporter
@@ -31,12 +32,17 @@ open class OpenTelemetryDefaultConfigurator(@JvmField protected val mainScope: C
                                             enableMetricsByDefault: Boolean) {
   private val metricsReportingPath = if (enableMetricsByDefault) OpenTelemetryUtils.metricsReportingPath() else null
   private val shutdownCompletionTimeout: Long = 10
-  private val resource: Resource = Resource.create(Attributes.of(
-    ResourceAttributes.SERVICE_NAME, serviceName,
-    ResourceAttributes.SERVICE_VERSION, serviceVersion,
-    ResourceAttributes.SERVICE_NAMESPACE, serviceNamespace,
-    ResourceAttributes.SERVICE_INSTANCE_ID, DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
-  ))
+  private val resource: Resource = Resource.create(
+    Attributes.builder()
+      .put(ResourceAttributes.SERVICE_NAME, serviceName)
+      .put(ResourceAttributes.SERVICE_VERSION, serviceVersion)
+      .put(ResourceAttributes.SERVICE_NAMESPACE, serviceNamespace)
+      .put(ResourceAttributes.OS_TYPE, SystemInfoRt.OS_NAME)
+      .put(ResourceAttributes.OS_VERSION, SystemInfoRt.OS_VERSION)
+      .put(ResourceAttributes.HOST_ARCH, System.getProperty("os.arch"))
+      .put(ResourceAttributes.SERVICE_INSTANCE_ID, DateTimeFormatter.ISO_INSTANT.format(Instant.now()))
+      .build()
+  )
 
   internal val aggregatedMetricsExporter: AggregatedMetricsExporter = AggregatedMetricsExporter()
   internal val aggregatedSpansProcessor: AggregatedSpansProcessor = AggregatedSpansProcessor(mainScope)
