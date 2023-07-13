@@ -58,11 +58,9 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTextAttributes.keyword,
         MermaidTokens.Flowchart.SUBGRAPH,
         MermaidTokens.Flowchart.STYLE,
-        MermaidTokens.Flowchart.STYLE_OPT,
         MermaidTokens.CLASS_DEF
       )
       holder[MermaidTokens.Flowchart.START_ARROW] = MermaidTextAttributes.edge
-      holder[MermaidTokens.Flowchart.STYLE_VAL] = MermaidTextAttributes.string
       holder[MermaidTokens.Flowchart.STYLE_TARGET] = MermaidTextAttributes.identifier
       holder[MermaidTokens.Flowchart.LINK_TEXT] = MermaidTextAttributes.note
     }
@@ -346,7 +344,8 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.CLICK,
         MermaidTokens.CALLBACK,
         MermaidTokens.Mindmap.OPEN_ICON,
-        MermaidTokens.Mindmap.CLOSE_ICON
+        MermaidTokens.Mindmap.CLOSE_ICON,
+        MermaidTokens.STYLE_OPT,
       )
       fillMap(
         holder,
@@ -359,7 +358,8 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.TASK_NAME,
         MermaidTokens.ACC_TITLE_VALUE,
         MermaidTokens.ACC_DESCR_VALUE,
-        MermaidTokens.ACC_DESCR_MULTILINE_VALUE
+        MermaidTokens.ACC_DESCR_MULTILINE_VALUE,
+        MermaidTokens.STYLE_VAL,
       )
 
       holder[MermaidTokens.TITLE_VALUE] = MermaidTextAttributes.title

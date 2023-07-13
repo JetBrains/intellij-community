@@ -418,8 +418,7 @@ complexNoteContent ::= noteLines
 private noteLines ::= noteLine [noteLines]
 private noteLine ::= simpleNoteContent [EOL] | EOL
 
-stateClassDefStatement ::= CLASS_DEF CLASS_DEF_ID CLASS_DEF_STYLE_OPTS
-  | CLASS_DEF DEFAULT CLASS_DEF_STYLE_OPTS
+stateClassDefStatement ::= CLASS_DEF (CLASS_DEF_ID | DEFAULT) styleOptions
 
 cssClassStatement ::= CLASS CLASS_ENTITY_IDS STYLE_CLASS
 

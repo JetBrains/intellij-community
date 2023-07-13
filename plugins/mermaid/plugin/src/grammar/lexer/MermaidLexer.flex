@@ -59,7 +59,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states class_diagram, struct, generic, simple_direction_value, annotation, class_relation_line, class_relation_start, class_relation_end, class_in_relation, description, class_style_id, class_member, namespace_body
 
-%states state_diagram, state_statement, note_statement, note_content, simple_note_content, state_class_def, state_class_def_id, state_class, state_class_style, state_scale
+%states state_diagram, state_statement, note_statement, note_content, simple_note_content, state_class_def, state_style_opt, state_style_value, state_class, state_class_style, state_scale
 
 %states entity_relationship, entity_attributes, relationship_description
 
@@ -334,13 +334,13 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\S\r\n]+ { yybegin(style_opt); return WHITE_SPACE; }
 }
 <style_opt> {
-  [^\s,:;][^,:\n\r;]*/: { return Flowchart.STYLE_OPT; }
+  [^\s,:;][^,:\n\r;]*/: { return STYLE_OPT; }
   ":" { yybegin(style_value); return COLON; }
   [^\S\r\n]+ { return WHITE_SPACE; }
 }
 <style_value> {
   [^\S\n\r]+ { return WHITE_SPACE; }
-  [^\s,:;][^,:\n\r;]* { return Flowchart.STYLE_VAL; }
+  [^\s,:;][^,:\n\r;]* { return STYLE_VAL; }
   "," { yybegin(style_opt); return COMMA; }
   ";" { yybegin(flowchart_body); return SEMICOLON; }
   [\n\r] { yybegin(flowchart_body); return EOL; }
@@ -608,11 +608,18 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\n\r] { yypopstate(); return EOL; }
 }
 <state_class_def> {
-  "default" { yypushstate(state_class_def_id); return DEFAULT; }
-  \w+\s+ { yypushstate(state_class_def_id); return StateDiagram.CLASS_DEF_ID; }
+  "default" { yypushstate(state_style_opt); return DEFAULT; }
+  \w+ { yypushstate(state_style_opt); return StateDiagram.CLASS_DEF_ID; }
 }
-<state_class_def_id> {
-  [^\n]* { yybegin(state_diagram); return StateDiagram.CLASS_DEF_STYLE_OPTS; }
+<state_style_opt> {
+  [^\s:,]* { return STYLE_OPT; }
+  ":" { yybegin(state_style_value); return COLON; }
+  [\n\r] { yybegin(state_diagram); return EOL; }
+}
+<state_style_value> {
+  [^\s:,]* { return STYLE_VAL; }
+  "," { yybegin(state_style_opt); return COMMA; }
+  [\n\r] { yybegin(state_diagram); return EOL; }
 }
 <state_class> {
   (\w+)+((","\s*\w+)*) { yybegin(state_class_style); return StateDiagram.CLASS_ENTITY_IDS; }

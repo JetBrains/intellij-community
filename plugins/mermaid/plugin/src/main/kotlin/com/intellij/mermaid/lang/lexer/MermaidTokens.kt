@@ -208,6 +208,12 @@ object MermaidTokens {
 
   @JvmField
   val CLASS_DEF = MermaidToken("CLASS_DEF")
+
+  @JvmField
+  val STYLE_OPT = MermaidToken("STYLE_OPT")
+
+  @JvmField
+  val STYLE_VAL = MermaidToken("STYLE_VAL")
   //endregion
 
   object Directives {
@@ -335,12 +341,6 @@ object MermaidTokens {
 
     @JvmField
     val CLASS_ID_STYLE = MermaidToken("Flowchart.CLASS_ID_STYLE")
-
-    @JvmField
-    val STYLE_OPT = MermaidToken("Flowchart.STYLE_OPT")
-
-    @JvmField
-    val STYLE_VAL = MermaidToken("Flowchart.STYLE_VAL")
   }
 
   object Sequence {
@@ -496,7 +496,7 @@ object MermaidTokens {
     val CLASS_DEF_ID = MermaidToken("StateDiagram.CLASS_DEF_ID")
 
     @JvmField
-    val CLASS_DEF_STYLE_OPTS = MermaidToken("StateDiagram.CLASS_DEF_STYLE_OPTS")
+    val CLASS_DEF_STYLE_OPT = MermaidToken("StateDiagram.CLASS_DEF_STYLE_OPT")
 
     @JvmField
     val CLASS_ENTITY_IDS = MermaidToken("StateDiagram.CLASS_ENTITY_IDS")
