@@ -5,18 +5,27 @@ import com.intellij.openapi.application.ApplicationManager
 
 interface KotlinPluginKindProvider {
     val pluginKind: KotlinPluginKind
+
+    companion object {
+        val currentPluginKind: KotlinPluginKind
+            get() = ApplicationManager.getApplication().getService(KotlinPluginKindProvider::class.java).pluginKind
+    }
 }
 
 enum class KotlinPluginKind {
-    FE10_PLUGIN,
-    FIR_PLUGIN
+    FE10_PLUGIN {
+        override fun other(): KotlinPluginKind = FIR_PLUGIN
+    },
+    FIR_PLUGIN {
+        override fun other(): KotlinPluginKind = FE10_PLUGIN
+    };
+
+    abstract fun other(): KotlinPluginKind
 }
 
-private val currentPluginKind: KotlinPluginKind
-    get() = ApplicationManager.getApplication().getService(KotlinPluginKindProvider::class.java).pluginKind
 
 fun isK2Plugin(): Boolean {
-    return currentPluginKind == KotlinPluginKind.FIR_PLUGIN
+    return KotlinPluginKindProvider.currentPluginKind == KotlinPluginKind.FIR_PLUGIN
 }
 
 /**
@@ -28,11 +37,11 @@ fun isK2Plugin(): Boolean {
 fun suppressAndroidPlugin(): Boolean = isK2Plugin()
 
 fun isFe10Plugin(): Boolean {
-    return currentPluginKind == KotlinPluginKind.FE10_PLUGIN
+    return KotlinPluginKindProvider.currentPluginKind == KotlinPluginKind.FE10_PLUGIN
 }
 
 fun checkKotlinPluginKind(expectedPluginKind: KotlinPluginKind) {
-    val pluginKind = currentPluginKind
+    val pluginKind = KotlinPluginKindProvider.currentPluginKind
     check(pluginKind == expectedPluginKind) {
         "Invalid Kotlin plugin detected: $pluginKind, but $expectedPluginKind was expected"
     }
