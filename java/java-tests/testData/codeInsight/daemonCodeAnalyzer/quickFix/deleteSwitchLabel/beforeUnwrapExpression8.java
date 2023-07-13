@@ -7,7 +7,8 @@ class Main {
           System.out.println("something");
           yield "Six by nine";
         }
-        case default, 100500 -> "and more";
+        case 100500 -> "and more";
+        default -> "and more";
       });
     }
   }
