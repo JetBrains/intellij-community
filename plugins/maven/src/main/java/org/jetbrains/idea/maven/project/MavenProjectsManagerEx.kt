@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.project
 import com.intellij.build.SyncViewManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
@@ -156,7 +155,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       val importResult = withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
         val importResult = blockingContext { doImport() }
         val fm = getVirtualFileManager()
-        writeAction { fm.syncRefresh() }
+        fm.asyncRefresh()
         return@withBackgroundProgress importResult
       }
       withBackgroundProgress(project, MavenProjectBundle.message("maven.post.processing"), true) {
