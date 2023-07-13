@@ -460,13 +460,13 @@ ganttHeader ::= GANTT
 ganttBody ::= ganttLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private ganttLines ::= ganttLine [ganttLines]
 private ganttLine ::= ganttStatement [IGNORED] [EOL] | [IGNORED] EOL
-ganttStatement ::= DATE_FORMAT
+ganttStatement ::= ganttDateFormatStatement
   | titleStatement
-  | EXCLUDES
-  | INCLUDES
-  | AXIS_FORMAT
-  | TODAY_MARKER
-  | TICK_INTERVAL
+  | ganttExcludesStatement
+  | ganttIncludesStatement
+  | ganttAxisFormatStatement
+  | ganttTodayMarkerStatement
+  | ganttTickIntervalStatement
   | ganttSectionStatement
   | ganttDataStatement
   | directive
@@ -481,6 +481,13 @@ ganttSectionBlock ::= ganttSectionLines { implements="com.intellij.mermaid.lang.
 private ganttSectionLines ::= (ganttSectionLine | IGNORED) [ganttSectionLines]
 private ganttSectionLine ::= ganttSectionInnerStatement [EOL] | EOL
 ganttSectionInnerStatement ::= ganttDataStatement
+
+ganttDateFormatStatement ::= DATE_FORMAT GANTT_VALUE+
+ganttExcludesStatement ::= EXCLUDES GANTT_VALUE+
+ganttIncludesStatement ::= INCLUDES GANTT_VALUE+
+ganttAxisFormatStatement ::= AXIS_FORMAT GANTT_VALUE+
+ganttTodayMarkerStatement ::= TODAY_MARKER GANTT_VALUE+
+ganttTickIntervalStatement ::= TICK_INTERVAL GANTT_VALUE+
 
 
 requirementDiagramHeader ::= REQUIREMENT_DIAGRAM

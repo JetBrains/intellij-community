@@ -30,7 +30,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       addMindmapHighlights(holder)
       addClassDiagramHighlights(holder)
       addEntityRelationshipHighlights(holder)
-      addGantDiagramHighlights(holder)
+      addGanttDiagramHighlights(holder)
       addGitGraphHighlights(holder)
       addJourneyHighlights(holder)
       addRequirementDiagramHighlights(holder)
@@ -155,8 +155,18 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       holder[MermaidTokens.EntityRelationship.ATTR_KEY] = MermaidTextAttributes.constant
     }
 
-    private fun addGantDiagramHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
+    private fun addGanttDiagramHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
       holder[MermaidTokens.Gantt.GANTT] = MermaidTextAttributes.diagram_name
+      fillMap(
+        holder,
+        MermaidTextAttributes.keyword,
+        MermaidTokens.Gantt.AXIS_FORMAT,
+        MermaidTokens.Gantt.DATE_FORMAT,
+        MermaidTokens.Gantt.EXCLUDES,
+        MermaidTokens.Gantt.INCLUDES,
+        MermaidTokens.Gantt.TICK_INTERVAL,
+        MermaidTokens.Gantt.TODAY_MARKER
+      )
     }
 
     private fun addRequirementDiagramHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {

@@ -190,7 +190,7 @@ internal object MermaidSpacingBuilder {
       .around(MermaidTokens.Requirement.ARROW_LEFT).spaces(1)
       .around(MermaidTokens.Requirement.ARROW_RIGHT).spaces(1)
       .around(MermaidTokens.Requirement.REQ_LINE).spaces(1)
-      // Git  Graph
+      // Git Graph
       .after(MermaidTokens.GitGraph.BRANCH).spaces(1)
       .after(MermaidTokens.GitGraph.CHERRY_PICK).spaces(1)
       .after(MermaidTokens.GitGraph.MERGE).spaces(1)
@@ -214,6 +214,13 @@ internal object MermaidSpacingBuilder {
       .after(MermaidTokens.Quadrant.X_AXIS).spaces(1)
       .after(MermaidTokens.Quadrant.Y_AXIS).spaces(1)
       .between(MermaidTokens.Quadrant.QUADRANT_TEXT, MermaidTokens.Quadrant.QUADRANT_TEXT).spaces(1)
+      // Gantt
+      .between(MermaidTokens.Gantt.DATE_FORMAT, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
+      .between(MermaidTokens.Gantt.TODAY_MARKER, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
+      .between(MermaidTokens.Gantt.TICK_INTERVAL, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
+      .between(MermaidTokens.Gantt.INCLUDES, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
+      .between(MermaidTokens.Gantt.EXCLUDES, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
+      .between(MermaidTokens.Gantt.AXIS_FORMAT, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
       // indent
       .between(MermaidElements.SEQUENCE_BODY, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
       .between(MermaidElements.SUBGRAPH_BLOCK, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)

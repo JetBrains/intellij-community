@@ -565,6 +565,9 @@ object MermaidTokens {
 
     @JvmField
     val TICK_INTERVAL = MermaidToken("Gantt.TICK_INTERVAL")
+
+    @JvmField
+    val GANTT_VALUE = MermaidToken("Gantt.GANTT_VALUE")
   }
 
   object Requirement {

@@ -63,7 +63,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states entity_relationship, entity_attributes, relationship_description
 
-%states gantt, gantt_task_data
+%states gantt, gantt_task_data, gantt_value, gantt_today_marker_value
 
 %states requirement_diagram, requirement, requirement_value, requirement_constant_value, req_element
 
@@ -688,22 +688,30 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 //---gantt------------------------------------------------------------------------
 <gantt> {
   "title" { yypushstate(title); return TITLE; }
-  "dateFormat"\s[^#\n;]+ { return Gantt.DATE_FORMAT; }
-  "axisFormat"\s[^#\n;]+ { return Gantt.AXIS_FORMAT; }
-  "includes"\s[^#\n;]+ { return Gantt.INCLUDES; }
-  "excludes"\s[^#\n;]+ { return Gantt.EXCLUDES; }
-  "todayMarker"\s[^\n;]+ { return Gantt.TODAY_MARKER; }
-  "tickInterval"\s[^#\n;]+ { return Gantt.TICK_INTERVAL; }
+  "dateFormat" { yybegin(gantt_value); return Gantt.DATE_FORMAT; }
+  "axisFormat" { yybegin(gantt_value); return Gantt.AXIS_FORMAT; }
+  "includes" { yybegin(gantt_value); return Gantt.INCLUDES; }
+  "excludes" { yybegin(gantt_value); return Gantt.EXCLUDES; }
+  "todayMarker" { yybegin(gantt_today_marker_value); return Gantt.TODAY_MARKER; }
+  "tickInterval" { yybegin(gantt_value); return Gantt.TICK_INTERVAL; }
   "section" { yypushstate(section); return SECTION; }
   [^\s#:;]+ { return TASK_NAME; }
   ":" { yybegin(gantt_task_data); return COLON; }
+}
+<gantt_task_data, gantt_value, gantt_today_marker_value> {
+  [\n\r] { yybegin(gantt); return EOL; }
 }
 <gantt_task_data> {
   (#[^\n\r]*)/[\n\r]? { return IGNORED; }
   [^#\s;,]+ { return TASK_DATA; }
   [^\S\r\n]+ { return WHITE_SPACE; }
   "," { return COMMA; }
-  [\n\r] { yybegin(gantt); return EOL; }
+}
+<gantt_value> {
+  [^#\s;]+ { return Gantt.GANTT_VALUE; }
+}
+<gantt_today_marker_value> {
+  [^\s;]+ { return Gantt.GANTT_VALUE; }
 }
 
 //---requirement------------------------------------------------------------------
