@@ -8,6 +8,7 @@ import com.intellij.cce.metric.util.Sample
 class Precision : Metric {
   private val sample = mutableListOf<Double>()
   override val name = "Precision"
+  override val description: String = "Ratio of selected proposals by all proposals"
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
     get() = sample.average()

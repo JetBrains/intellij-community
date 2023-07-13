@@ -7,6 +7,7 @@ import com.intellij.cce.metric.util.Sample
 class RecallMetric : Metric {
   private val sample = Sample()
   override val name = NAME
+  override val description: String = "Ratio of successful invocations"
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
     get() = sample.mean()

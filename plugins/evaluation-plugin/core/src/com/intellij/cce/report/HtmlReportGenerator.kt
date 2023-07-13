@@ -21,8 +21,7 @@ import kotlin.io.path.writeText
 class HtmlReportGenerator(
   private val dirs: GeneratorDirectories,
   private val defaultMetrics: List<String>?,
-  val fileGenerator: FileReportGenerator,
-  //completionGolfSettings: CompletionGolfEmulation.Settings?
+  val fileGenerator: FileReportGenerator
 ) : FullReportGenerator {
   companion object {
     private const val globalReportName = "index.html"
@@ -142,12 +141,15 @@ class HtmlReportGenerator(
     if (withDiff) evaluationTypes.add(diffColumnTitle)
     var rowId = 1
 
-    val errorMetrics = globalMetrics.map { MetricInfo(it.name, Double.NaN, null, it.evaluationType, it.valueType, it.showByDefault) }
+    val errorMetrics = globalMetrics.map {
+      MetricInfo(it.name, it.description, Double.NaN, null, it.evaluationType, it.valueType, it.showByDefault)
+    }
 
     fun getReportMetrics(repRef: ReferenceInfo) = globalMetrics.map { metric ->
       val refMetric = repRef.metrics.find { it.name == metric.name && it.evaluationType == metric.evaluationType }
       MetricInfo(
         metric.name,
+        metric.description,
         refMetric?.value ?: Double.NaN,
         refMetric?.confidenceInterval,
         metric.evaluationType,
@@ -160,7 +162,7 @@ class HtmlReportGenerator(
       if (withDiff) listOf(metrics, metrics
         .groupBy({ it.name }, { Triple(it.value, it.valueType, it.showByDefault) })
         .mapValues { with(it.value) { Triple(first().first - last().first, first().second, first().third) } }
-        .map { MetricInfo(it.key, it.value.first, null, diffColumnTitle, it.value.second, it.value.third) }).flatten()
+        .map { MetricInfo(it.key, "", it.value.first, null, diffColumnTitle, it.value.second, it.value.third) }).flatten()
       else metrics
                                                            ).joinToString(",") {
         "${it.name}${it.evaluationType}:'${
@@ -182,7 +184,7 @@ class HtmlReportGenerator(
         |columns:[{title:'File Report',field:'file',formatter:'html'${if (manyTypes) ",width:'120'" else ""}},
         |${
       uniqueMetricsInfo.joinToString(",\n") { metric ->
-        "{title:'${metric.name}',visible:${metric.visible()},columns:[${
+        "{title:'${metric.name}',headerTooltip:'${metric.description}',visible:${metric.visible()},columns:[${
           evaluationTypes.joinToString(",") { type ->
             "{title:'$type',field:'${metric.name.filter { it.isLetterOrDigit() }}$type',sorter:'number',align:'right',headerVertical:${manyTypes},visible:${metric.visible()}}"
           }

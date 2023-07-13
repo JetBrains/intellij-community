@@ -45,6 +45,7 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Metric {
 
 class MatchedRatio(showByDefault: Boolean = false) : SimilarityMetric(showByDefault) {
   override val name = "Matched Ratio"
+  override val description: String = "Length of selected proposal normalized by expected text (avg by invocations)"
 
   override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
     if (lookup.selectedPosition == -1)
@@ -58,6 +59,7 @@ class MatchedRatio(showByDefault: Boolean = false) : SimilarityMetric(showByDefa
 
 class PrefixSimilarity(showByDefault: Boolean = false) : SimilarityMetric(showByDefault) {
   override val name = "Prefix Similarity"
+  override val description: String = "The most matching prefix among proposals normalized by expected text (avg by invocations)"
 
   override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? =
     lookup.suggestions.maxOfOrNull {
@@ -67,6 +69,7 @@ class PrefixSimilarity(showByDefault: Boolean = false) : SimilarityMetric(showBy
 
 class EditSimilarity(showByDefault: Boolean = false) : SimilarityMetric(showByDefault) {
   override val name = "Edit Similarity"
+  override val description: String = "The minimum edit similarity among proposals normalized by expected text (avg by invocations)"
 
   override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? =
     lookup.suggestions.maxOfOrNull {

@@ -3,6 +3,7 @@ package com.intellij.cce.metric
 
 class MetricInfo(
   name: String,
+  val description: String,
   val value: Double,
   val confidenceInterval: Pair<Double, Double>?,
   evaluationType: String,

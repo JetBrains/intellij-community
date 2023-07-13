@@ -40,6 +40,7 @@ internal abstract class CompletionGolfMetric<T : Number> : Metric {
 
 internal class MovesCount : CompletionGolfMetric<Int>() {
   override val name = NAME
+  override val description: String = "Number of actions to write the file using completion"
   override val valueType = MetricValueType.INT
   override val value: Double
     get() = sample.sum()
@@ -65,7 +66,8 @@ internal class MovesCount : CompletionGolfMetric<Int>() {
 }
 
 internal class TypingsCount : CompletionGolfMetric<Int>() {
-  override val name = NAME
+  override val name = "Typings"
+  override val description: String = "Number of typing new symbols"
   override val valueType = MetricValueType.INT
   override val showByDefault = false
   override val value: Double
@@ -77,14 +79,11 @@ internal class TypingsCount : CompletionGolfMetric<Int>() {
       it.lookups.count { it.selectedPosition >= 0 } -
       it.lookups.sumOf { it.selectedWithoutPrefix()?.length ?: 0 }
     }
-
-  companion object {
-    const val NAME = "Typings"
-  }
 }
 
 internal class NavigationsCount : CompletionGolfMetric<Int>() {
-  override val name = NAME
+  override val name = "Navigations"
+  override val description: String = "Number of navigations between proposals in code completion results"
   override val valueType = MetricValueType.INT
   override val showByDefault = false
   override val value: Double
@@ -93,15 +92,12 @@ internal class NavigationsCount : CompletionGolfMetric<Int>() {
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator) = sessions.sumOf { computeMoves(it) }
 
   private fun computeMoves(session: Session) = session.lookups.sumOf { if (it.selectedPosition >= 0) it.selectedPosition else 0 }
-
-  companion object {
-    const val NAME = "Navigations"
-  }
 }
 
 
 internal class CompletionInvocationsCount : CompletionGolfMetric<Int>() {
-  override val name = NAME
+  override val name = "Completion Invocations"
+  override val description: String = "Number of code completion invocations"
   override val valueType = MetricValueType.INT
   override val showByDefault = false
   override val value: Double
@@ -109,15 +105,12 @@ internal class CompletionInvocationsCount : CompletionGolfMetric<Int>() {
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
     sessions.sumOf { it.lookups.count { lookup -> lookup.isNew } }
-
-  companion object {
-    const val NAME = "Completion Invocations"
-  }
 }
 
 internal class MatchedLineLength : Metric {
   private val sample = mutableListOf<Double>()
   override val name: String = "Matched Line Length"
+  override val description: String = "Maximum length of selected proposal in line (avg by lines)"
   override val valueType: MetricValueType = MetricValueType.DOUBLE
   override val showByDefault: Boolean = false
 
@@ -138,6 +131,7 @@ internal class MatchedLineLength : Metric {
 internal class FirstPerfectLineSession : Metric {
   private val sample = mutableListOf<Double>()
   override val name: String = "First Perfect Line Session"
+  override val description: String = "Index of first lookup with proposal matches until the end of line (avg by lines)"
   override val valueType: MetricValueType = MetricValueType.DOUBLE
   override val showByDefault: Boolean = false
 
@@ -161,7 +155,8 @@ internal class MovesCountNormalised : Metric {
   private var minPossibleMovesTotal: Int = 0
   private var maxPossibleMovesTotal: Int = 0
 
-  override val name = NAME
+  override val name = "Moves Count Normalised"
+  override val description: String = "Number of actions to write the file using completion normalized by minimum possible count"
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
     get() = (movesCountTotal - minPossibleMovesTotal).toDouble() / (maxPossibleMovesTotal - minPossibleMovesTotal)
@@ -184,14 +179,11 @@ internal class MovesCountNormalised : Metric {
     }
     return ((movesCount - minPossibleMoves).toDouble() / (maxPossibleMoves - minPossibleMoves))
   }
-
-  companion object {
-    const val NAME = "Moves Count Normalised"
-  }
 }
 
 internal class PerfectLine(showByDefault: Boolean) : SimilarityMetric(showByDefault) {
   override val name = "Perfect Line"
+  override val description: String = "Ratio of completions with proposal matches until the end of line"
 
   override fun computeSimilarity(lookup: Lookup, expectedText: String): Double =
     if (lookup.selectedWithoutPrefix()?.length == expectedText.length) 1.0 else 0.0

@@ -7,6 +7,7 @@ import com.intellij.cce.metric.util.Sample
 class RecallAtMetric(private val n: Int) : Metric {
   private val sample = Sample()
   override val name = NAME_PREFIX + n
+  override val description: String = "Ratio of invocations with selected proposal in top-$n"
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
     get() = sample.mean()

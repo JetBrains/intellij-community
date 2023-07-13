@@ -38,6 +38,7 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
     val result = metrics.map {
       MetricInfo(
         name = it.name,
+        description = it.description,
         value = it.evaluate(sessions, comparator).toDouble(),
         confidenceInterval = null,
         evaluationType = evaluationType,
@@ -49,6 +50,8 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
   }
 
   fun result(): List<MetricInfo> {
-    return metrics.map { MetricInfo(it.name, it.value, it.confidenceInterval(), evaluationType, it.valueType, it.showByDefault) }
+    return metrics.map {
+      MetricInfo(it.name, it.description, it.value, it.confidenceInterval(), evaluationType, it.valueType, it.showByDefault)
+    }
   }
 }

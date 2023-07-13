@@ -29,36 +29,27 @@ abstract class LatencyMetric(override val name: String) : Metric {
   open fun shouldInclude(lookup: Lookup) = true
 }
 
-class MaxLatencyMetric : LatencyMetric(NAME) {
+class MaxLatencyMetric : LatencyMetric("Max Latency") {
+  override val description: String = "Maximum invocation latency"
   override val valueType = MetricValueType.INT
   override val showByDefault: Boolean = false
 
   override fun compute(sample: List<Double>): Double = sample.maxOrNull() ?: Double.NaN
-
-  companion object {
-    const val NAME = "Max Latency"
-  }
 }
 
-class TotalLatencyMetric : LatencyMetric(NAME) {
+class TotalLatencyMetric : LatencyMetric("Total Latency") {
+  override val description: String = "Sum of invocations latencies"
   override val valueType = MetricValueType.DOUBLE
   override val showByDefault = false
 
   override fun compute(sample: List<Double>): Double = sample.sum()
-
-  companion object {
-    const val NAME = "Total Latency"
-  }
 }
 
-class MeanLatencyMetric(private val filterZeroes: Boolean = false) : LatencyMetric(NAME) {
+class MeanLatencyMetric(private val filterZeroes: Boolean = false) : LatencyMetric("Mean Latency") {
   override val valueType = MetricValueType.DOUBLE
+  override val description: String = "Average latency by all invocations"
 
   override fun compute(sample: List<Double>): Double = sample.average()
 
   override fun shouldInclude(lookup: Lookup) = if (filterZeroes) lookup.latency > 0 else true
-
-  companion object {
-    const val NAME = "Mean Latency"
-  }
 }

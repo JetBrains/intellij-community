@@ -6,7 +6,8 @@ import com.intellij.cce.metric.util.Sample
 
 class SuggestionsCountMetric : Metric {
   private val sample = Sample()
-  override val name = NAME
+  override val name = "Suggestions"
+  override val description: String = "Total number of proposals"
   override val valueType = MetricValueType.INT
   override val value: Double
     get() = sample.sum()
@@ -18,8 +19,4 @@ class SuggestionsCountMetric : Metric {
   }
 
   override val showByDefault = false
-
-  companion object {
-    const val NAME = "Suggestions"
-  }
 }

@@ -12,6 +12,8 @@ interface Metric {
 
   val name: String
 
+  val description: String
+
   val valueType: MetricValueType
 
   val showByDefault: Boolean
