@@ -23,11 +23,11 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 @ApiStatus.Internal
-open class OpenTelemetryDefaultConfigurator(protected val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
-                                            protected val otelSdkBuilder: OpenTelemetrySdkBuilder,
-                                            protected val serviceName: String = "",
-                                            protected val serviceVersion: String = "",
-                                            protected val serviceNamespace: String = "",
+open class OpenTelemetryDefaultConfigurator(@JvmField protected val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
+                                            @JvmField protected val otelSdkBuilder: OpenTelemetrySdkBuilder,
+                                            @JvmField protected val serviceName: String = "",
+                                            @JvmField protected val serviceVersion: String = "",
+                                            @JvmField protected val serviceNamespace: String = "",
                                             enableMetricsByDefault: Boolean) {
 
   private val metricsReportingPath = if (enableMetricsByDefault) OpenTelemetryUtils.metricsReportingPath() else null
@@ -41,7 +41,10 @@ open class OpenTelemetryDefaultConfigurator(protected val mainScope: CoroutineSc
 
   val aggregatedMetricsExporter: AggregatedMetricsExporter = AggregatedMetricsExporter()
   val aggregatedSpansProcessor: AggregatedSpansProcessor = AggregatedSpansProcessor(mainScope)
+
+  @JvmField
   protected val spanExporters: MutableList<AsyncSpanExporter> = mutableListOf()
+
   private val metricsExporters = mutableListOf<MetricsExporterEntry>()
 
   private fun isMetricsEnabled(): Boolean {

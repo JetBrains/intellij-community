@@ -10,7 +10,7 @@ import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 
-class OTelConfigurator(
+internal class OTelConfigurator(
   mainScope: CoroutineScope,
   otelSdkBuilder: OpenTelemetrySdkBuilder,
   appInfo: ApplicationInfo,
@@ -25,15 +25,14 @@ class OTelConfigurator(
   override fun getDefaultSpanExporters(): List<AsyncSpanExporter> {
     super.getDefaultSpanExporters()
 
-    val traceFile = System.getProperty("idea.diagnostic.opentelemetry.file")
-
-    if (traceFile != null) {
-      spanExporters.add(JaegerJsonSpanExporter(Path.of(traceFile), serviceName, serviceVersion, serviceNamespace))
+    System.getProperty("idea.diagnostic.opentelemetry.file")?.let { traceFile ->
+      spanExporters.add(JaegerJsonSpanExporter(file = Path.of(traceFile),
+                                               serviceName = serviceName,
+                                               serviceVersion = serviceVersion,
+                                               serviceNamespace = serviceNamespace))
     }
 
-    val traceEndpoint = System.getProperty(IDEA_DIAGNOSTIC_OTLP)
-
-    if (traceEndpoint != null) {
+    System.getProperty(IDEA_DIAGNOSTIC_OTLP)?.let { traceEndpoint ->
       spanExporters.add(OtlpSpanExporter(traceEndpoint))
     }
     return spanExporters
