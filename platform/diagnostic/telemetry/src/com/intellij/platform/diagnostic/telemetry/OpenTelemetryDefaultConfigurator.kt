@@ -29,7 +29,6 @@ open class OpenTelemetryDefaultConfigurator(@JvmField protected val mainScope: C
                                             @JvmField protected val serviceVersion: String = "",
                                             @JvmField protected val serviceNamespace: String = "",
                                             enableMetricsByDefault: Boolean) {
-
   private val metricsReportingPath = if (enableMetricsByDefault) OpenTelemetryUtils.metricsReportingPath() else null
   private val shutdownCompletionTimeout: Long = 10
   private val resource: Resource = Resource.create(Attributes.of(
@@ -39,39 +38,35 @@ open class OpenTelemetryDefaultConfigurator(@JvmField protected val mainScope: C
     ResourceAttributes.SERVICE_INSTANCE_ID, DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
   ))
 
-  val aggregatedMetricsExporter: AggregatedMetricsExporter = AggregatedMetricsExporter()
-  val aggregatedSpansProcessor: AggregatedSpansProcessor = AggregatedSpansProcessor(mainScope)
+  internal val aggregatedMetricsExporter: AggregatedMetricsExporter = AggregatedMetricsExporter()
+  internal val aggregatedSpansProcessor: AggregatedSpansProcessor = AggregatedSpansProcessor(mainScope)
 
-  @JvmField
-  protected val spanExporters: MutableList<AsyncSpanExporter> = mutableListOf()
+  private fun isMetricsEnabled(): Boolean = metricsReportingPath != null
 
-  private val metricsExporters = mutableListOf<MetricsExporterEntry>()
+  private fun registerSpanExporters(spanExporters: List<AsyncSpanExporter>) {
+    if (spanExporters.isEmpty()) {
+      return
+    }
 
-  private fun isMetricsEnabled(): Boolean {
-    return metricsReportingPath != null
-  }
+    val tracerProvider = SdkTracerProvider.builder()
+      .addSpanProcessor(BatchSpanProcessor(coroutineScope = mainScope, spanExporters = spanExporters))
+      .addSpanProcessor(aggregatedSpansProcessor)
+      .setResource(resource)
+      .build()
 
-  private fun registerSpanExporters() {
-    if (spanExporters.isNotEmpty()) {
-      val tracerProvider = SdkTracerProvider.builder().addSpanProcessor(BatchSpanProcessor(mainScope, spanExporters))
-        .addSpanProcessor(aggregatedSpansProcessor)
-        .setResource(resource)
-        .build()
-
-      otelSdkBuilder.setTracerProvider(tracerProvider)
-      ShutDownTracker.getInstance().registerShutdownTask {
-        tracerProvider.shutdown().join(shutdownCompletionTimeout, TimeUnit.SECONDS)
-      }
+    otelSdkBuilder.setTracerProvider(tracerProvider)
+    ShutDownTracker.getInstance().registerShutdownTask {
+      tracerProvider.shutdown().join(shutdownCompletionTimeout, TimeUnit.SECONDS)
     }
   }
 
-  private fun registerMetricsExporter() {
+  private fun registerMetricsExporter(metricsExporters: List<MetricsExporterEntry>) {
     val registeredMetricsReaders = SdkMeterProvider.builder()
     // can't reuse standard BoundedScheduledExecutorService because this library uses unsupported `scheduleAtFixedRate`
     val pool = Executors.newScheduledThreadPool(1, ConcurrencyUtil.newNamedThreadFactory("PeriodicMetricReader"))
-    metricsExporters.forEach { entry ->
-      entry.metrics.forEach {
-        val metricsReader = PeriodicMetricReader.builder(it).setExecutor(pool).setInterval(entry.duration).build()
+    for (entry in metricsExporters) {
+      for (metricExporter in entry.metrics) {
+        val metricsReader = PeriodicMetricReader.builder(metricExporter).setExecutor(pool).setInterval(entry.duration).build()
         registeredMetricsReaders.registerMetricReader(metricsReader)
       }
     }
@@ -80,41 +75,30 @@ open class OpenTelemetryDefaultConfigurator(@JvmField protected val mainScope: C
     ShutDownTracker.getInstance().registerShutdownTask(meterProvider::shutdown)
   }
 
-  open fun getDefaultSpanExporters(): List<AsyncSpanExporter> = spanExporters
-
-  open fun getDefaultMetricsExporters(): List<MetricsExporterEntry> {
+  open fun createMetricsExporters(): List<MetricsExporterEntry> {
     metricsReportingPath ?: return emptyList()
 
-    metricsExporters.add(
-      MetricsExporterEntry(
-        metrics = listOf(
-          FilteredMetricsExporter(
-            CsvMetricsExporter(
-              RollingFileSupplier(metricsReportingPath))) { metric -> metric.belongsToScope(PlatformMetrics) }
-        ),
-        duration = Duration.ofMinutes(1))
+    val result = mutableListOf<MetricsExporterEntry>()
+    result.add(MetricsExporterEntry(
+      metrics = listOf(
+        FilteredMetricsExporter(
+          CsvMetricsExporter(
+            RollingFileSupplier(metricsReportingPath))) { metric -> metric.belongsToScope(PlatformMetrics) }
+      ),
+      duration = Duration.ofMinutes(1))
     )
 
-    metricsExporters.add(MetricsExporterEntry(listOf(aggregatedMetricsExporter), Duration.ofMinutes(1)))
-
-    return metricsExporters
+    result.add(MetricsExporterEntry(listOf(aggregatedMetricsExporter), Duration.ofMinutes(1)))
+    return result
   }
 
-  open fun configureSpanExporters(): List<AsyncSpanExporter> = getDefaultSpanExporters()
-
-  open fun configureMetricsExporter(): List<MetricsExporterEntry> = getDefaultMetricsExporters()
+  open fun createSpanExporters(): List<AsyncSpanExporter> = emptyList()
 
   fun getConfiguredSdkBuilder(): OpenTelemetrySdkBuilder {
-    val metricsEnabled = isMetricsEnabled()
-
-    configureSpanExporters()
-    configureMetricsExporter()
-
-    registerSpanExporters()
-    if (metricsEnabled) {
-      registerMetricsExporter()
+    registerSpanExporters(spanExporters = createSpanExporters())
+    if (isMetricsEnabled()) {
+      registerMetricsExporter(createMetricsExporters())
     }
-
     return otelSdkBuilder
   }
 }

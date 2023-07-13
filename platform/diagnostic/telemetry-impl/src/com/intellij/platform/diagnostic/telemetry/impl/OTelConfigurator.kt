@@ -15,25 +15,24 @@ internal class OTelConfigurator(
   otelSdkBuilder: OpenTelemetrySdkBuilder,
   appInfo: ApplicationInfo,
   enableMetricsByDefault: Boolean
-) :
-  OpenTelemetryDefaultConfigurator(mainScope = mainScope,
-                                   otelSdkBuilder = otelSdkBuilder,
-                                   serviceName = ApplicationNamesInfo.getInstance().fullProductName,
-                                   serviceVersion = appInfo.build.asStringWithoutProductCode(),
-                                   serviceNamespace = appInfo.build.productCode,
-                                   enableMetricsByDefault = enableMetricsByDefault) {
-  override fun getDefaultSpanExporters(): List<AsyncSpanExporter> {
-    super.getDefaultSpanExporters()
-
+) : OpenTelemetryDefaultConfigurator(mainScope = mainScope,
+                                     otelSdkBuilder = otelSdkBuilder,
+                                     serviceName = ApplicationNamesInfo.getInstance().fullProductName,
+                                     serviceVersion = appInfo.build.asStringWithoutProductCode(),
+                                     serviceNamespace = appInfo.build.productCode,
+                                     enableMetricsByDefault = enableMetricsByDefault) {
+  @Suppress("SuspiciousCollectionReassignment")
+  override fun createSpanExporters(): List<AsyncSpanExporter> {
+    var spanExporters = emptyList<AsyncSpanExporter>()
     System.getProperty("idea.diagnostic.opentelemetry.file")?.let { traceFile ->
-      spanExporters.add(JaegerJsonSpanExporter(file = Path.of(traceFile),
+      spanExporters += (JaegerJsonSpanExporter(file = Path.of(traceFile),
                                                serviceName = serviceName,
                                                serviceVersion = serviceVersion,
                                                serviceNamespace = serviceNamespace))
     }
 
     System.getProperty(IDEA_DIAGNOSTIC_OTLP)?.let { traceEndpoint ->
-      spanExporters.add(OtlpSpanExporter(traceEndpoint))
+      spanExporters += OtlpSpanExporter(traceEndpoint)
     }
     return spanExporters
   }
