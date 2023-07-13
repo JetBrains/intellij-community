@@ -46,7 +46,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     val affectedRange = TextRange.from(e.offset, max(e.newLength, e.oldLength))
     val affectedMarkers = markers.filter { affectedRange.intersects(it.fragmentMarker) }
 
-    val guardedRanges = guardedBlocks.mapTo(HashSet()) { it.range }
+    val guardedRanges = guardedBlocks.mapTo(HashSet()) { it.textRange }
     if (affectedMarkers.isEmpty() && guardedRanges.any { it.intersects(affectedRange) }) {
       // changed guarded blocks are on fragment document editor conscience, we just ignore them silently
       return
@@ -62,7 +62,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     val markersToRemove = SmartList<MarkersMapping>()
     for ((affectedMarker, markerText) in distributeTextToMarkers(affectedMarkers, affectedRange, e.offset + e.newLength)
       .let(this::promoteLinesEnds)) {
-      val rangeInHost = affectedMarker.hostMarker.range
+      val rangeInHost = affectedMarker.hostMarker.textRange
 
       myHostEditor.caretModel.moveToOffset(rangeInHost.startOffset)
       val newText = CopyPastePreProcessor.EP_NAME.extensionList.fold(markerText) { newText, preProcessor ->

@@ -217,9 +217,9 @@ open class CommonInjectedFileChangesHandler(
   protected fun String.esclbr(): String = StringUtil.escapeLineBreak(this)
 
   private val RangeMarker.debugText: String
-    get() = "$range'${
+    get() = "$textRange'${
       try {
-        document.getText(range)
+        document.getText(textRange)
       }
       catch (e: IndexOutOfBoundsException) {
         e.toString()
@@ -264,7 +264,7 @@ open class CommonInjectedFileChangesHandler(
         val start = max(cursor, fragmentMarker.startOffset) - remainder
         remainder = 0
         val text = fragmentMarker.document.text
-        val fragmentText = fragmentMarker.range.subSequence(text)
+        val fragmentText = fragmentMarker.textRange.subSequence(text)
         val lastEndOfLine = fragmentText.lastIndexOf("\n")
 
         val nextValidMarker by lazy(LazyThreadSafetyMode.NONE) { affectedMarkers.nearestValidMarker(i + 1) }
@@ -298,8 +298,8 @@ data class MarkersMapping(val hostMarker: RangeMarker,
                           val fragmentMarker: RangeMarker,
                           val hostPointer: SmartPsiElementPointer<PsiLanguageInjectionHost>) {
   val host: PsiLanguageInjectionHost? get() = hostPointer.element
-  val hostElementRange: TextRange? get() = hostPointer.range?.range
-  val fragmentRange: TextRange get() = fragmentMarker.range
+  val hostElementRange: TextRange? get() = hostPointer.range?.let { TextRange.create(it) }
+  val fragmentRange: TextRange get() = fragmentMarker.textRange
   fun isValid(): Boolean = hostMarker.isValid && fragmentMarker.isValid && hostPointer.element?.isValid == true
   fun dispose() {
     fragmentMarker.dispose()
@@ -308,9 +308,6 @@ data class MarkersMapping(val hostMarker: RangeMarker,
 }
 
 infix fun TextRange?.union(another: TextRange?): TextRange? = another?.let { this?.union(it) ?: it } ?: this
-
-inline val Segment.range: TextRange get() = TextRange.create(this)
-inline val RangeMarker.range: TextRange get() = this.textRange
 
 inline val PsiLanguageInjectionHost.Shred.innerRange: TextRange
   get() = TextRange.create(this.range.startOffset + this.prefix.length,
