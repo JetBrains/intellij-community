@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.ui.NewUiValue
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.currentMode
 import org.jetbrains.plugins.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSizes
@@ -15,25 +14,10 @@ import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearance
 import java.awt.Color
 
 
-object DefaultNotebookEditorAppearance: NotebookEditorAppearance, NotebookEditorAppearanceSizes by DefaultNotebookEditorAppearanceSizes {
-  override fun getCodeCellBackground(scheme: EditorColorsScheme): Color? {
-    return if (NewUiValue.isEnabled()) {
-      scheme.getColor(NotebookEditorAppearance.CODE_CELL_BACKGROUND_NEW_UI)
-    }
-    else {
-      scheme.getColor(NotebookEditorAppearance.CODE_CELL_BACKGROUND)
-    }
-  }
-
-  private val CARET_ROW_COLOR_NEW_UI = ColorKey.createColorKey("JUPYTER.CARET_ROW_COLOR_NEW_UI")
-  override fun getCaretRowColor(scheme: EditorColorsScheme): Color? {
-    return if (NewUiValue.isEnabled()) {
-      scheme.getColor(CARET_ROW_COLOR_NEW_UI)
-    }
-    else {
-      scheme.getColor(EditorColors.CARET_ROW_COLOR)
-    }
-  }
+object DefaultNotebookEditorAppearance : NotebookEditorAppearance,
+                                         NotebookEditorAppearanceSizes by DefaultNotebookEditorAppearanceSizes {
+  override fun getCodeCellBackground(scheme: EditorColorsScheme): Color? = scheme.getColor(NotebookEditorAppearance.CODE_CELL_BACKGROUND)
+  override fun getCaretRowColor(scheme: EditorColorsScheme): Color? = scheme.getColor(EditorColors.CARET_ROW_COLOR)
 
   val GUTTER_INPUT_EXECUTION_COUNT = ColorKey.createColorKey("JUPYTER.GUTTER_INPUT_EXECUTION_COUNT")
   override fun getGutterInputExecutionCountForegroundColor(scheme: EditorColorsScheme): Color? =
@@ -50,6 +34,7 @@ object DefaultNotebookEditorAppearance: NotebookEditorAppearance, NotebookEditor
   val SAUSAGE_BUTTON_APPEARANCE = TextAttributesKey.createTextAttributesKey("JUPYTER.SAUSAGE_BUTTON_APPEARANCE")
   override fun getSausageButtonAppearanceBackgroundColor(scheme: EditorColorsScheme): Color =
     scheme.getAttributes(SAUSAGE_BUTTON_APPEARANCE)?.backgroundColor ?: super.getSausageButtonAppearanceBackgroundColor(scheme)
+
   override fun getSausageButtonAppearanceForegroundColor(scheme: EditorColorsScheme): Color =
     scheme.getAttributes(SAUSAGE_BUTTON_APPEARANCE)?.foregroundColor ?: super.getSausageButtonAppearanceForegroundColor(scheme)
 
@@ -77,6 +62,7 @@ object DefaultNotebookEditorAppearance: NotebookEditorAppearance, NotebookEditor
       }
     }
   }
+
   /**
    * Takes lines of the cell and returns a color for the stripe that will be drawn behind the folding markers.
    * Currently only code cells are supported.
