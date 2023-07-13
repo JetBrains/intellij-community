@@ -1182,10 +1182,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       WindowRoundedCornersManager.setRoundedCorners(window, roundedCornerParams);
     }
 
-    myWindow = window;
-    if (myNormalWindowLevel) {
-      myWindow.setType(Window.Type.NORMAL);
+    if (myNormalWindowLevel && !window.isDisplayable()) {
+      window.setType(Window.Type.NORMAL);
     }
+    myWindow = window;
     setMinimumSize(myMinSize);
 
     TouchbarSupport.showPopupItems(this, myContent);
