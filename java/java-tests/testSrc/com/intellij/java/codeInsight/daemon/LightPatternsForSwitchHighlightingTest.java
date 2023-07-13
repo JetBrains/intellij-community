@@ -197,6 +197,9 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   public void testWhenExpressionIsFalse() {
     doTest();
   }
+  public void testNullSelectorType() {
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");

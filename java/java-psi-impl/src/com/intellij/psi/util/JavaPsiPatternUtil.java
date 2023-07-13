@@ -275,6 +275,7 @@ public final class JavaPsiPatternUtil {
     if (who.getCanonicalText().equals(overWhom.getCanonicalText())) return true;
     overWhom = TypeConversionUtil.erasure(overWhom);
     PsiType baseType = TypeConversionUtil.erasure(who);
+    if(overWhom.equals(PsiTypes.nullType())) return who instanceof PsiClassType || who instanceof PsiArrayType;
     if (overWhom instanceof PsiArrayType || baseType instanceof PsiArrayType) {
       return baseType != null && TypeConversionUtil.isAssignable(baseType, overWhom);
     }

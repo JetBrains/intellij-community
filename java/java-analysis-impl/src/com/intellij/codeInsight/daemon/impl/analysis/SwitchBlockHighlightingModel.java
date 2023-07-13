@@ -739,11 +739,13 @@ public class SwitchBlockHighlightingModel {
           holder.add(info.create());
           return;
         }
-        if (!ContainerUtil.and(getAllTypes(mySelectorType), type -> TypeConversionUtil.areTypesConvertible(type, patternType)) ||
+        if ((!ContainerUtil.and(getAllTypes(mySelectorType), type -> TypeConversionUtil.areTypesConvertible(type, patternType)) ||
             // 14.30.3 A type pattern that declares a pattern variable of a reference type U is
             // applicable at another reference type T if T is checkcast convertible to U (JEP 440-441)
             // There is no rule that says that a reference type applies to a primitive type
-            (mySelectorType instanceof PsiPrimitiveType && HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(label))) {
+            (mySelectorType instanceof PsiPrimitiveType && HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(label))) &&
+            //null type is applicable to any class type
+            !mySelectorType.equals(PsiTypes.nullType())) {
           HighlightInfo error =
             HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, elementToReport.getTextRange(), 0).create();
           holder.add(error);
@@ -759,6 +761,12 @@ public class SwitchBlockHighlightingModel {
         return;
       }
       else if (label instanceof PsiExpression expr) {
+        if (mySelectorType.equals(PsiTypes.nullType())) {
+          HighlightInfo.Builder info =
+            HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, expr.getType(), expr.getTextRange(), 0);
+          holder.add(info.create());
+          return;
+        }
         HighlightInfo.Builder info = HighlightUtil.checkAssignability(mySelectorType, expr.getType(), expr, expr);
         if (info != null) {
           holder.add(info.create());
@@ -781,7 +789,8 @@ public class SwitchBlockHighlightingModel {
           return;
         }
         if (ConstantExpressionUtil.computeCastTo(constValue, mySelectorType) == null) {
-          HighlightInfo error = HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, expr.getType(), label.getTextRange(), 0).create();
+          HighlightInfo error =
+            HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, expr.getType(), label.getTextRange(), 0).create();
           holder.add(error);
           return;
         }
