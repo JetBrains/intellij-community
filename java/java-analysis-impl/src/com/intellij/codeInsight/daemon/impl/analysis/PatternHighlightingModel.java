@@ -290,6 +290,22 @@ final class PatternHighlightingModel {
     return new ReduceResult(currentPatterns, changed);
   }
 
+
+  @NotNull
+  static List<PatternTypeTestDescription> reduceEnumConstantsToTypeTest(@NotNull List<PsiEnumConstant> constants) {
+    List<PatternTypeTestDescription> reducedToTypeTest = new ArrayList<>();
+    Map<PsiType, List<PsiEnumConstant>> enumsByTypes = constants.stream().collect(Collectors.groupingBy(t -> t.getType()));
+    for (Map.Entry<PsiType, List<PsiEnumConstant>> entry : enumsByTypes.entrySet()) {
+      PsiClass enumClass = PsiUtil.resolveClassInClassTypeOnly(entry.getKey());
+      if (enumClass == null) {
+        continue;
+      }
+      if (SwitchBlockHighlightingModel.findMissingEnumConstant(enumClass, entry.getValue()).isEmpty()) {
+        reducedToTypeTest.add(new PatternTypeTestDescription(entry.getKey()));
+      }
+    }
+    return reducedToTypeTest;
+  }
   @NotNull
   static List<PatternTypeTestDescription> reduceToTypeTest(@NotNull List<? extends PatternDescription> elements,
                                                            @NotNull PsiElement context) {
@@ -312,6 +328,7 @@ final class PatternHighlightingModel {
     }
     return reducedToTypeTest;
   }
+
 
   record ReduceResultCacheContext(@NotNull PsiType selectorType,
                                   @NotNull Set<? extends PatternDescription> currentPatterns) {
