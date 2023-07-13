@@ -168,7 +168,7 @@ public final class Utils {
     if (!async) {
       throw new AssertionError("Async data context required in '" + place + "': " + dumpDataContextClass(context));
     }
-    FastTrackAwareEdtExecutor edtExecutor = fastTrack ? newFastTrackAwareExecutor(place, true) : null;
+    FastTrackAwareEdtExecutor edtExecutor = fastTrack ? newFastTrackAwareExecutor(group, place, context, true) : null;
     ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction, edtExecutor, null);
     CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
     if (edtExecutor != null) {
@@ -227,7 +227,7 @@ public final class Utils {
     boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     DataContext wrapped = wrapDataContext(context);
     boolean async = isAsyncDataContext(wrapped) && !isUnitTestMode;
-    FastTrackAwareEdtExecutor edtExecutor = async ? newFastTrackAwareExecutor(place, false) : null;
+    FastTrackAwareEdtExecutor edtExecutor = async ? newFastTrackAwareExecutor(group, place, context, false) : null;
     ActionUpdater updater = new ActionUpdater(presentationFactory, wrapped, place, isContextMenu, false, edtExecutor, null);
     List<AnAction> list;
     if (async) {
@@ -307,7 +307,14 @@ public final class Utils {
     });
   }
 
-  private static @Nullable FastTrackAwareEdtExecutor newFastTrackAwareExecutor(@NotNull String place, boolean checkMainMenuOrToolbarFirstTime) {
+  private static @Nullable FastTrackAwareEdtExecutor newFastTrackAwareExecutor(@NotNull ActionGroup group,
+                                                                               @NotNull String place,
+                                                                               @NotNull DataContext context,
+                                                                               boolean checkMainMenuOrToolbarFirstTime) {
+    if (!ActionGroupExpander.getInstance().allowsFastUpdate(
+      CommonDataKeys.PROJECT.getData(context), group, place)) {
+      return null;
+    }
     boolean mainMenuOrToolbarFirstTime = checkMainMenuOrToolbarFirstTime && (
       ActionPlaces.MAIN_MENU.equals(place) || ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR.equals(place));
     int maxTime = mainMenuOrToolbarFirstTime ? 5_000 : Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 20);
