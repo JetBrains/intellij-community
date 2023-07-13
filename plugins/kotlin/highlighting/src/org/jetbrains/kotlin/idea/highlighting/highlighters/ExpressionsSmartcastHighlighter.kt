@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiverSmartCastKind
 import org.jetbrains.kotlin.idea.base.highlighting.HighlightingFactory
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
-import org.jetbrains.kotlin.idea.highlighter.KotlinNameHighlightInfoTypes
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.psi.*
 
 internal class ExpressionsSmartcastHighlighter(
@@ -34,7 +34,7 @@ internal class ExpressionsSmartcastHighlighter(
 
             val builder = HighlightingFactory.highlightName(
               expression,
-              KotlinNameHighlightInfoTypes.SMART_CAST_RECEIVER,
+              KotlinHighlightInfoTypeSemanticNames.SMART_CAST_RECEIVER,
               KotlinBaseHighlightingBundle.message(
                 "0.smart.cast.to.1",
                 receiverName,
@@ -48,7 +48,7 @@ internal class ExpressionsSmartcastHighlighter(
         expression.getSmartCastInfo()?.let { info ->
             val builder = HighlightingFactory.highlightName(
               getSmartCastTarget(expression),
-              KotlinNameHighlightInfoTypes.SMART_CAST_VALUE,
+              KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE,
               KotlinBaseHighlightingBundle.message(
                 "smart.cast.to.0",
                 info.smartCastType.asStringForDebugging()

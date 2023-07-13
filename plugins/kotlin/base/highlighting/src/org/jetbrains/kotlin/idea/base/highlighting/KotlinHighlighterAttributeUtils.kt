@@ -8,7 +8,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.highlighter.KotlinNameHighlightInfoTypes
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isAbstract
@@ -27,66 +27,66 @@ fun textAttributesKeyForKtElement(element: PsiElement): HighlightInfoType? {
 fun textAttributesKeyForPropertyDeclaration(declaration: PsiElement): HighlightInfoType? = when (declaration) {
     is KtProperty -> textAttributesForKtPropertyDeclaration(declaration)
     is KtParameter -> textAttributesForKtParameterDeclaration(declaration)
-    is PsiLocalVariable -> KotlinNameHighlightInfoTypes.LOCAL_VARIABLE
-    is PsiParameter -> KotlinNameHighlightInfoTypes.PARAMETER
-    is PsiField -> KotlinNameHighlightInfoTypes.INSTANCE_PROPERTY
+    is PsiLocalVariable -> KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE
+    is PsiParameter -> KotlinHighlightInfoTypeSemanticNames.PARAMETER
+    is PsiField -> KotlinHighlightInfoTypeSemanticNames.INSTANCE_PROPERTY
     else -> null
 }
 
 @ApiStatus.Internal
 fun textAttributesForKtParameterDeclaration(parameter: KtParameter): HighlightInfoType = when {
-    parameter.valOrVarKeyword != null -> KotlinNameHighlightInfoTypes.INSTANCE_PROPERTY
-    else -> KotlinNameHighlightInfoTypes.PARAMETER
+    parameter.valOrVarKeyword != null -> KotlinHighlightInfoTypeSemanticNames.INSTANCE_PROPERTY
+    else -> KotlinHighlightInfoTypeSemanticNames.PARAMETER
 }
 
 @ApiStatus.Internal
 fun textAttributesForKtPropertyDeclaration(property: KtProperty): HighlightInfoType? = when {
-    property.isExtensionDeclaration() -> KotlinNameHighlightInfoTypes.EXTENSION_PROPERTY
-    property.isLocal -> KotlinNameHighlightInfoTypes.LOCAL_VARIABLE
+    property.isExtensionDeclaration() -> KotlinHighlightInfoTypeSemanticNames.EXTENSION_PROPERTY
+    property.isLocal -> KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE
     property.isTopLevel -> when {
-        property.isCustomPropertyDeclaration() -> KotlinNameHighlightInfoTypes.PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
-        else -> KotlinNameHighlightInfoTypes.PACKAGE_PROPERTY
+        property.isCustomPropertyDeclaration() -> KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
+        else -> KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY
     }
     else -> when {
-        property.isCustomPropertyDeclaration() -> KotlinNameHighlightInfoTypes.INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
-        else -> KotlinNameHighlightInfoTypes.INSTANCE_PROPERTY
+        property.isCustomPropertyDeclaration() -> KotlinHighlightInfoTypeSemanticNames.INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
+        else -> KotlinHighlightInfoTypeSemanticNames.INSTANCE_PROPERTY
     }
 }
 
 @ApiStatus.Internal
 fun textAttributesKeyForKtFunction(function: PsiElement): HighlightInfoType? = when (function) {
-    is KtFunction -> KotlinNameHighlightInfoTypes.FUNCTION_DECLARATION
+    is KtFunction -> KotlinHighlightInfoTypeSemanticNames.FUNCTION_DECLARATION
     else -> null
 }
 
 @ApiStatus.Internal
 fun textAttributesKeyForTypeDeclaration(declaration: PsiElement): HighlightInfoType? = when {
-    declaration is KtTypeParameter || declaration is PsiTypeParameter -> KotlinNameHighlightInfoTypes.TYPE_PARAMETER
-    declaration is KtTypeAlias -> KotlinNameHighlightInfoTypes.TYPE_ALIAS
+    declaration is KtTypeParameter || declaration is PsiTypeParameter -> KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER
+    declaration is KtTypeAlias -> KotlinHighlightInfoTypeSemanticNames.TYPE_ALIAS
     declaration is KtClass -> when {
-        declaration.isAnnotation() -> KotlinNameHighlightInfoTypes.ANNOTATION
+        declaration.isAnnotation() -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
         else -> textAttributesForClass(declaration)
     }
-    declaration is PsiClass && declaration.isInterface && !declaration.isAnnotationType -> KotlinNameHighlightInfoTypes.TRAIT
-    declaration is KtPrimaryConstructor && declaration.containingClassOrObject?.isAnnotation() == true -> KotlinNameHighlightInfoTypes.ANNOTATION
-    declaration is KtObjectDeclaration -> KotlinNameHighlightInfoTypes.OBJECT
-    declaration is PsiEnumConstant -> KotlinNameHighlightInfoTypes.ENUM_ENTRY
+    declaration is PsiClass && declaration.isInterface && !declaration.isAnnotationType -> KotlinHighlightInfoTypeSemanticNames.TRAIT
+    declaration is KtPrimaryConstructor && declaration.containingClassOrObject?.isAnnotation() == true -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
+    declaration is KtObjectDeclaration -> KotlinHighlightInfoTypeSemanticNames.OBJECT
+    declaration is PsiEnumConstant -> KotlinHighlightInfoTypeSemanticNames.ENUM_ENTRY
     declaration is PsiClass -> when {
-        declaration.isAnnotationType -> KotlinNameHighlightInfoTypes.ANNOTATION
-        declaration.hasModifier(JvmModifier.ABSTRACT) -> KotlinNameHighlightInfoTypes.ABSTRACT_CLASS
-        else -> KotlinNameHighlightInfoTypes.CLASS
+        declaration.isAnnotationType -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
+        declaration.hasModifier(JvmModifier.ABSTRACT) -> KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
+        else -> KotlinHighlightInfoTypeSemanticNames.CLASS
     }
     else -> null
 }
 
 @ApiStatus.Internal
 fun textAttributesForClass(klass: KtClass): HighlightInfoType = when {
-    klass.isInterface() -> KotlinNameHighlightInfoTypes.TRAIT
-    klass.isAnnotation() -> KotlinNameHighlightInfoTypes.ANNOTATION
-    klass.isEnum() -> KotlinNameHighlightInfoTypes.ENUM
-    klass is KtEnumEntry -> KotlinNameHighlightInfoTypes.ENUM_ENTRY
-    klass.isAbstract() -> KotlinNameHighlightInfoTypes.ABSTRACT_CLASS
-    else -> KotlinNameHighlightInfoTypes.CLASS
+    klass.isInterface() -> KotlinHighlightInfoTypeSemanticNames.TRAIT
+    klass.isAnnotation() -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
+    klass.isEnum() -> KotlinHighlightInfoTypeSemanticNames.ENUM
+    klass is KtEnumEntry -> KotlinHighlightInfoTypeSemanticNames.ENUM_ENTRY
+    klass.isAbstract() -> KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
+    else -> KotlinHighlightInfoTypeSemanticNames.CLASS
 }
 
 private fun KtProperty.isCustomPropertyDeclaration(): Boolean {

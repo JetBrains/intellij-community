@@ -106,29 +106,29 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
 
     override fun visitIntersectionType(type: KtIntersectionType) {
         // Currently, the only kind of intersection types is definitely non-nullable type, so highlight it without further analysis
-        type.parent?.safeAs<KtTypeReference>()?.run { highlightName(this, KotlinNameHighlightInfoTypes.TYPE_PARAMETER) }
+        type.parent?.safeAs<KtTypeReference>()?.run { highlightName(this, KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER) }
         super.visitIntersectionType(type)
     }
 
     private fun calculateClassReferenceAttributes(target: ClassDescriptor): HighlightInfoType {
         return when (target.kind) {
-            ClassKind.ANNOTATION_CLASS -> KotlinNameHighlightInfoTypes.ANNOTATION
-            ClassKind.INTERFACE -> KotlinNameHighlightInfoTypes.TRAIT
-            ClassKind.OBJECT -> KotlinNameHighlightInfoTypes.OBJECT
-            ClassKind.ENUM_CLASS -> KotlinNameHighlightInfoTypes.ENUM
-            ClassKind.ENUM_ENTRY -> KotlinNameHighlightInfoTypes.ENUM_ENTRY
-            else -> if (target.modality === Modality.ABSTRACT) KotlinNameHighlightInfoTypes.ABSTRACT_CLASS else KotlinNameHighlightInfoTypes.CLASS
+            ClassKind.ANNOTATION_CLASS -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
+            ClassKind.INTERFACE -> KotlinHighlightInfoTypeSemanticNames.TRAIT
+            ClassKind.OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
+            ClassKind.ENUM_CLASS -> KotlinHighlightInfoTypeSemanticNames.ENUM
+            ClassKind.ENUM_ENTRY -> KotlinHighlightInfoTypeSemanticNames.ENUM_ENTRY
+            else -> if (target.modality === Modality.ABSTRACT) KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS else KotlinHighlightInfoTypeSemanticNames.CLASS
         }
     }
 
     private fun calculateTypeAliasReferenceAttributes(target: TypeAliasDescriptor): HighlightInfoType {
         val aliasedTarget = target.expandedType.constructor.declarationDescriptor
-        return if (aliasedTarget is ClassDescriptor && aliasedTarget.kind == ClassKind.ANNOTATION_CLASS) KotlinNameHighlightInfoTypes.ANNOTATION else KotlinNameHighlightInfoTypes.TYPE_ALIAS
+        return if (aliasedTarget is ClassDescriptor && aliasedTarget.kind == ClassKind.ANNOTATION_CLASS) KotlinHighlightInfoTypeSemanticNames.ANNOTATION else KotlinHighlightInfoTypeSemanticNames.TYPE_ALIAS
     }
 
     private fun calculateDeclarationReferenceAttributes(target: DeclarationDescriptor): HighlightInfoType? {
         return when (target) {
-            is TypeParameterDescriptor -> KotlinNameHighlightInfoTypes.TYPE_PARAMETER
+            is TypeParameterDescriptor -> KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER
             is TypeAliasDescriptor -> calculateTypeAliasReferenceAttributes(target)
             is ClassDescriptor -> calculateClassReferenceAttributes(target)
             else -> null
