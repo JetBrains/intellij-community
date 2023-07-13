@@ -47,6 +47,8 @@ private class KtScratchFileEditorProvider : FileEditorProvider, DumbAware {
         return ScratchFileLanguageProvider.get(psiFile.fileType) != null
     }
 
+    override fun acceptRequiresReadAction(): Boolean = false
+
     override fun createEditor(project: Project, file: VirtualFile): FileEditor {
         val scratchFile = createScratchFile(project, file) ?: return TextEditorProvider.getInstance().createEditor(project, file)
         return KtScratchFileEditorWithPreview.create(scratchFile)

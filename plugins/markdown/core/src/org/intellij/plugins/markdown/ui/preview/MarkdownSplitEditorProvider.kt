@@ -13,7 +13,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class MarkdownSplitEditorProvider: SplitTextEditorProvider(PsiAwareTextEditorProvider(), MarkdownPreviewFileEditorProvider()) {
+class MarkdownSplitEditorProvider : SplitTextEditorProvider(PsiAwareTextEditorProvider(), MarkdownPreviewFileEditorProvider()) {
   override fun createSplitEditor(firstEditor: FileEditor, secondEditor: FileEditor): FileEditor {
     require(firstEditor is TextEditor) { "Main editor should be TextEditor" }
     require(secondEditor is MarkdownPreviewFileEditor) { "Secondary editor should be MarkdownPreviewFileEditor" }

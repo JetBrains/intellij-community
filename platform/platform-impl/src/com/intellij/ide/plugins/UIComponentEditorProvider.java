@@ -19,6 +19,11 @@ final class UIComponentEditorProvider implements FileEditorProvider, DumbAware {
   }
 
   @Override
+  public boolean acceptRequiresReadAction() {
+    return false;
+  }
+
+  @Override
   public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     return new UIComponentFileEditor((UIComponentVirtualFile)file);
   }

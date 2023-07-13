@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.editor
 
 import com.intellij.diff.tools.combined.CombinedDiffComponentFactoryProvider
@@ -17,7 +17,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.NonNls
 
-class DiffEditorProvider : DefaultPlatformFileEditorProvider, StructureViewFileEditorProvider, DumbAware {
+internal class DiffEditorProvider : DefaultPlatformFileEditorProvider, StructureViewFileEditorProvider, DumbAware {
   companion object {
     @NonNls
     const val DIFF_EDITOR_PROVIDER_ID = "DiffEditor"
@@ -26,6 +26,8 @@ class DiffEditorProvider : DefaultPlatformFileEditorProvider, StructureViewFileE
   override fun accept(project: Project, file: VirtualFile): Boolean {
     return file is CombinedDiffVirtualFile || file is DiffVirtualFile
   }
+
+  override fun acceptRequiresReadAction() = false
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     if (file is CombinedDiffVirtualFile) {
@@ -44,6 +46,8 @@ class DiffEditorProvider : DefaultPlatformFileEditorProvider, StructureViewFileE
   }
 
   override fun getEditorTypeId(): String = DIFF_EDITOR_PROVIDER_ID
+
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.NONE
+
   override fun getStructureViewBuilder(project: Project, file: VirtualFile): StructureViewBuilder? = null
 }

@@ -61,9 +61,9 @@ class VcsLogEditor(private val project: Project, private val vcsLogFile: VcsLogF
 private class VcsLogEditorProvider : FileEditorProvider, StructureViewFileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean = file is VcsLogFile
 
-  override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    return VcsLogEditor(project, file as VcsLogFile)
-  }
+  override fun acceptRequiresReadAction() = false
+
+  override fun createEditor(project: Project, file: VirtualFile) = VcsLogEditor(project, file as VcsLogFile)
 
   override fun getEditorTypeId(): String = "VcsLogEditor"
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR

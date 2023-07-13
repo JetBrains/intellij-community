@@ -29,9 +29,9 @@ public interface FileEditorProvider {
    */
   boolean accept(@NotNull Project project, @NotNull VirtualFile file);
 
-  default boolean acceptRequiresReadAction() {
-    return false;
-  }
+   default boolean acceptRequiresReadAction() {
+     return true;
+   }
 
   /**
    * Creates editor for the specified file.

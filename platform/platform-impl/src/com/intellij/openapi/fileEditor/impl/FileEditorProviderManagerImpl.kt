@@ -8,7 +8,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
@@ -18,12 +20,10 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.TestOnly
+import kotlin.time.Duration.Companion.seconds
 
 private val LOG: Logger
   get() = logger<FileEditorProviderManagerImpl>()
@@ -38,29 +38,6 @@ data class FileEditorProviderManagerState(@JvmField val selectedProviders: Map<S
 class FileEditorProviderManagerImpl : FileEditorProviderManager,
                                       SerializablePersistentStateComponent<FileEditorProviderManagerState>(
                                         FileEditorProviderManagerState()) {
-
-  private fun checkProvider(project: Project,
-                            file: VirtualFile,
-                            provider: FileEditorProvider,
-                            suppressors: List<FileEditorProviderSuppressor>): Boolean {
-    if (!DumbService.isDumbAware(provider) && DumbService.isDumb(project)) {
-      return false
-    }
-
-    if (!provider.accept(project, file)) {
-      return false
-    }
-
-    for (suppressor in suppressors) {
-      if (suppressor.isSuppressed(project, file, provider)) {
-        LOG.info("FileEditorProvider ${provider.javaClass} for VirtualFile $file " +
-                 "was suppressed by FileEditorProviderSuppressor ${suppressor.javaClass}")
-        return false
-      }
-    }
-    return true
-  }
-
   @Suppress("DuplicatedCode")
   override fun getProviderList(project: Project, file: VirtualFile): List<FileEditorProvider> {
     // collect all possible editors
@@ -70,6 +47,10 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
 
     val suppressors = FileEditorProviderSuppressor.EP_NAME.extensionList
     for (provider in FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList) {
+      if (!DumbService.isDumbAware(provider) && DumbService.isDumb(project)) {
+        continue
+      }
+
       if (ApplicationManager.getApplication().runReadAction<Boolean, RuntimeException> {
           checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)
         }) {
@@ -98,40 +79,31 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
     val sharedProviders = coroutineScope {
       FileEditorProvider.EP_FILE_EDITOR_PROVIDER.filterableLazySequence().map { item ->
         async {
-          val providerFileTypeName = item.getCustomAttribute("fileType")
-          // VcsLogFileType is not registered in FileTypeRegistry - we should check also by name
-          if (providerFileTypeName != null && fileType.name != providerFileTypeName) {
-            val fileTypeRegistry = FileTypeRegistry.getInstance()
-            val providerFileType = fileTypeRegistry.findFileTypeByName(providerFileTypeName)
-            if (providerFileType == null || !fileTypeRegistry.isFileOfType(file, providerFileType)) {
-              return@async null
-            }
-          }
-
-          val provider = item.instance ?: return@async null
           try {
-            if (provider.acceptRequiresReadAction()) {
-              if (!readAction {
-                  checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)
-                }) {
-                return@async null
+            withTimeout(30.seconds) {
+              val providerFileTypeName = item.getCustomAttribute("fileType")
+              // VcsLogFileType is not registered in FileTypeRegistry - we should check also by name
+              if (providerFileTypeName != null && fileType.name != providerFileTypeName) {
+                val fileTypeRegistry = FileTypeRegistry.getInstance()
+                val providerFileType = fileTypeRegistry.findFileTypeByName(providerFileTypeName)
+                if (providerFileType == null || !fileTypeRegistry.isFileOfType(file, providerFileType)) {
+                  return@withTimeout null
+                }
               }
-            }
-            else if (!checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)) {
-              return@async null
-            }
 
-            hideDefaultEditor = hideDefaultEditor or (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR)
-            hasHighPriorityEditors = hasHighPriorityEditors or (provider.policy == FileEditorPolicy.HIDE_OTHER_EDITORS)
-            checkPolicy(provider)
+              val provider = getProviderIfApplicable(item = item, project = project, file = file, suppressors = suppressors)
+                             ?: return@withTimeout null
+
+              hideDefaultEditor = hideDefaultEditor or (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR)
+              hasHighPriorityEditors = hasHighPriorityEditors or (provider.policy == FileEditorPolicy.HIDE_OTHER_EDITORS)
+              checkPolicy(provider)
+              provider
+            }
           }
-          catch (e: CancellationException) {
-            throw e
+          catch (e: TimeoutCancellationException) {
+            LOG.error(PluginException("Cannot check provider ${item.implementationClassName}", e, item.pluginDescriptor.pluginId))
+            null
           }
-          catch (e: Throwable) {
-            LOG.error(PluginException(e, item.pluginDescriptor.pluginId))
-          }
-          provider
         }
       }.toList()
     }.mapNotNullTo(mutableListOf()) { it.getCompleted() }
@@ -187,6 +159,63 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
       FileEditorProviderManagerState()
     }
   }
+}
+
+private suspend fun getProviderIfApplicable(item: ExtensionPointName.LazyExtension<FileEditorProvider>,
+                                            project: Project,
+                                            file: VirtualFile,
+                                            suppressors: List<FileEditorProviderSuppressor>): FileEditorProvider? {
+  val provider = item.instance ?: return null
+  if (!DumbService.isDumbAware(provider)) {
+    LOG.debug { "Please make ${provider.javaClass} dumb-aware" }
+    if (DumbService.isDumb(project)) {
+      return null
+    }
+  }
+
+  try {
+    if (provider.acceptRequiresReadAction()) {
+      if (!readAction {
+          checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)
+        }) {
+        return null
+      }
+    }
+    else {
+      //println("TO CHECK: " + item.implementationClassName)
+      if (!checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)) {
+        //println("FAIL: " + item.implementationClassName)
+        return null
+      }
+      //println("PASS: " + item.implementationClassName)
+    }
+    return provider
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    LOG.error(PluginException(e, item.pluginDescriptor.pluginId))
+    return null
+  }
+}
+
+private fun checkProvider(project: Project,
+                          file: VirtualFile,
+                          provider: FileEditorProvider,
+                          suppressors: List<FileEditorProviderSuppressor>): Boolean {
+  if (!provider.accept(project, file)) {
+    return false
+  }
+
+  for (suppressor in suppressors) {
+    if (suppressor.isSuppressed(project, file, provider)) {
+      LOG.info("FileEditorProvider ${provider.javaClass} for VirtualFile $file " +
+               "was suppressed by FileEditorProviderSuppressor ${suppressor.javaClass}")
+      return false
+    }
+  }
+  return true
 }
 
 private object MyComparator : Comparator<FileEditorProvider> {

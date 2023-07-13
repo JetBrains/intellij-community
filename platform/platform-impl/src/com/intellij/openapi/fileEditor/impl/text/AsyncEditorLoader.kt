@@ -4,6 +4,8 @@ package com.intellij.openapi.fileEditor.impl.text
 import com.intellij.concurrency.captureThreadContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
@@ -46,7 +48,7 @@ class AsyncEditorLoader internal constructor(private val project: Project,
 
     internal suspend fun waitForLoaded(editor: Editor) {
       if (editor.getUserData(ASYNC_LOADER) != null) {
-        withContext(Dispatchers.EDT) {
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           suspendCoroutine {
             performWhenLoaded(editor) { it.resume(Unit) }
           }
@@ -184,7 +186,7 @@ private fun CoroutineScope.showLoadingIndicator(startDelay: Duration, addUi: (co
     delay((startDelay.inWholeMilliseconds - (System.currentTimeMillis() - scheduleTime)).coerceAtLeast(0))
 
     val processIcon = withContext(Dispatchers.EDT) {
-      val processIcon = AsyncProcessIcon.createBig(this@launch)
+      val processIcon = AsyncProcessIcon.createBig(/* coroutineScope = */ this@launch)
       addUi(processIcon)
       processIcon
     }

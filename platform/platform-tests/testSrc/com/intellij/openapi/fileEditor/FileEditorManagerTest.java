@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.ui.UISettings;
@@ -472,9 +472,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       myPolicy = policy;
     }
 
-    @NotNull
     @Override
-    public String getEditorTypeId() {
+    public @NotNull String getEditorTypeId() {
       return myEditorTypeId;
     }
 
@@ -483,19 +482,21 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       return true;
     }
 
-    @NotNull
     @Override
-    public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    public boolean acceptRequiresReadAction() {
+      return false;
+    }
+
+    @Override
+    public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
       return new Mock.MyFileEditor() {
-        @NotNull
         @Override
-        public JComponent getComponent() {
+        public @NotNull JComponent getComponent() {
           return new JLabel();
         }
 
-        @NotNull
         @Override
-        public String getName() {
+        public @NotNull String getName() {
           return myFileEditorName;
         }
 
@@ -510,9 +511,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     public void disposeEditor(@NotNull FileEditor editor) {
     }
 
-    @NotNull
     @Override
-    public FileEditorPolicy getPolicy() {
+    public @NotNull FileEditorPolicy getPolicy() {
       return myPolicy;
     }
   }
@@ -547,21 +547,23 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       return true;
     }
 
-    @NotNull
     @Override
-    public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    public boolean acceptRequiresReadAction() {
+      return false;
+    }
+
+    @Override
+    public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
       return new MyTextEditor(file, FileDocumentManager.getInstance().getDocument(file), myId, myTargetOffset);
     }
 
-    @NotNull
     @Override
-    public String getEditorTypeId() {
+    public @NotNull String getEditorTypeId() {
       return myId;
     }
 
-    @NotNull
     @Override
-    public FileEditorPolicy getPolicy() {
+    public @NotNull FileEditorPolicy getPolicy() {
       return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
     }
   }
@@ -592,21 +594,18 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       }
     }
 
-    @NotNull
     @Override
-    public JComponent getComponent() {
+    public @NotNull JComponent getComponent() {
       return new JLabel();
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myName;
     }
 
-    @NotNull
     @Override
-    public Editor getEditor() {
+    public @NotNull Editor getEditor() {
       return myEditor;
     }
 

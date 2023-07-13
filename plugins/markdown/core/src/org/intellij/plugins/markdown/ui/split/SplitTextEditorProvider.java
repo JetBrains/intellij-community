@@ -27,13 +27,10 @@ public abstract class SplitTextEditorProvider implements AsyncFileEditorProvider
   protected static final String SECOND_EDITOR = "second_editor";
   protected static final String SPLIT_LAYOUT = "split_layout";
 
-  @NotNull
-  protected final FileEditorProvider myFirstProvider;
-  @NotNull
-  protected final FileEditorProvider mySecondProvider;
+  protected final @NotNull FileEditorProvider myFirstProvider;
+  protected final @NotNull FileEditorProvider mySecondProvider;
 
-  @NotNull
-  private final String myEditorTypeId;
+  private final @NotNull String myEditorTypeId;
 
   public SplitTextEditorProvider(@NotNull FileEditorProvider firstProvider, @NotNull FileEditorProvider secondProvider) {
     myFirstProvider = firstProvider;
@@ -43,38 +40,39 @@ public abstract class SplitTextEditorProvider implements AsyncFileEditorProvider
   }
 
   @Override
-  public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
+  public final boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     return myFirstProvider.accept(project, file) && mySecondProvider.accept(project, file);
   }
 
-  @NotNull
   @Override
-  public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+  public final boolean acceptRequiresReadAction() {
+    return myFirstProvider.acceptRequiresReadAction() || mySecondProvider.acceptRequiresReadAction();
+  }
+
+  @Override
+  public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     return createEditorAsync(project, file).build();
   }
 
-  @NotNull
   @Override
-  public String getEditorTypeId() {
+  public @NotNull String getEditorTypeId() {
     return myEditorTypeId;
   }
 
-  @NotNull
   @Override
-  public Builder createEditorAsync(@NotNull final Project project, @NotNull final VirtualFile file) {
+  public @NotNull Builder createEditorAsync(final @NotNull Project project, final @NotNull VirtualFile file) {
     final Builder firstBuilder = getBuilderFromEditorProvider(myFirstProvider, project, file);
     final Builder secondBuilder = getBuilderFromEditorProvider(mySecondProvider, project, file);
 
     return new Builder() {
       @Override
-      public FileEditor build() {
+      public @NotNull FileEditor build() {
         return createSplitEditor(firstBuilder.build(), secondBuilder.build());
       }
     };
   }
 
-  @Nullable
-  protected FileEditorState readFirstProviderState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+  protected @Nullable FileEditorState readFirstProviderState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
     final var child = sourceElement.getChild(FIRST_EDITOR);
     if (child != null) {
       return myFirstProvider.readState(child, project, file);
@@ -82,8 +80,7 @@ public abstract class SplitTextEditorProvider implements AsyncFileEditorProvider
     return null;
   }
 
-  @Nullable
-  protected FileEditorState readSecondProviderState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+  protected @Nullable FileEditorState readSecondProviderState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
     final var child = sourceElement.getChild(SECOND_EDITOR);
     if (child != null) {
       return mySecondProvider.readState(child, project, file);
@@ -91,8 +88,7 @@ public abstract class SplitTextEditorProvider implements AsyncFileEditorProvider
     return null;
   }
 
-  @Nullable
-  protected String readSplitLayoutState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+  protected @Nullable String readSplitLayoutState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
     final var attribute = sourceElement.getAttribute(SPLIT_LAYOUT);
     String layoutName = null;
     if (attribute != null) {
@@ -101,9 +97,8 @@ public abstract class SplitTextEditorProvider implements AsyncFileEditorProvider
     return layoutName;
   }
 
-  @NotNull
   @Override
-  public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
     final var firstState = readFirstProviderState(sourceElement, project, file);
     final var secondState = readSecondProviderState(sourceElement, project, file);
     final var layoutName = readSplitLayoutState(sourceElement, project, file);
@@ -144,16 +139,14 @@ public abstract class SplitTextEditorProvider implements AsyncFileEditorProvider
 
   protected abstract FileEditor createSplitEditor(@NotNull FileEditor firstEditor, @NotNull FileEditor secondEditor);
 
-  @NotNull
   @Override
-  public FileEditorPolicy getPolicy() {
+  public @NotNull FileEditorPolicy getPolicy() {
     return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
   }
 
-  @NotNull
-  public static Builder getBuilderFromEditorProvider(@NotNull final FileEditorProvider provider,
-                                                     @NotNull final Project project,
-                                                     @NotNull final VirtualFile file) {
+  public static @NotNull Builder getBuilderFromEditorProvider(final @NotNull FileEditorProvider provider,
+                                                              final @NotNull Project project,
+                                                              final @NotNull VirtualFile file) {
     if (provider instanceof AsyncFileEditorProvider) {
       return ((AsyncFileEditorProvider)provider).createEditorAsync(project, file);
     }

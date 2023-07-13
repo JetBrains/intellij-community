@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.vfs;
 
 import com.intellij.openapi.Disposable;
@@ -17,10 +17,15 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions;
 import org.jetbrains.plugins.terminal.ShellStartupOptionsKt;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
-public class TerminalSessionEditorProvider implements FileEditorProvider, DumbAware {
+final class TerminalSessionEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     return file instanceof TerminalSessionVirtualFileImpl;
+  }
+
+  @Override
+  public boolean acceptRequiresReadAction() {
+    return false;
   }
 
   @NotNull

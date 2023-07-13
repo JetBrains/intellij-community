@@ -84,6 +84,8 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     return isTextFile(file) && !SingleRootFileViewProvider.isTooLargeForContentLoading(file)
   }
 
+  override fun acceptRequiresReadAction() = false
+
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     return TextEditorImpl(project, file, this, createTextEditor(project, file))
   }

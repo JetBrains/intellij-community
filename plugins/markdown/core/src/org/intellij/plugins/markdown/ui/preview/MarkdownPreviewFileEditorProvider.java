@@ -15,27 +15,32 @@ import org.jetbrains.annotations.NotNull;
 final class MarkdownPreviewFileEditorProvider extends WeighedFileEditorProvider {
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    if (!MarkdownHtmlPanelProvider.hasAvailableProviders()) return false;
+    if (!MarkdownHtmlPanelProvider.hasAvailableProviders()) {
+      return false;
+    }
+
     FileType fileType = file.getFileType();
     return fileType == MarkdownFileType.INSTANCE ||
            ScratchUtil.isScratch(file) && LanguageUtil.getLanguageForPsi(project, file, fileType) == MarkdownLanguage.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+  public boolean acceptRequiresReadAction() {
+    return true;
+  }
+
+  @Override
+  public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     return new MarkdownPreviewFileEditor(project, file);
   }
 
-  @NotNull
   @Override
-  public String getEditorTypeId() {
+  public @NotNull String getEditorTypeId() {
     return "markdown-preview-editor";
   }
 
-  @NotNull
   @Override
-  public FileEditorPolicy getPolicy() {
+  public @NotNull FileEditorPolicy getPolicy() {
     return FileEditorPolicy.PLACE_AFTER_DEFAULT_EDITOR;
   }
 }

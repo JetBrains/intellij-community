@@ -47,20 +47,24 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     private val LOG = logger<TestEditorManagerImpl>()
     private val LIGHT_VIRTUAL_FILE = MyLightVirtualFile()
     private val stubProvider: FileEditorProvider
-      get() = object : FileEditorProvider {
-        override fun accept(project: Project, file: VirtualFile) = false
+      get() {
+        return object : FileEditorProvider {
+          override fun accept(project: Project, file: VirtualFile) = false
 
-        override fun createEditor(project: Project, file: VirtualFile): FileEditor = throw IncorrectOperationException()
+          override fun acceptRequiresReadAction() = false
 
-        override fun disposeEditor(editor: FileEditor) = Disposer.dispose(editor)
+          override fun createEditor(project: Project, file: VirtualFile): FileEditor = throw IncorrectOperationException()
 
-        override fun readState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState {
-          throw IncorrectOperationException()
+          override fun disposeEditor(editor: FileEditor) = Disposer.dispose(editor)
+
+          override fun readState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState {
+            throw IncorrectOperationException()
+          }
+
+          override fun getEditorTypeId() = ""
+
+          override fun getPolicy(): FileEditorPolicy = throw IncorrectOperationException()
         }
-
-        override fun getEditorTypeId() = ""
-
-        override fun getPolicy(): FileEditorPolicy = throw IncorrectOperationException()
       }
   }
 
@@ -123,7 +127,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   private fun openFileImpl3(openFileDescriptor: FileEditorNavigatable): FileEditorComposite {
     val file = openFileDescriptor.file
     if (!isCurrentlyUnderLocalId) {
-      clientFileEditorManager?.openFile(file, false, true) ?: return FileEditorComposite.EMPTY
+      clientFileEditorManager?.openFile(file = file, forceCreate = false, requestFocus = true) ?: return FileEditorComposite.EMPTY
     }
 
     val isNewEditor = !virtualFileToEditor.containsKey(file)
