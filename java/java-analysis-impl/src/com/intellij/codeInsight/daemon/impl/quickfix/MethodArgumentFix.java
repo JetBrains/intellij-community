@@ -31,7 +31,10 @@ public abstract class MethodArgumentFix extends PsiUpdateModCommandAction<PsiExp
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpressionList list) {
     if (!myToType.isValid() || !PsiTypesUtil.allTypeParametersResolved(list, myToType)) return null;
     PsiExpression[] args = list.getExpressions();
-    if (args.length <= myIndex || args[myIndex] == null || !args[myIndex].isValid()) return null;
+    if (args.length <= myIndex) return null;
+    PsiExpression arg = args[myIndex];
+    if (arg == null || !arg.isValid()) return null;
+    if (myArgumentFixerActionFactory.getModifiedArgument(arg, myToType) == null) return null;
     return Presentation.of(getText(list));
   }
 
