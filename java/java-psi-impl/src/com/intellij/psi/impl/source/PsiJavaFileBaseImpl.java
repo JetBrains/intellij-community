@@ -326,6 +326,14 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
           staticImports.putValue(name, staticImport);
         }
       }
+      if (PsiUtil.getLanguageLevel(this).isAtLeast(LanguageLevel.JDK_21_PREVIEW)) {
+        JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(getProject());
+        PsiClass aClass = psiFacade.findClass("java.lang.StringTemplate", getResolveScope());
+        if (aClass != null) {
+          PsiImportStaticStatement importStaticStatement = psiFacade.getElementFactory().createImportStaticStatement(aClass, "STR");
+          staticImports.putValue("STR", importStaticStatement);
+        }
+      }
 
       Map<String, Iterable<ResultWithContext>> result = new LinkedHashMap<>();
       for (String name : ContainerUtil.newLinkedHashSet(ContainerUtil.concat(ownClasses.keySet(), typeImports.keySet(), staticImports.keySet()))) {
