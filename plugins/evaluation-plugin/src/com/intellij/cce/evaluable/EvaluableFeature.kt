@@ -14,15 +14,31 @@ import com.intellij.cce.workspace.storages.FullLineLogsStorage
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 
+/**
+ * Represents a feature that can be evaluated in IDE.
+ * To define a new feature, you can inherit from {@link EvaluableFeatureBase} which implements some methods by default.
+ */
 interface EvaluableFeature<T : EvaluationStrategy> {
   val name: String
 
+  /**
+   * how to serialize/deserialize a strategy (list of parameters) for evaluation of the feature
+   */
   fun getStrategySerializer(): StrategySerializer<T>
 
+  /**
+   * how to prepare the context before the feature invocation
+   */
   fun getGenerateActionsProcessor(strategy: T): GenerateActionsProcessor
 
+  /**
+   * how to call the feature
+   */
   fun getFeatureInvoker(project: Project, language: Language, strategy: T): FeatureInvoker
 
+  /**
+   * how to render the results of evaluation
+   */
   fun getFileReportGenerator(suggestionsComparators: List<SuggestionsComparator>,
                              filterName: String,
                              comparisonFilterName: String,
@@ -30,10 +46,19 @@ interface EvaluableFeature<T : EvaluationStrategy> {
                              fullLineStorages: List<FullLineLogsStorage>,
                              dirs: GeneratorDirectories): FileReportGenerator
 
+  /**
+   * which metrics to calculate and show in reports
+   */
   fun getMetrics(): List<Metric>
 
+  /**
+   * which suggestions accept as relevant in metrics computation
+   */
   fun getSuggestionsComparator(language: Language): SuggestionsComparator
 
+  /**
+   * additional steps to set up evaluation
+   */
   fun getEvaluationSteps(language: Language, strategy: T): List<EvaluationStep>
 
   companion object {
