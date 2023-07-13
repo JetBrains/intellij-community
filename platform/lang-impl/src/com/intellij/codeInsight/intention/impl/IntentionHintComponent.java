@@ -699,21 +699,24 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         }
         context.dropHighlight();
       };
-      ((ListPopupImpl)popup.myListPopup).getList().addFocusListener(new FocusListener() {
-        @Override
-        public void focusGained(FocusEvent e) {
-          if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
-            popup.showPreview();
+      ListPopup listPopup = popup.myListPopup;
+      if (listPopup instanceof ListPopupImpl listPopupImpl) {
+        listPopupImpl.getList().addFocusListener(new FocusListener() {
+          @Override
+          public void focusGained(FocusEvent e) {
+            if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
+              popup.showPreview();
+            }
           }
-        }
 
-        @Override
-        public void focusLost(FocusEvent e) {
-          if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
-            popup.myPreviewPopupUpdateProcessor.hide();
+          @Override
+          public void focusLost(FocusEvent e) {
+            if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
+              popup.myPreviewPopupUpdateProcessor.hide();
+            }
           }
-        }
-      });
+        });
+      }
       popup.myListPopup.addListSelectionListener(selectionListener);
 
       popup.myListPopup.addListener(new JBPopupListener() {
