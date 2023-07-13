@@ -73,7 +73,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   override suspend fun addManagedFilesWithProfilesAndUpdate(files: List<VirtualFile>,
                                                             profiles: MavenExplicitProfiles,
                                                             modelsProvider: IdeModifiableModelsProvider?): List<Module> {
-    doAddManagedFilesWithProfiles(files, profiles, null)
+    blockingContext { doAddManagedFilesWithProfiles(files, profiles, null) }
     return updateAllMavenProjects(MavenImportSpec(false, true, false), modelsProvider, false)
   }
 
