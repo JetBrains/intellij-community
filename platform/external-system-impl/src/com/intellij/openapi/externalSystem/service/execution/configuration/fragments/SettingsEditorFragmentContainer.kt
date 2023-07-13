@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.externalSystem.service.execution.configuration
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.externalSystem.service.execution.configuration.fragments
 
 import com.intellij.execution.ui.SettingsEditorFragment
 import javax.swing.JComponent
 
-class SettingsFragmentsContainer<S> {
+class SettingsEditorFragmentContainer<S> {
   private val fragments = ArrayList<SettingsEditorFragment<S, *>>()
 
   fun <C : JComponent, F : SettingsEditorFragment<S, out C>> add(fragment: F): F {
@@ -22,8 +22,8 @@ class SettingsFragmentsContainer<S> {
   }
 
   companion object {
-    fun <S> fragments(configure: SettingsFragmentsContainer<S>.() -> Unit): List<SettingsEditorFragment<S, *>> {
-      return SettingsFragmentsContainer<S>().apply(configure).toList()
+    fun <S> fragments(configure: SettingsEditorFragmentContainer<S>.() -> Unit): List<SettingsEditorFragment<S, *>> {
+      return SettingsEditorFragmentContainer<S>().apply(configure).toList()
     }
   }
 }

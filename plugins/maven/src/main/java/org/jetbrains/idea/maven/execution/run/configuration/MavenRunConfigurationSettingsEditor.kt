@@ -9,6 +9,8 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.ui.*
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
+import com.intellij.openapi.externalSystem.service.execution.configuration.fragments.*
+import com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorLabeledComponent.Companion.modifyLabeledComponentSize
 import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesFiled
@@ -41,10 +43,7 @@ import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparatorImpl
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
-import org.jetbrains.idea.maven.execution.MavenRunConfiguration
-import org.jetbrains.idea.maven.execution.MavenRunner
-import org.jetbrains.idea.maven.execution.MavenRunnerSettings
-import org.jetbrains.idea.maven.execution.RunnerBundle
+import org.jetbrains.idea.maven.execution.*
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asDistributionInfo
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asMavenHome
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
@@ -82,7 +81,7 @@ class MavenRunConfigurationSettingsEditor(
     }
   }
 
-  override fun createRunFragments(): List<SettingsEditorFragment<MavenRunConfiguration, *>> = SettingsFragmentsContainer.fragments {
+  override fun createRunFragments(): List<SettingsEditorFragment<MavenRunConfiguration, *>> = SettingsEditorFragmentContainer.fragments {
     add(CommonParameterFragments.createRunHeader())
     addBeforeRunFragment(CompileStepBeforeRun.ID)
     addAll(BeforeRunFragment.createGroup())
@@ -101,7 +100,7 @@ class MavenRunConfigurationSettingsEditor(
   private val MavenRunConfiguration.runnerSettingsOrDefault: MavenRunnerSettings
     get() = runnerSettings ?: MavenRunner.getInstance(project).settings.clone()
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMavenOptionsGroupFragment() =
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addMavenOptionsGroupFragment() =
     addOptionsGroup(
       "maven.general.options.group",
       MavenConfigurableBundle.message("maven.run.configuration.general.options.group.name"),
@@ -124,11 +123,12 @@ class MavenRunConfigurationSettingsEditor(
       addWorkOfflineTag()
       addCheckSumPolicyTag()
       addMultiProjectBuildPolicyTag()
-      addEmulateTerminalTag()
-
+      if (!SystemInfo.isWindows) {
+        addEmulateTerminalTag()
+      }
     }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addJavaOptionsGroupFragment() =
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addJavaOptionsGroupFragment() =
     addOptionsGroup(
       "maven.runner.options.group",
       MavenConfigurableBundle.message("maven.run.configuration.runner.options.group.name"),
@@ -146,7 +146,7 @@ class MavenRunConfigurationSettingsEditor(
       addResolveWorkspaceArtifactsTag()
     }
 
-  private fun <S : FragmentedSettings, Settings> SettingsFragmentsContainer<S>.addOptionsGroup(
+  private fun <S : FragmentedSettings, Settings> SettingsEditorFragmentContainer<S>.addOptionsGroup(
     id: String,
     name: @Nls(capitalization = Nls.Capitalization.Sentence) String,
     group: @Nls(capitalization = Nls.Capitalization.Title) String,
@@ -154,12 +154,16 @@ class MavenRunConfigurationSettingsEditor(
     getSettings: S.() -> Settings?,
     getDefaultSettings: S.() -> Settings,
     setSettings: S.(Settings?) -> Unit,
-    configure: SettingsFragmentsContainer<S>.() -> Unit
+    configure: SettingsEditorFragmentContainer<S>.() -> Unit
   ) = add(object : NestedGroupFragment<S>(id, name, group, { true }) {
 
     private val separator = CollapsibleTitledSeparatorImpl(group)
     private val checkBox: JCheckBox
     private val checkBoxWithLink: JComponent
+
+    init {
+      isRemovable = false
+    }
 
     init {
       val labelText = MavenConfigurableBundle.message("maven.run.configuration.options.group.inherit")
@@ -178,7 +182,7 @@ class MavenRunConfigurationSettingsEditor(
       }
     }
 
-    override fun createChildren() = SettingsFragmentsContainer.fragments<S> {
+    override fun createChildren() = SettingsEditorFragmentContainer.fragments<S> {
       addSettingsEditorFragment(
         checkBoxWithLink,
         object : SettingsFragmentInfo {
@@ -193,7 +197,7 @@ class MavenRunConfigurationSettingsEditor(
         { it, _ -> checkBox.isSelected = it.getSettings() == null },
         { it, _ -> it.setSettings(if (checkBox.isSelected) null else (it.getSettings() ?: it.getDefaultSettings())) }
       )
-      for (fragment in SettingsFragmentsContainer.fragments(configure)) {
+      for (fragment in SettingsEditorFragmentContainer.fragments(configure)) {
         bind(checkBox, fragment)
         add(fragment)
       }
@@ -220,7 +224,7 @@ class MavenRunConfigurationSettingsEditor(
         }
       }
     }
-  }).apply { isRemovable = false }
+  })
 
   private fun bind(checkBox: JCheckBox, fragment: SettingsEditorFragment<*, *>) {
     checkBox.addItemListener {
@@ -253,7 +257,7 @@ class MavenRunConfigurationSettingsEditor(
     }
   }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addSkipTestsTag() {
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addSkipTestsTag() =
     addTag(
       "maven.skip.tests.tag",
       MavenConfigurableBundle.message("maven.settings.runner.skip.tests"),
@@ -262,9 +266,8 @@ class MavenRunConfigurationSettingsEditor(
       { runnerSettingsOrDefault.isSkipTests },
       { runnerSettingsOrDefault.isSkipTests = it }
     )
-  }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addUsePluginRegistryTag() {
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addUsePluginRegistryTag() =
     addTag(
       "maven.use.plugin.registry.tag",
       MavenConfigurableBundle.message("maven.settings.general.use.plugin.registry"),
@@ -273,9 +276,8 @@ class MavenRunConfigurationSettingsEditor(
       { generalSettingsOrDefault.isUsePluginRegistry },
       { generalSettingsOrDefault.isUsePluginRegistry = it }
     )
-  }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addPrintStacktracesTag() {
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addPrintStacktracesTag() =
     addTag(
       "maven.print.stacktraces.tag",
       MavenConfigurableBundle.message("maven.settings.general.print.stacktraces"),
@@ -284,9 +286,8 @@ class MavenRunConfigurationSettingsEditor(
       { generalSettingsOrDefault.isPrintErrorStackTraces },
       { generalSettingsOrDefault.isPrintErrorStackTraces = it }
     )
-  }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addUpdateSnapshotsTag() {
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addUpdateSnapshotsTag() =
     addTag(
       "maven.update.snapshots.tag",
       MavenConfigurableBundle.message("maven.settings.general.update.snapshots"),
@@ -295,9 +296,8 @@ class MavenRunConfigurationSettingsEditor(
       { generalSettingsOrDefault.isAlwaysUpdateSnapshots },
       { generalSettingsOrDefault.isAlwaysUpdateSnapshots = it }
     )
-  }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addResolveWorkspaceArtifactsTag() {
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addResolveWorkspaceArtifactsTag() =
     addTag(
       "maven.workspace.artifacts.tag",
       MavenConfigurableBundle.message("maven.settings.runner.resolve.workspace.artifacts"),
@@ -306,9 +306,8 @@ class MavenRunConfigurationSettingsEditor(
       { runnerParameters.isResolveToWorkspace },
       { runnerParameters.isResolveToWorkspace = it }
     )
-  }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addExecuteNonRecursivelyTag() {
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addExecuteNonRecursivelyTag() =
     addTag(
       "maven.execute.non.recursively.tag",
       MavenConfigurableBundle.message("maven.settings.general.execute.non.recursively"),
@@ -317,9 +316,8 @@ class MavenRunConfigurationSettingsEditor(
       { generalSettingsOrDefault.isNonRecursive },
       { generalSettingsOrDefault.isNonRecursive = it }
     )
-  }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addWorkOfflineTag() {
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addWorkOfflineTag() =
     addTag(
       "maven.work.offline.tag",
       MavenConfigurableBundle.message("maven.settings.general.work.offline"),
@@ -328,9 +326,8 @@ class MavenRunConfigurationSettingsEditor(
       { generalSettingsOrDefault.isWorkOffline },
       { generalSettingsOrDefault.isWorkOffline = it }
     )
-  }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addCheckSumPolicyTag() {
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addCheckSumPolicyTag() =
     addVariantTag(
       "maven.checksum.policy.tag",
       MavenConfigurableBundle.message("maven.run.configuration.checksum.policy"),
@@ -339,9 +336,8 @@ class MavenRunConfigurationSettingsEditor(
       { generalSettingsOrDefault.checksumPolicy = it },
       { it.displayString }
     )
-  }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addOutputLevelFragment() =
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addOutputLevelFragment() =
     addVariantFragment(
       object : LabeledSettingsFragmentInfo {
         override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.output.level.label")
@@ -356,7 +352,7 @@ class MavenRunConfigurationSettingsEditor(
       { it.displayString }
     ).modifyLabeledComponentSize { columns(10) }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMultiProjectBuildPolicyTag() {
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addMultiProjectBuildPolicyTag() =
     addVariantTag(
       "maven.multi.project.build.policy.tag",
       MavenConfigurableBundle.message("maven.run.configuration.multi.project.build.policy"),
@@ -365,22 +361,18 @@ class MavenRunConfigurationSettingsEditor(
       { generalSettingsOrDefault.failureBehavior = it },
       { it.displayString }
     )
-  }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addEmulateTerminalTag() {
-    if (!SystemInfo.isWindows) {
-      addTag(
-        "maven.emulate.terminal",
-        MavenConfigurableBundle.message("maven.run.configuration.emulate.terminal.name"),
-        MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
-        MavenConfigurableBundle.message("maven.run.configuration.emulate.terminal.hint"),
-        { generalSettingsOrDefault.isEmulateTerminal },
-        { generalSettingsOrDefault.isEmulateTerminal = it }
-      )
-    }
-  }
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addEmulateTerminalTag() =
+    addTag(
+      "maven.emulate.terminal",
+      MavenConfigurableBundle.message("maven.run.configuration.emulate.terminal.name"),
+      MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
+      MavenConfigurableBundle.message("maven.run.configuration.emulate.terminal.hint"),
+      { generalSettingsOrDefault.isEmulateTerminal },
+      { generalSettingsOrDefault.isEmulateTerminal = it }
+    )
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addDistributionFragment() =
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addDistributionFragment() =
     addDistributionFragment(
       project,
       MavenDistributionsInfo(),
@@ -392,7 +384,7 @@ class MavenRunConfigurationSettingsEditor(
       }
     }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addWorkingDirectoryFragment() =
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addWorkingDirectoryFragment() =
     addWorkingDirectoryFragment(
       project,
       MavenWorkingDirectoryInfo(project),
@@ -400,7 +392,7 @@ class MavenRunConfigurationSettingsEditor(
       { runnerParameters.workingDirPath = it }
     )
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addCommandLineFragment(
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addCommandLineFragment(
     workingDirectoryField: WorkingDirectoryField
   ) = addCommandLineFragment(
     project,
@@ -409,7 +401,7 @@ class MavenRunConfigurationSettingsEditor(
     { runnerParameters.commandLine = it }
   )
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addEnvironmentFragment() =
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addEnvironmentFragment() =
     addEnvironmentFragment(
       object : LabeledSettingsFragmentInfo {
         override val editorLabel: String = ExecutionBundle.message("environment.variables.component.title")
@@ -426,7 +418,7 @@ class MavenRunConfigurationSettingsEditor(
       hideWhenEmpty = true
     )
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addVmOptionsFragment() =
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addVmOptionsFragment() =
     addVmOptionsFragment(
       object : LabeledSettingsFragmentInfo {
         override val editorLabel: String = ExecutionBundle.message("run.configuration.java.vm.parameters.label")
@@ -440,7 +432,7 @@ class MavenRunConfigurationSettingsEditor(
       { runnerSettingsOrDefault.setVmOptions(it) }
     )
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addJreFragment() =
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addJreFragment() =
     SdkLookupProvider.getInstance(project, object : SdkLookupProvider.Id {})
       .let { sdkLookupProvider ->
         addRemovableLabeledSettingsEditorFragment(
@@ -461,7 +453,7 @@ class MavenRunConfigurationSettingsEditor(
         )
       }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addPropertiesFragment() =
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addPropertiesFragment() =
     addLabeledSettingsEditorFragment(
       PropertiesFiled(project, object : PropertiesInfo {
         override val dialogTitle: String = MavenConfigurableBundle.message("maven.run.configuration.properties.dialog.title")
@@ -483,7 +475,7 @@ class MavenRunConfigurationSettingsEditor(
       { it.runnerSettingsOrDefault.mavenProperties.isNotEmpty() }
     )
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addProfilesFragment(
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addProfilesFragment(
     workingDirectoryField: WorkingDirectoryField
   ) = addLabeledSettingsEditorFragment(
     MavenProfilesFiled(project, workingDirectoryField),
@@ -500,7 +492,7 @@ class MavenRunConfigurationSettingsEditor(
     { it, c -> it.runnerParameters.profilesMap = c.profiles }
   )
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addUserSettingsFragment() =
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addUserSettingsFragment() =
     addPathFragment(
       project,
       object : PathFragmentInfo {
@@ -523,7 +515,7 @@ class MavenRunConfigurationSettingsEditor(
       }
     )
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addLocalRepositoryFragment(
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addLocalRepositoryFragment(
     distributionComponent: DistributionComboBox,
     userSettingsComponent: TextFieldWithBrowseButton
   ) = addPathFragment(
@@ -553,7 +545,7 @@ class MavenRunConfigurationSettingsEditor(
     }
   )
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addThreadsFragment() =
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addThreadsFragment() =
     addRemovableLabeledTextSettingsEditorFragment(
       JBTextField(),
       object : LabeledSettingsFragmentInfo {
@@ -568,7 +560,7 @@ class MavenRunConfigurationSettingsEditor(
       { generalSettingsOrDefault.threads = it }
     ).modifyLabeledComponentSize { columns(10) }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMultimoduleDirFragment() =
+  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addMultimoduleDirFragment() =
     addPathFragment(
       project,
       object : PathFragmentInfo {
