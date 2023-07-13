@@ -6,7 +6,7 @@ import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.EvaluableFeatureBase
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.evaluation.EvaluationStep
-import com.intellij.cce.interpreter.ActionsInvoker
+import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.metric.EditSimilarity
 import com.intellij.cce.metric.Metric
 import com.intellij.cce.processor.GenerateActionsProcessor
@@ -18,8 +18,8 @@ class RenameFeature : EvaluableFeatureBase<RenameStrategy>("rename") {
   override fun getGenerateActionsProcessor(strategy: RenameStrategy): GenerateActionsProcessor =
     RenameGenerateActionsProcessor(strategy)
 
-  override fun getActionsInvoker(project: Project, language: Language, strategy: RenameStrategy): ActionsInvoker =
-    RenameActionsInvoker(project, language, strategy)
+  override fun getFeatureInvoker(project: Project, language: Language, strategy: RenameStrategy): FeatureInvoker =
+    RenameInvoker(project, language, strategy)
 
   override fun getStrategySerializer(): StrategySerializer<RenameStrategy> = RenameStrategySerializer()
 

@@ -3,13 +3,17 @@ package com.intellij.cce.evaluation.step
 
 import com.intellij.cce.evaluation.ActionsInterpretationHandler
 import com.intellij.cce.interpreter.ActionsInvoker
+import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.workspace.Config
 import com.intellij.openapi.project.Project
 
-class ActionsInterpretationOnNewWorkspaceStep(config: Config, actionsInvoker: ActionsInvoker, project: Project) :
+class ActionsInterpretationOnNewWorkspaceStep(config: Config,
+                                              actionsInvoker: ActionsInvoker,
+                                              featureInvoker: FeatureInvoker,
+                                              project: Project) :
   CreateWorkspaceStep(
     config,
-    ActionsInterpretationHandler(config.interpret, config.language, actionsInvoker, project),
+    ActionsInterpretationHandler(config.interpret, config.language, actionsInvoker, featureInvoker, project),
     project) {
 
   override val name: String = "Actions interpreting"

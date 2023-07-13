@@ -2,8 +2,12 @@
 package com.intellij.cce.evaluable.rename
 
 import com.intellij.cce.core.*
-import com.intellij.cce.evaluable.common.BasicActionsInvoker
+import com.intellij.cce.evaluable.common.asSuggestion
+import com.intellij.cce.evaluable.common.getEditor
+import com.intellij.cce.evaluable.common.positionToString
+import com.intellij.cce.evaluable.common.readActionInSmartMode
 import com.intellij.cce.evaluation.SuggestionsProvider
+import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.actions.MLCompletionFeaturesUtil
@@ -11,6 +15,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -21,21 +26,22 @@ import com.intellij.refactoring.actions.RenameElementAction
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import java.util.*
 
-class RenameActionsInvoker(project: Project,
-                           language: Language,
-                           private val strategy: RenameStrategy) : BasicActionsInvoker(project, language) {
+class RenameInvoker(private val project: Project,
+                    private val language: Language,
+                    private val strategy: RenameStrategy) : FeatureInvoker {
 
-  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties): Session {
-    LOG.info("Call rename. Expected text: $expectedText. ${positionToString(editor!!.caretModel.offset)}")
-    val lookup = getSuggestions(expectedText)
-    return createSession(offset, expectedText, properties, lookup)
+  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties): Session = readActionInSmartMode(project) {
+    val openedEditor = getEditor(project) ?: throw IllegalStateException("No open editor")
+
+    LOG.info("Call rename. Expected text: $expectedText. ${positionToString(openedEditor)}")
+    val lookup = getSuggestions(expectedText, openedEditor)
+    return@readActionInSmartMode createSession(offset, expectedText, properties, lookup)
   }
 
-  private fun callRename(expectedText: String): Lookup {
+  private fun callRename(expectedText: String, editor: Editor): Lookup {
     val start = System.currentTimeMillis()
 
-    val openedEditor = editor ?: throw IllegalStateException("No open editor")
-    val dataContext = buildDataContext(openedEditor)
+    val dataContext = buildDataContext(editor)
     val anActionEvent = AnActionEvent(null, dataContext, "", Presentation(), ActionManager.getInstance(), 0)
     RenameElementAction().actionPerformed(anActionEvent)
 
@@ -52,7 +58,7 @@ class RenameActionsInvoker(project: Project,
       suggestions = lookup.items.map { it.asSuggestion() }
     }
     val latency = System.currentTimeMillis() - start
-    finishSession(expectedText)
+    finishSession(expectedText, editor)
     return Lookup.fromExpectedText(expectedText, "", suggestions, latency, resultFeatures)
   }
 
@@ -77,15 +83,15 @@ class RenameActionsInvoker(project: Project,
     }
   }
 
-  private fun getSuggestions(expectedLine: String): Lookup {
+  private fun getSuggestions(expectedLine: String, editor: Editor): Lookup {
     if (strategy.isDefaultProvider()) {
-      return callRename(expectedLine)
+      return callRename(expectedLine, editor)
     }
     val lang = com.intellij.lang.Language.findLanguageByID(language.ideaLanguageId)
                ?: throw IllegalStateException("Can't find language \"${language.ideaLanguageId}\"")
     val provider = SuggestionsProvider.find(project, strategy.suggestionsProvider)
                    ?: throw IllegalStateException("Can't find suggestions provider \"${strategy.suggestionsProvider}\"")
-    return provider.getSuggestions(expectedLine, editor!!, lang)
+    return provider.getSuggestions(expectedLine, editor, lang)
   }
 
   private fun createSession(position: Int, expectedText: String, nodeProperties: TokenProperties, lookup: Lookup): Session {
@@ -95,13 +101,15 @@ class RenameActionsInvoker(project: Project,
     return session
   }
 
-  private fun finishSession(expectedText: String) {
+  private fun finishSession(expectedText: String, editor: Editor) {
     LOG.info("Finish rename. Expected text: $expectedText")
     val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl ?: return
     lookup.hide()
-    if (editor != null) {
-      InplaceRefactoring.getActiveInplaceRenamer(editor).finish(true)
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-    }
+    InplaceRefactoring.getActiveInplaceRenamer(editor).finish(true)
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+  }
+
+  companion object {
+    private val LOG = logger<RenameInvoker>()
   }
 }

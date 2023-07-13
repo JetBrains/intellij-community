@@ -3,8 +3,8 @@ package com.intellij.cce.evaluable.completion
 
 
 import com.intellij.cce.core.Language
-import com.intellij.cce.evaluable.common.BasicActionsInvoker
 import com.intellij.cce.evaluation.CodeCompletionHandlerFactory
+import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.lookup.Lookup
@@ -13,15 +13,18 @@ import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.command.impl.UndoManagerImpl
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 
-abstract class BaseCompletionActionsInvoker(project: Project,
-                                            language: Language) : BasicActionsInvoker(project, language) {
+abstract class BaseCompletionActionsInvoker(protected val project: Project,
+                                            protected val language: Language) : FeatureInvoker {
 
   protected fun invokeCompletion(expectedText: String,
                                  prefix: String?,
-                                 completionType: com.intellij.codeInsight.completion.CompletionType): LookupEx? {
+                                 completionType: com.intellij.codeInsight.completion.CompletionType,
+                                 editor: Editor): LookupEx? {
     val handlerFactory = CodeCompletionHandlerFactory.findCompletionHandlerFactory(project, language)
     val handler = handlerFactory?.createHandler(completionType, expectedText, prefix) ?: object : CodeCompletionHandlerBase(completionType,
                                                                                                                             false, false,
@@ -61,5 +64,9 @@ abstract class BaseCompletionActionsInvoker(project: Project,
       return false
     }
     return true
+  }
+
+  protected companion object {
+    val LOG = logger<BaseCompletionActionsInvoker>()
   }
 }

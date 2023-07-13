@@ -4,9 +4,10 @@ package com.intellij.cce.evaluation
 import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.EvaluationStrategy
+import com.intellij.cce.evaluable.common.CommonActionsInvoker
 import com.intellij.cce.evaluation.step.*
 import com.intellij.cce.interpreter.ActionsInvoker
-import com.intellij.cce.interpreter.DelegationActionsInvoker
+import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager
@@ -20,9 +21,9 @@ class BackgroundStepFactory(
   private val evaluationRootInfo: EvaluationRootInfo
 ) : StepFactory {
 
-  private val invoker: ActionsInvoker = DelegationActionsInvoker(
-    feature.getActionsInvoker(project, Language.resolve(config.language), config.strategy), project
-  )
+  private val actionsInvoker: ActionsInvoker = CommonActionsInvoker(project)
+
+  private val featureInvoker: FeatureInvoker = feature.getFeatureInvoker(project, Language.resolve(config.language), config.strategy)
 
   override fun generateActionsStep(): EvaluationStep {
     return ActionsGenerationStep(config, config.language, evaluationRootInfo,
@@ -30,14 +31,14 @@ class BackgroundStepFactory(
   }
 
   override fun interpretActionsStep(): EvaluationStep =
-    ActionsInterpretationStep(config.interpret, config.language, invoker, project)
+    ActionsInterpretationStep(config.interpret, config.language, actionsInvoker, featureInvoker, project)
 
   override fun generateReportStep(): EvaluationStep =
     ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it) },
                          config.reports.sessionsFilters, config.reports.comparisonFilters, project, feature)
 
   override fun interpretActionsOnNewWorkspaceStep(): EvaluationStep =
-    ActionsInterpretationOnNewWorkspaceStep(config, invoker, project)
+    ActionsInterpretationOnNewWorkspaceStep(config, actionsInvoker, featureInvoker, project)
 
   override fun reorderElements(): EvaluationStep =
     ReorderElementsStep(config, project)

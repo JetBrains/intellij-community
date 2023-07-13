@@ -8,7 +8,7 @@ import com.intellij.cce.evaluable.EvaluableFeatureBase
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.evaluation.step.SetupFullLineStep
-import com.intellij.cce.interpreter.ActionsInvoker
+import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.metric.Metric
 import com.intellij.cce.metric.SuggestionsComparator
 import com.intellij.cce.metric.createBenchmarkMetrics
@@ -23,7 +23,7 @@ class LineCompletionFeature : EvaluableFeatureBase<CompletionGolfStrategy>("line
 
   override fun getGenerateActionsProcessor(strategy: CompletionGolfStrategy): GenerateActionsProcessor = LineCompletionProcessor()
 
-  override fun getActionsInvoker(project: Project, language: Language, strategy: CompletionGolfStrategy): ActionsInvoker =
+  override fun getFeatureInvoker(project: Project, language: Language, strategy: CompletionGolfStrategy): FeatureInvoker =
     LineCompletionActionsInvoker(project, language, strategy, true)
 
   override fun getStrategySerializer(): StrategySerializer<CompletionGolfStrategy> = LineCompletionStrategySerializer()

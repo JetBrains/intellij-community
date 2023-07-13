@@ -6,7 +6,7 @@ import com.intellij.cce.evaluable.EvaluableFeatureBase
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.evaluation.step.SetupCompletionStep
-import com.intellij.cce.interpreter.ActionsInvoker
+import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.openapi.project.Project
 
@@ -17,7 +17,7 @@ class TokenCompletionFeature : EvaluableFeatureBase<CompletionStrategy>("token-c
     CompletionGenerateActionsProcessor(strategy)
 
 
-  override fun getActionsInvoker(project: Project, language: Language, strategy: CompletionStrategy): ActionsInvoker =
+  override fun getFeatureInvoker(project: Project, language: Language, strategy: CompletionStrategy): FeatureInvoker =
     CompletionActionsInvoker(project, language, strategy)
 
   override fun getStrategySerializer(): StrategySerializer<CompletionStrategy> = CompletionStrategySerializer()

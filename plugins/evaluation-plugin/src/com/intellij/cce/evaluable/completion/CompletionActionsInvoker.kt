@@ -3,18 +3,22 @@ package com.intellij.cce.evaluable.completion
 
 
 import com.intellij.cce.core.*
+import com.intellij.cce.evaluable.common.*
+import com.intellij.cce.interpreter.ActionsInvoker
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.actions.MLCompletionFeaturesUtil
 import com.intellij.completion.ml.util.prefix
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import java.util.*
 
 class CompletionActionsInvoker(project: Project,
                                language: Language,
                                private val strategy: CompletionStrategy) : BaseCompletionActionsInvoker(project, language) {
+  private val commonInvoker: ActionsInvoker = CommonActionsInvoker(project)
 
-  protected val completionType = when (strategy.completionType) {
+  private val completionType = when (strategy.completionType) {
     CompletionType.SMART -> com.intellij.codeInsight.completion.CompletionType.SMART
     else -> com.intellij.codeInsight.completion.CompletionType.BASIC
   }
@@ -33,18 +37,19 @@ class CompletionActionsInvoker(project: Project,
     return session
   }
 
-  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties): Session {
-    LOG.info("Call completion. Type: $completionType. ${positionToString(editor!!.caretModel.offset)}")
+  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties): Session = readActionInSmartMode(project) {
+    val editor = getEditorSafe(project)
+    LOG.info("Call completion. Type: $completionType. ${positionToString(editor)}")
     val prefix = prefixCreator.getPrefix(expectedText)
 
     val start = System.currentTimeMillis()
     val isNew = LookupManager.getActiveLookup(editor) == null
-    val activeLookup = invokeCompletion(expectedText, prefix, completionType)
+    val activeLookup = invokeCompletion(expectedText, prefix, completionType, editor)
     val latency = System.currentTimeMillis() - start
     if (activeLookup == null) {
-      printText(expectedText.substring(prefix.length))
-      return createSession(offset, expectedText, properties,
-                           Lookup.fromExpectedText(expectedText, prefix, emptyList(), latency, isNew = isNew))
+      commonInvoker.printText(expectedText.substring(prefix.length))
+      return@readActionInSmartMode createSession(offset, expectedText, properties,
+                                                 Lookup.fromExpectedText(expectedText, prefix, emptyList(), latency, isNew = isNew))
     }
 
     val lookup = activeLookup as LookupImpl
@@ -55,15 +60,16 @@ class CompletionActionsInvoker(project: Project,
     )
     val suggestions = lookup.items.map { it.asSuggestion() }
 
-    val success = finishSession(expectedText, prefix)
+    val success = finishSession(expectedText, prefix, editor)
     if (!success) {
-      printText(expectedText.substring(prefix.length))
+      commonInvoker.printText(expectedText.substring(prefix.length))
     }
-    return createSession(offset, expectedText, properties,
-                         Lookup.fromExpectedText(expectedText, lookup.prefix(), suggestions, latency, resultFeatures, isNew))
+    return@readActionInSmartMode createSession(offset, expectedText, properties,
+                                               Lookup.fromExpectedText(expectedText, lookup.prefix(), suggestions, latency, resultFeatures,
+                                                                       isNew))
   }
 
-  private fun finishSession(expectedText: String, prefix: String): Boolean {
+  private fun finishSession(expectedText: String, prefix: String, editor: Editor): Boolean {
     LOG.info("Finish completion. Expected text: $expectedText")
     if (strategy.completionType == CompletionType.SMART) return false
     val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl ?: return false
