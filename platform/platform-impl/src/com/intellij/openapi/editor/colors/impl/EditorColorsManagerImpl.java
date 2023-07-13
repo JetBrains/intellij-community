@@ -332,14 +332,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
         resolveSchemeParent(scheme);
       }
       catch (InvalidDataException e) {
+        LOG.warn("Skipping '" + scheme.getName() + "' because its parent scheme '" + e.getMessage() + "' is missing.");
         brokenSchemesList.add(scheme);
-        String name = scheme.getName();
-        if (name.startsWith(Scheme.EDITABLE_COPY_PREFIX)) name = StringUtil.trimStart(name, Scheme.EDITABLE_COPY_PREFIX);
-        String message = IdeBundle
-          .message("notification.content.color.scheme", name,
-                   e.getMessage());
-        Notifications.Bus.notify(
-          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("notification.title.incompatible.color.scheme"), message, NotificationType.ERROR));
       }
     }
     for (EditorColorsScheme brokenScheme : brokenSchemesList) {
