@@ -39,7 +39,9 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    *
    * @param interfaceClass the interface class of the component
    * @return component that matches interface class or null if there is no such component
+   * @deprecated Components are deprecated, please see <a href="https://plugins.jetbrains.com/docs/intellij/plugin-components.html">SDK Docs</a> for guidelines on migrating to other APIs.
    */
+  @Deprecated
   <T> T getComponent(@NotNull Class<T> interfaceClass);
 
   /**

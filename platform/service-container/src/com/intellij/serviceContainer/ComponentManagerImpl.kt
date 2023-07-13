@@ -592,6 +592,7 @@ abstract class ComponentManagerImpl(
 
   protected abstract fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor
 
+  @Deprecated("Deprecated in interface")
   final override fun <T : Any> getComponent(key: Class<T>): T? {
     assertComponentsSupported()
     checkState()

@@ -164,6 +164,7 @@ internal class DefaultProject : UserDataHolderBase(), Project {
 
   override fun <T> getServiceIfCreated(serviceClass: Class<T>): T? = delegate.getServiceIfCreated(serviceClass)
 
+  @Deprecated("Deprecated in interface")
   override fun <T> getComponent(interfaceClass: Class<T>): T = delegate.getComponent(interfaceClass)
 
   override fun isInjectionForExtensionSupported(): Boolean = true
