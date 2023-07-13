@@ -27,6 +27,7 @@ import org.jetbrains.eval4j.ObjectValue
 import org.jetbrains.eval4j.Value
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
 import org.jetbrains.kotlin.idea.debugger.evaluate.DebugContextProvider
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
@@ -204,7 +205,9 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
         val debuggerContext = createDebuggerContext(myDebuggerSession, suspendContext, threadProxy, frameProxy)
         debuggerContext.initCaches()
 
-        val contextElement = ContextUtil.getContextElement(debuggerContext)!!
+        val contextElement = runReadAction {
+            CodeFragmentContextTuner.getInstance().tuneContextElement(ContextUtil.getContextElement(debuggerContext))!!
+        }
 
         val codeFragmentFactory = CodeFragmentFactory.EXTENSION_POINT_NAME.extensions
             .first { it.fileType == KotlinFileType.INSTANCE }

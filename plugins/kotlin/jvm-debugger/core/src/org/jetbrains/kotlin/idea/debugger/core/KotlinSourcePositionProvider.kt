@@ -55,8 +55,7 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         val place = PositionUtil.getContextElement(context) ?: return null
         if (place.containingFile !is KtFile) return null
 
-        val contextElement = getContextElement(place) ?: return null
-
+        val contextElement = CodeFragmentContextTuner.getInstance().tuneContextElement(place) ?: return null
         val codeFragment = KtPsiFactory(context.project).createExpressionCodeFragment(descriptor.name, contextElement)
         val localReferenceExpression = codeFragment.getContentElement()
         if (localReferenceExpression is KtSimpleNameExpression) {

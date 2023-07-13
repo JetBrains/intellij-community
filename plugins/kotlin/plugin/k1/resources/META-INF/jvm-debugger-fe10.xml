@@ -5,6 +5,10 @@
             serviceInterface="org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerLegacyFacade"
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.fe10.core.Fe10KotlinDebuggerLegacyFacade"/>
 
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner"
+            serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.K1CodeFragmentContextTuner"/>
+
     <debugger.jvmSmartStepIntoHandler implementation="org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler"/>
     <debugger.frameExtraVarsProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinFrameExtraVariablesProvider"/>
     <debugger.codeFragmentFactory implementation="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinK1CodeFragmentFactory"/>

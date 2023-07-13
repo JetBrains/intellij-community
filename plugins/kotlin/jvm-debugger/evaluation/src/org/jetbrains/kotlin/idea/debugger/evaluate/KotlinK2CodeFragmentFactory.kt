@@ -7,12 +7,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaCodeFragment
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.debugger.core.getContextElement
+import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
 import org.jetbrains.kotlin.psi.KtBlockCodeFragment
 
 class KotlinK2CodeFragmentFactory : CodeFragmentFactory() {
     override fun createCodeFragment(item: TextWithImports, context: PsiElement?, project: Project): JavaCodeFragment {
-        val contextElement = getContextElement(context)
+        val contextElement = CodeFragmentContextTuner.getInstance().tuneContextElement(context)
         return KtBlockCodeFragment(project, "fragment.kt", item.text, item.imports, contextElement)
     }
 
