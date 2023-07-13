@@ -96,7 +96,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
     task {
       text(LessonsBundle.message("recent.files.search.jump", LessonUtil.rawEnter()))
       stateCheck { virtualFile.name == sampleFilePath.substringAfterLast("/") }
-      restoreState {
+      restoreState(delayMillis = defaultRestoreDelay) {
         !checkRecentFilesSearch("rfd") || previous.ui?.isShowing != true
       }
       test(waitEditorToBeReady = false) {
@@ -165,7 +165,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
         item.isToStringContains(transitionFileName)
       }
       stateCheck { virtualFile.name.contains(transitionFileName) }
-      restoreState {
+      restoreState(delayMillis = defaultRestoreDelay) {
         !checkRecentLocationsSearch(stringForRecentFilesSearch) || previous.ui?.isShowing != true
       }
       test {
