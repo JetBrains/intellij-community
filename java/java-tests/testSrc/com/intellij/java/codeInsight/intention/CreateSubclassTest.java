@@ -49,7 +49,7 @@ public class CreateSubclassTest extends LightMultiFileTestCase {
                            "class Scrat<caret>ch { }", ScratchFileService.Option.create_if_missing);
     assertNotNull(scratch);
     myFixture.configureFromExistingVirtualFile(scratch);
-    IntentionAction intention = myFixture.findSingleIntention("Create Subclass");
+    IntentionAction intention = myFixture.findSingleIntention("Create subclass");
     assertNotNull(intention);
     intention.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
     myFixture.checkResult("""

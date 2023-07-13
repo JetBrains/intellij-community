@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -50,7 +51,7 @@ import java.util.Objects;
 
 public class CreateSubclassAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance(CreateSubclassAction.class);
-  private @IntentionName String myText = JavaBundle.message("intention.implement.abstract.class.default.text");
+  private @IntentionName String myText = decapitalize(JavaBundle.message("intention.implement.abstract.class.default.text"));
 
   @Override
   @NotNull
@@ -107,7 +108,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       return false;
     }
 
-    myText = getTitle(psiClass);
+    myText = decapitalize(getTitle(psiClass));
     return true;
   }
 
@@ -405,4 +406,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     return false;
   }
 
+  private static @IntentionName String decapitalize(String s) {
+    return StringUtil.capitalize(StringUtil.wordsToBeginFromLowerCase(s));
+  }
 }
