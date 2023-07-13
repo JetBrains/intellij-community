@@ -1,19 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.base.fe10.analysis.classId
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.js.translate.declaration.hasCustomGetter
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -31,42 +24,15 @@ object OptInAnnotationWrongTargetFixesFactory : KotlinIntentionActionsFactory() 
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         if (diagnostic.factory != Errors.OPT_IN_MARKER_ON_WRONG_TARGET) return emptyList()
         val annotationEntry = diagnostic.psiElement.safeAs<KtAnnotationEntry>() ?: return emptyList()
-        val annotationUseSiteTarget = annotationEntry.useSiteTarget?.getAnnotationUseSiteTarget()
         val annotatedElement = annotationEntry.getParentOfTypes(
             strict = true,
             KtProperty::class.java,
             KtParameter::class.java,
         ) ?: return emptyList()
 
-        val result = mutableListOf<IntentionAction>()
         val bindingContext = annotationEntry.analyze(BodyResolveMode.PARTIAL)
-        val annotationClassId = bindingContext[BindingContext.ANNOTATION, annotationEntry]?.classId
-        if (annotationClassId != null) {
-            when {
-                annotatedElement is KtParameter && annotationUseSiteTarget != AnnotationUseSiteTarget.PROPERTY ->
-                    result.add(
-                        MoveOptInRequirementToPropertyFix(
-                            MoveOptInRequirementToPropertyFix.SourceType.VALUE_PARAMETER,
-                            annotationEntry,
-                            annotatedElement.createSmartPointer(),
-                            annotationClassId,
-                            AnnotationUseSiteTarget.PROPERTY
-                        )
-                    )
+        val annotationClassId = bindingContext[BindingContext.ANNOTATION, annotationEntry]?.classId ?: return emptyList()
 
-                annotatedElement is KtProperty
-                        && (annotatedElement.hasCustomGetter() || annotationUseSiteTarget == AnnotationUseSiteTarget.PROPERTY_GETTER) ->
-                    result.add(
-                        MoveOptInRequirementToPropertyFix(
-                            MoveOptInRequirementToPropertyFix.SourceType.GETTER,
-                            annotationEntry,
-                            annotatedElement.createSmartPointer(),
-                            annotationClassId
-                        )
-                    )
-            }
-        }
-
-        return result
+        return OptInAnnotationWrongTargetFixUtils.collectQuickFixes(annotatedElement, annotationEntry, annotationClassId)
     }
 }
