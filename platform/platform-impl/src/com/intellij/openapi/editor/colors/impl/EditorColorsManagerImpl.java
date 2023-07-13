@@ -74,9 +74,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl.COMPONENT_NAME;
+import static com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl.STORAGE_NAME;
+
 @State(
-  name = "EditorColorsManagerImpl",
-  storages = @Storage("colors.scheme.xml"),
+  name = COMPONENT_NAME,
+  storages = @Storage(STORAGE_NAME),
   additionalExportDirectory = EditorColorsManagerImpl.FILE_SPEC,
   category = SettingsCategory.UI
 )
@@ -85,6 +88,10 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   public static final ExtensionPointName<AdditionalTextAttributesEP> ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME = new ExtensionPointName<>("com.intellij.additionalTextAttributes");
 
   private static final Logger LOG = Logger.getInstance(EditorColorsManagerImpl.class);
+
+  public static final String COMPONENT_NAME = "EditorColorsManagerImpl";
+  public static final String STORAGE_NAME = "colors.scheme.xml";
+
   private static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = new ExtensionPointName<>("com.intellij.bundledColorScheme");
 
   private final ComponentTreeEventDispatcher<EditorColorsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener.class);
