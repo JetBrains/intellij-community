@@ -26,8 +26,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContextHolder
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.LoadAllGitLabMergeRequestTimelineViewModel
@@ -36,7 +36,7 @@ import java.beans.PropertyChangeSupport
 import javax.swing.JComponent
 
 internal class GitLabMergeRequestTimelineFileEditor(private val project: Project,
-                                                    private val ctx: GitLabProjectUIContext,
+                                                    private val ctx: GitLabToolWindowProjectViewModel,
                                                     private val file: GitLabMergeRequestTimelineFile)
   : UserDataHolderBase(), FileEditor, CheckedDisposable {
 
@@ -46,7 +46,7 @@ internal class GitLabMergeRequestTimelineFileEditor(private val project: Project
   private val cs = DisposingScope(this)
 
   private val component = run {
-    val contextHolder = project.service<GitLabProjectUIContextHolder>()
+    val contextHolder = project.service<GitLabToolWindowViewModel>()
     val accountManager = contextHolder.accountManager
 
     val timelineVmResultFlow: Flow<Result<LoadAllGitLabMergeRequestTimelineViewModel>> =

@@ -13,7 +13,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.childScope
 import com.intellij.util.ui.UIUtil
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.*
@@ -29,8 +28,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActio
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
 import org.jetbrains.plugins.gitlab.mergerequest.diff.selectedChange
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContextHolder
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestDetailsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModelImpl
@@ -44,19 +43,19 @@ import javax.swing.*
 
 internal class GitLabReviewTabComponentFactory(
   private val project: Project,
-  private val toolwindowViewModel: GitLabProjectUIContextHolder,
-) : ReviewTabsComponentFactory<GitLabReviewTab, GitLabProjectUIContext> {
+  private val toolwindowViewModel: GitLabToolWindowViewModel,
+) : ReviewTabsComponentFactory<GitLabReviewTab, GitLabToolWindowProjectViewModel> {
   override fun createReviewListComponent(
     cs: CoroutineScope,
-    projectContext: GitLabProjectUIContext
+    projectVm: GitLabToolWindowProjectViewModel
   ): JComponent {
     GitLabStatistics.logMrListOpened(project)
-    val accountVm = GitLabAccountViewModelImpl(project, cs, projectContext.account, toolwindowViewModel.accountManager)
+    val accountVm = GitLabAccountViewModelImpl(project, cs, projectVm.account, toolwindowViewModel.accountManager)
     return GitLabMergeRequestsPanelFactory()
-      .create(cs, accountVm, projectContext.listVm).also { panel ->
+      .create(cs, accountVm, projectVm.listVm).also { panel ->
         DataManager.registerDataProvider(panel) { dataId ->
           when {
-            GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> projectContext.filesController
+            GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> projectVm.filesController
             else -> null
           }
         }
@@ -64,12 +63,12 @@ internal class GitLabReviewTabComponentFactory(
   }
 
   override fun createTabComponent(cs: CoroutineScope,
-                                  projectContext: GitLabProjectUIContext,
+                                  projectVm: GitLabToolWindowProjectViewModel,
                                   reviewTabType: GitLabReviewTab): JComponent {
     return when (reviewTabType) {
       is GitLabReviewTab.ReviewSelected -> {
         GitLabStatistics.logMrDetailsOpened(project)
-        createReviewDetailsComponent(cs, projectContext, reviewTabType.reviewId)
+        createReviewDetailsComponent(cs, projectVm, reviewTabType.reviewId)
       }
     }
   }
@@ -82,10 +81,11 @@ internal class GitLabReviewTabComponentFactory(
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun createReviewDetailsComponent(
     cs: CoroutineScope,
-    ctx: GitLabProjectUIContext,
+    projectVm: GitLabToolWindowProjectViewModel,
     reviewId: GitLabMergeRequestId
   ): JComponent {
-    val reviewDetailsVm = GitLabMergeRequestDetailsLoadingViewModelImpl(project, cs, ctx.currentUser, ctx.projectData, reviewId).apply {
+    val reviewDetailsVm = GitLabMergeRequestDetailsLoadingViewModelImpl(project, cs, projectVm.currentUser, projectVm.projectData,
+                                                                        reviewId).apply {
       requestLoad()
       refreshData()
     }
@@ -94,19 +94,19 @@ internal class GitLabReviewTabComponentFactory(
       (it as? GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result)?.detailsVm
     }.filterNotNull()
 
-    val contextHolder = project.service<GitLabProjectUIContextHolder>()
+    val contextHolder = project.service<GitLabToolWindowViewModel>()
     val accountManager = contextHolder.accountManager
-    val accountVm = GitLabAccountViewModelImpl(project, cs, ctx.account, accountManager)
+    val accountVm = GitLabAccountViewModelImpl(project, cs, projectVm.account, accountManager)
 
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
       detailsVmFlow.flatMapLatest {
         it.showTimelineRequests
       }.collect {
-        ctx.filesController.openTimeline(reviewId, true)
+        projectVm.filesController.openTimeline(reviewId, true)
       }
     }
 
-    val diffBridge = ctx.getDiffBridge(reviewId)
+    val diffBridge = projectVm.getDiffBridge(reviewId)
 
     cs.launchNow(Dispatchers.EDT) {
       detailsVmFlow.collectLatest { detailsVm ->
@@ -133,7 +133,7 @@ internal class GitLabReviewTabComponentFactory(
           launchNow {
             changeListVms.collectLatest {
               it.showDiffRequests.collectLatest {
-                ctx.filesController.openDiff(reviewId, true)
+                projectVm.filesController.openDiff(reviewId, true)
               }
             }
           }
@@ -142,13 +142,13 @@ internal class GitLabReviewTabComponentFactory(
       }
     }
 
-    val avatarIconsProvider = ctx.avatarIconProvider
+    val avatarIconsProvider = projectVm.avatarIconProvider
     return GitLabMergeRequestDetailsComponentFactory.createDetailsComponent(
       project, cs, reviewDetailsVm, accountVm, avatarIconsProvider
     ).also {
       DataManager.registerDataProvider(it) { dataId ->
         when {
-          GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> ctx.filesController
+          GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> projectVm.filesController
           else -> null
         }
       }

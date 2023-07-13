@@ -20,30 +20,30 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.createSingleProjectAndAccountState
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext.Companion.GitLabReviewToolwindowContext
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowProjectViewModel.Companion.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 @Service(Service.Level.PROJECT)
-internal class GitLabProjectUIContextHolder(
+internal class GitLabToolWindowViewModel(
   private val project: Project,
   parentCs: CoroutineScope
-) : ReviewToolwindowViewModel<GitLabProjectUIContext> {
+) : ReviewToolwindowViewModel<GitLabToolWindowProjectViewModel> {
   private val cs = parentCs.childScope(Dispatchers.Default)
 
   val connectionManager: GitLabProjectConnectionManager = project.service<GitLabProjectConnectionManager>()
   val projectsManager: GitLabProjectsManager = project.service<GitLabProjectsManager>()
   val accountManager: GitLabAccountManager = service<GitLabAccountManager>()
 
-  override val projectContext: StateFlow<GitLabProjectUIContext?> =
+  override val projectVm: StateFlow<GitLabToolWindowProjectViewModel?> =
     connectionManager.connectionState.mapScoped { connection ->
-      connection?.let { GitLabReviewToolwindowContext(project, it) }
+      connection?.let { GitLabToolWindowProjectViewModel(project, it) }
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
   private val singleProjectAndAccountState: StateFlow<Pair<GitLabProjectMapping, GitLabAccount>?> =
     createSingleProjectAndAccountState(cs, projectsManager, accountManager)
 
   val canSwitchProject: StateFlow<Boolean> =
-    combineState(cs, projectContext, singleProjectAndAccountState) { currentProjectContext, currentSingleRepoAndAccountState ->
+    combineState(cs, projectVm, singleProjectAndAccountState) { currentProjectContext, currentSingleRepoAndAccountState ->
       // project can be switched when any project is selected and there are no 1-1 mapping with project and account
       currentProjectContext != null && currentSingleRepoAndAccountState == null
     }

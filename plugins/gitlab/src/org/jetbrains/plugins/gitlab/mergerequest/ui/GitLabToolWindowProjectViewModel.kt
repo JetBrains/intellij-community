@@ -5,7 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowProjectContext
+import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowProjectViewModel
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.awaitCancellationAndInvoke
@@ -26,9 +26,9 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsP
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModelImpl
 
-internal class GitLabProjectUIContext
+internal class GitLabToolWindowProjectViewModel
 private constructor(parentCs: CoroutineScope, project: Project, connection: GitLabProjectConnection)
-  : ReviewToolwindowProjectContext {
+  : ReviewToolwindowProjectViewModel {
 
   private val cs = parentCs.childScope()
 
@@ -79,7 +79,7 @@ private constructor(parentCs: CoroutineScope, project: Project, connection: GitL
   }
 
   companion object {
-    internal fun CoroutineScope.GitLabReviewToolwindowContext(project: Project, connection: GitLabProjectConnection) =
-      GitLabProjectUIContext(this, project, connection)
+    internal fun CoroutineScope.GitLabToolWindowProjectViewModel(project: Project, connection: GitLabProjectConnection) =
+      GitLabToolWindowProjectViewModel(this, project, connection)
   }
 }

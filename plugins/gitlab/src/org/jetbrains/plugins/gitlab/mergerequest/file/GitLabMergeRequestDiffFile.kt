@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContextHolder
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabMergeRequestDiffFile(override val connectionId: String,
@@ -36,8 +36,8 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
 
   override fun getPresentablePath(): String = "$glProject/mergerequests/${mergeRequestId.iid}.diff"
 
-  private fun findContext() = project.serviceIfCreated<GitLabProjectUIContextHolder>()
-    ?.projectContext?.value?.takeIf { it.connectionId == connectionId }
+  private fun findContext() = project.serviceIfCreated<GitLabToolWindowViewModel>()
+    ?.projectVm?.value?.takeIf { it.connectionId == connectionId }
 
   override fun createProcessor(project: Project): DiffRequestProcessor {
     val ctx = findContext() ?: error("Missing context for $this")
