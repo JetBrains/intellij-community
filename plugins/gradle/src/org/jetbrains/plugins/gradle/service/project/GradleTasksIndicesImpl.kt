@@ -15,7 +15,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleTaskData
 import org.jetbrains.plugins.gradle.util.getGradleTasks
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.Comparator
 
 
 class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices {
@@ -33,14 +32,8 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
     }
   }
 
-  private fun getTaskContext(modulePath: String, task: GradleTaskData): TaskResolutionContext {
-    val context = getModuleContext(modulePath)
-    return context.tasks.find { it.task == task }
-           ?: TaskResolutionContext(context, task)
-  }
-
   override fun findTasks(modulePath: String): List<GradleTaskData> {
-    return getModuleContext(modulePath).tasks.map { it.task }
+    return getModuleContext(modulePath).findTasks()
   }
 
   override fun findTasks(modulePath: String, matcher: String): List<GradleTaskData> {
@@ -48,47 +41,69 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
   }
 
   override fun findTasks(modulePath: String, matchers: List<String>): List<GradleTaskData> {
-    val moduleContext = getModuleContext(modulePath)
-    return matchers.flatMap { matcher -> moduleContext.findTasks(matcher) }
+    return getModuleContext(modulePath).findTasks(matchers)
   }
 
   override fun isMatchedTask(modulePath: String, task: GradleTaskData, matcher: String): ThreeState {
-    return getTaskContext(modulePath, task).isMatchedTask(matcher)
+    return getModuleContext(modulePath).getTaskContext(task).isMatchedTask(matcher)
   }
 
   override fun getPossibleTaskNames(modulePath: String, task: GradleTaskData): Set<String> {
-    return getTaskContext(modulePath, task).possibleNames
+    return getModuleContext(modulePath).getTaskContext(task).possibleNames
   }
 
   override fun getTasksCompletionVariances(modulePath: String): Map<String, List<GradleTaskData>> {
-    return findTasks(modulePath).asSequence()
-      .filterNot { it.isInherited }
-      .flatMap { task -> getPossibleTaskNames(modulePath, task).map { it to task } }
-      .sortedWith(Comparator.comparing({ it.first }, GRADLE_COMPLETION_COMPARATOR))
-      .groupBy { it.first }
-      .mapValues { it.value.map { (_, task) -> task } }
+    return getModuleContext(modulePath).tasksCompletionVariances
   }
 
-  private class ModuleResolutionContext(val project: Project, val path: String) {
+  private class ModuleResolutionContext(
+    val project: Project,
+    val path: String
+  ) {
+
     val externalProjectPath by lazy(::calculateExternalProjectPath)
 
     val gradlePath by lazy(::calculateGradlePath)
 
-    val compositeProject by lazy { getModuleCompositeProject(project, path) }
+    val compositeProject by lazy { findModuleCompositeProject(project, path) }
 
     val isFromCompositeProject by lazy { compositeProject != null }
 
     val tasks by lazy(::calculateTasks)
 
-    val tasksIndex by lazy(::calculateTasksIndex)
+    val tasksIndexByName by lazy(::calculateTasksIndexByName)
+
+    val tasksIndexByData by lazy(::calculateTasksIndexByData)
+
+    val tasksCompletionVariances by lazy(::calculateTasksCompletionVariances)
+
+    fun getTaskContext(task: GradleTaskData): TaskResolutionContext {
+      return tasksIndexByData[task] ?: TaskResolutionContext(this, task)
+    }
+
+    fun findTasks(): List<GradleTaskData> {
+      return tasks.map { it.task }
+    }
 
     fun findTasks(matcher: String): List<GradleTaskData> {
-      return tasksIndex[matcher]
+      return tasksIndexByName[matcher]
                ?.map { it.task }
              ?: tasks.asSequence()
                .filter { it.isMatchedTask(matcher) == ThreeState.UNSURE }
                .map { it.task }
                .toList()
+    }
+
+    fun findTasks(matchers: List<String>): List<GradleTaskData> {
+      return matchers.flatMap(::findTasks)
+    }
+
+    private fun calculateTasksCompletionVariances(): Map<String, List<GradleTaskData>> {
+      return tasks.asSequence()
+        .filterNot { it.task.isInherited }
+        .flatMap { taskContext -> taskContext.possibleNames.map { it to taskContext.task } }
+        .groupBy { it.first }
+        .mapValues { it.value.map { (_, task) -> task } }
     }
 
     private fun calculateExternalProjectPath(): String? {
@@ -112,14 +127,22 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
       return projectTasks.values().map { TaskResolutionContext(this, it) }
     }
 
-    private fun calculateTasksIndex(): Map<String, List<TaskResolutionContext>> {
+    private fun calculateTasksIndexByName(): Map<String, List<TaskResolutionContext>> {
       return tasks.asSequence()
         .flatMap { task -> task.possibleNames.map { it to task } }
         .groupBy({ it.first }, { it.second })
     }
+
+    private fun calculateTasksIndexByData(): Map<GradleTaskData, TaskResolutionContext> {
+      return tasks.associateBy { it.task }
+    }
   }
 
-  private class TaskResolutionContext(val moduleContext: ModuleResolutionContext, val task: GradleTaskData) {
+  private class TaskResolutionContext(
+    val moduleContext: ModuleResolutionContext,
+    val task: GradleTaskData
+  ) {
+
     val compositeProject by lazy(::calculateCompositeProject)
 
     val isFromCompositeProject by lazy { compositeProject != null }
@@ -148,7 +171,7 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
 
     private fun calculateCompositeProject(): BuildParticipant? {
       val moduleData = task.node.parent?.data as? ModuleData ?: return null
-      return getModuleCompositeProject(moduleContext.project, moduleData.linkedExternalProjectPath)
+      return findModuleCompositeProject(moduleContext.project, moduleData.linkedExternalProjectPath)
     }
 
     private fun calculatePathUnderModuleProject(): String {
@@ -189,23 +212,8 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
   }
 
   companion object {
-    val GRADLE_COMPLETION_COMPARATOR = Comparator<String> { o1, o2 ->
-      when {
-        o1.startsWith("--") && o2.startsWith("--") -> o1.compareTo(o2)
-        o1.startsWith("-") && o2.startsWith("--") -> -1
-        o1.startsWith("--") && o2.startsWith("-") -> 1
-        o1.startsWith(":") && o2.startsWith(":") -> o1.compareTo(o2)
-        o1.startsWith(":") && o2.startsWith("-") -> -1
-        o1.startsWith("-") && o2.startsWith(":") -> 1
-        o2.startsWith("-") -> -1
-        o2.startsWith(":") -> -1
-        o1.startsWith("-") -> 1
-        o1.startsWith(":") -> 1
-        else -> o1.compareTo(o2)
-      }
-    }
 
-    private fun getModuleCompositeProject(project: Project, modulePath: String): BuildParticipant? {
+    private fun findModuleCompositeProject(project: Project, modulePath: String): BuildParticipant? {
       val settings = GradleSettings.getInstance(project)
       val projectSettings = settings.getLinkedProjectSettings(modulePath)
       val compositeBuild = projectSettings?.compositeBuild

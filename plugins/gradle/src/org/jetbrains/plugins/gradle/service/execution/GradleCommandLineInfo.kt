@@ -13,6 +13,7 @@ import org.apache.commons.cli.Option
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider
 import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices
 import org.jetbrains.plugins.gradle.util.GradleBundle
+import java.util.Comparator
 import javax.swing.Icon
 
 class GradleCommandLineInfo(project: Project, workingDirectoryField: WorkingDirectoryField) : CommandLineInfo {
@@ -50,6 +51,7 @@ class GradleCommandLineInfo(project: Project, workingDirectoryField: WorkingDire
       val indices = GradleTasksIndices.getInstance(project)
       return indices.getTasksCompletionVariances(workingDirectoryField.workingDirectory)
         .map { TextCompletionInfo(it.key, it.value.first().description) }
+        .sortedWith(Comparator.comparing({ it.text }, GRADLE_COMPLETION_COMPARATOR))
     }
 
     init {
@@ -85,6 +87,25 @@ class GradleCommandLineInfo(project: Project, workingDirectoryField: WorkingDire
 
     override val tableCompletionInfo: List<TextCompletionInfo> by lazy {
       completionInfo.filter { it.text.startsWith("--") }
+    }
+  }
+
+  companion object {
+
+    val GRADLE_COMPLETION_COMPARATOR = Comparator<String> { o1, o2 ->
+      when {
+        o1.startsWith("--") && o2.startsWith("--") -> o1.compareTo(o2)
+        o1.startsWith("-") && o2.startsWith("--") -> -1
+        o1.startsWith("--") && o2.startsWith("-") -> 1
+        o1.startsWith(":") && o2.startsWith(":") -> o1.compareTo(o2)
+        o1.startsWith(":") && o2.startsWith("-") -> -1
+        o1.startsWith("-") && o2.startsWith(":") -> 1
+        o2.startsWith("-") -> -1
+        o2.startsWith(":") -> -1
+        o1.startsWith("-") -> 1
+        o1.startsWith(":") -> 1
+        else -> o1.compareTo(o2)
+      }
     }
   }
 }
