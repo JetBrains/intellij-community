@@ -2,7 +2,10 @@
 package com.intellij.openapi.rd.util
 
 import com.intellij.execution.process.ProcessIOExecutorService
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.rd.createLifetime
@@ -27,16 +30,21 @@ class RdCoroutineHost(lifetime: Lifetime) : RdCoroutineScope(lifetime) {
     val nonUrgentDispatcher = NonUrgentExecutor.getInstance().asCoroutineDispatcher()
   }
 
-  override val defaultDispatcher: CoroutineContext get() = applicationThreadPool
+  override val defaultDispatcher: CoroutineContext
+    get() = applicationThreadPool
 
-  val uiDispatcher get() = Dispatchers.EDT
+  val uiDispatcher: CoroutineContext
+    get() = Dispatchers.EDT
 
   val uiDispatcherWithInlining = object : CoroutineDispatcher() {
-    override fun dispatch(context: CoroutineContext, block: Runnable) = invokeLater { block.run() }
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+      ApplicationManager.getApplication().invokeLater(block, ModalityState.defaultModalityState())
+    }
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
-      if (!ApplicationManager.getApplication().isDispatchThread)
+      if (!ApplicationManager.getApplication().isDispatchThread) {
         return true
+      }
 
       val modality = ModalityState.current()
       val transactionGuard = TransactionGuard.getInstance()
@@ -45,7 +53,10 @@ class RdCoroutineHost(lifetime: Lifetime) : RdCoroutineScope(lifetime) {
   }
 
   val uiDispatcherAnyModality = object : CoroutineDispatcher() {
-    override fun dispatch(context: CoroutineContext, block: Runnable) = invokeLater(ModalityState.any()) { block.run() }
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+      ApplicationManager.getApplication().invokeLater(block, ModalityState.any())
+    }
+
     override fun isDispatchNeeded(context: CoroutineContext) = !ApplicationManager.getApplication().isDispatchThread
   }
 
