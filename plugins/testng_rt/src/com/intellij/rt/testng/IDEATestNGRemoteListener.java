@@ -314,7 +314,7 @@ public class IDEATestNGRemoteListener {
     if (invocationCount > 0) {
       paramString += " (" + invocationCount + ")";
     }
-    return paramString.length() > 0 ? paramString : null;
+    return !paramString.isEmpty() ? paramString : null;
   }
 
   protected String getTrace(Throwable tr) {
@@ -388,7 +388,7 @@ public class IDEATestNGRemoteListener {
       Test annotation = member.getAnnotation(Test.class);
       if (annotation == null) return method.getMethodName();
       String testNameFromAnnotation = annotation.testName();
-      return testNameFromAnnotation == null || testNameFromAnnotation.length() == 0 ? method.getMethodName() : testNameFromAnnotation;
+      return testNameFromAnnotation == null || testNameFromAnnotation.isEmpty() ? method.getMethodName() : testNameFromAnnotation;
     }
 
     @Override
