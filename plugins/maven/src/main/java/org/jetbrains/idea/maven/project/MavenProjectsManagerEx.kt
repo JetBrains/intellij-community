@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -125,29 +124,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                                    private val waitForPostTasks: Boolean) {
     @RequiresBlockingContext
     fun importMavenProjectsBlocking(): List<Module> {
-      if (ApplicationManager.getApplication().isDispatchThread) {
-        return importMavenProjectsEdt()
-      }
-      else {
-        return runBlockingMaybeCancellable { importMavenProjectsBg() }
-      }
+      return runBlockingMaybeCancellable { importMavenProjectsBg() }
     }
 
     suspend fun importMavenProjects(): List<Module> {
-      if (ApplicationManager.getApplication().isDispatchThread) {
-        return importMavenProjectsEdt()
-      }
-      else {
-        return importMavenProjectsBg()
-      }
-    }
-
-    @RequiresEdt
-    fun importMavenProjectsEdt(): List<Module> {
-      val importResult = doImport()
-      getVirtualFileManager().syncRefresh()
-      performPostImportTasks(importResult.postTasks)
-      return importResult.createdModules
+      return importMavenProjectsBg()
     }
 
     @RequiresBackgroundThread
