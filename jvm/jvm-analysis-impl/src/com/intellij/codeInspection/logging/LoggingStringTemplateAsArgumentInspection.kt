@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiType
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.uast.*
@@ -103,6 +104,17 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
       }
 
       if (parts.isEmpty()) {
+        return true
+      }
+
+      //strange behavior for last parameter as exception. let's ignore this case
+      val injected = parts.filter { it !is ULiteralExpression }
+      val javaLangThrowable = CommonClassNames.JAVA_LANG_THROWABLE
+      if ((injected.size == 1 &&
+           InheritanceUtil.isInheritor(injected[0].getExpressionType(), javaLangThrowable)) ||
+          ((valueArguments.size - 1 - indexStringExpression) == 1 &&
+          InheritanceUtil.isInheritor(valueArguments[valueArguments.size - 1].getExpressionType(), javaLangThrowable))
+        ) {
         return true
       }
 
