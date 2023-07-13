@@ -206,7 +206,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     final Dimension preferredSize = myComponent.getPreferredSize();
 
     final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, point, layeredPane);
-    myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
+    Rectangle popupRect = new Rectangle(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
+
+    myComponent.setBounds(popupRect);
     layeredPane.add(myComponent, JLayeredPane.POPUP_LAYER);
 
     myComponent.validate();
@@ -329,7 +331,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   public boolean isVisible() {
     Boolean shownAtDebug = getUserData(SHOWN_AT_DEBUG);
     if (shownAtDebug != null) return shownAtDebug;
-    
+
     if (myIsRealPopup) {
       return myPopup != null && myPopup.isVisible();
     }
@@ -343,7 +345,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     return myIsRealPopup || myForceShowAsPopup;
   }
 
-  public final boolean isShouldBeReopen(){
+  public final boolean isShouldBeReopen() {
     return myShouldReopenPopup;
   }
 
@@ -509,7 +511,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
       myComponent.revalidate();
       myComponent.repaint();
-    } else { // isAwtTooltip() case, we have to update Balloon size
+    }
+    else { // isAwtTooltip() case, we have to update Balloon size
       Component c = myComponent;
       while (c != null) {
         if (c.getParent() instanceof JLayeredPane) {
