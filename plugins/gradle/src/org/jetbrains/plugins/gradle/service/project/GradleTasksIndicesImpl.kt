@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.project
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicReference
 class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices {
 
   private fun getModuleContext(modulePath: String): ModuleResolutionContext {
+    ProgressManager.checkCanceled()
     val reference = CachedValuesManager.getManager(project).getCachedValue(project) {
       val dataStorage = ExternalProjectsDataStorage.getInstance(project)
       CachedValueProvider.Result.create(AtomicReference<ModuleResolutionContext>(), dataStorage)
@@ -78,14 +80,17 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
     val tasksCompletionVariances by lazy(::calculateTasksCompletionVariances)
 
     fun getTaskContext(task: GradleTaskData): TaskResolutionContext {
+      ProgressManager.checkCanceled()
       return tasksIndexByData[task] ?: TaskResolutionContext(this, task)
     }
 
     fun findTasks(): List<GradleTaskData> {
+      ProgressManager.checkCanceled()
       return tasks.map { it.task }
     }
 
     fun findTasks(matcher: String): List<GradleTaskData> {
+      ProgressManager.checkCanceled()
       return tasksIndexByName[matcher]
                ?.map { it.task }
              ?: tasks.asSequence()
@@ -95,10 +100,12 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
     }
 
     fun findTasks(matchers: List<String>): List<GradleTaskData> {
+      ProgressManager.checkCanceled()
       return matchers.flatMap(::findTasks)
     }
 
     private fun calculateTasksCompletionVariances(): Map<String, List<GradleTaskData>> {
+      ProgressManager.checkCanceled()
       return tasks.asSequence()
         .filterNot { it.task.isInherited }
         .flatMap { taskContext -> taskContext.possibleNames.map { it to taskContext.task } }
@@ -107,11 +114,13 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
     }
 
     private fun calculateExternalProjectPath(): String? {
+      ProgressManager.checkCanceled()
       return ExternalSystemUtil.getExternalProjectInfo(project, GradleConstants.SYSTEM_ID, path)
         ?.externalProjectPath
     }
 
     private fun calculateGradlePath(): String? {
+      ProgressManager.checkCanceled()
       val moduleNode = CachedModuleDataFinder.findModuleData(project, path)
       return when {
         moduleNode == null -> null
@@ -122,18 +131,21 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
     }
 
     private fun calculateTasks(): List<TaskResolutionContext> {
+      ProgressManager.checkCanceled()
       val externalProjectPath = externalProjectPath ?: return emptyList()
       val projectTasks = getGradleTasks(project)[externalProjectPath] ?: return emptyList()
       return projectTasks.values().map { TaskResolutionContext(this, it) }
     }
 
     private fun calculateTasksIndexByName(): Map<String, List<TaskResolutionContext>> {
+      ProgressManager.checkCanceled()
       return tasks.asSequence()
         .flatMap { task -> task.possibleNames.map { it to task } }
         .groupBy({ it.first }, { it.second })
     }
 
     private fun calculateTasksIndexByData(): Map<GradleTaskData, TaskResolutionContext> {
+      ProgressManager.checkCanceled()
       return tasks.associateBy { it.task }
     }
   }
