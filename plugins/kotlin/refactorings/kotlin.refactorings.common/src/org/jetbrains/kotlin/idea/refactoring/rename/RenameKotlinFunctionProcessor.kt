@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
+import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.declarationsSearch.findDeepestSuperMethodsKotlinAware
@@ -72,9 +73,9 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         val declaration = element.unwrapped as? KtNamedFunction ?: return
         checkConflictsAndReplaceUsageInfos(element, allRenames, result)
         result += SmartList<UsageInfo>().also { collisions ->
-            renameRefactoringSupport.checkRedeclarations(declaration, newName, collisions)
-            renameRefactoringSupport.checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
-            renameRefactoringSupport.checkNewNameUsagesRetargeting(declaration, newName, collisions)
+          checkRedeclarationConflicts(declaration, newName, collisions)
+          renameRefactoringSupport.checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
+          renameRefactoringSupport.checkNewNameUsagesRetargeting(declaration, newName, collisions)
         }
     }
 

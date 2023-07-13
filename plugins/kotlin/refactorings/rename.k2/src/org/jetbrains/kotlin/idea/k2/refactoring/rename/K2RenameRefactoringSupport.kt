@@ -49,10 +49,6 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         scope: SearchScope
     ) {}
 
-    override fun checkRedeclarations(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
-        // TODO
-    }
-
     override fun checkOriginalUsagesRetargeting(
         declaration: KtNamedDeclaration,
         newName: String,

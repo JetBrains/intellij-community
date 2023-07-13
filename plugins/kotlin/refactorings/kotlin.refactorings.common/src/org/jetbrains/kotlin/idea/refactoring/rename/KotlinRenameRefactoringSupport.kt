@@ -29,12 +29,6 @@ interface KotlinRenameRefactoringSupport {
 
     fun prepareForeignUsagesRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope)
 
-    fun checkRedeclarations(
-        declaration: KtNamedDeclaration,
-        newName: String,
-        result: MutableList<UsageInfo>
-    )
-
     fun checkOriginalUsagesRetargeting(
         declaration: KtNamedDeclaration,
         newName: String,

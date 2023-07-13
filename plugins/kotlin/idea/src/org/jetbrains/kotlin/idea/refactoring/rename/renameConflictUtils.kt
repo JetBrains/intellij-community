@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.MoveRenameUsageInfo
@@ -15,28 +18,28 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.FrontendInternals
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
+import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.and
+import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.base.psi.copied
-import org.jetbrains.kotlin.idea.base.util.and
-import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.highlighter.markers.resolveDeclarationWithParents
 import org.jetbrains.kotlin.idea.imports.importableFqName
+import org.jetbrains.kotlin.idea.refactoring.conflicts.renderDescription
+import org.jetbrains.kotlin.idea.refactoring.conflicts.representativeContainer
 import org.jetbrains.kotlin.idea.refactoring.explicateAsText
 import org.jetbrains.kotlin.idea.refactoring.getThisLabelName
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
-import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getAllAccessibleFunctions
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
@@ -51,19 +54,13 @@ import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.OverloadChecker
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getExplicitReceiverValue
 import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
-import org.jetbrains.kotlin.resolve.calls.results.TypeSpecificityComparator
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
-import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
-import org.jetbrains.kotlin.resolve.scopes.MemberScope
-import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.resolve.scopes.utils.getImplicitReceiversHierarchy
 import org.jetbrains.kotlin.resolve.source.getPsi
@@ -71,120 +68,11 @@ import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 import org.jetbrains.kotlin.utils.DFS
 import org.jetbrains.kotlin.utils.SmartList
-import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal fun ResolvedCall<*>.noReceivers() = dispatchReceiver == null && extensionReceiver == null
 
-internal fun PsiNamedElement.renderDescription(): String {
-    val type = UsageViewUtil.getType(this)
-    if (name == null || name!!.startsWith("<")) return type
-    return "$type '$name'".trim()
-}
-
-internal fun PsiElement.representativeContainer(): PsiNamedElement? = when (this) {
-    is KtDeclaration -> containingClassOrObject
-        ?: getStrictParentOfType<KtNamedDeclaration>()
-        ?: JavaPsiFacade.getInstance(project).findPackage(containingKtFile.packageFqName.asString())
-    is PsiMember -> containingClass
-    else -> null
-}
-
 internal fun DeclarationDescriptor.canonicalRender(): String = DescriptorRenderer.FQ_NAMES_IN_TYPES.render(this)
-
-internal fun checkRedeclarations(
-    declaration: KtNamedDeclaration,
-    newName: String,
-    result: MutableList<UsageInfo>
-) {
-    val resolutionFacade: ResolutionFacade = declaration.getResolutionFacade()
-    val descriptor: DeclarationDescriptor = declaration.unsafeResolveToDescriptor(resolutionFacade)
-
-    fun DeclarationDescriptor.isTopLevelPrivate(): Boolean =
-        this is DeclarationDescriptorWithVisibility && visibility == DescriptorVisibilities.PRIVATE && containingDeclaration is PackageFragmentDescriptor
-
-    fun isInSameFile(d1: DeclarationDescriptor, d2: DeclarationDescriptor): Boolean =
-        (d1 as? DeclarationDescriptorWithSource)?.source?.getPsi()?.containingFile == (d2 as? DeclarationDescriptorWithSource)?.source
-            ?.getPsi()?.containingFile
-
-    fun MemberScope.findSiblingsByName(): List<DeclarationDescriptor> {
-        val descriptorKindFilter = when (descriptor) {
-            is ClassifierDescriptor -> DescriptorKindFilter.CLASSIFIERS
-            is VariableDescriptor -> DescriptorKindFilter.VARIABLES
-            is FunctionDescriptor -> DescriptorKindFilter.FUNCTIONS
-            else -> return emptyList()
-        }
-        return getDescriptorsFiltered(descriptorKindFilter) { it.asString() == newName }.filter { it != descriptor }
-    }
-
-    fun getSiblingsWithNewName(): List<DeclarationDescriptor> {
-        val containingDescriptor = descriptor.containingDeclaration
-
-        if (descriptor is ValueParameterDescriptor) {
-            return (containingDescriptor as CallableDescriptor).valueParameters.filter { it.name.asString() == newName }
-        }
-
-        if (descriptor is TypeParameterDescriptor) {
-            val typeParameters = when (containingDescriptor) {
-                is ClassDescriptor -> containingDescriptor.declaredTypeParameters
-                is CallableDescriptor -> containingDescriptor.typeParameters
-                else -> emptyList()
-            }
-
-            return SmartList<DeclarationDescriptor>().apply {
-                typeParameters.filterTo(this) { it.name.asString() == newName }
-                val containingDeclaration = (containingDescriptor as? DeclarationDescriptorWithSource)?.source?.getPsi() as? KtDeclaration
-                    ?: return emptyList()
-                val dummyVar = KtPsiFactory(containingDeclaration.project).createProperty("val foo: $newName")
-                val outerScope = containingDeclaration.getResolutionScope()
-                val context = dummyVar.analyzeInContext(outerScope, containingDeclaration)
-                addIfNotNull(context[BindingContext.VARIABLE, dummyVar]?.type?.constructor?.declarationDescriptor)
-            }
-        }
-
-        return when (containingDescriptor) {
-            is ClassDescriptor -> containingDescriptor.unsubstitutedMemberScope.findSiblingsByName()
-            is PackageFragmentDescriptor -> containingDescriptor.getMemberScope().findSiblingsByName().filter {
-                it != descriptor && (!(descriptor.isTopLevelPrivate() || it.isTopLevelPrivate()) || isInSameFile(descriptor, it))
-            }
-            else -> {
-                val block =
-                    (descriptor as? DeclarationDescriptorWithSource)?.source?.getPsi()?.parent as? KtBlockExpression ?: return emptyList()
-                block.statements.mapNotNull {
-                    if (it.name != newName) return@mapNotNull null
-                    val isAccepted = when (descriptor) {
-                        is ClassDescriptor -> it is KtClassOrObject
-                        is VariableDescriptor -> it is KtProperty
-                        is FunctionDescriptor -> it is KtNamedFunction
-                        else -> false
-                    }
-                    if (!isAccepted) return@mapNotNull null
-                    (it as? KtDeclaration)?.unsafeResolveToDescriptor()
-                }
-            }
-        }
-    }
-
-    val overloadChecker = when (descriptor) {
-        is PropertyDescriptor,
-        is FunctionDescriptor,
-        is ClassifierDescriptor -> {
-
-            @OptIn(FrontendInternals::class)
-            val typeSpecificityComparator = resolutionFacade.getFrontendService(TypeSpecificityComparator::class.java)
-            OverloadChecker(typeSpecificityComparator)
-        }
-        else -> null
-    }
-    for (candidateDescriptor in getSiblingsWithNewName()) {
-        val candidate = (candidateDescriptor as? DeclarationDescriptorWithSource)?.source?.getPsi() as? KtNamedDeclaration ?: continue
-        if (overloadChecker != null && overloadChecker.isOverloadable(descriptor, candidateDescriptor)) continue
-        val what = candidate.renderDescription()
-        val where = candidate.representativeContainer()?.renderDescription() ?: continue
-        val message = KotlinBundle.message("text.0.already.declared.in.1", what, where).capitalize()
-        result += BasicUnresolvableCollisionUsageInfo(candidate, candidate, message)
-    }
-}
 
 private fun LexicalScope.getRelevantDescriptors(
     declaration: PsiNamedElement,
@@ -491,7 +379,7 @@ internal fun PsiElement?.isOperator(): Boolean {
         return false
     }
 
-    val resolveWithParents = resolveDeclarationWithParents(this as KtNamedFunction)
+    val resolveWithParents = resolveDeclarationWithParents(this)
     return resolveWithParents.overriddenDescriptors.any {
         val psi = it.source.getPsi() ?: return@any false
         psi !is KtElement || psi.safeAs<KtNamedFunction>()?.hasModifier(KtTokens.OPERATOR_KEYWORD) == true

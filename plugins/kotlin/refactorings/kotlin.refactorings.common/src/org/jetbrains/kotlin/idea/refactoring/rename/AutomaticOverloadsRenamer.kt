@@ -12,7 +12,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -50,7 +49,7 @@ private fun KtNamedFunction.getOverloads(): Collection<KtNamedFunction> {
             val symbol = getSymbol() as? KtFunctionSymbol  ?: return emptyList()
             if (symbol.isActual() && symbol.getExpectForActual() != null) return emptyList()
             val result = LinkedHashSet<KtNamedFunction>()
-            listOfNotNull<KtScope>(
+            listOfNotNull(
                 getPackageSymbolIfPackageExists(containingKtFile.packageFqName)?.getPackageScope(),
                 (symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.getDeclaredMemberScope(),
                 symbol.receiverParameter?.type?.expandedClassSymbol?.getDeclaredMemberScope()

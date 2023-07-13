@@ -51,10 +51,6 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
     }
 
-    override fun checkRedeclarations(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
-        org.jetbrains.kotlin.idea.refactoring.rename.checkRedeclarations(declaration, newName, result)
-    }
-
     override fun checkOriginalUsagesRetargeting(
         declaration: KtNamedDeclaration,
         newName: String,
