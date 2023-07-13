@@ -377,7 +377,7 @@ final class UpdateCheckerService {
       if (cleaned) {
         LOG.info("Some obsolete TBE custom repositories have been removed");
       }
-      settings.setObsoleteCustomRepositoriesCleaned(false);
+      settings.setObsoleteCustomRepositoriesCleanNeeded(false);
     }
   }
 }

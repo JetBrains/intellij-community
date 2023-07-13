@@ -135,7 +135,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
     return myState.isObsoleteCustomRepositoriesCleanNeeded();
   }
 
-  public void setObsoleteCustomRepositoriesCleaned(boolean value) {
+  public void setObsoleteCustomRepositoriesCleanNeeded(boolean value) {
     myState.setObsoleteCustomRepositoriesCleanNeeded(value);
   }
 }
