@@ -6,7 +6,6 @@ PsiJavaFile:StringTemplate8.java
       PsiIdentifier:STR('STR')
     PsiJavaToken:DOT('.')
     PsiTemplate
-      PsiLiteralExpression:"\{
-        PsiJavaToken:STRING_TEMPLATE_BEGIN('"\{')
+      PsiFragment:STRING_TEMPLATE_BEGIN('"\{')
       PsiErrorElement:Template fragment expected
         <empty list>

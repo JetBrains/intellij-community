@@ -53,6 +53,7 @@ public class OldExpressionParser {
   public PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
     return parseAssignment(builder);
   }
+
   @Nullable
   PsiBuilder.Marker parse(@NotNull PsiBuilder builder, final int mode) {
     return parseAssignment(builder, mode);
@@ -393,7 +394,7 @@ public class OldExpressionParser {
           builder.advanceLexer();
           literal.done(JavaElementType.LITERAL_EXPRESSION);
           templateExpression.done(JavaElementType.TEMPLATE_EXPRESSION);
-          expr =  templateExpression;
+          expr = templateExpression;
         }
         else if (THIS_OR_SUPER.contains(dotTokenType) && exprType(expr) == JavaElementType.REFERENCE_EXPRESSION) {
           if (breakPoint == BreakPoint.P2 && builder.getCurrentOffset() == breakOffset) {
@@ -513,15 +514,15 @@ public class OldExpressionParser {
   private PsiBuilder.Marker parsePrimaryExpressionStart(final PsiBuilder builder, final int mode) {
     IElementType tokenType = builder.getTokenType();
 
+    if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN || tokenType == JavaTokenType.STRING_TEMPLATE_BEGIN) {
+      return parseStringTemplate(builder, tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN);
+    }
+
     if (ElementType.ALL_LITERALS.contains(tokenType)) {
       final PsiBuilder.Marker literal = builder.mark();
       builder.advanceLexer();
       literal.done(JavaElementType.LITERAL_EXPRESSION);
       return literal;
-    }
-
-    if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN || tokenType == JavaTokenType.STRING_TEMPLATE_BEGIN) {
-      return parseStringTemplate(builder, tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN);
     }
 
     if (tokenType == JavaTokenType.LBRACE) {
@@ -698,9 +699,7 @@ public class OldExpressionParser {
     final PsiBuilder.Marker template = builder.mark();
     IElementType tokenType;
     do {
-      final PsiBuilder.Marker literal = builder.mark();
       builder.advanceLexer();
-      literal.done(JavaElementType.LITERAL_EXPRESSION);
       tokenType = builder.getTokenType();
       if (textBlock
           ? tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_MID || tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_END
@@ -716,9 +715,7 @@ public class OldExpressionParser {
       builder.error(JavaPsiBundle.message("expected.template.fragment"));
     }
     else {
-      final PsiBuilder.Marker literal = builder.mark();
       builder.advanceLexer();
-      literal.done(JavaElementType.LITERAL_EXPRESSION);
     }
     template.done(JavaElementType.TEMPLATE);
     return template;
