@@ -1044,11 +1044,11 @@ abstract class AbstractYamlMultilineInjectionTest(val async: Boolean) : BasePlat
       for (i in 0..size) {
         myFixture.type("newkey$i: val$i")
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
-        waitForYamlCoroutines()
       }
+      waitForYamlCoroutines()
     }.attempts(1)
       .assertTiming()
-    waitForYamlCoroutines()
+
     myInjectionFixture.assertInjectedContent("""root:
     ${(0..half).map { i -> "|  key$i: val$i" }.joinToString("\n")}
     ${(0..size).map { i -> "|  newkey$i: val$i" }.joinToString("\n")}
