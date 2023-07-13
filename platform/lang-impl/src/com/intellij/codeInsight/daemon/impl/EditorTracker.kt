@@ -235,7 +235,6 @@ open class EditorTracker(@JvmField protected val project: Project) : Disposable 
   }
 }
 
-
 interface EditorTrackerListener : EventListener {
   companion object {
     @Topic.ProjectLevel

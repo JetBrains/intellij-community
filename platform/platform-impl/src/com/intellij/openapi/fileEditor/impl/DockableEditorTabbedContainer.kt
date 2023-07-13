@@ -30,7 +30,10 @@ import com.intellij.ui.tabs.impl.TabLayout
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.Activatable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DisposableHandle
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import org.intellij.lang.annotations.MagicConstant
 import org.jdom.Element
 import java.awt.Component
@@ -49,7 +52,7 @@ class DockableEditorTabbedContainer internal constructor(
   internal val splitters: EditorsSplitters,
   private val disposeWhenEmpty: Boolean,
   private val coroutineScope: CoroutineScope,
-) : DockContainer.Persistent, Activatable, Disposable {
+) : DockContainer.Persistent, Activatable {
   private val listeners = CopyOnWriteArraySet<DockContainer.Listener>()
   private var currentOver: JBTabs? = null
   private var currentOverImg: Image? = null
@@ -57,10 +60,6 @@ class DockableEditorTabbedContainer internal constructor(
   private var currentPainter: AbstractPainter? = null
   private var glassPaneListenerDisposable: DisposableHandle? = null
   private var wasEverShown = false
-
-  override fun dispose() {
-    coroutineScope.cancel()
-  }
 
   override fun getDockContainerType(): String = DockableEditorContainerFactory.TYPE
 

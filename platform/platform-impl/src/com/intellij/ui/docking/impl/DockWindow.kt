@@ -31,7 +31,6 @@ import com.intellij.util.childScope
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import java.awt.BorderLayout
 import java.awt.Window
 import java.awt.event.KeyEvent
@@ -47,8 +46,11 @@ internal class DockWindow(
   private var container: DockContainer,
   isDialog: Boolean,
   val supportReopen: Boolean,
-  private val coroutineScope: CoroutineScope,
-) : FrameWrapper(project = project, dimensionKey = dimensionKey ?: "dock-window-$id", isDialog = isDialog) {
+  coroutineScope: CoroutineScope,
+) : FrameWrapper(project = project,
+                 dimensionKey = dimensionKey ?: "dock-window-$id",
+                 isDialog = isDialog,
+                 coroutineScope = coroutineScope) {
   var northPanelAvailable: Boolean = false
   private val northPanel = VerticalBox()
   private val northExtensions = LinkedHashMap<String, JComponent>()
@@ -66,9 +68,9 @@ internal class DockWindow(
       if (mainStatusBar != null) {
         val frame = getFrame()
         if (frame is IdeFrame) {
-          statusBar = mainStatusBar.createChild(coroutineScope, frame) {
+          statusBar = mainStatusBar.createChild(coroutineScope = coroutineScope.childScope(), frame = frame, editorProvider = {
             (container as? DockableEditorTabbedContainer)?.splitters?.currentWindow?.selectedComposite?.selectedWithProvider?.fileEditor
-          }
+          })
         }
       }
     }
@@ -87,7 +89,7 @@ internal class DockWindow(
                                                      dockManager.stopCurrentDragSession()
                                                    }
                                                    false
-                                                 }, this)
+                                                 }, coroutineScope)
     container.addListener(object : DockContainer.Listener {
       override fun contentRemoved(key: Any) {
         dockManager.ready.doWhenDone(Runnable(::closeIfEmpty))
@@ -115,7 +117,7 @@ internal class DockWindow(
       buttonManager = ToolWindowPaneOldButtonManager(paneId)
     }
     val containerComponent = container.containerComponent
-    toolWindowPane = ToolWindowPane(frame = frame, coroutineScope = coroutineScope.childScope(), paneId = paneId,
+    toolWindowPane = ToolWindowPane(frame = frame, coroutineScope = coroutineScope!!.childScope(), paneId = paneId,
                                     buttonManager = buttonManager)
     val toolWindowManagerImpl = ToolWindowManager.getInstance(dockManager.project) as ToolWindowManagerImpl
     toolWindowManagerImpl.addToolWindowPane(toolWindowPane!!, this)
@@ -169,7 +171,7 @@ internal class DockWindow(
     }
     centerPanel.add(northPanel, BorderLayout.NORTH)
     northPanelAvailable = true
-    dockManager.project.messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, UISettingsListener { uiSettings ->
+    dockManager.project.messageBus.connect(coroutineScope!!).subscribe(UISettingsListener.TOPIC, UISettingsListener { uiSettings ->
       val visible = DockManagerImpl.isNorthPanelVisible(uiSettings)
       if (northPanel.isVisible != visible) {
         updateNorthPanel(visible)
@@ -218,7 +220,6 @@ internal class DockWindow(
       Disposer.dispose((container as Disposable))
     }
     northExtensions.clear()
-    coroutineScope.cancel()
   }
 
   override fun createJFrame(parent: IdeFrame): JFrame {

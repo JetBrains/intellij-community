@@ -102,7 +102,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     });
 
     myKeyProcessor = new KeyPostProcessor();
-    IdeEventQueue.getInstance().addPostprocessor(myKeyProcessor, null);
+    IdeEventQueue.getInstance().addPostprocessor(myKeyProcessor, (Disposable)null);
   }
 
   static final class MyActionTuner implements ActionConfigurationCustomizer {

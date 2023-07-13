@@ -656,7 +656,9 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
   private static @NotNull DockManagerImpl getDockManager() {
     if (myDockManager == null) {
-      myDockManager = new DockManagerImpl(ProjectManager.getInstance().getDefaultProject());
+      Project project = ProjectManager.getInstance().getDefaultProject();
+      //noinspection deprecation
+      myDockManager = new DockManagerImpl(project, project.getCoroutineScope());
     }
     return myDockManager;
   }

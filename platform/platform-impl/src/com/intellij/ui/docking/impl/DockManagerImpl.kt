@@ -51,7 +51,8 @@ import java.util.function.Predicate
 import javax.swing.*
 
 @State(name = "DockManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], getStateRequiresEdt = true)
-class DockManagerImpl(@JvmField internal val project: Project) : DockManager(), PersistentStateComponent<Element?> {
+class DockManagerImpl(@JvmField internal val project: Project, private val coroutineScope: CoroutineScope)
+  : DockManager(), PersistentStateComponent<Element> {
   private val factories = HashMap<String, DockContainerFactory>()
   private val containers = HashSet<DockContainer>()
   private val containerToWindow = HashMap<DockContainer, DockWindow>()
@@ -167,10 +168,9 @@ class DockManagerImpl(@JvmField internal val project: Project) : DockManager(), 
 
   override fun createDragSession(mouseEvent: MouseEvent, content: DockableContent<*>): DragSession {
     stopCurrentDragSession()
-    for (each in getAllContainers()) {
-      if (each.isEmpty && each.isDisposeWhenEmpty) {
-        val window = containerToWindow.get(each)
-        window?.setTransparent(true)
+    for (container in getAllContainers()) {
+      if (container.isEmpty && container.isDisposeWhenEmpty) {
+        containerToWindow.get(container)?.setTransparent(true)
       }
     }
     currentDragSession = MyDragSession(mouseEvent, content)
@@ -364,7 +364,10 @@ class DockManagerImpl(@JvmField internal val project: Project) : DockManager(), 
     val container = getFactory(content.dockContainerType)!!.createContainer(content)
     val canReopenWindow = content.presentation.getClientProperty(REOPEN_WINDOW)
     val reopenWindow = canReopenWindow == null || canReopenWindow
-    val window = createWindowFor(getWindowDimensionKey(content), null, container, reopenWindow)
+    val window = createWindowFor(dimensionKey = getWindowDimensionKey(content = content),
+                                 id = null,
+                                 container = container,
+                                 canReopenWindow = reopenWindow)
     val isNorthPanelAvailable = if (content is DockableEditor) content.isNorthPanelAvailable else isNorthPanelVisible(UISettings.getInstance())
     if (isNorthPanelAvailable) {
       window.setupNorthPanel()
@@ -427,8 +430,7 @@ class DockManagerImpl(@JvmField internal val project: Project) : DockManager(), 
   }
 
   private fun createWindowFor(dimensionKey: String?, id: String?, container: DockContainer, canReopenWindow: Boolean): DockWindow {
-    @Suppress("DEPRECATION")
-    val coroutineScope = project.coroutineScope.childScope()
+    val coroutineScope = coroutineScope.childScope()
     val window = DockWindow(dockManager = this,
                             coroutineScope = coroutineScope,
                             dimensionKey = dimensionKey,

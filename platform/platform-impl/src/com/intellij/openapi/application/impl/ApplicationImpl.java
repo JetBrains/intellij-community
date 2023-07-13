@@ -188,7 +188,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
         getLogger().error("AWT events are not allowed inside write action: " + e);
       }
       return true;
-    }, app);
+    }, app.getCoroutineScope());
 
     app.addApplicationListener(new ApplicationListener() {
       @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.Executor;
@@ -9,6 +9,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -41,7 +42,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   private static boolean ourDoubleCtrlRegistered;
 
-  static class ShortcutTracker implements ActionConfigurationCustomizer {
+  static final class ShortcutTracker implements ActionConfigurationCustomizer {
     @Override
     public void customize(@NotNull ActionManager actionManager) {
       initShortcutTracker();
@@ -60,7 +61,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         }
       }
       return false;
-    }, null);
+    }, (Disposable)null);
   }
 
   @Override
@@ -134,9 +135,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     });
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     return new ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       @Override
       protected void updateToolTipText() {
@@ -149,8 +149,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           .installOn(this);
       }
 
-      @Nullable
-      private String getShortcut() {
+      private static @Nullable String getShortcut() {
         if (ourDoubleCtrlRegistered) {
           return IdeBundle.message("double.ctrl.or.shift.shortcut",
                                    SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : "Ctrl"); //NON-NLS

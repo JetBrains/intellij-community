@@ -131,6 +131,7 @@ open class IdeStatusBarImpl internal constructor(
     }
   }
 
+  @RequiresEdt
   override fun createChild(coroutineScope: CoroutineScope, frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar {
     EDT.assertIsEdt()
     val bar = IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false, coroutineScope = coroutineScope)
@@ -158,7 +159,9 @@ open class IdeStatusBarImpl internal constructor(
   private val disposable = Disposer.newDisposable()
 
   init {
-    coroutineScope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      Disposer.dispose(disposable)
+    }
 
     layout = BorderLayout()
     isOpaque = true

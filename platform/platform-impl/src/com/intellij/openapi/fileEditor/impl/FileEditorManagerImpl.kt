@@ -144,7 +144,7 @@ open class FileEditorManagerImpl(
   internal val initJob: Job
 
   private val dockable = lazy {
-    DockableEditorTabbedContainer(splitters = mainSplitters, disposeWhenEmpty = false, coroutineScope = coroutineScope)
+    DockableEditorTabbedContainer(splitters = mainSplitters, disposeWhenEmpty = false, coroutineScope = coroutineScope.childScope())
   }
 
   private val selectionHistory = SelectionHistory()
@@ -411,10 +411,6 @@ open class FileEditorManagerImpl(
       coroutineScope.cancel()
     }
     finally {
-      if (dockable.isInitialized()) {
-        Disposer.dispose(dockable.value)
-      }
-
       for (composite in openedComposites) {
         Disposer.dispose(composite)
       }
@@ -463,7 +459,7 @@ open class FileEditorManagerImpl(
     if (contentFactory != null) {
       return
     }
-    contentFactory = DockableEditorContainerFactory(this)
+    contentFactory = DockableEditorContainerFactory(fileEditorManager = this, coroutineScope = coroutineScope.childScope())
     DockManager.getInstance(project).register(DockableEditorContainerFactory.TYPE, contentFactory!!, this)
   }
 

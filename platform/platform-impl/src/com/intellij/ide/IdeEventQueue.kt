@@ -278,6 +278,13 @@ class IdeEventQueue private constructor() : EventQueue() {
     _addProcessor(dispatcher, parent, postProcessors)
   }
 
+  fun addPostprocessor(dispatcher: EventDispatcher, coroutineScope: CoroutineScope) {
+    postProcessors.add(dispatcher)
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      postProcessors.remove(dispatcher)
+    }
+  }
+
   fun removePostprocessor(dispatcher: EventDispatcher) {
     postProcessors.remove(dispatcher)
   }
@@ -899,7 +906,6 @@ typealias PostEventHook = (event: AWTEvent) -> Boolean
 
 private val DISPATCHER_EP = ExtensionPointName<IdeEventQueue.EventDispatcher>("com.intellij.ideEventQueueDispatcher")
 
-@Suppress("ConstPropertyName")
 private const val defaultEventWithWrite = true
 
 private val isSkipMetaPressOnLinux = java.lang.Boolean.getBoolean("keymap.skip.meta.press.on.linux")
@@ -999,7 +1005,7 @@ private fun mapEvent(e: AWTEvent): AWTEvent {
 
 private fun mapXWindowMouseEvent(src: MouseEvent): AWTEvent {
   if (src.button < 6) {
-    // Convert these events(buttons 4&5 in are produced by touchpad, they must be converted to horizontal scrolling events
+    // Convert these events (buttons 4&5 in are produced by touchpad, they must be converted to horizontal scrolling events
     @Suppress("DEPRECATION")
     return MouseWheelEvent(src.component, MouseEvent.MOUSE_WHEEL, src.getWhen(),
                            src.modifiers or InputEvent.SHIFT_DOWN_MASK, src.x, src.y,

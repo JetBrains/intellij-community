@@ -32,8 +32,7 @@ import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.childScope
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -49,7 +48,8 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
                                                   @param:NonNls protected open val dimensionKey: String? = null,
                                                   private val isDialog: Boolean = false,
                                                   @NlsContexts.DialogTitle var title: String = "",
-                                                  open var component: JComponent? = null) : Disposable, DataProvider {
+                                                  open var component: JComponent? = null,
+                                                  @JvmField protected val coroutineScope: CoroutineScope? = null) : Disposable, DataProvider {
   open var preferredFocusedComponent: JComponent? = null
   private var images: List<Image> = emptyList()
   private var isCloseOnEsc = false
@@ -66,8 +66,14 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
 
   init {
     if (project != null) {
-      @Suppress("LeakingThis")
-      ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      val connection = if (coroutineScope == null) {
+        @Suppress("LeakingThis")
+        ApplicationManager.getApplication().messageBus.connect(this)
+      }
+      else {
+        ApplicationManager.getApplication().messageBus.connect(coroutineScope)
+      }
+      connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
         override fun projectClosing(project: Project) {
           if (project === this@FrameWrapper.project) {
             close()
@@ -107,7 +113,7 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
         rootPane = frame.rootPane,
         handlerProvider = { FullScreenSupport.NEW.apply("com.intellij.ui.mac.MacFullScreenSupport") },
         onDispose = { runnable ->
-          Disposer.register(this, Disposable { runnable.run() })
+          executeOnDispose { runnable.run() }
         },
       )
     }
@@ -124,9 +130,9 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
       }
     }
     frame.addWindowListener(windowListener)
-    Disposer.register(this, Disposable {
+    executeOnDispose {
       frame.removeWindowListener(windowListener)
-    })
+    }
 
     if (Registry.`is`("ide.perProjectModality", false)) {
       frame.isAlwaysOnTop = true
@@ -165,6 +171,19 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
     }
   }
 
+  private fun executeOnDispose(task: () -> Unit) {
+    if (coroutineScope == null) {
+      Disposer.register(this, Disposable {
+        task()
+      })
+    }
+    else {
+      coroutineScope.coroutineContext.job.invokeOnCompletion {
+        task()
+      }
+    }
+  }
+
   fun show(restoreBounds: Boolean) {
     createContents()
 
@@ -199,6 +218,8 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
   }
 
   override fun dispose() {
+    coroutineScope?.cancel()
+
     if (isDisposed) {
       return
     }
