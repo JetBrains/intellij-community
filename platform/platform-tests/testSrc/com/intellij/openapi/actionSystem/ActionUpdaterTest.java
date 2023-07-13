@@ -5,62 +5,79 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class ActionUpdaterTest extends LightPlatformTestCase {
   public void testActionGroupCanBePerformed() {
-    CanBePerformedGroup canBePerformedGroup = new CanBePerformedGroup(true, true);
-    DefaultActionGroup popupGroup = new PopupGroup(canBePerformedGroup);
+    ActionGroup canBePerformedGroup = newCanBePerformedGroup(true, true);
+    ActionGroup popupGroup = newPopupGroup(canBePerformedGroup);
     ActionGroup actionGroup = new DefaultActionGroup(popupGroup);
     List<AnAction> actions = testExpandActionGroup(actionGroup);
     assertOrderedEquals(actions, popupGroup);
   }
 
   public void testActionGroupCanBePerformedButNotVisible() {
-    CanBePerformedGroup canBePerformedGroup = new CanBePerformedGroup(false, false);
-    ActionGroup actionGroup = new DefaultActionGroup(new PopupGroup(canBePerformedGroup));
+    ActionGroup canBePerformedGroup = newCanBePerformedGroup(false, false);
+    ActionGroup actionGroup = new DefaultActionGroup(newPopupGroup(canBePerformedGroup));
     List<AnAction> actions = testExpandActionGroup(actionGroup);
     assertEmpty(actions);
   }
 
   public void testActionGroupCanBePerformedButNotEnabled() {
-    CanBePerformedGroup canBePerformedGroup = new CanBePerformedGroup(true, false);
-    ActionGroup actionGroup = new DefaultCompactActionGroup(new PopupGroup(canBePerformedGroup));
+    ActionGroup canBePerformedGroup = newCanBePerformedGroup(true, false);
+    ActionGroup actionGroup = new DefaultCompactActionGroup(newPopupGroup(canBePerformedGroup));
     List<AnAction> actions = testExpandActionGroup(actionGroup);
     assertEmpty(actions);
   }
 
-  @NotNull
-  private List<AnAction> testExpandActionGroup(ActionGroup actionGroup) {
+  public void testWrappedActionGroupHasCorrectPresentation() {
+    String customizedText = "Customized!";
     PresentationFactory presentationFactory = new PresentationFactory();
+    ActionGroup popupGroup = new DefaultActionGroup(newCanBePerformedGroup(true, true)) {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setText(customizedText);
+      }
+    };
+    popupGroup.getTemplatePresentation().setPopupGroup(true);
+    List<AnAction> actions = testExpandActionGroup(new DefaultCompactActionGroup(popupGroup), presentationFactory);
+    AnAction actual = ContainerUtil.getOnlyItem(actions);
+    assertTrue("wrapper expected", actual instanceof ActionGroupWrapper wrapper && wrapper.getDelegate() == popupGroup);
+    Presentation actualPresentation = presentationFactory.getPresentation(actual);
+    assertSame(customizedText, actualPresentation.getText());
+    assertSame(actualPresentation, presentationFactory.getPresentation(popupGroup));
+  }
+
+  @NotNull
+  private List<AnAction> testExpandActionGroup(@NotNull ActionGroup actionGroup) {
+    return testExpandActionGroup(actionGroup, new PresentationFactory());
+  }
+
+  @NotNull
+  private List<AnAction> testExpandActionGroup(@NotNull ActionGroup actionGroup,
+                                               @NotNull PresentationFactory presentationFactory) {
     DataContext dataContext = SimpleDataContext.getProjectContext(getProject());
     return Utils.expandActionGroup(actionGroup, presentationFactory, dataContext, ActionPlaces.UNKNOWN);
   }
 
-  private static class PopupGroup extends DefaultActionGroup {
-    private PopupGroup(AnAction @NotNull ... actions) {
-      super(actions);
-      getTemplatePresentation().setPopupGroup(true);
-      getTemplatePresentation().setHideGroupIfEmpty(true);
-    }
+  private static ActionGroup newPopupGroup(AnAction @NotNull ... actions) {
+    DefaultActionGroup group = new DefaultActionGroup(actions);
+    group.getTemplatePresentation().setPopupGroup(true);
+    group.getTemplatePresentation().setHideGroupIfEmpty(true);
+    return group;
   }
 
-  private static class CanBePerformedGroup extends DefaultActionGroup {
-    private final boolean myVisible;
-    private final boolean myEnabled;
-
-    private CanBePerformedGroup(boolean visible, boolean enabled) {
-      myVisible = visible;
-      myEnabled = enabled;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setVisible(myVisible);
-      e.getPresentation().setEnabled(myEnabled);
-      e.getPresentation().setPerformGroup(true);
-    }
+  private static DefaultActionGroup newCanBePerformedGroup(boolean visible, boolean enabled) {
+    return new DefaultActionGroup() {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setVisible(visible);
+        e.getPresentation().setEnabled(enabled);
+        e.getPresentation().setPerformGroup(true);
+      }
+    };
   }
 }

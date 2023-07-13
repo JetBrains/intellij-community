@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.actionSystem.impl.PresentationFactory.TransparentWrapper;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public final class ActionGroupUtil {
 
   @ApiStatus.Experimental
   public static @NotNull ActionGroup forceHideDisabledChildren(@NotNull ActionGroup actionGroup) {
-    class Compact extends ActionGroupWrapper implements CompactActionGroup {
+    class Compact extends ActionGroupWrapper implements CompactActionGroup, TransparentWrapper {
 
       Compact(@NotNull ActionGroup action) {
         super(action);
@@ -56,7 +57,7 @@ public final class ActionGroupUtil {
 
   @ApiStatus.Experimental
   public static @NotNull ActionGroup forceRecursiveUpdateInBackground(@NotNull ActionGroup actionGroup) {
-    class MyGroup extends ActionGroup implements ActionUpdateThreadAware.Recursive {
+    class MyGroup extends ActionGroup implements ActionUpdateThreadAware.Recursive, TransparentWrapper {
       {
         setPopup(false);
       }
