@@ -22,15 +22,13 @@ class OfficialExamplesParsingTest {
   private val fixture: CodeInsightTestFixture
     get() = fixtureExtension.fixture
 
-  private val ignoredTests = listOf(
-    "gitgraph-14"
-  )
+  private val ignoredTests = listOf<String>()
 
   @TestTemplate
   @ExtendWith(OfficialDocumentationExamplesContext::class)
   fun testDiagram(path: Path) {
     Assumptions.assumeFalse { path.nameWithoutExtension in ignoredTests }
     fixture.configureByText(path.name, path.readText())
-    fixture.checkHighlighting(true, true, true, false)
+    fixture.checkHighlighting(true, true, true, true)
   }
 }
