@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.file
 
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
@@ -41,7 +44,7 @@ class GitLabMergeRequestsFilesControllerImpl(
   }
 
   override suspend fun closeAllFiles() {
-    withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+    withContext(Dispatchers.EDT) {
       if (project.isDisposed) return@withContext
       val fileManager = FileEditorManager.getInstance(project)
       writeAction {
