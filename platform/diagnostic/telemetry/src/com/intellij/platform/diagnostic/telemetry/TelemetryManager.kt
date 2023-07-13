@@ -1,14 +1,46 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-private val LOG = Logger.getInstance(TelemetryManager::class.java)
+private val instance = SynchronizedClearableLazy {
+  val log = logger<TelemetryManager>()
+  log.info("Initializing TelemetryTracer ...")
+
+  // GlobalOpenTelemetry.set(sdk) can be invoked only once
+  val instance = try {
+    getImplementationService(TelemetryManager::class.java)
+  }
+  catch (e: Throwable) {
+    log.info("Something unexpected happened during loading TelemetryTracer", e)
+    log.info("Falling back to loading default implementation of TelemetryTracer ${TelemetryDefaultManager::class.java.name}")
+    TelemetryDefaultManager()
+  }
+
+  log.info("Loaded telemetry tracer service ${instance::class.java.name}")
+  instance.sdk = instance.init().buildAndRegisterGlobal()
+  instance
+}
+
+private fun <T> getImplementationService(serviceClass: Class<T>): T {
+  val implementations: List<T> = ServiceLoader.load(serviceClass, serviceClass.classLoader).toList()
+  if (implementations.isEmpty()) {
+    throw ServiceConfigurationError("Implementation for $serviceClass not found")
+  }
+
+  if (implementations.size > 1) {
+    throw ServiceConfigurationError(
+      "More than one implementation for $serviceClass found: ${implementations.map { it!!::class.qualifiedName }}")
+  }
+
+  return implementations.single()
+}
 
 /**
  * See [Span](https://opentelemetry.io/docs/reference/specification),
@@ -48,71 +80,16 @@ interface TelemetryManager {
   fun getMeter(scopeName: String): Meter = sdk.getMeter(scopeName)
 
   fun addSpansExporters(vararg exporters: AsyncSpanExporter) {
-    oTelConfigurator.let {
-      val aggregatedSpansProcessor = it.aggregatedSpansProcessor
-      aggregatedSpansProcessor.addSpansExporters(*exporters)
-    }
+    oTelConfigurator.aggregatedSpansProcessor.addSpansExporters(*exporters)
   }
 
   fun addMetricsExporters(vararg exporters: MetricsExporterEntry) {
-    oTelConfigurator.let {
-      val aggregatedMetricsExporter = it.aggregatedMetricsExporter
-      aggregatedMetricsExporter.addMetricsExporters(*exporters)
-    }
+    oTelConfigurator.aggregatedMetricsExporter.addMetricsExporters(*exporters)
   }
 
   companion object {
-    private lateinit var instance: TelemetryManager
-    private val lock = Any()
-
-    private fun <T> getImplementationService(serviceClass: Class<T>): T {
-      val implementations: List<T> = ServiceLoader.load(serviceClass, serviceClass.classLoader).toList()
-      if (implementations.isEmpty()) {
-        throw ServiceConfigurationError("Implementation for $serviceClass not found")
-      }
-
-      if (implementations.size > 1) {
-        throw ServiceConfigurationError(
-          "More than one implementation for $serviceClass found: ${implementations.map { it!!::class.qualifiedName }}")
-      }
-
-      return implementations.single()
-    }
-
     @JvmStatic
-    fun getInstance(): TelemetryManager {
-      if (Companion::instance.isInitialized) {
-        return instance
-      }
-
-      synchronized(lock) {
-        if (Companion::instance.isInitialized) {
-          return instance
-        }
-
-        LOG.info("Initializing TelemetryTracer ...")
-
-        // GlobalOpenTelemetry.set(sdk) can be invoked only once
-        try {
-          instance = getImplementationService(TelemetryManager::class.java).apply {
-            LOG.info("Loaded telemetry tracer service ${this::class.java.name}")
-            sdk = init().buildAndRegisterGlobal()
-          }
-          return instance
-        }
-        catch (e: Throwable) {
-          LOG.info("Something unexpected happened during loading TelemetryTracer", e)
-          LOG.info("Falling back to loading default implementation of TelemetryTracer ${TelemetryDefaultManager::class.java.name}")
-
-          instance = TelemetryDefaultManager().apply {
-            LOG.info("Loaded telemetry tracer service ${this::class.java.name}")
-            sdk = init().buildAndRegisterGlobal()
-          }
-
-          return instance
-        }
-      }
-    }
+    fun getInstance(): TelemetryManager = instance.value
 
     @JvmStatic
     fun getMeter(scope: Scope): Meter = scope.meter()
