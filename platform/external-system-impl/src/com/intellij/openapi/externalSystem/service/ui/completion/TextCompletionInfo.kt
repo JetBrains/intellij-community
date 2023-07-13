@@ -8,4 +8,5 @@ import javax.swing.Icon
 data class TextCompletionInfo(
   val text: @NlsSafe String,
   val description: @Nls String? = null,
-  val icon: Icon? = null)
+  val icon: Icon? = null
+)

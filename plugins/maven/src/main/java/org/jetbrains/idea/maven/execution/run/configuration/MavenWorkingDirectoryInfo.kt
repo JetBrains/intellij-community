@@ -11,7 +11,10 @@ import org.jetbrains.idea.maven.execution.MavenPomFileChooserDescriptor
 import org.jetbrains.idea.maven.execution.RunnerBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
-class MavenWorkingDirectoryInfo(project: Project) : WorkingDirectoryInfo {
+class MavenWorkingDirectoryInfo(
+  private val project: Project
+) : WorkingDirectoryInfo {
+
   override val editorLabel: String = ExecutionBundle.message("run.configuration.working.directory.label")
 
   override val settingsName: String = ExecutionBundle.message("run.configuration.working.directory.name")
@@ -21,16 +24,16 @@ class MavenWorkingDirectoryInfo(project: Project) : WorkingDirectoryInfo {
 
   override val emptyFieldError: String = ExecutionBundle.message("run.configuration.working.directory.empty.error")
 
-  override val externalProjects: List<ExternalProject> by lazy {
-    ArrayList<ExternalProject>().apply {
-      val projectsManager = MavenProjectsManager.getInstance(project)
-      for (mavenProject in projectsManager.projects) {
-        val module = projectsManager.findModule(mavenProject)
-        if (module != null) {
-          val path = FileUtil.toCanonicalPath(mavenProject.directory)
-          add(ExternalProject(module.name, path))
-        }
+  override fun collectExternalProjects(): List<ExternalProject> {
+    val externalProjects = ArrayList<ExternalProject>()
+    val projectsManager = MavenProjectsManager.getInstance(project)
+    for (mavenProject in projectsManager.projects) {
+      val module = projectsManager.findModule(mavenProject)
+      if (module != null) {
+        val path = FileUtil.toCanonicalPath(mavenProject.directory)
+        externalProjects.add(ExternalProject(module.name, path))
       }
     }
+    return externalProjects
   }
 }

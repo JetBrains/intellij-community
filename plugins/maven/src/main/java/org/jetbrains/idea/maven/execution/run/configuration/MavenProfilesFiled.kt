@@ -2,7 +2,10 @@
 package org.jetbrains.idea.maven.execution.run.configuration
 
 import com.intellij.execution.configurations.ParametersList
-import com.intellij.openapi.externalSystem.service.ui.completion.*
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfoRenderer
+import com.intellij.openapi.externalSystem.service.ui.completion.collector.TextCompletionCollector
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.transform
@@ -22,11 +25,12 @@ class MavenProfilesFiled(
 
   var profiles by textProperty.transform(::decodeProfiles, ::encodeProfiles)
 
-  override fun getCompletionVariants(): List<TextCompletionInfo> {
+  override val completionCollector = TextCompletionCollector.basic {
     val profiles = getProfiles(project, workingDirectoryField)
       .sortedWith(NaturalComparator.INSTANCE)
-    return profiles.map { TextCompletionInfo(it) } +
-           profiles.map { TextCompletionInfo("-$it") }
+    val profileNames = profiles.map { TextCompletionInfo(it) }
+    val profileOptionNames = profiles.map { TextCompletionInfo("-$it") }
+    return@basic profileNames + profileOptionNames
   }
 
   init {

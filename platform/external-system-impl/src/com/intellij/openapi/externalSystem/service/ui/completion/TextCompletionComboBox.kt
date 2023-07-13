@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.ui.completion
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.externalSystem.service.ui.completion.collector.TextCompletionCollector
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
@@ -27,8 +28,8 @@ class TextCompletionComboBox<T>(
   private val selectedItemProperty = AtomicProperty(converter.getItem(""))
   var selectedItem by selectedItemProperty
 
-  override fun getCompletionVariants(): List<T> {
-    return collectionModel.items
+  override val completionCollector = TextCompletionCollector.basic {
+    collectionModel.items
   }
 
   private fun getItem(text: String): T {

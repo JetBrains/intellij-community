@@ -53,7 +53,7 @@ fun <S> SettingsEditorFragmentContainer<S>.addCommandLineFragment(
   setCommandLine: S.(String) -> Unit
 ) = addSettingsEditorFragment(
   commandLineInfo,
-  { CommandLineField(project, commandLineInfo) },
+  { CommandLineField(project, commandLineInfo, it) },
   { it, c -> c.commandLine = it.getCommandLine() },
   { it, c -> it.setCommandLine(c.commandLine) },
 )
@@ -75,7 +75,7 @@ fun <S> SettingsEditorFragmentContainer<S>.addWorkingDirectoryFragment(
   setWorkingDirectory: S.(String) -> Unit
 ) = addLabeledSettingsEditorFragment(
   workingDirectoryInfo,
-  { WorkingDirectoryField(project, workingDirectoryInfo) },
+  { WorkingDirectoryField(project, workingDirectoryInfo, it) },
   { it, c -> it.getWorkingDirectory().let { p -> if (p.isNotBlank()) c.workingDirectory = p } },
   { it, c -> it.setWorkingDirectory(c.workingDirectory) }
 ).addValidation {

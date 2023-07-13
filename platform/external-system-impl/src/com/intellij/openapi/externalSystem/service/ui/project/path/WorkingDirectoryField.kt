@@ -1,18 +1,23 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.ui.project.path
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfoRenderer
+import com.intellij.openapi.externalSystem.service.ui.completion.collector.TextCompletionCollector
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.observable.util.whenMousePressed
 import com.intellij.openapi.observable.util.whenTextChanged
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.RecursionGuard
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -23,7 +28,8 @@ import javax.swing.text.Highlighter
 
 class WorkingDirectoryField(
   project: Project,
-  private val workingDirectoryInfo: WorkingDirectoryInfo
+  workingDirectoryInfo: WorkingDirectoryInfo,
+  parentDisposable: Disposable
 ) : TextCompletionField<TextCompletionInfo>(project) {
 
   private val propertyGraph = PropertyGraph(isBlockPropagation = false)
@@ -36,26 +42,33 @@ class WorkingDirectoryField(
   var projectName by projectNameProperty
 
   private var highlightTag: Any? = null
-  private val highlightRecursionGuard =
-    RecursionManager.createGuard<WorkingDirectoryField>(WorkingDirectoryField::class.java.name)
+  private val highlightRecursionGuard: RecursionGuard<WorkingDirectoryField> =
+    RecursionManager.createGuard(WorkingDirectoryField::class.java.name)
 
-  private val externalProjects = workingDirectoryInfo.externalProjects
+  private val externalProjectModificationTracker: ModificationTracker =
+    workingDirectoryInfo.externalProjectModificationTracker
 
-  override fun getCompletionVariants(): List<TextCompletionInfo> {
-    return when (mode) {
-      Mode.NAME -> {
-        externalProjects
-          .map { it.name }
-          .map { TextCompletionInfo(it) }
-      }
-      Mode.PATH -> {
-        val textToComplete = getTextToComplete()
-        val pathToComplete = getCanonicalPath(textToComplete, removeLastSlash = false)
-        externalProjects
-          .filter { it.path.startsWith(pathToComplete) }
-          .map { it.path.substring(pathToComplete.length) }
-          .map { textToComplete + FileUtil.toSystemDependentName(it) }
-          .map { TextCompletionInfo(it) }
+  private val externalProjects: List<ExternalProject> by lazy {
+    workingDirectoryInfo.collectExternalProjects()
+  }
+
+  override val completionCollector = TextCompletionCollector.async(externalProjectModificationTracker, parentDisposable) {
+    blockingContext {
+      when (mode) {
+        Mode.NAME -> {
+          externalProjects
+            .map { it.name }
+            .map { TextCompletionInfo(it) }
+        }
+        Mode.PATH -> {
+          val textToComplete = getTextToComplete()
+          val pathToComplete = getCanonicalPath(textToComplete, removeLastSlash = false)
+          externalProjects
+            .filter { it.path.startsWith(pathToComplete) }
+            .map { it.path.substring(pathToComplete.length) }
+            .map { textToComplete + FileUtil.toSystemDependentName(it) }
+            .map { TextCompletionInfo(it) }
+        }
       }
     }
   }
