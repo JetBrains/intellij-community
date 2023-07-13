@@ -48,7 +48,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     accountVm: GitLabAccountViewModel,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   ): JComponent {
-    return Wrapper().apply {
+    return Wrapper(LoadingLabel()).apply {
       isOpaque = false
       background = UIUtil.getListBackground()
 
