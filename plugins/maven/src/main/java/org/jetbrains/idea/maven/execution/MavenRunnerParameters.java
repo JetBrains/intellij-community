@@ -173,7 +173,13 @@ public final class MavenRunnerParameters implements Cloneable {
   }
 
   public void setMultimoduleDir(@Nullable String multimoduleDir) {
-    myMultimoduleDir = multimoduleDir;
+    if (StringUtil.isEmptyOrSpaces(multimoduleDir)) {
+      myMultimoduleDir = null;
+    }
+    else {
+      myMultimoduleDir = multimoduleDir;
+    }
+
   }
 
   public List<String> getGoals() {

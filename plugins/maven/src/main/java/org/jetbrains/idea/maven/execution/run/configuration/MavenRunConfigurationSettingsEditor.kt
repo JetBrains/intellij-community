@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ui.distribution.DistributionComboBox
 import com.intellij.openapi.roots.ui.distribution.FileChooserInfo
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.getCanonicalPath
+import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.ActionLink
@@ -568,18 +569,21 @@ class MavenRunConfigurationSettingsEditor(
     ).modifyLabeledComponentSize { columns(10) }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMultimoduleDirFragment() =
-    addRemovableLabeledTextSettingsEditorFragment(
-      JBTextField(),
-      object : LabeledSettingsFragmentInfo {
+    addPathFragment(
+      project,
+      object : PathFragmentInfo {
         override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.label")
         override val settingsId: String = "maven.multimoduledir.fragment"
         override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.name")
         override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
         override val settingsHint: String? = null
         override val settingsActionHint: String = MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.tooltip")
+        override val fileChooserTitle: String = MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.title")
+        override val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
       },
-      { runnerParameters.multimoduleDir },
-      { runnerParameters.multimoduleDir = it },
+      { runnerParameters.multimoduleDir?.let(::getPresentablePath) ?: "" },
+      { runnerParameters.multimoduleDir = getCanonicalPath(it).trim() },
       { MavenServerUtil.findMavenBasedir(runnerParameters.workingDirFile).canonicalPath }
     )
 }
