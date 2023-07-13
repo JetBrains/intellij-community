@@ -5,6 +5,7 @@ import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.ID
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
+import org.jetbrains.kotlin.idea.klib.FileWithMetadata
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.name.FqName
@@ -22,7 +23,7 @@ class KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex : NameByPackageS
 
     override fun getName(): ID<FqName, List<Name>> = NAME
 
-    override fun getVersion(): Int = 2
+    override fun getVersion(): Int = 3
 
     override fun getDeclarationNamesByKtFile(ktFile: KtFile): List<Name> = buildList {
         for (declaration in ktFile.declarations) {
@@ -65,5 +66,20 @@ class KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex : NameByPackageS
         }
 
         return mapOf(builtins.packageFqName to names.distinct())
+    }
+
+    override fun getDeclarationNamesByKnm(kotlinNativeMetadata: FileWithMetadata.Compatible): List<Name> {
+        val nameResolver = kotlinNativeMetadata.nameResolver
+        val names = buildList {
+            kotlinNativeMetadata.classesToDecompile.mapTo(this) { pbClass ->
+                val classId = nameResolver.getClassId(pbClass.fqName)
+                classId.shortClassName
+            }
+            kotlinNativeMetadata.proto.`package`.typeAliasOrBuilderList.mapTo(this) { pbTypeAlias ->
+                nameResolver.getName(pbTypeAlias.name)
+            }
+        }
+
+        return names
     }
 }
