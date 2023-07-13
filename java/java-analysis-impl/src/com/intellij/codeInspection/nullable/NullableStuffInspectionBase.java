@@ -928,16 +928,17 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                                 PsiParameter parameter) {
     if (!REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER || !holder.isOnTheFly()) return;
 
-    PsiElement elementToHighlight;
-    if (DfaPsiUtil.getTypeNullability(parameter.getType()) == Nullability.NOT_NULL) {
-      elementToHighlight = parameter.getNameIdentifier();
+    PsiElement elementToHighlight = null;
+    NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(parameter);
+    if (info != null && !info.isInferred()) {
+      if (info.getNullability() == Nullability.NOT_NULL) {
+        PsiAnnotation notNullAnnotation = info.getAnnotation();
+        boolean physical = PsiTreeUtil.isAncestor(parameter, notNullAnnotation, true);
+        elementToHighlight = physical ? notNullAnnotation : parameter.getNameIdentifier();
+      }
     }
-    else {
-      NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(parameter);
-      if (info == null || info.getNullability() != Nullability.NOT_NULL || info.isInferred()) return;
-      PsiAnnotation notNullAnnotation = info.getAnnotation();
-      boolean physical = PsiTreeUtil.isAncestor(parameter, notNullAnnotation, true);
-      elementToHighlight = physical ? notNullAnnotation : parameter.getNameIdentifier();
+    else if (DfaPsiUtil.getTypeNullability(parameter.getType()) == Nullability.NOT_NULL) {
+      elementToHighlight = parameter.getNameIdentifier();
     }
     if (elementToHighlight == null || !JavaNullMethodArgumentUtil.hasNullArgument(method, parameterIdx)) return;
 
