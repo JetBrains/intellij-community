@@ -154,8 +154,8 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
   }
 
   private fun areElementsEquivalent(pattern: PsiElement?, candidate: PsiElement?): Boolean {
-    val manager = pattern?.manager ?: return false
-    return manager.areElementsEquivalent(getElementInPhysicalFile(pattern) ?: pattern, candidate)
+    if (pattern?.isValid != true || candidate?.isValid != true) return false
+    return pattern.manager.areElementsEquivalent(getElementInPhysicalFile(pattern) ?: pattern, candidate)
   }
 
   private fun canBeReplaced(pattern: PsiElement, candidate: PsiElement): Boolean {
