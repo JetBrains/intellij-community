@@ -4,6 +4,7 @@ package com.intellij.lang.impl
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 import java.util.regex.Pattern
+import kotlin.math.max
 import kotlin.streams.asSequence
 
 class PsiBuilderDiagnosticsImpl(val collectTraces: Boolean = false, ignoreMatching: Set<String> = emptySet()) : PsiBuilderDiagnostics {
@@ -22,9 +23,15 @@ class PsiBuilderDiagnosticsImpl(val collectTraces: Boolean = false, ignoreMatchi
   override fun toString(): String {
     var totalRollbacks = 0
     var totalRolledback = 0
+    var nonEmptyRollbacks = 0
     rollbacks.forEach {
-      totalRollbacks += it.value.get()
-      totalRolledback += it.key * it.value.get()
+      val rollbacks = it.value.get()
+      totalRollbacks += rollbacks
+      val length = it.key
+      totalRolledback += length * rollbacks
+      if (length > 0) {
+        nonEmptyRollbacks += rollbacks
+      }
     }
     var lexemeCount = 0
     var builders = 0
@@ -40,22 +47,36 @@ class PsiBuilderDiagnosticsImpl(val collectTraces: Boolean = false, ignoreMatchi
         val length = it.key
         val rollbacks = it.value.get()
         val tokensRolled = length * rollbacks
-        "$length;$rollbacks;$tokensRolled;" +
-        "${if (lexemeCount == 0) "n/a" else tokensRolled * 100 / lexemeCount}%;" +
-        "${if (totalRollbacks == 0) "n/a" else rollbacks * 100 / totalRollbacks}%;" +
-        "${if (totalRolledback == 0) "n/a" else tokensRolled * 100 / totalRolledback}%"
+        listOf("$length;$rollbacks;$tokensRolled",
+               percent(tokensRolled, lexemeCount),
+               percent(rollbacks, totalRollbacks),
+               percent(tokensRolled, totalRolledback)).joinToString(";")
       }
 
     val rollbackSources = traces.entries.asSequence()
       .sortedBy { entry -> -entry.value.tokens }
-      .joinToString("\n") { entry -> "${entry.key};${entry.value.rollbacks};${entry.value.tokens}" }
+      .joinToString("\n") { entry ->
+        val entryRollbacks = entry.value.rollbacks
+        val entryTokens = entry.value.tokens
+        val entryNonEmptyRollbacks = entry.value.nonEmptyRollbacks
+        val entryAvgRollback = avg(entryTokens, entryNonEmptyRollbacks)
+        val entryPercentRolled = percent(entryTokens, totalRolledback)
+        val entryMaxRollback = entry.value.maxTokens
+        val invocationPoint = entry.key.toString()
+          .replace(Regex("^((?:\\w+\\.(?=\\w+\\.))++)")) { match ->
+            match.groupValues[0].split(".").joinToString(".") { chunk -> if (chunk.isEmpty()) "" else chunk[0].toString() }
+          }
+        "$invocationPoint;$entryRollbacks;$entryNonEmptyRollbacks;$entryTokens;$entryPercentRolled;$entryAvgRollback;$entryMaxRollback"
+      }
 
     return """Summary:
 
-          Passes: $builders
-    Tokens count: $lexemeCount
- Total rollbacks: $totalRollbacks
-     Rolled back: $totalRolledback (${totalRolledback * 100 / lexemeCount}%) tokens
+                Passes: $builders
+          Tokens count: $lexemeCount
+       Total rollbacks: $totalRollbacks
+   Non-empty rollbacks: $nonEmptyRollbacks
+           Rolled back: $totalRolledback (${percent(totalRolledback, lexemeCount)}) tokens
+AVG non-empty rollback: ${avg(totalRolledback, nonEmptyRollbacks)}
 
 Passes CSV data:
 
@@ -71,10 +92,22 @@ $rollbacks
 
 Rollback traces CSV stat:
 
-Invocation point;Rollbacks;Tokens
+Invocation point;Rollbacks;Non-Empty Rollbacks;Rolled Tokens;% of total rolled;AVG Non-Empty Rollback;MAX Rollback
 $rollbackSources
         """
   }
+
+  /**
+   * @return formatted average of [amount]/[count]
+   */
+  private fun avg(amount: Int, count: Int) =
+    if (count == 0) "" else String.format("%.03f", amount.toFloat() / count)
+
+  /**
+   * @return formatted percentage of one [part] in relation to [whole].
+   */
+  private fun percent(part: Int, whole: Int) =
+    if (whole == 0) "" else String.format("%.02f%%", part.toFloat() * 100 / whole)
 
   override fun registerPass(charLength: Int, tokensLength: Int) {
     passes += charLength to tokensLength
@@ -93,10 +126,17 @@ $rollbackSources
     }
   }
 
-  private data class StatEntry(var rollbacks: Int = 0, var tokens: Int = 0) {
+  private data class StatEntry(var rollbacks: Int = 0) {
+    var tokens: Int = 0
+    var nonEmptyRollbacks: Int = 0
+    var maxTokens = 0
     fun registerRollback(tokens: Int) {
       rollbacks++
       this.tokens += tokens
+      maxTokens = max(maxTokens, tokens)
+      if (tokens > 0) {
+        nonEmptyRollbacks++
+      }
     }
   }
 
