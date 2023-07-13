@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.serialization.SerializerExtensionProtocol
+import org.jetbrains.kotlin.serialization.deserialization.DeserializationConfiguration
 import org.jetbrains.kotlin.serialization.deserialization.FlexibleTypeDeserializer
 import org.jetbrains.kotlin.serialization.deserialization.getClassId
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -40,26 +41,28 @@ abstract class Fe10KlibMetadataDecompiler<out V : BinaryVersion>(
         serializerProtocol: SerializerExtensionProtocol,
         flexibleTypeDeserializer: FlexibleTypeDeserializer
     ): DecompiledText {
-        return decompiledText(
-            file,
-            serializerProtocol,
-            flexibleTypeDeserializer,
-            renderer
-        )
+        return decompiledText(file, serializerProtocol, flexibleTypeDeserializer, renderer)
     }
 }
 
-// This function is extracted for KotlinNativeMetadataStubBuilder, that's the difference from Big Kotlin.
+/**
+ * This function is extracted for [Fe10KlibMetadataDecompiler], [Fe10KlibMetadataStubBuilder] and [K2KlibMetadataDecompiler].
+ * TODO: K2 shouldn't use descriptor renderer for building decompiled text.
+ * Note that decompiled text is not used for building stubs in K2.
+ * That's why in K2 it is important to preserve declaration order during deserialization to not get PSI vs. stubs mismatch.
+ */
 internal fun decompiledText(
     file: FileWithMetadata.Compatible,
     serializerProtocol: SerializerExtensionProtocol,
     flexibleTypeDeserializer: FlexibleTypeDeserializer,
-    renderer: DescriptorRenderer
+    renderer: DescriptorRenderer,
+    deserializationConfiguration: DeserializationConfiguration = DeserializationConfiguration.Default
 ): DecompiledText {
     val packageFqName = file.packageFqName
     val resolver = KlibMetadataDeserializerForDecompiler(
         packageFqName, file.proto, file.nameResolver,
-        serializerProtocol, flexibleTypeDeserializer
+        serializerProtocol, flexibleTypeDeserializer,
+        deserializationConfiguration,
     )
     val declarations = arrayListOf<DeclarationDescriptor>()
     declarations.addAll(resolver.resolveDeclarationsInFacade(packageFqName))

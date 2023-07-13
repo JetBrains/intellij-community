@@ -26,7 +26,8 @@ class KlibMetadataDeserializerForDecompiler(
     private val proto: ProtoBuf.PackageFragment,
     private val nameResolver: NameResolver,
     serializerProtocol: SerializerExtensionProtocol,
-    flexibleTypeDeserializer: FlexibleTypeDeserializer
+    flexibleTypeDeserializer: FlexibleTypeDeserializer,
+    deserializationConfiguration: DeserializationConfiguration = DeserializationConfiguration.Default,
 ) : DeserializerForDecompilerBase(packageFqName) {
     override val builtIns: KotlinBuiltIns get() = DefaultBuiltIns.Instance
 
@@ -36,7 +37,7 @@ class KlibMetadataDeserializerForDecompiler(
         val notFoundClasses = NotFoundClasses(storageManager, moduleDescriptor)
 
         deserializationComponents = DeserializationComponents(
-            storageManager, moduleDescriptor, DeserializationConfiguration.Default,
+            storageManager, moduleDescriptor, deserializationConfiguration,
             KlibMetadataClassDataFinder(proto, nameResolver),
             AnnotationAndConstantLoaderImpl(moduleDescriptor, notFoundClasses, serializerProtocol), packageFragmentProvider,
             ResolveEverythingToKotlinAnyLocalClassifierResolver(builtIns), LoggingErrorReporter(LOG),

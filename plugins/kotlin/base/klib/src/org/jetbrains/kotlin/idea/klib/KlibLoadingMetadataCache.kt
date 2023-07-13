@@ -61,20 +61,36 @@ class KlibLoadingMetadataCache {
         }.value
     }
 
-    private fun isMetadataCompatible(libraryRoot: VirtualFile): Boolean {
-        val manifestFile = libraryRoot.findChild(KLIB_MANIFEST_FILE_NAME) ?: return false
+    fun getCachedPackageFragmentWithVersion(packageFragmentFile: VirtualFile): Pair<ProtoBuf.PackageFragment?, KlibMetadataVersion?> {
+        val packageFragment = getCachedPackageFragment(packageFragmentFile) ?: return null to null
+        val version = getCachedMetadataVersion(getKlibLibraryRootForPackageFragment(packageFragmentFile))
+        return packageFragment to version
+    }
+
+    private fun getCachedMetadataVersion(libraryRoot: VirtualFile): KlibMetadataVersion? {
+        val manifestFile = libraryRoot.findChild(KLIB_MANIFEST_FILE_NAME) ?: return null
 
         val metadataVersion = libraryMetadataVersionCache.computeIfAbsent(
             CacheKey(manifestFile)
         ) {
             CacheValue(computeLibraryMetadataVersion(manifestFile))
-        }.value ?: return false
+        }.value
+
+        return metadataVersion
+    }
+
+    private fun getKlibLibraryRootForPackageFragment(packageFragmentFile: VirtualFile): VirtualFile {
+        return packageFragmentFile.parent.parent.parent
+    }
+
+    private fun isMetadataCompatible(libraryRoot: VirtualFile): Boolean {
+        val metadataVersion = getCachedMetadataVersion(libraryRoot) ?: return false
 
         return metadataVersion.isCompatible()
     }
 
     private fun computePackageFragment(packageFragmentFile: VirtualFile): ProtoBuf.PackageFragment? {
-        if (!isMetadataCompatible(packageFragmentFile.parent.parent.parent))
+        if (!isMetadataCompatible(getKlibLibraryRootForPackageFragment(packageFragmentFile)))
             return null
 
         return try {

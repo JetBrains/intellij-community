@@ -15,7 +15,6 @@
     <lang.syntaxHighlighterFactory language="KND"
                                    implementationClass="org.jetbrains.kotlin.ide.konan.NativeDefinitionsSyntaxHighlighterFactory"/>
     <languageInjector implementation="org.jetbrains.kotlin.ide.konan.CLanguageInjector"/>
-    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.idea.klib.KotlinNativeMetadataDecompiler"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
