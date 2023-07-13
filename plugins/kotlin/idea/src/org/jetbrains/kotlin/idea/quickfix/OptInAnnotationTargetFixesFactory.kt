@@ -45,17 +45,20 @@ object OptInAnnotationWrongTargetFixesFactory : KotlinIntentionActionsFactory() 
             when {
                 annotatedElement is KtParameter && annotationUseSiteTarget != AnnotationUseSiteTarget.PROPERTY ->
                     result.add(
-                        MoveOptInRequirementFromValueParameterToPropertyFix(
+                        MoveOptInRequirementToPropertyFix(
+                            MoveOptInRequirementToPropertyFix.SourceType.VALUE_PARAMETER,
                             annotationEntry,
                             annotatedElement.createSmartPointer(),
-                            annotationClassId
+                            annotationClassId,
+                            AnnotationUseSiteTarget.PROPERTY
                         )
                     )
 
                 annotatedElement is KtProperty
                         && (annotatedElement.hasCustomGetter() || annotationUseSiteTarget == AnnotationUseSiteTarget.PROPERTY_GETTER) ->
                     result.add(
-                        MoveOptInRequirementFromGetterToPropertyFix(
+                        MoveOptInRequirementToPropertyFix(
+                            MoveOptInRequirementToPropertyFix.SourceType.GETTER,
                             annotationEntry,
                             annotatedElement.createSmartPointer(),
                             annotationClassId
@@ -68,62 +71,49 @@ object OptInAnnotationWrongTargetFixesFactory : KotlinIntentionActionsFactory() 
     }
 }
 
+
 /**
- * High priority, specialized version of [ReplaceAnnotationFix] for moving opt-in propagating
- * annotations from property getters to corresponding properties.
+ * Specialized version of [ReplaceAnnotationFix] for moving opt-in propagating
+ * annotations from value parameters of constructors or getter to corresponding properties.
  *
+ * @param type the annotation entry to move
  * @param annotationEntry the annotation entry to move
  * @param modifierListOwner the property whose getter is currently annotated
  * @param annotationClassId fully qualified annotation class id
+ * @param useSiteTarget the use site target of the annotation, or null if no explicit use site target is provided
  * @param existingReplacementAnnotationEntry the existing annotation to update (null by default)
  */
-private class MoveOptInRequirementFromGetterToPropertyFix(
+class MoveOptInRequirementToPropertyFix(
+    val type: SourceType,
     annotationEntry: KtAnnotationEntry,
     modifierListOwner: SmartPsiElementPointer<KtModifierListOwner>,
     annotationClassId: ClassId,
-    existingReplacementAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
+    useSiteTarget: AnnotationUseSiteTarget? = null,
+    existingReplacementAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null,
 ) : ReplaceAnnotationFix(
     annotationEntry,
     modifierListOwner,
     annotationClassId,
     argumentClassFqName = null,
-    useSiteTarget = null,
+    useSiteTarget,
     existingReplacementAnnotationEntry = existingReplacementAnnotationEntry
 ), HighPriorityAction {
+
+    enum class SourceType {
+        VALUE_PARAMETER,
+        GETTER
+    }
+
     override fun getText(): String {
-        return KotlinBundle.message(
-            "fix.opt_in.move.requirement.from.getter.to.property",
-            renderAnnotationText(renderUserSiteTarget = false)
-        )
+        val annotationText = renderAnnotationText(renderUserSiteTarget = false)
+        return when (type) {
+            SourceType.VALUE_PARAMETER -> KotlinBundle.message(
+                "fix.opt_in.move.requirement.from.value.parameter.to.property",
+                annotationText
+            )
+
+            SourceType.GETTER -> KotlinBundle.message("fix.opt_in.move.requirement.from.getter.to.property", annotationText)
+        }
     }
 }
 
-/**
- * High priority, specialized version of [ReplaceAnnotationFix] for moving opt-in propagating
- * annotations from value parameters of constructors to corresponding properties.
- *
- * @param annotationEntry the annotation entry to move
- * @param modifierListOwner the property whose getter is currently annotated
- * @param annotationClassId fully qualified annotation class id
- * @param existingReplacementAnnotationEntry the existing annotation to update (null by default)
- */
-private class MoveOptInRequirementFromValueParameterToPropertyFix(
-    annotationEntry: KtAnnotationEntry,
-    modifierListOwner: SmartPsiElementPointer<KtModifierListOwner>,
-    annotationClassId: ClassId,
-    existingReplacementAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-) : ReplaceAnnotationFix(
-    annotationEntry,
-    modifierListOwner,
-    annotationClassId,
-    argumentClassFqName = null,
-    useSiteTarget = AnnotationUseSiteTarget.PROPERTY,
-    existingReplacementAnnotationEntry = existingReplacementAnnotationEntry
-), HighPriorityAction {
-    override fun getText(): String {
-        return KotlinBundle.message(
-            "fix.opt_in.move.requirement.from.value.parameter.to.property",
-            renderAnnotationText(renderUserSiteTarget = false)
-        )
-    }
-}
