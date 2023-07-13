@@ -159,6 +159,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     LightweightHint hint = new LightweightHint(popupPanel);
     HintListener closeListener = __ -> Disposer.dispose(childDisposable);
     hint.addHintListener(closeListener);
+    hint.setForceLightweightPopup(true);
 
     int line = editor.getCaretModel().getLogicalPosition().line;
     Point point = HintManagerImpl.getHintPosition(hint, editor, new LogicalPosition(line, 0), HintManager.UNDER);
