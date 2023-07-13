@@ -7,7 +7,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.ui.*
-import com.intellij.ide.plugins.newui.HorizontalLayout
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
 import com.intellij.openapi.externalSystem.service.execution.configuration.fragments.*
 import com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorLabeledComponent.Companion.modifyLabeledComponentSize
@@ -172,7 +172,7 @@ class MavenRunConfigurationSettingsEditor(
       @Suppress("HardCodedStringLiteral") val trailingLabelText = labelText.substringAfter("</a>")
       checkBox = JCheckBox(leadingLabelText)
       checkBoxWithLink = JPanel().apply {
-        layout = HorizontalLayout(0)
+        layout = ListLayout.horizontal(0)
         add(checkBox)
         add(ActionLink(linkLabelText) {
           val showSettingsUtil = ShowSettingsUtil.getInstance()
