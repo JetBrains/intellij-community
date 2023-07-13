@@ -266,7 +266,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractKotlinFindUsagesWithLibraryFirTest> {
-            model("libraryUsages", pattern = Patterns.forRegex("""^(.+)\.0\.kt$"""))
+            model("libraryUsages", pattern = Patterns.forRegex("""^(.+)\.0\.(kt|java)$"""))
         }
 
         testClass<AbstractKotlinFindUsagesWithStdlibFirTest> {

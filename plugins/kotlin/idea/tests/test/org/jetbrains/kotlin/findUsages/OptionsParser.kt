@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.findUsages
 import com.intellij.find.findUsages.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightMethodForDecompiledDeclaration
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinClassFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesOptions
@@ -206,7 +207,7 @@ internal enum class OptionsParser {
 
         fun getParserByPsiElementClass(klass: Class<out PsiElement>): OptionsParser? {
             return when (klass) {
-                KtNamedFunction::class.java -> FUNCTION
+                KtNamedFunction::class.java, KtLightMethodForDecompiledDeclaration::class.java -> FUNCTION
                 KtPrimaryConstructor::class.java, KtSecondaryConstructor::class.java -> CONSTRUCTOR
                 KtProperty::class.java, KtParameter::class.java -> PROPERTY
                 KtClass::class.java -> CLASS

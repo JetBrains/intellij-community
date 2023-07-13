@@ -4,13 +4,26 @@ package org.jetbrains.kotlin.findUsages
 
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.idea.test.runAll
+import java.io.File
 
 abstract class AbstractKotlinFindUsagesWithLibraryTest : AbstractFindUsagesTest() {
-    private val mockLibraryFacility = MockLibraryFacility(
-        source = IDEA_TEST_DATA_DIR.resolve("findUsages/libraryUsages/_library")
-    )
+
+    open val isWithSourcesTestData: Boolean = true
+
+    private val mockLibraryFacility = createMockLibraryFacility()
+
+    private fun createMockLibraryFacility(): MockLibraryFacility {
+        val root: String? = if (isWithSourcesTestData) KotlinTestUtils.getTestsRoot(this::class.java) else null
+
+        return when {
+            root == null -> MockLibraryFacility(source = IDEA_TEST_DATA_DIR.resolve("findUsages/libraryUsages/_library"))
+            root.matches(".*(java|kotlin)Library".toRegex())  -> MockLibraryFacility(source = IDEA_TEST_DATA_DIR.resolve("findUsages/libraryUsages/_library"))
+            else -> MockLibraryFacility(source = File("$root/_library"))
+        }
+    }
 
     override fun setUp() {
         super.setUp()
@@ -23,4 +36,8 @@ abstract class AbstractKotlinFindUsagesWithLibraryTest : AbstractFindUsagesTest(
             ThrowableRunnable { super.tearDown() }
         )
     }
+
+    override val ignoreLog: Boolean
+        get() = true
+
 }
