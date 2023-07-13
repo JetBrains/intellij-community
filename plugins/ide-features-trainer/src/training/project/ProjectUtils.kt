@@ -327,7 +327,6 @@ object ProjectUtils {
         }
 
         if (modified) {
-          VfsUtil.markDirtyAndRefresh(false, true, true, root)
           PropertiesComponent.getInstance(project).setValue(LEARNING_PROJECT_MODIFICATION, System.currentTimeMillis().toString())
         }
         done.complete(true)
