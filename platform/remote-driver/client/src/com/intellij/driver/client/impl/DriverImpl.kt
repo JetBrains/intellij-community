@@ -341,4 +341,4 @@ internal interface Invoker : AutoCloseable {
   fun cleanup(sessionId: Int)
 }
 
-class DriverCallException(message: String, e: Throwable): RuntimeException(message, e)
+class DriverCallException(message: String, e: Throwable) : RuntimeException(message, e)
