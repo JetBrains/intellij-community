@@ -47,21 +47,12 @@ abstract class DeclarationAndUsagesLesson
         test { actions(it) }
       }
 
-      task("GotoDeclaration") {
-        text(LessonsBundle.message("declaration.and.usages.show.usages", action(it)))
-        trigger(it, { state() }) l@{ before, now ->
-          if (before == null || now == null) {
-            return@l false
-          }
-
-          val navigationElement = before.target.navigationElement
-          return@l navigationElement == now.target.navigationElement &&
-                   isInsidePsi(navigationElement, before.position) &&
-                   !isInsidePsi(navigationElement, now.position)
-        }
+      task("GotoDeclaration") { actionId ->
+        text(LessonsBundle.message("declaration.and.usages.show.usages", action(actionId)))
+        stateCheck { virtualFile.name.let { it == "DerivedClass1.java" || it == "DerivedClass2.java" } }
         restoreIfModifiedOrMoved()
         test {
-          actions(it)
+          actions(actionId)
           ideFrame {
             waitComponent(JBTable::class.java, "ShowUsagesTable")
             invokeActionViaShortcut("ENTER")
