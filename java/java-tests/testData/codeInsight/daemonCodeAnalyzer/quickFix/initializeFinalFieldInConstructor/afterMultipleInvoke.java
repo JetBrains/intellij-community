@@ -7,6 +7,6 @@ class Main {
   }
 
   private Main(int var) {
-      this.var = 0;
+      this.var = 0<caret>;
   }
-}<caret>
+}

@@ -82,7 +82,7 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
           fixes.add(QuickFixFactory.getInstance().createDeleteFix(annotation, JavaBundle.message("quickfix.text.remove.not.null.annotation")));
         }
         if (isOnTheFly) {
-          fixes.add(new InitializeFinalFieldInConstructorFix(field));
+          fixes.add(new InitializeFinalFieldInConstructorFix(field).asQuickFix());
           fixes.add(new AddVariableInitializerFix(field).asQuickFix());
         }
 

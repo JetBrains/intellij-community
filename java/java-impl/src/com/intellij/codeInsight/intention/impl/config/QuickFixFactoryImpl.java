@@ -606,7 +606,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createInitializeFinalFieldInConstructorFix(@NotNull PsiField field) {
-    return new InitializeFinalFieldInConstructorFix(field);
+    return new InitializeFinalFieldInConstructorFix(field).asIntention();
   }
 
   @NotNull
