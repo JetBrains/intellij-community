@@ -23,7 +23,7 @@ import javax.swing.JComponent
 import javax.swing.UIManager
 
 @ApiStatus.Internal
-val lightThemeDarkHeaderDisableFilter: () -> RGBImageFilter =  { UIUtil.GrayFilter(0, 0, 70) }
+val lightThemeDarkHeaderDisableFilter: () -> RGBImageFilter =  { UIUtil.GrayFilter(0, 0, 30) }
 
 fun getHeaderBackgroundColor(component: JComponent, state: Int): Color? {
   if (ProjectWindowCustomizerService.getInstance().isActive()) {
