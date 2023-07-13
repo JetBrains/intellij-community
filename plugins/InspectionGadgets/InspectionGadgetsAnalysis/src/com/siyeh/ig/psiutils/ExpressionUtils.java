@@ -1631,7 +1631,7 @@ public final class ExpressionUtils {
           return (PsiAssignmentExpression)((PsiExpressionStatement)block.addAfter(statement, declaration)).getExpression();
         }
         finally {
-          initializer = var.getInitializer();
+          initializer = ((PsiLocalVariable)declaration.getDeclaredElements()[0]).getInitializer();
           if (initializer != null) {
             initializer.delete();
           }
