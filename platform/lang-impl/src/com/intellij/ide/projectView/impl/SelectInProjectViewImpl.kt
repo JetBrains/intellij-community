@@ -24,19 +24,35 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtilCore
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import java.util.function.Supplier
 
 @Service
 internal class SelectInProjectViewImpl(
   private val project: Project,
-  private val coroutineScope: CoroutineScope,
+  coroutineScope: CoroutineScope,
 ) {
 
+  private val selectInRequests = MutableSharedFlow<suspend SelectInProjectViewImpl.() -> Unit>(
+    extraBufferCapacity = 1,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST,
+  )
+
+  init {
+    coroutineScope.launch(CoroutineName("collecting select in project view requests")) {
+      selectInRequests.collectLatest { it() }
+    }
+  }
+
   fun selectInCurrentTarget(fileEditor: FileEditor?, invokedManually: Boolean) {
-    coroutineScope.launch(CoroutineName("ProjectView.selectInCurrentTarget(invokedManually=$invokedManually,fileEditor=$fileEditor")) {
+    selectInRequests.tryEmit { doSelectInCurrentTarget(fileEditor, invokedManually) }
+  }
+
+  private suspend fun doSelectInCurrentTarget(fileEditor: FileEditor?, invokedManually: Boolean) {
       val editorsToCheck = if (fileEditor == null) allEditors() else listOf(fileEditor)
       selectInCurrentTarget(invokedManually, editorsToCheck)
-    }
   }
 
   private suspend fun selectInCurrentTarget(invokedManually: Boolean, editorsToCheck: List<FileEditor>) {
@@ -44,7 +60,7 @@ internal class SelectInProjectViewImpl(
       if (
         !invokedManually &&
         AdvancedSettings.getBoolean("project.view.do.not.autoscroll.to.libraries") &&
-        readAction { fileEditor.file?.let { file ->ProjectFileIndex.getInstance(project).isInLibrary(file) } == true }
+        readAction { fileEditor.file?.let { file -> ProjectFileIndex.getInstance(project).isInLibrary(file) } == true }
       ) {
         continue
       }
@@ -106,11 +122,30 @@ internal class SelectInProjectViewImpl(
     allowSubIdChange: Boolean,
     result: ActionCallback?,
   ) {
-    coroutineScope.launch(CoroutineName("ProjectView.ensureSelected(pane=$paneId,virtualFile=$virtualFile,focus=$requestFocus))")) {
+    selectInRequests.tryEmit {
+      try {
+        doEnsureSelected(paneId, virtualFile, elementSupplier, requestFocus, allowSubIdChange, result)
+      }
+      finally {
+        if (result?.isProcessed == false) { // exception, or coroutine cancelled
+          result.setRejected()
+        }
+      }
+    }
+  }
+
+  private suspend fun doEnsureSelected(
+    paneId: String,
+    virtualFile: VirtualFile?,
+    elementSupplier: Supplier<Any?>,
+    requestFocus: Boolean,
+    allowSubIdChange: Boolean,
+    result: ActionCallback?,
+  ) {
       val projectView = project.serviceOrNull<ProjectView>() as ProjectViewImpl?
       if (projectView == null) {
         result?.setRejected()
-        return@launch
+        return
       }
       val pane = if (requestFocus) null else projectView.getProjectViewPaneById(paneId)
       val target = if (pane == null) null else projectView.getProjectViewSelectInTarget(pane)
@@ -123,31 +158,32 @@ internal class SelectInProjectViewImpl(
             target.isSubIdSelectable(pane.subId, FileSelectInContext(project, virtualFile, null))
           }
         if (!isSelectableInCurrentSubId) {
-          return@launch
+          return
         }
       }
       val visibleAndSelectedUserObject = withContext(Dispatchers.EDT) {
         pane?.visibleAndSelectedUserObject
       }
+
       data class SelectionContext(
         val isAlreadyVisibleAndSelected: Boolean,
         val virtualFile: VirtualFile?,
       )
+
       val context = readAction {
         val elementToSelect = elementSupplier.get() ?: virtualFile ?: return@readAction null
         SelectionContext(
-visibleAndSelectedUserObject != null && visibleAndSelectedUserObject.canRepresent(elementToSelect),
-virtualFile ?: (elementToSelect as? PsiElement)?.virtualFile
+          visibleAndSelectedUserObject != null && visibleAndSelectedUserObject.canRepresent(elementToSelect),
+          virtualFile ?: (elementToSelect as? PsiElement)?.virtualFile
         )
       }
       if (context == null || context.isAlreadyVisibleAndSelected || context.virtualFile == null) {
         result?.setDone()
-        return@launch
+        return
       }
       withContext(Dispatchers.EDT) {
         projectView.select(elementSupplier, context.virtualFile, requestFocus, result)
       }
-    }
   }
 
 }
