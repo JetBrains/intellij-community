@@ -139,7 +139,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
       return value // todo better handle primitive lists
     }
 
-    return null
+    return value // let's hope we will be able to cast it
   }
 
   private fun serviceBridge(clazz: Class<*>): Any {

@@ -25,8 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -112,6 +111,26 @@ public class Invoker implements InvokerMBean {
         // todo handle OnDispatcher: Default or IO
         result = withSemantics(call, () -> invokeMethod(callTarget, instance, transformedArgs));
       }
+
+      Method targetMethod = callTarget.targetMethod();
+
+      if (Collection.class.isAssignableFrom(targetMethod.getReturnType())) {
+        Type returnType = targetMethod.getGenericReturnType();
+
+        if (returnType instanceof ParameterizedType) {
+          Type[] typeArguments = ((ParameterizedType)returnType).getActualTypeArguments();
+          if (typeArguments.length == 1 && typeArguments[0] instanceof Class<?> componentType) {
+            if (isPassByValue(componentType)) {
+              return new RemoteCallResult(result);
+            }
+          }
+        }
+      }
+      else if (targetMethod.getReturnType().isArray()) {
+        if (isPassByValue(targetMethod.getReturnType().getComponentType())) {
+          return new RemoteCallResult(result);
+        }
+      }
     }
 
     if (isPassByValue(result)) {
@@ -157,12 +176,13 @@ public class Invoker implements InvokerMBean {
       }
 
       if (result.getClass().isArray()) {
-        Object[] array = (Object[])result;
-
-        List<Ref> items = new ArrayList<>(array.length);
-        for (Object item : array) {
+        int length = Array.getLength(result);
+        List<Ref> items = new ArrayList<>(length);
+        for (int i = 0; i < length; i++) {
+          Object item = Array.get(result, i);
           items.add(session.putReference(item));
         }
+
         return new RemoteCallResult(new RefList(ref.id(), result.getClass().getName(), items));
       }
 

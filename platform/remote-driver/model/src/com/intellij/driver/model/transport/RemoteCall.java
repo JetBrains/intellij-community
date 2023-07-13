@@ -10,7 +10,6 @@ import java.io.Serializable;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collection;
 
 public abstract class RemoteCall implements Serializable {
   @Serial
@@ -74,6 +73,29 @@ public abstract class RemoteCall implements Serializable {
 
   public String getTimedSpan() {
     return timedSpan;
+  }
+
+  public static boolean isPassByValue(Class<?> clazz) {
+    return String.class.isAssignableFrom(clazz)
+           || Boolean.class.isAssignableFrom(clazz)
+           || boolean.class.isAssignableFrom(clazz)
+           || Integer.class.isAssignableFrom(clazz)
+           || int.class.isAssignableFrom(clazz)
+           || Long.class.isAssignableFrom(clazz)
+           || long.class.isAssignableFrom(clazz)
+           || Byte.class.isAssignableFrom(clazz)
+           || byte.class.isAssignableFrom(clazz)
+           || Short.class.isAssignableFrom(clazz)
+           || short.class.isAssignableFrom(clazz)
+           || Double.class.isAssignableFrom(clazz)
+           || double.class.isAssignableFrom(clazz)
+           || Float.class.isAssignableFrom(clazz)
+           || float.class.isAssignableFrom(clazz)
+           || LocalDate.class.isAssignableFrom(clazz)
+           || LocalDateTime.class.isAssignableFrom(clazz)
+           || Duration.class.isAssignableFrom(clazz)
+           || Point.class.isAssignableFrom(clazz)
+           || PassByValue.class.isAssignableFrom(clazz);
   }
 
   @Contract("null -> true")
