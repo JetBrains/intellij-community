@@ -20,6 +20,14 @@ class StringTemplateAsArgument {
     loggerLog4J.atInfo().<warning descr="String template as argument to 'log()' logging call">log</warning>( "variable1: ${variable1}")
   }
 
+
+  fun testException(){
+    var exception = RuntimeException()
+    loggerLog4J.info("exception: $exception")
+    val variable1 = 1
+    loggerLog4J.info("variable1: $variable1", exception)
+  }
+
   fun testLoggerSlf4J() {
     val variable1 = 1
     loggerSlf4J.info("variable1: {}", variable1)
@@ -28,7 +36,7 @@ class StringTemplateAsArgument {
     loggerSlf4J.<warning descr="String template as argument to 'info()' logging call">info</warning>("${getInt()}")
     loggerSlf4J.<warning descr="String template as argument to 'info()' logging call">info</warning>("variable1: ${variable1}")
     loggerSlf4J.<warning descr="String template as argument to 'info()' logging call">info</warning>("variable1: $variable1")
-    loggerSlf4J.<warning descr="String template as argument to 'info()' logging call">info</warning>("variable1: $variable1", RuntimeException())
+    loggerSlf4J.info("variable1: $variable1", RuntimeException())
     loggerSlf4J.<warning descr="String template as argument to 'info()' logging call">info</warning>("{} variable1: $variable1", 1, RuntimeException())
     loggerSlf4J.<warning descr="String template as argument to 'info()' logging call">info</warning>("{} variable1: $variable1 {}", 1, 2, RuntimeException())
     loggerSlf4J.<warning descr="String template as argument to 'info()' logging call">info</warning>("{} variable1: $variable1 {} {}", 1, 2, RuntimeException())
