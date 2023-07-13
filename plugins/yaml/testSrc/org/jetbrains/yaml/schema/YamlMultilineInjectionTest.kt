@@ -489,6 +489,7 @@ abstract class AbstractYamlMultilineInjectionTest(val async: Boolean) : BasePlat
     assertEquals("literal text should be", "root:\n", literalTextAtTheCaret)
     myInjectionFixture.assertInjectedContent("root:\n")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    waitForYamlCoroutines()
     myFixture.checkResult("""
       |myyaml: |
       |  root:
@@ -498,6 +499,7 @@ abstract class AbstractYamlMultilineInjectionTest(val async: Boolean) : BasePlat
     PsiDocumentManager.getInstance(project).commitDocument(myFixture.getDocument(myFixture.file))
     myFixture.type("abc:")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    waitForYamlCoroutines()
     myFixture.checkResult("""
       |myyaml: |
       |  root:
@@ -507,6 +509,7 @@ abstract class AbstractYamlMultilineInjectionTest(val async: Boolean) : BasePlat
     myInjectionFixture.assertInjectedContent("root:\n  abc:\n    \n")
     myFixture.type("def: 1")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    waitForYamlCoroutines()
     myFixture.checkResult("""
       |myyaml: |
       |  root:
@@ -528,6 +531,7 @@ abstract class AbstractYamlMultilineInjectionTest(val async: Boolean) : BasePlat
 
     myInjectionFixture.assertInjectedLangAtCaret("yaml")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    waitForYamlCoroutines()
     myFixture.checkResult("""
       |myyaml: |
       |  root:
