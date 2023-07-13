@@ -13,7 +13,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class MavenPluginCollector : ProjectUsagesCollector() {
 
-  private val mavenPluginId = group.registerVarargEvent("MAVEN_PLUGIN_ID",
+  private val mavenPluginId = group.registerVarargEvent("maven.plugins.used",
                                                         groupArtifactId, Companion.version, isExtension, hasConfiguration)
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
@@ -37,7 +37,7 @@ class MavenPluginCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("maven.plugins", 2)
+    private val GROUP = EventLogGroup("maven.plugins", 3)
 
     val groupArtifactId = EventFields.StringValidatedByCustomRule<MavenPluginCoordinatesWhitelistValidationRule>("group_artifact_id")
     val version = EventFields.StringValidatedByCustomRule<MavenPluginVersionAllowAllValidationRule>("version")
