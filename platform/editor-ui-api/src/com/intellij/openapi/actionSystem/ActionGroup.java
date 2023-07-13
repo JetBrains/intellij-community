@@ -153,9 +153,8 @@ public abstract class ActionGroup extends AnAction {
   /**
    * Allows the group to intercept and transform its expanded content.
    */
-  @ApiStatus.Experimental
   public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
-                                                   @NotNull UpdateSession updateSession) {
+                                                            @NotNull UpdateSession updateSession) {
     return Collections.unmodifiableList(visibleChildren);
   }
 
@@ -173,14 +172,14 @@ public abstract class ActionGroup extends AnAction {
   }
 
   /** @deprecated Use {@link Presentation#setHideGroupIfEmpty(boolean)} instead. */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @ApiStatus.NonExtendable
   public boolean hideIfNoVisibleChildren() {
     return getTemplatePresentation().isHideGroupIfEmpty();
   }
 
   /** @deprecated Use {@link Presentation#setDisableGroupIfEmpty(boolean)} instead. */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @ApiStatus.NonExtendable
   public boolean disableIfNoVisibleChildren() {
     return getTemplatePresentation().isDisableGroupIfEmpty();
