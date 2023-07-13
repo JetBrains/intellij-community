@@ -1196,7 +1196,9 @@ private suspend fun initProject(file: Path,
 
     val registerComponentActivity = createActivity(project) { "project ${StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX}" }
 
-    PROJECT_PATH.set(project, file)
+    if (!PROJECT_PATH.isIn(project)) {
+      PROJECT_PATH.set(project, file)
+    }
     project.registerComponents()
     registerComponentActivity?.end()
 
