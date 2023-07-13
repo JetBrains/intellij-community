@@ -73,9 +73,7 @@ public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElemen
 
   TokenSet INTEGER_LITERALS = TokenSet.create(INTEGER_LITERAL, LONG_LITERAL);
   TokenSet REAL_LITERALS = TokenSet.create(FLOAT_LITERAL, DOUBLE_LITERAL);
-  TokenSet STRING_LITERALS = TokenSet.create(STRING_LITERAL, TEXT_BLOCK_LITERAL,
-                                             TEXT_BLOCK_TEMPLATE_BEGIN, TEXT_BLOCK_TEMPLATE_MID, TEXT_BLOCK_TEMPLATE_END,
-                                             STRING_TEMPLATE_BEGIN, STRING_TEMPLATE_MID, STRING_TEMPLATE_END);
+  TokenSet STRING_LITERALS = TokenSet.create(STRING_LITERAL, TEXT_BLOCK_LITERAL);
   TokenSet TEXT_LITERALS = TokenSet.create(STRING_LITERAL, TEXT_BLOCK_LITERAL, CHARACTER_LITERAL);
 
   TokenSet STRING_TEMPLATE_FRAGMENTS =

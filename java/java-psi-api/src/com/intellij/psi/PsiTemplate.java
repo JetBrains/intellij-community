@@ -15,7 +15,7 @@ public interface PsiTemplate extends PsiExpression {
   /**
    * @return the fragments of this template.
    */
-  @NotNull List<@NotNull PsiLiteralExpression> getFragments();
+  @NotNull List<@NotNull PsiFragment> getFragments();
 
   /**
    * @return the embedded expression in this template;

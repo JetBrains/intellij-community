@@ -9,8 +9,4 @@ public interface PsiLiteralExpression extends PsiExpression, PsiLiteral {
   default boolean isTextBlock() {
     return false;
   }
-
-  default boolean isFragment() {
-    return false;
-  }
 }

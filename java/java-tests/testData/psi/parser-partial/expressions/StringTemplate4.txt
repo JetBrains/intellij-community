@@ -6,8 +6,7 @@ PsiJavaFile:StringTemplate4.java
       PsiIdentifier:STR('STR')
     PsiJavaToken:DOT('.')
     PsiTemplate
-      PsiLiteralExpression:"\{
-        PsiJavaToken:STRING_TEMPLATE_BEGIN('"\{')
+      PsiFragment:STRING_TEMPLATE_BEGIN('"\{')
       PsiWhiteSpace(' ')
       PsiParenthesizedExpression:(1)
         PsiJavaToken:LPARENTH('(')
@@ -15,11 +14,9 @@ PsiJavaFile:StringTemplate4.java
           PsiJavaToken:INTEGER_LITERAL('1')
         PsiJavaToken:RPARENTH(')')
       PsiWhiteSpace(' ')
-      PsiLiteralExpression:} \{
-        PsiJavaToken:STRING_TEMPLATE_MID('} \{')
+      PsiFragment:STRING_TEMPLATE_MID('} \{')
       PsiWhiteSpace(' ')
       PsiLiteralExpression:"!"
         PsiJavaToken:STRING_LITERAL('"!"')
       PsiWhiteSpace(' ')
-      PsiLiteralExpression:}"
-        PsiJavaToken:STRING_TEMPLATE_END('}"')
+      PsiFragment:STRING_TEMPLATE_END('}"')

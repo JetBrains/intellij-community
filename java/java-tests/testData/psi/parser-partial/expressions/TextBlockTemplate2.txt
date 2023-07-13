@@ -6,10 +6,7 @@ PsiJavaFile:TextBlockTemplate2.java
       PsiIdentifier:STR('STR')
     PsiJavaToken:DOT('.')
     PsiTemplate
-      PsiLiteralExpression:"""
-\{
-        PsiJavaToken:TEXT_BLOCK_TEMPLATE_BEGIN('"""\n\{')
+      PsiFragment:TEXT_BLOCK_TEMPLATE_BEGIN('"""\n\{')
       PsiExpression(empty)
         <empty list>
-      PsiLiteralExpression:}"""
-        PsiJavaToken:TEXT_BLOCK_TEMPLATE_END('}"""')
+      PsiFragment:TEXT_BLOCK_TEMPLATE_END('}"""')

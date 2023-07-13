@@ -26,9 +26,6 @@ public class PsiLiteralExpressionImpl
   implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost {
 
   private static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(ElementType.INTEGER_LITERALS, ElementType.REAL_LITERALS);
-  private static final TokenSet TEXT_BLOCK_LITERALS =
-    TokenSet.create(JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN, JavaTokenType.TEXT_BLOCK_TEMPLATE_MID, JavaTokenType.TEXT_BLOCK_TEMPLATE_END,
-                    JavaTokenType.TEXT_BLOCK_LITERAL);
 
   public PsiLiteralExpressionImpl(@NotNull PsiLiteralStub stub) {
     super(stub, JavaStubElementTypes.LITERAL_EXPRESSION);
@@ -76,12 +73,7 @@ public class PsiLiteralExpressionImpl
 
   @Override
   public boolean isTextBlock() {
-    return TEXT_BLOCK_LITERALS.contains(getLiteralElementType());
-  }
-
-  @Override
-  public boolean isFragment() {
-    return ElementType.STRING_TEMPLATE_FRAGMENTS.contains(getLiteralElementType());
+    return getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL;
   }
 
   public IElementType getLiteralElementType() {

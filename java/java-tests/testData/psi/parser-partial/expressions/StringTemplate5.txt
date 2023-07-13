@@ -6,12 +6,10 @@ PsiJavaFile:StringTemplate5.java
       PsiIdentifier:STR('STR')
     PsiJavaToken:DOT('.')
     PsiTemplate
-      PsiLiteralExpression:"\{
-        PsiJavaToken:STRING_TEMPLATE_BEGIN('"\{')
+      PsiFragment:STRING_TEMPLATE_BEGIN('"\{')
       PsiWhiteSpace(' ')
       PsiLiteralExpression:"""
 !"""
         PsiJavaToken:TEXT_BLOCK_LITERAL('"""\n!"""')
       PsiWhiteSpace(' ')
-      PsiLiteralExpression:}"
-        PsiJavaToken:STRING_TEMPLATE_END('}"')
+      PsiFragment:STRING_TEMPLATE_END('}"')
