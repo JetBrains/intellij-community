@@ -3,10 +3,10 @@
 
 package com.intellij.platform.diagnostic.telemetry.impl
 
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.runAndLogException
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRequestRetry
@@ -39,8 +39,11 @@ class OtlpSpanExporter(endpoint: String) : AsyncSpanExporter {
   private val traceUrl = "${(if (endpoint == "true") "http://127.0.0.1:4318/" else endpoint).removeSuffix("/")}/v1/traces"
 
   override suspend fun export(spans: Collection<SpanData>) {
-    //checking whether the spans are exported from rem dev backend
-    if (System.getProperty(OpenTelemetryUtils.RDCT_TRACING_DIAGNOSTIC_FLAG) != null) return
+    // checking whether the spans are exported from rem dev backend
+    if (System.getProperty(OpenTelemetryUtils.RDCT_TRACING_DIAGNOSTIC_FLAG) != null) {
+      return
+    }
+
     val item = TraceRequestMarshaler.create(spans)
     try {
       httpClient.post(traceUrl) {
@@ -53,17 +56,17 @@ class OtlpSpanExporter(endpoint: String) : AsyncSpanExporter {
       throw e
     }
     catch (e: Throwable) {
-      Logger.getInstance(OtlpSpanExporter::class.java).error("Failed to export opentelemetry spans (url=$traceUrl)", e)
+      thisLogger().error("Failed to export opentelemetry spans (url=$traceUrl)", e)
     }
   }
 
   suspend fun exportBackendData(receivedBytes: Collection<Byte>) {
-    Logger.getInstance(OtlpSpanExporter::class.java).runAndLogException {
+    runCatching {
       httpClient.post(traceUrl) {
         setBody(OutputStreamContent(contentType = Protobuf, contentLength = receivedBytes.size.toLong(), body = {
           this.write(receivedBytes.toByteArray())
         }))
       }
-    }
+    }.getOrLogException(thisLogger())
   }
 }
