@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
 import org.jetbrains.kotlin.js.translate.declaration.hasCustomGetter
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -24,7 +23,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  *
  * Annotations that indicate the opt-in requirement are forbidden in several use sites:
  * getters, value parameters, local variables. This factory generates quick fixes
- * to either remove the annotation or to replace it with an allowed annotation variant
+ * to replace it with an allowed annotation variant
  * (e.g., annotate a property instead of a getter or a value parameter).
  */
 object OptInAnnotationWrongTargetFixesFactory : KotlinIntentionActionsFactory() {
@@ -64,8 +63,6 @@ object OptInAnnotationWrongTargetFixesFactory : KotlinIntentionActionsFactory() 
             }
         }
 
-        // 'Remove annotation' action is the universal fallback
-        result.addAll(RemoveAnnotationFix.createQuickFix(diagnostic.psiElement))
         return result
     }
 }
