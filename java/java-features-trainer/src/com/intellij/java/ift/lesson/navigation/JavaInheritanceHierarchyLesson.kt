@@ -37,7 +37,7 @@ class JavaInheritanceHierarchyLesson
         (virtualFile.name == "DerivedClass1.java" || virtualFile.name == "DerivedClass2.java") && atDeclarationPosition()
       }
 
-      restoreAfterStateBecomeFalse {
+      restoreState(delayMillis = defaultRestoreDelay) {
         focusOwner is EditorComponentImpl
       }
 
