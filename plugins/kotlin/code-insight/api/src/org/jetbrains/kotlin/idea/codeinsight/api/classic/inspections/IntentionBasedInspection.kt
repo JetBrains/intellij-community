@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.*
@@ -139,9 +140,11 @@ abstract class IntentionBasedInspection<TElement : PsiElement> private construct
         val intention: SelfTargetingRangeIntention<TElement>,
         private val additionalChecker: (TElement, IntentionBasedInspection<TElement>) -> Boolean,
         targetElement: TElement
-    ) : LocalQuickFixOnPsiElement(targetElement), IntentionAction {
+    ) : LocalQuickFixOnPsiElement(targetElement), IntentionAction, IntentionActionDelegate {
 
         private val text = intention.text
+
+        override fun getDelegate(): IntentionAction = intention
 
         // store text into variable because intention instance is shared and may change its text later
         override fun getFamilyName() = intention.familyName
