@@ -267,8 +267,8 @@ open class IdeErrorsDialog internal constructor(
     val commentPanel = JPanel(BorderLayout())
     commentPanel.border = JBUI.Borders.emptyTop(5)
     commentPanel.add(scrollPane(myCommentArea, 0, 0), BorderLayout.CENTER)
-    val attachmentsPanel = JBSplitter(false, 0.3f).apply {
-      firstComponent = scrollPane(myAttachmentList, 150, 350)
+    val attachmentsPanel = JBSplitter(false, 0.2f).apply {
+      firstComponent = scrollPane(myAttachmentList, 100, 350)
       secondComponent = scrollPane(myAttachmentArea, 500, 350)
     }
     attachmentsPanel.border = JBUI.Borders.emptyTop(5)
