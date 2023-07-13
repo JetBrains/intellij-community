@@ -579,7 +579,7 @@
                  description="If true, then tree nodes will be expanded on single click, otherwise expand as usual JTree"/>
     <registryKey key="git.do.not.swap.merge.conflict.sides" defaultValue="false"
                  description="Do not inverse 'ours' and 'theirs' conflict sides during rebase"/>
-    <registryKey key="git.recent.checkout.branches.reflog.entries.max.count" defaultValue="5"
+    <registryKey key="git.recent.checkout.branches.reflog.entries.max.count" defaultValue="50"
                  restartRequired="true"
                  description="Amount of entry to process from Git reflog to parse recently checkout branches"/>
 
