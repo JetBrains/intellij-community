@@ -5,21 +5,19 @@ import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListe
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.progressStep
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -64,19 +62,22 @@ class BlackFormatterActionOnSave : ActionOnSave() {
       .map { Descriptor(it.first, it.second) }
 
     runCatching {
-      runBlockingModal(project, PyBundle.message("black.formatting.with.black")) {
-        var processedFiles = 0L
+      ProgressManager.getInstance().run(
+        object : Task.Backgroundable(project, PyBundle.message("black.formatting.with.black"), true) {
+          override fun run(indicator: ProgressIndicator) {
+            var processedFiles = 0L
 
-        descriptors.forEach { descriptor ->
-          processedFiles++
-          progressStep(processedFiles / descriptors.size.toDouble(),
-                       PyBundle.message("black.processing.file.name", descriptor.virtualFile.name)) {
-            val request = BlackFormattingRequest.File(descriptor.document.text, descriptor.virtualFile)
-            val response = executor.getBlackFormattingResponse(request, BlackFormatterExecutor.BLACK_DEFAULT_TIMEOUT)
-            applyChanges(project, descriptor, response)
+            descriptors.forEach { descriptor ->
+              processedFiles++
+              indicator.fraction = processedFiles / descriptors.size.toDouble()
+              indicator.text = PyBundle.message("black.processing.file.name", descriptor.virtualFile.name)
+              val request = BlackFormattingRequest.File(descriptor.document.text, descriptor.virtualFile)
+              val response = executor.getBlackFormattingResponse(request, BlackFormatterExecutor.BLACK_DEFAULT_TIMEOUT)
+              applyChanges(project, descriptor, response)
+            }
           }
         }
-      }
+      )
     }.onFailure { exception ->
       when (exception) {
         is CancellationException -> { /* ignore */ }
@@ -88,16 +89,11 @@ class BlackFormatterActionOnSave : ActionOnSave() {
     }
   }
 
-  private suspend fun applyChanges(project: Project, descriptor: Descriptor, response: BlackFormattingResponse) {
+  private fun applyChanges(project: Project, descriptor: Descriptor, response: BlackFormattingResponse) {
     when (response) {
       is BlackFormattingResponse.Success -> {
-        withContext(Dispatchers.EDT) {
-          WriteCommandAction
-            .runWriteCommandAction(project,
-                                   null,
-                                   null,
-                                   { descriptor.document.setText(response.formattedText) })
-        }
+        WriteCommandAction.writeCommandAction(project)
+          .run<RuntimeException> { descriptor.document.setText(response.formattedText) }
       }
       is BlackFormattingResponse.Failure -> {
         reportFailure(response.title, response.description, project)
