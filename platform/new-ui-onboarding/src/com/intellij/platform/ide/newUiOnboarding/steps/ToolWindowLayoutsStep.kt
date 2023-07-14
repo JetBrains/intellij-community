@@ -6,8 +6,11 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepData
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingUtil
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.awt.RelativePoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.awt.Point
 import java.net.URL
 
@@ -18,6 +21,16 @@ class ToolWindowLayoutsStep : NewUiOnboardingStep {
       .withHeader(NewUiOnboardingBundle.message("tool.window.layouts.step.header"))
       .withBrowserLink(NewUiOnboardingBundle.message("gotIt.learn.more"),
                        URL("https://www.jetbrains.com/help/idea/tool-windows.html"))
+    val lottiePageData = withContext(Dispatchers.IO) {
+      NewUiOnboardingUtil.createLottieAnimationPage(LOTTIE_JSON_PATH, ToolWindowLayoutsStep::class.java.classLoader)
+    }
+    lottiePageData?.let { (html, size) ->
+      builder.withBrowserPage(html, size, withBorder = true)
+    }
     return NewUiOnboardingStepData(builder, RelativePoint(ideFrame.rootPane, Point(0, 0)), position = null) // show in the center
+  }
+
+  companion object {
+    private const val LOTTIE_JSON_PATH = "newUiOnboarding/ToolWindowLayoutsAnimation.json"
   }
 }
