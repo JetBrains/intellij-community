@@ -4,9 +4,7 @@ package com.intellij.diagnostic
 private const val NEW_THIRD_PARTY_THREAD_POST_URL = "https://exa-marketplace-listener.labs.jb.gg/trackerRpc/idea/createScr"
 
 /**
- * Submits error reports to JetBrains Marketplace.
- *
- * It is used by plugin authors to submit errors to our NEW_THIRD_PARTY_THREAD_POST_URL and view them on the JB Marketplace page
+ * Submits error reports in plugins to JetBrains Marketplace
  */
 class JetBrainsMarketplaceErrorReportSubmitter: ITNReporter(NEW_THIRD_PARTY_THREAD_POST_URL) {
   override fun getReportActionText(): String =
