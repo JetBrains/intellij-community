@@ -401,7 +401,10 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
       }
 
       Rectangle left = new Rectangle(compBounds.x, compBounds.y, separatorPosition - getSeparatorGap(), compBounds.height);
-      Rectangle right = new Rectangle(separatorPosition + SEPARATOR_WIDTH + getSeparatorGap(), compBounds.y, (compBounds.width - separatorPosition - SEPARATOR_WIDTH - 1), compBounds.height);
+      Rectangle right = new Rectangle(separatorPosition + SEPARATOR_WIDTH + getSeparatorGap(),
+                                      compBounds.y,
+                                      (compBounds.width - separatorPosition - SEPARATOR_WIDTH - getSeparatorGap()),
+                                      compBounds.height);
 
       updateHoverRect(mousePosition.x <= separatorPosition ? left : right);
     }
