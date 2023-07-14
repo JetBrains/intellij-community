@@ -106,7 +106,7 @@ public final class BackgroundUpdateHighlightersUtil {
 
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     HighlightersRecycler toReuse = new HighlightersRecycler();
-    ContainerUtil.quickSort(filteredInfos, UpdateHighlightersUtil.BY_START_OFFSET_NO_DUPS);
+    ContainerUtil.quickSort(filteredInfos, UpdateHighlightersUtil.BY_ACTUAL_START_OFFSET_NO_DUPS);
     Set<HighlightInfo> infoSet = new HashSet<>(filteredInfos);
 
     Processor<HighlightInfo> processor = info -> {
@@ -131,6 +131,7 @@ public final class BackgroundUpdateHighlightersUtil {
     boolean[] changed = {false};
     SweepProcessor.Generator<HighlightInfo> generator = proc -> ContainerUtil.process(filteredInfos, proc);
     List<HighlightInfo> fileLevelHighlights = new ArrayList<>();
+    List<HighlightInfo> infosToCreateHighlightersFor = new ArrayList<>(filteredInfos.size());
 
     try {
       DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, priorityRange.getStartOffset(), priorityRange.getEndOffset(), processor);
@@ -149,14 +150,16 @@ public final class BackgroundUpdateHighlightersUtil {
           return true;
         }
         if (info.getStartOffset() < priorityRange.getStartOffset() || info.getEndOffset() > priorityRange.getEndOffset()) {
-          EditorColorsScheme colorsScheme = session.getColorsScheme();
-          createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, (MarkupModelEx)markup, toReuse,
-                                        range2markerCache, severityRegistrar);
+          // have to create RangeHighlighter later, to avoid exposing them to the markup model immediately,
+          // thus messing the HighlightInfo.getStartOffset() leading to "sweep generator supplied infos in a wrong order" exception
+          infosToCreateHighlightersFor.add(info);
           changed[0] = true;
         }
         return true;
       });
-
+      for (HighlightInfo info : infosToCreateHighlightersFor) {
+        createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, (MarkupModelEx)markup, toReuse, range2markerCache, severityRegistrar);
+      }
       boolean shouldClean = restrictedRange.getStartOffset() == 0 && restrictedRange.getEndOffset() == document.getTextLength();
       session.updateFileLevelHighlights(fileLevelHighlights, group, shouldClean);
       changed[0] |= UpdateHighlightersUtil.incinerateObsoleteHighlighters(toReuse, session);
@@ -200,9 +203,10 @@ public final class BackgroundUpdateHighlightersUtil {
       });
 
       List<HighlightInfo> filteredInfos = UpdateHighlightersUtil.HighlightInfoPostFilters.applyPostFilter(project, infos);
-      ContainerUtil.quickSort(filteredInfos, UpdateHighlightersUtil.BY_START_OFFSET_NO_DUPS);
+      ContainerUtil.quickSort(filteredInfos, UpdateHighlightersUtil.BY_ACTUAL_START_OFFSET_NO_DUPS);
       SweepProcessor.Generator<HighlightInfo> generator = processor -> ContainerUtil.process(filteredInfos, processor);
       List<HighlightInfo> fileLevelHighlights = new ArrayList<>();
+      List<HighlightInfo> infosToCreateHighlightersFor = new ArrayList<>(filteredInfos.size());
       SweepProcessor.sweep(generator, (__, info, atStart, overlappingIntervals) -> {
         if (!atStart) {
           return true;
@@ -214,12 +218,16 @@ public final class BackgroundUpdateHighlightersUtil {
         }
 
         if (range.contains(info) && !UpdateHighlightersUtil.isWarningCoveredByError(info, severityRegistrar, overlappingIntervals)) {
-          createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, toReuse, range2markerCache, severityRegistrar);
+          // have to create RangeHighlighter later, to avoid exposing them to the markup model immediately,
+          // thus messing the HighlightInfo.getStartOffset() leading to "sweep generator supplied infos in a wrong order" exception
+          infosToCreateHighlightersFor.add(info);
           changed[0] = true;
         }
         return true;
       });
-
+      for (HighlightInfo info : infosToCreateHighlightersFor) {
+        createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, toReuse, range2markerCache, severityRegistrar);
+      }
       session.updateFileLevelHighlights(fileLevelHighlights, group, range.equalsToRange(0, document.getTextLength()));
       changed[0] |= UpdateHighlightersUtil.incinerateObsoleteHighlighters(toReuse, session);
     }
