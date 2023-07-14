@@ -12,7 +12,7 @@ abstract class IdeVersionedDataParser<T : IdeVersionedDataState> {
   companion object {
     internal class IdeVersion(val v: String) : Comparable<IdeVersion> {
       override fun compareTo(other: IdeVersion): Int {
-        return VersionComparatorUtil.compare(v, other.v) { 0 }
+        return VersionComparatorUtil.compare(v, other.v, VersionComparatorUtil.TokenPrioritizer { 0 })
       }
     }
 
