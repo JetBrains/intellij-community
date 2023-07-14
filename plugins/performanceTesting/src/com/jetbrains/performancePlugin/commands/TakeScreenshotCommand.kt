@@ -104,7 +104,7 @@ fun getNextFolder(base: File): File {
 
 internal suspend fun takeScreenshotOfAllWindows(childFolder: String? = null) {
   val projects = ProjectManager.getInstance().openProjects
-  var screenshotPath = File(PathManager.getLogPath() + "/screenshots/" + (childFolder ?: "default")).apply { mkdirs() }
+  var screenshotPath = File(PathManager.getLogPath() + "/screenshots/" + (childFolder ?: "default"))
   screenshotPath = getNextFolder(screenshotPath)
   for (project in projects) {
     try {
