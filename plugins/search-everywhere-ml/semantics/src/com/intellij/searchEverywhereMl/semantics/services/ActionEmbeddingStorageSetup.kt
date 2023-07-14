@@ -59,6 +59,6 @@ class ActionEmbeddingStorageSetup(
 
   companion object {
     private val SETUP_TITLE = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.actions.generation.label")
-    private const val BATCH_SIZE = 16
+    private const val BATCH_SIZE = 1
   }
 }
