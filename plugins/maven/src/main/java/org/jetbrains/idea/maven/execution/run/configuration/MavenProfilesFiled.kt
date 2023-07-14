@@ -8,8 +8,8 @@ import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionI
 import com.intellij.openapi.externalSystem.service.ui.completion.collector.TextCompletionCollector
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.observable.properties.AtomicProperty
-import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.observable.util.bind
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.vfs.LocalFileSystem
