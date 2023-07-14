@@ -80,7 +80,7 @@ internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(private val schemeMa
   private fun getHashStream(): HashStream64 {
     var result = digest
     if (result == null) {
-      result = Hashing.komihash4_3().hashStream()!!
+      result = Hashing.komihash5_0().hashStream()!!
       digest = result
     }
     else {

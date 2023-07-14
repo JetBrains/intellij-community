@@ -303,7 +303,7 @@ private fun createRootElement() = Element("component").setAttribute("name", "Pro
 
 private fun computeDigest(data: BufferExposingByteArrayOutputStream): LongArray {
   // 128-bit
-  return longArrayOf(Hashing.komihash4_3().hashBytesToLong(data.internalBuffer, 0, data.size()),
-                     Hashing.komihash4_3(745726263).hashBytesToLong(data.internalBuffer, 0, data.size()))
+  return longArrayOf(Hashing.komihash5_0().hashBytesToLong(data.internalBuffer, 0, data.size()),
+                     Hashing.komihash5_0(745726263).hashBytesToLong(data.internalBuffer, 0, data.size()))
 }
 

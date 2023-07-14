@@ -133,7 +133,7 @@ val LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE: Key<Boolean> = Key.create("LISTEN_VF
 
 @ApiStatus.Internal
 fun hashElement(element: Element): Long {
-  val hashStream = Hashing.komihash4_3().hashStream()
+  val hashStream = Hashing.komihash5_0().hashStream()
   hashElement(element, hashStream)
   return hashStream.asLong
 }
