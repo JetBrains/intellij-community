@@ -318,7 +318,13 @@ public final class TextMateServiceImpl extends TextMateService {
       TextMateGrammar grammar = grammarIterator.next();
       CharSequence rootScopeName = mySyntaxTable.loadSyntax(grammar.getPlist().getValue(), myInterner);
       for (TextMateFileNameMatcher fileNameMatcher : grammar.getFileNameMatchers()) {
-        extensionMapping.put(fileNameMatcher, rootScopeName);
+        if (fileNameMatcher instanceof TextMateFileNameMatcher.Name) {
+          String newName = StringUtil.toLowerCase(((TextMateFileNameMatcher.Name)fileNameMatcher).getFileName());
+          extensionMapping.put(((TextMateFileNameMatcher.Name)fileNameMatcher).copy(newName), rootScopeName);
+        }
+        else {
+          extensionMapping.put(fileNameMatcher, rootScopeName);
+        }
       }
     }
   }
