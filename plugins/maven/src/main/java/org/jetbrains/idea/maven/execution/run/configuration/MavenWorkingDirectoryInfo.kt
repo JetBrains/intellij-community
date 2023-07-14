@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.openapi.externalSystem.service.ui.project.path.ExternalProject
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.idea.maven.execution.MavenPomFileChooserDescriptor
@@ -24,16 +25,18 @@ class MavenWorkingDirectoryInfo(
 
   override val emptyFieldError: String = ExecutionBundle.message("run.configuration.working.directory.empty.error")
 
-  override fun collectExternalProjects(): List<ExternalProject> {
-    val externalProjects = ArrayList<ExternalProject>()
-    val projectsManager = MavenProjectsManager.getInstance(project)
-    for (mavenProject in projectsManager.projects) {
-      val module = projectsManager.findModule(mavenProject)
-      if (module != null) {
-        val path = FileUtil.toCanonicalPath(mavenProject.directory)
-        externalProjects.add(ExternalProject(module.name, path))
+  override suspend fun collectExternalProjects(): List<ExternalProject> {
+    return blockingContext {
+      val externalProjects = ArrayList<ExternalProject>()
+      val projectsManager = MavenProjectsManager.getInstance(project)
+      for (mavenProject in projectsManager.projects) {
+        val module = projectsManager.findModule(mavenProject)
+        if (module != null) {
+          val path = FileUtil.toCanonicalPath(mavenProject.directory)
+          externalProjects.add(ExternalProject(module.name, path))
+        }
       }
+      return@blockingContext externalProjects
     }
-    return externalProjects
   }
 }

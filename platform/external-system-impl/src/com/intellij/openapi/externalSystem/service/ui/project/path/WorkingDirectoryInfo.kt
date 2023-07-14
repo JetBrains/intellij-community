@@ -21,5 +21,5 @@ interface WorkingDirectoryInfo : FileChooserInfo, LabeledSettingsFragmentInfo {
   val externalProjectModificationTracker: ModificationTracker
     get() = ModificationTracker.NEVER_CHANGED
 
-  fun collectExternalProjects(): List<ExternalProject>
+  suspend fun collectExternalProjects(): List<ExternalProject>
 }

@@ -8,9 +8,12 @@ import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionI
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfoRenderer
 import com.intellij.openapi.externalSystem.service.ui.completion.collector.TextCompletionCollector
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.*
+import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.ModificationTracker
@@ -46,27 +49,36 @@ class WorkingDirectoryField(
     workingDirectoryInfo.externalProjectModificationTracker +
     modeProperty.createPropertyModificationTracker(parentDisposable)
 
-  private val externalProjects: List<ExternalProject> by lazy {
+  private val externalProjectCollector = AsyncExternalProjectCollector.create(externalProjectModificationTracker) {
     workingDirectoryInfo.collectExternalProjects()
   }
 
+  private fun getExternalProjects(): List<ExternalProject> {
+    val owner = ModalTaskOwner.component(this)
+    val title = ExternalSystemBundle.message("working.directory.filed.projects.collecting")
+    return runWithModalProgressBlocking(owner, title) {
+      externalProjectCollector.getOrCollectExternalProjects()
+    }
+  }
+
   override val completionCollector = TextCompletionCollector.async(externalProjectModificationTracker, parentDisposable) {
-    blockingContext {
-      when (mode) {
-        Mode.NAME -> {
-          externalProjects
-            .map { it.name }
-            .map { TextCompletionInfo(it) }
+    val externalProjects = externalProjectCollector.getOrCollectExternalProjects()
+    when (mode) {
+      Mode.NAME -> {
+        externalProjects
+          .map { it.name }
+          .map { TextCompletionInfo(it) }
+      }
+      Mode.PATH -> {
+        val textToComplete = blockingContext {
+          getTextToComplete()
         }
-        Mode.PATH -> {
-          val textToComplete = getTextToComplete()
-          val pathToComplete = getCanonicalPath(textToComplete, removeLastSlash = false)
-          externalProjects
-            .filter { it.path.startsWith(pathToComplete) }
-            .map { it.path.substring(pathToComplete.length) }
-            .map { textToComplete + FileUtil.toSystemDependentName(it) }
-            .map { TextCompletionInfo(it) }
-        }
+        val pathToComplete = getCanonicalPath(textToComplete, removeLastSlash = false)
+        externalProjects
+          .filter { it.path.startsWith(pathToComplete) }
+          .map { it.path.substring(pathToComplete.length) }
+          .map { textToComplete + FileUtil.toSystemDependentName(it) }
+          .map { TextCompletionInfo(it) }
       }
     }
   }
@@ -126,11 +138,13 @@ class WorkingDirectoryField(
     bind(textProperty)
   }
 
-  private fun resolveProjectPathByName(projectName: String) =
-    resolveValueByKey(projectName, externalProjects, { name }, { path })
+  private fun resolveProjectPathByName(projectName: String): String? {
+    return resolveValueByKey(projectName, getExternalProjects(), { name }, { path })
+  }
 
-  private fun resolveProjectNameByPath(workingDirectory: String) =
-    resolveValueByKey(workingDirectory, externalProjects, { path }, { name })
+  private fun resolveProjectNameByPath(workingDirectory: String): String? {
+    return resolveValueByKey(workingDirectory, getExternalProjects(), { path }, { name })
+  }
 
   private fun <E> resolveValueByKey(
     key: String,
