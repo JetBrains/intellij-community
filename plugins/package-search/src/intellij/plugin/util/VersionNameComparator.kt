@@ -25,11 +25,11 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions
  *
  * This expands on what [VersionComparatorUtil] provide, so you should prefer this to [VersionComparatorUtil.COMPARATOR].
  *
- * @see versionTokenPriorityProvider
+ * @see VersionTokenPrioritizer
  * @see VersionComparatorUtil
  */
 object VersionNameComparator : Comparator<String> {
 
     override fun compare(first: String?, second: String?): Int =
-        VersionComparatorUtil.compare(first, second, ::versionTokenPriorityProvider)
+        VersionComparatorUtil.compare(first, second, VersionTokenPrioritizer)
 }
