@@ -6,13 +6,13 @@ package com.jetbrains.python.run
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.target.ExternallySynchronized
 import com.intellij.execution.target.TargetEnvironment
+import com.intellij.remote.ProcessControlWithMappings
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
-import com.jetbrains.python.remote.PythonRemoteInterpreterManager
 import com.jetbrains.python.run.target.targetEnvironment
 
 fun ProcessHandler.guessPathMapper(): PathMapper? =
-  getUserData(PythonRemoteInterpreterManager.PATH_MAPPING_SETTINGS_KEY) ?: targetEnvironment?.collectAllPathMappings()
+  (this as? ProcessControlWithMappings)?.mappingSettings ?: targetEnvironment?.collectAllPathMappings()
 
 fun TargetEnvironment.collectAllPathMappings(): PathMappingSettings {
   val pathMappings = mutableListOf<PathMappingSettings.PathMapping>()
