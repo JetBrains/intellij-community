@@ -1015,6 +1015,7 @@ open class IdeErrorsDialog internal constructor(private val myMessagePool: Messa
           }
         }
       }
+      return getAndroidErrorReporter()  /* Android Studio: use Android instead of Jetbrains
       if (plugin == null || PluginManagerCore.isDevelopedByJetBrains(plugin)) {
         for (reporter in reporters) {
           val descriptor = reporter.pluginDescriptor
@@ -1024,6 +1025,18 @@ open class IdeErrorsDialog internal constructor(private val myMessagePool: Messa
         }
       }
       return null
+      */
+    }
+
+    // NOTE: This API is only present in Android Studio, so don't invoke it from a plugin
+    fun getAndroidErrorReporter(): ErrorReportSubmitter? {
+      return try {
+        ExtensionPoints.ERROR_HANDLER_EP.extensionList.firstOrNull { reporter ->
+          reporter.pluginDescriptor?.pluginId?.idString == "org.jetbrains.android"
+        }
+      } catch (t: Throwable) {
+        null
+      }
     }
 
     @JvmStatic
