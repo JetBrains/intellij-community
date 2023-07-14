@@ -155,25 +155,7 @@ internal class GitLabReviewTabComponentFactory(
   }
 
   private fun createSelectorsComponent(cs: CoroutineScope): JComponent {
-    val preferences = project.service<GitLabMergeRequestsPreferences>()
-    // TODO: move vm creation to another place
-    val selectorVm = GitLabRepositoryAndAccountSelectorViewModel(
-      cs, toolwindowViewModel.projectsManager, toolwindowViewModel.accountManager,
-      onSelected = { mapping, account ->
-        withContext(cs.coroutineContext) {
-          toolwindowViewModel.connectionManager.openConnection(mapping, account)
-          preferences.selectedRepoAndAccount = mapping to account
-        }
-      }
-    )
-
-    preferences.selectedRepoAndAccount?.let { (repo, account) ->
-      with(selectorVm) {
-        repoSelectionState.value = repo
-        accountSelectionState.value = account
-        submitSelection()
-      }
-    }
+    val selectorVm = toolwindowViewModel.selectorVm
 
     val accountsDetailsProvider = GitLabAccountsDetailsProvider(cs) {
       // TODO: separate loader

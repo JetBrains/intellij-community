@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
@@ -21,6 +22,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.createSingleProjectAndAccountState
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowProjectViewModel.Companion.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabRepositoryAndAccountSelectorViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 @Service(Service.Level.PROJECT)
@@ -30,14 +32,33 @@ internal class GitLabToolWindowViewModel(
 ) : ReviewToolwindowViewModel<GitLabToolWindowProjectViewModel> {
   private val cs = parentCs.childScope(Dispatchers.Default)
 
-  val connectionManager: GitLabProjectConnectionManager = project.service<GitLabProjectConnectionManager>()
-  val projectsManager: GitLabProjectsManager = project.service<GitLabProjectsManager>()
+  private val connectionManager: GitLabProjectConnectionManager = project.service<GitLabProjectConnectionManager>()
+  private val projectsManager: GitLabProjectsManager = project.service<GitLabProjectsManager>()
   val accountManager: GitLabAccountManager = service<GitLabAccountManager>()
 
   override val projectVm: StateFlow<GitLabToolWindowProjectViewModel?> =
     connectionManager.connectionState.mapScoped { connection ->
       connection?.let { GitLabToolWindowProjectViewModel(project, it) }
     }.stateIn(cs, SharingStarted.Eagerly, null)
+
+  val selectorVm: GitLabRepositoryAndAccountSelectorViewModel by lazy {
+    val preferences = project.service<GitLabMergeRequestsPreferences>()
+    GitLabRepositoryAndAccountSelectorViewModel(
+      cs, projectsManager, accountManager,
+      onSelected = { mapping, account ->
+        withContext(cs.coroutineContext) {
+          connectionManager.openConnection(mapping, account)
+          preferences.selectedRepoAndAccount = mapping to account
+        }
+      }
+    ).apply {
+      preferences.selectedRepoAndAccount?.let { (repo, account) ->
+        repoSelectionState.value = repo
+        accountSelectionState.value = account
+        submitSelection()
+      }
+    }
+  }
 
   private val singleProjectAndAccountState: StateFlow<Pair<GitLabProjectMapping, GitLabAccount>?> =
     createSingleProjectAndAccountState(cs, projectsManager, accountManager)
