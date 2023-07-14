@@ -239,7 +239,7 @@ object SourceNavigationHelper {
         val classFqName = entity.fqName ?: return null
         return targetScopes(entity, navigationKind).firstNotNullOfOrNull { scope ->
             ProgressManager.checkCanceled()
-            index.get(classFqName.asString(), entity.project, scope).minByOrNull { it.isExpectDeclaration() }
+            index.get(classFqName.asString(), entity.project, scope).maxByOrNull { it.isExpectDeclaration() }
         }
     }
 
