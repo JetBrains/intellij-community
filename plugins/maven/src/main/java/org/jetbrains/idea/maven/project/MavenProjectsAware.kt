@@ -48,7 +48,7 @@ class MavenProjectsAware(
         val updated = settingsFilesContext.created + settingsFilesContext.updated
         val deleted = settingsFilesContext.deleted
         if (updated.size == filesToUpdate.size && deleted.size == filesToDelete.size) {
-          watcher.scheduleUpdate(filesToUpdate, filesToDelete, MavenImportSpec(false, true, context.isExplicitReload))
+          manager.scheduleUpdate(filesToUpdate, filesToDelete, MavenImportSpec(false, true, context.isExplicitReload))
         }
         else {
           manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec(false, true, context.isExplicitReload))

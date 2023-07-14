@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -27,14 +26,9 @@ import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
-import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,53 +85,6 @@ public final class MavenProjectsManagerWatcher {
     myProjectsTree = tree;
   }
 
-  private Promise<Void> scheduleUpdateSuspendable(MavenImportSpec spec,
-                                                  List<VirtualFile> filesToUpdate,
-                                                  List<VirtualFile> filesToDelete) {
-    final AsyncPromise<Void> promise = new AsyncPromise<>();
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        updateMavenProjectsSync(spec, filesToUpdate, filesToDelete, promise);
-      }
-      else {
-        MavenLog.LOG.warn("updateAllMavenProjectsSync skipped in write action");
-      }
-    }
-    else {
-      AppExecutorUtil.getAppExecutorService().execute(() -> {
-        updateMavenProjectsSync(spec, filesToUpdate, filesToDelete, promise);
-      });
-    }
-
-    return promise;
-  }
-
-  private void updateMavenProjectsSync(MavenImportSpec spec,
-                                       List<VirtualFile> filesToUpdate,
-                                       List<VirtualFile> filesToDelete,
-                                       AsyncPromise<Void> promise) {
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-    try {
-      projectsManager.updateMavenProjectsSync(spec, filesToUpdate, filesToDelete);
-      promise.setResult(null);
-    }
-    catch (Exception e) {
-      promise.setError(e);
-    }
-  }
-
-  public Promise<Void> scheduleUpdate(@NotNull List<VirtualFile> filesToUpdate,
-                                      @NotNull List<VirtualFile> filesToDelete,
-                                      MavenImportSpec spec) {
-
-    if (MavenUtil.isLinearImportEnabled()) {
-      return MavenImportingManager.getInstance(myProject).scheduleUpdate(filesToUpdate, filesToDelete, spec).getFinishPromise().then(it -> null);
-    }
-
-    return scheduleUpdateSuspendable(spec, filesToUpdate, filesToDelete);
-  }
-
   private class MyRootChangesListener implements ModuleRootListener {
     @Override
     public void rootsChanged(@NotNull ModuleRootEvent event) {
@@ -157,7 +104,8 @@ public final class MavenProjectsManagerWatcher {
       }
 
       if (!deletedFiles.isEmpty() || !newFiles.isEmpty()) {
-        scheduleUpdate(newFiles, deletedFiles, new MavenImportSpec(false, false, true));
+        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+        projectsManager.scheduleUpdate(newFiles, deletedFiles, new MavenImportSpec(false, false, true));
       }
     }
   }
