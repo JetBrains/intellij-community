@@ -56,10 +56,13 @@ class EditorInlineInlineCompletion(private val editor: Editor) : InlineCompletio
   }
 
   private fun renderSuffix(editor: Editor, line: String, offset: Int) {
-    val element = editor.inlayModel.addInlineElement(offset, true, InlineSuffixRenderer(editor, line)) ?: return
-    element.addActionAvailabilityHint(EditorActionAvailabilityHint("InsertInlineCompletionAction", EditorActionAvailabilityHint.AvailabilityCondition.CaretOnStart))
-    Disposer.tryRegister(this, element)
-    suffixInlay = element
+    editor.inlayModel.execute(true) {
+      // wrapping into a batch to notify inlay listeners after the hint is added
+      val element = editor.inlayModel.addInlineElement(offset, true, InlineSuffixRenderer(editor, line)) ?: return@execute
+      element.addActionAvailabilityHint(EditorActionAvailabilityHint("InsertInlineCompletionAction", EditorActionAvailabilityHint.AvailabilityCondition.CaretOnStart))
+      Disposer.tryRegister(this, element)
+      suffixInlay = element
+    }
   }
 
   private fun renderBlock(
