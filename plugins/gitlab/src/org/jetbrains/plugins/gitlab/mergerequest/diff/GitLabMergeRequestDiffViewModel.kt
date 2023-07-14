@@ -22,12 +22,16 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitRevi
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.getSubmittableReview
 
-internal interface GitLabMergeRequestDiffReviewViewModel {
+internal interface GitLabMergeRequestDiffViewModel {
   val avatarIconsProvider: IconsProvider<GitLabUserDTO>
   val discussionsViewOption: StateFlow<DiscussionsViewOption>
 
   val submittableReview: StateFlow<SubmittableReview?>
   var submitReviewInputHandler: (suspend (GitLabMergeRequestSubmitReviewViewModel) -> Unit)?
+
+  // TODO: rework to hide details
+  val changes: SharedFlow<GitLabMergeRequestChanges>
+  val changesToShow: SharedFlow<ChangesSelection>
 
   fun getViewModelFor(change: Change): Flow<GitLabMergeRequestDiffChangeViewModel?>
 
@@ -38,22 +42,30 @@ internal interface GitLabMergeRequestDiffReviewViewModel {
    */
   fun submitReview()
 
+  fun showChanges(changes: ChangesSelection)
+
   companion object {
-    val KEY: Key<GitLabMergeRequestDiffReviewViewModel> = Key.create("GitLab.Diff.Review.ViewModel")
-    val DATA_KEY: DataKey<GitLabMergeRequestDiffReviewViewModel> = DataKey.create("GitLab.Diff.Review.ViewModel")
+    val KEY: Key<GitLabMergeRequestDiffViewModel> = Key.create("GitLab.MergeRequest.Diff.ViewModel")
+    val DATA_KEY: DataKey<GitLabMergeRequestDiffViewModel> = DataKey.create("GitLab.MergeRequest.Diff.Review.ViewModel")
   }
 }
 
-private val LOG = logger<GitLabMergeRequestDiffReviewViewModel>()
+private val LOG = logger<GitLabMergeRequestDiffViewModel>()
 
-internal class GitLabMergeRequestDiffReviewViewModelImpl(
+internal class GitLabMergeRequestDiffViewModelImpl(
   parentCs: CoroutineScope,
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
+  private val diffBridge: GitLabMergeRequestDiffBridge,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>
-) : GitLabMergeRequestDiffReviewViewModel {
+) : GitLabMergeRequestDiffViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default + CoroutineName("GitLab Merge Request Review Diff VM"))
+
+  override val changes: SharedFlow<GitLabMergeRequestChanges> =
+    mergeRequest.changes.modelFlow(cs, LOG)
+  override val changesToShow: SharedFlow<ChangesSelection> =
+    diffBridge.displayedChanges.modelFlow(cs, LOG)
 
   private val vmsByChange: Flow<Map<Change, GitLabMergeRequestDiffChangeViewModel>> =
     createVmsByChangeFlow().modelFlow(cs, LOG)
@@ -83,6 +95,10 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
 
   override fun setDiscussionsViewOption(viewOption: DiscussionsViewOption) {
     _discussionsViewOption.value = viewOption
+  }
+
+  override fun showChanges(changes: ChangesSelection) {
+    diffBridge.setChanges(changes)
   }
 
   override fun submitReview() {

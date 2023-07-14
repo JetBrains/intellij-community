@@ -5,13 +5,13 @@ import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.toActionName
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffReviewViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
 
 internal class GitLabMergeRequestDiffReviewDiscussionsToggleAction : ActionGroup(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val vm: GitLabMergeRequestDiffReviewViewModel? = e.getData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY)
+    val vm: GitLabMergeRequestDiffViewModel? = e.getData(GitLabMergeRequestDiffViewModel.DATA_KEY)
     e.presentation.isEnabledAndVisible = vm != null
   }
 
@@ -24,16 +24,16 @@ internal class GitLabMergeRequestDiffReviewDiscussionsToggleAction : ActionGroup
 
     override fun update(e: AnActionEvent) {
       super.update(e)
-      e.presentation.isEnabledAndVisible = e.getData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY) != null
+      e.presentation.isEnabledAndVisible = e.getData(GitLabMergeRequestDiffViewModel.DATA_KEY) != null
     }
 
     override fun isSelected(e: AnActionEvent): Boolean {
-      val vm: GitLabMergeRequestDiffReviewViewModel = e.getData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY) ?: return false
+      val vm: GitLabMergeRequestDiffViewModel = e.getData(GitLabMergeRequestDiffViewModel.DATA_KEY) ?: return false
       return vm.discussionsViewOption.value == viewOption
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      val vm: GitLabMergeRequestDiffReviewViewModel = e.getRequiredData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY)
+      val vm: GitLabMergeRequestDiffViewModel = e.getRequiredData(GitLabMergeRequestDiffViewModel.DATA_KEY)
       vm.setDiscussionsViewOption(viewOption)
     }
   }

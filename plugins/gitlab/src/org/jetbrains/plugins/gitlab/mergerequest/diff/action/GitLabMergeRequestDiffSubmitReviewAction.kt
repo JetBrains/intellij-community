@@ -4,10 +4,9 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff.action
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.util.ui.JButtonAction
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffReviewViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewPopup
 import javax.swing.JComponent
 
@@ -17,7 +16,7 @@ internal class GitLabMergeRequestDiffSubmitReviewAction
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val vm = e.getData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY)
+    val vm = e.getData(GitLabMergeRequestDiffViewModel.DATA_KEY)
     val review = vm?.submittableReview?.value
     e.presentation.isEnabledAndVisible = vm != null && review != null
 
@@ -31,7 +30,7 @@ internal class GitLabMergeRequestDiffSubmitReviewAction
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val vm = e.getRequiredData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY)
+    val vm = e.getRequiredData(GitLabMergeRequestDiffViewModel.DATA_KEY)
     val component = e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY) as JComponent
     // looks fishy but spares us the need to pass component to VM
     vm.submitReviewInputHandler = {

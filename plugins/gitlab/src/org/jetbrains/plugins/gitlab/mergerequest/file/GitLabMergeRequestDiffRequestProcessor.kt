@@ -5,7 +5,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.file
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.MutableDiffRequestChainProcessor
-import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
@@ -24,52 +23,45 @@ import com.intellij.util.cancelOnDispose
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.getDiffComputer
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLazyProject
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.diff.*
+import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
+import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.diff.equalChanges
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowProjectViewModel
 
-fun createMergeRequestDiffRequestProcessor(project: Project,
-                                           currentUser: GitLabUserDTO,
-                                           projectData: GitLabLazyProject,
-                                           diffBridge: GitLabMergeRequestDiffBridge,
-                                           avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                                           mergeRequestId: GitLabMergeRequestId): DiffRequestProcessor {
+internal fun createMergeRequestDiffRequestProcessor(project: Project,
+                                                    projectVm: GitLabToolWindowProjectViewModel,
+                                                    mergeRequestId: GitLabMergeRequestId): DiffRequestProcessor {
   val job = SupervisorJob()
   val uiCs = CoroutineScope(job + Dispatchers.Main.immediate + CoroutineName("GitLab Merge Request Review Diff UI"))
   val processor = MutableDiffRequestChainProcessor(project, SimpleDiffRequestChain(LoadingDiffRequest()))
   job.cancelOnDispose(processor)
 
   uiCs.launchNow {
-    projectData.mergeRequests.getShared(mergeRequestId)
-      .mapNotNull(Result<GitLabMergeRequest>::getOrNull)
-      .collectLatest { mr ->
-        coroutineScope {
-          val vm = GitLabMergeRequestDiffReviewViewModelImpl(this, currentUser, mr, avatarIconsProvider)
-          processor.putContextUserData(GitLabMergeRequestDiffReviewViewModel.KEY, vm)
+    projectVm.getDiffViewModel(mergeRequestId).collectLatest {
+      val diffVm = it.getOrNull() ?: return@collectLatest
 
-          mr.changes.collectLatest { changes ->
-            handleChanges(project, changes, diffBridge, processor)
-          }
-          try {
-            awaitCancellation()
-          }
-          catch (e: Exception) {
-            processor.chain = null
-          }
-        }
+      processor.putContextUserData(GitLabMergeRequestDiffViewModel.KEY, diffVm)
+
+      handleChanges(project, diffVm, processor)
+
+      try {
+        awaitCancellation()
       }
+      catch (e: Exception) {
+        processor.chain = null
+        processor.putContextUserData(GitLabMergeRequestDiffViewModel.KEY, null)
+      }
+    }
   }
 
   return processor
 }
 
 private suspend fun handleChanges(project: Project,
-                                  changes: GitLabMergeRequestChanges,
-                                  diffBridge: GitLabMergeRequestDiffBridge,
+                                  diffVm: GitLabMergeRequestDiffViewModel,
                                   processor: MutableDiffRequestChainProcessor) {
   var currentSelection: ChangesSelection? = null
   val selectionListener = MutableDiffRequestChainProcessor.SelectionListener { producer ->
@@ -77,44 +69,46 @@ private suspend fun handleChanges(project: Project,
     if (currentSelection != null && change != null) {
       val newSelection = currentSelection!!.copyWithSelection(change)
       currentSelection = newSelection
-      diffBridge.setChanges(newSelection)
+      diffVm.showChanges(newSelection)
     }
   }
-  diffBridge.displayedChanges.collect { selection ->
-    val needUpdate =
-      if (selection is ChangesSelection.Precise && selection.location != null) {
-        true
-      }
-      else {
-        !currentSelection.equalChanges(selection)
-      }
+  diffVm.changes.collectLatest { changes ->
+    diffVm.changesToShow.collect { selection ->
+      val needUpdate =
+        if (selection is ChangesSelection.Precise && selection.location != null) {
+          true
+        }
+        else {
+          !currentSelection.equalChanges(selection)
+        }
 
-    if (needUpdate) {
-      processor.selectionEventDispatcher.removeListener(selectionListener)
+      if (needUpdate) {
+        processor.selectionEventDispatcher.removeListener(selectionListener)
 
-      if (selection.changes.isEmpty()) {
-        processor.chain = null
-        return@collect
-      }
+        if (selection.changes.isEmpty()) {
+          processor.chain = null
+          return@collect
+        }
 
-      val changesBundle: GitBranchComparisonResult = try {
-        loadRevisionsAndParseChanges(changes)
-      }
-      catch (ce: CancellationException) {
-        throw ce
-      }
-      catch (e: Exception) {
-        processor.chain = SimpleDiffRequestChain(ErrorDiffRequest(e))
-        return@collect
-      }
+        val changesBundle: GitBranchComparisonResult = try {
+          loadRevisionsAndParseChanges(changes)
+        }
+        catch (ce: CancellationException) {
+          throw ce
+        }
+        catch (e: Exception) {
+          processor.chain = SimpleDiffRequestChain(ErrorDiffRequest(e))
+          return@collect
+        }
 
-      val producers = selection.toProducersSelection { change, location ->
-        val changeDataKeys = createData(changesBundle, change, location)
-        ChangeDiffRequestProducer.create(project, change, changeDataKeys)
+        val producers = selection.toProducersSelection { change, location ->
+          val changeDataKeys = createData(changesBundle, change, location)
+          ChangeDiffRequestProducer.create(project, change, changeDataKeys)
+        }
+        processor.chain = producers.let(SimpleDiffRequestChain::fromProducers)
+        currentSelection = selection
+        processor.selectionEventDispatcher.addListener(selectionListener)
       }
-      processor.chain = producers.let(SimpleDiffRequestChain::fromProducers)
-      currentSelection = selection
-      processor.selectionEventDispatcher.addListener(selectionListener)
     }
   }
 }

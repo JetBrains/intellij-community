@@ -29,23 +29,20 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
 
   override fun enforcePresentableName() = true
 
-  override fun isValid(): Boolean = findContext() != null
+  override fun isValid(): Boolean = findProjectVm() != null
 
   override fun getPath(): String =
     (fileSystem as GitLabVirtualFileSystem).getPath(connectionId, project, glProject, mergeRequestId, true)
 
   override fun getPresentablePath(): String = "$glProject/mergerequests/${mergeRequestId.iid}.diff"
 
-  private fun findContext() = project.serviceIfCreated<GitLabToolWindowViewModel>()
+  private fun findProjectVm() = project.serviceIfCreated<GitLabToolWindowViewModel>()
     ?.projectVm?.value?.takeIf { it.connectionId == connectionId }
 
   override fun createProcessor(project: Project): DiffRequestProcessor {
-    val ctx = findContext() ?: error("Missing context for $this")
+    val projectVm = findProjectVm() ?: error("Missing project view model for $this")
     return createMergeRequestDiffRequestProcessor(project,
-                                                  ctx.currentUser,
-                                                  ctx.projectData,
-                                                  ctx.getDiffBridge(mergeRequestId),
-                                                  ctx.avatarIconProvider,
+                                                  projectVm,
                                                   mergeRequestId)
   }
 

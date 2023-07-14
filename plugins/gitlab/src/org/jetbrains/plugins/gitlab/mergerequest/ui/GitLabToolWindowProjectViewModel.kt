@@ -28,8 +28,11 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLazyProject
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
+import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesController
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesControllerImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
@@ -49,7 +52,7 @@ private constructor(parentCs: CoroutineScope, private val project: Project, conn
   val connectionId: String = connection.id
   override val projectName: @Nls String = connection.repo.repository.projectPath.name
 
-  val currentUser: GitLabUserDTO = connection.currentUser
+  private val currentUser: GitLabUserDTO = connection.currentUser
   val projectData: GitLabLazyProject = connection.projectData
 
   private val diffBridgeStore = Caffeine.newBuilder()
@@ -59,6 +62,10 @@ private constructor(parentCs: CoroutineScope, private val project: Project, conn
   private val timelineVms = Caffeine.newBuilder()
     .weakValues()
     .build<GitLabMergeRequestId.Simple, SharedFlow<Result<LoadAllGitLabMergeRequestTimelineViewModel>>>()
+
+  private val diffVms = Caffeine.newBuilder()
+    .weakValues()
+    .build<GitLabMergeRequestId.Simple, SharedFlow<Result<GitLabMergeRequestDiffViewModel>>>()
 
   val filesController: GitLabMergeRequestsFilesController = GitLabMergeRequestsFilesControllerImpl(project, connection)
 
@@ -143,7 +150,7 @@ private constructor(parentCs: CoroutineScope, private val project: Project, conn
     }
   }
 
-  fun getDiffBridge(mr: GitLabMergeRequestId): GitLabMergeRequestDiffBridge =
+  private fun getDiffBridge(mr: GitLabMergeRequestId): GitLabMergeRequestDiffBridge =
     diffBridgeStore.get(GitLabMergeRequestId.Simple(mr)) {
       GitLabMergeRequestDiffBridge()
     }
@@ -165,6 +172,19 @@ private constructor(parentCs: CoroutineScope, private val project: Project, conn
               }
             }
           }
+        }
+      }.shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
+    }
+  }
+
+  fun getDiffViewModel(mergeRequestId: GitLabMergeRequestId): SharedFlow<Result<GitLabMergeRequestDiffViewModel>> {
+    val simpleId = GitLabMergeRequestId.Simple(mergeRequestId)
+    return diffVms.get(simpleId) {
+      projectData.mergeRequests.getShared(simpleId).mapScoped { mrResult ->
+        val cs = this
+        val diffBridge = getDiffBridge(simpleId)
+        mrResult.mapCatching {
+          GitLabMergeRequestDiffViewModelImpl(cs, currentUser, it, diffBridge, avatarIconProvider)
         }
       }.shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
     }
