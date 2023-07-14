@@ -33,7 +33,8 @@ class WebSymbolElementNameInTextCompletionProvider : WebSymbolsCompletionProvide
     val patchedResultSet = patchResultSetForHtmlElementInTextCompletion(
       result.withPrefixMatcher(result.prefixMatcher.cloneWithPrefix(name)), parameters)
 
-    processCompletionQueryResults(queryExecutor, patchedResultSet, NAMESPACE_HTML, KIND_HTML_ELEMENTS, name, position,
+    processCompletionQueryResults(queryExecutor, patchedResultSet, NAMESPACE_HTML, KIND_HTML_ELEMENTS,
+                                  name, position, context,
                                   filter = WebSymbolElementNameCompletionProvider.Companion::filterStandardHtmlSymbols) {
       it.withInsertHandlerAdded(XmlTagInsertHandler.INSTANCE)
         .withName("<" + it.name)

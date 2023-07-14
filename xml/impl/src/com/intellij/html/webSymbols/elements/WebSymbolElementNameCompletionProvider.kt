@@ -35,7 +35,7 @@ class WebSymbolElementNameCompletionProvider : WebSymbolsCompletionProviderBase<
 
     val patchedResultSet = result.withPrefixMatcher(result.prefixMatcher.cloneWithPrefix(name))
     processCompletionQueryResults(queryExecutor, patchedResultSet, NAMESPACE_HTML, KIND_HTML_ELEMENTS, name,
-                                  position, filter = Companion::filterStandardHtmlSymbols) {
+                                  position, context, filter = Companion::filterStandardHtmlSymbols) {
       it.withInsertHandlerAdded(XmlTagInsertHandler.INSTANCE)
         .addToResult(parameters, patchedResultSet)
     }
