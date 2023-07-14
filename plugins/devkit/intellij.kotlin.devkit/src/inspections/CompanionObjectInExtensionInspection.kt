@@ -22,8 +22,8 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringEventListener
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveDeclarationDelegate
@@ -147,9 +147,9 @@ private class CreateObjectAndMoveProhibitedDeclarationsQuickFix(
     )
   }
 
-  private fun suggestNamesForObjectInstance(companionObject: KtObjectDeclaration): List<String> {
+  private fun suggestNamesForObjectInstance(companionObject: KtObjectDeclaration): Sequence<String> {
     val containingClass = companionObject.containingClass()!!
-    return Fe10KotlinNameSuggester.getCamelNames(
+    return KotlinNameSuggester.getCamelNames(
       DEFAULT_OBJECT_NAME,
       Fe10KotlinNewDeclarationNameValidator(containingClass, null, KotlinNameSuggestionProvider.ValidatorTarget.CLASS),
       false

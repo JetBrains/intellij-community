@@ -2,15 +2,11 @@
 package org.jetbrains.kotlin.idea.core
 
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.addCamelNames
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.addName
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtFunctionType
-import org.jetbrains.kotlin.psi.KtNullableType
-import org.jetbrains.kotlin.psi.KtTypeElement
-import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
+import org.jetbrains.kotlin.utils.addIfNotNull
 
 @Suppress("DEPRECATION")
 @Deprecated("Use 'org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester' instead")
@@ -98,10 +94,16 @@ abstract class AbstractKotlinNameSuggester {
         }
     }
 
-    fun getCamelNames(name: String, validator: (String) -> Boolean, startLowerCase: Boolean): List<String> {
-        val result = ArrayList<String>()
-        result.addCamelNames(name, validator, startLowerCase)
-        return result
+    protected fun MutableCollection<String>.addCamelNames(name: String, validator: (String) -> Boolean, startLowerCase: Boolean = true) {
+        addAll(KotlinNameSuggester.getCamelNames(name, validator, startLowerCase))
+    }
+
+    protected fun MutableCollection<String>.addNamesByExpressionPSI(expression: KtExpression?, validator: (String) -> Boolean) {
+        addAll(KotlinNameSuggester.suggestNamesByExpressionPSI(expression, validator))
+    }
+
+    protected fun MutableCollection<String>.addName(name: String?, validator: (String) -> Boolean) {
+        addIfNotNull(KotlinNameSuggester.suggestNameByValidIdentifierName(name, validator))
     }
 
     private fun String.withPrefix(prefix: String): String {

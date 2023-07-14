@@ -132,46 +132,47 @@ class KotlinNameSuggester(
      *  - `print(<selection>listOf(User("Mary"), User("John"))</selection>)` -> {message, listOf, users}
      */
     fun KtAnalysisSession.suggestExpressionNames(expression: KtExpression): Sequence<String> {
-        return LinkedHashSet<String>().apply {
-            addNameByValueArgument(expression)
-            addNamesByExpressionPSI(expression, validator = { true })
-            addNamesByType(expression)
-        }.asSequence()
+        return (suggestNamesByValueArgument(expression) +
+                suggestNamesByExpressionPSI(expression, validator = { true }) +
+                suggestNamesByType(expression)).distinct()
     }
 
     /**
-     * Adds names based on the expression type.
+     * Returns names based on the expression type.
      * Examples:
      *  - `5` -> {int, i, n}
      *  - `intArrayOf(5)` -> {ints}
      *  - listOf(User("Mary"), User("John")) -> {users}
      */
     context(KtAnalysisSession)
-    private fun MutableCollection<String>.addNamesByType(expression: KtExpression) {
-        val type = expression.getKtType() ?: return
-        suggestTypeNames(type).forEach { name -> addName(name, validator = { true }) }
+    private fun suggestNamesByType(expression: KtExpression): Sequence<String> {
+        val type = expression.getKtType() ?: return emptySequence()
+        return suggestTypeNames(type)
     }
 
     /**
-     * Adds the name of the value parameter.
+     * Returns a sequence consisting of the name of the value parameter.
      * Examples:
-     *  - `print(<selection>5</selection>)` -> message
-     *  - `listOf(<selection>5</selection>)` -> element
-     *  - `ints.filter <selection>{ it > 0 }</selection>` -> predicate
+     *  - `print(<selection>5</selection>)` -> {message}
+     *  - `listOf(<selection>5</selection>)` -> {element}
+     *  - `ints.filter <selection>{ it > 0 }</selection>` -> {predicate}
      */
     context(KtAnalysisSession)
-    private fun MutableCollection<String>.addNameByValueArgument(expression: KtExpression) {
+    private fun suggestNamesByValueArgument(expression: KtExpression): Sequence<String> {
         val argumentExpression = expression.getOutermostParenthesizerOrThis()
-        val valueArgument = argumentExpression.parent as? KtValueArgument ?: return
-        val callElement = if (valueArgument is KtLambdaArgument) {
+        val valueArgument = argumentExpression.parent as? KtValueArgument ?: return emptySequence()
+        val callElement = getCallElement(valueArgument) ?: return emptySequence()
+        val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return emptySequence()
+        if (!resolvedCall.symbol.hasStableParameterNames) return emptySequence()
+        val parameter = resolvedCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return emptySequence()
+        return suggestNameByValidIdentifierName(parameter.name.asString(), validator = { true })?.let { sequenceOf(it) } ?: emptySequence()
+    }
+
+    private fun getCallElement(valueArgument: KtValueArgument): KtCallElement? {
+        return if (valueArgument is KtLambdaArgument) {
             valueArgument.parent as? KtCallElement
         } else {
             valueArgument.parents.match(KtValueArgumentList::class, last = KtCallElement::class)
-        } ?: return
-        val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return
-        if (resolvedCall.symbol.hasStableParameterNames) {
-            val parameter = resolvedCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return
-            addName(parameter.name.asString(), validator = { true })
         }
     }
 
@@ -391,8 +392,8 @@ class KotlinNameSuggester(
     }
 
     companion object {
-        fun MutableCollection<String>.addCamelNames(name: String, validator: (String) -> Boolean, startLowerCase: Boolean = true) {
-            if (name === "" || !name.unquoteKotlinIdentifier().isIdentifier()) return
+        fun getCamelNames(name: String, validator: (String) -> Boolean, startLowerCase: Boolean = true): Sequence<String> {
+            if (name === "" || !name.unquoteKotlinIdentifier().isIdentifier()) return emptySequence()
             var s = extractIdentifiers(name)
 
             for (prefix in ACCESSOR_PREFIXES) {
@@ -406,20 +407,26 @@ class KotlinNameSuggester(
             }
 
             var upperCaseLetterBefore = false
-            for (i in s.indices) {
-                val c = s[i]
-                val upperCaseLetter = Character.isUpperCase(c)
+            return sequence {
+                for (i in s.indices) {
+                    val c = s[i]
+                    val upperCaseLetter = Character.isUpperCase(c)
 
-                if (i == 0) {
-                    addName(if (startLowerCase) s.decapitalizeSmart() else s, validator)
-                } else {
-                    if (upperCaseLetter && !upperCaseLetterBefore) {
-                        val substring = s.substring(i)
-                        addName(if (startLowerCase) substring.decapitalizeSmart() else substring, validator)
+                    if (i == 0) {
+                        suggestNameByValidIdentifierName(
+                            if (startLowerCase) s.decapitalizeSmart() else s, validator
+                        )?.let { yield(it) }
+                    } else {
+                        if (upperCaseLetter && !upperCaseLetterBefore) {
+                            val substring = s.substring(i)
+                            suggestNameByValidIdentifierName(
+                                if (startLowerCase) substring.decapitalizeSmart() else substring, validator
+                            )?.let { yield(it) }
+                        }
                     }
-                }
 
-                upperCaseLetterBefore = upperCaseLetter
+                    upperCaseLetterBefore = upperCaseLetter
+                }
             }
         }
 
@@ -437,34 +444,40 @@ class KotlinNameSuggester(
         }
 
         /**
-         * Adds names based on an expression PSI and filtered by a validator function.
+         * Returns names based on an [expression] PSI, validates them using [validator], and improves them by
+         * adding a numeric suffix in case of conflicts.
          * Examples:
          *  - `listOf(42)` -> {list, of}
          *  - `point.x` -> {x}
          *  - `collection.isEmpty()` -> {empty}
          */
-        fun MutableCollection<String>.addNamesByExpressionPSI(expression: KtExpression?, validator: (String) -> Boolean) {
-            if (expression == null) return
-            when (val deparenthesized = KtPsiUtil.safeDeparenthesize(expression)) {
-                is KtSimpleNameExpression -> addCamelNames(deparenthesized.getReferencedName(), validator)
-                is KtQualifiedExpression -> addNamesByExpressionPSI(deparenthesized.selectorExpression, validator)
-                is KtCallExpression -> addNamesByExpressionPSI(deparenthesized.calleeExpression, validator)
-                is KtPostfixExpression -> addNamesByExpressionPSI(deparenthesized.baseExpression, validator)
+        fun suggestNamesByExpressionPSI(expression: KtExpression?, validator: (String) -> Boolean): Sequence<String> {
+            if (expression == null) return emptySequence()
+            return when (val deparenthesized = KtPsiUtil.safeDeparenthesize(expression)) {
+                is KtSimpleNameExpression -> getCamelNames(deparenthesized.getReferencedName(), validator)
+                is KtQualifiedExpression -> suggestNamesByExpressionPSI(deparenthesized.selectorExpression, validator)
+                is KtCallExpression -> suggestNamesByExpressionPSI(deparenthesized.calleeExpression, validator)
+                is KtPostfixExpression -> suggestNamesByExpressionPSI(deparenthesized.baseExpression, validator)
+                else -> emptySequence()
             }
-        }
-
-        fun MutableCollection<String>.addName(name: String?, validator: (String) -> Boolean) {
-            if (name == null) return
-            val correctedName = when {
-                name.isIdentifier() -> name
-                name == "class" -> "clazz"
-                else -> return
-            }
-            add(suggestNameByName(correctedName, validator))
         }
 
         /**
-         * Validates [name] and slightly improves it by adding a number suffix in case of conflicts.
+         * Checks whether the passed [name] is a valid identifier, validates it using [validator], and improves it
+         * by adding a numeric suffix in case of conflicts.
+         */
+        fun suggestNameByValidIdentifierName(name: String?, validator: (String) -> Boolean): String? {
+            if (name == null) return null
+            val correctedName = when {
+                name.isIdentifier() -> name
+                name == "class" -> "clazz"
+                else -> return null
+            }
+            return suggestNameByName(correctedName, validator)
+        }
+
+        /**
+         * Validates [name] and slightly improves it by adding a numeric suffix in case of conflicts.
          *
          * @param name to check in scope
          * @return [name] or nameI, where I is an integer

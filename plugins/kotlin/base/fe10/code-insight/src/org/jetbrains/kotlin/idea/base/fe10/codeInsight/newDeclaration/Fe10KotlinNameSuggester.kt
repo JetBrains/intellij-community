@@ -8,9 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.addCamelNames
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.addName
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.addNamesByExpressionPSI
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.KotlinBaseFe10CodeInsightBundle
 import org.jetbrains.kotlin.idea.core.AbstractKotlinNameSuggester
 import org.jetbrains.kotlin.idea.util.application.executeInBackgroundWithProgress
