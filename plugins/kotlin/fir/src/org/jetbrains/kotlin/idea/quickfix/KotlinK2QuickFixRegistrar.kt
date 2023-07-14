@@ -260,6 +260,12 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
             KtFirDiagnostic.OptInMarkerWithWrongTarget::class,
             RemoveWrongOptInAnnotationTargetFix
         )
+        registerPsiQuickFixes(
+            KtFirDiagnostic.OptInMarkerOnWrongTarget::class,
+            RemoveAnnotationFix
+        )
+
+        registerApplicator(OptInAnnotationWrongTargetFixFactory.optInAnnotationWrongTargetFixFactory)
     }
 
 
