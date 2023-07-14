@@ -6,18 +6,11 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
-import com.intellij.usageView.UsageViewUtil
-import org.jetbrains.kotlin.asJava.accessorNameByPropertyName
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -28,13 +21,11 @@ import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.highlighter.markers.resolveDeclarationWithParents
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.refactoring.conflicts.renderDescription
-import org.jetbrains.kotlin.idea.refactoring.conflicts.representativeContainer
 import org.jetbrains.kotlin.idea.refactoring.explicateAsText
 import org.jetbrains.kotlin.idea.refactoring.getThisLabelName
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -53,7 +44,6 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
-import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getExplicitReceiverValue
 import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
@@ -65,8 +55,6 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.resolve.scopes.utils.getImplicitReceiversHierarchy
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.error.ErrorUtils
-import org.jetbrains.kotlin.util.findCallableMemberBySignature
-import org.jetbrains.kotlin.utils.DFS
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -289,90 +277,6 @@ internal fun checkNewNameUsagesRetargeting(
         usages.filterIsInstanceTo<KtResolvableCollisionUsageInfo, MutableList<UsageInfo>>(newUsages)
     }
 }
-
-internal fun checkAccidentalPropertyOverrides(
-    declaration: KtNamedDeclaration,
-    newName: String,
-    result: MutableList<UsageInfo>
-) {
-    fun reportAccidentalOverride(candidate: PsiNamedElement) {
-        val what = UsageViewUtil.getType(declaration).capitalize()
-        val withWhat = candidate.renderDescription()
-        val where = candidate.representativeContainer()?.renderDescription() ?: return
-        val message = KotlinBundle.message("text.0.will.clash.with.existing.1.in.2", what, withWhat, where)
-        result += BasicUnresolvableCollisionUsageInfo(candidate, candidate, message)
-    }
-
-    val resolutionFacade = declaration.getResolutionFacade()
-    val descriptor = declaration.unsafeResolveToDescriptor(resolutionFacade) as VariableDescriptor
-
-    if (descriptor !is PropertyDescriptor) return
-    val initialClass = declaration.containingClassOrObject ?: return
-    val initialClassDescriptor = descriptor.containingDeclaration as? ClassDescriptor ?: return
-
-    val prototype = object : PropertyDescriptor by descriptor {
-        override fun getName() = Name.guessByFirstCharacter(newName)
-    }
-
-    DFS.dfs(
-        listOf(initialClassDescriptor),
-        DFS.Neighbors { DescriptorUtils.getSuperclassDescriptors(it) },
-        object : DFS.AbstractNodeHandler<ClassDescriptor, Unit>() {
-            override fun beforeChildren(current: ClassDescriptor): Boolean {
-                if (current == initialClassDescriptor) return true
-                (current.findCallableMemberBySignature(prototype))?.let { candidateDescriptor ->
-                    val candidate = candidateDescriptor.source.getPsi() as? PsiNamedElement ?: return false
-                    reportAccidentalOverride(candidate)
-                    return false
-                }
-                return true
-            }
-
-            override fun result() {}
-        }
-    )
-
-    if (!declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
-        val initialPsiClass = initialClass.toLightClass() ?: return
-        val prototypes = declaration.toLightMethods().mapNotNull {
-            it as KtLightMethod
-            val methodName = accessorNameByPropertyName(newName, it) ?: return@mapNotNull null
-            object : KtLightMethod by it {
-                override fun getName() = methodName
-                override fun getSourceElement(): PsiElement? = it.getSourceElement()
-            }
-        }
-
-        DFS.dfs(
-            listOf(initialPsiClass),
-            DFS.Neighbors { DirectClassInheritorsSearch.search(it) },
-            object : DFS.AbstractNodeHandler<PsiClass, Unit>() {
-                override fun beforeChildren(current: PsiClass): Boolean {
-                    if (current == initialPsiClass) return true
-
-                    if (current is KtLightClass) {
-                        val property = current.kotlinOrigin?.findPropertyByName(newName) ?: return true
-                        reportAccidentalOverride(property)
-                        return false
-                    }
-
-                    for (psiMethod in prototypes) {
-                        current.findMethodBySignature(psiMethod, false)?.let {
-                            val candidate = it.unwrapped as? PsiNamedElement ?: return true
-                            reportAccidentalOverride(candidate)
-                            return false
-                        }
-                    }
-
-                    return true
-                }
-
-                override fun result() {}
-            }
-        )
-    }
-}
-
 
 internal fun PsiElement?.isOperator(): Boolean {
     if (this !is KtNamedFunction || !KotlinPsiHeuristics.isPossibleOperator(this)) {

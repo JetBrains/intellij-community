@@ -62,10 +62,6 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         // TODO
     }
 
-    override fun checkAccidentalPropertyOverrides(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
-        // TODO
-    }
-
     override fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement> {
         return analyze(function) {
             val overridenFunctions = (function.getSymbol() as? KtCallableSymbol)?.getAllOverriddenSymbols().orEmpty()

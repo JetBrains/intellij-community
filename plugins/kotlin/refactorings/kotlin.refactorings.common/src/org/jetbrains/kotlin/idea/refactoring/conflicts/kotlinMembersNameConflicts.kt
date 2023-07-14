@@ -1,10 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.conflicts
 
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMember
-import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.*
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -16,14 +14,22 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.asJava.accessorNameByPropertyName
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUsageInfo
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.findPropertyByName
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.nonStaticOuterClasses
+import org.jetbrains.kotlin.utils.DFS
 
 /**
  * Checks for conflicts with members declared in the same scope if [declaration] would be named as [newName].
@@ -135,4 +141,97 @@ fun PsiNamedElement.renderDescription(): String {
   val type = UsageViewUtil.getType(this)
   if (name == null || name!!.startsWith("<")) return type
   return "$type '$name'".trim()
+}
+
+fun checkAccidentalPropertyOverrides(
+    declaration: KtNamedDeclaration,
+    newName: String,
+    result: MutableList<UsageInfo>
+) {
+    analyze(declaration) {
+        checkAccidentalPropertyOverrides(declaration, Name.identifier(newName), result)
+    }
+}
+
+private fun KtAnalysisSession.checkAccidentalPropertyOverrides(
+    declaration: KtNamedDeclaration,
+    newName: Name,
+    result: MutableList<UsageInfo>
+) {
+    fun reportAccidentalOverride(candidate: PsiNamedElement) {
+        val what = UsageViewUtil.getType(declaration).capitalize()
+        val withWhat = candidate.renderDescription()
+        val where = candidate.representativeContainer()?.renderDescription() ?: return
+        val message = KotlinBundle.message("text.0.will.clash.with.existing.1.in.2", what, withWhat, where)
+        result += BasicUnresolvableCollisionUsageInfo(candidate, candidate, message)
+    }
+
+    val symbol = declaration.getSymbol().let {
+        (it as? KtValueParameterSymbol?)?.generatedPrimaryConstructorProperty ?: it
+    }
+
+    if (symbol !is KtPropertySymbol) return
+    val initialClass = declaration.containingClassOrObject ?: return
+    val initialClassSymbol = symbol.getContainingSymbol() as? KtClassOrObjectSymbol ?: return
+
+
+
+    DFS.dfs(
+        listOf(initialClassSymbol),
+        DFS.Neighbors { initialClassSymbol.superTypes.mapNotNull { type -> type.expandedClassSymbol } },
+        object : DFS.AbstractNodeHandler<KtClassOrObjectSymbol, Unit>() {
+            override fun beforeChildren(current: KtClassOrObjectSymbol): Boolean {
+                if (current == initialClassSymbol) return true
+                current.getDeclaredMemberScope().getCallableSymbols(newName)
+                    .filterIsInstance<KtPropertySymbol>()
+                    .forEach { superPropertySymbol ->
+                        (superPropertySymbol.psi as? PsiNamedElement)?.let { reportAccidentalOverride(it) }
+                        return false
+                    }
+                return true
+            }
+
+            override fun result() {}
+        }
+    )
+
+    if (symbol.visibility != Visibilities.Private) {
+        val initialPsiClass = initialClass.toLightClass() ?: return
+        val prototypes = declaration.toLightMethods().mapNotNull {
+            it as KtLightMethod
+            val methodName = accessorNameByPropertyName(newName.asString(), it) ?: return@mapNotNull null
+            object : KtLightMethod by it {
+                override fun getName() = methodName
+                override fun getSourceElement(): PsiElement? = it.getSourceElement()
+            }
+        }
+
+        DFS.dfs(
+            listOf(initialPsiClass),
+            DFS.Neighbors { DirectClassInheritorsSearch.search(it) },
+            object : DFS.AbstractNodeHandler<PsiClass, Unit>() {
+                override fun beforeChildren(current: PsiClass): Boolean {
+                    if (current == initialPsiClass) return true
+
+                    if (current is KtLightClass) {
+                        val property = current.kotlinOrigin?.findPropertyByName(newName.asString()) ?: return true
+                        reportAccidentalOverride(property)
+                        return false
+                    }
+
+                    for (psiMethod in prototypes) {
+                        current.findMethodBySignature(psiMethod, false)?.let {
+                            val candidate = it.unwrapped as? PsiNamedElement ?: return true
+                            reportAccidentalOverride(candidate)
+                            return false
+                        }
+                    }
+
+                    return true
+                }
+
+                override fun result() {}
+            }
+        )
+    }
 }

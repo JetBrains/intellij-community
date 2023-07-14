@@ -42,12 +42,6 @@ interface KotlinRenameRefactoringSupport {
         newUsages: MutableList<UsageInfo>
     )
 
-    fun checkAccidentalPropertyOverrides(
-        declaration: KtNamedDeclaration,
-        newName: String,
-        result: MutableList<UsageInfo>
-    )
-
     fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement>
 
     fun getModuleNameSuffixForMangledName(mangledName: String): String? {
