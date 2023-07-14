@@ -10,3 +10,6 @@ fun test(base: Base) {
         is Base.A -> ""
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddWhenElseBranchFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddWhenElseBranchFix

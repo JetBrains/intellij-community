@@ -6,3 +6,4 @@ class C<T> {
         listOf(1).<caret>minBy { it }
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

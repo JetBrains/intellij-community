@@ -44,3 +44,4 @@ open class C1 : B() {
 
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeSuspendInHierarchyFix

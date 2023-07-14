@@ -6,3 +6,5 @@ class Foo<T> {
 fun foo() {
     val (a, b, c) = Foo<caret><Int>()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix

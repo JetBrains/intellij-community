@@ -11,3 +11,4 @@ class B(private val f: MutableList<String>): ArrayList<String>(), MutableList<St
     override val size: Int
         get() = f.size
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SpecifyOverrideExplicitlyFix

@@ -5,3 +5,5 @@ fun test(x: String) {
     x?.le<caret>ngth
 }
 /* IGNORE_FIR */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix

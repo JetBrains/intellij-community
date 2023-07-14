@@ -15,3 +15,4 @@ operator fun Bar.invoke() = 2
 fun main() {
     println(Foo.bar())
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.KotlinOptimizeImportsQuickFix

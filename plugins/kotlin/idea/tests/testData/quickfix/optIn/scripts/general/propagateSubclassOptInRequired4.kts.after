@@ -16,3 +16,4 @@ interface CoreLibraryApi
 
 @SubclassOptInRequired(UnstableApi::class)
 abstract class SomeImplementation : CoreLibraryApi<caret>
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixesFactory$PropagateOptInAnnotationFix

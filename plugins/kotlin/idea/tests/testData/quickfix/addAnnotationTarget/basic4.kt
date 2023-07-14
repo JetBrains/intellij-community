@@ -7,3 +7,4 @@ class Test {
     @Foo
     fun foo(): <caret>@Foo Int = 1
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix

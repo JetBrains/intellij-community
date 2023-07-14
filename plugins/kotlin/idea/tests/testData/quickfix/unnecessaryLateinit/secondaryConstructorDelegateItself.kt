@@ -12,3 +12,5 @@ class Foo {
         bar = "a"
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

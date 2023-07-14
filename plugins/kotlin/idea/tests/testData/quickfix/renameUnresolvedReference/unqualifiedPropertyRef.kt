@@ -20,3 +20,4 @@ class A {
         baz(x(1))
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RenameUnresolvedReferenceFix

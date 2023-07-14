@@ -12,3 +12,4 @@ class Outer {
 
     protected class First : <caret>Data(42)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToProtectedFix

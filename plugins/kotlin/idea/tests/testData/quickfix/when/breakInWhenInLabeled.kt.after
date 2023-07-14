@@ -14,3 +14,5 @@ fun foo(chars: CharArray) {
     }
 }
 /* IGNORE_FIR */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddLoopLabelFix

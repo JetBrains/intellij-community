@@ -27,3 +27,4 @@ val foo: MockLibrary = MockLibrary();
         }
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixesFactory$HighPriorityUseOptInAnnotationFix

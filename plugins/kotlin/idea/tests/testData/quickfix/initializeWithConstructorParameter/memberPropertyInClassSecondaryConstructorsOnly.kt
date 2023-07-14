@@ -17,3 +17,4 @@ fun test() {
     val a = A("")
     val aa = A(1)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$InitializeWithConstructorParameter

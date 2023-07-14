@@ -5,3 +5,5 @@
 fun f(x: Int, y: Int, z : () -> Int) {
     f(1, 2, {x: Int, y: Int<caret> -> x});
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeFunctionLiteralSignatureFix

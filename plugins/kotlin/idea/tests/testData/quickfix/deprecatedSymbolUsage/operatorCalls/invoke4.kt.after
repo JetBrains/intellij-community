@@ -15,3 +15,4 @@ fun usage(executor: Executor) {
         // do something
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

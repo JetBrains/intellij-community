@@ -17,3 +17,5 @@ fun foo(x: X?, p: Boolean, s: String) {
         v != 'a'
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

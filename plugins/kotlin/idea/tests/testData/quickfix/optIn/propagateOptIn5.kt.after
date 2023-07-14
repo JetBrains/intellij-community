@@ -11,3 +11,4 @@ interface CoreLibraryApi
 
 @UnstableApi
 enum class SomeImplementation : CoreLibraryApi
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixesFactory$PropagateOptInAnnotationFix

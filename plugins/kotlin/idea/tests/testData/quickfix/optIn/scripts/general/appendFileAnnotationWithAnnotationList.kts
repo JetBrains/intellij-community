@@ -20,3 +20,5 @@ fun f() {}
 fun g() {
     <caret>f()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.UseOptInFileAnnotationFix

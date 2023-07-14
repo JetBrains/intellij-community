@@ -12,3 +12,5 @@ class Derived : Base<String>() {
         <caret>newFun("a", 1)
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

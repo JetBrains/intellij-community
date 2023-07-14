@@ -14,3 +14,5 @@ annotation class AliasMarker
 class AliasTarget
 
 typealias AliasMarkerUsage = <caret>AliasTarget
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixesFactory$HighPriorityUseOptInAnnotationFix

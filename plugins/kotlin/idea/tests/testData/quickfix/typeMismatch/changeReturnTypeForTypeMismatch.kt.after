@@ -4,3 +4,4 @@
 fun test1(ss: List<Any>): Int {
     return ss.map { it }.size<caret>
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForEnclosing

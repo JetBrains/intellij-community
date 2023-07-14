@@ -6,3 +6,4 @@ annotation class X(val value: Y)
 @X(@Y()<caret>)
 fun foo() {
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveAtFromAnnotationArgument

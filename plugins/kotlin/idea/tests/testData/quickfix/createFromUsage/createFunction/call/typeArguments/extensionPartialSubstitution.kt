@@ -6,3 +6,4 @@ class A<T>(val items: List<T>) {
         return items.<caret>foo<Int>(2, "2")
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateExtensionCallableFromUsageFix

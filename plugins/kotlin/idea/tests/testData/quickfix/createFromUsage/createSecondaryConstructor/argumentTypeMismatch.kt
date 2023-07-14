@@ -5,3 +5,4 @@ class Foo(val n: Int)
 fun test() {
     val foo = Foo("a<caret>bc${1}")
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix

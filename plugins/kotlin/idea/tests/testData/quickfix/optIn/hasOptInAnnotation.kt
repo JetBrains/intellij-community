@@ -18,3 +18,4 @@ fun root() {
     f1()
     <caret>f2()
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixesFactory$HighPriorityUseOptInAnnotationFix

@@ -4,3 +4,4 @@ fun test(a: Any) {
 }
 
 fun <T> foo(list: List<T>) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix

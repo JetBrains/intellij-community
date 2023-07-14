@@ -3,3 +3,4 @@ annotation class SuperAnnotation(
         val boo: <caret>Array<Boolean>,
         val str: Array<String>
 )
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.TypeOfAnnotationMemberFix

@@ -14,3 +14,4 @@ class MyImpl3(
         TODO("Not yet implemented")
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler

@@ -4,3 +4,4 @@ open class C2 {}
 class C3: C1() /* Hello, world! */ {}
 
 /* IGNORE_FIR */
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveSupertypeFix

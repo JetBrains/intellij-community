@@ -5,3 +5,5 @@ fun oldFun(p: Int): Int = p
 fun foo() {
     val v = 0
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

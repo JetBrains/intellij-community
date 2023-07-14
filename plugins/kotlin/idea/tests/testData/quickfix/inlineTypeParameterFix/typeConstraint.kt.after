@@ -1,2 +1,3 @@
 // "Inline type parameter" "true"
 fun test(p: String, q: String) = p.length + q.length
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.InlineTypeParameterFix

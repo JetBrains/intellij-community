@@ -11,3 +11,4 @@ abstract class A {
 class B : A(), I {
     override fun foo(): String = super<A>.<caret>foo()
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AbstractSuperCallFix

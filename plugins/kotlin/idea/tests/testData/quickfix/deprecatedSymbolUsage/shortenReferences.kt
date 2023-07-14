@@ -8,3 +8,5 @@ fun newFun(separator: Char){}
 fun foo() {
     <caret>oldFun()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

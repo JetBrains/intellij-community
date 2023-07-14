@@ -14,3 +14,5 @@ fun foo() {
 }
 
 fun getC(): C = C()
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

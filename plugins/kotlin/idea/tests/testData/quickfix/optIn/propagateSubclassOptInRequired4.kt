@@ -10,3 +10,4 @@ annotation class UnstableApi
 interface CoreLibraryApi
 
 abstract class SomeImplementation : CoreLibraryApi<caret>
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixesFactory$PropagateOptInAnnotationFix

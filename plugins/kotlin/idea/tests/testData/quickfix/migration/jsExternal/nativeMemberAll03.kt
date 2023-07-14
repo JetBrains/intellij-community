@@ -19,3 +19,4 @@ external class B {
 
     fun B.doNotTouchNestedExtensionMembers(): Nothing = definedExternally
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.migration.MigrateExternalExtensionFix

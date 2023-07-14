@@ -7,3 +7,4 @@ fun test() {
     val list = Collections.singletonList("a")
     list.maxBy<caret> { it.length }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageInWholeProjectFix

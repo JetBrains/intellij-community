@@ -21,3 +21,5 @@ fun interface SamI {
 val bar = SamI {
     foo<caret>()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixesFactory$HighPriorityUseOptInAnnotationFix

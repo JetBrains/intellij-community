@@ -5,3 +5,4 @@ fun test(i: Int) {
         else -> ""
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix

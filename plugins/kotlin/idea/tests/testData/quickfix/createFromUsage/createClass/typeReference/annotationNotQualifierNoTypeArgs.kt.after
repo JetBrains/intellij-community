@@ -4,3 +4,4 @@ package p
 fun foo(): A = throw Throwable("")
 
 annotation class A
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromUsageFix$LowPriorityCreateClassFromUsageFix

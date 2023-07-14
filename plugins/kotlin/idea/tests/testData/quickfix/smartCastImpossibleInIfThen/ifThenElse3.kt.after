@@ -11,3 +11,4 @@ class Test {
 
     fun bar() = 0
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SmartCastImpossibleInIfThenFactory$createQuickFix$1

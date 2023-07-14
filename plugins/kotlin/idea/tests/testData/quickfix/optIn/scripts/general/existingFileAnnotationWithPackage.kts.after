@@ -24,3 +24,5 @@ fun g() {}
 fun h() {
     g()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.UseOptInFileAnnotationFix

@@ -9,3 +9,4 @@ fun test(i: Int) {
         }
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForEnclosing

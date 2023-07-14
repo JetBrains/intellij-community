@@ -7,3 +7,4 @@ fun test(a: Any) {
         <caret>Foo -> {}
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddIsToWhenConditionFix

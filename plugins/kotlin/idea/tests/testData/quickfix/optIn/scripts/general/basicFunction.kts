@@ -19,3 +19,5 @@ class Bar {
         foo<caret>()
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixesFactory$PropagateOptInAnnotationFix

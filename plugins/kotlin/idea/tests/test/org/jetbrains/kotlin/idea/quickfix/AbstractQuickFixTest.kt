@@ -10,7 +10,11 @@ import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.codeInspection.ex.QuickFixWrapper
+import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
@@ -18,6 +22,7 @@ import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.io.write
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.caches.resolve.ResolveInDispatchThreadException
@@ -25,6 +30,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.forceCheckForResolveInDispatchTh
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.statistic.FilterableTestStatisticsEventLoggerProvider
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
@@ -57,8 +63,38 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         }
     }
 
+    private var statisticDisposable: Disposable? = null
+    protected var statisticsEventLoggerProvider: FilterableTestStatisticsEventLoggerProvider? = null
+    private var actionHint: ActionHint? = null
+
+    override fun setUp() {
+        super.setUp()
+        val newDisposable = Disposer.newDisposable(testRootDisposable, "statisticTestDisposable")
+        statisticDisposable = newDisposable
+
+        val loggerProvider = FilterableTestStatisticsEventLoggerProvider("FUS") { it == "called" }
+        statisticsEventLoggerProvider = loggerProvider
+        StatisticsEventLoggerProvider.EP_NAME.point.registerExtension(
+            loggerProvider,
+            LoadingOrder.FIRST,
+            newDisposable
+        )
+    }
+
+    override fun tearDown() {
+        runAll(
+            {
+                actionHint = null
+                statisticDisposable?.let(Disposer::dispose)
+                statisticDisposable = null
+            },
+            { super.tearDown() },
+        )
+    }
+
     protected open fun doTest(beforeFileName: String) {
-        val beforeFileText = FileUtil.loadFile(File(beforeFileName))
+        val beforeFile = File(beforeFileName)
+        val beforeFileText = FileUtil.loadFile(beforeFile)
         InTextDirectivesUtils.checkIfMuted(beforeFileText)
         withCustomCompilerOptions(beforeFileText, project, module) {
             loadScriptConfiguration()
@@ -69,10 +105,54 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
                 doKotlinQuickFixTest(beforeFileName)
                 checkForUnexpectedErrors()
+                checkFusEvents(beforeFile, beforeFileText)
                 PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
             } finally {
                 myFixture.disableInspections(*inspections)
             }
+        }
+    }
+
+    private fun checkFusEvents(file: File, fileText: String) {
+        val calledEventIds = statisticsEventLoggerProvider!!.getLoggedEvents()
+            .map { it.event }
+            .filter {
+                it.id == "called"
+            }
+            .map {
+                it.data["id"]
+            }
+        val applyQuickFix = applyQuickFix()
+        if (actionHint?.shouldPresent() == false || !applyQuickFix) {
+            assertTrue("no `called` event should happen: $calledEventIds", calledEventIds.isEmpty())
+            return
+        }
+        val calledId = calledEventIds.singleOrNull() as? String ?: error("single `called` event is expected: $calledEventIds")
+
+        val fusDirectiveName = if (isFirPlugin) {
+            "FUS_K2_QUICKFIX_NAME"
+        } else {
+            "FUS_QUICKFIX_NAME"
+        }
+
+        val quickFixName = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $fusDirectiveName:")
+        if (quickFixName.isNullOrEmpty()) {
+            val expected = """
+                |$fileText
+                |// $fusDirectiveName: $calledId
+            """.trimMargin()
+            throw FileComparisonFailure(
+                "expected to find quickfix `called` id", fileText, expected, file.toString()
+            )
+        }
+
+        if (calledId != quickFixName) {
+            throw FileComparisonFailure(
+                "expected to find quickfix `called` id",
+                fileText,
+                fileText.replace("// $fusDirectiveName: $quickFixName", "// $fusDirectiveName: $calledId"),
+                file.toString()
+            )
         }
     }
 
@@ -170,12 +250,13 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     }
 
     private fun applyAction(contents: String, fileName: String) {
-        val actionHint = ActionHint.parse(myFixture.file, contents.replace("\${file}", fileName, ignoreCase = true))
-        val intention = findActionWithText(actionHint.expectedText)
-        if (actionHint.shouldPresent()) {
+        val hint = ActionHint.parse(myFixture.file, contents.replace("\${file}", fileName, ignoreCase = true))
+        actionHint = hint
+        val intention = findActionWithText(hint.expectedText)
+        if (hint.shouldPresent()) {
             if (intention == null) {
                 fail(
-                    "Action with text '" + actionHint.expectedText + "' not found\nAvailable actions:\n" +
+                    "Action with text '" + hint.expectedText + "' not found\nAvailable actions:\n" +
                             myFixture.availableIntentions.joinToString(separator = "\n") { "// \"${it.text}\" \"true\"" })
                 return
             }
@@ -201,8 +282,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 }
             }
 
-            val applyQuickFix = (InTextDirectivesUtils.findStringWithPrefixes(myFixture.file.text, "// $APPLY_QUICKFIX_DIRECTIVE: ")
-                ?: "true").toBoolean()
+            val applyQuickFix = applyQuickFix()
             val stubComparisonFailure: ComparisonFailure?
             if (applyQuickFix) {
                 stubComparisonFailure = try {
@@ -218,10 +298,10 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 UIUtil.dispatchAllInvocationEvents()
 
                 if (!shouldBeAvailableAfterExecution()) {
-                    var action = findActionWithText(actionHint.expectedText)
+                    var action = findActionWithText(hint.expectedText)
                     action = if (action == null) null else IntentionActionDelegate.unwrap(action)
                     assertNull(
-                        "Action '${actionHint.expectedText}' (${action?.javaClass}) is still available after its invocation in test " + fileName,
+                        "Action '${hint.expectedText}' (${action?.javaClass}) is still available after its invocation in test " + fileName,
                         action
                     )
                 }
@@ -233,9 +313,11 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
             stubComparisonFailure?.let { throw it }
         } else {
-            assertNull("Action with text ${actionHint.expectedText} is present, but should not", intention)
+            assertNull("Action with text ${hint.expectedText} is present, but should not", intention)
         }
     }
+
+    private fun applyQuickFix() = InTextDirectivesUtils.getPrefixedBoolean(myFixture.file.text, "$APPLY_QUICKFIX_DIRECTIVE:") != false
 
     protected open fun getAfterFileName(beforeFileName: String): String {
         return File(beforeFileName).name + ".after"

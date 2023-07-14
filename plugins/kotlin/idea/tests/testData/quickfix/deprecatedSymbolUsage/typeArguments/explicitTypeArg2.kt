@@ -11,3 +11,4 @@ fun main() {
     <caret>old<String>()
     old<Int>()
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageInWholeProjectFix

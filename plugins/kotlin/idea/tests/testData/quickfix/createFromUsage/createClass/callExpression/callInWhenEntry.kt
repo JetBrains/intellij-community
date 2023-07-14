@@ -13,3 +13,4 @@ fun test(n: Int): I? {
     }
     else null
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromUsageFix

@@ -3,3 +3,5 @@
 class Foo
 
 fun <T> Foo.f() {}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.migration.MigrateTypeParameterListFix

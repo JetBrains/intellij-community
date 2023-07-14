@@ -8,3 +8,4 @@ fun f(a: Int, b: A) {}
 fun g() {
      f(a=1, b = B())
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddNameToArgumentFix

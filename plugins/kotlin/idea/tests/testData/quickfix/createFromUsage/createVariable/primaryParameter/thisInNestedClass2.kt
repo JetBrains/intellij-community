@@ -7,3 +7,5 @@ class A<T>(val n: T) {
         }
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterFromUsageFix

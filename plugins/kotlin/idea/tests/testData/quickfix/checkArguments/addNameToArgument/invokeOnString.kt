@@ -6,3 +6,5 @@ operator fun String.invoke(a: Int, b: Int) {}
 fun g() {
     ""(a = 1, <caret>42)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddNameToArgumentFix

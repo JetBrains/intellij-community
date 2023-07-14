@@ -2,3 +2,4 @@
 fun test(b: Byte, i: Int): Boolean {
     return b.toInt() == i
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

@@ -8,3 +8,5 @@
 
 @RequiresOptIn<caret>
 annotation class MyExperimentalAPI
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MakeModuleOptInFix

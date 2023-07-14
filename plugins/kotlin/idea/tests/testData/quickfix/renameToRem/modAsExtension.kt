@@ -8,3 +8,4 @@ fun test() {
     A.mod(3)
     A % 2
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RenameModToRemFix

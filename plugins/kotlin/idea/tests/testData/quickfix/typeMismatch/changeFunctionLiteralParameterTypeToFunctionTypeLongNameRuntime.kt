@@ -5,3 +5,4 @@ fun foo(f: ((java.util.LinkedHashSet<Int>) -> java.util.HashSet<Int>) -> String)
         f: String<caret> -> "42"
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeTypeFix

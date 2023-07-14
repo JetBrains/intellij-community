@@ -7,3 +7,4 @@ fun foo(arg: Int?) {
         arg()
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithNullCheckFix

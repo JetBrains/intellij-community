@@ -5,3 +5,4 @@ fun takeByte(x: Byte) {}
 fun foo() {
     takeByte((1 + 1).toByte()<caret>)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddConversionCallFix

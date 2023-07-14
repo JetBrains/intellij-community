@@ -10,3 +10,5 @@ class B : A<caret>(i = 42)
 fun a() {
     A(42)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

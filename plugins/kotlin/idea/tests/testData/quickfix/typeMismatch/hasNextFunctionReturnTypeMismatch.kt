@@ -8,3 +8,4 @@ abstract class A {
 fun test(notRange: A) {
     for (i in notRange<caret>) {}
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForCalled

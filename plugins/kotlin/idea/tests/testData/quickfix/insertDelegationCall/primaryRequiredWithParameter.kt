@@ -4,3 +4,5 @@
 class A(val x: Int) {
     constructor(x: String)<caret>
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.InsertDelegationCallQuickfix

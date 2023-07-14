@@ -8,3 +8,5 @@ import kotlin.test.asserter
 fun foo() {
     asserter
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix

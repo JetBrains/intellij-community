@@ -21,3 +21,5 @@ class B : A(), I {
 
 
 
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AbstractSuperCallFix

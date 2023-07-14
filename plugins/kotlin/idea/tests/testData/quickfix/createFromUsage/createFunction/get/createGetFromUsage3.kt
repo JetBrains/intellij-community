@@ -5,3 +5,5 @@ class Foo<T> {
         val z: Iterable<S> = y<caret>[""]
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix

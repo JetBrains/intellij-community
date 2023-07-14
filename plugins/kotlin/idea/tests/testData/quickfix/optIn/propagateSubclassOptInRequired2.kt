@@ -17,3 +17,4 @@ interface LibraryA
 interface LibraryB
 
 interface SomeImplementation : LibraryA<caret>, LibraryB
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixesFactory$PropagateOptInAnnotationFix

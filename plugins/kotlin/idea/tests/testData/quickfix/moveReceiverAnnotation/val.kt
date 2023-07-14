@@ -4,3 +4,4 @@ annotation class Ann
 
 @receiver:Ann<caret>
 val String.bar get() = ""
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveReceiverAnnotationFix

@@ -12,3 +12,5 @@ fun test(foo: Foo?) {
 }
 // TODO: Enable when FIR reports UNSAFE_CALL for function reference on nullable (currently UNRESOLVED_REFERENCE)
 /* IGNORE_FIR */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

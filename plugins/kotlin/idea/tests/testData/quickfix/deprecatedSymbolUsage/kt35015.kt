@@ -11,3 +11,5 @@ object Math {
 }
 
 val test = <caret>cos(kotlin.math.PI)
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

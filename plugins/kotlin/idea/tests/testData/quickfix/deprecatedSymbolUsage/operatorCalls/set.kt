@@ -10,3 +10,4 @@ fun test(t: T) {
     <caret>t[0] = 1
     t[1] = 2
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageInWholeProjectFix

@@ -6,3 +6,4 @@ data class Foo(private val bar: String, protected var baz: Int) {
         }
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddDataModifierFix

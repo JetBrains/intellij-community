@@ -8,3 +8,4 @@ class Foo
 
 fun bar(kc: kotlin.reflect.KClass<Foo>) {
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertClassToKClassFix

@@ -4,3 +4,4 @@ fun foo(): Int? {
     val n: Int? = 1
     return n
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForEnclosing

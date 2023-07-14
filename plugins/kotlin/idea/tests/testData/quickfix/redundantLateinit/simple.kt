@@ -3,3 +3,4 @@
 class Test {
     private <caret>lateinit var foo: String = ""
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

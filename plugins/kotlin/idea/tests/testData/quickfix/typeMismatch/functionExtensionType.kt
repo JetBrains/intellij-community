@@ -6,3 +6,4 @@ fun foo() {
 }
 
 fun String.verifyData(a: Int) = this.length > a
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForEnclosing

@@ -7,3 +7,4 @@ class C {
 }
 
 fun baz() {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveTypeAliasToTopLevelFix

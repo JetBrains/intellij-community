@@ -3,3 +3,4 @@
 // DISABLE-ERRORS
 
 inline fun foo(<caret>x: suspend () -> Unit) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddInlineModifierFix

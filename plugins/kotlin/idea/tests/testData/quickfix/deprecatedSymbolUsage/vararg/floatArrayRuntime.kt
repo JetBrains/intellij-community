@@ -11,3 +11,5 @@ fun newFun(p: FloatArray){}
 fun foo() {
     <caret>oldFun(1f)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

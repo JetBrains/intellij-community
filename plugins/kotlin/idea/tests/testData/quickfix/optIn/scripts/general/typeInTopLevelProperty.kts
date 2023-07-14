@@ -12,3 +12,5 @@ class TopClass
 annotation class TopAnn
 
 val topUserVal: @TopAnn <caret>TopClass? = null
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixesFactory$PropagateOptInAnnotationFix

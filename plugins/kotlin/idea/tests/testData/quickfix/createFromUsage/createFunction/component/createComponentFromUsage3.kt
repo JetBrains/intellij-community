@@ -17,3 +17,4 @@ operator fun Any.component1(): Int {
 fun foo() {
     for ((i: Int, j: Int) in Foo<caret><Int>()) { }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateExtensionCallableFromUsageFix

@@ -1,2 +1,4 @@
 // "Migrate type parameter list syntax" "true"
 fun <T> f() {}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.migration.MigrateTypeParameterListFix

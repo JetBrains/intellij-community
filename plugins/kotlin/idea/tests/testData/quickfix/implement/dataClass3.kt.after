@@ -10,3 +10,4 @@ data class C(val i: Int) : I {
         TODO("Not yet implemented")
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler

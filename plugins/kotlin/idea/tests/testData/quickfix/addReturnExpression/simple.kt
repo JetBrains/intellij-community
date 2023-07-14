@@ -6,3 +6,4 @@ fun test(): Boolean {
 
 fun foo() {
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddReturnExpressionFix

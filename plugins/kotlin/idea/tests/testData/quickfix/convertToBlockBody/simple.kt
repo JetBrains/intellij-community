@@ -9,3 +9,5 @@ fun foo(): Int = when {
 }
 
 fun bar() {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertToBlockBodyFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertToBlockBodyFix

@@ -6,3 +6,5 @@ annotation class SomeOptInAnnotation
 
 @get:SomeOptInAnnotation<caret>
 val someProperty: Int = 5
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix

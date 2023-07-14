@@ -6,3 +6,4 @@ open class RAccessor : RGrandAccessor {
     constructor(p: Boolean) : super(1)
     constructor(p: String) : this(true)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$InitializeWithConstructorParameter

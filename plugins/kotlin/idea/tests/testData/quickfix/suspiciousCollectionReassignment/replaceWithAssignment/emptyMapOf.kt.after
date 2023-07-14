@@ -10,3 +10,4 @@ fun test(otherMap: Map<Int, Int>) {
 
 fun foo() {}
 fun bar() {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.SuspiciousCollectionReassignmentInspection$ReplaceWithAssignmentFix

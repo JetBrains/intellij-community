@@ -8,3 +8,4 @@ fun Int.newFn(other: Int) = this + other
 fun main() {
     1.newFn(2)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

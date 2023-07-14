@@ -7,3 +7,5 @@ annotation class SomeOptInAnnotation
 
 class Foo(@SomeOptInAnnotation<caret> val value: Int) {
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveOptInRequirementToPropertyFix

@@ -3,3 +3,4 @@ import kotlin.properties.Delegates
 // "Convert to notNull delegate" "true"
 // WITH_STDLIB
 var x by Delegates.notNull<Int>()
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertLateinitPropertyToNotNullDelegateFix
