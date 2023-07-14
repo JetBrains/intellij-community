@@ -88,13 +88,19 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.emb.local" type="repository">
-        <properties include-transitive-deps="true" maven-id="ai.grazie.emb:meta-emb-engine-local-jvm:0.2.165" />
+        <properties include-transitive-deps="false" maven-id="ai.grazie.emb:meta-emb-engine-local-jvm:0.2.175">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/emb/meta-emb-engine-local-jvm/0.2.175/meta-emb-engine-local-jvm-0.2.175.jar">
+              <sha256sum>4208cc50a2e5e7ba9f93a88f505d88b18fa8774aba4704586bc0949d9c83c2f4</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/emb/meta-emb-engine-local-jvm/0.2.165/meta-emb-engine-local-jvm-0.2.165.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/emb/meta-emb-engine-local-jvm/0.2.175/meta-emb-engine-local-jvm-0.2.175.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/emb/meta-emb-engine-local-jvm/0.2.165/meta-emb-engine-local-jvm-0.2.165-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/emb/meta-emb-engine-local-jvm/0.2.175/meta-emb-engine-local-jvm-0.2.175-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
