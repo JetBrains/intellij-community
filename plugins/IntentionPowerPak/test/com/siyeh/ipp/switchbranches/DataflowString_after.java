@@ -12,7 +12,6 @@ class DataflowString {
         }
         System.out.println("Go!");
         switch<caret> (s) {
-
             case "bar":
                 break;
             case "baz":

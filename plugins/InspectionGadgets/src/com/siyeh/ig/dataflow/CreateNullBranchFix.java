@@ -2,13 +2,11 @@
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.*;
-import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.BaseSwitchFix;
@@ -31,25 +29,12 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
   }
 
   @Override
-  public @NotNull String getText() {
-    return getName();
-  }
-
-  @Override
   public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("create.null.branch.fix.family.name");
   }
 
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    PsiSwitchBlock block = myBlock.getElement();
-    return block == null ? null : new CreateNullBranchFix(PsiTreeUtil.findSameElementInCopy(block, target));
-  }
-
-  @Override
-  protected void invoke() {
-    PsiSwitchBlock switchBlock = myBlock.getElement();
-    if (switchBlock == null) return;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiSwitchBlock switchBlock, @NotNull ModPsiUpdater updater) {
     if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(switchBlock)) return;
     PsiCodeBlock body = switchBlock.getBody();
     if (body == null) return;
@@ -63,6 +48,10 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
       if (branch instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType())) return;
     }
     PsiElement unconditionalLabel = findUnconditionalLabel(switchBlock);
+    PsiElement bodyElement = body.getFirstBodyElement();
+    if (bodyElement instanceof PsiWhiteSpace && bodyElement == body.getLastBodyElement()) {
+      bodyElement.delete();
+    }
     PsiElement anchor = unconditionalLabel != null ? unconditionalLabel : body.getRBrace();
     if (anchor == null) return;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());
@@ -70,7 +59,7 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
       .stream()
       .map(text -> factory.createStatementFromText(text, body))
       .forEach(statement -> body.addBefore(statement, anchor));
-    CreateDefaultBranchFix.startTemplateOnStatement(PsiTreeUtil.getPrevSiblingOfType(anchor, PsiStatement.class));
+    CreateDefaultBranchFix.startTemplateOnStatement(PsiTreeUtil.getPrevSiblingOfType(anchor, PsiStatement.class), updater);
   }
 
   @Nullable

@@ -1,20 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.switchbranches;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.magicConstant.MagicConstantUtils;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.IntentionPowerPackBundle;
@@ -29,15 +27,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAction {
+public class CreateMissingSwitchBranchesAction extends PsiUpdateModCommandAction<PsiSwitchBlock> {
   private static final int MAX_NUMBER_OF_BRANCHES = 100;
-  @SafeFieldForPreview
   private List<Value> myAllValues;
 
+  public CreateMissingSwitchBranchesAction() {
+    super(PsiSwitchBlock.class);
+  }
+
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    PsiSwitchBlock block = PsiTreeUtil.getParentOfType(element, PsiSwitchBlock.class, false, PsiCodeBlock.class, PsiStatement.class);
-    if (block == null) return;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiSwitchBlock block, @NotNull ModPsiUpdater updater) {
     if (block instanceof PsiSwitchExpression && !HighlightingFeature.SWITCH_EXPRESSION.isAvailable(block)) {
       // Do not suggest if switch expression is not supported as we may generate unparseable code with 'yield' statement
       return;
@@ -50,7 +49,7 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
     List<PsiSwitchLabelStatementBase> addedLabels =
       CreateSwitchBranchesUtil.createMissingBranches(block, allValueNames, missingValueNames,
                                                      label -> extractConstantNames(allValues, label));
-    CreateSwitchBranchesUtil.createTemplate(block, addedLabels);
+    CreateSwitchBranchesUtil.createTemplate(block, addedLabels, updater);
   }
 
   private static List<String> extractConstantNames(List<Value> allValues, PsiSwitchLabelStatementBase label) {
@@ -59,31 +58,26 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    PsiSwitchBlock block = PsiTreeUtil.getParentOfType(element, PsiSwitchBlock.class, false, PsiCodeBlock.class, PsiStatement.class);
-    if (block == null) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiSwitchBlock block) {
+    if (block != PsiTreeUtil.getParentOfType(context.findLeaf(), PsiSwitchBlock.class, false, PsiCodeBlock.class, PsiStatement.class)) {
+      return null;
+    }
     PsiExpression expression = PsiUtil.skipParenthesizedExprDown(block.getExpression());
-    if (expression == null) return false;
+    if (expression == null) return null;
     PsiType type = expression.getType();
-    if (type == null) return false;
+    if (type == null) return null;
     boolean isString = TypeUtils.isJavaLangString(type);
     if (type instanceof PsiClassType && !isString) {
       type = PsiPrimitiveType.getUnboxedType(type);
-      if (type == null) {
-        return false;
-      }
+      if (type == null) return null;
     }
 
     List<Value> values = getPossibleValues(expression, type);
-    if (!values.isEmpty()) {
-      List<Value> missingValues = getMissingValues(block, values);
-      if (!missingValues.isEmpty()) {
-        myAllValues = values;
-        setText(CreateSwitchBranchesUtil.getActionName(ContainerUtil.map(missingValues, v -> v.myPresentationName)));
-        return true;
-      }
-    }
-    return false;
+    if (values.isEmpty()) return null;
+    List<Value> missingValues = getMissingValues(block, values);
+    if (missingValues.isEmpty()) return null;
+    myAllValues = values;
+    return Presentation.of(CreateSwitchBranchesUtil.getActionName(ContainerUtil.map(missingValues, v -> v.myPresentationName)));
   }
 
   @NotNull
@@ -99,13 +93,13 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
         return values.stream().map(Value::fromConstant).sorted(Comparator.comparing(v -> (String)v.myValue)).collect(Collectors.toList());
       }
     }
-    if (expression instanceof PsiReferenceExpression) {
-      PsiModifierListOwner target = ObjectUtils.tryCast(((PsiReferenceExpression)expression).resolve(), PsiModifierListOwner.class);
+    if (expression instanceof PsiReferenceExpression ref) {
+      PsiModifierListOwner target = ObjectUtils.tryCast(ref.resolve(), PsiModifierListOwner.class);
       List<Value> values = getValues(target, type, expression);
       if (values != null) return values;
     }
-    else if (expression instanceof PsiMethodCallExpression) {
-      PsiModifierListOwner target = ((PsiMethodCallExpression)expression).resolveMethod();
+    else if (expression instanceof PsiMethodCallExpression call) {
+      PsiModifierListOwner target = call.resolveMethod();
       List<Value> values = getValues(target, type, expression);
       if (values != null) return values;
     }
@@ -121,14 +115,14 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
       List<Value> result = new ArrayList<>();
       for (PsiAnnotationMemberValue value : values.getValues()) {
         Value val = null;
-        if (value instanceof PsiReferenceExpression) {
-          PsiField field = ObjectUtils.tryCast(((PsiReferenceExpression)value).resolve(), PsiField.class);
+        if (value instanceof PsiReferenceExpression ref) {
+          PsiField field = ObjectUtils.tryCast(ref.resolve(), PsiField.class);
           if (field != null) {
             val = Value.fromField(field);
           }
         }
-        else if (value instanceof PsiExpression) {
-          final Object o = ExpressionUtils.computeConstantExpression((PsiExpression)value);
+        else if (value instanceof PsiExpression expr) {
+          final Object o = ExpressionUtils.computeConstantExpression(expr);
           val = Value.fromConstant(o);
         }
         if (val == null) return Collections.emptyList();
@@ -201,8 +195,8 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
       if (value instanceof Byte || value instanceof Short) {
         normalized = ((Number)value).intValue();
       }
-      else if (value instanceof Character) {
-        normalized = (int)(Character)value;
+      else if (value instanceof Character ch) {
+        normalized = (int)ch;
       }
       if (normalized instanceof Integer || normalized instanceof String) {
         String presentation = getPresentation(value);
@@ -230,8 +224,8 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
       if (constant instanceof Integer || constant instanceof Byte || constant instanceof Short) {
         return constant.toString();
       }
-      if (constant instanceof String) {
-        return '"' + StringUtil.escapeStringCharacters((String)constant) + '"';
+      if (constant instanceof String str) {
+        return '"' + StringUtil.escapeStringCharacters(str) + '"';
       }
       if (constant instanceof Character) {
         return "'" + StringUtil.escapeCharCharacters(constant.toString()) + "'";

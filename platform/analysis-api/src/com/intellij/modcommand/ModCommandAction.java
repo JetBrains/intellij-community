@@ -117,6 +117,24 @@ public interface ModCommandAction extends CommonIntentionAction {
     }
 
     /**
+     * @param element element
+     * @return new context, which is bound to the specified element
+     * @see #element() 
+     */
+    public ActionContext withElement(@NotNull PsiElement element) {
+      return new ActionContext(project, file, offset, selection, element);
+    }
+
+    /**
+     * @param offset new offset
+     * @return new context, which is bound to the specified offset
+     * @see #offset() 
+     */
+    public ActionContext withOffset(int offset) {
+      return new ActionContext(project, file, offset, selection, element);
+    }
+
+    /**
      * @return a context leaf element, if available
      */
     public @Nullable PsiElement findLeaf() {
@@ -128,10 +146,6 @@ public interface ModCommandAction extends CommonIntentionAction {
      */
     public @Nullable PsiElement findLeafOnTheLeft() {
       return offset == 0 ? null : file.findElementAt(offset - 1);
-    }
-
-    public ActionContext withElement(@NotNull PsiElement element) {
-      return new ActionContext(project, file, offset, selection, element);
     }
 
     /**

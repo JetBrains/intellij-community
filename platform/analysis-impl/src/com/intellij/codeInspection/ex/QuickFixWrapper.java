@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.MathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -227,7 +228,10 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
       if (myUnwrappedAction != null) {
         if (myDescriptor.getStartElement() == null) return null;
-        return myUnwrappedAction.getPresentation(ActionContext.from(myDescriptor));
+        ActionContext descriptorContext = ActionContext.from(myDescriptor);
+        return myUnwrappedAction.getPresentation(
+          descriptorContext.withOffset(MathUtil.clamp(context.offset(), descriptorContext.selection().getStartOffset(),
+                                                      descriptorContext.selection().getEndOffset())));
       }
       PsiElement psiElement = myDescriptor.getPsiElement();
       if (psiElement == null || !psiElement.isValid()) return null;

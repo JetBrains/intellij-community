@@ -960,7 +960,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddMissingEnumBranchesFix(@NotNull PsiSwitchBlock switchBlock, @NotNull Set<String> missingCases) {
-    return new CreateEnumMissingSwitchBranchesFix(switchBlock, missingCases);
+    return new CreateEnumMissingSwitchBranchesFix(switchBlock, missingCases).asIntention();
   }
 
   @NotNull
@@ -968,7 +968,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createAddMissingSealedClassBranchesFix(@NotNull PsiSwitchBlock switchBlock,
                                                                 @NotNull Set<String> missingCases,
                                                                 @NotNull List<String> allNames) {
-    return new CreateSealedClassMissingSwitchBranchesFix(switchBlock, missingCases, allNames);
+    return new CreateSealedClassMissingSwitchBranchesFix(switchBlock, missingCases, allNames).asIntention();
   }
 
   @Nullable
@@ -977,13 +977,15 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                                 @NotNull PsiClass selectorType,
                                                                 @NotNull Map<PsiType, Set<List<PsiType>>> branches,
                                                                 @NotNull List<? extends PsiCaseLabelElement> elements) {
-    return CreateMissingDeconstructionRecordClassBranchesFix.create(switchBlock, selectorType, branches, elements);
+    CreateMissingDeconstructionRecordClassBranchesFix fix =
+      CreateMissingDeconstructionRecordClassBranchesFix.create(switchBlock, selectorType, branches, elements);
+    return fix == null ? null : fix.asIntention();
   }
 
   @NotNull
   @Override
   public IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, @IntentionName String message) {
-    return new CreateDefaultBranchFix(switchBlock, message);
+    return new CreateDefaultBranchFix(switchBlock, message).asIntention();
   }
 
   @Nullable

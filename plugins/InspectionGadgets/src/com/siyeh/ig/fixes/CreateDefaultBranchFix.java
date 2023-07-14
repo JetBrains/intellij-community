@@ -1,16 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateBuilderFactory;
-import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -18,7 +13,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
@@ -29,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 
-public final class CreateDefaultBranchFix extends BaseSwitchFix implements IntentionActionWithFixAllOption {
+public final class CreateDefaultBranchFix extends BaseSwitchFix {
   @NonNls private static final String PLACEHOLDER_NAME = "$EXPRESSION$";
   private final @IntentionName String myMessage;
 
@@ -38,10 +32,15 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix implements Inten
     myMessage = message;
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return myMessage == null ? getName() : myMessage;
+  protected String getText(@NotNull PsiSwitchBlock switchBlock) {
+    return myMessage == null ? getFamilyName() : myMessage;
+  }
+
+  @Override
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiSwitchBlock startSwitch) {
+    Presentation presentation = super.getPresentation(context, startSwitch);
+    return presentation == null ? null : presentation.withFixAllOption(this);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -52,9 +51,7 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix implements Inten
   }
 
   @Override
-  protected void invoke() {
-    PsiSwitchBlock switchBlock = myBlock.getElement();
-    if (switchBlock == null) return;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiSwitchBlock switchBlock, @NotNull ModPsiUpdater updater) {
     PsiCodeBlock body = switchBlock.getBody();
     if (body == null) return;
     if (SwitchUtils.calculateBranchCount(switchBlock) < 0) {
@@ -64,6 +61,10 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix implements Inten
     PsiExpression switchExpression = switchBlock.getExpression();
     if (switchExpression == null) return;
     boolean isRuleBasedFormat = SwitchUtils.isRuleFormatSwitch(switchBlock);
+    PsiElement bodyElement = body.getFirstBodyElement();
+    if (bodyElement instanceof PsiWhiteSpace && bodyElement == body.getLastBodyElement()) {
+      bodyElement.delete();
+    }
     PsiElement anchor = body.getRBrace();
     if (anchor == null) return;
     PsiElement parent = anchor.getParent();
@@ -72,31 +73,24 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix implements Inten
       .map(text -> factory.createStatementFromText(text, parent))
       .forEach(statement -> parent.addBefore(statement, anchor));
     PsiStatement lastStatement = ArrayUtil.getLastElement(body.getStatements());
-    startTemplateOnStatement(lastStatement);
+    startTemplateOnStatement(lastStatement, updater);
   }
 
   /**
    * Method selects the statement inside the switch block and offers a user to replace the selected statement
    * with the user-specified value.
    */
-  public static void startTemplateOnStatement(@Nullable PsiStatement statementToAdjust) {
-    if (statementToAdjust == null) return;
-    SmartPsiElementPointer<PsiStatement> pointer = SmartPointerManager.createPointer(statementToAdjust);
-    Editor editor = CreateSwitchBranchesUtil.prepareForTemplateAndObtainEditor(statementToAdjust);
-    if (editor == null) return;
-    statementToAdjust = pointer.getElement();
+  public static void startTemplateOnStatement(@Nullable PsiStatement statementToAdjust, @NotNull ModPsiUpdater updater) {
     if (statementToAdjust == null) return;
     PsiSwitchBlock block = PsiTreeUtil.getParentOfType(statementToAdjust, PsiSwitchBlock.class);
-    if (block == null || !block.isPhysical()) return;
+    if (block == null) return;
     PsiCodeBlock body = block.getBody();
     if (body == null) return;
-    if (statementToAdjust instanceof PsiSwitchLabeledRuleStatement) {
-      statementToAdjust = ((PsiSwitchLabeledRuleStatement)statementToAdjust).getBody();
+    if (statementToAdjust instanceof PsiSwitchLabeledRuleStatement rule) {
+      statementToAdjust = rule.getBody();
     }
     if (statementToAdjust != null) {
-      TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(block);
-      builder.replaceElement(statementToAdjust, new ConstantNode(statementToAdjust.getText()));
-      builder.run(editor, true);
+      updater.templateBuilder().field(statementToAdjust, statementToAdjust.getText());
     }
   }
 
@@ -144,11 +138,5 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix implements Inten
       }
       return Arrays.asList("default:", statement.getText());
     }
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    PsiSwitchBlock block = myBlock.getElement();
-    return block == null ? null : new CreateDefaultBranchFix(PsiTreeUtil.findSameElementInCopy(block, target), myMessage);
   }
 }

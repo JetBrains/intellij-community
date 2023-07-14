@@ -1,16 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -24,12 +21,6 @@ public final class CreateEnumMissingSwitchBranchesFix extends CreateMissingSwitc
   @Override
   public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("create.missing.enum.switch.branches.fix.family.name");
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    PsiSwitchBlock block = myBlock.getElement();
-    return block == null ? null : new CreateEnumMissingSwitchBranchesFix(PsiTreeUtil.findSameElementInCopy(block, target), myNames);
   }
 
   @Override

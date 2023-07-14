@@ -4,7 +4,7 @@ class X {
     switch(i=j) {
       case 0:break;
         default:
-            throw new IllegalStateException("Unexpected value: " + (i = j));
+            throw new IllegalStateException("Unexpected value: " + (i=j));
     }
   }
 }

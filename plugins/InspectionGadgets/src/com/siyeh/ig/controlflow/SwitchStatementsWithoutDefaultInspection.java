@@ -84,10 +84,11 @@ public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLo
         }
         String message = InspectionGadgetsBundle.message("switch.statements.without.default.problem.descriptor");
         if (infoMode || (isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), statement))) {
-          holder.registerProblem(statement, message, ProblemHighlightType.INFORMATION, new CreateDefaultBranchFix(statement, null));
+          holder.problem(statement, message).highlight(ProblemHighlightType.INFORMATION)
+            .fix(new CreateDefaultBranchFix(statement, null)).register();
         }
         else {
-          holder.registerProblem(statement.getFirstChild(), message, new CreateDefaultBranchFix(statement, null));
+          holder.problem(statement.getFirstChild(), message).fix(new CreateDefaultBranchFix(statement, null)).register();
         }
       }
     };

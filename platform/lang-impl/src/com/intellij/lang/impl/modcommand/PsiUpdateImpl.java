@@ -2,6 +2,9 @@
 package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInspection.ModCommands;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -10,14 +13,12 @@ import com.intellij.modcommand.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
@@ -352,7 +353,11 @@ final class PsiUpdateImpl {
             throw new IllegalStateException("Unable to restore element for template");
           }
           TextRange range = mapRange(elementRange);
+          Result result = expression.calculateResult(new DummyContext(range, element));
           myTemplateFields.add(new ModStartTemplate.ExpressionField(range, expression));
+          if (result != null) {
+            myTracker.myPositionDocument.replaceString(range.getStartOffset(), range.getEndOffset(), result.toString());
+          }
           return this;
         }
 
@@ -537,6 +542,40 @@ final class PsiUpdateImpl {
     private ModCommand getTemplateCommand() {
       if (myTemplateFields.isEmpty()) return nop();
       return new ModStartTemplate(myNavigationFile, myTemplateFields, f -> nop());
+    }
+
+    private class DummyContext implements ExpressionContext {
+      private final TextRange myRange;
+      private final @NotNull PsiElement myElement;
+
+      public DummyContext(TextRange range, @NotNull PsiElement element) {
+        myRange = range;
+        myElement = element;
+      }
+
+      @Override
+      public Project getProject() { return myTracker.myProject; }
+
+      @Override
+      public @Nullable Editor getEditor() { return null; }
+
+      @Override
+      public int getStartOffset() { return myRange.getStartOffset(); }
+
+      @Override
+      public int getTemplateStartOffset() { return myRange.getStartOffset(); }
+
+      @Override
+      public int getTemplateEndOffset() { return myRange.getEndOffset(); }
+
+      @Override
+      public <T> T getProperty(Key<T> key) { return null; }
+
+      @Override
+      public @Nullable PsiElement getPsiElementAtStartOffset() { return myElement.isValid() ? myElement : null; }
+
+      @Override
+      public @Nullable TextResult getVariableValue(String variableName) { return null; }
     }
   }
 }

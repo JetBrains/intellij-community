@@ -188,8 +188,8 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   private static void addCreateNullBranchFix(@NotNull PsiExpression qualifier, @NotNull List<? super @NotNull LocalQuickFix> fixes) {
     if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(qualifier)) return;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(qualifier.getParent());
-    if (parent instanceof PsiSwitchBlock && PsiUtil.skipParenthesizedExprDown(((PsiSwitchBlock)parent).getExpression()) == qualifier) {
-      fixes.add(new CreateNullBranchFix((PsiSwitchBlock)parent));
+    if (parent instanceof PsiSwitchBlock block && PsiUtil.skipParenthesizedExprDown(block.getExpression()) == qualifier) {
+      fixes.add(new CreateNullBranchFix(block).asQuickFix());
     }
   }
 

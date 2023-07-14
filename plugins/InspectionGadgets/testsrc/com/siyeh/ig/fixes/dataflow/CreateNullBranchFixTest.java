@@ -52,4 +52,8 @@ public class CreateNullBranchFixTest extends IGQuickFixesTestCase {
   public void testUnconditionalPatternNotExist() {
     doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
   }
+  
+  public void testEmptyBody() {
+    doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
+  }
 }

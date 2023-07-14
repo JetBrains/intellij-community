@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.ModTemplateBuilder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -94,6 +94,10 @@ public final class CreateSwitchBranchesUtil {
     String nextLabel = getNextLabel(prevToNext, missingLabels);
     PsiElement bodyElement = body.getFirstBodyElement();
     List<PsiSwitchLabelStatementBase> addedLabels = new ArrayList<>();
+    if (bodyElement instanceof PsiWhiteSpace && bodyElement == body.getLastBodyElement()) {
+      bodyElement.delete();
+      bodyElement = null;
+    }
     while (bodyElement != null) {
       PsiSwitchLabelStatementBase label = ObjectUtils.tryCast(bodyElement, PsiSwitchLabelStatementBase.class);
       if (label != null) {
@@ -129,35 +133,31 @@ public final class CreateSwitchBranchesUtil {
    * If necessary, starts a template to modify the bodies of created switch branches
    * @param block parent switch block
    * @param addedLabels list of created labels (returned from {@link #createMissingBranches(PsiSwitchBlock, List, Collection, Function)}).
+   * @param updater updater to use to record template information
    */
-  public static void createTemplate(@NotNull PsiSwitchBlock block, List<PsiSwitchLabelStatementBase> addedLabels) {
+  public static void createTemplate(PsiSwitchBlock block, List<PsiSwitchLabelStatementBase> addedLabels, ModPsiUpdater updater) {
     if (!(block instanceof PsiSwitchExpression)) return;
-    List<SmartPsiElementPointer<PsiSwitchLabelStatementBase>> pointers = ContainerUtil.map(addedLabels, SmartPointerManager::createPointer);
-    Editor editor = prepareForTemplateAndObtainEditor(block);
-    if (editor == null) return;
-    TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(block);
-    List<PsiExpression> elementsToReplace = getElementsToReplace(pointers);
+    List<PsiExpression> elementsToReplace = getElementsToReplace(addedLabels);
+    ModTemplateBuilder builder = updater.templateBuilder();
     for (PsiExpression expression : elementsToReplace) {
-      builder.replaceElement(expression, new ConstantNode(expression.getText()));
+      builder.field(expression, new ConstantNode(expression.getText()));
     }
-    builder.run(editor, true);
   }
 
-  private static @NotNull List<PsiExpression> getElementsToReplace(@NotNull List<SmartPsiElementPointer<PsiSwitchLabelStatementBase>> labels) {
+  @NotNull
+  private static List<PsiExpression> getElementsToReplace(@NotNull List<@NotNull PsiSwitchLabelStatementBase> labels) {
     List<PsiExpression> elementsToReplace = new ArrayList<>();
-    for (SmartPsiElementPointer<PsiSwitchLabelStatementBase> pointer : labels) {
-      PsiSwitchLabelStatementBase label = pointer.getElement();
-      if (label == null) continue;
-      if (label instanceof PsiSwitchLabeledRuleStatement) {
-        PsiStatement body = ((PsiSwitchLabeledRuleStatement)label).getBody();
-        if (body instanceof PsiExpressionStatement) {
-          ContainerUtil.addIfNotNull(elementsToReplace, ((PsiExpressionStatement)body).getExpression());
+    for (PsiSwitchLabelStatementBase label : labels) {
+      if (label instanceof PsiSwitchLabeledRuleStatement rule) {
+        PsiStatement body = rule.getBody();
+        if (body instanceof PsiExpressionStatement statement) {
+          ContainerUtil.addIfNotNull(elementsToReplace, statement.getExpression());
         }
       }
       else {
         PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(label);
-        if (next instanceof PsiYieldStatement) {
-          ContainerUtil.addIfNotNull(elementsToReplace, ((PsiYieldStatement)next).getExpression());
+        if (next instanceof PsiYieldStatement yieldStatement) {
+          ContainerUtil.addIfNotNull(elementsToReplace, yieldStatement.getExpression());
         }
       }
     }

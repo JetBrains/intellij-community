@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -31,7 +32,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.CreateEnumMissingSwitchBranchesFix;
-import com.siyeh.ig.fixes.CreateMissingSwitchBranchesFix;
 import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
@@ -148,7 +148,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
         }
         if (constants.isEmpty()) return;
         String message = buildErrorString(aClass.getQualifiedName(), constants);
-        CreateMissingSwitchBranchesFix fix = new CreateEnumMissingSwitchBranchesFix(switchBlock, constants);
+        LocalQuickFix fix = new CreateEnumMissingSwitchBranchesFix(switchBlock, constants).asQuickFix();
         if (highlighting == ProblemHighlightType.INFORMATION ||
             InspectionProjectProfileManager.isInformationLevel(getShortName(), switchBlock)) {
           holder.registerProblem(switchBlock, message, highlighting, fix);

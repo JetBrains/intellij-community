@@ -1,10 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,15 +29,6 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
   @Override
   public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("create.missing.record.deconstructions.switch.branches.fix.family.name");
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    PsiSwitchBlock block = myBlock.getElement();
-    return block == null
-           ? null
-           : new CreateMissingDeconstructionRecordClassBranchesFix(PsiTreeUtil.findSameElementInCopy(block, target), this.myNames,
-                                                                   this.allNames);
   }
 
   @Override

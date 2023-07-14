@@ -1,58 +1,26 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.psi.PsiSwitchBlock;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseSwitchFix implements LocalQuickFix, IntentionAction {
-  protected final SmartPsiElementPointer<PsiSwitchBlock> myBlock;
-
+public abstract class BaseSwitchFix extends PsiUpdateModCommandAction<PsiSwitchBlock> {
   public BaseSwitchFix(@NotNull PsiSwitchBlock block) {
-    myBlock = SmartPointerManager.createPointer(block);
-  }
-
-  /**
-   * {@inheritDoc}
-   * Must be implemented in subclasses to remap {@link #myBlock}
-   */
-  @Override
-  abstract public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target);
-
-  @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    invoke();
+    super(block);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    invoke();
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiSwitchBlock startSwitch) {
+    int offset = Math.min(context.offset(), startSwitch.getTextRange().getEndOffset() - 1);
+    PsiSwitchBlock currentSwitch = PsiTreeUtil.getNonStrictParentOfType(context.file().findElementAt(offset), PsiSwitchBlock.class);
+    return currentSwitch == startSwitch ? Presentation.of(getText(startSwitch)) : null;
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  abstract protected void invoke();
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiSwitchBlock startSwitch = myBlock.getElement();
-    if (startSwitch == null) return false;
-    int offset = Math.min(editor.getCaretModel().getOffset(), startSwitch.getTextRange().getEndOffset() - 1);
-    PsiSwitchBlock currentSwitch = PsiTreeUtil.getNonStrictParentOfType(file.findElementAt(offset), PsiSwitchBlock.class);
-    return currentSwitch == startSwitch;
+  protected @IntentionName String getText(@NotNull PsiSwitchBlock switchBlock) {
+    return getFamilyName();
   }
 }

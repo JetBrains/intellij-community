@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -20,28 +20,21 @@ public abstract class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
   }
 
   @Override
-  public @NotNull String getText() {
-    return getName();
-  }
-
-  @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
+  protected String getText(@NotNull PsiSwitchBlock switchBlock) {
     return CreateSwitchBranchesUtil.getActionName(myNames.stream().sorted().toList());
   }
 
   @Override
-  protected void invoke() {
-    PsiSwitchBlock switchBlock = myBlock.getElement();
-    if (switchBlock == null) return;
-    final PsiExpression switchExpression = switchBlock.getExpression();
-    if (switchExpression == null) return;
-    final PsiClassType switchType = (PsiClassType)switchExpression.getType();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiSwitchBlock switchBlock, @NotNull ModPsiUpdater updater) {
+    final PsiExpression selector = switchBlock.getExpression();
+    if (selector == null) return;
+    final PsiClassType switchType = (PsiClassType)selector.getType();
     if (switchType == null) return;
     final PsiClass psiClass = switchType.resolve();
     if (psiClass == null) return;
     List<PsiSwitchLabelStatementBase> addedLabels = CreateSwitchBranchesUtil
       .createMissingBranches(switchBlock, getAllNames(psiClass), myNames, getCaseExtractor());
-    CreateSwitchBranchesUtil.createTemplate(switchBlock, addedLabels);
+    CreateSwitchBranchesUtil.createTemplate(switchBlock, addedLabels, updater);
   }
 
   abstract protected @NotNull List<String> getAllNames(@NotNull PsiClass aClass);
