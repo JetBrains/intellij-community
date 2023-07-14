@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="hash4j" type="repository">
-    <properties maven-id="com.dynatrace.hash4j:hash4j:0.9.0">
+    <properties jar-repository-id="central-proxy" maven-id="com.dynatrace.hash4j:hash4j:0.11.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.9.0/hash4j-0.9.0.jar">
-          <sha256sum>d6aa5066620ebf8451cc1f80ccbe30f7c7612bc0084049dd5012159fd93d6670</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.11.0/hash4j-0.11.0.jar">
+          <sha256sum>9a873745a13de721c28840a580aa7095ca46e26e95a42258788ed2bd6228ce00</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.9.0/hash4j-0.9.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.11.0/hash4j-0.11.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.9.0/hash4j-0.9.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.11.0/hash4j-0.11.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
