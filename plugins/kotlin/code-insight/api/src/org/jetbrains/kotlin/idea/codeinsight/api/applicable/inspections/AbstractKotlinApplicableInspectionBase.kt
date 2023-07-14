@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.internal.statistic.ReportingClassSubstitutor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -71,7 +72,7 @@ abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement>(
     }
 }
 
-internal abstract class AbstractKotlinApplicableInspectionQuickFix<ELEMENT : KtElement> : LocalQuickFix {
+internal abstract class AbstractKotlinApplicableInspectionQuickFix<ELEMENT : KtElement> : LocalQuickFix, ReportingClassSubstitutor {
     abstract fun applyTo(element: ELEMENT)
 
     abstract fun shouldApplyInWriteAction(): Boolean

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.*
+import com.intellij.internal.statistic.ReportingClassSubstitutor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.Nls
 
 open class QuickFixWithDelegateFactory(
     delegateFactory: () -> IntentionAction?
-) : IntentionAction, IntentionActionDelegate {
+) : IntentionAction, ReportingClassSubstitutor {
     @Nls
     private val familyName: String
     @Nls
@@ -26,7 +27,7 @@ open class QuickFixWithDelegateFactory(
         startInWriteAction = delegate != null && delegate.startInWriteAction()
     }
 
-    override fun getDelegate(): IntentionAction = delegate ?: EmptyIntentionAction("")
+    override fun getSubstitutedClass(): Class<*> = delegate?.javaClass ?: javaClass
 
     override fun getFamilyName() = familyName
 
