@@ -3,11 +3,9 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
-import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory
 import com.intellij.codeInsight.hints.presentation.SpacePresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.PlainTextLanguage
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.psi.PsiElement
@@ -16,28 +14,6 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class InlayHintsPassFactoryTest : BasePlatformTestCase() {
-  fun testAlwaysEnabledWorksAfterDisabling() {
-    myFixture.configureByText("file.txt", "text")
-    val language = PlainTextLanguage.INSTANCE
-    val key = SettingsKey<NoSettings>("key")
-    ExtensionTestUtil.maskExtensions(InlayHintsProviderFactory.EP, listOf(object : InlayHintsProviderFactory {
-      override fun getProvidersInfo(): List<ProviderInfo<out Any>> {
-        return listOf(ProviderInfo(language, DummyProvider(key, object : InlayHintsCollector {
-          override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
-            sink.addInlineElement(0, true, SpacePresentation(1, 1), false)
-            return false
-          }
-        })))
-      }
-    }), testRootDisposable)
-    InlayHintsSettings.instance().changeHintTypeStatus(key, language, false)
-    InlayHintsPassFactory.setAlwaysEnabledHintsProviders(myFixture.editor, listOf(key))
-    val factory = InlayHintsPassFactory()
-    val pass = factory.createHighlightingPass(myFixture.file, myFixture.editor) as InlayHintsPass
-    pass.doCollectInformation(EmptyProgressIndicator())
-    pass.applyInformationToEditor()
-    assertTrue(myFixture.editor.inlayModel.getInlineElementsInRange(0, 0).isNotEmpty())
-  }
 
   fun testDumbMode() {
     myFixture.configureByText("file.txt", "text")
