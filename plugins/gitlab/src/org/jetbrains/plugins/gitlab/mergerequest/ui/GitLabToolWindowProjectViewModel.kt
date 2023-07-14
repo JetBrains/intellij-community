@@ -116,7 +116,8 @@ private constructor(parentCs: CoroutineScope, private val project: Project, conn
   }
 
   private fun createVm(tab: GitLabReviewTab): GitLabReviewTabViewModel = when (tab) {
-    is GitLabReviewTab.ReviewSelected -> GitLabReviewTabViewModel.Details(project, cs, currentUser, projectData, tab.reviewId)
+    is GitLabReviewTab.ReviewSelected -> GitLabReviewTabViewModel.Details(project, cs, currentUser, projectData, tab.reviewId,
+                                                                          getDiffBridge(tab.reviewId), filesController)
   }
 
   override fun selectTab(tab: GitLabReviewTab?) {

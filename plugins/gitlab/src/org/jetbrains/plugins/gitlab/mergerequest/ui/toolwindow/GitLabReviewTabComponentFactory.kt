@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 
-import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.toolwindow.ReviewTabsComponentFactory
@@ -9,24 +8,19 @@ import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.util.URIUtil
 import com.intellij.ide.DataManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.UIUtil
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
-import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
-import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
-import org.jetbrains.plugins.gitlab.mergerequest.diff.selectedChange
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabReviewTabViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
@@ -82,60 +76,11 @@ internal class GitLabReviewTabComponentFactory(
     return createSelectorsComponent(cs)
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   private fun createReviewDetailsComponent(
     cs: CoroutineScope,
     projectVm: GitLabToolWindowProjectViewModel,
     reviewDetailsVm: GitLabMergeRequestDetailsLoadingViewModel
   ): JComponent {
-    val detailsVmFlow = reviewDetailsVm.mergeRequestLoadingFlow.mapLatest {
-      (it as? GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result)?.detailsVm
-    }.filterNotNull()
-
-    cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
-      detailsVmFlow.flatMapLatest {
-        it.showTimelineRequests
-      }.collect {
-        projectVm.filesController.openTimeline(reviewDetailsVm.mergeRequestId, true)
-      }
-    }
-
-    val diffBridge = projectVm.getDiffBridge(reviewDetailsVm.mergeRequestId)
-
-    cs.launchNow(Dispatchers.EDT) {
-      detailsVmFlow.collectLatest { detailsVm ->
-        val changesVm = detailsVm.changesVm
-        val changeListVms = changesVm.changeListVm.mapNotNull { it.getOrNull() }
-
-        coroutineScope {
-          launchNow {
-            changeListVms.flatMapLatest {
-              it.changesSelection
-            }.filterNotNull().collectLatest {
-              diffBridge.setChanges(it)
-            }
-          }
-
-          launchNow {
-            diffBridge.displayedChanges.mapNotNull {
-              (it as? ChangesSelection.Precise)?.selectedChange
-            }.collect {
-              changesVm.selectChange(it)
-            }
-          }
-
-          launchNow {
-            changeListVms.collectLatest {
-              it.showDiffRequests.collectLatest {
-                projectVm.filesController.openDiff(reviewDetailsVm.mergeRequestId, true)
-              }
-            }
-          }
-          awaitCancellation()
-        }
-      }
-    }
-
     val avatarIconsProvider = projectVm.avatarIconProvider
     return GitLabMergeRequestDetailsComponentFactory.createDetailsComponent(
       project, cs, reviewDetailsVm, projectVm.accountVm, avatarIconsProvider
