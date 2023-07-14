@@ -9,7 +9,6 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem;
-import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.codeInspection.dataFlow.fix.ReplaceWithArgumentFix;
 import com.intellij.codeInspection.dataFlow.fix.ReplaceWithObjectsEqualsFix;
@@ -335,10 +334,15 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       // duplicate case label is a compilation error so no need to highlight by the inspection
       Set<PsiElement> suspiciousElements = SwitchBlockHighlightingModel.findSuspiciousLabelElements(switchBlock);
       if (!suspiciousElements.contains(label)) {
-        holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.unreachable.switch.label"),
-                               new DeleteSwitchLabelFix(label, true));
+        holder.problem(label, JavaAnalysisBundle.message("dataflow.message.unreachable.switch.label"))
+            .maybeFix(createDeleteLabelFix(label)).register();
       }
     });
+  }
+
+  @Nullable
+  protected LocalQuickFix createDeleteLabelFix(PsiCaseLabelElement label) {
+    return null;
   }
 
   private static boolean isThrowing(PsiCaseLabelElement label) {
@@ -591,14 +595,14 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     String msg = JavaAnalysisBundle
       .message("dataflow.message.return.notnull.from.nullable", NullableStuffInspectionBase.getPresentableAnnoName(annotation),
                method.getName());
-    @NotNull LocalQuickFix[] fixes = LocalQuickFix.notNullElements(
-      AddAnnotationPsiFix.createAddNotNullFix(method),
-      new SetInspectionOptionFix(this, "REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL",
-                                 JavaAnalysisBundle
-                                   .message(
-                                     "inspection.data.flow.turn.off.nullable.returning.notnull.quickfix"),
-                                 false));
-    holder.registerProblem(annoName, msg, fixes);
+    holder.problem(annoName, msg)
+      .maybeFix(AddAnnotationPsiFix.createAddNotNullFix(method))
+      .fix(new SetInspectionOptionFix(this, "REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL",
+                                      JavaAnalysisBundle
+                                        .message(
+                                          "inspection.data.flow.turn.off.nullable.returning.notnull.quickfix"),
+                                      false))
+      .register();
   }
 
   private static boolean alsoAppliesToInternalSubType(PsiAnnotation annotation, PsiMethod method) {

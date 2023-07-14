@@ -1116,7 +1116,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createDeleteSwitchLabelFix(@NotNull PsiCaseLabelElement labelElement) {
-    return new DeleteSwitchLabelFix(labelElement, false);
+    return new DeleteSwitchLabelFix(labelElement, false).asIntention();
   }
 
   @Override

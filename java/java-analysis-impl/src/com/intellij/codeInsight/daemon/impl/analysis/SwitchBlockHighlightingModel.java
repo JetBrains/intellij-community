@@ -4,13 +4,12 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -70,21 +69,28 @@ public class SwitchBlockHighlightingModel {
     return new SwitchBlockHighlightingModel(languageLevel, switchBlock, psiFile);
   }
 
-  public static IntentionAction createAddDefaultFixIfNecessary(@NotNull PsiSwitchBlock block) {
+  public static boolean shouldAddDefault(@NotNull PsiSwitchBlock block) {
     PsiFile file = block.getContainingFile();
     SwitchBlockHighlightingModel model = createInstance(PsiUtil.getLanguageLevel(file), block, file);
-    if (model == null) return null;
-    IntentionActionWithFixAllOption templateFix = (IntentionActionWithFixAllOption)QuickFixFactory.getInstance().createAddSwitchDefaultFix(block, null);
-    Ref<IntentionAction> found = new Ref<>();
-    HighlightInfoHolder holder = new HighlightInfoHolder(file){
+    if (model == null) return false;
+    ModCommandAction templateAction = ModCommandAction.unwrap(QuickFixFactory.getInstance().createAddSwitchDefaultFix(block, null));
+    if (templateAction == null) return false;
+    var holder = new HighlightInfoHolder(file) {
+      boolean found;
+      
       @Override
       public boolean add(@Nullable HighlightInfo info) {
-        found.setIfNull(info == null ? null : info.getSameFamilyFix(templateFix));
+        if (info != null) {
+          found |= info.findRegisteredQuickFix((desc, range) -> {
+            ModCommandAction action = ModCommandAction.unwrap(desc.getAction());
+            return action != null && action.getClass().equals(templateAction.getClass());
+          });
+        }
         return false;
       }
     };
     model.checkSwitchLabelValues(holder);
-    return found.get();
+    return holder.found;
   }
 
   void checkSwitchBlockStatements(@NotNull HighlightInfoHolder holder) {

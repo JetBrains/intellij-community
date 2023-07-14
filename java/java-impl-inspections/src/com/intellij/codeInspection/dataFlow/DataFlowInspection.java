@@ -6,10 +6,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
 import com.intellij.codeInsight.options.JavaInspectionButtons;
 import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.dataFlow.fix.BoxPrimitiveInTernaryFix;
-import com.intellij.codeInspection.dataFlow.fix.FindDfaProblemCauseFix;
-import com.intellij.codeInspection.dataFlow.fix.ReplaceWithBooleanEqualsFix;
-import com.intellij.codeInspection.dataFlow.fix.SurroundWithRequireNonNullFix;
+import com.intellij.codeInspection.dataFlow.fix.*;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,6 +59,11 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   @Override
   protected LocalQuickFix createIntroduceVariableFix() {
     return new IntroduceVariableFix(true);
+  }
+
+  @Override
+  protected @Nullable LocalQuickFix createDeleteLabelFix(PsiCaseLabelElement label) {
+    return new DeleteSwitchLabelFix(label, true).asQuickFix();
   }
 
   private static boolean isVolatileFieldReference(PsiExpression qualifier) {

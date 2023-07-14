@@ -2,10 +2,9 @@
 package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -14,19 +13,19 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.fixes.CreateDefaultBranchFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class DeleteSwitchLabelFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class DeleteSwitchLabelFix extends PsiUpdateModCommandAction<PsiCaseLabelElement> {
   private final String myName;
   private final boolean myAddDefaultIfNecessary;
   private final boolean myBranch;
@@ -51,13 +50,11 @@ public class DeleteSwitchLabelFix extends LocalQuickFixAndIntentionActionOnPsiEl
     return prevStatement == null || !ControlFlowUtils.statementMayCompleteNormally(prevStatement);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getText() {
-    return myBranch ?
-           JavaAnalysisBundle.message("remove.switch.branch.0", myName) :
-           JavaAnalysisBundle.message("remove.switch.label.0", myName);
+  protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiCaseLabelElement element) {
+    return Presentation.of(myBranch ?
+                           JavaAnalysisBundle.message("remove.switch.branch.0", myName) :
+                           JavaAnalysisBundle.message("remove.switch.label.0", myName));
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -68,22 +65,14 @@ public class DeleteSwitchLabelFix extends LocalQuickFixAndIntentionActionOnPsiEl
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-    PsiCaseLabelElement labelElement = ObjectUtils.tryCast(startElement, PsiCaseLabelElement.class);
-    if (labelElement == null) return;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiCaseLabelElement labelElement, @NotNull ModPsiUpdater updater) {
     PsiSwitchLabelStatementBase label = PsiImplUtil.getSwitchLabel(labelElement);
     if (label == null) return;
     PsiSwitchBlock block = label.getEnclosingSwitchBlock();
     if (block == null) return;
-    deleteLabelElement(project, labelElement);
-    if (myAddDefaultIfNecessary) {
-      IntentionAction addDefaultFix = SwitchBlockHighlightingModel.createAddDefaultFixIfNecessary(block);
-      if (addDefaultFix != null) {
-        addDefaultFix.invoke(project, editor, file);
-      }
+    deleteLabelElement(context.project(), labelElement);
+    if (myAddDefaultIfNecessary && SwitchBlockHighlightingModel.shouldAddDefault(block)) {
+      CreateDefaultBranchFix.addDefault(block, updater);
     }
   }
 

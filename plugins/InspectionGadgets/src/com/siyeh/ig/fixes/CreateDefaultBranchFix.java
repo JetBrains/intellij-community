@@ -5,6 +5,7 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -52,6 +53,10 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix {
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiSwitchBlock switchBlock, @NotNull ModPsiUpdater updater) {
+    addDefault(switchBlock, updater);
+  }
+
+  public static void addDefault(@NotNull PsiSwitchBlock switchBlock, @NotNull ModPsiUpdater updater) {
     PsiCodeBlock body = switchBlock.getBody();
     if (body == null) return;
     if (SwitchUtils.calculateBranchCount(switchBlock) < 0) {
@@ -69,7 +74,7 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix {
     if (anchor == null) return;
     PsiElement parent = anchor.getParent();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());
-    generateStatements(switchBlock, isRuleBasedFormat).stream()
+    generateStatements(switchBlock, isRuleBasedFormat, updater).stream()
       .map(text -> factory.createStatementFromText(text, parent))
       .forEach(statement -> parent.addBefore(statement, anchor));
     PsiStatement lastStatement = ArrayUtil.getLastElement(body.getStatements());
@@ -94,7 +99,8 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix {
     }
   }
 
-  private static @NonNls List<String> generateStatements(PsiSwitchBlock switchBlock, boolean isRuleBasedFormat) {
+  private static @NonNls List<String> generateStatements(PsiSwitchBlock switchBlock, boolean isRuleBasedFormat,
+                                                         @NotNull ModPsiUpdater updater) {
     Project project = switchBlock.getProject();
     FileTemplate branchTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(JavaTemplateUtil.TEMPLATE_SWITCH_DEFAULT_BRANCH);
     Properties props = FileTemplateManager.getInstance(project).getDefaultProperties();
@@ -122,7 +128,9 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix {
       }
     }
     catch (IOException | IncorrectOperationException e) {
-      throw new IncorrectOperationException("Incorrect file template", (Throwable)e);
+      String templateName = "Switch Default Branch";
+      updater.cancel(JavaBundle.message("tooltip.incorrect.file.template", templateName));
+      return List.of();
     }
     PsiStatement stripped = ControlFlowUtils.stripBraces(statement);
     if (!isRuleBasedFormat || stripped instanceof PsiThrowStatement || stripped instanceof PsiExpressionStatement) {
