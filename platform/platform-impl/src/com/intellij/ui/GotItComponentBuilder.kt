@@ -27,16 +27,20 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.jcef.JBCefBrowser
+import com.intellij.ui.paint.LinePainter2D
+import com.intellij.ui.paint.RectanglePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionListener
+import java.awt.geom.Path2D
 import java.awt.geom.RoundRectangle2D
 import java.io.StringReader
 import java.net.URL
 import javax.swing.*
+import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 import javax.swing.event.HyperlinkEvent
 import javax.swing.plaf.TextUI
@@ -349,38 +353,62 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     val column = if (icon != null || stepText != null) 1 else 0
 
     if (image != null || htmlText != null) {
+      val borderSize = 1  // do not scale
       val component = if (htmlText != null) {
         val browser = JBCefBrowser.createBuilder().setMouseWheelEventEnable(false).build()
         browser.loadHTML(htmlText!!)
-
-        val arcSize = JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get()
-        val borderSize = if (withImageBorder) 1 else 0
         val wrapper = object : Wrapper(browser.component) {
           /** JCEF component is painting the whole background rect with no regard to opaque property. It breaks rounded borders.
-           *  So, it is a hack to allow painting only in the clipped rect.
+           *  So, it is a hack to paint the border again over the JCEF component to override it.
            */
-          override fun paintChildren(g: Graphics) {
-            val rect = RoundRectangle2D.Double(borderSize.toDouble(), borderSize.toDouble(),
-                                               width.toDouble() - 2 * borderSize, height.toDouble() - 2 * borderSize,
-                                               arcSize.toDouble(), arcSize.toDouble())
-            (g as Graphics2D).clip(rect)
-            super.paintChildren(g)
+          override fun paint(g: Graphics?) {
+            super.paint(g)
+            super.paintBorder(g)
           }
         }
         wrapper.also {
           UIUtil.setNotOpaqueRecursively(it)
-          val definedSize = htmlPageSize!!
-          val adjustedSize = Dimension(definedSize.width + 2 * borderSize, definedSize.height + 2 * borderSize)
+          val baseSize = htmlPageSize!!
+          val adjustedSize = Dimension(baseSize.width + 2 * borderSize, baseSize.height + 2 * borderSize)
           it.minimumSize = adjustedSize
           it.preferredSize = adjustedSize
         }
       }
       else JLabel(adjustIcon(image!!, useContrastColors))
 
-      if (withImageBorder) {
-        component.border = RoundedLineBorder(JBUI.CurrentTheme.GotItTooltip.imageBorderColor(useContrastColors),
-                                             JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get(),
-                                             1)
+      component.border = object : Border {
+        override fun paintBorder(c: Component?, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+          val g2d = g.create() as Graphics2D
+          try {
+            val arc = JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get().toDouble()
+            val rect = Rectangle(0, 0, width, height)
+            val roundedRect = RoundRectangle2D.Double(borderSize / 2.0, borderSize / 2.0,
+                                                      width.toDouble() - borderSize, height.toDouble() - borderSize,
+                                                      arc, arc)
+            // Fill the corners with default background to override the background of JCEF component and create the rounded corners
+            val path: Path2D = Path2D.Float(Path2D.WIND_EVEN_ODD)
+            path.append(roundedRect, false)
+            path.append(rect, false)
+
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+            g2d.color = JBUI.CurrentTheme.GotItTooltip.background(useContrastColors)
+            g2d.fill(path)
+            // Then paint the border itself if it is specified
+            if (withImageBorder) {
+              g2d.color = JBUI.CurrentTheme.GotItTooltip.imageBorderColor(useContrastColors)
+              RectanglePainter2D.DRAW.paint(g2d, 0.0, 0.0, width.toDouble(), height.toDouble(), arc,
+                                            LinePainter2D.StrokeType.CENTERED, borderSize.toDouble(), RenderingHints.VALUE_ANTIALIAS_ON)
+            }
+          }
+          finally {
+            g2d.dispose()
+          }
+        }
+
+        @Suppress("UseDPIAwareInsets")
+        override fun getBorderInsets(c: Component?): Insets = borderSize.let { Insets(it, it, it, it) }
+
+        override fun isBorderOpaque(): Boolean = true
       }
 
       panel.add(component,
