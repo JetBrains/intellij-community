@@ -454,7 +454,9 @@ class KotlinNameSuggester(
         fun suggestNamesByExpressionPSI(expression: KtExpression?, validator: (String) -> Boolean): Sequence<String> {
             if (expression == null) return emptySequence()
             return when (val deparenthesized = KtPsiUtil.safeDeparenthesize(expression)) {
-                is KtSimpleNameExpression -> getCamelNames(deparenthesized.getReferencedName(), validator)
+                is KtSimpleNameExpression -> getCamelNames(deparenthesized.getReferencedName(), validator).filter { name ->
+                    name.length >= MIN_LENGTH_OF_NAME_BASED_ON_EXPRESSION_PSI
+                }
                 is KtQualifiedExpression -> suggestNamesByExpressionPSI(deparenthesized.selectorExpression, validator)
                 is KtCallExpression -> suggestNamesByExpressionPSI(deparenthesized.calleeExpression, validator)
                 is KtPostfixExpression -> suggestNamesByExpressionPSI(deparenthesized.baseExpression, validator)
@@ -524,6 +526,7 @@ class KotlinNameSuggester(
         )
 
         private const val MAX_NUMBER_OF_SUGGESTED_NAME_CHECKS = 1000
+        private const val MIN_LENGTH_OF_NAME_BASED_ON_EXPRESSION_PSI = 3
         private val ACCESSOR_PREFIXES = arrayOf("get", "is", "set")
 
         private val KOTLIN_HARD_KEYWORDS = KtTokens.KEYWORDS.types.filterIsInstance<KtKeywordToken>().map { it.value }
