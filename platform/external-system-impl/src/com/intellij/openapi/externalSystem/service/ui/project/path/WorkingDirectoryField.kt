@@ -9,10 +9,7 @@ import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionI
 import com.intellij.openapi.externalSystem.service.ui.completion.collector.TextCompletionCollector
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.util.bind
-import com.intellij.openapi.observable.util.trim
-import com.intellij.openapi.observable.util.whenMousePressed
-import com.intellij.openapi.observable.util.whenTextChanged
+import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
@@ -46,7 +43,8 @@ class WorkingDirectoryField(
     RecursionManager.createGuard(WorkingDirectoryField::class.java.name)
 
   private val externalProjectModificationTracker: ModificationTracker =
-    workingDirectoryInfo.externalProjectModificationTracker
+    workingDirectoryInfo.externalProjectModificationTracker +
+    modeProperty.createPropertyModificationTracker(parentDisposable)
 
   private val externalProjects: List<ExternalProject> by lazy {
     workingDirectoryInfo.collectExternalProjects()
