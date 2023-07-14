@@ -45,18 +45,18 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
         if (addScheme) {
           EditorColorsManager.getInstance().addColorsScheme(scheme);
         }
-        String oldSchemeName = EditorColorsManager.getInstance().getGlobalScheme().getName();
+        EditorColorsScheme oldScheme = EditorColorsManager.getInstance().getGlobalScheme();
         EditorColorsManager.getInstance().setGlobalScheme(scheme);
-        changeLafIfNecessary(oldSchemeName, scheme);
+        changeLafIfNecessary(oldScheme, scheme);
       }
     });
   }
 
-  public static void changeLafIfNecessary(@NotNull String oldSchemeName, EditorColorsScheme newScheme) {
-    changeLafIfNecessary(oldSchemeName, newScheme, null);
+  public static void changeLafIfNecessary(@NotNull EditorColorsScheme oldScheme, EditorColorsScheme newScheme) {
+    changeLafIfNecessary(oldScheme, newScheme, null);
   }
 
-  public static void changeLafIfNecessary(@NotNull String oldSchemeName, EditorColorsScheme newScheme, @Nullable Runnable onDone) {
+  public static void changeLafIfNecessary(@NotNull EditorColorsScheme oldScheme, EditorColorsScheme newScheme, @Nullable Runnable onDone) {
     final String productName = ApplicationNamesInfo.getInstance().getFullProductName();
     final LafManager lafManager = LafManager.getInstance();
     boolean isDarkEditorTheme = ColorUtil.isDark(newScheme.getDefaultBackground());
@@ -65,7 +65,7 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
     // because if the user decides to switch the theme, it will make no sense to remember the new scheme for the old theme (IDEA-323306).
     // 2. But we also need to prevent the LaF manager from remembering it automatically.
     // 3. In case the user does NOT decide to change the theme, we'll remember the new scheme later.
-    lafManager.rememberSchemeForLaf(oldSchemeName);
+    lafManager.rememberSchemeForLaf(oldScheme);
     lafManager.setRememberSchemeForLaf(false);
     boolean lafChanged = false;
 
@@ -115,7 +115,7 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
 
     lafManager.setRememberSchemeForLaf(true);
     if (!lafChanged) { // The user decided to keep the new scheme for the old theme, so remember it.
-      lafManager.rememberSchemeForLaf(newScheme.getName());
+      lafManager.rememberSchemeForLaf(newScheme);
     }
 
     if (onDone != null) {
