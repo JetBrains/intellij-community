@@ -282,13 +282,15 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   // as a separate step, not a part of computing implicitModules, as we should collect libraries from a such implicitly included modules
   layout.collectProjectLibrariesFromIncludedModules(context = context) { lib, module ->
     val name = lib.name
-    //this module is used only when running IDE from sources, no need to include its dependencies, see IJPL-125 
+    // this module is used only when running IDE from sources, no need to include its dependencies, see IJPL-125
     if (module.name == "intellij.platform.buildScripts.downloader" && (name == "zstd-jni" || name == "zstd-jni-windows-aarch64")) {
       return@collectProjectLibrariesFromIncludedModules
     }
 
     layout.includedProjectLibraries
-      .addOrGet(ProjectLibraryData(name, PLATFORM_CUSTOM_PACK_MODE.getOrDefault(name, LibraryPackMode.MERGED)))
+      .addOrGet(ProjectLibraryData(libraryName = name,
+                                   packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(name, LibraryPackMode.MERGED),
+                                   reason = "<- ${module.name}"))
       .dependentModules.computeIfAbsent("core") { mutableListOf() }.add(module.name)
   }
   return layout
@@ -321,7 +323,7 @@ internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, 
         }
 
         val packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libraryName, LibraryPackMode.MERGED)
-        result.addOrGet(ProjectLibraryData(libraryName, packMode))
+        result.addOrGet(ProjectLibraryData(libraryName, packMode, reason = "<- $moduleName"))
           .dependentModules
           .computeIfAbsent(plugin.directoryName) { mutableListOf() }
           .add(moduleName)

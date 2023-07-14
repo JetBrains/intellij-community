@@ -99,7 +99,7 @@ private val predefinedMergeRules = persistentMapOf<String, (String, JetBrainsCli
   map.put(PRODUCT_CLIENT_JAR) { name, filter -> name.startsWith("License") && filter.isProjectLibraryIncluded(name) }
   // see ClassPathUtil.getUtilClassPath
   map.put(UTIL_8_JAR) { it, _ ->
-  libsThatUsedInJps.contains(it) ||
+    libsThatUsedInJps.contains(it) ||
     (it.startsWith("kotlinx-") && !notImportantKotlinLibs.contains(it)) ||
     it == "kotlin-reflect"
   }
@@ -182,7 +182,8 @@ class JarPackager private constructor(private val outputDir: Path,
 
       if (layout != null) {
         val clientModuleFilter = context.jetBrainsClientModuleFilter
-        val libraryToMerge = packager.packProjectLibraries(outputDir = outputDir, layout = layout, copiedFiles = packager.copiedFiles, clientModuleFilter)
+        val libraryToMerge = packager.packProjectLibraries(outputDir = outputDir, layout = layout, copiedFiles = packager.copiedFiles,
+                                                           clientModuleFilter)
         if (isRootDir) {
           for ((key, value) in predefinedMergeRules) {
             packager.mergeLibsByPredicate(key, libraryToMerge, outputDir, value, clientModuleFilter)
@@ -257,7 +258,7 @@ class JarPackager private constructor(private val outputDir: Path,
       val childPrefix = "${layout.mainModule}."
       for (element in module.dependenciesList.dependencies) {
         if (element !is JpsModuleDependency ||
-                  javaExtensionService.getDependencyExtension(element)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
+            javaExtensionService.getDependencyExtension(element)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
           continue
         }
 
@@ -374,12 +375,15 @@ class JarPackager private constructor(private val outputDir: Path,
 
     val excluded = layout.excludedModuleLibraries.get(moduleName)
     for (element in module.dependenciesList.dependencies) {
+      var isModuleLevel = true
       val libraryReference = (element as? JpsLibraryDependency)?.libraryReference ?: continue
       if (libraryReference.parentReference !is JpsModuleReference) {
         if (includeProjectLib) {
-          if (platformLayout!!.hasLibrary(element.library!!.name)) {
+          val name = element.library!!.name
+          if (platformLayout!!.hasLibrary(name) || layout.hasLibrary(name)) {
             continue
           }
+          isModuleLevel = false
         }
         else {
           continue
@@ -410,11 +414,21 @@ class JarPackager private constructor(private val outputDir: Path,
 
       for (file in files) {
         sources.add(ZipSource(file) { size ->
-          libraryEntries.add(ModuleLibraryFileEntry(path = targetFile,
-                                                    moduleName = moduleName,
-                                                    libraryName = LibraryLicensesListGenerator.getLibraryName(library),
-                                                    libraryFile = file,
-                                                    size = size))
+          val entry = if (isModuleLevel) {
+            ModuleLibraryFileEntry(path = targetFile,
+                                   moduleName = moduleName,
+                                   libraryName = LibraryLicensesListGenerator.getLibraryName(library),
+                                   libraryFile = file,
+                                   size = size)
+          }
+          else {
+            ProjectLibraryEntry(path = targetFile,
+                                libraryFile = file,
+                                size = size,
+                                data = ProjectLibraryData(libraryName, LibraryPackMode.MERGED, reason = "<- $moduleName"))
+
+          }
+          libraryEntries.add(entry)
         })
       }
     }
@@ -486,7 +500,8 @@ class JarPackager private constructor(private val outputDir: Path,
       libToMetadata.put(library, libraryData)
       val libName = library.name
       var packMode = libraryData.packMode
-      if (packMode == LibraryPackMode.MERGED && !predefinedMergeRules.values.any { it(libName, clientModuleFilter) } && !isLibraryMergeable(libName)) {
+      if (packMode == LibraryPackMode.MERGED && !predefinedMergeRules.values.any { it(libName, clientModuleFilter) } && !isLibraryMergeable(
+          libName)) {
         packMode = LibraryPackMode.STANDALONE_MERGED
       }
 

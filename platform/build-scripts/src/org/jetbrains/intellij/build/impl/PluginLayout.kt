@@ -123,11 +123,20 @@ class PluginLayout private constructor(val mainModule: String,
 
     /**
      * Project-level library is included in the plugin by default, if not yet included in the platform.
+     * Direct main module dependencies in the same module group are included automatically.
      */
     @Experimental
     fun pluginAuto(moduleNames: List<String>): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first(), auto = true)
       layout.withModules(moduleNames)
+      return layout
+    }
+
+    @Experimental
+    fun pluginAuto(moduleNames: List<String>, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout {
+      val layout = PluginLayout(mainModule = moduleNames.first(), auto = true)
+      layout.withModules(moduleNames)
+      body(SimplePluginLayoutSpec(layout))
       return layout
     }
 

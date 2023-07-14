@@ -139,7 +139,9 @@ sealed class BaseLayout {
   }
 
   fun withProjectLibrary(libraryName: String) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = LibraryPackMode.MERGED))
+    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName,
+                                                    packMode = LibraryPackMode.MERGED,
+                                                    reason = "withProjectLibrary"))
   }
 
   fun withProjectLibraries(libraryNames: Iterable<String>) {
@@ -147,7 +149,7 @@ sealed class BaseLayout {
   }
 
   fun withProjectLibrary(libraryName: String, packMode: LibraryPackMode) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode))
+    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode, reason = "withProjectLibrary"))
   }
 
   /**

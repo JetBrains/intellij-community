@@ -728,7 +728,7 @@ private suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildCon
   return spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).useWithScope2 {
     val sources = ArrayList<ZipSource>()
     val result = ArrayList<DistributionFileEntry>()
-    val libraryData = ProjectLibraryData("Ant", LibraryPackMode.MERGED)
+    val libraryData = ProjectLibraryData("Ant", LibraryPackMode.MERGED, reason = "ant")
     copyDir(sourceDir = context.paths.communityHomeDir.resolve("lib/ant"),
             targetDir = antDir,
             dirFilter = { !it.endsWith("src") },
@@ -1046,7 +1046,7 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
         entries.add(ModuleLibraryFileEntry(path = artifactFile, moduleName = parentReference.moduleName, libraryName = LibraryLicensesListGenerator.getLibraryName(library), libraryFile = null, size = 0))
       }
       else {
-        val libraryData = ProjectLibraryData(library.name, LibraryPackMode.MERGED)
+        val libraryData = ProjectLibraryData(library.name, LibraryPackMode.MERGED, reason = "<- artifact ${artifact.name}")
         entries.add(ProjectLibraryEntry(path = artifactFile, data = libraryData, libraryFile = null, size = 0))
       }
     }

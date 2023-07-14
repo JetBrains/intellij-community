@@ -17,8 +17,8 @@ enum class LibraryPackMode {
 class ProjectLibraryData(
   @JvmField val libraryName: String,
   @JvmField val packMode: LibraryPackMode,
+  @JvmField val reason: String?,
   @JvmField val outPath: String? = null,
-  @JvmField val reason: String? = null,
 ) {
   init {
     require(outPath == null || !outPath.isBlank()) {
