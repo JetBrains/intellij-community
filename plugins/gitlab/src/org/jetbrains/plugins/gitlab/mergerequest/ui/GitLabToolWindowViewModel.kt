@@ -34,7 +34,7 @@ internal class GitLabToolWindowViewModel(
 
   private val connectionManager: GitLabProjectConnectionManager = project.service<GitLabProjectConnectionManager>()
   private val projectsManager: GitLabProjectsManager = project.service<GitLabProjectsManager>()
-  val accountManager: GitLabAccountManager = service<GitLabAccountManager>()
+  private val accountManager: GitLabAccountManager = service<GitLabAccountManager>()
 
   override val projectVm: StateFlow<GitLabToolWindowProjectViewModel?> =
     connectionManager.connectionState.mapScoped { connection ->

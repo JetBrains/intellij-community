@@ -50,9 +50,8 @@ internal class GitLabReviewTabComponentFactory(
     projectVm: GitLabToolWindowProjectViewModel
   ): JComponent {
     GitLabStatistics.logMrListOpened(project)
-    val accountVm = GitLabAccountViewModelImpl(project, cs, projectVm.account, toolwindowViewModel.accountManager)
     return GitLabMergeRequestsPanelFactory()
-      .create(cs, accountVm, projectVm.listVm).also { panel ->
+      .create(cs, projectVm.accountVm, projectVm.listVm).also { panel ->
         DataManager.registerDataProvider(panel) { dataId ->
           when {
             GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> projectVm.filesController
@@ -92,10 +91,6 @@ internal class GitLabReviewTabComponentFactory(
     val detailsVmFlow = reviewDetailsVm.mergeRequestLoadingFlow.mapLatest {
       (it as? GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result)?.detailsVm
     }.filterNotNull()
-
-    val contextHolder = project.service<GitLabToolWindowViewModel>()
-    val accountManager = contextHolder.accountManager
-    val accountVm = GitLabAccountViewModelImpl(project, cs, projectVm.account, accountManager)
 
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
       detailsVmFlow.flatMapLatest {
@@ -143,7 +138,7 @@ internal class GitLabReviewTabComponentFactory(
 
     val avatarIconsProvider = projectVm.avatarIconProvider
     return GitLabMergeRequestDetailsComponentFactory.createDetailsComponent(
-      project, cs, reviewDetailsVm, accountVm, avatarIconsProvider
+      project, cs, reviewDetailsVm, projectVm.accountVm, avatarIconsProvider
     ).also {
       DataManager.registerDataProvider(it) { dataId ->
         when {

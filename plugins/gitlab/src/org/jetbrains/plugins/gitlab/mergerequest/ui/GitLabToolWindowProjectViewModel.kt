@@ -2,27 +2,31 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowProjectViewModel
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabs
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLazyProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
@@ -33,6 +37,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsF
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsPersistentFiltersHistory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.LoadAllGitLabMergeRequestTimelineViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 
 internal class GitLabToolWindowProjectViewModel
@@ -51,12 +56,16 @@ private constructor(parentCs: CoroutineScope, private val project: Project, conn
     .weakValues()
     .build<GitLabMergeRequestId.Simple, GitLabMergeRequestDiffBridge>()
 
+  private val timelineVms = Caffeine.newBuilder()
+    .weakValues()
+    .build<GitLabMergeRequestId.Simple, SharedFlow<Result<LoadAllGitLabMergeRequestTimelineViewModel>>>()
+
   val filesController: GitLabMergeRequestsFilesController = GitLabMergeRequestsFilesControllerImpl(project, connection)
 
   val avatarIconProvider: IconsProvider<GitLabUserDTO> = CachingIconsProvider(AsyncImageIconsProvider(cs, connection.imageLoader))
 
-  // should not be here
-  val account: GitLabAccount = connection.account
+  val accountVm: GitLabAccountViewModel =
+    GitLabAccountViewModelImpl(project, cs, connection.account, service<GitLabAccountManager>())
 
   override val listVm: GitLabMergeRequestsListViewModel = run {
     val filterVm = GitLabMergeRequestsFiltersViewModelImpl(
@@ -137,6 +146,28 @@ private constructor(parentCs: CoroutineScope, private val project: Project, conn
     diffBridgeStore.get(GitLabMergeRequestId.Simple(mr)) {
       GitLabMergeRequestDiffBridge()
     }
+
+  fun getTimelineViewModel(mergeRequestId: GitLabMergeRequestId): SharedFlow<Result<LoadAllGitLabMergeRequestTimelineViewModel>> {
+    val simpleId = GitLabMergeRequestId.Simple(mergeRequestId)
+    return timelineVms.get(simpleId) {
+      projectData.mergeRequests.getShared(simpleId).mapScoped { mrResult ->
+        val cs = this
+        val diffBridge = getDiffBridge(simpleId)
+        mrResult.mapCatching {
+          LoadAllGitLabMergeRequestTimelineViewModel(cs, project.service(), currentUser, it).also {
+            cs.launchNow {
+              it.diffRequests.collect { change ->
+                diffBridge.setChanges(change)
+                withContext(Dispatchers.EDT) {
+                  filesController.openDiff(simpleId, true)
+                }
+              }
+            }
+          }
+        }
+      }.shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
+    }
+  }
 
   init {
     cs.awaitCancellationAndInvoke { filesController.closeAllFiles() }
