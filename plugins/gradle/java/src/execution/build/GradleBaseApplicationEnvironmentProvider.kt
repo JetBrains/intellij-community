@@ -71,7 +71,9 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     val mainClass = runProfile.configurationModule.findClass(runClass) ?: return null
 
     val virtualFile = mainClass.containingFile.virtualFile
-    val module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile) ?: return null
+    val module = runReadAction {
+      ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile)
+    } ?: return null
 
     val params = JavaParameters().apply {
       JavaParametersUtil.configureConfiguration(this, runProfile)
