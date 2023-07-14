@@ -114,6 +114,9 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   public void testReachability() {
     doTest();
   }
+  public void testReachabilityStatement() {
+    doTest();
+  }
 
   public void testEffectivelyFinal() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
