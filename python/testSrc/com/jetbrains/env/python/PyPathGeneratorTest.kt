@@ -8,7 +8,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.UsefulTestCase
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyExecutionFixtureTestTask
@@ -23,7 +22,6 @@ class PyPathGeneratorTest : PyEnvTestCase() {
 
   @Test
   fun `test only source dirs are added to PYTHONPATH`() {
-    VfsRootAccess.allowRootAccess(testRootDisposable, "D:/run/pythons")
     runPythonTest(object : PyExecutionFixtureTestTask(null) {
       override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
         val sdk = existingSdk ?: createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK)
