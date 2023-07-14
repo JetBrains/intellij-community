@@ -3,20 +3,24 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.presentation.FilePresentationService;
 import com.intellij.psi.PsiElement;
 import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.toolWindow.ToolWindowHeader;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.tabs.FileColorManagerImpl;
+import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -69,6 +73,16 @@ public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.S
           }
           return null;
         }
+    });
+    ClientProperty.put(this, DefaultTreeUI.AUTO_EXPAND_FILTER, node -> {
+      var obj = TreeUtil.getUserObject(node);
+      if (obj instanceof ProjectViewNode<?> pvNode) {
+        var file = pvNode.getVirtualFile();
+        return file != null && !file.isDirectory(); // true means "don't expand", so we only auto-expand directories
+      }
+      else {
+        return false;
+      }
     });
   }
 
