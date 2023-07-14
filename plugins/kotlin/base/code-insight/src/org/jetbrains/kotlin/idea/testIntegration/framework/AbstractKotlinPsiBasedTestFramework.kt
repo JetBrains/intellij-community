@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
 import com.intellij.java.library.JavaLibraryUtil
+import com.intellij.util.ThreeState
+import com.intellij.util.ThreeState.*
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.KOTLIN_TEST_IGNORE
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -24,23 +26,24 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
         }
 
         return when (declaration) {
-            is KtClassOrObject -> isTestClass(declaration)
-            is KtNamedFunction -> (declaration.containingClassOrObject?.let(::isTestClass) ?: false) && isTestMethod(declaration)
+            is KtClassOrObject -> checkTestClass(declaration) == YES
+            is KtNamedFunction -> (declaration.containingClassOrObject?.let(::checkTestClass) ?: NO) == YES
+                    && isTestMethod(declaration)
+
             else -> false
         }
     }
 
-    override fun isTestClass(declaration: KtClassOrObject): Boolean {
-        return when {
-            declaration.isPrivate() -> false
-            declaration.isAnnotation() -> false
-            (declaration.isTopLevel() && declaration is KtObjectDeclaration) && !allowTestMethodsInObject -> false
-            declaration.annotations.isNotEmpty() -> true
-            declaration.superTypeListEntries.any { it is KtSuperTypeCallEntry } -> true
-            declaration.declarations.any { it is KtNamedFunction && it.isPublic } -> true
-            else -> false
+    override fun checkTestClass(declaration: KtClassOrObject): ThreeState =
+        when {
+            declaration.isPrivate() -> NO
+            declaration.isAnnotation() -> NO
+            (declaration.isTopLevel() && declaration is KtObjectDeclaration) && !allowTestMethodsInObject -> NO
+            declaration.annotationEntries.isNotEmpty() -> UNSURE
+            declaration.superTypeListEntries.any { it is KtSuperTypeCallEntry } -> UNSURE
+            declaration.declarations.any { it is KtNamedFunction && it.isPublic } -> UNSURE
+            else -> NO
         }
-    }
 
     override fun isTestMethod(declaration: KtNamedFunction): Boolean {
         return when {
@@ -52,7 +55,7 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             else -> {
                 val ktClassOrObject =
                     if (allowTestMethodsInObject) declaration.getStrictParentOfType<KtClassOrObject>() else declaration.containingClass()
-                ktClassOrObject?.let(::isTestClass) ?: false
+                ktClassOrObject?.let(::checkTestClass) == YES
             }
         }
     }
@@ -63,7 +66,7 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
     }
 
     protected fun checkNameMatch(file: KtFile, fqNames: Set<String>, shortName: String): Boolean {
-        if ("${file.packageFqName}.$shortName" in fqNames) return true
+        if (shortName in fqNames || "${file.packageFqName}.$shortName" in fqNames) return true
 
         for (importDirective in file.importDirectives) {
             if (!importDirective.isValidImport) {

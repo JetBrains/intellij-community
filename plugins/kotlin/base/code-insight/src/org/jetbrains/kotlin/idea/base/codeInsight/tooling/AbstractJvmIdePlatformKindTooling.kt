@@ -9,8 +9,6 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.testIntegration.TestFramework
-import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
@@ -51,22 +49,12 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
             calculatedTestFrameworkValue?.let { cachedValue ->
                 val name = cachedValue.upToDateOrNull?.get() ?: return@let null
                 TestFramework.EXTENSION_NAME.extensionList.first { name == it.name }
-            } ?: TestFramework.EXTENSION_NAME.extensionList.firstOrNull { framework ->
-                if (framework is KotlinPsiBasedTestFramework) {
-                    framework.responsibleFor(declaration)
-                } else if (allowSlowOperations) {
-                    when (declaration) {
-                        is KtClassOrObject -> declaration.toLightClass()?.let(framework::isTestClass) ?: false
-                        is KtNamedFunction -> declaration.toLightMethods().firstOrNull()?.let { framework.isTestMethod(it, false) } ?: false
-                        else -> false
-                    }
-                } else {
-                    false
-                }
-            } ?: run {
-                declaration.removeUserData(TEST_FRAMEWORK_NAME_KEY)
-                return null
             }
+                ?: KotlinPsiBasedTestFramework.findTestFramework(declaration, !allowSlowOperations)
+                ?: run {
+                    declaration.removeUserData(TEST_FRAMEWORK_NAME_KEY)
+                    return null
+                }
         declaration.putUserData(
             TEST_FRAMEWORK_NAME_KEY,
             CachedValuesManager.getManager(declaration.project).createCachedValue {

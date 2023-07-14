@@ -8,6 +8,8 @@ import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.ThreeState
+import com.intellij.util.ThreeState.*
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.testIntegration.framework.AbstractKotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
@@ -25,13 +27,16 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
         override val disabledTestAnnotation: String = "org.junit.jupiter.api.Disabled"
         override val allowTestMethodsInObject: Boolean = true
 
-        override fun isTestClass(declaration: KtClassOrObject): Boolean =
-            super.isTestClass(declaration) && CachedValuesManager.getCachedValue(declaration) {
+        override fun checkTestClass(declaration: KtClassOrObject): ThreeState {
+            val checkState = super.checkTestClass(declaration)
+            if (checkState != UNSURE) return checkState
+            return CachedValuesManager.getCachedValue(declaration) {
                 CachedValueProvider.Result.create(
-                  isJUnit5TestClass(declaration),
-                  OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker
+                    checkJUnit5TestClass(declaration),
+                    OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker
                 )
             }
+        }
 
         override fun isTestMethod(declaration: KtNamedFunction): Boolean {
             if (!super.isTestMethod(declaration)) return false
@@ -39,18 +44,18 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
             return isJUnit5TestMethod(declaration)
         }
 
-        private fun isJUnit5TestClass(declaration: KtClassOrObject): Boolean {
-            val b = if (!isFrameworkAvailable(declaration)) {
-                false
+        private fun checkJUnit5TestClass(declaration: KtClassOrObject): ThreeState =
+            if (!isFrameworkAvailable(declaration)) {
+                NO
             } else if (declaration is KtClass && declaration.isInner() && !isAnnotated(declaration, "org.junit.jupiter.api.Nested")) {
-                false
+                NO
             } else if (declaration.isTopLevel() && isAnnotated(declaration, "org.junit.jupiter.api.extension.ExtendWith")) {
-                true
+                YES
+            } else if (findAnnotatedFunction(declaration, METHOD_ANNOTATION_FQN) != null) {
+                YES
             } else {
-                findAnnotatedFunction(declaration, METHOD_ANNOTATION_FQN) != null
+                UNSURE
             }
-            return b
-        }
 
         private fun isJUnit5TestMethod(method: KtNamedFunction): Boolean {
             return isAnnotated(method, METHOD_ANNOTATION_FQN)
@@ -67,31 +72,43 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
     override fun responsibleFor(declaration: KtNamedDeclaration): Boolean =
         psiBasedDelegate.responsibleFor(declaration)
 
-    override fun isTestClass(clazz: PsiElement): Boolean {
-        val ktClassOrObject = clazz.asKtClassOrObject() ?: return false
-        return psiBasedDelegate.isTestClass(ktClassOrObject)
-    }
+    override fun checkTestClass(declaration: KtClassOrObject): ThreeState = psiBasedDelegate.checkTestClass(declaration)
 
-    override fun findSetUpMethod(clazz: PsiElement): PsiElement? {
-        val ktClassOrObject = clazz.asKtClassOrObject() ?: return null
-        return psiBasedDelegate.findSetUp(ktClassOrObject)
-    }
+    override fun isTestClass(clazz: PsiElement): Boolean =
+        when (val checkTestClass = checkTestClass(clazz)) {
+            UNSURE -> super.isTestClass(clazz)
+            else -> checkTestClass == YES
+        }
 
-    override fun findTearDownMethod(clazz: PsiElement): PsiElement? {
-        val ktClassOrObject = clazz.asKtClassOrObject() ?: return null
-        return psiBasedDelegate.findTearDown(ktClassOrObject)
-    }
+    override fun findSetUpMethod(clazz: PsiElement): PsiElement? =
+        when (checkTestClass(clazz)) {
+            UNSURE -> super.findSetUpMethod(clazz)
+            NO -> null
+            else -> clazz.asKtClassOrObject()?.let(psiBasedDelegate::findSetUp)
+        }
+
+    override fun findTearDownMethod(clazz: PsiElement): PsiElement? =
+        when (checkTestClass(clazz)) {
+            UNSURE -> super.findTearDownMethod(clazz)
+            NO -> null
+            else -> clazz.asKtClassOrObject()?.let(psiBasedDelegate::findTearDown)
+        }
 
     override fun isIgnoredMethod(element: PsiElement?): Boolean =
-        element.asKtNamedFunction()?.let(psiBasedDelegate::isIgnoredMethod) ?: false
+        when (checkTestClass(element)) {
+            UNSURE -> super.isIgnoredMethod(element)
+            NO -> false
+            else -> element.asKtNamedFunction()?.let(psiBasedDelegate::isIgnoredMethod) ?: false
+        }
 
     override fun isTestMethod(element: PsiElement?): Boolean =
-        element.asKtNamedFunction()?.let(psiBasedDelegate::isTestMethod) ?: false
+        when (checkTestClass(element)) {
+            UNSURE -> super.isTestMethod(element)
+            NO -> false
+            else -> element.asKtNamedFunction()?.let(psiBasedDelegate::isTestMethod) ?: false
+        }
 
     override fun getLanguage(): Language = KotlinLanguage.INSTANCE
-
-    override fun isTestClass(declaration: KtClassOrObject): Boolean =
-        psiBasedDelegate.isTestClass(declaration)
 
     override fun isTestMethod(declaration: KtNamedFunction): Boolean =
         psiBasedDelegate.isTestMethod(declaration)

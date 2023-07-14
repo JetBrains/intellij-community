@@ -72,19 +72,12 @@ public abstract class TestFrameworks {
     for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
       String frameworkName = framework.getName();
       if (frameworkNames.contains(frameworkName)) continue;
-      if (framework.isTestClass(psiClass)) {
+      if (framework.isTestClass(psiClass) ||
+          framework.findSetUpMethod(psiClass) != null ||
+          framework.findTearDownMethod(psiClass) != null) {
         frameworks.add(framework);
-        frameworkNames.add(frameworkName);
       }
-    }
-
-    for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
-      String frameworkName = framework.getName();
-      if (frameworkNames.contains(frameworkName)) continue;
-      if (framework.findSetUpMethod(psiClass) != null || framework.findTearDownMethod(psiClass) != null) {
-        frameworks.add(framework);
-        frameworkNames.add(frameworkName);
-      }
+      frameworkNames.add(frameworkName);
     }
     return frameworks;
   }

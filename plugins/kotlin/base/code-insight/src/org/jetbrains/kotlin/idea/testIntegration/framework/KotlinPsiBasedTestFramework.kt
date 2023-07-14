@@ -2,8 +2,14 @@
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentOfType
+import com.intellij.testIntegration.TestFramework
+import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -12,7 +18,14 @@ interface KotlinPsiBasedTestFramework {
 
     fun responsibleFor(declaration: KtNamedDeclaration): Boolean
 
-    fun isTestClass(declaration: KtClassOrObject): Boolean
+    fun checkTestClass(element: PsiElement?): ThreeState {
+        if (element?.language != KotlinLanguage.INSTANCE) return ThreeState.UNSURE
+        val psiElement = (element as? KtLightElement<*, *>)?.kotlinOrigin ?: element
+        val ktClassOrObject = psiElement.parentOfType<KtClassOrObject>(true) ?: return ThreeState.NO
+        return checkTestClass(ktClassOrObject)
+    }
+
+    fun checkTestClass(declaration: KtClassOrObject): ThreeState
 
     fun isTestMethod(declaration: KtNamedFunction): Boolean
 
@@ -41,5 +54,35 @@ interface KotlinPsiBasedTestFramework {
                 is KtLightMethod -> kotlinOrigin as? KtNamedFunction
                 else -> null
             }
+
+        @JvmStatic
+        fun findTestFramework(declaration: KtNamedDeclaration, psiOnlyChecks: Boolean = false): TestFramework? {
+            val frameworkNames = HashSet<String>()
+            for (framework in TestFramework.EXTENSION_NAME.extensionList) {
+                val frameworkName = framework.name
+                if (frameworkNames.contains(frameworkName)) continue
+
+                val kotlinPsiBasedTestFramework = framework as? KotlinPsiBasedTestFramework
+                if (psiOnlyChecks && kotlinPsiBasedTestFramework == null) continue
+                val checkTestClass =
+                    kotlinPsiBasedTestFramework?.checkTestClass(declaration) ?: ThreeState.UNSURE
+
+                val isTestFrameworkResponsible = if (checkTestClass != ThreeState.UNSURE) {
+                    frameworkNames += frameworkName
+                    checkTestClass == ThreeState.YES && kotlinPsiBasedTestFramework!!.responsibleFor(declaration)
+                } else when (declaration) {
+                    is KtClassOrObject ->
+                        declaration.toLightClass()?.let(framework::isTestClass) ?: false
+
+                    is KtNamedFunction ->
+                        declaration.toLightMethods().firstOrNull()?.let { framework.isTestMethod(it, false) }
+                            ?: false
+
+                    else -> false
+                }
+                if (isTestFrameworkResponsible) return framework
+            }
+            return null
+        }
     }
 }
