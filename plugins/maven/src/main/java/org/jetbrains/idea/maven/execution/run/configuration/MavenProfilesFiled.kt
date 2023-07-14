@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.execution.run.configuration
 
 import com.intellij.execution.configurations.ParametersList
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfoRenderer
@@ -10,6 +11,7 @@ import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirect
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.observable.util.transform
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -18,19 +20,20 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class MavenProfilesFiled(
   private val project: Project,
-  private val workingDirectoryField: WorkingDirectoryField
+  private val workingDirectoryField: WorkingDirectoryField,
+  parentDisposable: Disposable
 ) : TextCompletionField<TextCompletionInfo>(project) {
 
   private val textProperty = AtomicProperty("")
 
   var profiles by textProperty.transform(::decodeProfiles, ::encodeProfiles)
 
-  override val completionCollector = TextCompletionCollector.basic {
-    val profiles = getProfiles(project, workingDirectoryField)
+  override val completionCollector = TextCompletionCollector.async(parentDisposable) {
+    val profiles = blockingContext { getProfiles(project, workingDirectoryField) }
       .sortedWith(NaturalComparator.INSTANCE)
-    val profileNames = profiles.map { TextCompletionInfo(it) }
-    val profileOptionNames = profiles.map { TextCompletionInfo("-$it") }
-    return@basic profileNames + profileOptionNames
+    val enableProfileCompletion = profiles.map { TextCompletionInfo(it) }
+    val disableProfileCompletion = profiles.map { TextCompletionInfo("-$it") }
+    return@async enableProfileCompletion + disableProfileCompletion
   }
 
   init {
