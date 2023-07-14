@@ -32,7 +32,6 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -56,9 +55,9 @@ public final class MavenProjectsManagerWatcher {
   private final ExecutorService myBackgroundExecutor;
   private final Disposable myDisposable;
 
-  public MavenProjectsManagerWatcher(Project project,
-                                     MavenProjectsTree projectsTree,
-                                     MavenGeneralSettings generalSettings) {
+  MavenProjectsManagerWatcher(Project project,
+                              MavenProjectsTree projectsTree,
+                              MavenGeneralSettings generalSettings) {
     myBackgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MavenProjectsManagerWatcher.backgroundExecutor", 1);
     myProject = project;
     myProjectsTree = projectsTree;
@@ -73,7 +72,7 @@ public final class MavenProjectsManagerWatcher {
     busConnection.subscribe(ProjectTopics.MODULES, new MavenRenameModulesWatcher());
     busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-    registerGeneralSettingsWatcher(projectsManager, this, myBackgroundExecutor, myDisposable);
+    registerGeneralSettingsWatcher(projectsManager, myBackgroundExecutor, myDisposable);
     ExternalSystemProjectTracker projectTracker = ExternalSystemProjectTracker.getInstance(myProject);
     projectTracker.register(myProjectsAware, projectsManager);
     projectTracker.activate(myProjectsAware.getProjectId());
@@ -90,64 +89,6 @@ public final class MavenProjectsManagerWatcher {
 
   public void setProjectsTree(MavenProjectsTree tree) {
     myProjectsTree = tree;
-  }
-
-  @TestOnly
-  public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
-    myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
-    scheduleUpdateAll(new MavenImportSpec(true, true, true));
-  }
-
-  public synchronized void removeManagedFiles(List<VirtualFile> files) {
-    myProjectsTree.removeManagedFiles(files);
-    scheduleUpdateAll(new MavenImportSpec(false, true, true));
-  }
-
-  public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
-    myProjectsTree.setExplicitProfiles(profiles);
-    scheduleUpdateAll(new MavenImportSpec(false, false, false));
-  }
-
-  /**
-   * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
-   * if project is closed)
-   */
-  public Promise<Void> scheduleUpdateAll(MavenImportSpec spec) {
-    if (MavenUtil.isLinearImportEnabled()) {
-      return MavenImportingManager.getInstance(myProject).scheduleImportAll(spec).getFinishPromise().then(it -> null);
-    }
-
-    return scheduleUpdateAllSuspendable(spec);
-  }
-
-  /**
-   * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
-   * if project is closed)
-   */
-  private Promise<Void> scheduleUpdateAllSuspendable(MavenImportSpec spec) {
-    final AsyncPromise<Void> promise = new AsyncPromise<>();
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      updateAllMavenProjectsSync(spec, promise);
-    }
-    else {
-      AppExecutorUtil.getAppExecutorService().execute(() -> {
-        updateAllMavenProjectsSync(spec, promise);
-      });
-    }
-
-    return promise;
-  }
-
-  private void updateAllMavenProjectsSync(MavenImportSpec spec, AsyncPromise<Void> promise) {
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-    try {
-      projectsManager.updateAllMavenProjectsSync(spec);
-      promise.setResult(null);
-    }
-    catch (Exception e) {
-      promise.setError(e);
-    }
   }
 
   private Promise<Void> scheduleUpdateSuspendable(MavenImportSpec spec,

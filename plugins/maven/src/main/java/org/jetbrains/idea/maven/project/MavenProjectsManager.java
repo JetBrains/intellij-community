@@ -32,6 +32,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
@@ -212,7 +213,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       }
       doInit(false);
       if (!MavenUtil.isLinearImportEnabled()) {
-        myWatcher.scheduleUpdateAll(new MavenImportSpec(false, false, false));
+        scheduleUpdateAll(new MavenImportSpec(false, false, false));
       }
     });
   }
@@ -221,7 +222,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   public void initForTests() {
     doInit(false);
     if (!MavenUtil.isLinearImportEnabled()) {
-      myWatcher.scheduleUpdateAll(new MavenImportSpec(false, false, false));
+      scheduleUpdateAll(new MavenImportSpec(false, false, false));
     }
   }
 
@@ -475,15 +476,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return MavenUtil.isMavenizedModule(m);
   }
 
-  @TestOnly
-  public void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, MavenExplicitProfiles profiles) {
-    myWatcher.resetManagedFilesAndProfilesInTests(files, profiles);
-  }
-
-
   public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
     doAddManagedFilesWithProfiles(files, profiles, previewModuleToDelete);
-    myWatcher.scheduleUpdateAll(new MavenImportSpec(false, true, false));
+    scheduleUpdateAll(new MavenImportSpec(false, true, false));
   }
 
   protected void doAddManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
@@ -509,10 +504,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     addManagedFiles(files);
   }
 
-  public void removeManagedFiles(@NotNull List<VirtualFile> files) {
-    myWatcher.removeManagedFiles(files);
-  }
-
   public boolean isManagedFile(@NotNull VirtualFile f) {
     if (!isInitialized()) return false;
     return myProjectsTree.isManagedFile(f);
@@ -522,10 +513,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   public MavenExplicitProfiles getExplicitProfiles() {
     if (!isInitialized()) return MavenExplicitProfiles.NONE;
     return myProjectsTree.getExplicitProfiles();
-  }
-
-  public void setExplicitProfiles(@NotNull MavenExplicitProfiles profiles) {
-    myWatcher.setExplicitProfiles(profiles);
   }
 
   @NotNull
@@ -757,7 +744,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     if (!isInitialized()) {
       doInit(true);
       if (!MavenUtil.isLinearImportEnabled()) {
-        myWatcher.scheduleUpdateAll(new MavenImportSpec(false, true, false));
+        scheduleUpdateAll(new MavenImportSpec(false, true, false));
       }
     }
     newTree.addListenersFrom(myProjectsTree);
@@ -777,6 +764,63 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       return initProjectsTree(true);
     }
     return myProjectsTree;
+  }
+
+  @TestOnly
+  public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
+    myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
+    scheduleUpdateAll(new MavenImportSpec(true, true, true));
+  }
+
+  public synchronized void removeManagedFiles(List<VirtualFile> files) {
+    myProjectsTree.removeManagedFiles(files);
+    scheduleUpdateAll(new MavenImportSpec(false, true, true));
+  }
+
+  public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
+    myProjectsTree.setExplicitProfiles(profiles);
+    scheduleUpdateAll(new MavenImportSpec(false, false, false));
+  }
+
+  /**
+   * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
+   * if project is closed)
+   */
+  Promise<Void> scheduleUpdateAll(MavenImportSpec spec) {
+    if (MavenUtil.isLinearImportEnabled()) {
+      return MavenImportingManager.getInstance(myProject).scheduleImportAll(spec).getFinishPromise().then(it -> null);
+    }
+
+    return scheduleUpdateAllSuspendable(spec);
+  }
+
+  /**
+   * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
+   * if project is closed)
+   */
+  private Promise<Void> scheduleUpdateAllSuspendable(MavenImportSpec spec) {
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      updateAllMavenProjectsSync(spec, promise);
+    }
+    else {
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
+        updateAllMavenProjectsSync(spec, promise);
+      });
+    }
+
+    return promise;
+  }
+
+  private void updateAllMavenProjectsSync(MavenImportSpec spec, AsyncPromise<Void> promise) {
+    try {
+      updateAllMavenProjectsSync(spec);
+      promise.setResult(null);
+    }
+    catch (Exception e) {
+      promise.setError(e);
+    }
   }
 
   private void scheduleUpdateAllProjects(MavenImportSpec spec) {
@@ -825,7 +869,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
       if (projects.isEmpty()) {
-        myWatcher.scheduleUpdateAll(spec).processed(promise);
+        scheduleUpdateAll(spec).processed(promise);
       }
       else {
         myWatcher.scheduleUpdate(MavenUtil.collectFiles(projects),

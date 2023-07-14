@@ -12,7 +12,6 @@ import java.util.concurrent.ExecutorService
 
 class MavenGeneralSettingsWatcher private constructor(
   private val manager: MavenProjectsManager,
-  private val watcher: MavenProjectsManagerWatcher,
   backgroundExecutor: ExecutorService,
   parentDisposable: Disposable
 ) {
@@ -31,7 +30,7 @@ class MavenGeneralSettingsWatcher private constructor(
   private fun fireSettingsChange() {
     embeddersManager.reset()
     MavenDistributionsCache.getInstance(manager.project).cleanCaches()
-    watcher.scheduleUpdateAll(MavenImportSpec.IMPLICIT_IMPORT)
+    manager.scheduleUpdateAll(MavenImportSpec.IMPLICIT_IMPORT)
   }
 
   private fun fireSettingsXmlChange() {
@@ -53,11 +52,10 @@ class MavenGeneralSettingsWatcher private constructor(
     @JvmStatic
     fun registerGeneralSettingsWatcher(
       manager: MavenProjectsManager,
-      watcher: MavenProjectsManagerWatcher,
       backgroundExecutor: ExecutorService,
       parentDisposable: Disposable
     ) {
-      MavenGeneralSettingsWatcher(manager, watcher, backgroundExecutor, parentDisposable)
+      MavenGeneralSettingsWatcher(manager, backgroundExecutor, parentDisposable)
     }
   }
 }
