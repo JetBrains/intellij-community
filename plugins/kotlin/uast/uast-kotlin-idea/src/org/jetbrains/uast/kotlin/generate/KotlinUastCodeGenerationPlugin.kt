@@ -9,6 +9,7 @@ import com.intellij.util.asSafely
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.utils.fqname.fqName
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.intentions.ImportAllMembersIntention
@@ -32,6 +33,10 @@ class KotlinUastCodeGenerationPlugin : KotlinUastBaseCodeGenerationPlugin() {
     val ptr = SmartPointerManager.createPointer(selector)
     ImportAllMembersIntention().applyTo(ktQualifiedExpression, null)
     return ptr.element?.toUElementOfType()
+  }
+
+  override fun shortenReference(sourcePsi: KtElement): PsiElement {
+    return ShortenReferences.DEFAULT.process(sourcePsi)
   }
 
   override fun getElementFactory(project: Project): UastElementFactory {

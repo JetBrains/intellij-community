@@ -9,11 +9,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -30,7 +27,7 @@ import org.jetbrains.uast.generate.UastElementFactory
 import org.jetbrains.uast.kotlin.*
 import org.jetbrains.uast.kotlin.internal.KotlinFakeUElement
 
-open class KotlinUastBaseCodeGenerationPlugin : UastCodeGenerationPlugin {
+abstract class KotlinUastBaseCodeGenerationPlugin : UastCodeGenerationPlugin {
     override val language: Language
         get() = KotlinLanguage.INSTANCE
 
@@ -67,7 +64,7 @@ open class KotlinUastBaseCodeGenerationPlugin : UastCodeGenerationPlugin {
             else ->
                 oldPsi to newPsi
         }
-        val replaced = (updOldPsi.replace(updNewPsi) as? KtElement)?.let { ShortenReferencesFacility.getInstance().shorten(it) ?: it }
+        val replaced = (updOldPsi.replace(updNewPsi) as? KtElement)?.let { shortenReference(it) ?: it }
         return when  {
             newElement.sourcePsi is KtCallExpression && replaced is KtQualifiedExpression -> replaced.selectorExpression
             else -> replaced
@@ -84,8 +81,10 @@ open class KotlinUastBaseCodeGenerationPlugin : UastCodeGenerationPlugin {
     override fun shortenReference(reference: UReferenceExpression): UReferenceExpression? {
         val sourcePsi = reference.sourcePsi ?: return null
         if (sourcePsi !is KtElement) return null
-        return ShortenReferencesFacility.getInstance().shorten(sourcePsi).toUElementOfType()
+        return shortenReference(sourcePsi).toUElementOfType()
     }
+
+    abstract fun shortenReference(sourcePsi: KtElement): PsiElement?
 
     override fun importMemberOnDemand(reference: UQualifiedReferenceExpression): UExpression? {
         TODO("Not implemented")
@@ -152,10 +151,6 @@ open class KotlinUastElementFactory(project: Project) : UastElementFactory {
     }
 
     protected open fun PsiType?.suggestName(context: PsiElement?): String {
-        if (context is KtElement) {
-            val classId = getClassId() ?: return "v"
-            return KotlinNameSuggester(KotlinNameSuggester.Case.CAMEL).suggestClassNames(classId).firstOrNull() ?: "v"
-        }
         return "v"
     }
 
@@ -298,7 +293,6 @@ open class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return psiFactory(context).createExpression("null").toUElementOfType()!!
     }
 
-    @Suppress("UNUSED_PARAMETER")
     /*override*/ fun createIntLiteral(value: Int, context: PsiElement?): ULiteralExpression {
         return psiFactory(context).createExpression(value.toString()).toUElementOfType()!!
     }
