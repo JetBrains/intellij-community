@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.providers.LocalSemanticActionsProvider
 import com.intellij.searchEverywhereMl.semantics.providers.SemanticActionsProvider
 import com.intellij.searchEverywhereMl.semantics.providers.ServerSemanticActionsProvider

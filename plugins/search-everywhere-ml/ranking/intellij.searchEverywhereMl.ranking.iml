@@ -152,6 +152,5 @@
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.yaml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.typos" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" />
-    <orderEntry type="module" module-name="intellij.searchEverywhereMl.semantics" />
   </component>
 </module>

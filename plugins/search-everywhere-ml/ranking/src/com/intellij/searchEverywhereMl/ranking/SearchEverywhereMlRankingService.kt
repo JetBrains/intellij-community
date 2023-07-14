@@ -10,7 +10,7 @@ import com.intellij.searchEverywhereMl.RANKING_EP_NAME
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 import com.intellij.searchEverywhereMl.settings.SearchEverywhereMlSettings
-import com.intellij.searchEverywhereMl.semantics.contributors.SemanticSearchEverywhereContributor
+import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
 import com.intellij.ui.components.JBList
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger

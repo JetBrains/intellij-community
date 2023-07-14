@@ -1,4 +1,4 @@
-package com.intellij.searchEverywhereMl.semantics.contributors
+package com.intellij.searchEverywhereMl
 
 import org.jetbrains.annotations.ApiStatus
 

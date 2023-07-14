@@ -3,7 +3,7 @@ package com.intellij.searchEverywhereMl.semantics.reordering
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereReorderingService
-import com.intellij.searchEverywhereMl.semantics.contributors.SemanticSearchEverywhereContributor
+import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 
 class SearchEverywhereReorderingServiceImpl : SearchEverywhereReorderingService {
