@@ -3,11 +3,12 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements DumbAware {
+public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   public QuickChangeSchemesAction() {
     myActionPlace = ActionPlaces.QUICK_SWITCH_SCHEME_POPUP;
   }

@@ -6,13 +6,14 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.ide.actions.GotoActionBase.getInitialText;
 
-public abstract class SearchEverywhereBaseAction extends AnAction {
+public abstract class SearchEverywhereBaseAction extends AnAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public void update(@NotNull final AnActionEvent event) {

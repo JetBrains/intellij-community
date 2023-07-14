@@ -19,6 +19,7 @@ package com.intellij.application.options.colors;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -265,7 +266,7 @@ public class FontEditorPreview implements PreviewPanel{
     }
   }
 
-  public static class ToggleBoldFontAction extends DumbAwareAction {
+  public static class ToggleBoldFontAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {

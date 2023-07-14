@@ -8,6 +8,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.util.BitUtil.isSet
@@ -82,7 +83,7 @@ internal class SwitcherIterateThroughItemsAction : DumbAwareAction() {
 }
 
 
-internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction() {
+internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
   private fun getCheckBox(event: AnActionEvent) =
     Switcher.SWITCHER_KEY.get(event.project)?.cbShowOnlyEditedFiles
 

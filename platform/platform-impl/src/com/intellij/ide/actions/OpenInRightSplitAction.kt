@@ -2,6 +2,7 @@
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
@@ -14,7 +15,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
 import javax.swing.JComponent
 
-class OpenInRightSplitAction : AnAction(), DumbAware {
+class OpenInRightSplitAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
     val project = getEventProject(e) ?: return
     val file = getVirtualFile(e) ?: return

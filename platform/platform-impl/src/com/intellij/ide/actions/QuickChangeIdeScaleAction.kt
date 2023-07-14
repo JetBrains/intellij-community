@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.IdeZoomChanged
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomSwitcherClosed
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -24,7 +25,7 @@ import javax.swing.JList
 import javax.swing.event.ListSelectionEvent
 import kotlin.math.roundToInt
 
-class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
+class QuickChangeIdeScaleAction : QuickSwitchSchemeAction(), ActionRemoteBehaviorSpecification.Frontend {
   private val switchAlarm = Alarm()
   private var popupSession: PopupSession? = null
 

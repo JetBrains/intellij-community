@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
@@ -17,7 +18,7 @@ import java.util.function.Function;
 
 import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT;
 
-public class SwingActionDelegate extends AnAction implements DumbAware {
+public class SwingActionDelegate extends AnAction implements ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   private static final Key<Function<String, JComponent>> FUNCTION = Key.create("SwingActionsMapping");
   private final String mySwingActionId;
 

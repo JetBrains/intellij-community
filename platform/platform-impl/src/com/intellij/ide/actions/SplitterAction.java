@@ -5,13 +5,14 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class SplitterAction extends DumbAwareAction {
+public abstract class SplitterAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   abstract void actionPerformed(@NotNull EditorWindow window);
 
   @Override
@@ -76,7 +77,7 @@ public abstract class SplitterAction extends DumbAwareAction {
   }
 
 
-  static final class UnsplitAll extends DumbAwareAction {
+  static final class UnsplitAll extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
       FileEditorManagerEx manager = getManager(event);

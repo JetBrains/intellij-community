@@ -3,13 +3,14 @@ package com.intellij.ide.ui.customization
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 
 abstract class ToolbarAddQuickActionsAction(protected val actionIds: List<String>,
                                             private val rootGroupID: String,
-                                            private val insertStrategy: ToolbarQuickActionInsertStrategy) : DumbAwareAction() {
+                                            private val insertStrategy: ToolbarQuickActionInsertStrategy) : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
     val schema = CustomActionsSchema(null)
     schema.copyFrom(CustomActionsSchema.getInstance())

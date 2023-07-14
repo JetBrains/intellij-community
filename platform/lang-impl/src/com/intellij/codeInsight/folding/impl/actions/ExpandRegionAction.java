@@ -18,6 +18,7 @@ package com.intellij.codeInsight.folding.impl.actions;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
@@ -26,7 +27,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExpandRegionAction extends EditorAction {
+public class ExpandRegionAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public ExpandRegionAction() {
     super(new BaseFoldingHandler() {
       @Override

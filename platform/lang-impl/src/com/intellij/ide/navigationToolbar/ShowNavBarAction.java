@@ -8,6 +8,7 @@ import com.intellij.ide.ui.NavBarLocation;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -19,7 +20,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-final class ShowNavBarAction extends AnAction implements DumbAware, PopupAction {
+final class ShowNavBarAction extends AnAction implements DumbAware, PopupAction, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext context = e.getDataContext();

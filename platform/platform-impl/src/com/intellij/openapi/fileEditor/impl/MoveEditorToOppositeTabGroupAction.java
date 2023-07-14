@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware {
+public class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   private final boolean myCloseSource;
 
   @SuppressWarnings("unused")

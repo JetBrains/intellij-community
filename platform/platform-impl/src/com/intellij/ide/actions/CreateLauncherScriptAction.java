@@ -10,6 +10,7 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-final class CreateLauncherScriptAction extends DumbAwareAction {
+final class CreateLauncherScriptAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   private static final String TOPIC = "Working_with_the_IDE_Features_from_Command_Line";
 
   @Override

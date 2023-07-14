@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
@@ -91,25 +92,25 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   }
 
-  public static class UpAction extends EditorAction {
+  public static class UpAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
     public UpAction() {
       super(new UpDownInEditorHandler(true));
     }
   }
 
-  public static class DownAction extends EditorAction {
+  public static class DownAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
     public DownAction() {
       super(new UpDownInEditorHandler(false));
     }
   }
 
-  public static class UpInLookupAction extends EditorAction {
+  public static class UpInLookupAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
     public UpInLookupAction() {
       super(new UpHandler(null));
     }
   }
 
-  public static class DownInLookupAction extends EditorAction {
+  public static class DownInLookupAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
     public DownInLookupAction() {
       super(new DownHandler(null));
     }

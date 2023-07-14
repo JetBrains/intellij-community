@@ -6,9 +6,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowSearchHistoryAction extends AnAction {
+public class ShowSearchHistoryAction extends AnAction implements ActionRemoteBehaviorSpecification.Frontend {
   ShowSearchHistoryAction() {
     super(IdeBundle.messagePointer("action.AnAction.text.search.history"),
           IdeBundle.messagePointer("action.AnAction.description.search.history"), AllIcons.Actions.SearchWithHistory);

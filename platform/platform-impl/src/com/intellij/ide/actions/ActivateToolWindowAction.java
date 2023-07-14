@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -28,7 +29,7 @@ import java.awt.event.KeyEvent;
  * Usually shown in View|Tool-windows sub-menu.
  * Dynamically registered in Settings|Keymap for each newly-registered tool window.
  */
-public class ActivateToolWindowAction extends DumbAwareAction implements MainMenuPresentationAware {
+public class ActivateToolWindowAction extends DumbAwareAction implements MainMenuPresentationAware, ActionRemoteBehaviorSpecification.Frontend {
   private final String myToolWindowId;
 
   protected ActivateToolWindowAction(@NotNull String toolWindowId) {

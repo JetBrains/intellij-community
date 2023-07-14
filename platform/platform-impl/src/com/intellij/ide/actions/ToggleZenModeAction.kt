@@ -3,12 +3,13 @@ package com.intellij.ide.actions
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 
-class ToggleZenModeAction : DumbAwareAction() {
+class ToggleZenModeAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
     companion object {
         private fun isFullScreenApplicable() = WindowManager.getInstance().isFullScreenSupportedInCurrentOS
         private fun Project.getFrame() = WindowManagerEx.getInstanceEx().findFrameHelper(this)

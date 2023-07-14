@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.editor.actions;
 
-public class NextWordInDifferentHumpsModeWithSelectionAction extends TextComponentEditorAction {
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+
+public class NextWordInDifferentHumpsModeWithSelectionAction extends TextComponentEditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public NextWordInDifferentHumpsModeWithSelectionAction() {
     super(new NextPrevWordHandler(true, true, true));
   }

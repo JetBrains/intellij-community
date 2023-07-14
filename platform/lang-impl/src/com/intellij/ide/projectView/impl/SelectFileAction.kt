@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys.TOOL_WINDOW
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
@@ -21,7 +22,7 @@ import com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW
 private const val SELECT_CONTEXT_FILE = "SelectInProjectView"
 private const val SELECT_OPENED_FILE = "SelectOpenedFileInProjectView"
 
-internal class SelectFileAction : DumbAwareAction() {
+internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(event: AnActionEvent) {
     when (getActionId(event)) {
       SELECT_CONTEXT_FILE -> getSelector(event)?.run { target.selectIn(context, true) }

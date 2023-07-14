@@ -4,17 +4,17 @@ package com.intellij.ide.actions
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 
 /**
  * @author Konstantin Bulenkov
  */
-abstract class CloseProjectsActionBase : DumbAwareAction() {
+abstract class CloseProjectsActionBase : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
     val currentProject = e.getRequiredData(CommonDataKeys.PROJECT)
     ProjectManager.getInstance().openProjects

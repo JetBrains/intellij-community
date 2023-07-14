@@ -3,12 +3,13 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtendLineSelectionAction extends TextComponentEditorAction {
+public class ExtendLineSelectionAction extends TextComponentEditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public ExtendLineSelectionAction() {
     super(new Handler());
   }

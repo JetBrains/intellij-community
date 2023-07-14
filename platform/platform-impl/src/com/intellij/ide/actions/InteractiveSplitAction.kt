@@ -3,6 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.actions.OpenFileAction.Companion.openFile
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -10,7 +11,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.SplitterService
 import com.intellij.openapi.project.DumbAware
 
-private class InteractiveSplitAction : AnAction(), DumbAware {
+private class InteractiveSplitAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project != null && e.getData(CommonDataKeys.VIRTUAL_FILE) != null
   }
@@ -34,7 +35,7 @@ private class InteractiveSplitAction : AnAction(), DumbAware {
     }
   }
 
-  sealed class Key : AnAction(), DumbAware {
+  sealed class Key : AnAction(), ActionRemoteBehaviorSpecification.Frontend, DumbAware {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun update(e: AnActionEvent) {

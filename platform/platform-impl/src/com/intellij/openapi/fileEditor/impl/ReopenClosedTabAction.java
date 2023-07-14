@@ -5,6 +5,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -19,7 +20,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-final class ReopenClosedTabAction extends DumbAwareAction {
+final class ReopenClosedTabAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   ReopenClosedTabAction() {
     super(ActionsBundle.messagePointer("action.ReopenClosedTabAction.text"));
   }

@@ -9,6 +9,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public final class TogglePresentationModeAction extends AnAction implements DumbAware {
+public final class TogglePresentationModeAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   private static final Logger LOG = Logger.getInstance(TogglePresentationModeAction.class);
 
   @Override

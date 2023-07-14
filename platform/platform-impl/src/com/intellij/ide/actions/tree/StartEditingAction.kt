@@ -4,6 +4,7 @@ package com.intellij.ide.actions.tree
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.SwingActionDelegate
 import com.intellij.util.ui.tree.EditableNode
@@ -11,7 +12,7 @@ import com.intellij.util.ui.tree.EditableTree
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JTree
 
-internal class StartEditingAction : DumbAwareAction() {
+internal class StartEditingAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   private val AnActionEvent.contextTree
     get() = getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? JTree
 

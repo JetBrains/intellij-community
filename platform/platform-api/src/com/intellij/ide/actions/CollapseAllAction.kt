@@ -9,10 +9,11 @@ import com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys.TREE_EXPANDER
 import com.intellij.openapi.actionSystem.ex.ActionUtil.copyFrom
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.ExperimentalUI
 
-class CollapseAllAction : DumbAwareAction {
+class CollapseAllAction : DumbAwareAction, ActionRemoteBehaviorSpecification.Frontend {
   private val getTreeExpander: (AnActionEvent) -> TreeExpander?
 
   constructor() : super() {

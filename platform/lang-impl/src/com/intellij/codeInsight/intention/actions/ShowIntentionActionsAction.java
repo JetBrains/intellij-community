@@ -10,6 +10,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -22,7 +23,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class ShowIntentionActionsAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore,
                                                                                  LightEditCompatible,
-                                                                                 DumbAware {
+                                                                                 DumbAware,
+                                                                                 ActionRemoteBehaviorSpecification.Frontend {
   public ShowIntentionActionsAction() {
     setEnabledInModalContext(true);
   }

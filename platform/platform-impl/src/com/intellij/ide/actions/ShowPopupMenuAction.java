@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PopupAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -17,7 +18,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public class ShowPopupMenuAction extends DumbAwareAction implements PopupAction {
+public class ShowPopupMenuAction extends DumbAwareAction implements PopupAction, ActionRemoteBehaviorSpecification.Frontend {
   public ShowPopupMenuAction() {
     setEnabledInModalContext(true);
   }

@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class WindowAction extends AnAction implements DumbAware {
+public abstract class WindowAction extends AnAction implements ActionRemoteBehaviorSpecification.Frontend, DumbAware {
 
   private static final String NO_WINDOW_ACTIONS = "no.window.actions";
   private static JLabel ourSizeHelper;

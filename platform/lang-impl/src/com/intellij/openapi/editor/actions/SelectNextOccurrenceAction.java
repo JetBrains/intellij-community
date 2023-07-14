@@ -20,6 +20,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindUtil;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
 
-public class SelectNextOccurrenceAction extends EditorAction {
+public class SelectNextOccurrenceAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   protected SelectNextOccurrenceAction() {
     super(new Handler());
   }

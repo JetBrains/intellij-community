@@ -5,6 +5,7 @@ import com.intellij.ide.ActiveWindowsWatcher;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Function;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class AbstractTraverseWindowAction extends AnAction {
+public abstract class AbstractTraverseWindowAction extends AnAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   protected void doPerform(@NotNull Function<? super Window, ? extends Window> mapWindow) {
     Window w = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();

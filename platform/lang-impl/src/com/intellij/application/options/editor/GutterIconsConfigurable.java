@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -239,7 +240,7 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
   @TestOnly
   public List<GutterIconDescriptor> getDescriptors() { return myDescriptors; }
 
-  public static class ShowSettingsAction extends DumbAwareAction {
+  public static class ShowSettingsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
     public ShowSettingsAction() {
     }
 

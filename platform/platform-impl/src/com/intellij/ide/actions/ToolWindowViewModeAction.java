@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.actionSystem.impl.FusAwareAction;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class ToolWindowViewModeAction extends DumbAwareToggleAction implements FusAwareAction {
+public class ToolWindowViewModeAction extends DumbAwareToggleAction implements FusAwareAction, ActionRemoteBehaviorSpecification.Frontend {
   public enum ViewMode {
     DockPinned("DockPinnedMode"),
     DockUnpinned("DockUnpinnedMode"),

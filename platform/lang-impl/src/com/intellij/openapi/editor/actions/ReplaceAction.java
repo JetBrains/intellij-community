@@ -16,9 +16,10 @@
 
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 
-public class ReplaceAction extends EditorAction {
+public class ReplaceAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public ReplaceAction() {
     super(new IncrementalFindAction.Handler(true));
   }

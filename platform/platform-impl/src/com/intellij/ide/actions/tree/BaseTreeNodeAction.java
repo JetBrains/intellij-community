@@ -5,13 +5,14 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-abstract class BaseTreeNodeAction extends AnAction implements DumbAware {
+abstract class BaseTreeNodeAction extends AnAction implements ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   BaseTreeNodeAction() {
     setEnabledInModalContext(true);
   }

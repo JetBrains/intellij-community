@@ -6,6 +6,7 @@ import com.intellij.ide.navbar.ide.NavBarIdeUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ import java.util.Objects;
 import static com.intellij.ide.navbar.actions.NavBarActionHandler.NAV_BAR_ACTION_HANDLER;
 import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT;
 
-public sealed abstract class NavBarActions extends AnAction implements DumbAware {
+public sealed abstract class NavBarActions extends AnAction implements ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   NavBarActions() {
     setEnabledInModalContext(true);
   }

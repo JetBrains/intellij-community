@@ -5,6 +5,7 @@ import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -29,7 +30,7 @@ import java.util.Objects;
  *
  * todo drop TW and EW, both are only for menu|Window tab/editor sub-menus.
  */
-public class PinActiveTabAction extends DumbAwareAction {
+public class PinActiveTabAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   public static abstract class Handler {
     public final boolean isPinned;

@@ -23,6 +23,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -32,7 +33,7 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class IncrementalFindAction extends EditorAction {
+public class IncrementalFindAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public static final Key<Boolean> SEARCH_DISABLED = Key.create("EDITOR_SEARCH_DISABLED");
 
   public static class Handler extends EditorActionHandler {
