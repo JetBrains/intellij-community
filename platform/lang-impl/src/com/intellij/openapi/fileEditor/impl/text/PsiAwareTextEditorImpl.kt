@@ -2,15 +2,8 @@
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
-import com.intellij.codeInsight.codeVision.CodeVisionEntry
-import com.intellij.codeInsight.codeVision.CodeVisionInitializer
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory.Companion.applyPlaceholders
-import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory.Companion.collectPlaceholders
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
-import com.intellij.codeInsight.hints.HintsBuffer
-import com.intellij.codeInsight.hints.codeVision.CodeVisionPassFactory.Companion.applyPlaceholders
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.actionSystem.CompositeDataProvider
