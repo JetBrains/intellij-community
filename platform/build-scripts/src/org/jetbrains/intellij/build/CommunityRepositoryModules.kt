@@ -175,7 +175,7 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("TestNG")
     },
     plugin(listOf("intellij.dev", "intellij.dev.psiViewer", "intellij.platform.statistics.devkit")),
-    plugin("intellij.devkit") { spec ->
+    pluginAuto(listOf("intellij.devkit")) { spec ->
       spec.withModule("intellij.devkit.core")
       spec.withModule("intellij.devkit.git")
       spec.withModule("intellij.devkit.themes")
@@ -190,7 +190,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.kotlin.devkit")
       spec.withModule("intellij.devkit.jps")
       spec.withModule("intellij.devkit.runtimeModuleRepository.jps")
-      spec.withProjectLibrary("workspace-model-codegen")
     },
     plugin("intellij.eclipse") { spec ->
       spec.withModule("intellij.eclipse.jps", "eclipse-jps.jar")
