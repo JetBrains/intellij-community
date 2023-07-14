@@ -36,12 +36,13 @@ class BlackFormatterAdvertiserService private constructor() {
   @Synchronized
   fun suggestBlack(psiFile: PsiFile, blackFormatterConfiguration: BlackFormatterConfiguration) {
     if (!alreadyShown) {
+      if (blackFormatterConfiguration == BlackFormatterConfiguration()) {
+
       val project = psiFile.project
       val blackInstalled = project.modules
         .mapNotNull { it.pythonSdk }
         .any { BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(it) }
 
-      if (blackFormatterConfiguration == BlackFormatterConfiguration()) {
         if (blackInstalled) {
           showBlackFormatterSupportNotification(project,
                                                 PyBundle.message("black.advertising.service.found.in.packages"))
