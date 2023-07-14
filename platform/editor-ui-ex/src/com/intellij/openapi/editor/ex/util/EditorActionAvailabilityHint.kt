@@ -40,26 +40,18 @@ private val logger = logger<EditorActionAvailabilityHint>()
 @Experimental
 class EditorActionAvailabilityHint(val actionId: String, val condition: AvailabilityCondition) {
 
-  sealed interface AvailabilityCondition {
-    fun isAvailable(offset: Int, rangeMarker: RangeMarker): Boolean
-  }
+  enum class AvailabilityCondition {
+    CaretInside {
+      override fun isAvailable(offset: Int, rangeMarker: RangeMarker): Boolean = rangeMarker.textRange.containsOffset(offset)
+    },
+    CaretOnStart {
+      override fun isAvailable(offset: Int, rangeMarker: RangeMarker): Boolean = rangeMarker.startOffset == offset
+    },
+    CaretOnEnd {
+      override fun isAvailable(offset: Int, rangeMarker: RangeMarker): Boolean = rangeMarker.endOffset == offset
+    };
 
-  object CaretInside : AvailabilityCondition {
-    override fun isAvailable(offset: Int, rangeMarker: RangeMarker): Boolean {
-      return rangeMarker.textRange.containsOffset(offset)
-    }
-  }
-
-  object CaretOnStart : AvailabilityCondition {
-    override fun isAvailable(offset: Int, rangeMarker: RangeMarker): Boolean {
-      return rangeMarker.startOffset == offset
-    }
-  }
-
-  object CaretOnEnd : AvailabilityCondition {
-    override fun isAvailable(offset: Int, rangeMarker: RangeMarker): Boolean {
-      return rangeMarker.endOffset == offset
-    }
+    open fun isAvailable(offset: Int, rangeMarker: RangeMarker): Boolean = false
   }
 }
 
