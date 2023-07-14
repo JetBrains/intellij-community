@@ -146,15 +146,13 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("Gradle", LibraryPackMode.STANDALONE_SEPARATE)
       spec.withProjectLibrary("Ant", "ant", LibraryPackMode.STANDALONE_SEPARATE)
     },
-    plugin(listOf(
+    pluginAuto(listOf(
       "intellij.packageSearch",
       "intellij.packageSearch.gradle",
       "intellij.packageSearch.maven",
       "intellij.packageSearch.kotlin",
-      )) { spec ->
+    )) { spec ->
       spec.withModule("intellij.packageSearch.gradle.tooling", "pkgs-tooling-extension.jar")
-      spec.withProjectLibrary("kotlinx-serialization-protobuf")
-      spec.withProjectLibrary("package-search-version-utils")
     },
     plugin("intellij.android.gradle.dsl") { spec ->
       spec.withModule("intellij.android.gradle.dsl.kotlin")
