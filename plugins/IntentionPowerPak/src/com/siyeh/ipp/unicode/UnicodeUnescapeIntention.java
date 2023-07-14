@@ -30,7 +30,7 @@ public class UnicodeUnescapeIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull ActionContext context, @NotNull ModPsiUpdater updater, @NotNull PsiElement element) {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     TextRange selection = context.selection();
     final Document document = element.getContainingFile().getViewProvider().getDocument();
     if (!selection.isEmpty()) {

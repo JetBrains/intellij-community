@@ -31,7 +31,7 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull ActionContext context, @NotNull ModPsiUpdater updater, @NotNull PsiElement element) {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     TextRange selection = context.selection();
     if (!selection.isEmpty()) {
       // does not check if octal escape is inside char or string literal (garbage in, garbage out)

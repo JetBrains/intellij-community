@@ -27,14 +27,14 @@ public abstract class MCIntention implements ModCommandAction {
     if (matchingElement == null) {
       return ModCommands.nop();
     }
-    return ModCommands.psiUpdate(matchingElement, (e, updater) -> processIntention(context, updater, e));
+    return ModCommands.psiUpdate(matchingElement, (e, updater) -> processIntention(e, context, updater));
   }
 
   protected void processIntention(@NotNull PsiElement element) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  protected void processIntention(@NotNull ActionContext context, @NotNull ModPsiUpdater updater, @NotNull PsiElement element) {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     processIntention(element);
   }
 

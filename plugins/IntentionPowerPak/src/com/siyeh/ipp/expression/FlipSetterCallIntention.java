@@ -31,7 +31,7 @@ public class FlipSetterCallIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull ActionContext context, @NotNull ModPsiUpdater updater, @NotNull PsiElement element) {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     if (!context.selection().isEmpty()) {
       final List<PsiMethodCallExpression> methodCalls =
         PsiSelectionSearcher.searchElementsInSelection(element.getContainingFile(), context.selection(), PsiMethodCallExpression.class, false);

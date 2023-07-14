@@ -15,8 +15,8 @@
  */
 package com.siyeh.ipp.initialization;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
@@ -63,7 +63,7 @@ public class SplitDeclarationAndInitializationIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull ActionContext context, @NotNull ModPsiUpdater updater, @NotNull PsiElement element) {
+  public void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     final PsiField field = (PsiField)element.getParent();
     final PsiExpression initializer = field.getInitializer();
     if (initializer == null) {
