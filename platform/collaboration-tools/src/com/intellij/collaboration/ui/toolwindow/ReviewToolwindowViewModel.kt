@@ -8,6 +8,6 @@ import kotlinx.coroutines.flow.StateFlow
  *
  * Clients can provide more specific methods in implementation and acquire the view model using [ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_VM]
  */
-interface ReviewToolwindowViewModel<PVM : ReviewToolwindowProjectViewModel> {
+interface ReviewToolwindowViewModel<PVM : ReviewToolwindowProjectViewModel<*>> {
   val projectVm: StateFlow<PVM?>
 }

@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui.toolwindow
 
 import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.Nls
 
 /**
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.Nls
  * VM is mostly used for UI creation in [ReviewTabsComponentFactory]
  * to create the review list component or other tabs.
  */
-interface ReviewToolwindowProjectViewModel {
+interface ReviewToolwindowProjectViewModel<T : ReviewTab> {
   /**
    * Presentable name for the project which context is hold here.
    * Used in toolwindow UI places like review list tab title.
@@ -21,4 +22,8 @@ interface ReviewToolwindowProjectViewModel {
    * ViewModel of the review list view.
    */
   val listVm: ReviewListViewModel
+
+  val openReviewTabRequest: Flow<T>
+
+  val closeReviewTabRequest: Flow<T>
 }

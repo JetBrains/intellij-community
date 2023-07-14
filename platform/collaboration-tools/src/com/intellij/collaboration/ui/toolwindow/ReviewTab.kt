@@ -11,11 +11,9 @@ import org.jetbrains.annotations.NonNls
 interface ReviewTab {
   /**
    * Unique id used to distinguish tabs that can be reused,
-   * so if tab with the same [id] is requested to open by [ReviewTabsController]
+   * so if tab with the same [id] is requested to open by [ReviewToolwindowProjectViewModel]
    * it will be reused if [reuseTabOnRequest] is [true]
    * or closed and new one will be opened.
-   *
-   * Also, this id is used for close requests passed to [ReviewTabsController]
    */
   val id: @NonNls String
 
@@ -31,7 +29,7 @@ interface ReviewTab {
     get() = displayName
 
   /**
-   * If [true] open requests to [ReviewTabsController] will select opened tabs if tabs with the same [id] exists,
+   * If [true] open requests to [ReviewToolwindowProjectViewModel] will select opened tabs if tabs with the same [id] exists,
    * otherwise existed tab with the [id] will be closed and new tab opened
    */
   val reuseTabOnRequest: Boolean

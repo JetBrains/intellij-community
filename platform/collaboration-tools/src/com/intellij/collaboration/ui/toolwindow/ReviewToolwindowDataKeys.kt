@@ -6,11 +6,8 @@ import org.jetbrains.annotations.ApiStatus
 
 object ReviewToolwindowDataKeys {
   @JvmStatic
-  val REVIEW_TABS_CONTROLLER = DataKey.create<ReviewTabsController<*>>("com.intellij.collaboration.toolwindow.review.tabs.controller")
-
-  @JvmStatic
   val REVIEW_TOOLWINDOW_PROJECT_VM =
-    DataKey.create<ReviewToolwindowProjectViewModel>("com.intellij.collaboration.toolwindow.review.project.vm")
+    DataKey.create<ReviewToolwindowProjectViewModel<*>>("com.intellij.collaboration.toolwindow.review.project.vm")
 
   @JvmStatic
   val REVIEW_TOOLWINDOW_VM = DataKey.create<ReviewToolwindowViewModel<*>>("com.intellij.collaboration.toolwindow.review.toolwindow.vm")

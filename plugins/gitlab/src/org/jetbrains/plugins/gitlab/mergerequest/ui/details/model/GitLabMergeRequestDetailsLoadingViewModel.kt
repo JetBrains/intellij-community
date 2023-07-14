@@ -16,6 +16,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeReq
 private val LOG = logger<GitLabMergeRequestDetailsLoadingViewModel>()
 
 internal interface GitLabMergeRequestDetailsLoadingViewModel {
+  val mergeRequestId: GitLabMergeRequestId
   val mergeRequestLoadingFlow: Flow<LoadingState>
 
   fun requestLoad()
@@ -35,7 +36,7 @@ internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
   parentScope: CoroutineScope,
   currentUser: GitLabUserDTO,
   private val projectData: GitLabProject,
-  private val mergeRequestId: GitLabMergeRequestId
+  override val mergeRequestId: GitLabMergeRequestId
 ) : GitLabMergeRequestDetailsLoadingViewModel {
   private val scope = parentScope.childScope(Dispatchers.Default)
 

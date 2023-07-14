@@ -34,10 +34,9 @@ internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
     val cs = toolWindow.contentManager.disposingMainScope()
     val contextHolder = project.service<GitLabToolWindowViewModel>()
 
-    val tabsController = GitLabReviewTabsController()
     val componentFactory = GitLabReviewTabComponentFactory(project, contextHolder)
 
-    manageReviewToolwindowTabs(cs, toolWindow, contextHolder, tabsController, componentFactory,
+    manageReviewToolwindowTabs(cs, toolWindow, contextHolder, componentFactory,
                                GitLabBundle.message("merge.request.toolwindow.tab.title"))
 
     toolWindow.setAdditionalGearActions(DefaultActionGroup(GitLabSwitchProjectAndAccountAction()))

@@ -10,7 +10,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.childScope
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -25,10 +27,11 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsF
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsPersistentFiltersHistory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 
 internal class GitLabToolWindowProjectViewModel
-private constructor(parentCs: CoroutineScope, project: Project, connection: GitLabProjectConnection)
-  : ReviewToolwindowProjectViewModel {
+private constructor(parentCs: CoroutineScope, private val project: Project, connection: GitLabProjectConnection)
+  : ReviewToolwindowProjectViewModel<GitLabReviewTab> {
 
   private val cs = parentCs.childScope()
 
@@ -67,6 +70,15 @@ private constructor(parentCs: CoroutineScope, project: Project, connection: GitL
       tokenRefreshFlow = connection.tokenRefreshFlow,
       loaderSupplier = { filtersValue -> projectData.mergeRequests.getListLoader(filtersValue.toSearchQuery()) }
     )
+  }
+
+  private val _openReviewTabRequest = MutableSharedFlow<GitLabReviewTab>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  override val openReviewTabRequest: Flow<GitLabReviewTab> = _openReviewTabRequest
+
+  override val closeReviewTabRequest: Flow<GitLabReviewTab> = emptyFlow() // GitLab are not closed externally (only by toolwindow functionality)
+
+  fun openReviewDetails(reviewId: GitLabMergeRequestId) {
+    _openReviewTabRequest.tryEmit(GitLabReviewTab.ReviewSelected(reviewId))
   }
 
   fun getDiffBridge(mr: GitLabMergeRequestId): GitLabMergeRequestDiffBridge =

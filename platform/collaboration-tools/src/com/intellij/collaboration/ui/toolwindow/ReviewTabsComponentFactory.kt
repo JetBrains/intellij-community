@@ -7,7 +7,7 @@ import javax.swing.JComponent
 /**
  * Provides UI components for review toolwindow tabs and toolwindow empty state.
  */
-interface ReviewTabsComponentFactory<T : ReviewTab, VM : ReviewToolwindowProjectViewModel> {
+interface ReviewTabsComponentFactory<T : ReviewTab, VM : ReviewToolwindowProjectViewModel<T>> {
   /**
    * Provide a review list component for given [projectVm]
    *
