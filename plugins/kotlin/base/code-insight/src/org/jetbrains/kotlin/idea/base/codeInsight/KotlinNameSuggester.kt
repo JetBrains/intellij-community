@@ -157,13 +157,17 @@ class KotlinNameSuggester(
      * Examples:
      *  - `print(<selection>5</selection>)` -> message
      *  - `listOf(<selection>5</selection>)` -> element
-     *  - `listOf(1, 2, 3).get(<selection>0</selection>)` -> index
+     *  - `ints.filter <selection>{ it > 0 }</selection>` -> predicate
      */
     context(KtAnalysisSession)
     private fun MutableCollection<String>.addNameByValueArgument(expression: KtExpression) {
         val argumentExpression = expression.getOutermostParenthesizerOrThis()
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return
-        val callElement = valueArgument.parents.match(KtValueArgumentList::class, last = KtCallElement::class) ?: return
+        val callElement = if (valueArgument is KtLambdaArgument) {
+            valueArgument.parent as? KtCallElement
+        } else {
+            valueArgument.parents.match(KtValueArgumentList::class, last = KtCallElement::class)
+        } ?: return
         val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return
         if (resolvedCall.symbol.hasStableParameterNames) {
             val parameter = resolvedCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return
