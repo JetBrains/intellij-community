@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -49,6 +47,14 @@ public final class Iterators {
 
   public interface Provider<T> {
     T get();
+  }
+  
+  public interface Function<S, T> {
+    T fun(S s);
+  }
+  
+  public interface BooleanFunction<T> {
+    boolean fun(T t);
   }
   
   public static <T> Iterable<T> lazy(final Provider<? extends Iterable<T>> provider) {

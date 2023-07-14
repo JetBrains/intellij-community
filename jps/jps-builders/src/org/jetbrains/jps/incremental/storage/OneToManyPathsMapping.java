@@ -53,7 +53,7 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
   @NotNull
   public Iterator<String> getStateIterator(@NotNull String keyPath) throws IOException {
     Collection<String> collection = super.getState(normalizePath(keyPath));
-    return collection == null? Collections.emptyIterator() : Iterators.map(collection.iterator(), toFull());
+    return collection == null ? Collections.emptyIterator() : Iterators.map(collection.iterator(), myRelativizer::toFull);
   }
 
   @Override
@@ -68,7 +68,7 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
 
   @Override
   public Iterator<String> getKeysIterator() throws IOException {
-    return Iterators.map(super.getKeysIterator(), toFull());
+    return Iterators.map(super.getKeysIterator(), myRelativizer::toFull);
   }
 
   public void removeData(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
