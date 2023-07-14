@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports unnecessary calls to static methods that convert to string, like <code>String.valueOf()</code> or <code>Integer.toString()</code>.
-Such calls are unnecessary when used, in string concatenations or, as arguments of library methods where explicit string conversion is not needed.
+Reports unnecessary calls to static methods that convert their parameters to a string, e.g. <code>String.valueOf()</code> or <code>Integer.toString()</code>.
+Such calls are unnecessary when used in string concatenations.
 <p>Example:</p>
 <pre><code>
   System.out.println("Number: " + Integer.toString(count));
@@ -10,8 +10,8 @@ Such calls are unnecessary when used, in string concatenations or, as arguments 
 <pre><code>
   System.out.println("Number: " + count);
 </code></pre>
-<!-- tooltip end -->
-<p>Library methods that don't require explicit string conversion:</p>
+Additionally such calls are unnecessary when used as arguments to library methods that do their own string conversion.
+Some examples of library methods that do their own string conversion are:
 <ul>
   <li>
     Classes <code>java.io.PrintWriter</code>, <code>java.io.PrintStream</code>
@@ -29,6 +29,7 @@ Such calls are unnecessary when used, in string concatenations or, as arguments 
     </ul>
   </li>
 </ul>
+<!-- tooltip end -->
 <p>
   Use the <b>Report calls that can be replaced with a concatenation with the empty string</b>
   option to also report cases where concatenations with the empty string can be used instead of a call to <code>String.valueOf()</code>.
