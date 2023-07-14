@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
 
@@ -388,6 +389,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
 
   private static class MyScanningListener implements ArtifactScanningListener {
     private final MavenServerProgressIndicator p;
+    private AtomicInteger scanned = new AtomicInteger();
 
     MyScanningListener(MavenServerProgressIndicator indicator) {
       p = indicator;
@@ -397,6 +399,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     public void scanningStarted(IndexingContext ctx) {
       try {
         if (p.isCanceled()) throw new MavenProcessCanceledRuntimeException();
+        p.setText("Maven Indexing Started");
       }
       catch (RemoteException e) {
         throw new RuntimeException(e);
@@ -407,6 +410,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     public void scanningFinished(IndexingContext ctx, ScanningResult result) {
       try {
         if (p.isCanceled()) throw new MavenProcessCanceledRuntimeException();
+        p.setText("Maven Indexing Finished: " + result.getTotalFiles() + " was scanned");
       }
       catch (RemoteException e) {
         throw new RuntimeException(e);
@@ -421,8 +425,9 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     public void artifactDiscovered(ArtifactContext ac) {
       try {
         if (p.isCanceled()) throw new MavenProcessCanceledRuntimeException();
-        ArtifactInfo info = ac.getArtifactInfo();
-        p.setText2(info.getGroupId() + ":" + info.getArtifactId() + ":" + info.getVersion());
+        if(scanned.incrementAndGet() %100 == 0) {
+          p.setText("Scanned " + scanned.get() + " artifacts...");
+        }
       }
       catch (RemoteException e) {
         throw new RuntimeException(e);
