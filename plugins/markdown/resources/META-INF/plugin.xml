@@ -134,6 +134,7 @@
     <fileType name="Markdown" extensions="markdown;md" language="Markdown"
               implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileType" fieldName="INSTANCE"/>
     <lang.fileViewProviderFactory language="Markdown"
+                                  id="SingleRootMarkdownFileViewProviderFactory"
                                   implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileViewProviderFactory"/>
     <lang.parserDefinition language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition"/>
     <lang.ast.factory language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.psi.MarkdownAstFactory"/>
