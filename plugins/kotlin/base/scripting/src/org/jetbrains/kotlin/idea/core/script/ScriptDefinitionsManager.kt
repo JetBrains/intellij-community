@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.ide.script.IdeConsoleRootType
+import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -91,6 +92,12 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     override fun findDefinition(script: SourceCode): ScriptDefinition? {
         val locationId = script.locationId ?: return null
+
+        if (isScratchFile(script) || isEmbeddedScript(script)) {
+            // Scratch and embedded script should always have the default script definition
+            return getDefaultDefinition()
+        }
+
         if (nonScriptId(locationId)) return null
 
         configurations?.tryGetScriptDefinitionFast(locationId)?.let { fastPath -> return fastPath }
@@ -99,13 +106,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
         scriptDefinitionsCacheLock.withLock { scriptDefinitionsCache.get(locationId) }?.let { cached -> return cached }
 
-        val definition =
-            if (isScratchFile(script)) {
-                // Scratch should always have default script definition
-                getDefaultDefinition()
-            } else {
-                super.findDefinition(script) ?: return null
-            }
+        val definition = super.findDefinition(script) ?: return null
 
         scriptDefinitionsCacheLock.withLock {
             scriptDefinitionsCache.put(locationId, definition)
@@ -119,6 +120,12 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
             if (script is VirtualFileScriptSource) script.virtualFile
             else script.locationId?.let { VirtualFileManager.getInstance().findFileByUrl(it) }
         return virtualFile != null && ScratchFileService.getInstance().getRootType(virtualFile) is ScratchRootType
+    }
+
+    private fun isEmbeddedScript(code: SourceCode): Boolean {
+        val scriptSource = code as? VirtualFileScriptSource ?: return false
+        val virtualFile = scriptSource.virtualFile
+        return virtualFile is VirtualFileWindow && virtualFile.fileType == KotlinFileType.INSTANCE
     }
 
     @Suppress("OVERRIDE_DEPRECATION")
