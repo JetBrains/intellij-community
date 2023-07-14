@@ -11,15 +11,14 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -92,7 +91,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     LOG.assertTrue(type != null);
     final ExpectedTypeInfo[] expectedTypes =
       new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE)};
-    CreateMethodFromUsageFix.doCreate(targetClass, method, true, ContainerUtil.map(PsiExpression.EMPTY_ARRAY, Pair.createFunction(null)),
+    CreateMethodFromUsageFix.doCreate(targetClass, method, true, Collections.emptyList(), 
                                       getTargetSubstitutor(nameValuePair), expectedTypes, context);
   }
 

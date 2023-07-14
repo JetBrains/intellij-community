@@ -59,10 +59,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonJavaRefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -264,7 +261,7 @@ public final class CreateFromUsageUtils {
 
   public static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
                                            final PsiSubstitutor substitutor, final PsiExpression[] arguments) {
-    setupMethodParameters(method, builder, contextElement, substitutor, ContainerUtil.map(arguments, Pair.createFunction(null)));
+    setupMethodParameters(method, builder, contextElement, substitutor, ContainerUtil.map(arguments, arg -> new Pair<>(arg, null)));
   }
 
   static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
