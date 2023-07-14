@@ -1,3 +1,5 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,20 +20,13 @@
 // Contributors:  Kitching Simon <Simon.Kitching@orange.ch>
 //                Nicholas Wolff
 
-// Copied from http://svn.apache.org/repos/asf/logging/log4j/tags/v1_2_17/src/main/java/org/apache/log4j/Level.java
-// Modified by JetBrains s.r.o.
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.apache.log4j;
 
 import com.intellij.openapi.diagnostic.LogLevel;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.ObjectStreamException;
-import java.io.Serializable;
+import java.io.*;
 
 /**
  * @deprecated IntelliJ Platform no longer uses Log4j as the logging framework
@@ -131,7 +126,7 @@ public class Level extends Priority implements Serializable {
   public
   static
   Level toLevel(String sArg) {
-    return (Level) toLevel(sArg, Level.DEBUG);
+    return toLevel(sArg, Level.DEBUG);
   }
 
   /**
@@ -142,7 +137,7 @@ public class Level extends Priority implements Serializable {
   public
   static
   Level toLevel(int val) {
-    return (Level) toLevel(val, Level.DEBUG);
+    return toLevel(val, Level.DEBUG);
   }
 
   /**

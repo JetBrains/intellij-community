@@ -9,7 +9,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -223,7 +222,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     JScrollPane scrollPane = createScrollPane(centerComponent, true);
     if (ExperimentalUI.isNewUI()) {
       scrollPane.getHorizontalScrollBar().addAdjustmentListener(event -> {
-        int orientation = ((ActionToolbarImpl)myToolbar).getOrientation();
+        int orientation = myToolbar.getOrientation();
         Insets i = orientation == SwingConstants.VERTICAL ? JBUI.CurrentTheme.Toolbar.verticalToolbarInsets()
                                                           : JBUI.CurrentTheme.Toolbar.horizontalToolbarInsets();
         Border innerBorder = i != null ? JBUI.Borders.empty(i.top, i.left, i.bottom, i.right)
