@@ -22,8 +22,8 @@ import org.jetbrains.kotlin.name.Name
 internal class ShadowedCallablesFilter {
     data class FilterResult(val excludeFromCompletion: Boolean, val updatedInsertionOptions: CallableInsertionOptions)
 
-    private val processedSignatures: MutableSet<KtCallableSignature<*>> = mutableSetOf()
-    private val processedSimplifiedSignatures: MutableMap<SimplifiedSignature, CompletionSymbolOrigin> = mutableMapOf()
+    private val processedSignatures: MutableSet<KtCallableSignature<*>> = HashSet()
+    private val processedSimplifiedSignatures: MutableMap<SimplifiedSignature, CompletionSymbolOrigin> = HashMap()
 
     /**
      *  Checks whether callable is shadowed and updates [CallableInsertionOptions] if the callable is already imported and its short name
@@ -243,7 +243,7 @@ private sealed class SimplifiedSignature {
                     symbol.name,
                     containerFqName,
                     requiredTypeArgumentsCount = if (typeArgumentsAreRequired) callableSignature.symbol.typeParameters.size else 0,
-                    callableSignature.valueParameters.map { it.returnType },
+                    lazy(LazyThreadSafetyMode.NONE) { callableSignature.valueParameters.map { it.returnType } },
                     callableSignature.valueParameters.mapIndexedNotNull { index, parameter -> index.takeIf { parameter.symbol.isVararg } },
                 )
             }
@@ -256,12 +256,14 @@ private sealed class SimplifiedSignature {
             containerFqName: FqName?,
         ): SimplifiedSignature = when {
             isFunctionalVariableCall -> {
-                val functionalType = signature.returnType as? KtFunctionalType ?: error("Unexpected ${signature.returnType::class}")
                 FunctionLikeSimplifiedSignature(
                     signature.name,
                     containerFqName,
                     requiredTypeArgumentsCount = 0,
-                    functionalType.parameterTypes,
+                    lazy(LazyThreadSafetyMode.NONE) {
+                        val functionalType = signature.returnType as? KtFunctionalType ?: error("Unexpected ${signature.returnType::class}")
+                        functionalType.parameterTypes
+                    },
                     varargValueParameterIndices = emptyList()
                 )
             }
@@ -293,10 +295,26 @@ private data class VariableLikeSimplifiedSignature(
     override val containerFqName: FqName?,
 ) : SimplifiedSignature()
 
-private data class FunctionLikeSimplifiedSignature(
+private class FunctionLikeSimplifiedSignature(
     override val name: Name,
     override val containerFqName: FqName?,
-    val requiredTypeArgumentsCount: Int,
-    val valueParameterTypes: List<KtType>,
-    val varargValueParameterIndices: List<Int>,
-) : SimplifiedSignature()
+    private val requiredTypeArgumentsCount: Int,
+    private val valueParameterTypes: Lazy<List<KtType>>,
+    private val varargValueParameterIndices: List<Int>,
+) : SimplifiedSignature() {
+    override fun hashCode(): Int {
+        var result = name.hashCode()
+        result = 31 * result + containerFqName.hashCode()
+        result = 31 * result + requiredTypeArgumentsCount.hashCode()
+        result = 31 * result + varargValueParameterIndices.hashCode()
+        return result
+    }
+
+    override fun equals(other: Any?): Boolean = this === other ||
+            other is FunctionLikeSimplifiedSignature &&
+            other.name == name &&
+            other.containerFqName == containerFqName &&
+            other.requiredTypeArgumentsCount == requiredTypeArgumentsCount &&
+            other.varargValueParameterIndices == varargValueParameterIndices &&
+            other.valueParameterTypes.value == valueParameterTypes.value
+}
