@@ -2,8 +2,6 @@
 package com.intellij.formatting.visualLayer
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInspection.incorrectFormatting.FormattingChanges
 import com.intellij.codeInspection.incorrectFormatting.detectFormattingChanges
 import com.intellij.formatting.visualLayer.VisualFormattingLayerElement.*
@@ -57,6 +55,7 @@ class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
   }
 
   override fun collectVisualFormattingLayerElements(editor: Editor): List<VisualFormattingLayerElement> {
+    if (editor.document.isWritable) return emptyList()
     val project = editor.project ?: return emptyList()
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return emptyList()
     val codeStyleSettings = editor.visualFormattingLayerCodeStyleSettings ?: return emptyList()
