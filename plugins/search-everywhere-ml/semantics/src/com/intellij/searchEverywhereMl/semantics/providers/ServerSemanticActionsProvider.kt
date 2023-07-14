@@ -9,7 +9,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.semantics.utils.RequestResult
 import com.intellij.searchEverywhereMl.semantics.utils.sendRequest
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettingsManager
+import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 
 private val LOG = logger<ServerSemanticActionsProvider>()
 
@@ -19,13 +19,13 @@ class ServerSemanticActionsProvider(val model: GotoActionModel) : SemanticAction
   private val URL_BASE = Registry.stringValue("search.everywhere.ml.semantic.actions.server.host")
 
   override fun search(pattern: String): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
-    if (!SemanticSearchSettingsManager.getInstance().getIsEnabledInActionsTab()) return emptyList()
+    if (!SemanticSearchSettings.getInstance().enabledInActionsTab) return emptyList()
 
     val requestJson: String = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapOf(
       "pattern" to pattern,
       "items_limit" to ITEMS_LIMIT,
       "similarity_threshold" to SIMILARITY_THRESHOLD,
-      "token" to SemanticSearchSettingsManager.getInstance().getActionsAPIToken()
+      "token" to SemanticSearchSettings.getInstance().getActionsAPIToken()
     ))
 
     val modelResponse: ModelResponse = when (

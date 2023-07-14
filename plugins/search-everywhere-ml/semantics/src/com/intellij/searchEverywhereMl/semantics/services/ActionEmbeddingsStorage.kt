@@ -17,7 +17,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.searchEverywhereMl.semantics.indices.LocalEmbeddingIndex
 import com.intellij.searchEverywhereMl.semantics.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettingsManager
+import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import java.io.File
 import java.nio.file.Files
 import java.util.*
@@ -66,7 +66,7 @@ class ActionEmbeddingsStorage {
 
     fun getInstance() = service<ActionEmbeddingsStorage>()
 
-    private fun checkSearchEnabled() = SemanticSearchSettingsManager.getInstance().getIsEnabledInActionsTab()
+    private fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInActionsTab
 
     internal fun shouldIndexAction(action: AnAction?): Boolean {
       return action != null && !(action is ActionGroup && !action.isSearchable) && action.templateText != null
@@ -90,7 +90,7 @@ class ActionSemanticSearchServiceInitializer : ProjectActivity {
   override suspend fun execute(project: Project) {
     // Instantiate service for the first time with state loading if available.
     // Whether the state exists or not, we generate the missing embeddings:
-    if (SemanticSearchSettingsManager.getInstance().getIsEnabledInActionsTab()) {
+    if (SemanticSearchSettings.getInstance().enabledInActionsTab) {
       ActionEmbeddingsStorage.getInstance().prepareForSearch()
     }
   }

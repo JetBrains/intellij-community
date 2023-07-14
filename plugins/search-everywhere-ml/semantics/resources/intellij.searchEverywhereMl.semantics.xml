@@ -4,13 +4,18 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <searchEverywhereMlContributorReplacementService
-      implementation="com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereMlContributorReplacementServiceImpl" />
+      implementation="com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereMlContributorReplacementServiceImpl"/>
 
     <searchEverywhereReorderingService
-      implementation="com.intellij.searchEverywhereMl.semantics.reordering.SearchEverywhereReorderingServiceImpl" />
+      implementation="com.intellij.searchEverywhereMl.semantics.reordering.SearchEverywhereReorderingServiceImpl"/>
 
     <postStartupActivity
       implementation="com.intellij.searchEverywhereMl.semantics.services.ActionSemanticSearchServiceInitializer"/>
+
+    <advancedSetting default="false" id="search.everywhere.ml.semantic.actions.enable"
+                     groupKey="advanced.setting.search.everywhere.ml.name"
+                     service="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings"
+                     property="enabledInActionsTab"/>
 
     <registryKey defaultValue="false"
                  description="Use remote server for the Actions tab"
@@ -31,13 +36,6 @@
     <registryKey defaultValue="0.0.1"
                  description="Semantic text search model version"
                  key="search.everywhere.ml.semantic.model.version"/>
-
-    <applicationConfigurable
-      groupId="tools"
-      instance="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchConfigurable"
-      id="com.intellij.searchEverywhereMl.SemanticSearchConfigurable"
-      bundle="messages.searchEverywhereMlSemanticsBundle"
-      key="search.everywhere.ml.semantic.settings.configurable.display.name"/>
 
     <notificationGroup id="Semantic search" displayType="STICKY_BALLOON"
                        bundle="messages.searchEverywhereMlSemanticsBundle"

@@ -13,7 +13,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.semantics.providers.LocalSemanticActionsProvider
 import com.intellij.searchEverywhereMl.semantics.providers.SemanticActionsProvider
 import com.intellij.searchEverywhereMl.semantics.providers.ServerSemanticActionsProvider
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettingsManager
+import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.ui.JBColor
 import com.intellij.util.Processor
 import javax.swing.ListCellRenderer
@@ -30,7 +30,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
   private val semanticActionsProvider: SemanticActionsProvider
 
   init {
-    val settings = SemanticSearchSettingsManager.getInstance()
+    val settings = SemanticSearchSettings.getInstance()
     semanticActionsProvider = if (settings.getUseRemoteActionsServer()) {
       ServerSemanticActionsProvider(model)
     }

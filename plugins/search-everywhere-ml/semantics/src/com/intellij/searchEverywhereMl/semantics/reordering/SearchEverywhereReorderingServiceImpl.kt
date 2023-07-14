@@ -4,11 +4,11 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereReorderingService
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticSearchEverywhereContributor
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettingsManager
+import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 
 class SearchEverywhereReorderingServiceImpl : SearchEverywhereReorderingService {
   override fun isEnabled(): Boolean {
-    return SemanticSearchSettingsManager.getInstance().getIsEnabledInActionsTab()
+    return SemanticSearchSettings.getInstance().enabledInActionsTab
   }
 
   override fun isEnabledInTab(tabID: String): Boolean {

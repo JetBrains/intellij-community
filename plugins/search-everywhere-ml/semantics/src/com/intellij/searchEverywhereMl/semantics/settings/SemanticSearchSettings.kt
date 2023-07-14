@@ -11,20 +11,20 @@ import com.intellij.util.xmlb.annotations.OptionTag
   name = "SemanticSearchSettings",
   storages = [Storage(value = "semantic-search-settings.xml", roamingType = RoamingType.DISABLED, exportable = true)]
 )
-class SemanticSearchSettingsManager : PersistentStateComponent<SemanticSearchSettings> {
-  private var state = SemanticSearchSettings()
+class SemanticSearchSettings : PersistentStateComponent<SemanticSearchSettingsState> {
+  private var state = SemanticSearchSettingsState()
 
-  override fun getState(): SemanticSearchSettings = state
+  var enabledInActionsTab: Boolean
+    get() = state.enabledInActionsTab
+    set(newValue) {
+      state.enabledInActionsTab = newValue
+      ActionEmbeddingsStorage.getInstance().run { if (newValue) prepareForSearch() else tryStopGeneratingEmbeddings() }
+    }
 
-  override fun loadState(newState: SemanticSearchSettings) {
+  override fun getState(): SemanticSearchSettingsState = state
+
+  override fun loadState(newState: SemanticSearchSettingsState) {
     state = newState
-  }
-
-  fun getIsEnabledInActionsTab() = state.isEnabledInActionsTab
-
-  fun setIsEnabledInActionsTab(newValue: Boolean) {
-    state.isEnabledInActionsTab = newValue
-    ActionEmbeddingsStorage.getInstance().run { if (newValue) prepareForSearch() else tryStopGeneratingEmbeddings() }
   }
 
   fun getUseRemoteActionsServer() = Registry.`is`("search.everywhere.ml.semantic.actions.server.use")
@@ -32,11 +32,11 @@ class SemanticSearchSettingsManager : PersistentStateComponent<SemanticSearchSet
   fun getActionsAPIToken(): String = Registry.stringValue("search.everywhere.ml.semantic.actions.server.token")
 
   companion object {
-    fun getInstance() = service<SemanticSearchSettingsManager>()
+    fun getInstance() = service<SemanticSearchSettings>()
   }
 }
 
-class SemanticSearchSettings : BaseState() {
-  @get:OptionTag("enable_in_actions_tab")
-  var isEnabledInActionsTab by property(false)
+class SemanticSearchSettingsState : BaseState() {
+  @get:OptionTag("enabled_in_actions_tab")
+  var enabledInActionsTab by property(false)
 }
