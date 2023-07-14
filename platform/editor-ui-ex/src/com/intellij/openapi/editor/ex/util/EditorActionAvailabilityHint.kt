@@ -55,6 +55,12 @@ class EditorActionAvailabilityHint(val actionId: String, val condition: Availabi
   }
 }
 
+/**
+ * Marks [RangeMarker] with [EditorActionAvailabilityHint]
+ *
+ * NB: when marking a range marker you have to ensure that you do it inside highlighter initialization block.
+ * See the last parameter of [com.intellij.openapi.editor.ex.MarkupModelEx.addRangeHighlighterAndChangeAttributes]
+ */
 @Experimental
 fun RangeMarker.addActionAvailabilityHint(vararg hints: EditorActionAvailabilityHint) {
   this as UserDataHolderEx? ?: run {
@@ -64,6 +70,12 @@ fun RangeMarker.addActionAvailabilityHint(vararg hints: EditorActionAvailability
   this.addActionAvailabilityHintImpl(*hints)
 }
 
+/**
+ * Marks [Inlay] with [EditorActionAvailabilityHint]
+ *
+ * NB: when marking an inlay you have to wrap any `com.intellij.openapi.editor.InlayModel.add*` call
+ * with [com.intellij.openapi.editor.InlayModel.execute] to force listeners triggering occurs after [addActionAvailabilityHint] is called.
+ */
 @Experimental
 fun Inlay<*>.addActionAvailabilityHint(vararg hints: EditorActionAvailabilityHint) {
   this as UserDataHolderEx? ?: run {
