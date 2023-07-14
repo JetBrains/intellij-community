@@ -9,12 +9,15 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties
-import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinBreakpointType
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle.message
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ApplicabilityResult.Companion.maybe
-import org.jetbrains.kotlin.js.descriptorUtils.getKotlinTypeFqName
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
@@ -70,14 +73,27 @@ open class KotlinFunctionBreakpointType protected constructor(@NotNull id: Strin
         }
 }
 
-private const val COMPOSABLE_FQDN = "androidx.compose.runtime.Composable"
+private val COMPOSABLE_CLASS_ID = ClassId.fromString("androidx/compose/runtime/Composable")
 
 /**
  * Don't allow method breakpoints on Composable functions because we can't match their signature.
  *
  * This will be handled by the Compose plugin.
  */
-fun KtFunction.isComposable() = annotationEntries.any { it.getType() == COMPOSABLE_FQDN }
+private fun KtFunction.isComposable(): Boolean {
+    analyze(this) {
+        for (annotationEntry in annotationEntries) {
+            val classSymbol = when (val symbol = annotationEntry.typeReference?.mainReference?.resolveToSymbol()) {
+                is KtTypeAliasSymbol -> symbol.expandedType.expandedClassSymbol
+                is KtClassOrObjectSymbol -> symbol
+                else -> null
+            }
 
-private fun KtAnnotationEntry.getType() =
-    LightClassGenerationSupport.getInstance(project).analyzeAnnotation(this)?.type?.getKotlinTypeFqName(false)
+            if (classSymbol != null && classSymbol.classIdIfNonLocal == COMPOSABLE_CLASS_ID) {
+                return true
+            }
+        }
+
+        return false
+    }
+}
