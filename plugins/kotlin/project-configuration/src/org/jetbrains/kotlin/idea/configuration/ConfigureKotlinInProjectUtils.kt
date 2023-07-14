@@ -514,16 +514,14 @@ fun getModulesTargetingUnsupportedJvmAndTargetsForAllModules(
     kotlinVersion: IdeKotlinVersion
 ): Pair<Map<String, List<String>>, Map<ModuleName, TargetJvm>> {
     val modulesAndJvmTargets = mutableMapOf<ModuleName, TargetJvm>()
-    val jvmModulesTargetingUnsupportedJvm = mutableMapOf<String,  MutableList<String>>()
+    val jvmModulesTargetingUnsupportedJvm = mutableMapOf<String, MutableList<String>>()
     for (module in modulesToConfigure) {
         val jvmTarget = getTargetBytecodeVersionFromModule(module, kotlinVersion)
         modulesAndJvmTargets[module.name] = jvmTarget
-        jvmTarget?.let {
-            getJvmTargetNumber(jvmTarget)?.let {
-                if (it < 8) {
-                    val modulesForThisTarget = jvmModulesTargetingUnsupportedJvm.getOrPut(jvmTarget) { mutableListOf() }
-                    modulesForThisTarget.add(module.name)
-                }
+        jvmTarget?.let(::getJvmTargetNumber)?.let { jvmTargetNumber ->
+            if (jvmTargetNumber < 8) {
+                val modulesForThisTarget = jvmModulesTargetingUnsupportedJvm.getOrPut(jvmTarget) { mutableListOf() }
+                modulesForThisTarget.add(module.name)
             }
         }
     }
