@@ -2,16 +2,16 @@
 package org.jetbrains.idea.maven.execution.run.configuration
 
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineInfo
 import com.intellij.openapi.externalSystem.service.ui.command.line.CompletionTableInfo
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
-import com.intellij.openapi.ui.getActionShortcutText
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.observable.util.createTextModificationTracker
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.getActionShortcutText
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.idea.maven.execution.MavenCommandLineOptions
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
@@ -58,24 +58,24 @@ class MavenCommandLineInfo(project: Project, projectPathField: WorkingDirectoryF
         .sortedBy { it.text }
     }
 
-    private fun collectGoals(): List<TextCompletionInfo> {
+    private suspend fun collectGoals(): List<TextCompletionInfo> {
+      val projectDirectory = blockingContext { workingDirectoryField.getWorkingDirectoryVirtualFile() }
+                             ?: return emptyList()
       val projectsManager = MavenProjectsManager.getInstance(project)
-      val localFileSystem = LocalFileSystem.getInstance()
-      val projectPath = workingDirectoryField.workingDirectory
-      val projectDir = localFileSystem.refreshAndFindFileByPath(projectPath) ?: return emptyList()
-      val mavenProject = projectsManager.findContainingProject(projectDir) ?: return emptyList()
-      val localRepository = projectsManager.localRepository
-      return mavenProject.declaredPlugins
-        .mapNotNull { MavenArtifactUtil.readPluginInfo(localRepository, it.mavenId) }
-        .flatMap { it.mojos }
-        .map { TextCompletionInfo(it.displayName) }
-        .sortedBy { it.text }
+      val mavenProject = readAction { projectsManager.findContainingProject(projectDirectory) }
+                         ?: return emptyList()
+      val localRepository = blockingContext { projectsManager.localRepository }
+      return blockingContext {
+        mavenProject.declaredPlugins
+          .mapNotNull { MavenArtifactUtil.readPluginInfo(localRepository, it.mavenId) }
+          .flatMap { it.mojos }
+          .map { TextCompletionInfo(it.displayName) }
+          .sortedBy { it.text }
+      }
     }
 
     override suspend fun collectCompletionInfo(): List<TextCompletionInfo> {
-      return blockingContext {
-        collectPhases() + collectGoals()
-      }
+      return collectPhases() + collectGoals()
     }
 
     override suspend fun collectTableCompletionInfo(): List<TextCompletionInfo> {
