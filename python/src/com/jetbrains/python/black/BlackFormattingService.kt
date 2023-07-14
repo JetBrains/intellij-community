@@ -131,6 +131,7 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
             }
             is BlackFormattingResponse.Ignored -> {
               showFormattedLinesInfo(editor, PyBundle.message("black.file.ignored.notification.message", vFile.name), false)
+              formattingRequest.onTextReady(text)
             }
           }
         }.onFailure { exception ->
