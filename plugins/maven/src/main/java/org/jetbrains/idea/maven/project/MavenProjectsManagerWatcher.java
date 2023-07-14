@@ -44,18 +44,14 @@ public final class MavenProjectsManagerWatcher {
 
   private final Project myProject;
   private MavenProjectsTree myProjectsTree;
-  private final MavenGeneralSettings myGeneralSettings;
   private final MavenProjectsAware myProjectsAware;
   private final ExecutorService myBackgroundExecutor;
   private final Disposable myDisposable;
 
-  MavenProjectsManagerWatcher(Project project,
-                              MavenProjectsTree projectsTree,
-                              MavenGeneralSettings generalSettings) {
+  MavenProjectsManagerWatcher(Project project, MavenProjectsTree projectsTree) {
     myBackgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MavenProjectsManagerWatcher.backgroundExecutor", 1);
     myProject = project;
     myProjectsTree = projectsTree;
-    myGeneralSettings = generalSettings;
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     myProjectsAware = new MavenProjectsAware(project, projectsManager, this, myBackgroundExecutor);
     myDisposable = Disposer.newDisposable(projectsManager, MavenProjectsManagerWatcher.class.toString());

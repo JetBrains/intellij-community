@@ -387,7 +387,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void initWorkers() {
-    myWatcher = new MavenProjectsManagerWatcher(myProject, myProjectsTree, getGeneralSettings());
+    myWatcher = new MavenProjectsManagerWatcher(myProject, myProjectsTree);
 
     myImportingQueue =
       new MavenMergingUpdateQueue(getClass().getName() + ": Importing queue", IMPORT_DELAY, !MavenUtil.isMavenUnitTestModeEnabled(), this);
