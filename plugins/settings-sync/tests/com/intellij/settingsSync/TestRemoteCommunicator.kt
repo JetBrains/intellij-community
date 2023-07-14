@@ -6,7 +6,8 @@ import org.junit.Assert
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
 
-internal open class TestRemoteCommunicator : CloudConfigServerCommunicator() {
+internal open class TestRemoteCommunicator(customServerUrl: String = "http://localhost:7777/cloudconfig")
+  : CloudConfigServerCommunicator(customServerUrl) {
 
   private lateinit var pushedLatch: CountDownLatch
   private lateinit var pushedSnapshot: SettingsSnapshot

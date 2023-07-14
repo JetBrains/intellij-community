@@ -28,10 +28,10 @@ internal const val SETTINGS_SYNC_SNAPSHOT_ZIP = "$SETTINGS_SYNC_SNAPSHOT.zip"
 private const val CONNECTION_TIMEOUT_MS = 10000
 private const val READ_TIMEOUT_MS = 50000
 
-internal open class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
+internal open class CloudConfigServerCommunicator(serverUrl: String = defaultUrl) : SettingsSyncRemoteCommunicator {
 
   internal open val client get() = _client.value
-  private val _client = lazy { createCloudConfigClient(clientVersionContext) }
+  private val _client = lazy { createCloudConfigClient(serverUrl, clientVersionContext) }
   protected val clientVersionContext = CloudConfigVersionContext()
 
   private val lastRemoteErrorRef = AtomicReference<Throwable>()
@@ -286,7 +286,7 @@ internal open class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicat
     private const val DEFAULT_DEBUG_URL = "https://stgn.cloudconfig.jetbrains.com/cloudconfig"
     internal const val URL_PROPERTY = "idea.settings.sync.cloud.url"
 
-    internal val url get() = _url.value
+    internal val defaultUrl get() = _url.value
 
     private val _url = lazy {
       val explicitUrl = System.getProperty(URL_PROPERTY)
@@ -319,7 +319,7 @@ internal open class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicat
       return configUrl
     }
 
-    internal fun createCloudConfigClient(versionContext: CloudConfigVersionContext): CloudConfigFileClientV2 {
+    internal fun createCloudConfigClient(url: String, versionContext: CloudConfigVersionContext): CloudConfigFileClientV2 {
       val conf = createConfiguration()
       return CloudConfigFileClientV2(url, conf, DUMMY_ETAG_STORAGE, versionContext)
     }

@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger
 internal class MockRemoteCommunicator : TestRemoteCommunicator() {
   private val filesAndVersions = mutableMapOf<String, Version>()
   private val myClientV2 = lazy {
-    object : CloudConfigFileClientV2(url, Configuration().auth(JbaTokenAuthProvider("my-test-token")),
+    object : CloudConfigFileClientV2(defaultUrl, Configuration().auth(JbaTokenAuthProvider("my-test-token")),
                                      CloudConfigServerCommunicator.DUMMY_ETAG_STORAGE, clientVersionContext) {
       override fun read(filePath: String): InputStream {
         val version = filesAndVersions[filePath] ?: throw IOException("file $filePath is not found")

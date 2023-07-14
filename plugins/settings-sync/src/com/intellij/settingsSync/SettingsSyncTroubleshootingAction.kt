@@ -191,7 +191,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
     private fun Panel.serverUrlRow() =
       row {
         label(SettingsSyncBundle.message("troubleshooting.dialog.server.url.label"))
-        copyableLabel(CloudConfigServerCommunicator.url)
+        copyableLabel(CloudConfigServerCommunicator.defaultUrl)
       }.layout(RowLayout.PARENT_GRID)
 
     private fun Panel.loginNameRow(userData: JBAccountInfoService.JBAData?) =
