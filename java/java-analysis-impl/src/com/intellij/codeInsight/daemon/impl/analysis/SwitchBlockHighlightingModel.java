@@ -862,31 +862,42 @@ public class SwitchBlockHighlightingModel {
         for (int j = i + 1; j < switchLabels.size(); j++) {
           PsiElement next = switchLabels.get(j);
           if (!(next instanceof PsiCaseLabelElement nextElement)) continue;
-          if (!JavaPsiPatternUtil.isUnconditionalForType(nextElement, mySelectorType) &&
-              ((!(next instanceof PsiExpression expression) || ExpressionUtils.isNullLiteral(expression)) &&
-               current instanceof PsiKeyword &&
-               PsiKeyword.DEFAULT.equals(current.getText()) || isInCaseNullDefaultLabel(current))) {
-            // JEP 440-441
-            // A 'default' label dominates a case label with a case pattern,
-            // and it also dominates a case label with a null case constant.
-            // A 'case null, default' label dominates all other switch labels.
+          boolean dominated = isDominated(nextElement, current, mySelectorType);
+          if (dominated) {
             result.put(nextElement, current);
-          }
-          else if (current instanceof PsiCaseLabelElement currentElement) {
-            if (isConstantLabelElement(nextElement)) {
-              PsiExpression constExpr = ObjectUtils.tryCast(nextElement, PsiExpression.class);
-              assert constExpr != null;
-              if (JavaPsiPatternUtil.dominatesOverConstant(currentElement, constExpr.getType())) {
-                result.put(nextElement, current);
-              }
-            }
-            else if (JavaPsiPatternUtil.dominates(currentElement, nextElement)) {
-              result.put(nextElement, current);
-            }
           }
         }
       }
       return result;
+    }
+
+    public static boolean isDominated(@NotNull PsiCaseLabelElement overWhom,
+                                @NotNull PsiElement who,
+                                @NotNull PsiType selectorType) {
+      boolean dominated = false;
+      if (!JavaPsiPatternUtil.isUnconditionalForType(overWhom, selectorType) &&
+          ((!(overWhom instanceof PsiExpression expression) || ExpressionUtils.isNullLiteral(expression)) &&
+           who instanceof PsiKeyword &&
+           PsiKeyword.DEFAULT.equals(who.getText()) || isInCaseNullDefaultLabel(who))) {
+        // JEP 440-441
+        // A 'default' label dominates a case label with a case pattern,
+        // and it also dominates a case label with a null case constant.
+        // A 'case null, default' label dominates all other switch labels.
+        dominated =true;
+      }
+      else if (who instanceof PsiCaseLabelElement currentElement) {
+        if (isConstantLabelElement(overWhom)) {
+          PsiExpression constExpr = ObjectUtils.tryCast(overWhom, PsiExpression.class);
+          assert constExpr != null;
+          if (JavaPsiPatternUtil.dominatesOverConstant(currentElement, constExpr.getType())) {
+            dominated =true;
+          }
+        }
+        else if (JavaPsiPatternUtil.dominates(currentElement, overWhom)) {
+          dominated =true;
+        }
+      }
+      return dominated;
     }
 
     private static boolean isInCaseNullDefaultLabel(@NotNull PsiElement element) {

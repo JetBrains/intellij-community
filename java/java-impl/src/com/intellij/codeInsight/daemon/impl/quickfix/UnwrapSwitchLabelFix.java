@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
@@ -44,9 +45,16 @@ public class UnwrapSwitchLabelFix extends PsiUpdateModCommandQuickFix {
     boolean shouldKeepDefault = block instanceof PsiSwitchExpression &&
                                 !(labelStatement instanceof PsiSwitchLabeledRuleStatement ruleStatement &&
                                   ruleStatement.getBody() instanceof PsiExpressionStatement);
+    Set<PsiCaseLabelElement> removableUnreachableBranches = new HashSet<>(DataFlowInspectionBase.findRemovableUnreachableBranches(label, block));
     for (PsiSwitchLabelStatementBase otherLabel : labels) {
       if (otherLabel == labelStatement) continue;
-      if (!shouldKeepDefault || !SwitchUtils.isDefaultLabel(otherLabel)) {
+      boolean isDefault = SwitchUtils.isDefaultLabel(otherLabel);
+      PsiCaseLabelElementList otherElementList = otherLabel.getCaseLabelElementList();
+      if (otherElementList != null) {
+        PsiCaseLabelElement[] otherElements = otherElementList.getElements();
+        if(!removableUnreachableBranches.containsAll(Set.of(otherElements)) && !isDefault) continue;
+      }
+      if (!shouldKeepDefault || !isDefault) {
         DeleteSwitchLabelFix.deleteLabel(otherLabel);
       }
       else {
@@ -54,7 +62,9 @@ public class UnwrapSwitchLabelFix extends PsiUpdateModCommandQuickFix {
       }
     }
     for (PsiCaseLabelElement labelElement : Objects.requireNonNull(labelStatement.getCaseLabelElementList()).getElements()) {
-      if (labelElement != label && !(shouldKeepDefault && labelElement instanceof PsiDefaultCaseLabelElement)) {
+      boolean isDefault = labelElement instanceof PsiDefaultCaseLabelElement;
+      if(!removableUnreachableBranches.contains(labelElement) && !isDefault) continue;
+      if (labelElement != label && !(shouldKeepDefault && isDefault)) {
         new CommentTracker().deleteAndRestoreComments(labelElement);
       }
     }
