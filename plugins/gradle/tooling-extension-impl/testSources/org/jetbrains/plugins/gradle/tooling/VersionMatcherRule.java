@@ -34,7 +34,7 @@ public class VersionMatcherRule extends TestWatcher {
     "7.0.2", /* "7.1", "7.2", "7.4", "7.5.1", */ "7.6",
     "8.0", "8.2"
   };
-  public static final String BASE_GRADLE_VERSION = "8.2-rc-1";
+  public static final String BASE_GRADLE_VERSION = "8.2";
 
   @Nullable
   private CustomMatcher<String> myMatcher;
