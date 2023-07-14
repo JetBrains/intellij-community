@@ -431,22 +431,14 @@ public final class HighlightFixUtil {
     PsiType type = expression.getType();
     if (type == null) return;
     if (!type.equals(PsiTypes.voidType())) {
-      IntentionAction action = PriorityIntentionActionWrapper.highPriority(QUICK_FIX_FACTORY.createIterateFix(expression));
-      registrar.add(action);
-    }
-    if (PsiTreeUtil.skipWhitespacesAndCommentsForward(statement) == block.getRBrace()) {
-      PsiElement blockParent = block.getParent();
-      if (blockParent instanceof PsiMethod) {
-        PsiType returnType = ((PsiMethod)blockParent).getReturnType();
+      registrar.add(PriorityIntentionActionWrapper.highPriority(QUICK_FIX_FACTORY.createIterateFix(expression)));
+      if (PsiTreeUtil.skipWhitespacesAndCommentsForward(statement) == block.getRBrace() && block.getParent() instanceof PsiMethod method) {
+        PsiType returnType = method.getReturnType();
         if (returnType != null && isPossibleReturnValue(expression, type, returnType)) {
-          IntentionAction action = QUICK_FIX_FACTORY.createInsertReturnFix(expression);
-          registrar.add(action);
+          registrar.add(QUICK_FIX_FACTORY.createInsertReturnFix(expression));
         }
       }
-    }
-    if (!type.equals(PsiTypes.voidType())) {
-      IntentionAction action = QUICK_FIX_FACTORY.createIntroduceVariableAction(expression);
-      registrar.add(action);
+      registrar.add(QUICK_FIX_FACTORY.createIntroduceVariableAction(expression));
     }
   }
 
