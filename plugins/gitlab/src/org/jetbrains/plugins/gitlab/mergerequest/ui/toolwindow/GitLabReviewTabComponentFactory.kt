@@ -25,14 +25,13 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewMod
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
 import org.jetbrains.plugins.gitlab.mergerequest.diff.selectedChange
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabReviewTabViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestDetailsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsPanelFactory
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
@@ -44,7 +43,8 @@ import javax.swing.*
 internal class GitLabReviewTabComponentFactory(
   private val project: Project,
   private val toolwindowViewModel: GitLabToolWindowViewModel,
-) : ReviewTabsComponentFactory<GitLabReviewTab, GitLabToolWindowProjectViewModel> {
+) : ReviewTabsComponentFactory<GitLabReviewTabViewModel, GitLabToolWindowProjectViewModel> {
+
   override fun createReviewListComponent(
     cs: CoroutineScope,
     projectVm: GitLabToolWindowProjectViewModel
@@ -64,11 +64,16 @@ internal class GitLabReviewTabComponentFactory(
 
   override fun createTabComponent(cs: CoroutineScope,
                                   projectVm: GitLabToolWindowProjectViewModel,
-                                  reviewTabType: GitLabReviewTab): JComponent {
-    return when (reviewTabType) {
-      is GitLabReviewTab.ReviewSelected -> {
+                                  tabVm: GitLabReviewTabViewModel): JComponent {
+    return when (tabVm) {
+      is GitLabReviewTabViewModel.Details -> {
         GitLabStatistics.logMrDetailsOpened(project)
-        createReviewDetailsComponent(cs, projectVm, reviewTabType.reviewId)
+        createReviewDetailsComponent(cs, projectVm, tabVm.detailsVm).also {
+          tabVm.detailsVm.apply {
+            requestLoad()
+            refreshData()
+          }
+        }
       }
     }
   }
@@ -82,14 +87,8 @@ internal class GitLabReviewTabComponentFactory(
   private fun createReviewDetailsComponent(
     cs: CoroutineScope,
     projectVm: GitLabToolWindowProjectViewModel,
-    reviewId: GitLabMergeRequestId
+    reviewDetailsVm: GitLabMergeRequestDetailsLoadingViewModel
   ): JComponent {
-    val reviewDetailsVm = GitLabMergeRequestDetailsLoadingViewModelImpl(project, cs, projectVm.currentUser, projectVm.projectData,
-                                                                        reviewId).apply {
-      requestLoad()
-      refreshData()
-    }
-
     val detailsVmFlow = reviewDetailsVm.mergeRequestLoadingFlow.mapLatest {
       (it as? GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result)?.detailsVm
     }.filterNotNull()
@@ -102,11 +101,11 @@ internal class GitLabReviewTabComponentFactory(
       detailsVmFlow.flatMapLatest {
         it.showTimelineRequests
       }.collect {
-        projectVm.filesController.openTimeline(reviewId, true)
+        projectVm.filesController.openTimeline(reviewDetailsVm.mergeRequestId, true)
       }
     }
 
-    val diffBridge = projectVm.getDiffBridge(reviewId)
+    val diffBridge = projectVm.getDiffBridge(reviewDetailsVm.mergeRequestId)
 
     cs.launchNow(Dispatchers.EDT) {
       detailsVmFlow.collectLatest { detailsVm ->
@@ -133,7 +132,7 @@ internal class GitLabReviewTabComponentFactory(
           launchNow {
             changeListVms.collectLatest {
               it.showDiffRequests.collectLatest {
-                projectVm.filesController.openDiff(reviewId, true)
+                projectVm.filesController.openDiff(reviewDetailsVm.mergeRequestId, true)
               }
             }
           }

@@ -6,13 +6,19 @@ import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowProjectViewModel
+import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabs
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.childScope
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -31,7 +37,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 
 internal class GitLabToolWindowProjectViewModel
 private constructor(parentCs: CoroutineScope, private val project: Project, connection: GitLabProjectConnection)
-  : ReviewToolwindowProjectViewModel<GitLabReviewTab> {
+  : ReviewToolwindowProjectViewModel<GitLabReviewTab, GitLabReviewTabViewModel> {
 
   private val cs = parentCs.childScope()
 
@@ -72,13 +78,59 @@ private constructor(parentCs: CoroutineScope, private val project: Project, conn
     )
   }
 
-  private val _openReviewTabRequest = MutableSharedFlow<GitLabReviewTab>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  override val openReviewTabRequest: Flow<GitLabReviewTab> = _openReviewTabRequest
+  private val _tabs = MutableStateFlow<ReviewToolwindowTabs<GitLabReviewTab, GitLabReviewTabViewModel>>(
+    ReviewToolwindowTabs(emptyMap(), null)
+  )
+  override val tabs: StateFlow<ReviewToolwindowTabs<GitLabReviewTab, GitLabReviewTabViewModel>> = _tabs.asStateFlow()
 
-  override val closeReviewTabRequest: Flow<GitLabReviewTab> = emptyFlow() // GitLab are not closed externally (only by toolwindow functionality)
+  private val tabsGuard = Mutex()
 
-  fun openReviewDetails(reviewId: GitLabMergeRequestId) {
-    _openReviewTabRequest.tryEmit(GitLabReviewTab.ReviewSelected(reviewId))
+  fun show(mr: GitLabMergeRequestId) {
+    showTab(GitLabReviewTab.ReviewSelected(mr))
+  }
+
+  private fun showTab(tab: GitLabReviewTab) {
+    cs.launch {
+      tabsGuard.withLock {
+        val current = _tabs.value
+        val currentVm = current.tabs[tab]
+        if (currentVm == null || !tab.reuseTabOnRequest) {
+          currentVm?.destroy()
+          val tabVm = createVm(tab)
+          _tabs.value = current.copy(current.tabs + (tab to tabVm), tab)
+        }
+        else {
+          _tabs.value = current.copy(selectedTab = tab)
+        }
+      }
+    }
+  }
+
+  private fun createVm(tab: GitLabReviewTab): GitLabReviewTabViewModel = when (tab) {
+    is GitLabReviewTab.ReviewSelected -> GitLabReviewTabViewModel.Details(project, cs, currentUser, projectData, tab.reviewId)
+  }
+
+  override fun selectTab(tab: GitLabReviewTab?) {
+    cs.launch {
+      tabsGuard.withLock {
+        _tabs.update {
+          it.copy(selectedTab = tab)
+        }
+      }
+    }
+  }
+
+  override fun closeTab(tab: GitLabReviewTab) {
+    cs.launch {
+      tabsGuard.withLock {
+        val current = _tabs.value
+        val currentVm = current.tabs[tab]
+        if (currentVm != null) {
+          currentVm.destroy()
+          _tabs.value = current.copy(current.tabs - tab, null)
+        }
+      }
+    }
   }
 
   fun getDiffBridge(mr: GitLabMergeRequestId): GitLabMergeRequestDiffBridge =

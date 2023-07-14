@@ -2,18 +2,12 @@
 package com.intellij.collaboration.ui.toolwindow
 
 import com.intellij.openapi.actionSystem.DataKey
-import org.jetbrains.annotations.ApiStatus
 
 object ReviewToolwindowDataKeys {
   @JvmStatic
   val REVIEW_TOOLWINDOW_PROJECT_VM =
-    DataKey.create<ReviewToolwindowProjectViewModel<*>>("com.intellij.collaboration.toolwindow.review.project.vm")
+    DataKey.create<ReviewToolwindowProjectViewModel<*, *>>("com.intellij.collaboration.toolwindow.review.project.vm")
 
   @JvmStatic
   val REVIEW_TOOLWINDOW_VM = DataKey.create<ReviewToolwindowViewModel<*>>("com.intellij.collaboration.toolwindow.review.toolwindow.vm")
-
-  @ApiStatus.Internal
-  @JvmStatic
-  val REVIEW_TABS_CONTENT_SELECTOR =
-    DataKey.create<ReviewToolwindowTabsContentSelector<*>>("com.intellij.collaboration.toolwindow.review.tabs.content.selector")
 }

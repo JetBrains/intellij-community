@@ -27,7 +27,7 @@ class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messagePointer
     val filesController = e.getRequiredData(GitLabMergeRequestsActionKeys.FILES_CONTROLLER)
     val selection: GitLabMergeRequestId = e.getRequiredData(GitLabMergeRequestsActionKeys.SELECTED)
 
-    twVm.openReviewDetails(selection)
+    twVm.show(selection)
     filesController.openTimeline(selection, false)
   }
 }

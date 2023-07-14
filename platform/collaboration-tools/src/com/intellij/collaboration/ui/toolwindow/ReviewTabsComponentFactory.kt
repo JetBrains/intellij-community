@@ -7,20 +7,20 @@ import javax.swing.JComponent
 /**
  * Provides UI components for review toolwindow tabs and toolwindow empty state.
  */
-interface ReviewTabsComponentFactory<T : ReviewTab, VM : ReviewToolwindowProjectViewModel<T>> {
+interface ReviewTabsComponentFactory<TVM : ReviewTabViewModel, PVM : ReviewToolwindowProjectViewModel<*, TVM>> {
   /**
    * Provide a review list component for given [projectVm]
    *
    * @param cs scope that closes when context is changed
    */
-  fun createReviewListComponent(cs: CoroutineScope, projectVm: VM): JComponent
+  fun createReviewListComponent(cs: CoroutineScope, projectVm: PVM): JComponent
 
   /**
-   * Provides a component for given [reviewTabType] and [projectVm]
+   * Provides a component for given [tabVm] and [projectVm]
    *
    * @param cs scope that closes when tab is closed or context changed
    */
-  fun createTabComponent(cs: CoroutineScope, projectVm: VM, reviewTabType: T): JComponent
+  fun createTabComponent(cs: CoroutineScope, projectVm: PVM, tabVm: TVM): JComponent
 
   /**
    * Provides a component that should be shown in toolwindow when there are no [ReviewToolwindowProjectViewModel]

@@ -17,47 +17,43 @@ import org.jetbrains.annotations.Nls
 
 /**
  * Manages review toolwindow tabs and their content.
- * If [reviewToolwindowViewModel.projectVm] is [null] UI for acquiring this context is shown (by [ReviewTabsComponentFactory.createEmptyTabContent]).
+ * If [ReviewToolwindowViewModel.projectVm] in [reviewToolwindowViewModel] is null UI for acquiring this context is shown (by [ReviewTabsComponentFactory.createEmptyTabContent]).
  *
- * When [reviewToolwindowViewModel.projectVm] appears Review List will be shown (by [ReviewTabsComponentFactory.createReviewListComponent]),
- * and requests in [reviewToolwindowViewModel] will be handled, according to described in [ReviewTab] [ReviewTab.id] logic.
+ * When [ReviewToolwindowViewModel.projectVm] appears Review List will be shown (by [ReviewTabsComponentFactory.createReviewListComponent]),
+ * and [ReviewToolwindowProjectViewModel.tabs] will be managed, according to described in [ReviewTab] [ReviewTab.id] logic.
  * So, new tabs will be shown using [ReviewTabsComponentFactory.createTabComponent].
  *
  * @see ReviewToolwindowDataKeys
  */
 @ApiStatus.Experimental
-fun <T : ReviewTab, PVM : ReviewToolwindowProjectViewModel<T>> manageReviewToolwindowTabs(
+fun <T : ReviewTab, TVM : ReviewTabViewModel, PVM : ReviewToolwindowProjectViewModel<T, TVM>> manageReviewToolwindowTabs(
   cs: CoroutineScope,
   toolwindow: ToolWindow,
   reviewToolwindowViewModel: ReviewToolwindowViewModel<PVM>,
-  tabComponentFactory: ReviewTabsComponentFactory<T, PVM>,
+  tabComponentFactory: ReviewTabsComponentFactory<TVM, PVM>,
   tabTitle: @Nls String
 ) {
   ReviewToolwindowTabsManager(cs, toolwindow, reviewToolwindowViewModel, tabComponentFactory, tabTitle)
 }
 
-private class ReviewToolwindowTabsManager<T : ReviewTab, PVM : ReviewToolwindowProjectViewModel<T>>(
+private class ReviewToolwindowTabsManager<
+  T : ReviewTab,
+  TVM : ReviewTabViewModel,
+  PVM : ReviewToolwindowProjectViewModel<T, TVM>
+  >(
   parentCs: CoroutineScope,
   private val toolwindow: ToolWindow,
   private val reviewToolwindowViewModel: ReviewToolwindowViewModel<PVM>,
-  private val tabComponentFactory: ReviewTabsComponentFactory<T, PVM>,
+  private val tabComponentFactory: ReviewTabsComponentFactory<TVM, PVM>,
   private val tabTitle: @Nls String
 ) {
   private val contentManager = toolwindow.contentManager
   private val projectVm = reviewToolwindowViewModel.projectVm
   private val cs = parentCs.childScope(Dispatchers.Main)
 
-  private val tabsSelector = object : ReviewToolwindowTabsContentSelector<T> {
-    override suspend fun selectTab(reviewTab: T): Content? {
-      val currentContext = projectVm.value ?: return null
-      return selectExistedTabOrCreate(currentContext, reviewTab)
-    }
-  }
-
   init {
     contentManager.addDataProvider {
       when {
-        ReviewToolwindowDataKeys.REVIEW_TABS_CONTENT_SELECTOR.`is`(it) -> tabsSelector
         ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_PROJECT_VM.`is`(it) -> projectVm.value
         ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_VM.`is`(it) -> reviewToolwindowViewModel
         else -> null
@@ -66,79 +62,92 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, PVM : ReviewToolwindowP
 
     cs.launchNow {
       projectVm.collectLatest { vm ->
-        if (vm == null) {
+        try {
+          if (vm == null) {
+            val loginContent = createDisposableContent { content, contentCs ->
+              content.component = tabComponentFactory.createEmptyTabContent(contentCs)
+              content.isCloseable = false
+            }
+            withContext(NonCancellable) {
+              contentManager.addContent(loginContent)
+              contentManager.setSelectedContent(loginContent)
+            }
+          }
+          else {
+            manageProjectTabs(vm)
+          }
+        }
+        catch (e: Exception) {
           withContext(NonCancellable) {
-            setEmptyContent()
-          }
-          return@collectLatest
-        }
-
-        withContext(NonCancellable) {
-          contentManager.removeAllContents(true)
-          val newContent = createReviewListContent(vm)
-          contentManager.addContent(newContent)
-          contentManager.setSelectedContent(newContent)
-          refreshReviewListOnTabSelection(vm.listVm, contentManager, newContent)
-          refreshListOnToolwindowShow(vm.listVm, toolwindow, newContent)
-        }
-
-        coroutineScope {
-          cs.launchNow {
-            vm.openReviewTabRequest.collect { reviewTab ->
-              val currentContext = projectVm.value ?: return@collect
-
-              if (reviewTab.reuseTabOnRequest) {
-                selectExistedTabOrCreate(currentContext, reviewTab)
-              }
-              else {
-                closeExistedTabAndCreateNew(currentContext, reviewTab)
-              }
-            }
-          }
-
-          cs.launchNow {
-            vm.closeReviewTabRequest.collect { reviewTab ->
-              val contentToClose = findTabContent(reviewTab)
-              if (contentToClose != null) {
-                contentManager.removeContent(contentToClose, true)
-
-                // select review list on requested tab close
-                contentManager.getContent(0)?.let { contentManager.setSelectedContent(it) }
-              }
-            }
+            contentManager.removeAllContents(true)
           }
         }
       }
     }
   }
 
-  private fun selectExistedTabOrCreate(projectVm: PVM, reviewTab: T): Content {
-    val existedTab = findTabContent(reviewTab)
-    if (existedTab != null) {
-      contentManager.setSelectedContent(existedTab)
-      return existedTab
+  private suspend fun manageProjectTabs(projectVm: PVM) {
+    val listContent = createReviewListContent(projectVm)
+    withContext(NonCancellable) {
+      contentManager.addContent(listContent)
+      contentManager.setSelectedContent(listContent)
     }
-    else {
-      val tabContent = createTabContent(projectVm, reviewTab)
-      contentManager.addContent(tabContent)
-      contentManager.setSelectedContent(tabContent)
-      return tabContent
+    refreshReviewListOnTabSelection(projectVm.listVm, contentManager, listContent)
+    refreshListOnToolwindowShow(projectVm.listVm, toolwindow, listContent)
+
+    currentCoroutineContext().ensureActive()
+
+    // required for backwards sync contentManager -> VM
+    val syncListener = object : ContentManagerListener {
+      override fun contentRemoved(event: ContentManagerEvent) {
+        event.content.getUserData(REVIEW_TAB_KEY)?.let {
+          projectVm.closeTab(it)
+        }
+      }
+
+      override fun selectionChanged(event: ContentManagerEvent) {
+        if(event.operation == ContentManagerEvent.ContentOperation.add) {
+          event.content.getUserData(REVIEW_TAB_KEY).let {
+            projectVm.selectTab(it)
+          }
+        }
+      }
+    }
+
+    projectVm.tabs.collect { tabsState ->
+      contentManager.removeContentManagerListener(syncListener)
+      contentManager.contents.forEach { content ->
+        if (content !== listContent) {
+          val tab = content.getUserData(REVIEW_TAB_KEY)
+          if (tab == null || !tabsState.tabs.containsKey(tab)) {
+            contentManager.removeContent(content, true)
+          }
+        }
+      }
+
+      for ((tabType, tabVm) in tabsState.tabs) {
+        val existing = findTabContent(tabType)
+        if (existing == null || existing.getUserData(REVIEW_TAB_VM_KEY) !== tabVm) {
+          closeExistingTabAndCreateNew(tabType, projectVm, tabVm)
+        }
+      }
+
+      val contentToSelect = tabsState.selectedTab?.let(::findTabContent) ?: listContent
+      contentManager.setSelectedContent(contentToSelect, true)
+      contentManager.addContentManagerListener(syncListener)
     }
   }
 
-  private fun closeExistedTabAndCreateNew(projectVm: PVM, reviewTab: T) {
-    val existedTab = findTabContent(reviewTab)
-    if (existedTab != null) {
-      contentManager.removeContent(existedTab, true)
+  private fun findTabContent(reviewTab: T): Content? = contentManager.contents.find { it.getUserData(REVIEW_TAB_KEY) == reviewTab }
+
+  private fun closeExistingTabAndCreateNew(tab: T, projectVm: PVM, tabVm: TVM) {
+    val existingContent = findTabContent(tab)
+    if (existingContent != null) {
+      contentManager.removeContent(existingContent, true)
     }
 
-    val reviewDetailsContent = createTabContent(projectVm, reviewTab)
-    contentManager.addContent(reviewDetailsContent)
-    contentManager.setSelectedContent(reviewDetailsContent)
-  }
-
-  private fun findTabContent(reviewTab: T): Content? {
-    return contentManager.contents.find { it.getUserData(REVIEW_TAB)?.id == reviewTab.id }
+    val content = createTabContent(tab, projectVm, tabVm)
+    contentManager.addContent(content)
   }
 
   private fun createReviewListContent(projectVm: PVM): Content = createDisposableContent { content, contentCs ->
@@ -148,24 +157,15 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, PVM : ReviewToolwindowP
     content.component = tabComponentFactory.createReviewListComponent(contentCs, projectVm)
   }
 
-  private fun createTabContent(projectVm: PVM, reviewTab: T): Content = createDisposableContent { content, contentCs ->
+  private fun createTabContent(tab: T, projectVm: PVM, tabVm: TVM): Content = createDisposableContent { content, contentCs ->
     content.isCloseable = true
-    content.displayName = reviewTab.displayName
-    content.description = "${projectVm.projectName}: ${reviewTab.description}"
+    content.displayName = tabVm.displayName
+    content.description = "${projectVm.projectName}: ${tabVm.description}"
 
-    content.component = tabComponentFactory.createTabComponent(contentCs, projectVm, reviewTab)
+    content.component = tabComponentFactory.createTabComponent(contentCs, projectVm, tabVm)
 
-    content.putUserData(REVIEW_TAB, reviewTab)
-  }
-
-  private fun setEmptyContent() {
-    contentManager.removeAllContents(true)
-    val loginContent = createDisposableContent { content, contentCs ->
-      content.component = tabComponentFactory.createEmptyTabContent(contentCs)
-      content.isCloseable = false
-    }
-    contentManager.addContent(loginContent)
-    contentManager.setSelectedContent(loginContent)
+    content.putUserData(REVIEW_TAB_KEY, tab)
+    content.putUserData(REVIEW_TAB_VM_KEY, tabVm)
   }
 
 
@@ -178,10 +178,8 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, PVM : ReviewToolwindowP
     }
   }
 
-  companion object {
-    @JvmStatic
-    private val REVIEW_TAB: Key<ReviewTab> = Key.create("com.intellij.collaboration.toolwindow.review.tab")
-  }
+  private val REVIEW_TAB_KEY: Key<T> = Key.create("com.intellij.collaboration.toolwindow.review.tab")
+  private val REVIEW_TAB_VM_KEY: Key<TVM> = Key.create("com.intellij.collaboration.toolwindow.review.tab.vm")
 }
 
 private fun refreshReviewListOnTabSelection(listVm: ReviewListViewModel, contentManager: ContentManager, content: Content) {
