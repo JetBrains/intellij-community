@@ -642,38 +642,6 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private void clearRendererCache() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myExpandingCollapsing) return; // to avoid quadratic row enumeration
-    // clear renderer cache of node preferred size
-    TreeUI ui = myTree.getUI();
-    if (ui instanceof BasicTreeUI) {
-      AbstractLayoutCache treeState = ReflectionUtil.getField(BasicTreeUI.class, ui, AbstractLayoutCache.class, "treeState");
-      Rectangle visibleRect = myTree.getVisibleRect();
-      int rowForLocation = myTree.getClosestRowForLocation(0, visibleRect.y);
-      int visibleRowCount = getVisibleRowCount();
-      List<Node> toUpdate = new ArrayList<>();
-      for (int i = rowForLocation + visibleRowCount + 1; i >= rowForLocation; i--) {
-        TreePath eachPath = myTree.getPathForRow(i);
-        if (eachPath == null) continue;
-
-        treeState.invalidatePathBounds(eachPath);
-        Object node = eachPath.getLastPathComponent();
-        if (node instanceof UsageNode || node instanceof GroupNode) {
-          toUpdate.add((Node)node);
-        }
-      }
-      queueUpdateBulk(toUpdate, () -> {
-        if (!isDisposed()) {
-          myTree.repaint(visibleRect);
-        }
-      });
-    }
-    else {
-      myTree.setCellRenderer(myUsageViewTreeCellRenderer);
-    }
-  }
-
   private int getVisibleRowCount() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return TreeUtil.getVisibleRowCount(myTree);
@@ -683,10 +651,6 @@ public class UsageViewImpl implements UsageViewEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     JScrollPane treePane = ScrollPaneFactory.createScrollPane(myTree);
-    // add reaction to scrolling:
-    // since the UsageViewTreeCellRenderer ignores invisible nodes (outside the viewport), their preferred size is incorrect,
-    // and we need to recalculate them when the node scrolled into the visible rectangle
-    treePane.getViewport().addChangeListener(__ -> clearRendererCache());
     myPreviewSplitter = new OnePixelSplitter(false, 0.5f, 0.1f, 0.9f);
     myPreviewSplitter.setFirstComponent(treePane);
 
@@ -828,8 +792,6 @@ public class UsageViewImpl implements UsageViewEx {
     myTree.addTreeExpansionListener(new TreeExpansionListener() {
       @Override
       public void treeExpanded(TreeExpansionEvent event) {
-        clearRendererCache();
-
         TreePath path = event.getPath();
         Object component = path.getLastPathComponent();
         if (component instanceof Node node) {
@@ -843,7 +805,6 @@ public class UsageViewImpl implements UsageViewEx {
 
       @Override
       public void treeCollapsed(TreeExpansionEvent event) {
-        clearRendererCache();
       }
     });
 
@@ -855,12 +816,6 @@ public class UsageViewImpl implements UsageViewEx {
       }
       return value == null ? null : value.toString();
     }, true);
-    FileStatusManager.getInstance(myProject).addFileStatusListener(new FileStatusListener() {
-      @Override
-      public void fileStatusesChanged() {
-        clearRendererCache();
-      }
-    }, this);
   }
 
   @NotNull
@@ -1191,7 +1146,6 @@ public class UsageViewImpl implements UsageViewEx {
     finally {
       myExpandingCollapsing = false;
     }
-    clearRendererCache();
   }
 
   private void collapseAll() {
