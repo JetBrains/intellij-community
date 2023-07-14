@@ -826,9 +826,14 @@ private callbackArg ::= CLICK_DATA | string
 
 directionStatement ::= DIRECTION DIR
 
-accStatement ::= ACC_TITLE COLON ACC_TITLE_VALUE
-  | ACC_DESCR COLON ACC_DESCR_VALUE
-  | ACC_DESCR OPEN_CURLY ACC_DESCR_MULTILINE_VALUE CLOSE_CURLY
+accStatement ::= ACC_TITLE COLON complexAccTitleValue
+  | ACC_DESCR COLON complexAccDescrValue
+  | ACC_DESCR OPEN_CURLY EOL* accDescrMultilineValueLines CLOSE_CURLY
+
+complexAccTitleValue ::= ACC_TITLE_VALUE+
+complexAccDescrValue ::= ACC_DESCR_VALUE+
+accDescrMultilineValueLines ::= complexAccDescrMultilineValue [accDescrMultilineValueLines]
+complexAccDescrMultilineValue ::= ACC_DESCR_MULTILINE_VALUE+ [EOL] | EOL
 
 string ::= DOUBLE_QUOTE STRING_VALUE DOUBLE_QUOTE
 private maybeEmptyString ::= DOUBLE_QUOTE DOUBLE_QUOTE | string

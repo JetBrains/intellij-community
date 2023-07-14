@@ -1006,7 +1006,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\n\r] { return EOL; }
 }
 <acc_title_value> {
-  [^\n]* { yypopstate(); return ACC_TITLE_VALUE; }
+  [^\s]+ { return ACC_TITLE_VALUE; }
+  [\n\r] { yypopstate(); return EOL; }
 }
 <acc_descr> {
   ":" { yybegin(acc_descr_value); return COLON; }
@@ -1016,10 +1017,11 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\n\r] { return EOL; }
 }
 <acc_descr_value> {
-  [^\n]* { yypopstate(); return ACC_DESCR_VALUE; }
+  [^\s]+ { return ACC_DESCR_VALUE; }
+  [\n\r] { yypopstate(); return EOL; }
 }
 <acc_descr_multiline_value> {
-  [^}]* { return ACC_DESCR_MULTILINE_VALUE; }
+  [^}\s]* { return ACC_DESCR_MULTILINE_VALUE; }
   "}" { yypopstate(); return CLOSE_CURLY; }
 }
 
