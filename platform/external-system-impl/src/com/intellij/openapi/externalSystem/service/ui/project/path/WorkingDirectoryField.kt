@@ -20,7 +20,10 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.RecursionGuard
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.isFile
+import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import javax.swing.plaf.basic.BasicTextUI
 import javax.swing.text.DefaultHighlighter.DefaultHighlightPainter
 import javax.swing.text.Highlighter
@@ -81,6 +84,12 @@ class WorkingDirectoryField(
           .map { TextCompletionInfo(it) }
       }
     }
+  }
+
+  fun getWorkingDirectoryVirtualFile(): VirtualFile? {
+    val directoryPath = workingDirectory.toNioPathOrNull() ?: return null
+    val directoryOrFile = directoryPath.refreshAndFindVirtualFileOrDirectory() ?: return null
+    return if (directoryOrFile.isFile) null else directoryOrFile
   }
 
   init {

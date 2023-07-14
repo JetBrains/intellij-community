@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.execution.run.configuration
 
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfoRenderer
@@ -14,7 +15,6 @@ import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.NaturalComparator
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
@@ -29,7 +29,7 @@ class MavenProfilesFiled(
   var profiles by textProperty.transform(::decodeProfiles, ::encodeProfiles)
 
   override val completionCollector = TextCompletionCollector.async(parentDisposable) {
-    val profiles = blockingContext { getProfiles(project, workingDirectoryField) }
+    val profiles = getProfiles(project, workingDirectoryField)
       .sortedWith(NaturalComparator.INSTANCE)
     val enableProfileCompletion = profiles.map { TextCompletionInfo(it) }
     val disableProfileCompletion = profiles.map { TextCompletionInfo("-$it") }
@@ -70,22 +70,24 @@ class MavenProfilesFiled(
     return parametersList.parametersString
   }
 
-  private fun getProfiles(project: Project, workingDirectoryField: WorkingDirectoryField): Collection<String> {
+  private suspend fun getProfiles(project: Project, workingDirectoryField: WorkingDirectoryField): Collection<String> {
     return getGlobalProfiles(project) + getLocalProfiles(project, workingDirectoryField)
   }
 
-  private fun getGlobalProfiles(project: Project): Collection<String> {
-    val projectsManager = MavenProjectsManager.getInstance(project)
-    val explicitProfiles = projectsManager.explicitProfiles
-    return explicitProfiles.enabledProfiles + explicitProfiles.disabledProfiles
+  private suspend fun getGlobalProfiles(project: Project): Collection<String> {
+    return blockingContext {
+      val projectsManager = MavenProjectsManager.getInstance(project)
+      val explicitProfiles = projectsManager.explicitProfiles
+      explicitProfiles.enabledProfiles + explicitProfiles.disabledProfiles
+    }
   }
 
-  private fun getLocalProfiles(project: Project, workingDirectoryField: WorkingDirectoryField): Collection<String> {
+  private suspend fun getLocalProfiles(project: Project, workingDirectoryField: WorkingDirectoryField): Collection<String> {
+    val projectDirectory = blockingContext { workingDirectoryField.getWorkingDirectoryVirtualFile() }
+                           ?: return emptyList()
     val projectsManager = MavenProjectsManager.getInstance(project)
-    val localFileSystem = LocalFileSystem.getInstance()
-    val projectPath = workingDirectoryField.workingDirectory
-    val projectDir = localFileSystem.refreshAndFindFileByPath(projectPath) ?: return emptyList()
-    val mavenProject = projectsManager.findContainingProject(projectDir) ?: return emptyList()
+    val mavenProject = readAction { projectsManager.findContainingProject(projectDirectory) }
+                       ?: return emptyList()
     return mavenProject.profilesIds
   }
 }

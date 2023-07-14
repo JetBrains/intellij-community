@@ -112,9 +112,13 @@ fun VirtualFile.findOrCreateDirectory(relativePath: @SystemIndependent String): 
   return directory
 }
 
-fun Path.refreshAndFindVirtualFile(): VirtualFile? {
+fun Path.refreshAndFindVirtualFileOrDirectory(): VirtualFile? {
   val fileManager = VirtualFileManager.getInstance()
-  val file = fileManager.refreshAndFindFileByNioPath(this) ?: return null
+  return fileManager.refreshAndFindFileByNioPath(this)
+}
+
+fun Path.refreshAndFindVirtualFile(): VirtualFile? {
+  val file = refreshAndFindVirtualFileOrDirectory() ?: return null
   if (!file.isFile) {
     throw IOException("Expected file instead of directory: $this")
   }
@@ -122,8 +126,7 @@ fun Path.refreshAndFindVirtualFile(): VirtualFile? {
 }
 
 fun Path.refreshAndFindVirtualDirectory(): VirtualFile? {
-  val fileManager = VirtualFileManager.getInstance()
-  val file = fileManager.refreshAndFindFileByNioPath(this) ?: return null
+  val file = refreshAndFindVirtualFileOrDirectory() ?: return null
   if (!file.isDirectory) {
     throw IOException("Expected directory instead of file: $this")
   }
