@@ -28,6 +28,8 @@ import com.intellij.openapi.ui.playback.PlaybackRunner
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter.Companion.logStats
 import com.intellij.util.Alarm
 import com.intellij.util.SystemProperties
@@ -153,7 +155,9 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
               }
             }
             LOG.info("Is initialized: " + ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished)
-            if (isDumb(project) || !CoreProgressManager.getCurrentIndicators().isEmpty() ||
+            val hasUserVisibleIndicators = (WindowManager.getInstance().getIdeFrame(project)?.statusBar as StatusBarEx)
+              .backgroundProcesses.isNotEmpty()
+            if (isDumb(project) || hasUserVisibleIndicators ||
                 !ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished) {
               runScriptWhenInitializedAndIndexed(project)
             }
