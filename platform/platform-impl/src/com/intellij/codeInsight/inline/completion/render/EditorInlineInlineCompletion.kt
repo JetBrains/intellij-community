@@ -4,6 +4,8 @@ package com.intellij.codeInsight.inline.completion.render
 import com.intellij.codeInsight.inline.completion.InlineCompletionElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint
+import com.intellij.openapi.editor.ex.util.addActionAvailabilityHint
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
@@ -55,6 +57,7 @@ class EditorInlineInlineCompletion(private val editor: Editor) : InlineCompletio
 
   private fun renderSuffix(editor: Editor, line: String, offset: Int) {
     val element = editor.inlayModel.addInlineElement(offset, true, InlineSuffixRenderer(editor, line)) ?: return
+    element.addActionAvailabilityHint(EditorActionAvailabilityHint("InsertInlineCompletionAction", EditorActionAvailabilityHint.AvailabilityCondition.CaretOnStart))
     Disposer.tryRegister(this, element)
     suffixInlay = element
   }
