@@ -6,6 +6,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint
+import com.intellij.openapi.editor.ex.util.addActionAvailabilityHint
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
@@ -70,7 +72,7 @@ class EditorInlineInlineCompletion(private val editor: Editor) : InlineCompletio
     editor.inlayModel.execute(true) {
       // wrapping into a batch to notify inlay listeners after the hint is added
       val element = editor.inlayModel.addInlineElement(offset, true, InlineSuffixRenderer(editor, line)) ?: return@execute
-      Disposer.tryRegister(this, element)
+      element.addActionAvailabilityHint(EditorActionAvailabilityHint("InsertInlineCompletionAction", EditorActionAvailabilityHint.AvailabilityCondition.CaretOnStart))Disposer.tryRegister(this, element)
       suffixInlay = element
     }
   }
