@@ -9,6 +9,7 @@ import org.jetbrains.intellij.build.impl.BundledMavenDownloader
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
+import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAuto
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
@@ -206,8 +207,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.java.decompiler.engine", spec.mainJarName)
     },
     javaFXPlugin("intellij.javaFX.community"),
-    plugin("intellij.terminal") { spec ->
-      spec.withModule("intellij.terminal.sh")
+    pluginAuto(listOf("intellij.terminal")) { spec ->
       spec.withResource("resources/zsh/.zshenv", "zsh")
       spec.withResource("resources/zsh/hooks.zsh", "zsh")
       spec.withResource("resources/shell-integrations", "shell-integrations")
