@@ -152,7 +152,7 @@ sealed class BaseLayout {
 
   /**
    * Include the module library to the plugin distribution. Please note that it makes sense to call this method only
-   * for additional modules which aren't copied directly to the 'lib' directory of the plugin distribution, because for ordinary modules
+   * for additional modules which aren't copied directly to the 'lib' directory of the plugin distribution, because for ordinary modules,
    * their module libraries are included in the layout automatically.
    * @param relativeOutputPath target path relative to 'lib' directory
    */
@@ -196,13 +196,12 @@ class ModuleItem(
     }
   }
 
-  override fun equals(other: Any?): Boolean =
-    this === other ||
-    other is ModuleItem && moduleName == other.moduleName && relativeOutputFile == other.relativeOutputFile
+  override fun equals(other: Any?): Boolean {
+    return this === other ||
+           other is ModuleItem && moduleName == other.moduleName && relativeOutputFile == other.relativeOutputFile
+  }
 
-  override fun hashCode(): Int =
-    31 * moduleName.hashCode() + relativeOutputFile.hashCode()
+  override fun hashCode(): Int = 31 * moduleName.hashCode() + relativeOutputFile.hashCode()
 
-  override fun toString(): String =
-    "ModuleItem(moduleName=${moduleName}, relativeOutputFile=${relativeOutputFile}, reason=${reason})"
+  override fun toString(): String = "ModuleItem(moduleName=${moduleName}, relativeOutputFile=${relativeOutputFile}, reason=${reason})"
 }

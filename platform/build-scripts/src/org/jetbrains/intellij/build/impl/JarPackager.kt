@@ -31,6 +31,8 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
+import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.io.File
 import java.nio.ByteBuffer
@@ -247,14 +249,43 @@ class JarPackager private constructor(private val outputDir: Path,
                  moduleNameToSize = moduleNameToSize,
                  unpackedModules = unpackedModules)
     }
+
+    if (layout is PluginLayout && layout.auto) {
+      // for now, check only direct dependencies of the main plugin module
+      val module = context.findRequiredModule(layout.mainModule)
+      val javaExtensionService = JpsJavaExtensionService.getInstance()
+      val childPrefix = "${layout.mainModule}."
+      for (element in module.dependenciesList.dependencies) {
+        if (element !is JpsModuleDependency ||
+                  javaExtensionService.getDependencyExtension(element)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
+          continue
+        }
+
+        val name = element.moduleReference.moduleName
+        if (includedModules.any { it.moduleName == name } || !name.startsWith(childPrefix)) {
+          continue
+        }
+
+        val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
+        if (platformLayout!!.includedModules.contains(moduleItem)) {
+          continue
+        }
+
+        packModule(item = moduleItem,
+                   moduleOutputPatcher = moduleOutputPatcher,
+                   layout = layout,
+                   moduleNameToSize = moduleNameToSize,
+                   unpackedModules = unpackedModules)
+      }
+    }
     return unpackedModules
   }
 
   private suspend fun JarPackager.packModule(item: ModuleItem,
-                                            moduleOutputPatcher: ModuleOutputPatcher,
-                                            layout: BaseLayout?,
-                                            moduleNameToSize: ConcurrentHashMap<String, Int>,
-                                            unpackedModules: MutableList<ModuleOutputEntry>) {
+                                             moduleOutputPatcher: ModuleOutputPatcher,
+                                             layout: BaseLayout?,
+                                             moduleNameToSize: ConcurrentHashMap<String, Int>,
+                                             unpackedModules: MutableList<ModuleOutputEntry>) {
     val moduleName = item.moduleName
     val patchedDirs = moduleOutputPatcher.getPatchedDir(moduleName)
     val patchedContent = moduleOutputPatcher.getPatchedContent(moduleName)
@@ -265,7 +296,8 @@ class JarPackager private constructor(private val outputDir: Path,
       }
     }
 
-    val moduleOutputDir = context.getModuleOutputDir(context.findRequiredModule(moduleName))
+    val module = context.findRequiredModule(moduleName)
+    val moduleOutputDir = context.getModuleOutputDir(module)
     val extraExcludes = layout?.moduleExcludes?.get(moduleName) ?: emptyList()
 
     val packToDir = isUnpackedDist && layout is PlatformLayout && patchedContent.isEmpty() && extraExcludes.isEmpty()
@@ -314,7 +346,7 @@ class JarPackager private constructor(private val outputDir: Path,
                              sizeConsumer = sizeConsumer))
 
     if (layout != null) {
-      packModuleLibs(item = item, layout = layout, copiedFiles = copiedFiles, sources = descriptor.sources)
+      packModuleLibs(item = item, module = module, layout = layout, copiedFiles = copiedFiles, sources = descriptor.sources)
     }
 
     if (packToDir) {
@@ -326,13 +358,14 @@ class JarPackager private constructor(private val outputDir: Path,
 
   private suspend fun packModuleLibs(item: ModuleItem,
                                      layout: BaseLayout,
+                                     module: JpsModule,
                                      copiedFiles: MutableMap<Path, CopiedFor>,
                                      sources: MutableList<Source>) {
     if (item.relativeOutputFile.contains('/')) {
       return
     }
 
-    val moduleName = item.moduleName
+    val moduleName = module.name
     if (layout.modulesWithExcludedModuleLibraries.contains(moduleName)) {
       return
     }
@@ -340,7 +373,7 @@ class JarPackager private constructor(private val outputDir: Path,
     val includeProjectLib = layout is PluginLayout && layout.auto
 
     val excluded = layout.excludedModuleLibraries.get(moduleName)
-    for (element in context.findRequiredModule(moduleName).dependenciesList.dependencies) {
+    for (element in module.dependenciesList.dependencies) {
       val libraryReference = (element as? JpsLibraryDependency)?.libraryReference ?: continue
       if (libraryReference.parentReference !is JpsModuleReference) {
         if (includeProjectLib) {

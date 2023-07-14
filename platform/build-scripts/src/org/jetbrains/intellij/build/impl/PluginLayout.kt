@@ -366,7 +366,7 @@ class PluginLayout private constructor(val mainModule: String,
       withPatch { patcher, context ->
         val discoveredServiceFiles = LinkedHashMap<String, LinkedHashSet<Pair<String, Path>>>()
 
-        for (moduleName in layout.includedModules.asSequence().filter { it.relativeOutputFile ==  layout.mainJarName }.map { it.moduleName }.distinct()) {
+        for (moduleName in layout.includedModules.asSequence().filter { it.relativeOutputFile == layout.mainJarName }.map { it.moduleName }.distinct()) {
           val path = context.findFileInModuleSources(moduleName, "META-INF/services") ?: continue
           Files.newDirectoryStream(path).use { dirStream ->
             dirStream
