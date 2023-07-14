@@ -191,7 +191,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   ), productLayout = productLayout, layout = layout)
   // used by jdom - pack to the same JAR
   layout.withProjectLibrary(libraryName = "aalto-xml", jarName = UTIL_8_JAR)
-  // Space plugin uses it and bundled into IntelliJ IDEA, but not bundled into DataGrip, so, or Space plugin should bundle this lib,
+  // Space plugin uses it and bundles into IntelliJ IDEA, but not bundles into DataGrip, so, or Space plugin should bundle this lib,
   // or IJ Platform. As it is a small library and consistency is important across other coroutine libs, bundle to IJ Platform.
   layout.withProjectLibrary(libraryName = "kotlinx-coroutines-slf4j", jarName = APP_JAR)
 
@@ -300,6 +300,10 @@ internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, 
   val pluginLayoutsByJpsModuleNames = getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules,
                                                                        productLayout = context.productProperties.productLayout)
   for (plugin in pluginLayoutsByJpsModuleNames) {
+    if (plugin.auto) {
+      continue
+    }
+
     for (moduleName in plugin.includedModules.asSequence().map { it.moduleName }.distinct()) {
       for (element in context.findRequiredModule(moduleName).dependenciesList.dependencies) {
         val libraryReference = (element as? JpsLibraryDependency)?.libraryReference ?: continue

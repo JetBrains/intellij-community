@@ -9,7 +9,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.io.copyDir
@@ -25,10 +25,13 @@ typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
 /**
  * Describes layout of a plugin in the product distribution
  */
-class PluginLayout private constructor(val mainModule: String, mainJarNameWithoutExtension: String) : BaseLayout() {
-  constructor(mainModule: String) : this(
+class PluginLayout private constructor(val mainModule: String,
+                                       mainJarNameWithoutExtension: String,
+                                       internal val auto: Boolean = false) : BaseLayout() {
+  constructor(mainModule: String, auto: Boolean = false) : this(
     mainModule = mainModule,
     mainJarNameWithoutExtension = convertModuleNameToFileName(mainModule),
+    auto = auto,
   )
 
   private var mainJarName = "$mainJarNameWithoutExtension.jar"
@@ -82,7 +85,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
      * [org.jetbrains.intellij.build.ProductModulesLayout.pluginModulesToPublish] list.
      *
      * <p>Note that project-level libraries on which the plugin modules depend are automatically put to 'IDE_HOME/lib' directory for all IDEs
-     * which are compatible with the plugin. If this isn't desired (e.g. a library is used in a single plugin only, or if plugins where
+     * that are compatible with the plugin. If this isn't desired (e.g., a library is used in a single plugin only, or of plugins where
      * a library is used aren't bundled with IDEs, so we don't want to increase the size of the distribution, you may invoke [PluginLayoutSpec.withProjectLibrary]
      * to include such a library to the plugin distribution.</p>
      * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
@@ -114,6 +117,16 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     @JvmStatic
     fun plugin(moduleNames: List<String>): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first())
+      layout.withModules(moduleNames)
+      return layout
+    }
+
+    /**
+     * Project-level library is included in the plugin by default, if not yet included in the platform.
+     */
+    @Experimental
+    fun pluginAuto(moduleNames: List<String>): PluginLayout {
+      val layout = PluginLayout(mainModule = moduleNames.first(), auto = true)
       layout.withModules(moduleNames)
       return layout
     }
@@ -160,7 +173,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     }
   }
 
-  @ApiStatus.Experimental
+  @Experimental
   class SimplePluginLayoutSpec(layout: PluginLayout) : PluginLayoutBuilder(layout)
 
   // as a builder for PluginLayout, that ideally should be immutable

@@ -96,6 +96,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
                      outputDir = tempDir,
                      context = context,
                      layout = layout,
+                     platformLayout = null,
                      isRootDir = false,
                      isCodesignEnabled = false,
                      dryRun = dryRun)

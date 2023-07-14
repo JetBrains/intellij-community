@@ -414,13 +414,13 @@ private suspend fun buildHelpPlugin(helpPlugin: PluginLayout,
   return PluginRepositorySpec(destFile, moduleOutputPatcher.getPatchedPluginXml(helpPlugin.mainModule))
 }
 
-internal suspend fun generateProjectStructureMapping(context: BuildContext, platform: PlatformLayout): List<DistributionFileEntry> {
+internal suspend fun generateProjectStructureMapping(context: BuildContext, platformLayout: PlatformLayout): List<DistributionFileEntry> {
   val moduleOutputPatcher = ModuleOutputPatcher()
   return coroutineScope {
     val libDirLayout = async {
       layoutPlatformDistribution(moduleOutputPatcher = moduleOutputPatcher,
                                  targetDirectory = context.paths.distAllDir,
-                                 platform = platform,
+                                 platform = platformLayout,
                                  context = context,
                                  copyFiles = false)
     }
@@ -431,6 +431,7 @@ internal suspend fun generateProjectStructureMapping(context: BuildContext, plat
       if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, withEphemeral = true, context = context)) {
         val targetDirectory = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY).resolve(plugin.directoryName)
         entries.addAll(layoutDistribution(layout = plugin,
+                                          platformLayout = platformLayout,
                                           targetDirectory = targetDirectory,
                                           copyFiles = false,
                                           simplify = false,
@@ -479,6 +480,7 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
       val task = async {
         spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).useWithScope2 {
           val (entries, file) = layoutDistribution(layout = plugin,
+                                                   platformLayout = state.platform,
                                                    targetDirectory = pluginDir,
                                                    copyFiles = true,
                                                    simplify = simplify,
@@ -609,6 +611,7 @@ suspend fun layoutPlatformDistribution(moduleOutputPatcher: ModuleOutputPatcher,
     .setAttribute("path", targetDirectory.toString())
     .useWithScope2 {
       layoutDistribution(layout = platform,
+                         platformLayout = platform,
                          targetDirectory = targetDirectory,
                          copyFiles = copyFiles,
                          moduleOutputPatcher = moduleOutputPatcher,
@@ -865,6 +868,7 @@ private suspend fun buildKeymapPlugins(targetDir: Path, context: BuildContext): 
 }
 
 suspend fun layoutDistribution(layout: BaseLayout,
+                               platformLayout: PlatformLayout,
                                targetDirectory: Path,
                                copyFiles: Boolean = true,
                                simplify: Boolean = false,
@@ -900,6 +904,7 @@ suspend fun layoutDistribution(layout: BaseLayout,
                          outputDir = outputDir,
                          isRootDir = layout is PlatformLayout,
                          layout = layout,
+                         platformLayout = platformLayout,
                          moduleOutputPatcher = moduleOutputPatcher,
                          dryRun = !copyFiles,
                          context = context)
@@ -1138,16 +1143,16 @@ private fun buildBlockMap(file: Path, json: JSON) {
 }
 
 suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext): Set<String> {
-  // for some reasons, maybe duplicated paths - use set
+  // for some reason, maybe duplicated paths - use set
   val classPath = LinkedHashSet<String>()
   val pluginLayouts = context.productProperties.productLayout.pluginLayouts
   val nonPluginEntries = mutableListOf<DistributionFileEntry>()
   val pluginEntries = mutableListOf<DistributionFileEntry>()
   val pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
-  for (e in generateProjectStructureMapping(context = context, platform = platform)) {
+  for (e in generateProjectStructureMapping(context = context, platformLayout = platform)) {
     if (e.path.startsWith(pluginDir)) {
       val relativePath = pluginDir.relativize(e.path)
-      // for plugins our classloader load jars only from lib folder
+      // for plugins, our classloader load jars only from lib folder
       if (relativePath.nameCount == 3 && relativePath.getName(1).toString() == "lib") {
         pluginEntries.add(e)
       }

@@ -157,8 +157,8 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
  */
 suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildContext) {
   writeProjectStructureReport(
-    entries = generateProjectStructureMapping(context = context, platform = createPlatformLayout(pluginsToPublish = emptySet(),
-                                                                                                 context = context)),
+    entries = generateProjectStructureMapping(context = context, platformLayout = createPlatformLayout(pluginsToPublish = emptySet(),
+                                                                                                       context = context)),
     file = targetFile,
     buildPaths = context.paths
   )

@@ -21,7 +21,7 @@ suspend fun createDistributionBuilderState(context: BuildContext): DistributionB
 
 class DistributionBuilderState(@JvmField val platform: PlatformLayout,
                                @JvmField val pluginsToPublish: Set<PluginLayout>,
-                               private val context: BuildContext) {
+                               context: BuildContext) {
   init {
     val releaseDate = context.applicationInfo.majorReleaseDate
     require(!releaseDate.startsWith("__")) {

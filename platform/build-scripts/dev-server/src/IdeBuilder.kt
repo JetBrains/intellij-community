@@ -81,6 +81,10 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
                                    runDir = runDir,
                                    jarCacheDir = rootDir.resolve("jar-cache"))
   coroutineScope {
+    val platformLayout = async {
+      createPlatformLayout(pluginsToPublish = emptySet(), context = context)
+    }
+
     launch {
       launch(Dispatchers.IO) {
         // PathManager.getBinPath() is used as a working dir for maven
@@ -89,7 +93,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
       }
 
       val classPath = spanBuilder("compute lib classpath").useWithScope2 {
-        layoutPlatform(runDir = runDir, context = context)
+        layoutPlatform(runDir = runDir, platformLayout = platformLayout.await(), context = context)
       }
 
       launch(Dispatchers.IO) {
@@ -119,7 +123,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
           continue
         }
 
-        // remove all modules without content root
+        // remove all modules without a content root
         val modules = plugin.includedModules.asSequence()
           .map { it.moduleName }
           .distinct()
@@ -141,6 +145,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
       artifactTask.join()
       buildPlugins(pluginBuildDescriptors = pluginBuildDescriptors,
                    outDir = request.productionClassOutput,
+                   platformLayout = platformLayout.await(),
                    pluginCacheRootDir = pluginCacheRootDir,
                    context = context)
     }
@@ -271,8 +276,7 @@ private fun getBuildModules(productConfiguration: ProductConfiguration): Sequenc
   return sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()
 }
 
-private suspend fun layoutPlatform(runDir: Path, context: BuildContext): Set<Path> {
-  val platformLayout = createPlatformLayout(pluginsToPublish = emptySet(), context = context)
+private suspend fun layoutPlatform(runDir: Path, platformLayout: PlatformLayout, context: BuildContext): Set<Path> {
   val projectStructureMapping = layoutPlatformDistribution(moduleOutputPatcher = ModuleOutputPatcher(),
                                                            targetDirectory = runDir,
                                                            platform = platformLayout,

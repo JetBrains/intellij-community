@@ -11,10 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
-import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.checkOutputOfPluginModules
-import org.jetbrains.intellij.build.impl.layoutDistribution
+import org.jetbrains.intellij.build.impl.*
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -45,13 +42,18 @@ internal data class PluginBuildDescriptor(@JvmField val dir: Path,
 internal suspend fun buildPlugins(pluginBuildDescriptors: List<PluginBuildDescriptor>,
                                   outDir: Path,
                                   pluginCacheRootDir: Path,
+                                  platformLayout: PlatformLayout,
                                   context: BuildContext) {
   spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope2 { span ->
     val counter = LongAdder()
     coroutineScope {
       for (plugin in pluginBuildDescriptors) {
         launch {
-          if (buildPlugin(plugin = plugin, outDir = outDir, pluginCacheRootDir = pluginCacheRootDir, context = context)) {
+          if (buildPlugin(plugin = plugin,
+                          platformLayout = platformLayout,
+                          outDir = outDir,
+                          pluginCacheRootDir = pluginCacheRootDir,
+                          context = context)) {
             counter.add(1)
           }
         }
@@ -61,7 +63,11 @@ internal suspend fun buildPlugins(pluginBuildDescriptors: List<PluginBuildDescri
   }
 }
 
-internal suspend fun buildPlugin(plugin: PluginBuildDescriptor, outDir: Path, pluginCacheRootDir: Path, context: BuildContext): Boolean {
+internal suspend fun buildPlugin(plugin: PluginBuildDescriptor,
+                                 outDir: Path,
+                                 pluginCacheRootDir: Path,
+                                 platformLayout: PlatformLayout,
+                                 context: BuildContext): Boolean {
   val mainModule = plugin.layout.mainModule
 
   val reason = withContext(Dispatchers.IO) {
@@ -88,6 +94,7 @@ internal suspend fun buildPlugin(plugin: PluginBuildDescriptor, outDir: Path, pl
     .useWithScope2 {
       layoutDistribution(layout = plugin.layout,
                          targetDirectory = plugin.dir,
+                         platformLayout = platformLayout,
                          moduleOutputPatcher = moduleOutputPatcher,
                          includedModules = plugin.layout.includedModules,
                          context = context)
