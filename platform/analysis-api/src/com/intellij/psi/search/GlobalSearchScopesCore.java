@@ -2,7 +2,6 @@
 package com.intellij.psi.search;
 
 import com.intellij.analysis.AnalysisBundle;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
@@ -214,11 +213,6 @@ public final class GlobalSearchScopesCore {
       super(project);
       myWithSubdirectories = withSubdirectories;
       myDirectory = directory;
-    }
-
-    @Override
-    public @NotNull Collection<ModelBranch> getModelBranchesAffectingScope() {
-      return ContainerUtil.createMaybeSingletonSet(ModelBranch.getFileBranch(myDirectory));
     }
 
     public @NotNull VirtualFile getDirectory() {

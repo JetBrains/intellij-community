@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
@@ -8,7 +8,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -146,7 +145,6 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
                                        @NotNull PsiFileSystemItem context,
                                        final @NotNull Collection<? super ResolveResult> result,
                                        final boolean caseSensitive) {
-    context = ModelBranchUtil.obtainCopyFromTheSameBranch(getElement(), context);
     if (isAllowedEmptyPath(text) || ".".equals(text) || "/".equals(text)) {
       if (context instanceof FileReferenceResolver) {
         ResolveResult element = resolveFileReferenceResolver((FileReferenceResolver)context, text);

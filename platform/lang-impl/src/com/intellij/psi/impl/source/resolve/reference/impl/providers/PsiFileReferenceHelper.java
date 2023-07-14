@@ -4,7 +4,6 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.ide.util.PlatformPackageUtil;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -17,7 +16,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.SyntheticFileSystemItem;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
@@ -176,8 +174,6 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
               }
 
               List<PsiFileSystemItem> contextsForModule =
-                ModelBranch.getPsiBranch(item) != null ?
-                getContextsForScope(project, path, item.getResolveScope().intersectWith(ProjectScope.getContentScope(project))) :
                 getContextsForModule(module, path, module.getModuleWithDependenciesScope());
               if (!includeMissingPackages) {
                 return contextsForModule;

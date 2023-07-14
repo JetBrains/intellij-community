@@ -1,9 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.model.ModelBranch;
-import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -155,11 +153,6 @@ public abstract class StubIndexEx extends StubIndex {
       PairProcessor<VirtualFile, StubIdList> stubProcessor = (file, list) -> myStubProcessingHelper.processStubsInFile(
         project, file, list, keyFilter == null ? processor : o -> !keyFilter.test(o) || processor.process(o), scope, requiredClass);
 
-      if (!ModelBranchImpl.processModifiedFilesInScope(scope != null ? scope : GlobalSearchScope.everythingScope(project),
-                                                       file -> processInMemoryStubs(indexKey, key, project, stubProcessor, file))) {
-        return false;
-      }
-
       Iterator<VirtualFile> singleFileInScope = FileBasedIndexEx.extractSingleFileOrEmpty(scope);
       Iterator<VirtualFile> fileStream;
       boolean shouldHaveKeys;
@@ -191,19 +184,10 @@ public abstract class StubIndexEx extends StubIndex {
       trace.stubTreesDeserializingStarted();
 
       try {
-        Collection<ModelBranch> branches = null;
         while (fileStream.hasNext()) {
           VirtualFile file = fileStream.next();
           assert file != null;
-          List<VirtualFile> filesInScope;
-          if (scope != null) {
-            if (branches == null) branches = scope.getModelBranchesAffectingScope();
-            filesInScope = FileBasedIndexEx.filesInScopeWithBranches(scope, file, branches);
-          }
-          else {
-            filesInScope = Collections.singletonList(file);
-          }
-          if (filesInScope.isEmpty()) {
+          if (scope != null && !scope.contains(file)) {
             continue;
           }
 
@@ -215,10 +199,8 @@ public abstract class StubIndexEx extends StubIndex {
             // stub index inconsistency
             continue;
           }
-          for (VirtualFile eachFile : filesInScope) {
-            if (!stubProcessor.process(eachFile, list)) {
-              return false;
-            }
+          if (!stubProcessor.process(file, list)) {
+            return false;
           }
         }
       }
@@ -245,26 +227,6 @@ public abstract class StubIndexEx extends StubIndex {
       //  do all catch/finally blocks
       trace.close();
     }
-  }
-
-  private static <Key, Psi extends PsiElement> boolean processInMemoryStubs(StubIndexKey<Key, Psi> indexKey,
-                                                                            Key key,
-                                                                            Project project,
-                                                                            PairProcessor<? super VirtualFile, ? super StubIdList> stubProcessor,
-                                                                            VirtualFile file) {
-    Map<Integer, SerializedStubTree> data = FileBasedIndex.getInstance().getFileData(StubUpdatingIndex.INDEX_ID, file, project);
-    if (data.size() == 1) {
-      try {
-        StubIdList list = data.values().iterator().next().restoreIndexedStubs(indexKey, key);
-        if (list != null) {
-          return stubProcessor.process(file, list);
-        }
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return true;
   }
 
   @ApiStatus.Experimental

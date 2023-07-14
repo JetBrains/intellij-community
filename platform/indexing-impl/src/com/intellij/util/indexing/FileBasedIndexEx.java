@@ -2,8 +2,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.model.ModelBranch;
-import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -346,9 +344,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                   @NotNull ValueProcessor<? super V> processor) {
     Project project = scope.getProject();
     if (!(restrictToFile instanceof VirtualFileWithId)) {
-      return project == null ||
-             ModelBranch.getFileBranch(restrictToFile) == null ||
-             processInMemoryFileData(indexId, dataKey, project, restrictToFile, processor);
+      return true;
     }
 
     int restrictedFileId = getFileId(restrictToFile);
@@ -367,15 +363,6 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     });
   }
 
-  private <K, V> boolean processInMemoryFileData(ID<K, V> indexId,
-                                                 K dataKey,
-                                                 Project project,
-                                                 VirtualFile file,
-                                                 ValueProcessor<? super V> processor) {
-    Map<K, V> data = getFileData(indexId, file, project);
-    return !data.containsKey(dataKey) || processor.process(file, data.get(dataKey));
-  }
-
   protected <K, V> boolean processValuesInScope(@NotNull ID<K, V> indexId,
                                                 @NotNull K dataKey,
                                                 boolean ensureValueProcessedOnce,
@@ -383,32 +370,20 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                 @Nullable IdFilter idFilter,
                                                 @NotNull ValueProcessor<? super V> processor) {
     Project project = scope.getProject();
-    if (project != null &&
-        !ModelBranchImpl.processModifiedFilesInScope(scope, file -> processInMemoryFileData(indexId, dataKey, project, file, processor))) {
-      return false;
-    }
 
     IdFilter filter = idFilter != null ? idFilter : extractIdFilter(scope, project);
     IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(project);
 
     return processValueIterator(indexId, dataKey, null, scope, valueIt -> {
-      Collection<ModelBranch> branches = null;
       while (valueIt.hasNext()) {
         final V value = valueIt.next();
         for (final ValueContainer.IntIterator inputIdsIterator = valueIt.getInputIdsIterator(); inputIdsIterator.hasNext(); ) {
           final int id = inputIdsIterator.next();
           if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) continue;
           VirtualFile file = findFileById(id);
-          if (file != null) {
-            if (branches == null) branches = scope.getModelBranchesAffectingScope();
-            for (VirtualFile eachFile : filesInScopeWithBranches(scope, file, branches)) {
-              if (!processor.process(eachFile, value)) {
-                return false;
-              }
-              if (ensureValueProcessedOnce) {
-                ProgressManager.checkCanceled();
-                break; // continue with the next value
-              }
+          if (file != null && scope.contains(file)) {
+            if (!processor.process(file, value)) {
+              return false;
             }
           }
 
@@ -499,22 +474,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public boolean processFilesContainingAllKeys(@NotNull Collection<? extends AllKeysQuery<?, ?>> queries,
                                                @NotNull GlobalSearchScope filter,
                                                @NotNull Processor<? super VirtualFile> processor) {
-    Project project = filter.getProject();
     IdFilter filesSet = extractIdFilter(filter, filter.getProject());
 
     if (!processFilesContainingAllKeysInPhysicalFiles(queries, filter, processor, filesSet)) {
       return false;
     }
 
-    if (project == null) return true;
-    return ModelBranchImpl.processModifiedFilesInScope(filter, file -> {
-      for (AllKeysQuery<?, ?> query : queries) {
-        ID<?, ?> id = query.getIndexId();
-        Map<?, ?> data = getFileData(id, file, project);
-        if (!data.keySet().containsAll(query.getDataKeys())) return true;
-      }
-      return processor.process(file);
-    });
+    return true;
   }
 
   @Override
@@ -650,19 +616,15 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     IntList sortedIds = new IntArrayList(ids);
     sortedIds.sort(null);
 
-    Collection<ModelBranch> branches = null;
     for (IntIterator iterator = sortedIds.iterator(); iterator.hasNext(); ) {
       ProgressManager.checkCanceled();
       int id = iterator.nextInt();
       VirtualFile file = findFileById(id);
-      if (file != null) {
-        if (branches == null) branches = filter.getModelBranchesAffectingScope();
-        for (VirtualFile fileInBranch : filesInScopeWithBranches(filter, file, branches)) {
-          boolean processNext = processor.process(fileInBranch);
-          ProgressManager.checkCanceled();
-          if (!processNext) {
-            return false;
-          }
+      if (file != null && filter.contains(file)) {
+        boolean processNext = processor.process(file);
+        ProgressManager.checkCanceled();
+        if (!processNext) {
+          return false;
         }
       }
     }
@@ -739,25 +701,6 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @NotNull
   @ApiStatus.Internal
   public abstract Logger getLogger();
-
-  @NotNull
-  @ApiStatus.Internal
-  public static List<VirtualFile> filesInScopeWithBranches(@NotNull GlobalSearchScope scope,
-                                                           @NotNull VirtualFile file,
-                                                           @NotNull Collection<ModelBranch> branchesAffectingScope) {
-    List<VirtualFile> filesInScope;
-    filesInScope = new SmartList<>();
-    if (scope.contains(file)) filesInScope.add(file);
-    ProgressManager.checkCanceled();
-    for (ModelBranch branch : branchesAffectingScope) {
-      VirtualFile copy = branch.findFileCopy(file);
-      if (!((ModelBranchImpl)branch).hasModifications(copy) && scope.contains(copy)) {
-        filesInScope.add(copy);
-      }
-      ProgressManager.checkCanceled();
-    }
-    return filesInScope;
-  }
 
   @Nullable
   public static Throwable getCauseToRebuildIndex(@NotNull RuntimeException e) {

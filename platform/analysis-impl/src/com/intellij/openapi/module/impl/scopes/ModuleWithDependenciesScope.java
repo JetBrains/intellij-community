@@ -1,13 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes;
 
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -63,21 +61,17 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     myModule = module;
     myOptions = options;
     myProjectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex();
-    myRoots = calcRoots(null);
+    myRoots = calcRoots();
     mySingleFileSourcesTracker = SingleFileSourcesTracker.getInstance(module.getProject());
   }
 
-  private Object2IntMap<VirtualFile> calcRoots(@Nullable ModelBranch branch) {
-    Set<VirtualFile> roots = new LinkedHashSet<>();
+  private Object2IntMap<VirtualFile> calcRoots() {
     OrderRootsEnumerator en = getOrderEnumeratorForOptions().roots(entry -> {
       if (entry instanceof ModuleOrderEntry || entry instanceof ModuleSourceOrderEntry) return OrderRootType.SOURCES;
       return OrderRootType.CLASSES;
     });
-    if (branch == null) {
-      Collections.addAll(roots, en.getRoots());
-    } else {
-      roots.addAll(ContainerUtil.mapNotNull(en.getUrls(), branch::findFileByUrl));
-    }
+    Set<VirtualFile> roots = new LinkedHashSet<>();
+    Collections.addAll(roots, en.getRoots());
 
     int i = 1;
     Object2IntMap<VirtualFile> map = new Object2IntOpenHashMap<>(roots.size());
@@ -154,24 +148,8 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     if (mySingleFileSourcesTracker.isSourceDirectoryInModule(file, myModule)) return true;
 
     VirtualFile root = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file);
-    return root != null && getRoots(file).containsKey(root);
+    return root != null && myRoots.containsKey(root);
   }
-
-  private Object2IntMap<VirtualFile> getRoots(@NotNull VirtualFile file) {
-    ModelBranch branch = ModelBranch.getFileBranch(file);
-    return branch != null ? obtainBranchRoots(branch) : myRoots;
-  }
-
-  private Object2IntMap<VirtualFile> obtainBranchRoots(ModelBranch branch) {
-    Pair<Long, Object2IntMap<VirtualFile>> pair = branch.getUserData(BRANCH_ROOTS);
-    long modCount = branch.getBranchedVfsStructureModificationCount();
-    if (pair == null || pair.first != modCount) {
-      pair = Pair.create(modCount, calcRoots(branch));
-    }
-    return pair.second;
-  }
-
-  private static final Key<Pair<Long, Object2IntMap<VirtualFile>>> BRANCH_ROOTS = Key.create("BRANCH_ROOTS");
 
   @Override
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
@@ -182,7 +160,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     if (r1 == null) return -1;
     if (r2 == null) return 1;
 
-    Object2IntMap<VirtualFile> roots = getRoots(file1);
+    Object2IntMap<VirtualFile> roots = myRoots;
     int i1 = roots.getInt(r1);
     int i2 = roots.getInt(r2);
     if (i1 == 0 && i2 == 0) return 0;

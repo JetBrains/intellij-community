@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.providers.FileTargetContext.toTargetContexts;
 import static java.util.Collections.*;
@@ -303,12 +301,6 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     Collection<PsiFileSystemItem> result = myDefaultContexts;
     if (result == null) {
       result = computeDefaultContexts();
-      ModelBranch branch = ModelBranch.getPsiBranch(getElement());
-      if (branch != null) {
-        result = result.stream()
-          .map(item -> ModelBranch.getPsiBranch(item) == branch ? item : branch.obtainPsiCopy(item))
-          .collect(Collectors.toCollection(LinkedHashSet::new));
-      }
       myDefaultContexts = result;
     }
     return result;

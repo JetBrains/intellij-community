@@ -16,7 +16,6 @@
 package com.jetbrains.python.codeInsight.userSkeletons;
 
 import com.google.common.collect.ImmutableSet;
-import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -132,8 +131,7 @@ public final class PyUserSkeletonsUtil {
     if (skeletonsDir == null) {
       return false;
     }
-    final String relativePath =
-      VfsUtilCore.getRelativePath(virtualFile, ModelBranchUtil.obtainCopyFromTheSameBranch(virtualFile, skeletonsDir), '/');
+    final String relativePath = VfsUtilCore.getRelativePath(virtualFile, skeletonsDir, '/');
     // not under skeletons directory
     if (relativePath == null) {
       return false;

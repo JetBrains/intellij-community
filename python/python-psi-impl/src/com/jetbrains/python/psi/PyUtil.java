@@ -8,7 +8,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -1158,12 +1157,7 @@ public final class PyUtil {
   public static Collection<VirtualFile> getSourceRoots(@NotNull PsiElement foothold) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(foothold);
     if (module != null) {
-      Collection<VirtualFile> roots = getSourceRoots(module);
-      ModelBranch branch = ModelBranch.getPsiBranch(foothold);
-      if (branch != null) {
-        return ContainerUtil.map(roots, branch::findFileCopy);
-      }
-      return roots;
+      return getSourceRoots(module);
     }
     return Collections.emptyList();
   }

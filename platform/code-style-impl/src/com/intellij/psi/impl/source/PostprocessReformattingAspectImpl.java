@@ -10,7 +10,6 @@ import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationListener;
@@ -210,7 +209,7 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
     final PsiFile containingFile = getContainingFile(psiElement);
     final FileViewProvider viewProvider = containingFile.getViewProvider();
 
-    if (!viewProvider.isEventSystemEnabled() && ModelBranch.getPsiBranch(containingFile) == null &&
+    if (!viewProvider.isEventSystemEnabled() &&
         !IntentionPreviewUtils.isPreviewElement(containingFile) &&
         !FORCE_POSTPROCESS_FORMAT.isIn(viewProvider)) return;
     getContext().myUpdatedProviders.putValue(viewProvider, (FileElement)containingFile.getNode());

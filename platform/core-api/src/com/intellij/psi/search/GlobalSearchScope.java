@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.core.CoreBundle;
-import com.intellij.model.ModelBranch;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -90,14 +89,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     return Collections.emptySet();
   }
 
-  /**
-   * @return a set of model branches whose copied files this scope might contain
-   */
-  @ApiStatus.Experimental
-  public @NotNull Collection<ModelBranch> getModelBranchesAffectingScope() {
-    return Collections.emptySet();
-  }
-
   @NotNull
   @Contract(pure = true)
   public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
@@ -171,11 +162,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       @Override
       public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
         return GlobalSearchScope.this.getUnloadedModulesBelongingToScope();
-      }
-
-      @Override
-      public @NotNull Collection<ModelBranch> getModelBranchesAffectingScope() {
-        return GlobalSearchScope.this.getModelBranchesAffectingScope();
       }
 
       @NonNls
@@ -477,11 +463,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
-    public @NotNull Collection<ModelBranch> getModelBranchesAffectingScope() {
-      return ContainerUtil.intersection(myScope1.getModelBranchesAffectingScope(), myScope2.getModelBranchesAffectingScope());
-    }
-
-    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof IntersectionScope)) return false;
@@ -606,15 +587,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       Set<UnloadedModuleDescription> result = new LinkedHashSet<>();
       for (GlobalSearchScope scope : myScopes) {
         result.addAll(scope.getUnloadedModulesBelongingToScope());
-      }
-      return result;
-    }
-
-    @Override
-    public @NotNull Collection<ModelBranch> getModelBranchesAffectingScope() {
-      Set<ModelBranch> result = new LinkedHashSet<>();
-      for (GlobalSearchScope scope : myScopes) {
-        result.addAll(scope.getModelBranchesAffectingScope());
       }
       return result;
     }
@@ -852,13 +824,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public String getDisplayName() {
       return myDisplayName != null ? myDisplayName : super.getDisplayName();
-    }
-
-    @Override
-    public @NotNull Collection<ModelBranch> getModelBranchesAffectingScope() {
-      return myVirtualFile == null
-             ? Collections.emptyList()
-             : ContainerUtil.createMaybeSingletonList(ModelBranch.getFileBranch(myVirtualFile));
     }
 
     @Override

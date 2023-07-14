@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.model.ModelBranch;
-import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -139,9 +137,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     if (containingFile == null) {
       return GlobalSearchScope.allScope(myProject);
     }
-    GlobalSearchScope scope = getPsiFileResolveScope(containingFile);
-    ModelBranch branch = ModelBranch.getPsiBranch(containingFile);
-    return branch != null ? ((ModelBranchImpl)branch).modifyScope(scope) : scope;
+    return getPsiFileResolveScope(containingFile);
   }
 
   @NotNull

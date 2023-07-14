@@ -2,7 +2,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.lang.Language;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -169,7 +168,6 @@ public class LightVirtualFile extends LightVirtualFileBase {
    */
   @Contract("null -> false")
   public static boolean shouldSkipEventSystem(@Nullable VirtualFile virtualFile) {
-    return ModelBranch.getFileBranch(virtualFile) != null ||
-           virtualFile instanceof LightVirtualFile && ((LightVirtualFile)virtualFile).shouldSkipEventSystem();
+    return virtualFile instanceof LightVirtualFile && ((LightVirtualFile)virtualFile).shouldSkipEventSystem();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -7,9 +7,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService;
 import com.intellij.pom.java.LanguageLevel;
@@ -49,11 +47,8 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   }
 
   public static boolean isInSourceContent(@NotNull VirtualFile file) {
-    if (ApplicationManager.getApplication().getService(InternalPersistentJavaLanguageLevelReaderService.class).getPersistedLanguageLevel(file) != null) {
-      return true;
-    }
-    ModelBranch branch = ModelBranch.getFileBranch(file);
-    return branch != null && FileIndexFacade.getInstance(branch.getProject()).isInSourceContent(file);
+    return ApplicationManager.getApplication().getService(InternalPersistentJavaLanguageLevelReaderService.class)
+             .getPersistedLanguageLevel(file) != null;
   }
 
   @Override

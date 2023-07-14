@@ -3,8 +3,6 @@ package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.lang.FileASTNode;
-import com.intellij.model.BranchableUsageInfo;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -346,7 +344,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private static class MyUsageInfo extends UsageInfo implements BranchableUsageInfo {
+  private static class MyUsageInfo extends UsageInfo {
     private final PsiElement myTarget;
     final PsiReference myReference;
 
@@ -354,11 +352,6 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       super(reference);
       myReference = reference;
       myTarget = target;
-    }
-
-    @Override
-    public @NotNull UsageInfo obtainBranchCopy(@NotNull ModelBranch branch) {
-      return new MyUsageInfo(branch.obtainReferenceCopy(myReference), branch.obtainPsiCopy(myTarget));
     }
   }
 }

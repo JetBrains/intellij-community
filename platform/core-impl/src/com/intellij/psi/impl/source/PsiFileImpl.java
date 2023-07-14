@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.*;
-import com.intellij.model.ModelBranch;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -121,7 +120,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public VirtualFile getVirtualFile() {
     VirtualFile indexingFile = IndexingDataKeys.VIRTUAL_FILE.get(this);
     if (indexingFile != null) return indexingFile;
-    return getViewProvider().isEventSystemEnabled() || ModelBranch.getPsiBranch(this) != null ? getViewProvider().getVirtualFile() : null;
+    return getViewProvider().isEventSystemEnabled() ? getViewProvider().getVirtualFile() : null;
   }
 
   @Override

@@ -3,7 +3,6 @@ package com.intellij.pom.core.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -278,7 +277,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
     sendBeforeChildrenChangeEvent(changeScope);
     Document document = psiFile == null || psiFile instanceof DummyHolder ? null :
-                        physical || ModelBranch.getPsiBranch(psiFile) != null ? FileDocumentManager.getInstance().getDocument(vFile) :
+                        physical ? FileDocumentManager.getInstance().getDocument(vFile) :
                         FileDocumentManager.getInstance().getCachedDocument(vFile);
     if (document != null) {
       synchronizer.startTransaction(myProject, document, psiFile);
@@ -348,8 +347,8 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   @ApiStatus.Internal
   public static boolean shouldFirePhysicalPsiEvents(@NotNull PsiElement scope) {
-    return scope.isPhysical() &&
-           ModelBranch.getPsiBranch(scope) == null; // injections are physical even in non-physical PSI :(
+    // injections are physical even in non-physical PSI :(
+    return scope.isPhysical();
   }
 
   private void sendAfterChildrenChangedEvent(@NotNull PsiFile scope, int oldLength) {

@@ -1,27 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
-import com.intellij.model.BranchableUsageInfo;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.BitUtil;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.Objects;
-
-public class MoveRenameUsageInfo extends UsageInfo implements BranchableUsageInfo, Cloneable {
+public class MoveRenameUsageInfo extends UsageInfo implements Cloneable {
   private static final Logger LOG = Logger.getInstance(MoveRenameUsageInfo.class);
   private SmartPsiElementPointer<?> myReferencedElementPointer;
   private PsiElement myReferencedElement;
@@ -119,66 +109,7 @@ public class MoveRenameUsageInfo extends UsageInfo implements BranchableUsageInf
     return reference;
   }
 
-  @Override
-  public @NotNull MoveRenameUsageInfo obtainBranchCopy(@NotNull ModelBranch branch) {
-    try {
-      MoveRenameUsageInfo copy = (MoveRenameUsageInfo)clone();
-      Class<?> aClass = copy.getClass();
-      while (aClass != null) {
-        for (Field field : aClass.getDeclaredFields()) {
-          if (BitUtil.isSet(field.getModifiers(), Modifier.STATIC)) continue;
-
-          field.setAccessible(true);
-          Object valueCopy = obtainBranchCopy(branch, field.get(copy));
-          if (valueCopy != null) {
-            field.set(copy, valueCopy);
-          }
-        }
-        aClass = aClass.getSuperclass();
-      }
-      return copy;
-    }
-    catch (CloneNotSupportedException | IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private Object obtainBranchCopy(ModelBranch branch, Object fieldValue) {
-    if (fieldValue instanceof PsiElement) {
-      return isPackage((PsiElement)fieldValue) ? fieldValue : branch.obtainPsiCopy((PsiElement)fieldValue);
-    }
-    if (fieldValue instanceof PsiReference) {
-      return branch.obtainReferenceCopy((PsiReference)fieldValue);
-    }
-    if (fieldValue instanceof SmartPsiFileRange) {
-      return SmartPointerManager.getInstance(getProject())
-        .createSmartPsiFileRangePointer(
-          branch.obtainPsiCopy(Objects.requireNonNull(((SmartPsiFileRange)fieldValue).getContainingFile())),
-          TextRange.create(Objects.requireNonNull(((SmartPsiFileRange)fieldValue).getRange())));
-    }
-    if (fieldValue instanceof SmartPsiElementPointer) {
-      PsiElement element = Objects.requireNonNull(((SmartPsiElementPointer<?>)fieldValue).getElement());
-      return isPackage(element) ? fieldValue : SmartPointerManager.createPointer(branch.obtainPsiCopy(element));
-    }
-    if (fieldValue instanceof RangeMarker) {
-      return obtainMarkerCopy(branch, (RangeMarker)fieldValue);
-    }
-    return null;
-  }
-
   private static boolean isPackage(PsiElement element) {
     return element instanceof PsiDirectoryContainer && element.getContainingFile() == null;
-  }
-
-  private static RangeMarker obtainMarkerCopy(@NotNull ModelBranch branch, RangeMarker original) {
-    Document document = original.getDocument();
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    VirtualFile fileCopy = branch.findFileCopy(Objects.requireNonNull(file));
-    Document docCopy = FileDocumentManager.getInstance().getDocument(Objects.requireNonNull(fileCopy));
-    assert docCopy != null;
-    RangeMarker marker = docCopy.createRangeMarker(original.getStartOffset(), original.getEndOffset());
-    marker.setGreedyToLeft(original.isGreedyToLeft());
-    marker.setGreedyToRight(original.isGreedyToRight());
-    return marker;
   }
 }

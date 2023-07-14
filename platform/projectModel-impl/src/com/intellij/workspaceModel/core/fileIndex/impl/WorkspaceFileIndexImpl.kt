@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.injected.editor.VirtualFileWindow
-import com.intellij.model.ModelBranch
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
@@ -23,7 +22,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.CollectionQuery
 import com.intellij.util.PathUtil
 import com.intellij.util.Query
 import com.intellij.util.ThreeState
@@ -237,7 +235,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
                            includeExternalSets: Boolean,
                            includeExternalSourceSets: Boolean): WorkspaceFileInternalInfo {
     val unwrappedFile = BackedVirtualFile.getOriginFileIfBacked((file as? VirtualFileWindow)?.delegate ?: file)
-    return getOrCreateIndexData(unwrappedFile).getFileInfo(unwrappedFile, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets)
+    return getMainIndexData().getFileInfo(unwrappedFile, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets)
   }
 
   override fun visitFileSets(visitor: WorkspaceFileSetVisitor) {
@@ -245,7 +243,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
   }
 
   override fun getPackageName(directory: VirtualFile): String? {
-    return getOrCreateIndexData(directory).getPackageName(directory)
+    return getMainIndexData().getPackageName(directory)
   }
 
   override fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile> {
@@ -253,24 +251,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
   }
 
   override fun getDirectoriesByPackageName(packageName: String, scope: GlobalSearchScope): Query<VirtualFile> {
-    val branches = scope.modelBranchesAffectingScope
-    if (branches.isEmpty()) {
-      return getDirectoriesByPackageName(packageName, true).filtering { scope.contains(it) }
-    }
-    val indexDataList = mutableListOf(getMainIndexData()).also {
-      branches.mapTo(it, ::obtainBranchIndexData)
-    }
-    return CollectionQuery(indexDataList)
-             .flatMapping { it.getDirectoriesByPackageName(packageName, true) }
-             .filtering { scope.contains(it) }
-  }
-
-  private fun getOrCreateIndexData(file: VirtualFile): WorkspaceFileIndexData {
-    val branch = ModelBranch.getFileBranch(file)
-    if (branch != null) {
-      return obtainBranchIndexData(branch)
-    }
-    return getMainIndexData()
+    return getDirectoriesByPackageName(packageName, true).filtering { scope.contains(it) }
   }
 
   private fun getMainIndexData(): WorkspaceFileIndexData {
@@ -294,16 +275,6 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
 
   val contributors: List<WorkspaceFileIndexContributor<*>>
     get() = EP_NAME.extensionList + CustomEntityProjectModelInfoProvider.EP.extensionList.map { CustomEntityProjectModelInfoProviderBridge(it) }
-
-  private fun obtainBranchIndexData(branch: ModelBranch): WorkspaceFileIndexData {
-    var pair = branch.getUserData(BRANCH_INDEX_DATA_KEY)
-    val modCount = branch.branchedVfsStructureModificationCount
-    if (pair == null || pair.first != modCount) {
-      pair = Pair(modCount, WorkspaceFileIndexDataImpl(contributors, branch.project, RootFileSupplier.forBranch(branch)))
-      branch.putUserData(BRANCH_INDEX_DATA_KEY, pair)
-    }
-    return pair.second
-  }
 
   override fun reset() {
     indexData = EmptyWorkspaceFileIndexData.RESET

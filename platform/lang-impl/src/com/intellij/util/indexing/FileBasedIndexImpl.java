@@ -6,7 +6,6 @@ import com.intellij.AppTopics;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.startup.ServiceNotReadyException;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.Application;
@@ -1099,16 +1098,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     FileContentImpl newFc = (FileContentImpl)FileContentImpl.createByText(vFile, contentText, project);
     document.putUserData(ourFileContentKey, new WeakReference<>(Pair.create(newFc, currentDocStamp)));
     return newFc;
-  }
-
-  @NotNull
-  @Override
-  public <K, V> Map<K, V> getFileData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project) {
-    if (ModelBranch.getFileBranch(virtualFile) != null) {
-      return getInMemoryData(id, virtualFile, project);
-    }
-
-    return super.getFileData(id, virtualFile, project);
   }
 
   @Override

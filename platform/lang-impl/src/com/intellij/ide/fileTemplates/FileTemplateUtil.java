@@ -4,7 +4,6 @@ package com.intellij.ide.fileTemplates;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
-import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -334,7 +333,7 @@ public final class FileTemplateUtil {
   public static @Nullable String getDirPathRelativeToProjectBaseDir(@NotNull PsiDirectory directory) {
     VirtualFile dirVfile = directory.getVirtualFile();
     VirtualFile baseDir = directory.getProject().getBaseDir();
-    return baseDir != null ? VfsUtilCore.getRelativePath(dirVfile, ModelBranchUtil.obtainCopyFromTheSameBranch(dirVfile, baseDir)) : null;
+    return baseDir != null ? VfsUtilCore.getRelativePath(dirVfile, baseDir) : null;
   }
 
   public static @NotNull CreateFromTemplateHandler findHandler(@NotNull FileTemplate template) {
