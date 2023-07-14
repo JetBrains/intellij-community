@@ -61,8 +61,6 @@ import java.util.function.BiFunction
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import javax.swing.*
-import kotlin.io.path.deleteIfExists
-import kotlin.io.path.div
 import kotlin.system.exitProcess
 
 internal const val IDE_STARTED: String = "------------------------------------------------------ IDE STARTED ------------------------------------------------------"
@@ -354,8 +352,8 @@ private fun deleteMarkerFromAllConfigCandidates(configPath: Path) {
 }
 
 private fun deleteNewConfigDirectoryMarkerIfCreated(configPath: Path): Boolean {
-  val autoCreatedMarker = configPath / ".config.directory.created.by.headless.or.external.app"
-  return runCatching { autoCreatedMarker.deleteIfExists() }.getOrElse { false }
+  val autoCreatedMarker = configPath.resolve(".config.directory.created.by.headless.or.external.app")
+  return runCatching { Files.deleteIfExists(autoCreatedMarker) }.getOrElse { false }
 }
 
 /**
