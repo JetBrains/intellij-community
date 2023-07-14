@@ -41,7 +41,7 @@ private const val INTERVAL = 10 * 60 * 1000L  // an interval between exceptions 
  * their own implementations of [ErrorReportSubmitter].
  */
 @InternalIgnoreDependencyViolation
-open class ITNReporter : ErrorReportSubmitter() {
+open class ITNReporter(private val newThreadPostUrl: String = NEW_THREAD_POST_URL) : ErrorReportSubmitter() {
 
   override fun getReportActionText(): String = DiagnosticBundle.message("error.report.to.jetbrains.action")
 
@@ -54,8 +54,6 @@ open class ITNReporter : ErrorReportSubmitter() {
   override fun changeReporterAccount(parentComponent: Component) {
     askJBAccountCredentials(parentComponent, null)
   }
-
-  open val newThreadPostUrl: String = NEW_THREAD_POST_URL
 
   override fun submit(events: Array<IdeaLoggingEvent>,
                       additionalInfo: String?,

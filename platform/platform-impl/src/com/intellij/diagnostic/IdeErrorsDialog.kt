@@ -980,11 +980,6 @@ open class IdeErrorsDialog internal constructor(
           }
         }
       }
-      for (reporter in reporters) {
-        if (reporter is JetBrainsMarketplaceErrorReportSubmitter) {
-          return reporter
-        }
-      }
       return null
     }
 
