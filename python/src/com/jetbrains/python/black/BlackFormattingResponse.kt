@@ -25,5 +25,20 @@ sealed class BlackFormattingResponse {
       }
       return stringBuilder.toString()
     }
+
+    @NlsSafe
+    fun getInlineNotificationMessage() = trimBlackErrorMessage(64)
+
+    @NlsSafe
+    fun getPopupMessage(): String = trimBlackErrorMessage(256)
+
+    private fun trimBlackErrorMessage(maxLength: Int): String {
+      val errorInfo = this.description
+                        .lines()
+                        .firstOrNull()
+                        ?.replaceBefore("Cannot parse", "")
+                      ?: this.description
+      return if (errorInfo.length > maxLength) errorInfo.substring(0, maxLength) + "..." else errorInfo
+    }
   }
 }
