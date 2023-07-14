@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * Simple atomic property implementation.
  */
+@Suppress("DEPRECATION")
 class AtomicProperty<T>(private val initialValue: T) : AbstractObservableClearableProperty<T>(), AtomicMutableProperty<T> {
   private val reference = AtomicReference(initialValue)
 

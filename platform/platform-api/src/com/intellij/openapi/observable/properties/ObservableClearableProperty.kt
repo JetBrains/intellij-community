@@ -14,9 +14,15 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.ScheduledForRemoval
 interface ObservableClearableProperty<T> : ObservableMutableProperty<T> {
 
+  @Deprecated("Use set instead")
+  @ApiStatus.ScheduledForRemoval
   fun reset() {}
 
+  @Deprecated("Use afterChange instead")
+  @ApiStatus.ScheduledForRemoval
   fun afterReset(listener: () -> Unit) {}
 
+  @Deprecated("Use afterChange instead")
+  @ApiStatus.ScheduledForRemoval
   fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {}
 }

@@ -5,7 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.util.containers.DisposableWrapperList
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@Deprecated("Use instead AbstractObservableProperty")
+@ApiStatus.ScheduledForRemoval
 @Suppress("DEPRECATION")
 abstract class AbstractObservableClearableProperty<T> : AbstractObservableProperty<T>(), ObservableClearableProperty<T> {
 
