@@ -326,7 +326,12 @@ object CommunityLibraryLicenses {
                                                    "ai.grazie.model.common",
                                                    "ai.grazie.model.gec",
                                                    "ai.grazie.model.text",
-                                                   "ai.grazie.spell.hunspell.en")).apache(),
+                                                   "ai.grazie.spell.hunspell.en",
+                                                   "ai.grazie.emb",
+                                                   "ai.grazie.model.nlp.encoder",
+                                                   "ai.grazie.utils.ki",
+                                                   "ai.grazie.nlp.encoder",
+                                                   "ai.grazie.emb.local")).apache(),
     LibraryLicense(name = "Groovy", libraryName = "org.codehaus.groovy:groovy", url = "https://groovy-lang.org/")
       .apache("https://github.com/apache/groovy/blob/master/LICENSE"),
     LibraryLicense(name = "Groovy Ant", libraryName = "org.codehaus.groovy:groovy-ant", url = "https://groovy-lang.org/")
