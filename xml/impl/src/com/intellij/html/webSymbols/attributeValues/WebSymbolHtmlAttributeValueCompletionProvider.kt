@@ -33,14 +33,14 @@ class WebSymbolHtmlAttributeValueCompletionProvider : WebSymbolsCompletionProvid
     val providedNames = mutableSetOf(context.name)
     if (type == Type.ENUM) {
       processCompletionQueryResults(queryExecutor, patchedResultSet, WebSymbol.NAMESPACE_HTML,
-                                    WebSymbol.KIND_HTML_ATTRIBUTE_VALUES, name, position, queryScope, providedNames) {
+                                    WebSymbol.KIND_HTML_ATTRIBUTE_VALUES, name, position, context, queryScope, providedNames) {
         if (!it.completeAfterInsert) {
           it.addToResult(parameters, patchedResultSet)
         }
       }
     } else {
       processCompletionQueryResults(queryExecutor, patchedResultSet, WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES, name,
-                                    position, queryScope, providedNames) {
+                                    position, context, queryScope, providedNames) {
         it.addToResult(parameters, patchedResultSet)
       }
     }

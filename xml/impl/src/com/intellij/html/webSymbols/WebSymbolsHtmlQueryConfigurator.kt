@@ -115,7 +115,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
   class HtmlSymbolsCodeCompletionItemCustomizer : WebSymbolCodeCompletionItemCustomizer {
     override fun customize(item: WebSymbolCodeCompletionItem,
-                           framework: FrameworkId?, namespace: SymbolNamespace, kind: SymbolKind): WebSymbolCodeCompletionItem =
+                           framework: FrameworkId?, namespace: SymbolNamespace, kind: SymbolKind, location: PsiElement): WebSymbolCodeCompletionItem =
       item.let {
         if (namespace == WebSymbol.NAMESPACE_HTML)
           when (kind) {

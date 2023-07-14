@@ -59,6 +59,7 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
                                       kind: SymbolKind,
                                       name: String,
                                       position: Int,
+                                      location: PsiElement,
                                       queryContext: List<WebSymbolsScope> = emptyList(),
                                       providedNames: MutableSet<String>? = null,
                                       filter: ((WebSymbolCodeCompletionItem) -> Boolean)? = null,
@@ -69,7 +70,7 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
         .runCodeCompletionQuery(namespace, kind, name, position, scope = queryContext)
         .asSequence()
         .distinctBy { Triple(it.offset, it.name, it.completeAfterInsert) }
-        .customizeItems(queryExecutor.framework, namespace, kind)
+        .customizeItems(queryExecutor.framework, namespace, kind, location)
         .filter { item ->
           (filter == null || filter(item))
           && item.offset <= prefixLength
