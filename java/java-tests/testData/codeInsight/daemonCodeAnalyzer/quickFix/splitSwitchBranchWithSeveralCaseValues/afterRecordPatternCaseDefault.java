@@ -5,7 +5,7 @@ class C {
             case Rect(Point(double x1, double y1) point1, Point(double x2, double y2) point2):
                 System.out.println();
                 break;
-            default:
+            case default:
                 System.out.println();
         }
     }
