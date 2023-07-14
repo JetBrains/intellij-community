@@ -46,6 +46,10 @@
       <action id="com.intellij.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
               class="com.intellij.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
               internal="true"/>
+      <action id="com.intellij.feedback.kafka.TestShowKafkaConsumerFeedbackAction"
+              class="com.intellij.feedback.kafka.TestShowKafkaConsumerFeedbackAction" internal="true"/>
+      <action id="com.intellij.feedback.kafka.TestShowKafkaProducerFeedbackAction"
+              class="com.intellij.feedback.kafka.TestShowKafkaProducerFeedbackAction" internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
   </actions>
