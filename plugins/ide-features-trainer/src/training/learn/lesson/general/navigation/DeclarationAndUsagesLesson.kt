@@ -49,7 +49,14 @@ abstract class DeclarationAndUsagesLesson
 
       task("GotoDeclaration") { actionId ->
         text(LessonsBundle.message("declaration.and.usages.show.usages", action(actionId)))
-        stateCheck { virtualFile.name.let { it == "DerivedClass1.java" || it == "DerivedClass2.java" } }
+        stateCheck l@{
+          val curEditor = editor
+          val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(curEditor.document) ?: return@l false
+          val offset = curEditor.caretModel.offset
+          val element = psiFile.findElementAt(offset) ?: return@l false
+          val parentExpr = getParentExpression(element) ?: return@l false
+          parentExpr.text.endsWith(entityName)
+        }
         restoreIfModifiedOrMoved()
         test {
           actions(actionId)
@@ -114,6 +121,8 @@ abstract class DeclarationAndUsagesLesson
                               action(it), strong(UIBundle.message("tool.window.name.find")))
       }
     }
+
+  protected abstract fun getParentExpression(element: PsiElement): PsiElement?
 
   private fun TaskRuntimeContext.state(): MyInfo? {
     val flags = TargetElementUtil.ELEMENT_NAME_ACCEPTED or TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
