@@ -80,6 +80,10 @@
       language="Mermaid"
       implementationClass="com.intellij.mermaid.lang.intention.NbspAnnotator"/>
 
+    <annotator
+      language="Mermaid"
+      implementationClass="com.intellij.mermaid.lang.intention.TextAttributesHighlightingAnnotator"/>
+
     <localInspection language="Mermaid" shortName="UnusedAttribute"
                      groupKey="unused.attribute.inspection.display.name"
                      bundle="messages.MermaidBundle"
