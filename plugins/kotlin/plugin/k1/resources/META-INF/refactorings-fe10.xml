@@ -35,7 +35,7 @@
             implementationClass="org.jetbrains.kotlin.idea.refactoring.suggested.KotlinSuggestedRefactoringSupport"/>
 
     <refactoring.helper implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinRefactoringHelperForDelayedRequests"/>
-    <refactoring.helper implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinOptimizeImportsRefactoringHelper"/>
+    <refactoring.helper implementation="org.jetbrains.kotlin.idea.refactoring.helper.KotlinOptimizeImportsRefactoringHelper"/>
 
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.memberInfo.K1MemberInfoSupport"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoSupport"/>
