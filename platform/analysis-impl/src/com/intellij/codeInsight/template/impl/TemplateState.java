@@ -1153,8 +1153,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
           segmentHighlighter.setTextAttributes(clone);
         }
         EditorActionAvailabilityHintKt.addActionAvailabilityHint(segmentHighlighter,
-                                                                 new EditorActionAvailabilityHint("NextTemplateVariable", EditorActionAvailabilityHint.CaretInside.INSTANCE),
-                                                                 new EditorActionAvailabilityHint("PreviousTemplateVariable", EditorActionAvailabilityHint.CaretInside.INSTANCE));
+                                                                 new EditorActionAvailabilityHint("NextTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                 new EditorActionAvailabilityHint("PreviousTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
         segmentHighlighter.putUserData(TEMPLATE_RANGE_HIGHLIGHTER_KEY, mightStop);
       });
   }
