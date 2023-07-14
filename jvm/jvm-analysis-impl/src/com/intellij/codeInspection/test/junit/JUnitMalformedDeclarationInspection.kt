@@ -242,6 +242,13 @@ private class JUnitMalformedSignatureVisitor(
         else false
       }
     if (hasAnnotation) return true
+    val hasRegisteredExtension = if (this is PsiClass) {
+      fields.any {  field ->
+        field.hasAnnotation(ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION)
+        && InheritanceUtil.isInheritor(field.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
+      }
+    } else false
+    if (hasRegisteredExtension) return true
     if (parentOfType<PsiModifierListOwner>(withSelf = false)?.inParameterResolverContext() == true) return true
     return hasPotentialAutomaticParameterResolver(this)
   }

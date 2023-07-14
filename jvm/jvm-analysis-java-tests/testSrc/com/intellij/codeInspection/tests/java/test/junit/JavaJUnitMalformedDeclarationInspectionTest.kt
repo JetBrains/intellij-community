@@ -1285,7 +1285,32 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
-
+    fun `test no highlighting for programmatically registered parameter resolver`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        import org.junit.jupiter.api.extension.*;
+        import org.junit.jupiter.api.Test;
+        
+        class MyResolver implements ParameterResolver {
+          @Override
+          public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+            return true;
+          }
+             
+          @Override
+          public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException { 
+            return null;
+          }
+        }       
+        
+        class Bar {
+          @org.junit.jupiter.api.extension.RegisterExtension
+          static final MyResolver integerResolver = new MyResolver();
+        
+          @Test
+          void parametersExample(String a, String b) { }
+        } 
+      """.trimIndent())
+    }
 
 
     // Unconstructable test case
