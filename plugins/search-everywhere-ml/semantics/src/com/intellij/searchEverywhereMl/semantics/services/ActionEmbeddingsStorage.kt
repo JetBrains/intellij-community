@@ -15,7 +15,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.searchEverywhereMl.semantics.indices.LocalEmbeddingIndex
+import com.intellij.searchEverywhereMl.semantics.indices.InMemoryEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import java.io.File
@@ -33,7 +33,7 @@ import kotlin.math.sqrt
 class ActionEmbeddingsStorage {
   private val root = File(PathManager.getSystemPath()).resolve(SEMANTIC_SEARCH_RESOURCES_DIR).also { Files.createDirectories(it.toPath()) }
 
-  private val index = LocalEmbeddingIndex(root.resolve(INDEX_DIR).toPath())
+  private val index = InMemoryEmbeddingSearchIndex(root.resolve(INDEX_DIR).toPath())
 
   private val setupTaskIndicator = AtomicReference<ProgressIndicator>(null)
 
@@ -68,12 +68,13 @@ class ActionEmbeddingsStorage {
 
     private fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInActionsTab
 
-    internal fun shouldIndexAction(action: AnAction?): Boolean {
+    private fun shouldIndexAction(action: AnAction?): Boolean {
       return action != null && !(action is ActionGroup && !action.isSearchable) && action.templateText != null
     }
 
-    internal fun getTotalIndexableActionsCount(): Int {
-      return (ActionManager.getInstance() as ActionManagerImpl).actionsOrStubs().filter { shouldIndexAction(it) }.count()
+    internal fun getIndexableActionIds(): Set<String> {
+      val actionManager = (ActionManager.getInstance() as ActionManagerImpl)
+      return actionManager.actionIds.filter { shouldIndexAction(actionManager.getActionOrStub(it)) }.toSet()
     }
   }
 }

@@ -9,16 +9,17 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
-import com.intellij.searchEverywhereMl.semantics.indices.LocalEmbeddingIndex
+import com.intellij.searchEverywhereMl.semantics.indices.EmbeddingSearchIndex
 import java.util.concurrent.atomic.AtomicReference
 
 class ActionEmbeddingStorageSetup(
   project: Project,
-  private val index: LocalEmbeddingIndex,
+  private val index: EmbeddingSearchIndex,
   private val setupTaskIndicator: AtomicReference<ProgressIndicator>
 ) : Task.Backgroundable(project, SETUP_TITLE) {
   override fun run(indicator: ProgressIndicator) {
-    if (!hasUnreadyEmbeddings()) return
+    val indexableActionIds = ActionEmbeddingsStorage.getIndexableActionIds()
+    if (checkEmbeddingsReady(indexableActionIds)) return
 
     val embeddingService = runBlockingCancellable { LocalEmbeddingServiceProvider.getInstance().getService() } ?: return
     // Cancel the previous embeddings calculation task if it's not finished
@@ -26,20 +27,20 @@ class ActionEmbeddingStorageSetup(
 
     indicator.text = SETUP_TITLE
     var indexedActionsCount = index.size
-    val totalIndexableActionsCount = ActionEmbeddingsStorage.getTotalIndexableActionsCount()
+    val totalIndexableActionsCount = indexableActionIds.size
 
     val actionManager = ActionManager.getInstance() as ActionManagerImpl
-    actionManager.actionIds
+    indexableActionIds
       .asSequence()
+      .filter { it !in index }
       .map { it to actionManager.getActionOrStub(it) }
-      .filter { (id, action) -> ActionEmbeddingsStorage.shouldIndexAction(action) && (id !in index) }
       .chunked(BATCH_SIZE)
       .forEach { batch ->
         ProgressManager.checkCanceled()
         val actionIds = batch.map { (id, _) -> id }
         val texts = batch.map { (_, action) -> action!!.templateText!! }
         val embeddings = runBlockingCancellable { embeddingService.embed(texts) }.map { it.normalized() }
-        index.addValues(actionIds zip embeddings)
+        index.addEntries(actionIds zip embeddings)
         indexedActionsCount += embeddings.size
         indicator.fraction = indexedActionsCount.toDouble() / totalIndexableActionsCount
       }
@@ -52,9 +53,9 @@ class ActionEmbeddingStorageSetup(
     ApplicationManager.getApplication().executeOnPooledThread { index.saveToDisk() }
   }
 
-  private fun hasUnreadyEmbeddings(): Boolean {
-    // Do not try to instantiate the local embedding model if all embeddings already present
-    return ActionEmbeddingsStorage.getTotalIndexableActionsCount() != index.size
+  private fun checkEmbeddingsReady(indexableActionIds: Set<String>): Boolean {
+    index.filterIdsTo(indexableActionIds)
+    return index.checkAllIdsPresent(indexableActionIds)
   }
 
   companion object {
