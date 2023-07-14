@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle
 
 import com.intellij.execution.target.value.TargetValue
@@ -40,9 +40,25 @@ import java.util.function.Function
 internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Project) : Disposable {
   private val connectorsMap = ConcurrentHashMap<String, GradleProjectConnection>()
 
+  @Volatile
+  private var shutdownStarted = false
+
+  init {
+    Runtime.getRuntime().addShutdownHook(object : Thread("Shutdown hook to get to know whether shutdown is started") {
+      override fun start() {
+        shutdownStarted = true
+        super.start()
+      }
+    })
+  }
+
   override fun dispose() {
     if (ApplicationManager.getApplication().isUnitTestMode) return
-    disconnectGradleConnections()
+    if (!shutdownStarted) {
+      // do not call Gradle connector disconnect API when IDE app exit is called during VM shutdown
+      // otherwise Gradle call might lead to adding a new shutdown hook but it's prohibited when shutdown is already started
+      disconnectGradleConnections()
+    }
     stopIdleDaemonsOfOldVersions()
   }
 
@@ -139,8 +155,9 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
 
     /** disable stop IDLE Gradle daemons on IDE project close. Applicable for Gradle versions w/o disconnect support (older than 6.5). */
     private val DISABLE_STOP_OLD_IDLE_DAEMONS = java.lang.Boolean.getBoolean("idea.gradle.disableStopIdleDaemonsOnProjectClose")
+
     /** some longer running tests require a longer idle time */
-    private val USE_PRODUCTION_TTL_FOR_TESTS = 
+    private val USE_PRODUCTION_TTL_FOR_TESTS =
       java.lang.Boolean.getBoolean("gradle.connector.useExternalSystemRemoteProcessIdleTtlForTests")
 
     @JvmStatic
