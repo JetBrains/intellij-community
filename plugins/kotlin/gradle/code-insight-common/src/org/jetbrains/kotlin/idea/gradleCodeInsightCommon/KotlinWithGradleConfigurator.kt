@@ -188,7 +188,8 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             listOf(module),
             moduleVersions,
             settings.kotlinVersion,
-            jvmTargets
+            jvmTargets,
+            "command.name.configure.kotlin.automatically"
         )
         collector.showNotification()
 
@@ -201,9 +202,10 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         modules: List<Module>,
         kotlinVersionsAndModules: Map<String, Map<String, Module>>,
         version: IdeKotlinVersion,
-        modulesAndJvmTargets: Map<ModuleName, TargetJvm>
+        modulesAndJvmTargets: Map<ModuleName, TargetJvm>,
+        commandName: String = "command.name.configure.kotlin"
     ): NotificationMessageCollector {
-        return project.executeCommand(KotlinIdeaGradleBundle.message("command.name.configure.kotlin")) {
+        return project.executeCommand(KotlinIdeaGradleBundle.message(commandName)) {
             val collector = NotificationMessageCollector.create(project)
             val changedFiles = configureWithVersion(project, modules, version, collector, kotlinVersionsAndModules, modulesAndJvmTargets)
 

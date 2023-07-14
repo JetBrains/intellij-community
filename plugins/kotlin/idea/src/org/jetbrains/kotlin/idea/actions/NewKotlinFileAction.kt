@@ -10,6 +10,7 @@ import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -301,12 +302,16 @@ internal fun createKotlinFileFromTemplate(name: String, template: FileTemplate, 
         }
 
         // New auto-config logic
-        DumbService.getInstance(module.project).runWhenSmart {
+        ApplicationManager.getApplication().invokeLater {
             val autoConfigurator = KotlinProjectConfigurator.EP_NAME.extensions
-                .firstOrNull { it.canRunAutoConfig() && it.isApplicable(module) } ?: return@runWhenSmart
-            val settings = autoConfigurator.calculateAutoConfigSettings(module) ?: return@runWhenSmart
-            autoConfigurator.runAutoConfig(settings)
+                .firstOrNull { it.canRunAutoConfig() && it.isApplicable(module) }
+            autoConfigurator?.let {
+                autoConfigurator.calculateAutoConfigSettings(module)?.let { settings ->
+                    autoConfigurator.runAutoConfig(settings)
+                }
+            }
         }
+
         return@computeWithAlternativeResolveEnabled psiFile
     }
 }
