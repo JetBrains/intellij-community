@@ -48,6 +48,7 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.Cach
 import org.jetbrains.idea.maven.importing.MavenImportUtil;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
+import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.importing.FilesList;
@@ -239,16 +240,19 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       listenForProjectsTreeChanges();
       registerSyncConsoleListener();
       updateTabTitles();
-
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
-            fireActivated();
-            listenForExternalChanges();
-        });
-      }
     }
     finally {
       initLock.unlock();
+    }
+  }
+
+  protected void onProjectStartup() {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      if (isInitialized()) {
+        MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(null);
+        fireActivated();
+        listenForExternalChanges();
+      }
     }
   }
 

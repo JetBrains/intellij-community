@@ -66,7 +66,7 @@
   <depends optional="true" config-file="maven-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="org.jetbrains.idea.maven.indices.MavenIndicesManagerProjectActivity"/>
+    <postStartupActivity implementation="org.jetbrains.idea.maven.project.MavenProjectsManagerProjectActivity"/>
 
     <pathMacroContributor implementation="org.jetbrains.idea.maven.utils.MavenPathMacroContributor"/>
     <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>

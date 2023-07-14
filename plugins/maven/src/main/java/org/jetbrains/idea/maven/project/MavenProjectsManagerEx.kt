@@ -14,6 +14,7 @@ import com.intellij.openapi.externalSystem.statistics.runImportActivity
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.ExceptionUtil
@@ -560,5 +561,13 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       return ApplicationManager.getApplication().getService(VirtualFileManager::class.java)
     }
     return VirtualFileManager.getInstance()
+  }
+}
+
+class MavenProjectsManagerProjectActivity : ProjectActivity {
+  override suspend fun execute(project: Project) {
+    blockingContext {
+      MavenProjectsManager.getInstance(project).onProjectStartup()
+    }
   }
 }
