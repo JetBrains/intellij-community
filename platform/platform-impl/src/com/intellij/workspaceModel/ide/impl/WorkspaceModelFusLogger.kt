@@ -11,7 +11,7 @@ class WorkspaceModelFusLogger : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = Util.GROUP
 
   object Util {
-    val GROUP = EventLogGroup("workspaceModel", 2)
+    val GROUP = EventLogGroup("workspace.model", 3)
 
     /**
      * Time of loading of iml files. These files are loaded to the empty storage on start. The loading happens every time, but
