@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,11 @@ public class Pair<A, B> {
     return new Pair<>(first, second);
   }
 
+  /**
+   * @deprecated use an explicit lambda expression instead, this won't make the code longer but make it easier to understand.
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   @NotNull
   public static <A, B> Function<A, Pair<A, B>> createFunction(final B value) {
     return new Function<A, Pair<A, B>>() {
