@@ -14,7 +14,7 @@ import java.util.Arrays;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 
-class MavenPathRelativizer extends CommonPathRelativizer {
+class MavenPathRelativizer extends SubPathRelativizer {
   private static final String IDENTIFIER = "$MAVEN_REPOSITORY$";
   private static final String M2_DIR = ".m2";
   private static final String CONF_DIR = "conf";

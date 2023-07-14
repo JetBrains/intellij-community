@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-class GradlePathRelativizer extends CommonPathRelativizer {
+class GradlePathRelativizer extends SubPathRelativizer {
   private static final String IDENTIFIER = "$GRADLE_REPOSITORY$";
   private static final String GRADLE_USER_HOME = "GRADLE_USER_HOME";
 
