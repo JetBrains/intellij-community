@@ -125,47 +125,50 @@ class KotlinNameSuggester(
     }
 
     /**
-     * Returns names based on the name of the value parameter, the expression PSI and the expression type.
+     * Returns names based on the name of the value parameter, the expression PSI and the expression type,
+     * validates them using [validator], and improves them by adding a numeric suffix in case of conflicts.
      * Examples:
      *  - `print(<selection>5</selection>)` -> {message, i, n}
      *  - `print(<selection>intArrayOf(5)</selection>)` -> {message, intArrayOf, ints}
      *  - `print(<selection>listOf(User("Mary"), User("John"))</selection>)` -> {message, listOf, users}
      */
-    fun KtAnalysisSession.suggestExpressionNames(expression: KtExpression): Sequence<String> {
-        return (suggestNamesByValueArgument(expression) +
-                suggestNamesByExpressionPSI(expression, validator = { true }) +
-                suggestNamesByType(expression)).distinct()
+    fun KtAnalysisSession.suggestExpressionNames(expression: KtExpression, validator: (String) -> Boolean = { true }): Sequence<String> {
+        return (suggestNamesByValueArgument(expression, validator) +
+                suggestNamesByExpressionPSI(expression, validator) +
+                suggestNamesByType(expression, validator)).distinct()
     }
 
     /**
-     * Returns names based on the expression type.
+     * Returns names based on the expression type, validates them using [validator], and improves them
+     * by adding a numeric suffix in case of conflicts.
      * Examples:
      *  - `5` -> {int, i, n}
      *  - `intArrayOf(5)` -> {ints}
      *  - listOf(User("Mary"), User("John")) -> {users}
      */
     context(KtAnalysisSession)
-    private fun suggestNamesByType(expression: KtExpression): Sequence<String> {
+    private fun suggestNamesByType(expression: KtExpression, validator: (String) -> Boolean): Sequence<String> {
         val type = expression.getKtType() ?: return emptySequence()
-        return suggestTypeNames(type)
+        return suggestTypeNames(type).map { name -> suggestNameByName(name, validator) }
     }
 
     /**
-     * Returns a sequence consisting of the name of the value parameter.
+     * Returns a sequence consisting of the name of the value parameter, validates it using [validator], and improves it
+     * by adding a numeric suffix in case of conflicts.
      * Examples:
      *  - `print(<selection>5</selection>)` -> {message}
      *  - `listOf(<selection>5</selection>)` -> {element}
      *  - `ints.filter <selection>{ it > 0 }</selection>` -> {predicate}
      */
     context(KtAnalysisSession)
-    private fun suggestNamesByValueArgument(expression: KtExpression): Sequence<String> {
+    private fun suggestNamesByValueArgument(expression: KtExpression, validator: (String) -> Boolean): Sequence<String> {
         val argumentExpression = expression.getOutermostParenthesizerOrThis()
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return emptySequence()
         val callElement = getCallElement(valueArgument) ?: return emptySequence()
         val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return emptySequence()
         if (!resolvedCall.symbol.hasStableParameterNames) return emptySequence()
         val parameter = resolvedCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return emptySequence()
-        return suggestNameByValidIdentifierName(parameter.name.asString(), validator = { true })?.let { sequenceOf(it) } ?: emptySequence()
+        return suggestNameByValidIdentifierName(parameter.name.asString(), validator)?.let { sequenceOf(it) } ?: emptySequence()
     }
 
     private fun getCallElement(valueArgument: KtValueArgument): KtCallElement? {
