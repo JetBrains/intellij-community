@@ -6,3 +6,5 @@ object yield {}
 fun test() {
     val foo = `yield`
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.UnsupportedYieldFix

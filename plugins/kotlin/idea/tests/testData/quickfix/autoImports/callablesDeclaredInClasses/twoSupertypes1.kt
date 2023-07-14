@@ -16,3 +16,5 @@ object ObjBase : Base(), SomeInterface
 fun usage(c: Other) {
     c.<caret>foo()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix

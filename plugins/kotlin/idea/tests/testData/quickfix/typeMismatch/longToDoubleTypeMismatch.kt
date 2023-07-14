@@ -3,3 +3,4 @@
 fun foo() {
     val x: Double = <caret>0L
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix

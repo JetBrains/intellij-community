@@ -7,3 +7,4 @@ fun toMutableMap() {
 }
 
 fun foo() = mapOf(1 to 2)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.SuspiciousCollectionReassignmentInspection$ChangeTypeToMutableFix

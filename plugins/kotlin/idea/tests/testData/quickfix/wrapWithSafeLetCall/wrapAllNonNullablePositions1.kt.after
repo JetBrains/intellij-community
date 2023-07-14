@@ -9,3 +9,4 @@ fun test(s: String?) {
 
 fun notNull(name: String): String = name
 fun nullable(name: String?): String = ""
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrapWithSafeLetCallFix

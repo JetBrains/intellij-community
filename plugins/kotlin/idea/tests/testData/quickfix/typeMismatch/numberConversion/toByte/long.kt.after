@@ -4,3 +4,4 @@ fun byte(x: Byte) {}
 fun test(l: Long) {
     byte(l.toByte())
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

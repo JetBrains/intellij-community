@@ -16,3 +16,4 @@ class Test : Foo<Int, Int>(), Bar<Int, Int> {
     override val <caret>bar1 = 3L
     override fun bar2(): Int = 4
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeSuperTypeListEntryTypeArgumentFix

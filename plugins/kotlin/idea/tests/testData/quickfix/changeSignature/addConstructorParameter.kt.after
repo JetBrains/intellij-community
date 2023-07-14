@@ -10,3 +10,5 @@ open class Base(var x: Int, d: Double) {
 }
 
 open class Inherited(x: Int) : Base(1, 2.5) {}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix

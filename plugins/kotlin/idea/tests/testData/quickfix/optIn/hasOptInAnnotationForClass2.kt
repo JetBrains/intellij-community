@@ -19,3 +19,4 @@ class C : I {
     override fun foo() {}
     override fun <caret>bar() {}
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixesFactory$UseOptInAnnotationFix

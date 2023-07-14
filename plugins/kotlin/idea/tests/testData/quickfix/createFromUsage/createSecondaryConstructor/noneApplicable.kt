@@ -9,3 +9,4 @@ fun construct() {
     // todo: add this()
     val vA = <caret>CtorSecondary(2, 3)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix

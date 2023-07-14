@@ -12,3 +12,5 @@ fun foo() {
     val v3 = Array<String>::class.java
     val v4 = Random::class.java
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageInWholeProjectFix

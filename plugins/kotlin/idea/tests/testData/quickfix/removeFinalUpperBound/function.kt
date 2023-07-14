@@ -5,3 +5,4 @@ data class DC(val x: Int, val y: String) {
         val a: S = b
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveFinalUpperBoundFix

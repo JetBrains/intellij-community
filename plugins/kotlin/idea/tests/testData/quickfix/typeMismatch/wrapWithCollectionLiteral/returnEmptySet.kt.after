@@ -5,3 +5,5 @@ fun foo(a: String?): Set<String> {
     val w = a ?: return emptySet()<caret>
     return setOf(w)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrapWithCollectionLiteralCallFix

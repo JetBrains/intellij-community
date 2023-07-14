@@ -17,3 +17,4 @@ interface ZZZZ : ZZZ {
 fun usage(z: ZZZ) {
     z.f(<caret>3)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix

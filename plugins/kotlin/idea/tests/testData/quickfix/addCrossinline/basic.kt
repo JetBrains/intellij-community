@@ -11,3 +11,5 @@ inline fun bar(block: () -> Unit) {
         }
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddInlineModifierFix

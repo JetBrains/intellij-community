@@ -11,3 +11,4 @@ object Old {
 }
 
 val test = some.<caret>Old
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

@@ -8,3 +8,4 @@ fun foo(x: Int, linkedHashSet: LinkedHashSet<Int>) {
     foo(1, LinkedHashSet<Int>());
     foo(2, java.util.LinkedHashSet<Int>());
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix

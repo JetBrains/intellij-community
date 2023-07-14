@@ -7,3 +7,4 @@ fun foo() {
 
 // IGNORE_FIR
 // TOOL: org.jetbrains.kotlin.idea.inspections.ConstantConditionIfInspection
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

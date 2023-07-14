@@ -13,3 +13,4 @@ class Foo {
     constructor(a: Int, b: Int) : this(a) {
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

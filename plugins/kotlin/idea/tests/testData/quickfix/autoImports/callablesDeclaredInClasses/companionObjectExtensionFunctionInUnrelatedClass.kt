@@ -14,3 +14,5 @@ object BObject : B()
 fun usage() {
     A.<caret>baz()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix

@@ -14,3 +14,5 @@ fun foo(x: X?, p: Boolean) {
     else
         null
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

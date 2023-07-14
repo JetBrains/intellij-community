@@ -20,3 +20,4 @@ object StandAloneContext {
 fun koin() {
     val i = stopKoin
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

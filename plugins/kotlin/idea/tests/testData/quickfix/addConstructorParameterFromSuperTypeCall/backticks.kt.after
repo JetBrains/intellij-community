@@ -3,3 +3,4 @@
 class `My class`
 open class A(`first param`: `My class`)
 class B(`first param`: `My class`) : A(`first param`)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddConstructorParameterFromSuperTypeCallFix

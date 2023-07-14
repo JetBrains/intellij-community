@@ -5,3 +5,4 @@ fun test() {
     val map = mutableMapOf(1 to 2)<caret>
     map += 3 to 4
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.SuspiciousCollectionReassignmentInspection$ChangeTypeToMutableFix

@@ -12,3 +12,4 @@ fun main() {
     val c = Demo()
     <caret>c.attribute = "test"
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPublicFix

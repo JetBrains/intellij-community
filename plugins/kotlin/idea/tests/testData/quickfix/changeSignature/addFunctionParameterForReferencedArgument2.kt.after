@@ -5,3 +5,4 @@ fun bar(isObject: Boolean, isObject1: Boolean) {}
 fun test(isObject: Boolean) {
     bar(true, isObject)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix

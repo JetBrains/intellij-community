@@ -9,3 +9,5 @@ fun <T> aMethod(a: T, block: () -> Unit) {
 fun main() {
     <caret>aMethod(1) {}
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

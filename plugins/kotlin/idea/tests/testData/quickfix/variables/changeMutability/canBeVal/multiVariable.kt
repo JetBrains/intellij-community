@@ -8,3 +8,4 @@ fun getPair(): Pair<Int, String>? = null
 
 data class Pair<T1, T2>(val a: T1, val b: T2)
 /* IGNORE_FIR */
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix

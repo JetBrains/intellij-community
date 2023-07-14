@@ -7,3 +7,4 @@ enum class Foo {
     D(),
     E
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix

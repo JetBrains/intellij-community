@@ -11,3 +11,5 @@ fun bar() {
         y.hashCode()
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RenameToUnderscoreFix

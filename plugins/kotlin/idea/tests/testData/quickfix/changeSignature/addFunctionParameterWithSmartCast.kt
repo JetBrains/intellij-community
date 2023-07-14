@@ -11,3 +11,4 @@ val bar = when(subFoo){
     is Foo.SubFoo -> fooFun(<caret>subFoo)
     else -> 0
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix

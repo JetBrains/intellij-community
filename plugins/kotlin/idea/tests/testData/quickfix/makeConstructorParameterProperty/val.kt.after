@@ -5,3 +5,4 @@ class A(<selection>private<caret></selection> val foo: String) {
         val a = foo
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MakeConstructorParameterPropertyFix

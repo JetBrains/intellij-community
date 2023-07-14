@@ -3,3 +3,4 @@
 open class My(val x: Int) {
     val y = x
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10

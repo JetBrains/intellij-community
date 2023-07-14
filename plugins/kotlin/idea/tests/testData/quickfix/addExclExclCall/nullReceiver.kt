@@ -6,3 +6,4 @@ fun foo(arg: String?) {
         arg<caret>.length
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

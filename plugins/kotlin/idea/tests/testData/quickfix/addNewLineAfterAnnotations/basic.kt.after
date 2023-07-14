@@ -9,3 +9,5 @@ fun foo(y: Int) {
     @Ann
     x += 2
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddNewLineAfterAnnotationsFix

@@ -2,3 +2,4 @@
 fun test(s: Short?, l: Long?): Boolean {
     return s?.toLong() == l
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

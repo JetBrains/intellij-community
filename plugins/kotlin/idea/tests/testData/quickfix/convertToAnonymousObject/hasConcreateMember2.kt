@@ -14,3 +14,5 @@ fun foo(i: I) {}
 fun test() {
     foo(<caret>I {})
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertToAnonymousObjectFix

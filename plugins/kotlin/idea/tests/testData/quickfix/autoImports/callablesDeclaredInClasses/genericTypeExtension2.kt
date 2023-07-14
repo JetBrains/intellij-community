@@ -11,3 +11,5 @@ object StringObj : Base<String>()
 fun usage() {
     "".<caret>ext()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix

@@ -18,3 +18,4 @@ package kotlin
 fun some() {
     FunctionReference<caret>::class
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix

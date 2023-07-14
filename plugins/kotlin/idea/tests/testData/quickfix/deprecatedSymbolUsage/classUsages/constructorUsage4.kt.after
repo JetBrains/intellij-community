@@ -9,3 +9,5 @@ class NewClass(p: Int)
 fun foo() {
     <caret>NewClass(1 + 1)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

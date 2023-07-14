@@ -1,3 +1,4 @@
 // "Specify return type explicitly" "true"
 // WITH_STDLIB
 fun foo(): Nothing = throw IllegalArgumentException()
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention

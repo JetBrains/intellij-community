@@ -5,3 +5,4 @@ fun test() {
         break@<caret>foo
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CreateLabelFix$ForLoop

@@ -9,3 +9,4 @@
 internal open class InternalString
 
 class User<T : <caret>User<T, InternalString>, R>
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToInternalFix

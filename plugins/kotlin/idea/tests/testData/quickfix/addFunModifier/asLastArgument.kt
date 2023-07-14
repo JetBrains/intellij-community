@@ -8,3 +8,5 @@ fun foo(i: I) {}
 fun test() {
     val x = foo(<caret>I {})
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunModifierFix

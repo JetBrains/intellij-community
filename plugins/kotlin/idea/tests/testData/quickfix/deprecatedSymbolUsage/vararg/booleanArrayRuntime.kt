@@ -11,3 +11,5 @@ fun newFun(p: BooleanArray){}
 fun foo() {
     <caret>oldFun(true, false)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

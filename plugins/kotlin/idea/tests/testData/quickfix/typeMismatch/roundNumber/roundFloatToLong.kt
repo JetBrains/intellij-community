@@ -5,3 +5,4 @@ fun test(f: Float) {
 }
 
 fun bar(x: Long) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RoundNumberFix

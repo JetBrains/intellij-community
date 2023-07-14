@@ -10,3 +10,5 @@ open class Base() {
 }
 
 open class Inherited(x: Int) : Base() {}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeFunctionSignatureFix$Companion$RemoveParameterFix

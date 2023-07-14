@@ -4,3 +4,4 @@
 fun takeUInt(u: Int) = 0
 
 val b = takeUInt(1)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeParameterTypeFix

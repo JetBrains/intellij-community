@@ -8,3 +8,4 @@ class Foo: A<Int, String>(1, "2") {
 open class A<T, U>(t: T, u: U) {
 
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromUsageFix

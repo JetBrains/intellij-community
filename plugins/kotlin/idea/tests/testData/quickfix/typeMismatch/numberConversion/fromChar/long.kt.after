@@ -5,3 +5,4 @@ fun long(x: Long) {}
 fun test(c: Char) {
     long(c.code.toLong())
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

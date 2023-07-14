@@ -6,3 +6,5 @@ interface A<P,Q> {
 class B<R,S> : A<R,S> {
     <caret>override fun f(y: S, x: List<Set<R>>) {}
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeMemberFunctionSignatureFix

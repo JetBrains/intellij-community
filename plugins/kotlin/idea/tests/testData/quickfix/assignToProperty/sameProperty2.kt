@@ -6,3 +6,4 @@ class Test {
         <caret>foo = 2
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AssignToPropertyFix

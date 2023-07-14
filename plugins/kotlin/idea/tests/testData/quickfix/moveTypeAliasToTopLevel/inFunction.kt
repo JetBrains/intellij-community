@@ -7,3 +7,4 @@ fun bar() {
 }
 
 fun qux() {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveTypeAliasToTopLevelFix

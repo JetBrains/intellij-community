@@ -12,3 +12,5 @@ private data class Data(val x: Int)
 class First {
     internal fun <caret>bar(x: Int) = Data(x)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToInternalFix

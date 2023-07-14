@@ -13,3 +13,5 @@ typealias New = NewClass
 fun foo() {
     New(1)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

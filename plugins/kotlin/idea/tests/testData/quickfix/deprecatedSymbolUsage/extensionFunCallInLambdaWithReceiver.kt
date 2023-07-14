@@ -13,3 +13,5 @@ fun test() {
         "a".<caret>oldFun("b")
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

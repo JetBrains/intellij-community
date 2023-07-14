@@ -11,3 +11,5 @@ object Math {
 }
 
 val test = kotlin.math.cos(kotlin.math.PI)
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

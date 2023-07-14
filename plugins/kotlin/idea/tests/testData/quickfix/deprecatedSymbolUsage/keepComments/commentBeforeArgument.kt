@@ -12,3 +12,5 @@ fun foo() {
                   2, // 2
                   3, /* 4 */ 4)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

@@ -15,3 +15,5 @@ class Derived2 : OldClass {
     constructor(p: Int) : super(p)
     constructor() : super()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageInWholeProjectFix

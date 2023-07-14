@@ -14,3 +14,5 @@ fun foo(): Int {
 }
 
 fun bar(): Int? = null
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

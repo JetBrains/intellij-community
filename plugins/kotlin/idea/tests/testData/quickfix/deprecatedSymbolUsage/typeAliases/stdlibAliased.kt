@@ -6,3 +6,4 @@ package ppp
 fun x(): Throwable = RuntimeException()
 
 val e = <caret>x()
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

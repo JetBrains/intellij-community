@@ -11,3 +11,4 @@ abstract class C {
 ) : C() {
     override val q: Int = 0
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler

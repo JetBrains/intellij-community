@@ -11,3 +11,5 @@ fun test(otherList: List<Int>, flag: Boolean) {
         list <caret>+= 4
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.ReplaceWithOrdinaryAssignmentIntention

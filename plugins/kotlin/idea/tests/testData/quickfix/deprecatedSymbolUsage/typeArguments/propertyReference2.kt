@@ -13,3 +13,4 @@ fun test() {
         val b: KProperty0<Int> = this::foo<caret>
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

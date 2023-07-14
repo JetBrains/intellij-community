@@ -3,3 +3,5 @@
 operator fun Any.invoke() = this
 
 fun foo(arg: Any) = "${arg().<caret>toString()}"
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RemoveToStringInStringTemplateInspection
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveToStringFix

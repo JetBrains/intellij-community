@@ -5,3 +5,5 @@ class A() {
         get(): <caret>Any = java.util.LinkedHashSet<Int>()
 }
 /* IGNORE_FIR */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeAccessorTypeFix

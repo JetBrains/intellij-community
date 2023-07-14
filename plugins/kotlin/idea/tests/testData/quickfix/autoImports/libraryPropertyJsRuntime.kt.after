@@ -8,3 +8,5 @@ import kotlinx.browser.localStorage
 fun foo() {
     localStorage
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix

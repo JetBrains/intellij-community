@@ -5,3 +5,4 @@ class A<T, U> {
         fun test(x: Any) = x is C<caret>
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddStartProjectionsForInnerClass

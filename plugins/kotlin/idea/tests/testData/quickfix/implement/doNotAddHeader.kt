@@ -10,3 +10,5 @@ expect interface InterfaceWithFuns {
 
 class <caret>ChildOfInterface : InterfaceWithFuns{
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler

@@ -6,3 +6,5 @@ interface A {
 interface B : A {
     <caret>override fun f(a: String)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeMemberFunctionSignatureFix

@@ -5,3 +5,4 @@ fun double(x: Double) {}
 fun test(c: Char) {
     double(c.code.toDouble())
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

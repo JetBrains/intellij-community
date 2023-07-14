@@ -4,3 +4,4 @@ fun foo(s : String) = Unit
 fun test() {
     foo(<caret>null, "")
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix

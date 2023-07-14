@@ -8,3 +8,5 @@ fun <R> foo(x: R & Any) {}
 fun <T : Foo?> bar(x: T) {
     foo(<caret>x)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.HighPriorityMakeUpperBoundNonNullableFix

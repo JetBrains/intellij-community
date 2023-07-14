@@ -10,3 +10,5 @@ object AObject : A()
 fun usage() {
     "hello".<caret>ext()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix

@@ -11,3 +11,4 @@ interface CoreLibraryApi
 fun interface SomeImplementation : CoreLibraryApi<caret> {
     fun method()
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixesFactory$PropagateOptInAnnotationFix

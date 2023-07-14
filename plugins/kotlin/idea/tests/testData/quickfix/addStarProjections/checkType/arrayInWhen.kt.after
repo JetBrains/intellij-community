@@ -3,3 +3,5 @@ fun test(a: Any) = when (a) {
     is Array<*> -> 1
     else -> 2
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix

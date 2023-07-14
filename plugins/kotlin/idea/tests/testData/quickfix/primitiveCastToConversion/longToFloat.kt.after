@@ -3,3 +3,4 @@
 fun foo() {
     val a = 1L.toFloat()<caret>
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplacePrimitiveCastWithNumberConversionFix

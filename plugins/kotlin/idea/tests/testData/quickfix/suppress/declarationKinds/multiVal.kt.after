@@ -6,3 +6,6 @@ fun foo() {
 }
 
 data class Pair<A, B>(val a: A, val b: B)
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction

@@ -10,3 +10,4 @@ fun <T> new() {
 fun test() {
     new<Int>()
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

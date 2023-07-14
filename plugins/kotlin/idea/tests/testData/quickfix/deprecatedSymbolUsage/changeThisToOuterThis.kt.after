@@ -16,3 +16,5 @@ class Derived : Base() {
 }
 
 fun String.newFun(x: Base){}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

@@ -5,3 +5,4 @@ fun foo(a: String?) {
         it<caret>.length
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithSafeCallForScopeFunctionFix

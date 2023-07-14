@@ -11,3 +11,5 @@ open class Base {
 class Derived : Base() {
     override fun <caret>foo() {}
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddAnnotationWithArgumentsFix
