@@ -30,8 +30,8 @@ import java.io.File
 @RunWith(JUnit3RunnerWithInners::class)
 @TestMetadata("testData/highlighter/compiled")
 class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
-    @TestMetadata("kotlin/collections/CollectionsKt.kotlin_metadata")
-    fun testKotlinCollectionsCollectionsKtKotlinMetadata() {
+    @TestMetadata("kotlin/collections/GroupingKt.kotlin_metadata")
+    fun testKotlinCollectionsGroupingKtKotlinMetadata() {
         doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlibCommon, FileHighlightingSetting.SKIP_INSPECTION)
     }
 
