@@ -9,6 +9,7 @@ import com.intellij.execution.util.ProgramParametersConfigurator
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.getPathMapper
+import com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir
 import com.jetbrains.python.sdk.PythonEnvUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
@@ -87,7 +88,7 @@ private fun <T> buildScriptFunctionWithConsoleRun(config: PythonRunConfiguration
   }
   if (!workingDir.isEmpty()) {
     scriptBuilder.append(t(", wdir="))
-    scriptBuilder.append(toStringLiteral(toTargetPath(workingDir)))
+    scriptBuilder.append(toStringLiteral(toTargetPath(getExpandedWorkingDir(config))))
   }
   if (config.isModuleMode) {
     scriptBuilder.append(t(", is_module=True"))

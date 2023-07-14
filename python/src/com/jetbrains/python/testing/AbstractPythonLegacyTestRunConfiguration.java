@@ -24,11 +24,14 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
-import java.io.File;
-import java.util.Objects;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.util.Objects;
+
+import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
 
 /**
  * Parent of all python test old-style test runners.
@@ -58,7 +61,7 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
   public String getWorkingDirectorySafe() {
     final String workingDirectoryFromConfig = getWorkingDirectory();
     if (StringUtil.isNotEmpty(workingDirectoryFromConfig)) {
-      return workingDirectoryFromConfig;
+      return getExpandedWorkingDir(this);
     }
 
     final String folderName = myFolderName;
@@ -286,7 +289,7 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
   public RefactoringElementListener getRefactoringElementListener(PsiElement element) {
     if (element instanceof PsiDirectory) {
       VirtualFile vFile = ((PsiDirectory)element).getVirtualFile();
-      if ((myTestType == TestType.TEST_FOLDER && pathsEqual(vFile, myFolderName)) || pathsEqual(vFile, getWorkingDirectory())) {
+      if ((myTestType == TestType.TEST_FOLDER && pathsEqual(vFile, myFolderName)) || pathsEqual(vFile, getExpandedWorkingDir(this))) {
         return new RefactoringElementAdapter() {
           @Override
           protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
@@ -314,7 +317,7 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
     }
     File scriptFile = new File(myScriptName);
     if (!scriptFile.isAbsolute()) {
-      scriptFile = new File(getWorkingDirectory(), myScriptName);
+      scriptFile = new File(getExpandedWorkingDir(this), myScriptName);
     }
     PsiFile containingFile = element.getContainingFile();
     VirtualFile vFile = containingFile == null ? null : containingFile.getVirtualFile();

@@ -40,6 +40,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
+
 /**
  * @author Leonid Shalupov
  */
@@ -409,7 +411,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   /**
    * Patches command line before virtualenv patchers.
    * Default implementation does nothing.
-   *
    */
   protected void patchCommandLineFirst(GeneralCommandLine commandLine, String sdkHome) {
     // override
@@ -418,7 +419,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   /**
    * Patches command line after virtualenv patchers.
    * Default implementation does nothing.
-   *
    */
   protected void patchCommandLineLast(GeneralCommandLine commandLine, String sdkHome) {
     // override
@@ -426,7 +426,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   /**
    * Alters PATH so that a virtualenv is activated, if present.
-   *
    */
   protected void patchCommandLineForVirtualenv(@NotNull GeneralCommandLine commandLine, @NotNull Sdk sdk) {
     PythonSdkType.patchCommandLineForVirtualenv(commandLine, sdk);
@@ -458,7 +457,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    */
   @NotNull
   public String getWorkingDirectorySafe() {
-    final String result = StringUtil.isEmpty(myWorkingDirectory) ? getProject().getBasePath() : myWorkingDirectory;
+    final String result = StringUtil.isEmpty(myWorkingDirectory) ? getProject().getBasePath() : getExpandedWorkingDir(this);
     if (result != null) {
       return result;
     }

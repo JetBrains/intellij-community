@@ -21,6 +21,7 @@ import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.ProgramParametersConfigurator;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -308,7 +309,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     scriptParameters.addParameters(getExpandedScriptParameters(myConfig));
 
     if (!StringUtil.isEmptyOrSpaces(myConfig.getWorkingDirectory())) {
-      commandLine.setWorkDirectory(myConfig.getWorkingDirectory());
+      commandLine.setWorkDirectory(getExpandedWorkingDir(myConfig));
     }
     String inputFile = myConfig.getInputFile();
     if (myConfig.isRedirectInput() && !StringUtil.isEmptyOrSpaces(inputFile)) {
@@ -326,5 +327,10 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   private static @NotNull List<String> getExpandedScriptParameters(@NotNull PythonRunConfiguration config) {
     final String parameters = config.getScriptParameters();
     return ProgramParametersConfigurator.expandMacrosAndParseParameters(parameters);
+  }
+
+  public static @NotNull String getExpandedWorkingDir(@NotNull AbstractPythonRunConfiguration config) {
+    final String workingDirectory = config.getWorkingDirectory();
+    return ProgramParametersUtil.expandPathAndMacros(workingDirectory, config.getModule(), config.getProject());
   }
 }
