@@ -153,8 +153,8 @@ class KotlinNameSuggester(
     }
 
     /**
-     * Returns a sequence consisting of the name of the value parameter, validates it using [validator], and improves it
-     * by adding a numeric suffix in case of conflicts.
+     * Returns a `Sequence` consisting of the name, based on the value parameter name and validated
+     * by the [validator], and improved by adding a numeric suffix in case of conflicts
      * Examples:
      *  - `print(<selection>5</selection>)` -> {message}
      *  - `listOf(<selection>5</selection>)` -> {element}
