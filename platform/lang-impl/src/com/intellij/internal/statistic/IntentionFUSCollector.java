@@ -60,10 +60,7 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
       }
     }
     LocalQuickFix quickFix = QuickFixWrapper.unwrap(action);
-    if (quickFix != null) {
-      return quickFix.getClass();
-    }
-    return action.getClass();
+    return ReportingClassSubstitutor.getClassToReport(quickFix != null ? quickFix : action);
   }
 
   public static void reportShownIntentions(@NotNull Project project,
