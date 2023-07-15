@@ -27,9 +27,9 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.measureTimeMillis
 import com.jetbrains.rd.util.reactive.viewNotNull
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
 import java.awt.image.BufferedImage
 import java.io.File
-import java.io.IOException
 import java.net.InetAddress
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
@@ -236,38 +236,54 @@ open class DistributedTestHost {
     if (application.isHeadlessEnvironment) {
       error("Don't try making screenshots on application in headless mode.")
     }
-    val fileNameWithPostfix = if (actionName.endsWith(".png")) actionName else "$actionName.png"
-    val finalFileName = fileNameWithPostfix.replace("[^a-zA-Z.]".toRegex(), "_").replace("_+".toRegex(), "_")
+
+    fun screenshotFile(suffix: String? = null): File {
+      var fileName = actionName.replace("[^a-zA-Z.]".toRegex(), "_").replace("_+".toRegex(), "_")
+      if (suffix != null) {
+        fileName += suffix
+      }
+      if (!fileName.endsWith(".png")) {
+        fileName += ".png"
+      }
+      return File(PathManager.getLogPath()).resolve(fileName)
+    }
 
     val result = CompletableFuture<Boolean>()
     ApplicationManager.getApplication().invokeLater {
-      val frame = WindowManager.getInstance().getIdeFrame(projectOrNull)
-      if (frame != null) {
-        val component = frame.component
-        val img = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
-        component.printAll(img.createGraphics())
-        ApplicationManager.getApplication().executeOnPooledThread {
-          try {
-            result.complete(ImageIO.write(img, "png", File(PathManager.getLogPath()).resolve(finalFileName)))
-          }
-          catch (e: IOException) {
-            logger.info(e)
+      fun makeScreenshotOfComponent(screenshotFile: File, component: Component?) {
+        if (component != null) {
+          logger.info("Making screenshot")
+          val img = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
+          component.printAll(img.createGraphics())
+          ApplicationManager.getApplication().executeOnPooledThread {
+            try {
+              ImageIO.write(img, "png", screenshotFile)
+              logger.info("Screenshot is saved at: $screenshotFile")
+            }
+            catch (t: Throwable) {
+              logger.warn("Exception while writing screenshot image to file", t)
+            }
           }
         }
+        else {
+          logger.warn("Frame was empty when makeScreenshot was called")
+        }
       }
-      else {
-        logger.info("Frame was empty when makeScreenshot was called")
-        result.complete(false)
+
+      val focusedComponent = WindowManager.getInstance().getFocusedComponent(project)?.focusCycleRootAncestor
+      val projectFrame = WindowManager.getInstance().getIdeFrame(projectOrNull)?.component
+      if (focusedComponent != projectFrame) {
+        makeScreenshotOfComponent(screenshotFile("_focusedWindow"), focusedComponent)
       }
+      val screenshotFile = screenshotFile()
+      makeScreenshotOfComponent(screenshotFile, projectFrame)
+      result.complete(screenshotFile.exists())
     }
 
     IdeEventQueue.getInstance().flushQueue()
 
     try {
-      if (result[45, TimeUnit.SECONDS])
-        logger.info("Screenshot is saved at: $finalFileName")
-      else
-        logger.info("No writers were found for screenshot")
+      result[45, TimeUnit.SECONDS]
     }
     catch (e: Throwable) {
       when (e) {
