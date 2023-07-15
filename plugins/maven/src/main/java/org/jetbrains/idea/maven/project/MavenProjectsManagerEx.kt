@@ -22,7 +22,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -37,7 +36,10 @@ import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
-import org.jetbrains.idea.maven.utils.*
+import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
+import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.performInBackground
 import java.util.function.Supplier
 
 @ApiStatus.Experimental
@@ -75,54 +77,45 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                                             profiles: MavenExplicitProfiles,
                                                             modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     blockingContext { doAddManagedFilesWithProfiles(files, profiles, null) }
-    return updateAllMavenProjects(MavenImportSpec(false, true, false), modelsProvider, false)
+    return updateAllMavenProjects(MavenImportSpec(false, true, false), modelsProvider)
   }
 
   override suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
-    return importMavenProjects(projectsToImport, null, true)
+    return importMavenProjects(projectsToImport, null)
   }
 
   private suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>,
-                                          modelsProvider: IdeModifiableModelsProvider?,
-                                          waitForPostTasks: Boolean): List<Module> {
-    val createdModules = doImportMavenProjects(projectsToImport, false, modelsProvider, waitForPostTasks)
+                                          modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+    val createdModules = doImportMavenProjects(projectsToImport, false, modelsProvider)
     fireProjectImportCompleted()
     return createdModules
   }
 
   override fun importMavenProjectsSync() {
-    prepareImporter(null, emptyMap(), false, true).importMavenProjectsBlocking()
+    prepareImporter(null, emptyMap(), false).importMavenProjectsBlocking()
   }
 
   private suspend fun doImportMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>,
                                             importModuleGroupsRequired: Boolean,
-                                            modelsProvider: IdeModifiableModelsProvider?,
-                                            waitForPostTasks: Boolean): List<Module> {
-    return prepareImporter(modelsProvider, projectsToImport, importModuleGroupsRequired, waitForPostTasks).importMavenProjects()
+                                            modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+    return prepareImporter(modelsProvider, projectsToImport, importModuleGroupsRequired).importMavenProjects()
   }
 
   private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider?,
                               projectsToImport: Map<MavenProject, MavenProjectChanges>,
-                              importModuleGroupsRequired: Boolean,
-                              waitForPostTasks: Boolean): MavenProjectsManagerImporter {
+                              importModuleGroupsRequired: Boolean): MavenProjectsManagerImporter {
     if (projectsToImport.any { it.key == null }) {
       throw IllegalArgumentException("Null key in projectsToImport")
     }
     val finalModelsProvider = modelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
-    return MavenProjectsManagerImporter(
-      finalModelsProvider,
-      projectsToImport,
-      importModuleGroupsRequired,
-      waitForPostTasks
-    )
+    return MavenProjectsManagerImporter(finalModelsProvider, projectsToImport, importModuleGroupsRequired)
   }
 
   private data class ImportResult(val createdModules: List<Module>, val postTasks: List<MavenProjectsProcessorTask>)
 
   private inner class MavenProjectsManagerImporter(private val modelsProvider: IdeModifiableModelsProvider,
                                                    private val projectsToImport: Map<MavenProject, MavenProjectChanges>,
-                                                   private val importModuleGroupsRequired: Boolean,
-                                                   private val waitForPostTasks: Boolean) {
+                                                   private val importModuleGroupsRequired: Boolean) {
     @RequiresBlockingContext
     fun importMavenProjectsBlocking(): List<Module> {
       return runBlockingMaybeCancellable { importMavenProjectsBg() }
@@ -141,24 +134,14 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         return@withBackgroundProgress importResult
       }
       withBackgroundProgress(project, MavenProjectBundle.message("maven.post.processing"), true) {
-        performPostImportTasks(importResult.postTasks)
+        blockingContext {
+          performPostImportTasks(importResult.postTasks)
+        }
       }
       return importResult.createdModules
     }
 
-    fun performPostImportTasks(postTasks: List<MavenProjectsProcessorTask>) {
-      if (waitForPostTasks) {
-        doPerformPostImportTasks(postTasks)
-      }
-      else {
-        val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
-        cs.launch {
-          doPerformPostImportTasks(postTasks)
-        }
-      }
-    }
-
-    private fun doPerformPostImportTasks(postTasks: List<MavenProjectsProcessorTask>) {
+    private fun performPostImportTasks(postTasks: List<MavenProjectsProcessorTask>) {
       val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
       for (task in postTasks) {
         task.perform(myProject, embeddersManager, mavenConsole, indicator)
@@ -221,7 +204,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   private suspend fun importSettings(importModuleGroupsRequired: Boolean) {
-    doImportMavenProjects(emptyMap(), importModuleGroupsRequired, null, true)
+    doImportMavenProjects(emptyMap(), importModuleGroupsRequired, null)
   }
 
   private suspend fun importAllProjects() {
@@ -266,7 +249,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private suspend fun doUpdateMavenProjects(spec: MavenImportSpec,
                                             filesToUpdate: MutableList<VirtualFile>,
                                             filesToDelete: MutableList<VirtualFile>): List<Module> {
-    return doUpdateMavenProjects(spec, null, true) { readMavenProjects(spec, filesToUpdate, filesToDelete) }
+    return doUpdateMavenProjects(spec, null) { readMavenProjects(spec, filesToUpdate, filesToDelete) }
   }
 
   private fun readMavenProjects(spec: MavenImportSpec,
@@ -314,25 +297,22 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private val importMutex = Mutex()
 
   override suspend fun updateAllMavenProjects(spec: MavenImportSpec): List<Module> {
-    return updateAllMavenProjects(spec, null, true)
+    return updateAllMavenProjects(spec, null)
   }
 
   private suspend fun updateAllMavenProjects(spec: MavenImportSpec,
-                                             modelsProvider: IdeModifiableModelsProvider?,
-                                             waitForPostTasks: Boolean): List<Module> {
-    return importMutex.withLock { doUpdateAllMavenProjects(spec, modelsProvider, waitForPostTasks) }
+                                             modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+    return importMutex.withLock { doUpdateAllMavenProjects(spec, modelsProvider) }
   }
 
   private suspend fun doUpdateAllMavenProjects(spec: MavenImportSpec,
-                                               modelsProvider: IdeModifiableModelsProvider?,
-                                               waitForPostTasks: Boolean): List<Module> {
+                                               modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     checkOrInstallMavenWrapper(project)
-    return doUpdateMavenProjects(spec, modelsProvider, waitForPostTasks) { readAllMavenProjects(spec) }
+    return doUpdateMavenProjects(spec, modelsProvider) { readAllMavenProjects(spec) }
   }
 
   private suspend fun doUpdateMavenProjects(spec: MavenImportSpec,
                                             modelsProvider: IdeModifiableModelsProvider?,
-                                            waitForPostTasks: Boolean,
                                             read: () -> MavenProjectsTreeUpdateResult): List<Module> {
     // display all import activities using the same build progress
     logDebug("Start update ${project.name}, ${spec.isForceReading}, ${spec.isForceResolve}, ${spec.isExplicitImport}")
@@ -384,7 +364,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                             importingSettings.isDownloadSourcesAutomatically,
                             importingSettings.isDownloadDocsAutomatically)
 
-          importMavenProjects(projectsToImport, modelsProvider, waitForPostTasks)
+          importMavenProjects(projectsToImport, modelsProvider)
         }
 
         MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
