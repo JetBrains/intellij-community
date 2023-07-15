@@ -3,12 +3,10 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.intellij.testFramework.rules.TempDirectoryExtension;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
@@ -18,9 +16,6 @@ import java.nio.file.Path;
 public class IntFileAttributesStorageTest {
   private static final int ENOUGH_VALUES = 1 << 22;
   private static final int DEFAULT_VALUE = 0;
-
-  @RegisterExtension
-  public final TempDirectoryExtension tempDirectory = new TempDirectoryExtension();
 
   private FSRecordsImpl vfs;
   private IntFileAttributesStorage attributeStorage;
@@ -38,11 +33,11 @@ public class IntFileAttributesStorageTest {
     attributeStorage.close();
   }
 
-  private @NotNull IntFileAttributesStorage openAndEnsureMatchVFS(@NotNull FSRecordsImpl vfs) throws IOException {
+  private static @NotNull IntFileAttributesStorage openAndEnsureMatchVFS(@NotNull FSRecordsImpl vfs) throws IOException {
     return IntFileAttributesStorage.openAndEnsureMatchVFS(vfs, "testIntAttributeStorage");
   }
 
-  private @NotNull IntFileAttributesStorage openWithoutMatchingVFS(@NotNull FSRecordsImpl vfs) throws IOException {
+  private static @NotNull IntFileAttributesStorage openWithoutMatchingVFS(@NotNull FSRecordsImpl vfs) throws IOException {
     return IntFileAttributesStorage.openOrCreate(vfs, "testIntAttributeStorage");
   }
 

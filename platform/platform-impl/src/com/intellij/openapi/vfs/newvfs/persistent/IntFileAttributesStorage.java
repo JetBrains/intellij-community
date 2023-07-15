@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -55,14 +56,16 @@ public class IntFileAttributesStorage implements AutoCloseable {
   //       is at least self-consistent -- particular file's attribute was either updated or not, but not partially
   //       updated
 
-  private static final int HEADER_VERSION_OFFSET = 0;
-  /** Next field is int64, must be 64-aligned for volatile access, so insert additional int32 */
-  private static final int HEADER_RESERVED_OFFSET = HEADER_VERSION_OFFSET + Integer.BYTES;
+  private static class HeaderLayout {
+    private static final int VERSION_OFFSET = 0;
+    /** Next field is int64, must be 64-aligned for volatile access, so insert additional int32 */
+    private static final int RESERVED_OFFSET = VERSION_OFFSET + Integer.BYTES;
 
-  private static final int HEADER_VFS_CREATION_TIMESTAMP_OFFSET = HEADER_RESERVED_OFFSET + Integer.BYTES;
+    private static final int VFS_CREATION_TIMESTAMP_OFFSET = RESERVED_OFFSET + Integer.BYTES;
 
-  //reserve [8 x int64] just for the case
-  private static final int HEADER_SIZE = 8 * Long.BYTES;
+    //reserve [8 x int64] just for the case
+    private static final int HEADER_SIZE = 8 * Long.BYTES;
+  }
 
   private static final int DEFAULT_PAGE_SIZE = 4 * MiB;
 
@@ -85,9 +88,14 @@ public class IntFileAttributesStorage implements AutoCloseable {
     Files.createDirectories(fastAttributesDir);
 
     Path storagePath = fastAttributesDir.resolve(name);
-    long maxFileSize = HEADER_SIZE + BYTES_PER_ATTRIBUTE * (long)Integer.MAX_VALUE;
+    long maxFileSize = HeaderLayout.HEADER_SIZE + BYTES_PER_ATTRIBUTE * (long)Integer.MAX_VALUE;
     MMappedFileStorage storage = new MMappedFileStorage(storagePath, DEFAULT_PAGE_SIZE, maxFileSize);
-    return new IntFileAttributesStorage(vfs, storage);
+
+    PersistentFSRecordsStorage recordsStorage = vfs.connection().getRecords();
+    return new IntFileAttributesStorage(
+      storage,
+      recordsStorage::maxAllocatedID
+    );
   }
 
   public static void verifyVFSCreationTag(@NotNull FSRecordsImpl vfs,
@@ -109,30 +117,26 @@ public class IntFileAttributesStorage implements AutoCloseable {
   }
 
 
-  IntFileAttributesStorage(@NotNull FSRecordsImpl vfs,
-                           @NotNull MMappedFileStorage storage) throws IOException {
+  IntFileAttributesStorage(@NotNull MMappedFileStorage storage,
+                           @NotNull IntSupplier maxAllocatedFileIdSupplier) {
     this.storage = storage;
-
-    var recordsStorage = vfs.connection().getRecords();
-    maxAllocatedFileIdSupplier = () -> {
-      return recordsStorage.maxAllocatedID();
-    };
+    this.maxAllocatedFileIdSupplier = maxAllocatedFileIdSupplier;
   }
 
   public int getVersion() throws IOException {
-    return getIntHeaderField(HEADER_VERSION_OFFSET);
+    return getIntHeaderField(HeaderLayout.VERSION_OFFSET);
   }
 
   public void setVersion(int version) throws IOException {
-    setIntHeaderField(HEADER_VERSION_OFFSET, version);
+    setIntHeaderField(HeaderLayout.VERSION_OFFSET, version);
   }
 
   public long getVFSCreationTag() throws IOException {
-    return getLongHeaderField(HEADER_VFS_CREATION_TIMESTAMP_OFFSET);
+    return getLongHeaderField(HeaderLayout.VFS_CREATION_TIMESTAMP_OFFSET);
   }
 
   public void setVFSCreationTag(long vfsCreationTag) throws IOException {
-    setLongHeaderField(HEADER_VFS_CREATION_TIMESTAMP_OFFSET, vfsCreationTag);
+    setLongHeaderField(HeaderLayout.VFS_CREATION_TIMESTAMP_OFFSET, vfsCreationTag);
   }
 
 
@@ -185,6 +189,20 @@ public class IntFileAttributesStorage implements AutoCloseable {
 
   public void fsync() throws IOException {
     storage.fsync();
+  }
+
+  /**
+   * Closes the file, releases the mapped buffers, and tries to delete the file.
+   * <p/>
+   * Implementation note: the exact moment file memory-mapping is actually released and the file could be
+   * deleted -- is very OS/platform-dependent. E.g., Win is known to keep file 'in use' for some time even
+   * after unmap() call is already finished. JVM release mapped buffers with GC, which adds another level
+   * of uncertainty. Hence, if one needs to re-create the storage, it may be more reliable to just .clear()
+   * the current storage, than to close->remove->create-fresh-new.
+   */
+  public void closeAndRemove() throws IOException {
+    close();
+    FileUtil.delete(storage.storagePath());
   }
 
   @Override
@@ -255,7 +273,7 @@ public class IntFileAttributesStorage implements AutoCloseable {
   }
 
   private int toOffsetInFile(int fileId) {
-    return (fileId - FSRecords.ROOT_FILE_ID) * BYTES_PER_ATTRIBUTE + HEADER_SIZE;
+    return (fileId - FSRecords.ROOT_FILE_ID) * BYTES_PER_ATTRIBUTE + HeaderLayout.HEADER_SIZE;
   }
 
   private int getIntHeaderField(int headerRelativeOffsetBytes) throws IOException {

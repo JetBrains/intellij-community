@@ -127,6 +127,8 @@ public final class FSRecordsImpl {
     }
   }
 
+  private final @NotNull Path storagesDirectory;
+
   private final @NotNull PersistentFSConnection connection;
   private final @NotNull PersistentFSContentAccessor contentAccessor;
   private final @NotNull PersistentFSAttributeAccessor attributeAccessor;
@@ -176,6 +178,7 @@ public final class FSRecordsImpl {
   public static int currentImplementationVersion() {
     //bumped main version (59 -> 60) because of VfsDependentEnumerator removal, and filenames change
     final int mainVFSFormatVersion = 60;
+    //@formatter:off (nextMask better be aligned)
     return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()), /* acceptable range is [0..255] */ 8,
            nextMask(USE_CONTENT_HASHES,
            nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
@@ -189,6 +192,7 @@ public final class FSRecordsImpl {
            nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
            nextMask(USE_FAST_NAMES_IMPLEMENTATION,
            nextMask(USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION, 0)))))))))))));
+    //@formatter:on
   }
 
 
@@ -244,6 +248,7 @@ public final class FSRecordsImpl {
         treeAccessor.ensureLoaded();
 
         return new FSRecordsImpl(
+          storagesDirectoryPath,
           connection,
           contentAccessor, attributeAccessor, treeAccessor, recordAccessor,
           invertedNameIndexLazy,
@@ -279,7 +284,8 @@ public final class FSRecordsImpl {
   }
 
 
-  private FSRecordsImpl(@NotNull PersistentFSConnection connection,
+  private FSRecordsImpl(@NotNull Path storagesDirectoryPath,
+                        @NotNull PersistentFSConnection connection,
                         @NotNull PersistentFSContentAccessor contentAccessor,
                         @NotNull PersistentFSAttributeAccessor attributeAccessor,
                         @NotNull PersistentFSTreeAccessor treeAccessor,
@@ -287,6 +293,8 @@ public final class FSRecordsImpl {
                         @NotNull NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy,
                         int currentVersion,
                         @NotNull ErrorHandler errorHandler,
+                        @NotNull PersistentFSConnector.InitializationResult initializationResult) {
+    storagesDirectory = storagesDirectoryPath;
                         @NotNull VFSInitializationResult initializationResult) {
     this.connection = connection;
     this.contentAccessor = contentAccessor;
@@ -359,7 +367,7 @@ public final class FSRecordsImpl {
   public VFSInitializationResult initializationResult(){
     return initializationResult;
   }
-
+  
   //========== modifications counters: ========================================
 
   long getInvertedNameIndexModCount() {
