@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.typos" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.searchEverywhereMl.semantics" scope="RUNTIME"/>
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.semantics" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
   </component>

@@ -105,7 +105,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="ai.grazie.nlp.encoder" type="repository">
+      <library name="ai.grazie.nlp.encoder.bert.uncased" type="repository">
         <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-encoder-bert-base-uncased-jvm:0.2.175">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-encoder-bert-base-uncased-jvm/0.2.175/nlp-encoder-bert-base-uncased-jvm-0.2.175.jar">
