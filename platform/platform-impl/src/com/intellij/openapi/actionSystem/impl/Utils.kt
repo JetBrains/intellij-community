@@ -1,989 +1,953 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.actionSystem.impl;
+package com.intellij.openapi.actionSystem.impl
 
-import com.intellij.CommonBundle;
-import com.intellij.concurrency.SensitiveProgressWrapper;
-import com.intellij.diagnostic.PluginException;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.keymap.impl.ActionProcessor;
-import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.impl.IdeMenuBar;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.ui.AnimatedIcon;
-import com.intellij.ui.ClientProperty;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.GroupHeaderSeparator;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.mac.screenmenu.Menu;
-import com.intellij.ui.mac.screenmenu.MenuItem;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ExceptionUtilRt;
-import com.intellij.util.SlowOperations;
-import com.intellij.util.TimeoutUtil;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
-import io.opentelemetry.api.OpenTelemetry;
-import io.opentelemetry.api.common.AttributeKey;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Context;
-import io.opentelemetry.context.ContextKey;
-import io.opentelemetry.context.Scope;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.CancellablePromise;
+import com.intellij.CommonBundle
+import com.intellij.concurrency.SensitiveProgressWrapper
+import com.intellij.diagnostic.PluginException
+import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.ProhibitAWTEvents
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionGroupExpanded
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAligned
+import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAlignedInGroup
+import com.intellij.openapi.actionSystem.util.ActionSystem
+import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx
+import com.intellij.openapi.keymap.impl.ActionProcessor
+import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicatorProvider
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.*
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.impl.IdeMenuBar
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.GroupHeaderSeparator
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.mac.screenmenu.MenuItem
+import com.intellij.util.ExceptionUtil
+import com.intellij.util.ExceptionUtilRt
+import com.intellij.util.SlowOperations
+import com.intellij.util.TimeoutUtil
+import com.intellij.util.concurrency.EdtScheduledExecutorService
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.ContainerUtil.concat
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil.isUnderDarcula
+import com.intellij.util.ui.UIUtil
+import io.opentelemetry.api.OpenTelemetry
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.context.Context
+import io.opentelemetry.context.ContextKey
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.concurrency.CancellablePromise
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Window
+import java.awt.event.FocusEvent
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
+import java.util.*
+import java.util.concurrent.*
+import java.util.function.Consumer
+import javax.swing.*
+import kotlin.math.max
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.*;
-import java.util.function.BiFunction;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+private val IS_MODAL_CONTEXT = Key.create<Boolean>("Component.isModalContext")
 
-import static com.intellij.openapi.actionSystem.util.ActionSystemScopeKt.ActionSystem;
+private val LOG = logger<Utils>()
 
 @ApiStatus.Internal
-public final class Utils {
-  private static final Key<Boolean> IS_MODAL_CONTEXT = Key.create("Component.isModalContext");
-  private static final Logger LOG = Logger.getInstance(Utils.class);
+object Utils {
 
-  public static final AnAction EMPTY_MENU_FILLER = new EmptyAction();
-  static {
-    EMPTY_MENU_FILLER.getTemplatePresentation().setText(CommonBundle.messagePointer("empty.menu.filler"));
+  @JvmField
+  val EMPTY_MENU_FILLER: AnAction = EmptyAction().apply {
+    getTemplatePresentation().setText(CommonBundle.messagePointer("empty.menu.filler"))
   }
 
-  static final AttributeKey<String> OT_OP_KEY = AttributeKey.stringKey("op");
-  private static final ContextKey<Boolean> OT_ENABLE_SPANS = ContextKey.named("OT_ENABLE_SPANS");
-
-  static @NotNull Tracer getTracer(boolean checkNoop) {
-    return checkNoop && !Boolean.TRUE.equals(Context.current().get(OT_ENABLE_SPANS)) ?
-           OpenTelemetry.noop().getTracer("") : TelemetryManager.getInstance().getTracer(ActionSystem);
+  val OT_OP_KEY: AttributeKey<String> = AttributeKey.stringKey("op")
+  private val OT_ENABLE_SPANS: ContextKey<Boolean> = ContextKey.named("OT_ENABLE_SPANS")
+  internal fun getTracer(checkNoop: Boolean): Tracer {
+    return if (checkNoop && Context.current().get<Boolean>(OT_ENABLE_SPANS) != true) OpenTelemetry.noop().getTracer("")
+    else TelemetryManager.getInstance().getTracer(ActionSystem)
   }
 
-  public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
-    if (isAsyncDataContext(dataContext)) {
-      return dataContext;
-    }
-    else if (dataContext instanceof EdtDataContext) {
-      Component component = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-      return newPreCachedDataContext(component);
-    }
-    else if (dataContext instanceof CustomizedDataContext context) {
-      DataContext delegate = wrapToAsyncDataContext(context.getParent());
-      if (delegate == DataContext.EMPTY_CONTEXT) {
-        return new PreCachedDataContext(null).prependProvider(context.getCustomDataProvider());
+  @JvmStatic
+  fun wrapToAsyncDataContext(dataContext: DataContext): DataContext = when {
+    isAsyncDataContext(dataContext) -> dataContext
+    dataContext is EdtDataContext -> newPreCachedDataContext(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
+    dataContext is CustomizedDataContext ->
+      when (val delegate = wrapToAsyncDataContext(dataContext.getParent())) {
+        DataContext.EMPTY_CONTEXT -> PreCachedDataContext(null)
+          .prependProvider(dataContext.customDataProvider)
+        is PreCachedDataContext -> delegate
+          .prependProvider(dataContext.customDataProvider)
+        else -> dataContext
       }
-      else if (delegate instanceof PreCachedDataContext) {
-        return ((PreCachedDataContext)delegate).prependProvider(context.getCustomDataProvider());
-      }
+    !ApplicationManager.getApplication().isUnitTestMode() -> { // see `HeadlessContext`
+      LOG.warn(Throwable("Unable to wrap '" + dataContext.javaClass.getName() + "'. Use CustomizedDataContext or EdtDataContext"))
+      dataContext
     }
-    else if (!ApplicationManager.getApplication().isUnitTestMode()) { // see `HeadlessContext`
-      LOG.warn(new Throwable("Unable to wrap '" + dataContext.getClass().getName() + "'. Use CustomizedDataContext or EdtDataContext"));
-    }
-    return dataContext;
+    else -> dataContext
   }
 
-  private static @NotNull DataContext newPreCachedDataContext(@Nullable Component component) {
-    return new PreCachedDataContext(component);
+  private fun newPreCachedDataContext(component: Component?): DataContext = PreCachedDataContext(component)
+
+  @JvmStatic
+  fun wrapDataContext(dataContext: DataContext): DataContext =
+    if (!Registry.`is`("actionSystem.update.actions.async")) dataContext
+    else wrapToAsyncDataContext(dataContext)
+
+  @JvmStatic
+  fun freezeDataContext(dataContext: DataContext, missedKeys: Consumer<in String?>?): DataContext =
+    if (dataContext is PreCachedDataContext) dataContext.frozenCopy(missedKeys)
+    else dataContext
+
+  @JvmStatic
+  fun isAsyncDataContext(dataContext: DataContext): Boolean =
+    dataContext === DataContext.EMPTY_CONTEXT || dataContext is AsyncDataContext
+
+  @JvmStatic
+  fun getRawDataIfCached(dataContext: DataContext, dataId: String): Any? = when (dataContext) {
+    is PreCachedDataContext -> dataContext.getRawDataIfCached(dataId)
+    is EdtDataContext -> dataContext.getRawDataIfCached(dataId)
+    else -> null
   }
 
-  public static @NotNull DataContext wrapDataContext(@NotNull DataContext dataContext) {
-    if (!Registry.is("actionSystem.update.actions.async")) return dataContext;
-    return wrapToAsyncDataContext(dataContext);
+  @JvmStatic
+  fun clearAllCachesAndUpdates() {
+    cancelAllUpdates("clear-all-caches-and-updates requested")
+    waitForAllUpdatesToFinish()
+    PreCachedDataContext.clearAllCaches()
   }
 
-  @ApiStatus.Internal
-  public static @NotNull DataContext freezeDataContext(@NotNull DataContext dataContext, @Nullable Consumer<? super String> missedKeys) {
-    return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).frozenCopy(missedKeys) :
-           dataContext;
+  @JvmStatic
+  fun expandActionGroupAsync(group: ActionGroup,
+                             presentationFactory: PresentationFactory,
+                             context: DataContext,
+                             place: String): CancellablePromise<List<AnAction>> {
+    return expandActionGroupAsync(group, presentationFactory, context, place, false, true)
   }
 
-  public static boolean isAsyncDataContext(@NotNull DataContext dataContext) {
-    return dataContext == DataContext.EMPTY_CONTEXT || dataContext instanceof AsyncDataContext;
-  }
-
-  @ApiStatus.Internal
-  public static @Nullable Object getRawDataIfCached(@NotNull DataContext dataContext, @NotNull String dataId) {
-    return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).getRawDataIfCached(dataId) :
-           dataContext instanceof EdtDataContext ? ((EdtDataContext)dataContext).getRawDataIfCached$intellij_platform_ide_impl(dataId) : null;
-  }
-
-  static void clearAllCachesAndUpdates() {
-    ActionUpdater.cancelAllUpdates("clear-all-caches-and-updates requested");
-    ActionUpdater.waitForAllUpdatesToFinish();
-    PreCachedDataContext.clearAllCaches();
-  }
-
-  @ApiStatus.Internal
-  public static CancellablePromise<List<AnAction>> expandActionGroupAsync(@NotNull ActionGroup group,
-                                                                          @NotNull PresentationFactory presentationFactory,
-                                                                          @NotNull DataContext context,
-                                                                          @NotNull String place) {
-    return expandActionGroupAsync(group, presentationFactory, context, place, false, true);
-  }
-
-  @ApiStatus.Internal
-  public static CancellablePromise<List<AnAction>> expandActionGroupAsync(@NotNull ActionGroup group,
-                                                                          @NotNull PresentationFactory presentationFactory,
-                                                                          @NotNull DataContext context,
-                                                                          @NotNull String place,
-                                                                          boolean isToolbarAction,
-                                                                          boolean fastTrack) {
-    boolean async = isAsyncDataContext(context);
+  @JvmStatic
+  fun expandActionGroupAsync(group: ActionGroup,
+                             presentationFactory: PresentationFactory,
+                             context: DataContext,
+                             place: String,
+                             isToolbarAction: Boolean,
+                             fastTrack: Boolean): CancellablePromise<List<AnAction>> {
+    val async = isAsyncDataContext(context)
     if (!async) {
-      throw new AssertionError("Async data context required in '" + place + "': " + dumpDataContextClass(context));
+      throw AssertionError("Async data context required in '" + place + "': " + dumpDataContextClass(context))
     }
-    FastTrackAwareEdtExecutor edtExecutor = fastTrack ? newFastTrackAwareExecutor(group, place, context, true) : null;
-    ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction, edtExecutor, null);
-    CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
-    if (edtExecutor != null) {
-      edtExecutor.waitForFastTrack(promise);
-    }
-    return promise;
+    val edtExecutor = if (fastTrack) newFastTrackAwareExecutor(group, place, context, true) else null
+    val updater = ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction, edtExecutor, null)
+    val promise = updater.expandActionGroupAsync(group, group is CompactActionGroup)
+    edtExecutor?.waitForFastTrack(promise)
+    return promise
   }
 
-  @ApiStatus.Internal
-  public static List<AnAction> expandActionGroupWithTimeout(@NotNull ActionGroup group,
-                                                            @NotNull PresentationFactory presentationFactory,
-                                                            @NotNull DataContext context,
-                                                            @NotNull String place,
-                                                            boolean isToolbarAction,
-                                                            int timeoutMs) {
-    return new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction)
-      .expandActionGroupWithTimeout(group, group instanceof CompactActionGroup, timeoutMs);
+
+  @JvmStatic
+  fun expandActionGroupWithTimeout(group: ActionGroup,
+                                   presentationFactory: PresentationFactory,
+                                   context: DataContext,
+                                   place: String,
+                                   isToolbarAction: Boolean,
+                                   timeoutMs: Int): List<AnAction> {
+    return ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction)
+      .expandActionGroupWithTimeout(group, group is CompactActionGroup, timeoutMs)
   }
 
-  private static final boolean DO_FULL_EXPAND = Boolean.getBoolean("actionSystem.use.full.group.expand"); // for tests and debug
+  private val DO_FULL_EXPAND = java.lang.Boolean.getBoolean("actionSystem.use.full.group.expand") // for tests and debug
 
-  public static @NotNull List<AnAction> expandActionGroup(@NotNull ActionGroup group,
-                                                          @NotNull PresentationFactory presentationFactory,
-                                                          @NotNull DataContext context,
-                                                          @NotNull String place) {
-    RelativePoint point = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context) == null ? null :
-                          JBPopupFactory.getInstance().guessBestPopupLocation(context);
-    Runnable removeIcon = addLoadingIcon(point, place);
-    List<AnAction> result = null;
-    Span span = getTracer(false).spanBuilder("expandActionGroup").setAttribute("place", place).startSpan();
-    long start = System.nanoTime();
-    try (Scope ignore = Context.current().with(span).with(OT_ENABLE_SPANS, true).makeCurrent()) {
-      return result = computeWithRetries(
-        () -> expandActionGroupImpl(group, presentationFactory, context, place, ActionPlaces.isPopupPlace(place), removeIcon, null),
-        null, removeIcon);
+  @JvmStatic
+  fun expandActionGroup(group: ActionGroup,
+                        presentationFactory: PresentationFactory,
+                        context: DataContext,
+                        place: String): List<AnAction> {
+    val point = if (PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context) == null) null
+    else JBPopupFactory.getInstance().guessBestPopupLocation(context)
+    val removeIcon = addLoadingIcon(point, place)
+    var result: List<AnAction>? = null
+    val span = getTracer(false).spanBuilder("expandActionGroup").setAttribute("place", place).startSpan()
+    val start = System.nanoTime()
+    try {
+      result = Context.current().with(span).with(OT_ENABLE_SPANS, true).makeCurrent().use {
+        computeWithRetries(null, removeIcon) {
+          expandActionGroupImpl(group, presentationFactory, context, place, ActionPlaces.isPopupPlace(place), removeIcon, null)
+        }
+      }
+      return result
     }
     finally {
-      long elapsed = TimeoutUtil.getDurationMillis(start);
-      span.end();
+      val elapsed = TimeoutUtil.getDurationMillis(start)
+      span.end()
       if (elapsed > 1000) {
-        LOG.warn(elapsed + " ms to expandActionGroup@" + place);
+        LOG.warn("$elapsed ms to expandActionGroup@$place")
       }
-      ActionsCollectorImpl.recordActionGroupExpanded(group, context, place, false, elapsed, result);
+      recordActionGroupExpanded(group, context, place, false, elapsed, result)
     }
   }
 
-  private static int ourExpandActionGroupImplEDTLoopLevel;
+  private var ourExpandActionGroupImplEDTLoopLevel = 0
 
-  private static @NotNull List<AnAction> expandActionGroupImpl(@NotNull ActionGroup group,
-                                                               @NotNull PresentationFactory presentationFactory,
-                                                               @NotNull DataContext context,
-                                                               @NotNull String place,
-                                                               boolean isContextMenu,
-                                                               @Nullable Runnable onProcessed,
-                                                               @Nullable JComponent menuItem) {
-    boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    DataContext wrapped = wrapDataContext(context);
-    boolean async = isAsyncDataContext(wrapped) && !isUnitTestMode;
-    FastTrackAwareEdtExecutor edtExecutor = async ? newFastTrackAwareExecutor(group, place, context, false) : null;
-    ActionUpdater updater = new ActionUpdater(presentationFactory, wrapped, place, isContextMenu, false, edtExecutor, null);
-    List<AnAction> list;
+  private fun expandActionGroupImpl(group: ActionGroup,
+                                    presentationFactory: PresentationFactory,
+                                    context: DataContext,
+                                    place: String,
+                                    isContextMenu: Boolean,
+                                    onProcessed: (() -> Unit)?,
+                                    menuItem: JComponent?): List<AnAction> {
+    val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode()
+    val wrapped = wrapDataContext(context)
+    val async = isAsyncDataContext(wrapped) && !isUnitTestMode
+    val edtExecutor = if (async) newFastTrackAwareExecutor(group, place, context, false) else null
+    val updater = ActionUpdater(presentationFactory, wrapped, place, isContextMenu, false, edtExecutor, null)
+    var list: List<AnAction>?
     if (async) {
       if (isContextMenu) {
-        ActionUpdater.cancelAllUpdates("context menu requested");
+        cancelAllUpdates("context menu requested")
       }
-      int maxLoops = Math.max(2, Registry.intValue("actionSystem.update.actions.async.max.nested.loops", 20));
+      val maxLoops = max(2.0, Registry.intValue("actionSystem.update.actions.async.max.nested.loops", 20).toDouble()).toInt()
       if (ourExpandActionGroupImplEDTLoopLevel >= maxLoops) {
-        LOG.warn("Maximum number of recursive EDT loops reached (" + maxLoops + ") at '" + place + "'");
-        if (onProcessed != null) onProcessed.run();
-        ActionUpdater.cancelAllUpdates("recursive EDT loops limit reached at '" + place + "'");
-        throw new ProcessCanceledException();
+        LOG.warn("Maximum number of recursive EDT loops reached ($maxLoops) at '$place'")
+        onProcessed?.invoke()
+        cancelAllUpdates("recursive EDT loops limit reached at '$place'")
+        throw ProcessCanceledException()
       }
-      CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
+      val promise = updater.expandActionGroupAsync(group, group is CompactActionGroup)
       if (edtExecutor != null) {
-        list = edtExecutor.waitForFastTrack(promise);
+        list = edtExecutor.waitForFastTrack(promise)
         if (list != null) {
-          if (onProcessed != null) onProcessed.run();
-          return list;
+          onProcessed?.invoke()
+          return list
         }
       }
       if (onProcessed != null) {
-        promise.onSuccess(__ -> onProcessed.run());
-        promise.onError(ex -> {
-          if (!canRetryOnThisException(ex)) onProcessed.run();
-        });
+        promise.onSuccess { onProcessed.invoke() }
+        promise.onError { ex -> if (!canRetryOnThisException(ex)) onProcessed.invoke() }
       }
-      IdeEventQueue queue = IdeEventQueue.getInstance();
-      Component contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(wrapped);
-      try (AccessToken ignore = cancelOnUserActivityInside(promise, contextComponent, menuItem)) {
-        ourExpandActionGroupImplEDTLoopLevel++;
-        list = runLoopAndWaitForFuture(promise, Collections.emptyList(), true, () -> {
-          AWTEvent event = queue.getNextEvent();
-          queue.dispatchEvent(event);
-          return true;
-        });
+      val queue = IdeEventQueue.getInstance()
+      val contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(wrapped)
+      try {
+        cancelOnUserActivityInside(promise, contextComponent, menuItem).use {
+          ourExpandActionGroupImplEDTLoopLevel++
+          list = runLoopAndWaitForFuture(promise, emptyList(), true) {
+            val event = queue.getNextEvent()
+            queue.dispatchEvent(event)
+            true
+          }
+        }
       }
       finally {
-        ourExpandActionGroupImplEDTLoopLevel--;
+        ourExpandActionGroupImplEDTLoopLevel--
       }
-      if (promise.isCancelled()) {
+      if (promise.isCancelled) {
         // to avoid duplicate "Nothing Here" items in menu bar
         // and "Nothing Here"-only popup menus
-        throw new ProcessCanceledException();
+        throw ProcessCanceledException()
       }
     }
     else {
-      if (Registry.is("actionSystem.update.actions.async") && !isUnitTestMode) {
-        LOG.error("Async data context required in '" + place + "': " + dumpDataContextClass(wrapped));
+      if (Registry.`is`("actionSystem.update.actions.async") && !isUnitTestMode) {
+        LOG.error("Async data context required in '" + place + "': " + dumpDataContextClass(wrapped))
       }
       try {
-        list = DO_FULL_EXPAND ?
-               updater.expandActionGroupFull(group, group instanceof CompactActionGroup) :
-               updater.expandActionGroupWithTimeout(group, group instanceof CompactActionGroup);
+        list = if (DO_FULL_EXPAND) updater.expandActionGroupFull(group, group is CompactActionGroup)
+        else updater.expandActionGroupWithTimeout(group, group is CompactActionGroup)
       }
       finally {
-        if (onProcessed != null) onProcessed.run();
+        onProcessed?.invoke()
       }
     }
-    return Objects.requireNonNull(list);
+    return list!!
   }
 
-  private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise,
-                                                                 @Nullable Component contextComponent,
-                                                                 @Nullable Component menuItem) {
-    Window window = contextComponent == null ? null : SwingUtilities.getWindowAncestor(contextComponent);
-    return ProhibitAWTEvents.startFiltered("expandActionGroup", event -> {
-      if (event instanceof FocusEvent && event.getID() == FocusEvent.FOCUS_LOST &&
-          ((FocusEvent)event).getCause() == FocusEvent.Cause.ACTIVATION &&
-           window != null && window == SwingUtilities.getWindowAncestor(((FocusEvent)event).getComponent()) ||
-          event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
-          event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED && UIUtil.getDeepestComponentAt(
-            ((MouseEvent)event).getComponent(), ((MouseEvent)event).getX(), ((MouseEvent)event).getY()) != menuItem ) {
-        ActionUpdater.cancelPromise(promise, event);
-      }
-      return null;
-    });
+  private fun cancelOnUserActivityInside(promise: CancellablePromise<List<AnAction>>,
+                                         contextComponent: Component?,
+                                         menuItem: Component?): AccessToken {
+    val window: Window? = if (contextComponent == null) null else SwingUtilities.getWindowAncestor(contextComponent)
+    return ProhibitAWTEvents.startFiltered("expandActionGroup") { event ->
+      if (event is FocusEvent && event.getID() == FocusEvent.FOCUS_LOST && event.cause == FocusEvent.Cause.ACTIVATION &&
+            window != null && window === SwingUtilities.getWindowAncestor(event.component) ||
+          event is KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
+          event is MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED &&
+            UIUtil.getDeepestComponentAt(event.component, event.x, event.y) !== menuItem)
+        cancelPromise(promise, event)
+      null
+    }
   }
 
-  private static @Nullable FastTrackAwareEdtExecutor newFastTrackAwareExecutor(@NotNull ActionGroup group,
-                                                                               @NotNull String place,
-                                                                               @NotNull DataContext context,
-                                                                               boolean checkMainMenuOrToolbarFirstTime) {
+  private fun newFastTrackAwareExecutor(group: ActionGroup,
+                                        place: String,
+                                        context: DataContext,
+                                        checkMainMenuOrToolbarFirstTime: Boolean): FastTrackAwareEdtExecutor? {
     if (!ActionGroupExpander.getInstance().allowsFastUpdate(
-      CommonDataKeys.PROJECT.getData(context), group, place)) {
-      return null;
+        CommonDataKeys.PROJECT.getData(context), group, place)) {
+      return null
     }
-    boolean mainMenuOrToolbarFirstTime = checkMainMenuOrToolbarFirstTime && (
-      ActionPlaces.MAIN_MENU.equals(place) || ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR.equals(place));
-    int maxTime = mainMenuOrToolbarFirstTime ? 5_000 : Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 20);
-    if (maxTime < 1) return null;
-    return new FastTrackAwareEdtExecutor(maxTime);
+    val mainMenuOrToolbarFirstTime = checkMainMenuOrToolbarFirstTime && (ActionPlaces.MAIN_MENU == place || ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR == place)
+    val maxTime = if (mainMenuOrToolbarFirstTime) 5000 else Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 20)
+    return if (maxTime < 1) null else FastTrackAwareEdtExecutor(maxTime)
   }
 
-  static void fillMenu(@NotNull ActionGroup group,
-                       @NotNull JComponent component,
-                       boolean enableMnemonics,
-                       @NotNull PresentationFactory presentationFactory,
-                       @NotNull DataContext context,
-                       @NotNull String place,
-                       boolean isWindowMenu,
-                       boolean useDarkIcons,
-                       @Nullable RelativePoint progressPoint,
-                       @Nullable BooleanSupplier expire) {
+  @JvmStatic
+  fun fillMenu(group: ActionGroup,
+               component: JComponent,
+               enableMnemonics: Boolean,
+               presentationFactory: PresentationFactory,
+               context: DataContext,
+               place: String,
+               isWindowMenu: Boolean,
+               useDarkIcons: Boolean,
+               progressPoint: RelativePoint?,
+               expire: (() -> Boolean)?) {
     if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
-      throw new ProcessCanceledException();
+      throw ProcessCanceledException()
     }
-    if (Thread.holdsLock(component.getTreeLock())) {
-      throw new ProcessCanceledException();
+    if (Thread.holdsLock(component.treeLock)) {
+      throw ProcessCanceledException()
     }
-    List<AnAction> result = null;
-    Span span = getTracer(false).spanBuilder("fillMenu").setAttribute("place", place).startSpan();
-    long start = System.nanoTime();
-    try (Scope ignore = Context.current().with(span).with(OT_ENABLE_SPANS, true).makeCurrent()) {
-      Runnable removeIcon = addLoadingIcon(progressPoint, place);
-      result = computeWithRetries(
-        () -> expandActionGroupImpl(group, presentationFactory, context, place, true, removeIcon, component),
-        expire, removeIcon);
-      boolean checked = group instanceof CheckedActionGroup;
-      boolean multiChoice = isMultiChoiceGroup(group);
-      fillMenuInner(component, result, checked, multiChoice, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
+    var result: List<AnAction>? = null
+    val span = getTracer(false).spanBuilder("fillMenu").setAttribute("place", place).startSpan()
+    val start = System.nanoTime()
+    try {
+      Context.current().with(span).with(OT_ENABLE_SPANS, true).makeCurrent().use {
+        val removeIcon = addLoadingIcon(progressPoint, place)
+        val list = computeWithRetries(expire, removeIcon) {
+          expandActionGroupImpl(group, presentationFactory, context, place, true, removeIcon, component)
+        }
+        result = list
+        val checked = group is CheckedActionGroup
+        val multiChoice = isMultiChoiceGroup(group)
+        fillMenuInner(component, list, checked, multiChoice, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons)
+      }
     }
     finally {
-      long elapsed = TimeoutUtil.getDurationMillis(start);
-      span.end();
+      val elapsed = TimeoutUtil.getDurationMillis(start)
+      span.end()
       if (elapsed > 1000) {
-        LOG.warn(elapsed + " ms to fillMenu@" + place);
+        LOG.warn("$elapsed ms to fillMenu@$place")
       }
-      boolean submenu = component instanceof ActionMenu && component.getParent() != null;
-      ActionsCollectorImpl.recordActionGroupExpanded(group, context, place, submenu, elapsed, result);
+      val submenu = component is ActionMenu && component.getParent() != null
+      recordActionGroupExpanded(group, context, place, submenu, elapsed, result)
     }
   }
 
-  private static @NotNull Runnable addLoadingIcon(@Nullable RelativePoint point, @NotNull String place) {
-    if (!Registry.is("actionSystem.update.actions.async")) return EmptyRunnable.getInstance();
-    JRootPane rootPane = point == null ? null : UIUtil.getRootPane(point.getComponent());
-    JComponent glassPane = rootPane == null ? null : (JComponent)rootPane.getGlassPane();
-    if (glassPane == null) return EmptyRunnable.getInstance();
-    Component comp = point.getOriginalComponent();
-    if (comp instanceof ActionMenu && comp.getParent() instanceof IdeMenuBar ||
-        ActionPlaces.EDITOR_GUTTER_POPUP.equals(place) && comp instanceof EditorGutterComponentEx &&
-        ((EditorGutterComponentEx)comp).getGutterRenderer(point.getOriginalPoint()) != null) {
-      return EmptyRunnable.getInstance();
+  private fun addLoadingIcon(point: RelativePoint?, place: String): (() -> Unit)? {
+    if (!Registry.`is`("actionSystem.update.actions.async")) return null
+    val rootPane = if (point == null) null else UIUtil.getRootPane(point.component)
+    val glassPane = if (rootPane == null) null else rootPane.glassPane as JComponent
+    if (glassPane == null) return null
+    val comp = point!!.originalComponent
+    if (comp is ActionMenu && comp.getParent() is IdeMenuBar ||
+        ActionPlaces.EDITOR_GUTTER_POPUP == place && comp is EditorGutterComponentEx && comp.getGutterRenderer(
+        point.originalPoint) != null) {
+      return null
     }
-    boolean isMenuItem = comp instanceof ActionMenu;
-    JLabel icon = new JLabel(isMenuItem ? AnimatedIcon.Default.INSTANCE : AnimatedIcon.Big.INSTANCE);
-    Dimension size = icon.getPreferredSize();
-    icon.setSize(size);
-    Point location = point.getPoint(glassPane);
+    val isMenuItem = comp is ActionMenu
+    val icon = JLabel(if (isMenuItem) AnimatedIcon.Default.INSTANCE else AnimatedIcon.Big.INSTANCE)
+    val size = icon.getPreferredSize()
+    icon.size = size
+    val location = point.getPoint(glassPane)
     if (isMenuItem) {
-      location.x -= 2 * size.width;
-      location.y += (comp.getSize().height - size.height + 1) / 2;
+      location.x -= 2 * size.width
+      location.y += (comp.size.height - size.height + 1) / 2
     }
     else {
-      location.x -= size.width / 2;
-      location.y -= size.height / 2;
+      location.x -= size.width / 2
+      location.y -= size.height / 2
     }
-    icon.setLocation(location);
-    EdtScheduledExecutorService.getInstance().schedule(() -> {
-      if (!icon.isVisible()) return;
-      glassPane.add(icon);
-    }, Registry.intValue("actionSystem.popup.progress.icon.delay", 500), TimeUnit.MILLISECONDS);
-    return () -> {
-      if (icon.getParent() != null) glassPane.remove(icon);
-      else icon.setVisible(false);
-    };
+    icon.location = location
+    EdtScheduledExecutorService.getInstance().schedule(Runnable {
+      if (!icon.isVisible) return@Runnable
+      glassPane.add(icon)
+    }, Registry.intValue("actionSystem.popup.progress.icon.delay", 500).toLong(), TimeUnit.MILLISECONDS)
+    return {
+      if (icon.parent != null) glassPane.remove(icon)
+      else icon.isVisible = false
+    }
   }
 
-
-  private static void fillMenuInner(@NotNull JComponent component,
-                                    @NotNull List<? extends AnAction> list,
-                                    boolean checked,
-                                    boolean multiChoice,
-                                    boolean enableMnemonics,
-                                    @NotNull PresentationFactory presentationFactory,
-                                    @NotNull DataContext context,
-                                    @NotNull String place,
-                                    boolean isWindowMenu,
-                                    boolean useDarkIcons) {
-    component.removeAll();
-    Menu nativePeer = component instanceof ActionMenu ? ((ActionMenu)component).getScreenMenuPeer() : null;
-    if (nativePeer != null) nativePeer.beginFill();
-    List<AnAction> filtered = filterInvisible(list, presentationFactory, place);
-    ArrayList<Component> children = new ArrayList<>();
-
-    for (int i = 0, size = filtered.size(); i < size; i++) {
-      AnAction action = filtered.get(i);
-      Presentation presentation = presentationFactory.getPresentation(action);
-      if (multiChoice && action instanceof Toggleable) {
-        presentation.setMultiChoice(true);
+  private fun fillMenuInner(component: JComponent,
+                            list: List<AnAction>,
+                            checked: Boolean,
+                            multiChoice: Boolean,
+                            enableMnemonics: Boolean,
+                            presentationFactory: PresentationFactory,
+                            context: DataContext,
+                            place: String,
+                            isWindowMenu: Boolean,
+                            useDarkIcons: Boolean) {
+    component.removeAll()
+    val nativePeer = if (component is ActionMenu) component.screenMenuPeer else null
+    nativePeer?.beginFill()
+    val filtered = filterInvisible(list, presentationFactory, place)
+    val children = ArrayList<Component>()
+    for (action in filtered) {
+      val presentation = presentationFactory.getPresentation(action)
+      if (multiChoice && action is Toggleable) {
+        presentation.isMultiChoice = true
       }
-
-      JComponent comp;
-      MenuItem peer;
-
-      if (action instanceof Separator s) {
-        comp = createSeparator(s.getText(), children.isEmpty());
-        peer = null;
+      var comp: JComponent
+      var peer: MenuItem?
+      if (action is Separator) {
+        comp = createSeparator(action.text, children.isEmpty())
+        peer = null
       }
-      else if (action instanceof ActionGroup g && !isSubmenuSuppressed(presentation)) {
-        ActionMenu menu = new ActionMenu(context, place, g, presentationFactory, enableMnemonics, useDarkIcons);
-        comp = menu;
-        peer = menu.getScreenMenuPeer();
+      else if (action is ActionGroup && !isSubmenuSuppressed(presentation)) {
+        val menu = ActionMenu(context, place, action, presentationFactory, enableMnemonics, useDarkIcons)
+        comp = menu
+        peer = menu.screenMenuPeer
       }
       else {
-        ActionMenuItem each = new ActionMenuItem(action, place, context, enableMnemonics, checked, useDarkIcons);
-        each.updateFromPresentation(presentation);
-        comp = each;
-        peer = each.getScreenMenuItemPeer();
+        val each = ActionMenuItem(action, place, context, enableMnemonics, checked, useDarkIcons)
+        each.updateFromPresentation(presentation)
+        comp = each
+        peer = each.screenMenuItemPeer
       }
-      component.add(comp);
-      children.add(comp);
-      if (nativePeer != null) nativePeer.add(peer);
+      component.add(comp)
+      children.add(comp)
+      nativePeer?.add(peer)
     }
-
     if (list.isEmpty()) {
-      Presentation presentation = presentationFactory.getPresentation(EMPTY_MENU_FILLER);
-      ActionMenuItem each = new ActionMenuItem(EMPTY_MENU_FILLER, place, context, enableMnemonics, checked, useDarkIcons);
-      each.updateFromPresentation(presentation);
-      component.add(each);
-      children.add(each);
+      val presentation = presentationFactory.getPresentation(EMPTY_MENU_FILLER)
+      val each = ActionMenuItem(EMPTY_MENU_FILLER, place, context, enableMnemonics, checked, useDarkIcons)
+      each.updateFromPresentation(presentation)
+      component.add(each)
+      children.add(each)
     }
-
     if (SystemInfo.isMacSystemMenu && isWindowMenu) {
-      if (ActionMenu.isAligned()) {
-        Icon icon = hasIcons(children) ? ActionMenuItem.EMPTY_ICON : null;
-        children.forEach(child -> replaceIconIn(child, icon));
+      if (isAligned) {
+        val icon = if (hasIcons(children)) ActionMenuItem.EMPTY_ICON else null
+        children.forEach { child -> replaceIconIn(child, icon) }
       }
-      else if (ActionMenu.isAlignedInGroup()) {
-        ArrayList<Component> currentGroup = new ArrayList<>();
-        for (int i = 0; i < children.size(); i++) {
-          Component child = children.get(i);
-          boolean isSeparator = child instanceof JPopupMenu.Separator;
-          boolean isLastElement = i == children.size() - 1;
+      else if (isAlignedInGroup) {
+        val currentGroup = ArrayList<Component>()
+        for (i in children.indices) {
+          val child = children[i]
+          val isSeparator = child is JPopupMenu.Separator
+          val isLastElement = i == children.size - 1
           if (isLastElement || isSeparator) {
             if (isLastElement && !isSeparator) {
-              currentGroup.add(child);
+              currentGroup.add(child)
             }
-            Icon icon = hasIcons(currentGroup) ? ActionMenuItem.EMPTY_ICON : null;
-            currentGroup.forEach(menuItem -> replaceIconIn(menuItem, icon));
-            currentGroup.clear();
+            val icon = if (hasIcons(currentGroup)) ActionMenuItem.EMPTY_ICON else null
+            currentGroup.forEach { menuItem -> replaceIconIn(menuItem, icon) }
+            currentGroup.clear()
           }
           else {
-            currentGroup.add(child);
+            currentGroup.add(child)
           }
         }
       }
     }
   }
 
-  @NotNull
-  private static List<AnAction> filterInvisible(@NotNull List<? extends AnAction> list,
-                                           @NotNull PresentationFactory presentationFactory,
-                                           @NotNull String place) {
-    List<AnAction> filtered = new ArrayList<>(list.size());
-    for (int i = 0, size = list.size(); i < size; i++) {
-      AnAction action = list.get(i);
-      Presentation presentation = presentationFactory.getPresentation(action);
-      if (!presentation.isVisible()) {
-        reportInvisibleMenuItem(action, place);
-        continue;
+  private fun filterInvisible(list: List<AnAction>,
+                              presentationFactory: PresentationFactory,
+                              place: String): List<AnAction> {
+    val filtered: MutableList<AnAction> = ArrayList(list.size)
+    for (action in list) {
+      val presentation = presentationFactory.getPresentation(action)
+      if (!presentation.isVisible) {
+        reportInvisibleMenuItem(action, place)
+        continue
       }
-      if (!(action instanceof Separator) && StringUtil.isEmpty(presentation.getText())) {
-        reportEmptyTextMenuItem(action, place);
-        continue;
+      if (action !is Separator && StringUtil.isEmpty(presentation.text)) {
+        reportEmptyTextMenuItem(action, place)
+        continue
       }
-      if (action instanceof Separator s) {
-        int lastIdx = filtered.size() - 1;
-        if (lastIdx < 0 && StringUtil.isEmpty(s.getText())) {
-          continue;
+      if (action is Separator) {
+        val lastIdx = filtered.size - 1
+        if (lastIdx < 0 && StringUtil.isEmpty(action.text)) {
+          continue
         }
-        if (lastIdx >= 0 && filtered.get(lastIdx) instanceof Separator) {
-          filtered.set(lastIdx, action);
-          continue;
+        if (lastIdx >= 0 && filtered[lastIdx] is Separator) {
+          filtered[lastIdx] = action
+          continue
         }
       }
-      filtered.add(action);
+      filtered.add(action)
     }
-    int lastIdx = filtered.size() - 1;
-    if (lastIdx >= 0 && filtered.get(lastIdx) instanceof Separator s && StringUtil.isEmpty(s.getText())) {
-      filtered.remove(lastIdx);
+    val lastIdx = filtered.size - 1
+    if (lastIdx >= 0 && filtered[lastIdx].let { it is Separator && StringUtil.isEmpty(it.text) }) {
+      filtered.removeAt(lastIdx)
     }
-    return filtered;
+    return filtered
   }
 
-  private static void reportInvisibleMenuItem(@NotNull AnAction action, @NotNull String place) {
-    String operationName = operationName(action, null, place);
-    LOG.error("Invisible menu item for " + operationName);
+  private fun reportInvisibleMenuItem(action: AnAction, place: String) {
+    val operationName = operationName(action, null, place)
+    LOG.error("Invisible menu item for $operationName")
   }
 
-  private static void reportEmptyTextMenuItem(@NotNull AnAction action, @NotNull String place) {
-    String operationName = operationName(action, null, place);
-    String message = "Empty menu item text for " + operationName;
-    if (StringUtil.isEmpty(action.getTemplatePresentation().getText())) {
-      message += ". The default action text must be specified in plugin.xml or its class constructor";
+  private fun reportEmptyTextMenuItem(action: AnAction, place: String) {
+    val operationName = operationName(action, null, place)
+    var message = "Empty menu item text for $operationName"
+    if (StringUtil.isEmpty(action.getTemplatePresentation().text)) {
+      message += ". The default action text must be specified in plugin.xml or its class constructor"
     }
-    LOG.error(PluginException.createByClass(message, null, action.getClass()));
+    LOG.error(PluginException.createByClass(message, null, action.javaClass))
   }
 
-  public static @NotNull String operationName(@NotNull Object action, @Nullable String op, @Nullable String place) {
-    Class<?> c = action.getClass();
-    StringBuilder sb = new StringBuilder(200);
-    if (StringUtil.isNotEmpty(op)) sb.append("#").append(op);
-    if (StringUtil.isNotEmpty(place)) sb.append("@").append(place);
-    sb.append(" (");
-    for (Object x = action; x instanceof ActionWithDelegate; x = ((ActionWithDelegate<?>)x).getDelegate(), c = x.getClass()) {
-      sb.append(StringUtil.getShortName(c.getName())).append("/");
+  @JvmStatic
+  fun operationName(action: Any, op: String?, place: String?): String {
+    var c: Class<*> = action.javaClass
+    val sb = StringBuilder(200)
+    if (StringUtil.isNotEmpty(op)) sb.append("#").append(op)
+    if (StringUtil.isNotEmpty(place)) sb.append("@").append(place)
+    sb.append(" (")
+    var x = action
+    while (x is ActionWithDelegate<*>) {
+      sb.append(StringUtil.getShortName(c.getName())).append("/")
+      x = x.getDelegate()
+      c = x.javaClass
     }
-    sb.append(c.getName()).append(")");
-    sb.insert(0, StringUtil.getShortName(c.getName()));
-    return sb.toString();
+    sb.append(c.getName()).append(")")
+    sb.insert(0, StringUtil.getShortName(c.getName()))
+    return sb.toString()
   }
 
-  private static @NotNull String dumpDataContextClass(@NotNull DataContext context) {
-    Class<?> c = context.getClass();
-    StringBuilder sb = new StringBuilder(200);
-    int i = 0;
-    for (Object x = context; x instanceof CustomizedDataContext; x = ((CustomizedDataContext)x).getParent(), i++, c = x.getClass()) {
-      sb.append(StringUtil.getShortName(c.getName())).append("(");
+  private fun dumpDataContextClass(context: DataContext): String {
+    var c: Class<*> = context.javaClass
+    val sb = StringBuilder(200)
+    var i = 0
+    var x: Any = context
+    while (x is CustomizedDataContext) {
+      sb.append(StringUtil.getShortName(c.getName())).append("(")
+      x = x.getParent()
+      i++
+      c = x.javaClass
     }
-    sb.append(c.getName());
-    StringUtil.repeatSymbol(sb, ')', i);
-    return sb.toString();
+    sb.append(c.getName())
+    StringUtil.repeatSymbol(sb, ')', i)
+    return sb.toString()
   }
 
-  public static boolean isMultiChoiceGroup(@NotNull ActionGroup actionGroup) {
-    Presentation p = actionGroup.getTemplatePresentation();
-    if (p.isMultiChoice()) return true;
-    if (p.getIcon() == AllIcons.Actions.GroupBy ||
-        p.getIcon() == AllIcons.Actions.Show ||
-        p.getIcon() == AllIcons.General.GearPlain ||
-        p.getIcon() == AllIcons.Debugger.RestoreLayout) {
-      return true;
+  @JvmStatic
+  fun isMultiChoiceGroup(actionGroup: ActionGroup): Boolean {
+    val p = actionGroup.getTemplatePresentation()
+    if (p.isMultiChoice) return true
+    if (p.icon === AllIcons.Actions.GroupBy || p.icon === AllIcons.Actions.Show || p.icon === AllIcons.General.GearPlain || p.icon === AllIcons.Debugger.RestoreLayout) {
+      return true
     }
-    if (actionGroup.getClass() == DefaultActionGroup.class) {
-      for (AnAction child : actionGroup.getChildren(null)) {
-        if (child instanceof Separator) continue;
-        if (!(child instanceof Toggleable)) return false;
+    if (actionGroup.javaClass == DefaultActionGroup::class.java) {
+      for (child in actionGroup.getChildren(null)) {
+        if (child is Separator) continue
+        if (child !is Toggleable) return false
       }
-      return true;
+      return true
     }
-    return false;
+    return false
   }
 
-  static void updateMenuItems(@NotNull JPopupMenu popupMenu,
-                              @NotNull DataContext dataContext,
-                              @NotNull String place,
-                              @NotNull PresentationFactory presentationFactory) {
-    List<ActionMenuItem> items = ContainerUtil.filterIsInstance(popupMenu.getComponents(), ActionMenuItem.class);
-    updateComponentActions(
-      popupMenu, ContainerUtil.map(items, ActionMenuItem::getAnAction), dataContext, place, presentationFactory,
-      () -> {
-        for (ActionMenuItem item : items) {
-          item.updateFromPresentation(presentationFactory.getPresentation(item.getAnAction()));
-        }
-      });
+  @JvmStatic
+  fun updateMenuItems(popupMenu: JPopupMenu,
+                      dataContext: DataContext,
+                      place: String,
+                      presentationFactory: PresentationFactory) {
+    val items = ContainerUtil.filterIsInstance(popupMenu.components, ActionMenuItem::class.java)
+    updateComponentActions(popupMenu, items.map { it.anAction }, dataContext, place, presentationFactory) {
+      for (item in items) {
+        item.updateFromPresentation(presentationFactory.getPresentation(item.anAction))
+      }
+    }
   }
 
-  @ApiStatus.Internal
-  public static void updateComponentActions(@NotNull JComponent component,
-                                            @NotNull Iterable<? extends AnAction> actions,
-                                            @NotNull DataContext dataContext,
-                                            @NotNull String place,
-                                            @NotNull PresentationFactory presentationFactory,
-                                            @NotNull Runnable onUpdate) {
-    DefaultActionGroup actionGroup = new DefaultActionGroup();
-    for (AnAction action : actions) {
-      actionGroup.add(action);
+  @JvmStatic
+  fun updateComponentActions(component: JComponent,
+                             actions: Iterable<AnAction>,
+                             dataContext: DataContext,
+                             place: String,
+                             presentationFactory: PresentationFactory,
+                             onUpdate: Runnable) {
+    val actionGroup = DefaultActionGroup()
+    for (action in actions) {
+      actionGroup.add(action)
     }
     // note that no retries are attempted
     if (isAsyncDataContext(dataContext)) {
       expandActionGroupAsync(actionGroup, presentationFactory, dataContext, place)
-        .onSuccess(__ -> {
+        .onSuccess {
           try {
-            onUpdate.run();
+            onUpdate.run()
           }
           finally {
-            component.repaint();
+            component.repaint()
           }
-        });
+        }
     }
     else {
-      expandActionGroupImpl(actionGroup, presentationFactory, dataContext, place, ActionPlaces.isPopupPlace(place), null, null);
-      onUpdate.run();
+      expandActionGroupImpl(actionGroup, presentationFactory, dataContext, place, ActionPlaces.isPopupPlace(place), null, null)
+      onUpdate.run()
     }
   }
 
-  public static boolean isSubmenuSuppressed(@NotNull Presentation presentation) {
-    return Boolean.TRUE.equals(presentation.getClientProperty(ActionUpdater.SUPPRESS_SUBMENU_IMPL));
+  @JvmStatic
+  fun isSubmenuSuppressed(presentation: Presentation): Boolean {
+    return presentation.getClientProperty(SUPPRESS_SUBMENU_IMPL) == true
   }
 
-  private static @NotNull JPopupMenu.Separator createSeparator(@NlsContexts.Separator String text, boolean first) {
-    return new JPopupMenu.Separator() {
-      private final GroupHeaderSeparator myMenu;
-      {
+  private fun createSeparator(text: @NlsContexts.Separator String?, first: Boolean): JPopupMenu.Separator {
+    return object : JPopupMenu.Separator() {
+      private val myMenu: GroupHeaderSeparator?
+
+      init {
         if (StringUtil.isNotEmpty(text)) {
-          Insets labelInsets = ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.separatorLabelInsets() :
-                               JBUI.CurrentTheme.ActionsList.cellPadding();
-          myMenu = new GroupHeaderSeparator(labelInsets);
-          myMenu.setCaption(text);
-          myMenu.setHideLine(first);
+          val labelInsets = if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Popup.separatorLabelInsets() else JBUI.CurrentTheme.ActionsList.cellPadding()
+          myMenu = GroupHeaderSeparator(labelInsets)
+          myMenu.caption = text
+          myMenu.setHideLine(first)
         }
         else {
-          myMenu = null;
-        }
-      }
-      @Override
-      public void doLayout() {
-        super.doLayout();
-        if (myMenu != null) {
-          myMenu.setBounds(getBounds());
+          myMenu = null
         }
       }
 
-      @Override
-      protected void paintComponent(Graphics g) {
-        if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel()) {
-          g.setColor(getParent().getBackground());
-          g.fillRect(0, 0, getWidth(), getHeight());
+      override fun doLayout() {
+        super.doLayout()
+        myMenu?.bounds = bounds
+      }
+
+      override fun paintComponent(g: Graphics) {
+        if (isUnderDarcula || UIUtil.isUnderWin10LookAndFeel()) {
+          g.color = parent.getBackground()
+          g.fillRect(0, 0, width, height)
         }
         if (myMenu != null) {
-          myMenu.paint(g);
+          myMenu.paint(g)
         }
         else {
-          super.paintComponent(g);
+          super.paintComponent(g)
         }
       }
 
-      @Override
-      public Dimension getPreferredSize() {
-        return myMenu != null ? myMenu.getPreferredSize() : super.getPreferredSize();
-      }
-    };
-  }
-
-  private static void replaceIconIn(Component menuItem, Icon icon) {
-    Icon from = icon == null ? ActionMenuItem.EMPTY_ICON : null;
-
-    if (menuItem instanceof ActionMenuItem && ((ActionMenuItem)menuItem).getIcon() == from) {
-        ((ActionMenuItem)menuItem).setIcon(icon);
-    } else if (menuItem instanceof ActionMenu && ((ActionMenu)menuItem).getIcon() == from) {
-        ((ActionMenu)menuItem).setIcon(icon);
+      override fun getPreferredSize(): Dimension =
+        if (myMenu != null) myMenu.preferredSize
+        else super.getPreferredSize()
     }
   }
 
-  private static boolean hasIcons(List<? extends Component> components) {
-    for (Component comp : components) {
-      if (hasNotEmptyIcon(comp)) {
-        return true;
-      }
+  private fun replaceIconIn(menuItem: Component, icon: Icon?) {
+    val from = if (icon == null) ActionMenuItem.EMPTY_ICON else null
+    if (menuItem is ActionMenuItem && menuItem.icon === from) {
+      menuItem.setIcon(icon)
     }
-    return false;
+    else if (menuItem is ActionMenu && menuItem.icon === from) {
+      menuItem.setIcon(icon)
+    }
   }
 
-  private static boolean hasNotEmptyIcon(Component comp) {
-    Icon icon = null;
-    if (comp instanceof ActionMenuItem) {
-      icon = ((ActionMenuItem)comp).getIcon();
-    } else if (comp instanceof ActionMenu) {
-      icon = ((ActionMenu)comp).getIcon();
-    }
+  private fun hasIcons(components: List<Component>): Boolean =
+    components.find { hasNotEmptyIcon(it) } != null
 
-    return icon != null && icon != ActionMenuItem.EMPTY_ICON;
+  private fun hasNotEmptyIcon(comp: Component): Boolean {
+    val icon: Icon? = when (comp) {
+      is ActionMenuItem -> comp.icon
+      is ActionMenu -> comp.icon
+      else -> null
+    }
+    return icon != null && icon !== ActionMenuItem.EMPTY_ICON
   }
 
   /**
-   * Check if the {@code component} represents a modal context in a general sense,
-   * i.e., whether any of its parents is either a modal {@link Window}
+   * Check if the `component` represents a modal context in a general sense,
+   * i.e., whether any of its parents is either a modal [Window]
    * or explicitly marked to be treated like a modal context.
-   * @see Utils#markAsModalContext(JComponent, Boolean)
+   * @see Utils.markAsModalContext
    */
-  @ApiStatus.Internal
-  public static boolean isModalContext(@NotNull Component component) {
-    Boolean implicitValue = IdeKeyEventDispatcher.isModalContextOrNull(component);
+  @JvmStatic
+  fun isModalContext(component: Component): Boolean {
+    val implicitValue = IdeKeyEventDispatcher.isModalContextOrNull(component)
     if (implicitValue != null) {
-      return implicitValue;
+      return implicitValue
     }
+    var cur: Component? = component
     do {
-      Boolean explicitValue = ClientProperty.get(component, IS_MODAL_CONTEXT);
+      val explicitValue = ClientProperty.get(cur, IS_MODAL_CONTEXT)
       if (explicitValue != null) {
-        return explicitValue;
+        return explicitValue
       }
-      component = component.getParent();
-    } while (component != null);
-    return true;
+      cur = cur?.parent
+    }
+    while (cur != null)
+    return true
   }
 
   /**
-   * Mark the {@code component} to be treated like a modal context (or not) when it cannot be deduced implicitly from UI hierarchy.
-   * @param isModalContext {@code null} to clear a mark, to set a new one otherwise.
-   * @see Utils#isModalContext(Component)
+   * Mark the `component` to be treated like a modal context (or not) when it cannot be deduced implicitly from UI hierarchy.
+   * @param isModalContext `null` to clear a mark, to set a new one otherwise.
+   * @see Utils.isModalContext
    */
-  @ApiStatus.Internal
-  public static void markAsModalContext(@NotNull JComponent component, @Nullable Boolean isModalContext) {
-    ClientProperty.put(component, IS_MODAL_CONTEXT, isModalContext);
+  @JvmStatic
+  fun markAsModalContext(component: JComponent, isModalContext: Boolean?) {
+    ClientProperty.put(component, IS_MODAL_CONTEXT, isModalContext)
   }
 
-  /** @deprecated Use {@link AnActionEvent#getUpdateSession()} */
-  @Deprecated(forRemoval = true)
-  public static @NotNull UpdateSession getOrCreateUpdateSession(@NotNull AnActionEvent e) {
-    initUpdateSession(e);
-    return e.getUpdateSession();
+  @Deprecated("Use {@link AnActionEvent#getUpdateSession()}")
+  @JvmStatic
+  fun getOrCreateUpdateSession(e: AnActionEvent): UpdateSession {
+    initUpdateSession(e)
+    return e.updateSession
   }
 
-  @ApiStatus.Internal
-  public static void initUpdateSession(@NotNull AnActionEvent e) {
-    UpdateSession updater = e.getUpdateSession();
-    if (updater == UpdateSession.EMPTY) {
-      ActionUpdater actionUpdater = new ActionUpdater(
-        new PresentationFactory(), e.getDataContext(),
-        e.getPlace(), e.isFromContextMenu(), e.isFromActionToolbar());
-      updater = actionUpdater.asUpdateSession();
-      e.setUpdateSession(updater);
+  @JvmStatic
+  fun initUpdateSession(e: AnActionEvent) {
+    var updater = e.updateSession
+    if (updater === UpdateSession.EMPTY) {
+      val actionUpdater = ActionUpdater(
+        PresentationFactory(), e.dataContext,
+        e.place, e.isFromContextMenu, e.isFromActionToolbar)
+      updater = actionUpdater.asUpdateSession()
+      e.updateSession = updater
     }
   }
 
-  private static boolean ourInUpdateSessionForInputEventEDTLoop;
+  private var ourInUpdateSessionForInputEventEDTLoop = false
 
-  @ApiStatus.Internal
-  public static @Nullable <T> T runUpdateSessionForInputEvent(@NotNull List<? extends AnAction> actions,
-                                                              @NotNull InputEvent inputEvent,
-                                                              @NotNull DataContext dataContext,
-                                                              @NotNull String place,
-                                                              @NotNull ActionProcessor actionProcessor,
-                                                              @NotNull PresentationFactory factory,
-                                                              @Nullable Consumer<? super AnActionEvent> eventTracker,
-                                                              @NotNull BiFunction<? super UpdateSession, ? super List<AnAction>, ? extends T> function) {
-    ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
+  fun <T> runUpdateSessionForInputEvent(actions: List<AnAction>,
+                                        inputEvent: InputEvent,
+                                        dataContext: DataContext,
+                                        place: String,
+                                        actionProcessor: ActionProcessor,
+                                        factory: PresentationFactory,
+                                        eventTracker: ((AnActionEvent) -> Unit)?,
+                                        function: (UpdateSession, List<AnAction>) -> T): T? {
+    val applicationEx = ApplicationManagerEx.getApplicationEx()
     if (ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx)) {
-      LOG.error("Actions cannot be updated when write-action is running or pending");
-      return null;
+      LOG.error("Actions cannot be updated when write-action is running or pending")
+      return null
     }
     if (ourInUpdateSessionForInputEventEDTLoop) {
-      LOG.warn("Recursive shortcut processing invocation is ignored");
-      return null;
+      LOG.warn("Recursive shortcut processing invocation is ignored")
+      return null
     }
-    long start = System.nanoTime();
-    boolean async = isAsyncDataContext(dataContext);
+    val start = System.nanoTime()
+    val async = isAsyncDataContext(dataContext)
     // we will manually process "invokeLater" calls using a queue for performance reasons:
     // direct approach would be to pump events in a custom modality state (enterModal/leaveModal)
     // EventQueue would add significant overhead (x10), but key events must be processed ASAP.
-    BlockingQueue<Runnable> queue = async ? new LinkedBlockingQueue<>() : null;
-    ActionUpdater actionUpdater = new ActionUpdater(
+    val queue: BlockingQueue<Runnable>? = if (async) LinkedBlockingQueue() else null
+    val actionUpdater = ActionUpdater(
       factory, dataContext,
-      place, false, false, async ? queue::offer : null, event -> {
-        AnActionEvent transformed = actionProcessor.createEvent(
-          inputEvent, event.getDataContext(), event.getPlace(), event.getPresentation(), event.getActionManager());
-        if (eventTracker != null) eventTracker.accept(transformed);
-        return transformed;
-    });
-
-    T result;
+      place, false, false, if (async) Executor { e: Runnable -> queue!!.offer(e) } else null) { event: AnActionEvent ->
+      val transformed = actionProcessor.createEvent(
+        inputEvent, event.dataContext, event.place, event.presentation, event.actionManager)
+      eventTracker?.invoke(transformed)
+      transformed
+    }
+    val result: T?
     if (async) {
-      ActionUpdater.cancelAllUpdates("'" + place + "' invoked");
-      AsyncPromise<T> promise = ActionUpdater.newPromise(place);
-      ProgressIndicator parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-      ActionUpdater.ourBeforePerformedExecutor.execute(() -> {
+      queue!!
+      cancelAllUpdates("'$place' invoked")
+      val promise = newPromise<T>(place)
+      val parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator()
+      ourBeforePerformedExecutor.execute(Runnable {
         try {
-          Ref<T> ref = Ref.create();
-          ThrowableComputable<Void, RuntimeException> computable = () -> {
-            List<AnAction> adjusted = new ArrayList<>(actions);
-            actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> rearrangeByPromoters(adjusted, dataContext));
-            if (promise.isDone()) return null;
-            UpdateSession session = actionUpdater.asUpdateSession();
-            actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> ref.set(function.apply(session, adjusted)));
-            queue.offer(actionUpdater::applyPresentationChanges);
-            return null;
-          };
-          ProgressIndicator indicator = parentIndicator == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(parentIndicator);
-          promise.onError(__ -> indicator.cancel());
+          val ref = Ref.create<T>()
+          val computable = ThrowableComputable<Void?, RuntimeException> {
+            val adjusted = ArrayList(actions)
+            actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise) {
+              rearrangeByPromoters(adjusted, dataContext)
+            }
+            if (promise.isDone()) return@ThrowableComputable null
+            val session = actionUpdater.asUpdateSession()
+            actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise) {
+              ref.set(function(session, adjusted))
+            }
+            queue.offer { actionUpdater.applyPresentationChanges() }
+            null
+          }
+          val indicator: ProgressIndicator = if (parentIndicator == null) ProgressIndicatorBase()
+          else SensitiveProgressWrapper(parentIndicator)
+          promise.onError { indicator.cancel() }
           ProgressManager.getInstance().executeProcessUnderProgress(
-            () -> ProgressManager.getInstance().computePrioritized(computable),
-            indicator);
-          queue.offer(() -> promise.setResult(ref.get()));
+            { ProgressManager.getInstance().computePrioritized(computable) },
+            indicator)
+          queue.offer { promise.setResult(ref.get()) }
         }
-        catch (Throwable e) {
-          promise.setError(e);
+        catch (e: Throwable) {
+          promise.setError(e)
         }
-      });
+      })
       try {
-        ourInUpdateSessionForInputEventEDTLoop = true;
-        result = runLoopAndWaitForFuture(promise, null, false, () -> {
-          Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
-          if (runnable != null) runnable.run();
-          if (parentIndicator != null) parentIndicator.checkCanceled();
-          return true;
-        });
+        ourInUpdateSessionForInputEventEDTLoop = true
+        result = runLoopAndWaitForFuture(promise, null, false) {
+          val runnable = queue.poll(1, TimeUnit.MILLISECONDS)
+          runnable?.run()
+          parentIndicator?.checkCanceled()
+          true
+        }
       }
       finally {
-        ourInUpdateSessionForInputEventEDTLoop = false;
+        ourInUpdateSessionForInputEventEDTLoop = false
       }
     }
     else {
-      List<AnAction> adjusted = new ArrayList<>(actions);
-      rearrangeByPromoters(adjusted, dataContext);
-      result = function.apply(actionUpdater.asUpdateSession(), adjusted);
-      actionUpdater.applyPresentationChanges();
+      val adjusted = ArrayList(actions)
+      rearrangeByPromoters(adjusted, dataContext)
+      result = function(actionUpdater.asUpdateSession(), adjusted)
+      actionUpdater.applyPresentationChanges()
     }
-    long elapsed = TimeoutUtil.getDurationMillis(start);
+    val elapsed = TimeoutUtil.getDurationMillis(start)
     if (elapsed > 1000) {
-      LOG.warn(elapsed + " ms to runUpdateSessionForInputEvent@" + place);
+      LOG.warn("$elapsed ms to runUpdateSessionForInputEvent@$place")
     }
-    return result;
+    return result
   }
 
-  @ApiStatus.Internal
-  public static void rearrangeByPromoters(@NotNull List<AnAction> actions, @NotNull DataContext dataContext) {
-    DataContext frozenContext = freezeDataContext(dataContext, null);
-    List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
-    List<ActionPromoter> promoters = ContainerUtil.concat(
-      ActionPromoter.EP_NAME.getExtensionList(), ContainerUtil.filterIsInstance(actions, ActionPromoter.class));
-    for (ActionPromoter promoter : promoters) {
-      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.FORCE_ASSERT)) {
-        List<AnAction> promoted = promoter.promote(readOnlyActions, frozenContext);
-        if (promoted != null && !promoted.isEmpty()) {
-          actions.removeAll(promoted);
-          actions.addAll(0, promoted);
-        }
-        List<AnAction> suppressed = promoter.suppress(readOnlyActions, frozenContext);
-        if (suppressed != null && !suppressed.isEmpty()) {
-          actions.removeAll(suppressed);
-        }
-      }
-      catch (ProcessCanceledException ignore) {
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
-  }
-
-  private static <T> @Nullable T runLoopAndWaitForFuture(@NotNull Future<? extends T> promise,
-                                               @Nullable T defValue,
-                                               boolean rethrowCancellation,
-                                               @NotNull EventPump eventPump) {
-    while (!promise.isDone()) {
+  fun rearrangeByPromoters(actions: MutableList<AnAction>, dataContext: DataContext) {
+    val frozenContext = freezeDataContext(dataContext, null)
+    val readOnlyActions = Collections.unmodifiableList(actions)
+    val promoters = concat(ActionPromoter.EP_NAME.extensionList, actions.filterIsInstance<ActionPromoter>())
+    for (promoter in promoters) {
       try {
-        if (!eventPump.run()) {
-          return null;
+        SlowOperations.startSection(SlowOperations.FORCE_ASSERT).use {
+          val promoted = promoter.promote(readOnlyActions, frozenContext)
+          if (!promoted.isNullOrEmpty()) {
+            actions.removeAll(promoted)
+            actions.addAll(0, promoted)
+          }
+          val suppressed = promoter.suppress(readOnlyActions, frozenContext)
+          if (!suppressed.isNullOrEmpty()) {
+            actions.removeAll(suppressed)
+          }
         }
       }
-      catch (ProcessCanceledException ignore) {
+      catch (ignore: ProcessCanceledException) {
       }
-      catch (Throwable e) {
-        LOG.error(e);
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
+    }
+  }
+
+  private fun <T> runLoopAndWaitForFuture(promise: Future<out T?>,
+                                          defValue: T?,
+                                          rethrowCancellation: Boolean,
+                                          eventPump: () -> Boolean): T? {
+    while (!promise.isDone) {
+      try {
+        if (!eventPump()) {
+          return null
+        }
+      }
+      catch (ignore: ProcessCanceledException) {
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
       }
     }
     try {
-      return promise.isCancelled() ? defValue : promise.get();
+      return if (promise.isCancelled) defValue else promise.get()
     }
-    catch (Throwable ex) {
-      ProcessCanceledException pce = ExceptionUtilRt.findCause(ex, ProcessCanceledException.class);
+    catch (ex: Throwable) {
+      val pce = ExceptionUtilRt.findCause(ex, ProcessCanceledException::class.java)
       if (pce == null) {
-        LOG.error(ex);
+        LOG.error(ex)
       }
       else if (rethrowCancellation) {
-        throw pce;
+        throw pce
       }
     }
-    return defValue;
+    return defValue
   }
 
   @RequiresEdt
-  private static <T> T computeWithRetries(@NotNull Supplier<? extends T> computable, @Nullable BooleanSupplier expire, @Nullable Runnable onProcessed) {
-    ProcessCanceledWithReasonException lastCancellation = null;
-    int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
-    for (int i = 0; i < retries; i++) {
-      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET)) {
-        return computable.get();
-      }
-      catch (Utils.ProcessCanceledWithReasonException ex) {
-        lastCancellation = ex;
-        if (canRetryOnThisException(ex) &&
-            (expire == null || !expire.getAsBoolean())) {
-          continue;
+  private fun <T> computeWithRetries(expire: (() -> Boolean)?, onProcessed: (() -> Unit)?, computable: () -> T): T {
+    var lastCancellation: ProcessCanceledWithReasonException? = null
+    val retries = max(1.0, Registry.intValue("actionSystem.update.actions.max.retries", 20).toDouble()).toInt()
+    for (i in 0 until retries) {
+      try {
+        SlowOperations.startSection(SlowOperations.RESET).use {
+          return computable()
         }
-        throw ex;
       }
-      catch (Throwable ex) {
-        ExceptionUtil.rethrow(ex);
+      catch (ex: ProcessCanceledWithReasonException) {
+        lastCancellation = ex
+        if (canRetryOnThisException(ex) && (expire == null || !expire())) {
+          continue
+        }
+        throw ex
+      }
+      catch (ex: Throwable) {
+        ExceptionUtil.rethrow(ex)
       }
       finally {
-        if (onProcessed != null) {
-          onProcessed.run();
-        }
+        onProcessed?.invoke()
       }
     }
     if (retries > 1) {
-      LOG.warn("Maximum number of retries to show a menu reached (" + retries + "): " + lastCancellation.reason);
+      LOG.warn("Maximum number of retries to show a menu reached (" + retries + "): " + lastCancellation!!.reason)
     }
-    throw Objects.requireNonNull(lastCancellation);
+    throw lastCancellation!!
   }
 
-  private static boolean canRetryOnThisException(Throwable ex) {
-    Object reason = ex instanceof ProcessCanceledWithReasonException ? ((ProcessCanceledWithReasonException)ex).reason : null;
-    String reasonStr = reason instanceof String ? (String)reason : "";
+  private fun canRetryOnThisException(ex: Throwable): Boolean {
+    val reason = if (ex is ProcessCanceledWithReasonException) ex.reason else null
+    val reasonStr = if (reason is String) reason else ""
     return reasonStr.contains("write-action") ||
-           reasonStr.contains("fast-track") && StringUtil.containsIgnoreCase(reasonStr, "toolbar");
+           reasonStr.contains("fast-track") && StringUtil.containsIgnoreCase(reasonStr, "toolbar")
   }
 
-  private interface EventPump {
-    boolean run() throws Throwable;
-  }
+  private class FastTrackAwareEdtExecutor(val maxTime: Int) : Executor {
+    val queue: LinkedBlockingQueue<Runnable> = LinkedBlockingQueue()
 
-  private static class FastTrackAwareEdtExecutor implements Executor {
-    final LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
-    final int maxTime;
-    volatile boolean fastTrack = true;
-
-    FastTrackAwareEdtExecutor(int maxTime) {
-      this.maxTime = maxTime;
-    }
-
-    @Override
-    public void execute(@NotNull Runnable runnable) {
+    @Volatile
+    var fastTrack: Boolean = true
+    override fun execute(runnable: Runnable) {
       if (fastTrack) {
-        queue.offer(runnable);
+        queue.offer(runnable)
       }
       else {
-        ActionUpdateEdtExecutor.EDT_EXECUTOR.execute(runnable);
+        ActionUpdateEdtExecutor.EDT_EXECUTOR.execute(runnable)
       }
     }
 
-    <T> T waitForFastTrack(Future<? extends T> promise) {
-      T result;
-      long start = System.nanoTime();
+    fun <T> waitForFastTrack(promise: Future<out T>): T? {
+      val result: T?
+      val start = System.nanoTime()
       try {
-        fastTrack = true;
-        result = runLoopAndWaitForFuture(promise, null, false, () -> {
-          Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
-          if (runnable != null) runnable.run();
-          return TimeoutUtil.getDurationMillis(start) < maxTime;
-        });
+        fastTrack = true
+        result = runLoopAndWaitForFuture(promise, null, false) {
+          val runnable = queue.poll(1, TimeUnit.MILLISECONDS)
+          runnable?.run()
+          TimeoutUtil.getDurationMillis(start) < maxTime
+        }
       }
       finally {
-        fastTrack = false;
+        fastTrack = false
       }
       if (result == null) {
-        queue.forEach(ActionUpdateEdtExecutor.EDT_EXECUTOR::execute);
-        queue.clear();
+        queue.forEach(ActionUpdateEdtExecutor.EDT_EXECUTOR::execute)
+        queue.clear()
       }
-      LOG.assertTrue(queue.isEmpty(), "fast-track queue is not empty");
-      return result;
+      LOG.assertTrue(queue.isEmpty(), "fast-track queue is not empty")
+      return result
     }
   }
+}
 
-  static final class ProcessCanceledWithReasonException extends ProcessCanceledException {
-    final Object reason;
-
-    ProcessCanceledWithReasonException(Object reason) {
-      this.reason = reason;
-    }
-
-    @Override
-    public Throwable fillInStackTrace() {
-      return this;
-    }
+internal class ProcessCanceledWithReasonException(val reason: Any) : ProcessCanceledException() {
+  override fun fillInStackTrace(): Throwable {
+    return this
   }
 }
