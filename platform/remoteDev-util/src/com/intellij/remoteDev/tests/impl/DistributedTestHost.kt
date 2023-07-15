@@ -4,6 +4,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.diagnostic.DebugLogManager
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -12,12 +13,15 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.modelGenerated.RdAgentType
+import com.intellij.remoteDev.tests.modelGenerated.RdProductType
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
+import com.intellij.ui.WinFocusStealer
 import com.intellij.util.application
 import com.intellij.util.ui.ImageUtil
 import com.jetbrains.rd.framework.*
@@ -105,6 +109,12 @@ open class DistributedTestHost {
         }
         else {
           logger.info("New test session: ${session.testClassName}.${session.testMethodName}")
+
+          // Needed to enable proper focus behaviour
+          if (SystemInfo.isWindows) {
+            WinFocusStealer.setFocusStealingEnabled(true)
+          }
+
           // Create test class
           val testClass = Class.forName(session.testClassName)
           val testClassObject = testClass.kotlin.createInstance() as DistributedTestPlayer
@@ -126,9 +136,17 @@ open class DistributedTestHost {
 
               val action = queue.remove()
               actionTitle = action.title
-              logger.info("'$actionTitle': preparing to start action")
-              showNotification("${session.agentInfo.id}: $actionTitle")
 
+
+              logger.info("'$actionTitle': preparing to start action")
+
+              val isNotRdHost = !(session.agentInfo.productTypeType == RdProductType.REMOTE_DEVELOPMENT && session.agentInfo.agentType == RdAgentType.HOST)
+              if (!application.isHeadlessEnvironment && isNotRdHost) {
+                IdeEventQueue.getInstance().flushQueue()
+                requestFocus(actionTitle)
+              }
+
+              showNotification("${session.agentInfo.id}: $actionTitle")
               // Flush all events to process pending protocol events and other things
               //   before actual test method execution
               IdeEventQueue.getInstance().flushQueue()
@@ -228,6 +246,27 @@ open class DistributedTestHost {
       catch (ex: Throwable) {
         logger.warn("Test session initialization hasn't finished successfully", ex)
         session.ready.value = false
+      }
+    }
+  }
+
+  private fun requestFocus(actionTitle: String) {
+    projectOrNull?.let {
+      val frame = WindowManager.getInstance().getFrame(it)
+      if (frame != null) {
+        if (frame.isFocusAncestor()) {
+          logger.info("'$actionTitle': Already focused")
+        }
+        else {
+          logger.info("'$actionTitle': Requesting project focus")
+          ProjectUtil.focusProjectWindow(it, true)
+          if (!frame.isFocusAncestor()) {
+            logger.error("Failed to request the focus.")
+          }
+        }
+      }
+      else {
+        logger.info("'$actionTitle': No frame yet, nothing to focus")
       }
     }
   }

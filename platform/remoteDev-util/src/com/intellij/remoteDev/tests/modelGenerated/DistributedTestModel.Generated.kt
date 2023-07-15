@@ -28,6 +28,7 @@ class DistributedTestModel private constructor(
         override fun registerSerializersCore(serializers: ISerializers)  {
             serializers.register(RdAgentInfo)
             serializers.register(RdAgentType.marshaller)
+            serializers.register(RdProductType.marshaller)
             serializers.register(RdTestSessionStackTraceElement)
             serializers.register(RdTestSessionExceptionCause)
             serializers.register(RdTestSessionException)
@@ -53,7 +54,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = 3947516050474036909L
+        const val serializationHash = -4014616248337957052L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -103,7 +104,8 @@ val IProtocol.distributedTestModel get() = getOrCreateExtension(DistributedTestM
 data class RdAgentInfo (
     val id: String,
     val launchNumber: Int,
-    val agentType: RdAgentType
+    val agentType: RdAgentType,
+    val productTypeType: RdProductType
 ) : IPrintable {
     //companion
     
@@ -115,13 +117,15 @@ data class RdAgentInfo (
             val id = buffer.readString()
             val launchNumber = buffer.readInt()
             val agentType = buffer.readEnum<RdAgentType>()
-            return RdAgentInfo(id, launchNumber, agentType)
+            val productTypeType = buffer.readEnum<RdProductType>()
+            return RdAgentInfo(id, launchNumber, agentType, productTypeType)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdAgentInfo)  {
             buffer.writeString(value.id)
             buffer.writeInt(value.launchNumber)
             buffer.writeEnum(value.agentType)
+            buffer.writeEnum(value.productTypeType)
         }
         
         
@@ -140,6 +144,7 @@ data class RdAgentInfo (
         if (id != other.id) return false
         if (launchNumber != other.launchNumber) return false
         if (agentType != other.agentType) return false
+        if (productTypeType != other.productTypeType) return false
         
         return true
     }
@@ -149,6 +154,7 @@ data class RdAgentInfo (
         __r = __r*31 + id.hashCode()
         __r = __r*31 + launchNumber.hashCode()
         __r = __r*31 + agentType.hashCode()
+        __r = __r*31 + productTypeType.hashCode()
         return __r
     }
     //pretty print
@@ -158,6 +164,7 @@ data class RdAgentInfo (
             print("id = "); id.print(printer); println()
             print("launchNumber = "); launchNumber.print(printer); println()
             print("agentType = "); agentType.print(printer); println()
+            print("productTypeType = "); productTypeType.print(printer); println()
         }
         printer.print(")")
     }
@@ -177,6 +184,20 @@ enum class RdAgentType {
     
     companion object {
         val marshaller = FrameworkMarshallers.enum<RdAgentType>()
+        
+    }
+}
+
+
+/**
+ * #### Generated from [DistributedTestModel.kt]
+ */
+enum class RdProductType {
+    REMOTE_DEVELOPMENT, 
+    CODE_WITH_ME;
+    
+    companion object {
+        val marshaller = FrameworkMarshallers.enum<RdProductType>()
         
     }
 }

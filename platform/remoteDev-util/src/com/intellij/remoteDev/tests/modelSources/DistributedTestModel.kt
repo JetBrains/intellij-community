@@ -15,12 +15,18 @@ object DistributedTestModel : Ext(TestRoot) {
     field("id", string)
     field("launchNumber", int)
     field("agentType", RdAgentType)
+    field("productTypeType", RdProductType)
   }
 
   private val RdAgentType = enum {
     +"HOST"
     +"CLIENT"
     +"GATEWAY"
+  }
+
+  private val RdProductType = enum {
+    +"REMOTE_DEVELOPMENT"
+    +"CODE_WITH_ME"
   }
 
   private val RdTestSessionStackTraceElement = structdef {
