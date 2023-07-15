@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.forRegex
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK2Tests()
@@ -199,6 +200,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("../../idea-fir/testData/completion/basic/common", testClassName = "CommonFir")
         }
 
+        testClass<AbstractHighLevelJvmBasicCompletionTest>("org.jetbrains.kotlin.idea.fir.completion.HighLevelKDocCompletionTestGenerated") {
+            model("kdoc", pattern = KT_WITHOUT_FIR_PREFIX)
+        }
+
         testClass<AbstractHighLevelBasicCompletionHandlerTest> {
             model("handlers/basic", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
             model("handlers", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX, isRecursive = false)
@@ -281,6 +286,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractFirQuickDocTest> {
             model("quickDoc", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""))
+        }
+
+        testClass<AbstractK2MultiModuleHighlightingTest> {
+            model("resolve/anchors", isRecursive = false, pattern = forRegex("^([^\\._]+)$"))
         }
 
         testClass<AbstractK2ReferenceResolveWithResolveExtensionTest> {

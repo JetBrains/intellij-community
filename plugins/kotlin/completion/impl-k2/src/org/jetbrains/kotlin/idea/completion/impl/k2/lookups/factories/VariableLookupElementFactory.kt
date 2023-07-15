@@ -96,6 +96,7 @@ internal class VariableLookupElementFactory {
             lookupElementBuilder.withTailText((" (from ${buildSyntheticPropertyTailText(getterName, setterName)})"))
                 .withLookupStrings(listOfNotNull(getterName, setterName))
         }
+
         else -> lookupElementBuilder
     }
 
@@ -113,10 +114,12 @@ private data class VariableLookupObject(
 ) : KotlinCallableLookupObject()
 
 
-private object VariableInsertionHandler : QuotedNamesAwareInsertionHandler() {
+private object VariableInsertionHandler : CallableIdentifierInsertionHandler()
+
+internal open class CallableIdentifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val targetFile = context.file as? KtFile ?: return
-        val lookupObject = item.`object` as VariableLookupObject
+        val lookupObject = item.`object` as KotlinCallableLookupObject
 
         super.handleInsert(context, item)
 

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
@@ -48,10 +49,6 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         scope: SearchScope
     ) {}
 
-    override fun checkRedeclarations(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
-        // TODO
-    }
-
     override fun checkOriginalUsagesRetargeting(
         declaration: KtNamedDeclaration,
         newName: String,
@@ -62,10 +59,6 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
     }
 
     override fun checkNewNameUsagesRetargeting(declaration: KtNamedDeclaration, newName: String, newUsages: MutableList<UsageInfo>) {
-        // TODO
-    }
-
-    override fun checkAccidentalPropertyOverrides(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
         // TODO
     }
 
@@ -122,7 +115,11 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
             analyze(this) {
                 val declarationSymbol = declaration.getSymbol() as? KtCallableSymbol ?: return false
 
-                return declarationSymbol.getDirectlyOverriddenSymbols().isEmpty()
+                val callableSymbol = when (declarationSymbol) {
+                    is KtValueParameterSymbol -> declarationSymbol.generatedPrimaryConstructorProperty ?: return false
+                    else -> declarationSymbol
+                }
+                return callableSymbol.getDirectlyOverriddenSymbols().isEmpty()
             }
         }
 
@@ -140,7 +137,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
 
     override fun findAllOverridingMethods(psiMethod: PsiMethod, scope: SearchScope): List<PsiMethod> {
         return when (val element = psiMethod.unwrapped) {
-            is PsiMethod -> notImplementedInK2()
+            is PsiMethod -> OverridingMethodsSearch.search(element, scope, /* checkDeep = */ true).toList()
 
             is KtCallableDeclaration -> {
                 val allOverrides = element.findAllOverridings(scope).toList()

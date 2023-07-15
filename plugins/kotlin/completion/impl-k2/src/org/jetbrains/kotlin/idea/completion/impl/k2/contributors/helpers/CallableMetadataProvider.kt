@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 
 internal object CallableMetadataProvider {
 
@@ -105,7 +106,9 @@ internal object CallableMetadataProvider {
         val symbol = signature.symbol
 
         val actualExplicitReceiverType = context.explicitReceiver?.let {
-            getReferencedClassTypeInCallableReferenceExpression(it) ?: it.getKtType()
+            getReferencedClassTypeInCallableReferenceExpression(it)
+                ?: getQualifierClassTypeInKDocName(it)
+                ?: (it as? KtExpression)?.getKtType()
         }
         val actualImplicitReceiverTypes = context.implicitReceiver.map { it.type }
         val expectedExtensionReceiverType = signature.receiverType
@@ -166,7 +169,7 @@ internal object CallableMetadataProvider {
      * val l = String::length
      * ```
      */
-    private fun KtAnalysisSession.getReferencedClassTypeInCallableReferenceExpression(explicitReceiver: KtExpression): KtType? {
+    private fun KtAnalysisSession.getReferencedClassTypeInCallableReferenceExpression(explicitReceiver: KtElement): KtType? {
         val callableReferenceExpression = explicitReceiver.getParentOfType<KtCallableReferenceExpression>(strict = true) ?: return null
         if (callableReferenceExpression.lhs != explicitReceiver) return null
         val symbol = when (explicitReceiver) {
@@ -175,6 +178,14 @@ internal object CallableMetadataProvider {
             else -> return null
         }
         if (symbol !is KtClassLikeSymbol) return null
+        return buildClassType(symbol)
+    }
+
+    context(KtAnalysisSession)
+    private fun getQualifierClassTypeInKDocName(explicitReceiver: KtElement): KtType? {
+        if (explicitReceiver !is KDocName) return null
+
+        val symbol = explicitReceiver.mainReference.resolveToSymbol() as? KtClassLikeSymbol ?: return null
         return buildClassType(symbol)
     }
 

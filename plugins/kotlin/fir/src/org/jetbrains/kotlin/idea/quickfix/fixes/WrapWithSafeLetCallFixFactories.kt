@@ -161,7 +161,9 @@ object WrapWithSafeLetCallFixFactories {
         val localScope = callExpression.containingKtFile.getScopeContextForPosition(callSite).getCompositeScope()
         // If no symbol in the local scope contains the called symbol, then the symbol must be a member symbol.
 
-        return localScope.getCallableSymbols(calleeName).any { it == functionalVariableSymbol }
+        return localScope.getCallableSymbols(calleeName).any { symbol ->
+            symbol.psi?.let { it == functionalVariableSymbol.psi } == true
+        }
     }
 
     val forUnsafeInfixCall = diagnosticFixFactory(KtFirDiagnostic.UnsafeInfixCall::class) { diagnostic ->

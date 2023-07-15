@@ -5,16 +5,17 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.getStaticScope
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.getStaticScopes
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtElement
 
 internal open class FirClassifierCompletionContributor(
     basicContext: FirBasicCompletionContext,
@@ -26,13 +27,18 @@ internal open class FirClassifierCompletionContributor(
     protected open fun KtAnalysisSession.getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy =
         importStrategyDetector.detectImportStrategyForClassifierSymbol(classifierSymbol)
 
-    override fun KtAnalysisSession.complete(positionContext: FirNameReferencePositionContext, weighingContext: WeighingContext) {
+    override fun KtAnalysisSession.complete(
+        positionContext: FirNameReferencePositionContext,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
+    ) {
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
 
         when (val receiver = positionContext.explicitReceiver) {
             null -> {
                 completeWithoutReceiver(positionContext, visibilityChecker, weighingContext)
             }
+
             else -> {
                 completeWithReceiver(receiver, visibilityChecker, weighingContext)
             }
@@ -40,20 +46,21 @@ internal open class FirClassifierCompletionContributor(
     }
 
     private fun KtAnalysisSession.completeWithReceiver(
-        receiver: KtExpression,
+        receiver: KtElement,
         visibilityChecker: CompletionVisibilityChecker,
         context: WeighingContext
     ) {
         val reference = receiver.reference() ?: return
-        val scopeWithKind = getStaticScope(reference) ?: return
-        scopeWithKind.scope
-            .getClassifierSymbols(scopeNameFilter)
-            .filter { filterClassifiers(it) }
-            .filter { visibilityChecker.isVisible(it) }
-            .forEach {
-                val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
-                addClassifierSymbolToCompletion(it, context, symbolOrigin, ImportStrategy.DoNothing)
-            }
+        getStaticScopes(reference).forEach { scopeWithKind ->
+            scopeWithKind.scope
+                .getClassifierSymbols(scopeNameFilter)
+                .filter { filterClassifiers(it) }
+                .filter { visibilityChecker.isVisible(it) }
+                .forEach {
+                    val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
+                    addClassifierSymbolToCompletion(it, context, symbolOrigin, ImportStrategy.DoNothing)
+                }
+        }
     }
 
     private fun KtAnalysisSession.completeWithoutReceiver(
@@ -109,6 +116,7 @@ internal class FirAnnotationCompletionContributor(
                 false
             }
         }
+
         is KtTypeAliasSymbol -> {
             val expendedClass = (classifierSymbol.expandedType as? KtNonErrorClassType)?.classSymbol
             expendedClass?.let { filterClassifiers(it) } == true

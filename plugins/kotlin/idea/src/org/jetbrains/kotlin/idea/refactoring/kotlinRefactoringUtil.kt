@@ -76,6 +76,18 @@ import org.jetbrains.kotlin.idea.base.psi.getLineNumber as _getLineNumber
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
 
+@Deprecated("Was moved to the common part", replaceWith = ReplaceWith("canRefactorElement()"))
+fun PsiElement.canRefactor(): Boolean {
+    return when {
+        !isValid -> false
+        this is PsiPackage ->
+            directories.any { it.canRefactor() }
+        this is KtElement || this is PsiMember && language == JavaLanguage.INSTANCE || this is PsiDirectory ->
+            RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this)
+        else -> false
+    }
+}
+
 @JvmOverloads
 fun getOrCreateKotlinFile(
     fileName: String,
@@ -246,17 +258,6 @@ fun PsiElement.getLineNumber(start: Boolean = true): Int {
 }
 
 fun PsiElement.isTrueJavaMethod(): Boolean = this is PsiMethod && this !is KtLightMethod
-
-fun PsiElement.canRefactor(): Boolean {
-    return when {
-        !isValid -> false
-        this is PsiPackage ->
-            directories.any { it.canRefactor() }
-        this is KtElement || this is PsiMember && language == JavaLanguage.INSTANCE || this is PsiDirectory ->
-            RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this)
-        else -> false
-    }
-}
 
 private fun copyModifierListItems(from: PsiModifierList, to: PsiModifierList, withPsiModifiers: Boolean = true) {
     if (withPsiModifiers) {

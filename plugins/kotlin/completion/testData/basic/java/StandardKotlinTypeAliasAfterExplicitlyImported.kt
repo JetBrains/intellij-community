@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 import java.lang.IllegalArgumentException
 
 fun some(e: IllegalArgumentException<caret>) {

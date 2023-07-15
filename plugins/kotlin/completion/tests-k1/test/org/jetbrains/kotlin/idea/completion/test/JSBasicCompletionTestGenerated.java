@@ -505,6 +505,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/callableReference/JavaSyntheticPropertyReference2.kt");
             }
 
+            @TestMetadata("JavaSyntheticPropertyReference3.kt")
+            public void testJavaSyntheticPropertyReference3() throws Exception {
+                runTest("../testData/basic/common/callableReference/JavaSyntheticPropertyReference3.kt");
+            }
+
             @TestMetadata("JavaSyntheticPropertyReferenceTrueNegative1.kt")
             public void testJavaSyntheticPropertyReferenceTrueNegative1() throws Exception {
                 runTest("../testData/basic/common/callableReference/JavaSyntheticPropertyReferenceTrueNegative1.kt");
@@ -513,6 +518,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("JavaSyntheticPropertyReferenceTrueNegative2.kt")
             public void testJavaSyntheticPropertyReferenceTrueNegative2() throws Exception {
                 runTest("../testData/basic/common/callableReference/JavaSyntheticPropertyReferenceTrueNegative2.kt");
+            }
+
+            @TestMetadata("JavaSyntheticPropertyReferenceTrueNegative3.kt")
+            public void testJavaSyntheticPropertyReferenceTrueNegative3() throws Exception {
+                runTest("../testData/basic/common/callableReference/JavaSyntheticPropertyReferenceTrueNegative3.kt");
             }
 
             @TestMetadata("NonEmptyQualifier.kt")

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.fir.codeInsight
 
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
@@ -13,7 +14,7 @@ internal class SymbolBasedShortenReferencesFacility : ShortenReferencesFacility 
         shortenReferencesInRange(file, range)
     }
 
-    override fun shorten(element: KtElement) {
-        shortenReferences(element)
+    override fun shorten(element: KtElement): PsiElement? {
+        return shortenReferences(element)
     }
 }

@@ -750,6 +750,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/noImportInterfaceRefAsConstructor.before.Main.kt");
             }
 
+            @TestMetadata("noImportOfExtensionForReferenceWithPackageQualifier.test")
+            public void testNoImportOfExtensionForReferenceWithPackageQualifier() throws Exception {
+                runTest("testData/quickfix/autoImports/noImportOfExtensionForReferenceWithPackageQualifier.test");
+            }
+
+            @TestMetadata("noImportOfExtensionWhenMatchingReceiverIsMissing.test")
+            public void testNoImportOfExtensionWhenMatchingReceiverIsMissing() throws Exception {
+                runTest("testData/quickfix/autoImports/noImportOfExtensionWhenMatchingReceiverIsMissing.test");
+            }
+
             @TestMetadata("noImportsForClassInExcludedPackage.before.Main.kt")
             public void testNoImportsForClassInExcludedPackage() throws Exception {
                 runTest("testData/quickfix/autoImports/noImportsForClassInExcludedPackage.before.Main.kt");

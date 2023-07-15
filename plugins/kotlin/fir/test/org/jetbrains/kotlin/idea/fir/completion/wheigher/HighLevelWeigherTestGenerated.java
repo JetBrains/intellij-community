@@ -600,6 +600,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../completion/testData/weighers/basic/PropertiesBeforeKeywords.kt");
         }
 
+        @TestMetadata("RecursiveCall.kt")
+        public void testRecursiveCall() throws Exception {
+            runTest("../completion/testData/weighers/basic/RecursiveCall.kt");
+        }
+
         @TestMetadata("StaticMembers.kt")
         public void testStaticMembers() throws Exception {
             runTest("../completion/testData/weighers/basic/StaticMembers.kt");

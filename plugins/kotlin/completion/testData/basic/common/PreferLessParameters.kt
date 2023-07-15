@@ -1,10 +1,20 @@
-fun foo(iterable: Iterable<String>) {
-    iterable.singl<caret>
+// FIR_COMPARISON
+// FIR_IDENTICAL
+interface A {
+    fun xxx(p1: Int, p2: Int)
+}
+
+interface B {
+    fun xxx(singleParameter: Int) {}
+}
+
+abstract class C : A, B {
+    fun test() {
+        xx<caret>
+    }
 }
 
 // WITH_ORDER
-// EXIST: { itemText: "single", tailText: "() for Iterable<T> in kotlin.collections" }
-// EXIST: { itemText: "single", tailText: " {...} (predicate: (String) -> Boolean) for Iterable<T> in kotlin.collections" }
-// EXIST: { itemText: "singleOrNull", tailText: "() for Iterable<T> in kotlin.collections" }
-// EXIST: { itemText: "singleOrNull", tailText: " {...} (predicate: (String) -> Boolean) for Iterable<T> in kotlin.collections" }
+// EXIST: { itemText: "xxx", tailText: "(singleParameter: Int)" }
+// EXIST: { itemText: "xxx", tailText: "(p1: Int, p2: Int)" }
 // NOTHING_ELSE

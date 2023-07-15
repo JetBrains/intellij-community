@@ -23,8 +23,8 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.FileTypeIndex
 import org.jetbrains.annotations.ApiStatus
@@ -36,7 +36,6 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.nio.file.Paths
 
 val KOTLIN_FILE_EXTENSIONS: Set<String> = setOf("kt", "kts")
 val KOTLIN_FILE_TYPES: Set<KotlinFileType> = setOf(KotlinFileType.INSTANCE)
@@ -60,8 +59,8 @@ fun getOutsiderFileOrigin(project: Project, file: VirtualFile): VirtualFile? {
         return null
     }
 
-    val originalFilePath = OutsidersPsiFileSupport.getOriginalFilePath(file) ?: return null
-    val originalFile = VfsUtil.findFile(Paths.get(originalFilePath), false) ?: return null
+    val originalUrl = OutsidersPsiFileSupport.getOriginalFileUrl(file) ?: return null
+    val originalFile = VirtualFileManager.getInstance().findFileByUrl(originalUrl) ?: return null
 
     // TODO possibly change to 'GlobalSearchScope.projectScope(project)' check
     val projectDir = project.baseDir

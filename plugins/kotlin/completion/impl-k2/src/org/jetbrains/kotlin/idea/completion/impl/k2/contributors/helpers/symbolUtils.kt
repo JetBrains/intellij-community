@@ -15,13 +15,15 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.idea.references.KtReference
 
-internal fun KtAnalysisSession.getStaticScope(reference: KtReference): KtScopeWithKind? {
+internal fun KtAnalysisSession.getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
     val scopeIndex = CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX
 
-    return when (val symbol = reference.resolveToSymbol()) {
-        is KtSymbolWithMembers -> KtScopeWithKind(symbol.getStaticMemberScope(), KtScopeKind.StaticMemberScope(scopeIndex), token)
-        is KtPackageSymbol -> KtScopeWithKind(symbol.getPackageScope(), KtScopeKind.StaticMemberScope(scopeIndex), token)
-        else -> null
+    return reference.resolveToSymbols().mapNotNull { symbol ->
+        when (symbol) {
+            is KtSymbolWithMembers -> KtScopeWithKind(symbol.getStaticMemberScope(), KtScopeKind.StaticMemberScope(scopeIndex), token)
+            is KtPackageSymbol -> KtScopeWithKind(symbol.getPackageScope(), KtScopeKind.PackageMemberScope(scopeIndex), token)
+            else -> null
+        }
     }
 }
 

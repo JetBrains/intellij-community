@@ -8,5 +8,3 @@ fun some() {
     val str = ""
     str.someFun()
 }
-
-/* IGNORE_FIR */

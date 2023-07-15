@@ -600,6 +600,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/PropertiesBeforeKeywords.kt");
         }
 
+        @TestMetadata("RecursiveCall.kt")
+        public void testRecursiveCall() throws Exception {
+            runTest("../testData/weighers/basic/RecursiveCall.kt");
+        }
+
         @TestMetadata("StaticMembers.kt")
         public void testStaticMembers() throws Exception {
             runTest("../testData/weighers/basic/StaticMembers.kt");

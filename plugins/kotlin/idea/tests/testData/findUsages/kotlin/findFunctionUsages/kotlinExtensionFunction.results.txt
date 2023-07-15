@@ -1,2 +1,2 @@
 Function call 11 e.myFoo("")
-Function call 12 e.myFoo(2.13) //not found by K2 - KTIJ-26231
+Function call 12 e.myFoo(2.13)

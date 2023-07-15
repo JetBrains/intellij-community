@@ -28,9 +28,29 @@ public class KDocCompletionTestGenerated extends AbstractJvmBasicCompletionTest 
         runTest("../testData/kdoc/AfterPackageName.kt");
     }
 
+    @TestMetadata("AmbiguousQualifier.kt")
+    public void testAmbiguousQualifier() throws Exception {
+        runTest("../testData/kdoc/AmbiguousQualifier.kt");
+    }
+
     @TestMetadata("AutoPopupAfterAtInKDoc.kt")
     public void testAutoPopupAfterAtInKDoc() throws Exception {
         runTest("../testData/kdoc/AutoPopupAfterAtInKDoc.kt");
+    }
+
+    @TestMetadata("ClassesWithTheSameName.kt")
+    public void testClassesWithTheSameName() throws Exception {
+        runTest("../testData/kdoc/ClassesWithTheSameName.kt");
+    }
+
+    @TestMetadata("CompanionObject.kt")
+    public void testCompanionObject() throws Exception {
+        runTest("../testData/kdoc/CompanionObject.kt");
+    }
+
+    @TestMetadata("Extension.kt")
+    public void testExtension() throws Exception {
+        runTest("../testData/kdoc/Extension.kt");
     }
 
     @TestMetadata("ExtensionsFQLink.kt")
@@ -88,6 +108,11 @@ public class KDocCompletionTestGenerated extends AbstractJvmBasicCompletionTest 
         runTest("../testData/kdoc/NoCompletionAfterFunName.kt");
     }
 
+    @TestMetadata("NoJavaSyntheticProperty.kt")
+    public void testNoJavaSyntheticProperty() throws Exception {
+        runTest("../testData/kdoc/NoJavaSyntheticProperty.kt");
+    }
+
     @TestMetadata("NoTopLevelForQualified.kt")
     public void testNoTopLevelForQualified() throws Exception {
         runTest("../testData/kdoc/NoTopLevelForQualified.kt");
@@ -101,6 +126,16 @@ public class KDocCompletionTestGenerated extends AbstractJvmBasicCompletionTest 
     @TestMetadata("ParamTag.kt")
     public void testParamTag() throws Exception {
         runTest("../testData/kdoc/ParamTag.kt");
+    }
+
+    @TestMetadata("ParamTagNoCompletionAfterQualifier.kt")
+    public void testParamTagNoCompletionAfterQualifier() throws Exception {
+        runTest("../testData/kdoc/ParamTagNoCompletionAfterQualifier.kt");
+    }
+
+    @TestMetadata("PrivateMember.kt")
+    public void testPrivateMember() throws Exception {
+        runTest("../testData/kdoc/PrivateMember.kt");
     }
 
     @TestMetadata("SkipExistingParamTag.kt")

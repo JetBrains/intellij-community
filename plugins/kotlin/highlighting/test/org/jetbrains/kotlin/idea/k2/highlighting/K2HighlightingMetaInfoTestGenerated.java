@@ -180,6 +180,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../idea/tests/testData/highlighterMetaInfo/InvokeCall.kt");
         }
 
+        @TestMetadata("JavaRecord.kt")
+        public void testJavaRecord() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/JavaRecord.kt");
+        }
+
         @TestMetadata("JavaTypes.kt")
         public void testJavaTypes() throws Exception {
             runTest("../idea/tests/testData/highlighterMetaInfo/JavaTypes.kt");

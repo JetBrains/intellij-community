@@ -23,15 +23,11 @@ interface KotlinRenameRefactoringSupport {
         fun getInstance(): KotlinRenameRefactoringSupport = service()
     }
 
+    fun mapSetter(ktReference: PsiReference): PsiReference? = ktReference
+
     fun processForeignUsages(element: PsiElement, newName: String, usages: Array<UsageInfo>, fallbackHandler: (UsageInfo) -> Unit)
 
     fun prepareForeignUsagesRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope)
-
-    fun checkRedeclarations(
-        declaration: KtNamedDeclaration,
-        newName: String,
-        result: MutableList<UsageInfo>
-    )
 
     fun checkOriginalUsagesRetargeting(
         declaration: KtNamedDeclaration,
@@ -44,12 +40,6 @@ interface KotlinRenameRefactoringSupport {
         declaration: KtNamedDeclaration,
         newName: String,
         newUsages: MutableList<UsageInfo>
-    )
-
-    fun checkAccidentalPropertyOverrides(
-        declaration: KtNamedDeclaration,
-        newName: String,
-        result: MutableList<UsageInfo>
     )
 
     fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement>

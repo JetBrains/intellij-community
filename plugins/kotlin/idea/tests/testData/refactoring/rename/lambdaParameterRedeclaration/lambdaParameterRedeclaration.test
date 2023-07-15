@@ -3,5 +3,6 @@
   "mainFile": "test.kt",
   "newName": "b",
   "withRuntime": "true",
-  "hint": "Parameter 'b' is already declared in lambda"
+  "hint": "Parameter 'b' is already declared in lambda",
+  "enabledInK2": "true"
 }

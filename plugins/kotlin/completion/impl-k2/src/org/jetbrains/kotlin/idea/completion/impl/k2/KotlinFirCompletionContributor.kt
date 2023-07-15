@@ -3,22 +3,37 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.patterns.PlatformPatterns
+import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
+import com.intellij.patterns.StandardPatterns
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
+import org.jetbrains.kotlin.idea.completion.context.*
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirPositionCompletionContextDetector
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
+import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinFirCompletionContributor : CompletionContributor() {
     init {
-        extend(CompletionType.BASIC, PlatformPatterns.psiElement(), KotlinFirCompletionProvider)
+        extend(CompletionType.BASIC, psiElement(), KotlinFirCompletionProvider)
+
+        // add tag completion in KDoc
+        extend(
+            CompletionType.BASIC,
+            psiElement().afterLeaf(StandardPatterns.or(psiElement(KDocTokens.LEADING_ASTERISK), psiElement(KDocTokens.START))),
+            KDocTagCompletionProvider
+        )
+        extend(CompletionType.BASIC, psiElement(KDocTokens.TAG_NAME), KDocTagCompletionProvider)
     }
 
     override fun beforeCompletion(context: CompletionInitializationContext) {
@@ -50,11 +65,12 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParametersProvider.provide(parameters)
 
         if (shouldSuppressCompletion(parameters.ijParameters, result.prefixMatcher)) return
-        val resultSet = createResultSet(parameters, result)
+        val positionContext = FirPositionCompletionContextDetector.detect(parameters.ijParameters.position)
+        val resultSet = createResultSet(parameters, positionContext, result)
 
         val basicContext = FirBasicCompletionContext.createFromParameters(parameters, resultSet) ?: return
 
-        val positionContext = FirPositionCompletionContextDetector.detect(basicContext)
+
 
         FirPositionCompletionContextDetector.analyzeInContext(basicContext, positionContext) {
             recordOriginalFile(basicContext)
@@ -70,7 +86,8 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         val factory = FirCompletionContributorFactory(basicContext)
         with(Completions) {
             val weighingContext = createWeighingContext(basicContext, positionContext)
-            complete(factory, positionContext, weighingContext)
+            val sessionParameters = FirCompletionSessionParameters(basicContext, positionContext)
+            complete(factory, positionContext, weighingContext, sessionParameters)
         }
     }
 
@@ -81,19 +98,26 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         fakeFile.recordOriginalKtFile(originalFile)
     }
 
-    private fun createResultSet(parameters: KotlinFirCompletionParameters, result: CompletionResultSet): CompletionResultSet {
+    private fun createResultSet(
+        parameters: KotlinFirCompletionParameters,
+        positionContext: FirRawPositionCompletionContext,
+        result: CompletionResultSet
+    ): CompletionResultSet {
         val prefix = CompletionUtil.findIdentifierPrefix(
             parameters.ijParameters.position.containingFile,
             parameters.ijParameters.offset,
             kotlinIdentifierPartPattern(),
             kotlinIdentifierStartPattern()
         )
-        return result.withRelevanceSorter(createSorter(parameters.ijParameters, result)).withPrefixMatcher(prefix)
+        return result.withRelevanceSorter(createSorter(parameters.ijParameters, positionContext, result)).withPrefixMatcher(prefix)
     }
 
-    private fun createSorter(parameters: CompletionParameters, result: CompletionResultSet): CompletionSorter =
-        CompletionSorter.defaultSorter(parameters, result.prefixMatcher)
-            .let(Weighers::addWeighersToCompletionSorter)
+    private fun createSorter(
+        parameters: CompletionParameters,
+        positionContext: FirRawPositionCompletionContext,
+        result: CompletionResultSet
+    ): CompletionSorter = CompletionSorter.defaultSorter(parameters, result.prefixMatcher)
+            .let { Weighers.addWeighersToCompletionSorter(it, positionContext) }
 
     private val AFTER_NUMBER_LITERAL = PsiJavaPatterns.psiElement().afterLeafSkipping(
         PsiJavaPatterns.psiElement().withText(""),
@@ -116,4 +140,18 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
 
         return false
     }
+}
+
+internal data class FirCompletionSessionParameters(
+    private val basicContext: FirBasicCompletionContext,
+    private val positionContext: FirRawPositionCompletionContext,
+) {
+    private val languageVersionSettings = basicContext.project.languageVersionSettings
+    val excludeEnumEntries: Boolean = !languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries)
+
+    val allowSyntheticJavaProperties: Boolean = positionContext !is FirKDocNameReferencePositionContext &&
+            (positionContext !is FirCallableReferencePositionContext || languageVersionSettings.supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties))
+
+    val allowJavaGettersAndSetters: Boolean = !allowSyntheticJavaProperties || basicContext.parameters.invocationCount > 1
+    val allowExpectedDeclarations: Boolean = basicContext.originalKtFile.moduleInfo.platform.isMultiPlatform()
 }
