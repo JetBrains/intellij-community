@@ -9,5 +9,5 @@ fun E.myFoo(d: Double) {}
 
 fun usages(e: E) {
     e.myFoo("")
-    e.myFoo(2.13) //not found by K2 - KTIJ-26231
+    e.myFoo(2.13)
 }
