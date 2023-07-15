@@ -207,7 +207,6 @@ final class PersistentFSConnector {
       // sources usually zipped with 4x ratio
       if (useContentHashes) {
         contentHashesEnumerator = new ContentHashEnumerator(contentsHashesFile, PERSISTENT_FS_STORAGE_CONTEXT);
-        checkStoragesAreConsistent(contentsStorage, contentHashesEnumerator);
       }
       else {
         contentHashesEnumerator = null;
@@ -243,6 +242,9 @@ final class PersistentFSConnector {
         if (recordsStorage.getConnectionStatus() != PersistentFSHeaders.SAFELY_CLOSED_MAGIC) {
           throw new VFSNeedsRebuildException(NOT_CLOSED_PROPERLY,
                                              "FS repository wasn't safely shut down: records.connectionStatus != SAFELY_CLOSED");
+        }
+        if (useContentHashes) {
+          checkStoragesAreConsistent(contentsStorage, contentHashesEnumerator);
         }
       }
 
