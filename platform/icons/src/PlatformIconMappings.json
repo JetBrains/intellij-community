@@ -193,7 +193,6 @@
       "modified.svg": "general/modified.svg",
       "patch.svg": "vcs/patch_file.svg",
       "properties.svg": "fileTypes/properties.svg",
-      "protobuf.svg": "protoFile.png",
       "react.svg": "org/jetbrains/kotlin/idea/icons/wizard/react.svg",
       "regexp.svg": "fileTypes/regexp.svg",
       "scala.svg": "org/jetbrains/plugins/scala/images/scala16.png",
