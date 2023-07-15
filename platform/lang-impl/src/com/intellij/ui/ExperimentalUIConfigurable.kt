@@ -107,13 +107,15 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
         browserLink(getExploreNewUiLabel(), getExploreNewUiUrl())
         link(IdeBundle.message("new.ui.submit.feedback")) { onSubmitFeedback() }
       }.bottomGap(BottomGap.SMALL)
-      row {
-        val img = IconLoader.getIcon("images/newUiPreview.png", this@panel::class.java.classLoader)
-        val promo = VideoPromoComponent(JLabel(img), IdeBundle.message("new.ui.watch.new.ui.overview"), alwaysDisplayLabel = true,
-                                        darkLabel = true) {
-          BrowserUtil.browse(PROMO_URL)
+      if (PlatformUtils.isIntelliJ()) {
+        row {
+          val img = IconLoader.getIcon("images/newUiPreview.png", this@panel::class.java.classLoader)
+          val promo = VideoPromoComponent(JLabel(img), IdeBundle.message("new.ui.watch.new.ui.overview"), alwaysDisplayLabel = true,
+                                          darkLabel = true) {
+            BrowserUtil.browse(PROMO_URL)
+          }
+          cell(promo)
         }
-        cell(promo)
       }
     }
   }
