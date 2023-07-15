@@ -90,6 +90,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     customJvmMemoryOptions = customJvmMemoryOptions.putAll(arrayOf("-Xms" to "256m", "-Xmx" to "2048m"))
     additionalIdeJvmArguments = mutableListOf("-XX:FlightRecorderOptions=stackdepth=256", "--add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED")
 
+    embeddedJetBrainsClientMainModule = null // Overrides org.jetbrains.intellij.build.configureJetBrainsProduct().
     productLayout.productImplementationModules =
       listOf("intellij.idea.community.resources", "intellij.platform.duplicates.analysis", "intellij.platform.main", "intellij.platform.structuralSearch") -
       listOf("intellij.platform.jps.model.impl", "intellij.platform.jps.model.serialization")
