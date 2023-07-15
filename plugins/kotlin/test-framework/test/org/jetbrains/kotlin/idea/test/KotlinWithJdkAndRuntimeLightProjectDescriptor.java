@@ -58,15 +58,26 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
             };
 
     public KotlinWithJdkAndRuntimeLightProjectDescriptor() {
-        super(List.of(TestKotlinArtifacts.getKotlinStdlib()),
-              List.of(TestKotlinArtifacts.getKotlinStdlibSources(), TestKotlinArtifacts.getKotlinStdlibCommonSources()));
+        super(
+                List.of(TestKotlinArtifacts.getKotlinStdlib()),
+                List.of(TestKotlinArtifacts.getKotlinStdlibSources(), TestKotlinArtifacts.getKotlinStdlibCommonSources()),
+                null
+        );
     }
 
     public KotlinWithJdkAndRuntimeLightProjectDescriptor(
             @NotNull List<? extends File> libraryFiles,
             @NotNull List<? extends File> librarySourceFiles
     ) {
-        super(libraryFiles, librarySourceFiles);
+        super(libraryFiles, librarySourceFiles, null);
+    }
+
+    public KotlinWithJdkAndRuntimeLightProjectDescriptor(
+            @NotNull List<? extends File> libraryFiles,
+            @NotNull List<? extends File> librarySourceFiles,
+            @NotNull LanguageLevel languageLevel
+    ) {
+        super(libraryFiles, librarySourceFiles, languageLevel);
     }
 
     public static KotlinWithJdkAndRuntimeLightProjectDescriptor getInstance(@NotNull String version) {

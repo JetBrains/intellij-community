@@ -38,7 +38,7 @@ class FirIdeaKotlinUastResolveProviderService : FirKotlinUastResolveProviderServ
             if (fileIndex.isInSourceContent(virtualFile) || fileIndex.isInLibrary(virtualFile)) {
                 return true
             }
-        }
+        } else return true
 
         // The checks above might not work in all possible situations (e.g. scripts) and `getKtModule` is able to give a definitive answer.
         val module = ProjectStructureProvider.getModule(project, file, contextualModule = null)

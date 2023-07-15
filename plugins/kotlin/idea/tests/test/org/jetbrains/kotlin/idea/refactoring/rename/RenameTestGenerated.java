@@ -118,6 +118,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/automaticVariableRenamerWithQuotation/automaticVariableRenamerWithQuotation.test");
     }
 
+    @TestMetadata("backingField/backingField.test")
+    public void testBackingField_BackingField() throws Exception {
+        runTest("testData/refactoring/rename/backingField/backingField.test");
+    }
+
     @TestMetadata("clashOfNestedWithOuterClass/clashOfNestedWithOuterClass.test")
     public void testClashOfNestedWithOuterClass_ClashOfNestedWithOuterClass() throws Exception {
         runTest("testData/refactoring/rename/clashOfNestedWithOuterClass/clashOfNestedWithOuterClass.test");

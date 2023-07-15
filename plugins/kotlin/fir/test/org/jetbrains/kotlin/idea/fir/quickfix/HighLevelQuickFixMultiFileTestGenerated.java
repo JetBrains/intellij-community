@@ -660,6 +660,16 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/noImportInterfaceRefAsConstructor.before.Main.kt");
         }
 
+        @TestMetadata("noImportOfExtensionForReferenceWithPackageQualifier.test")
+        public void testNoImportOfExtensionForReferenceWithPackageQualifier() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/noImportOfExtensionForReferenceWithPackageQualifier.test");
+        }
+
+        @TestMetadata("noImportOfExtensionWhenMatchingReceiverIsMissing.test")
+        public void testNoImportOfExtensionWhenMatchingReceiverIsMissing() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/noImportOfExtensionWhenMatchingReceiverIsMissing.test");
+        }
+
         @TestMetadata("noImportsForClassInExcludedPackage.before.Main.kt")
         public void testNoImportsForClassInExcludedPackage() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/noImportsForClassInExcludedPackage.before.Main.kt");

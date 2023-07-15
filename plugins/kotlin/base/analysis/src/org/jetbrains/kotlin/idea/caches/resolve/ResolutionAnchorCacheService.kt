@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceIn
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
-import org.jetbrains.kotlin.types.typeUtil.closure
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @State(name = "KotlinIdeAnchorService", storages = [Storage("anchors.xml")])
@@ -128,4 +127,20 @@ class ResolutionAnchorCacheServiceImpl(
     companion object {
         private val logger = logger<ResolutionAnchorCacheServiceImpl>()
     }
+}
+fun <T> Collection<T>.closure(f: (T) -> Collection<T>): Collection<T> {
+    if (isEmpty()) return this
+
+    val result = HashSet(this)
+    var elementsToCheck = result
+    var oldSize = 0
+    while (result.size > oldSize) {
+        oldSize = result.size
+        val toAdd = hashSetOf<T>()
+        elementsToCheck.forEach { toAdd.addAll(f(it)) }
+        result.addAll(toAdd)
+        elementsToCheck = toAdd
+    }
+
+    return result
 }

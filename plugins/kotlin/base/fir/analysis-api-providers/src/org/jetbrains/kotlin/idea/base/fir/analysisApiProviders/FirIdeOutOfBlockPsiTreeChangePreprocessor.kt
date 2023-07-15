@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
 
@@ -8,11 +8,14 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
-import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.getNonLocalContainingInBodyDeclarationWith
-import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.isReanalyzableContainer
+import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
+import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.getNonLocalReanalyzableContainingDeclaration
+import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.invalidateAfterInBlockModification
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.psi.KtDeclaration
 
+@OptIn(LLFirInternals::class)
 internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor {
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
         if (!PsiModificationTrackerImpl.canAffectPsi(event) ||
@@ -40,44 +43,40 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
             return
         }
 
-        if (isOutOfCodeBlockChange(rootElement, child)) {
-            project.getService(FirIdeModificationTrackerService::class.java)
-                .increaseModificationCountForModuleAndProject(rootElement.module)
-        }
-    }
-
-    private fun isOutOfCodeBlockChange(rootElement: PsiElement, child: PsiElement?): Boolean {
-        return when (rootElement.language) {
-            KotlinLanguage.INSTANCE -> {
-                isOutOfBlockChange(child ?: rootElement)
+        val changeType = calculateChangeType(rootElement, child)
+        when (changeType) {
+            ChangeType.Invisible -> {}
+            ChangeType.OutOfBlock -> {
+                project.getService(FirIdeModificationTrackerService::class.java)
+                    .increaseModificationCountForModuleAndProject(rootElement.module)
             }
 
-            JavaLanguage.INSTANCE -> {
-                true // TODO improve for Java KTIJ-21684
-            }
-
-            else -> {
-                // Any other language may cause OOBM in Kotlin too
-                true
+            is ChangeType.InBlock -> {
+                // trigger in-block a FIR tree invalidation
+                invalidateAfterInBlockModification(changeType.blockOwner)
             }
         }
 
     }
 
-    private fun isOutOfBlockChange(psi: PsiElement): Boolean {
-        if (!psi.isValid) {
-            /**
-             * If PSI is not valid, well something bad happened, OOBM won't hurt
-             */
-            return true
-        }
+    private fun calculateChangeType(rootElement: PsiElement, child: PsiElement?): ChangeType = when (rootElement.language) {
+        KotlinLanguage.INSTANCE -> kotlinChangeType(child ?: rootElement)
 
-        if (psi is PsiWhiteSpace || psi is PsiComment) {
-            return false
-        }
+        // TODO improve for Java KTIJ-21684
+        JavaLanguage.INSTANCE -> ChangeType.OutOfBlock
 
-        val container = psi.getNonLocalContainingInBodyDeclarationWith() ?: return true
-        return !isReanalyzableContainer(container)
+        // Any other language may cause OOBM in Kotlin too
+        else -> ChangeType.OutOfBlock
+    }
+
+    private fun kotlinChangeType(psi: PsiElement): ChangeType = when {
+        // If PSI is not valid, well something bad happened, OOBM won't hurt
+        !psi.isValid -> ChangeType.OutOfBlock
+        psi is PsiWhiteSpace || psi is PsiComment -> ChangeType.Invisible
+        else -> {
+            val inBlockModificationOwner = psi.getNonLocalReanalyzableContainingDeclaration()
+            inBlockModificationOwner?.let(ChangeType::InBlock) ?: ChangeType.OutOfBlock
+        }
     }
 
     // Copy logic from PsiModificationTrackerImpl.treeChanged(). Some out-of-code-block events are written to language modification
@@ -89,4 +88,10 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
         PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED -> oldParent is PsiDirectory || newParent is PsiDirectory
         else -> parent is PsiDirectory
     }
+}
+
+private sealed class ChangeType {
+    object OutOfBlock : ChangeType()
+    object Invisible : ChangeType()
+    class InBlock(val blockOwner: KtDeclaration) : ChangeType()
 }

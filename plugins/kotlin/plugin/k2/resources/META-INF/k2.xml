@@ -50,6 +50,7 @@
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
     <uastLanguagePlugin implementation="org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin"/>
+    <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.kotlin.FirKotlinUastCodeGenerationPlugin"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -111,9 +111,8 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                     if (target.isTopLevelCallable()) return@any false
                     if (target === declaration) return@any false
                     analyze(target) {
-                        if (!declaration.canBeAnalysed()) return@any false
                         val targetSymbol = target.getSymbol() as? KtCallableSymbol ?: return@any false
-                        declaration.getSymbol() in targetSymbol.getAllOverriddenSymbols()
+                        declaration.originalElement in targetSymbol.getAllOverriddenSymbols().mapNotNull { it.psi?.originalElement }
                     }
                 }
                 is PsiMethod -> {
@@ -126,11 +125,14 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
     override fun isUsageInContainingDeclaration(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
         analyze(declaration) {
-            val symbol = declaration.getSymbol()
-            val containerSymbol = symbol.getContainingSymbol() ?: return false
+            val symbol = declaration.getSymbol() as? KtCallableSymbol ?: return false
+            fun container(symbol: KtCallableSymbol): KtDeclarationSymbol? {
+                return symbol.receiverType?.expandedClassSymbol ?: symbol.getContainingSymbol()
+            }
+            val containerSymbol = container(symbol) ?: return false
             return reference.unwrappedTargets.filterIsInstance(KtDeclaration::class.java).any { candidateDeclaration ->
                 val candidateSymbol = candidateDeclaration.getSymbol()
-                candidateSymbol != symbol && candidateSymbol.getContainingSymbol() == containerSymbol
+                candidateSymbol is KtCallableSymbol && candidateSymbol != symbol && container(candidateSymbol) == containerSymbol
             }
         }
     }
@@ -252,12 +254,12 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
             is PsiMethod -> element.findDeepestSuperMethods().toList()
             is KtCallableDeclaration -> analyze(element) {
                 // it's not possible to create symbol for function type parameter, so we need to process this case separately
-                // see KTIJ-25760
+                // see KTIJ-25760 and KTIJ-25653
                 if (method is KtParameter && method.isFunctionTypeParameter) return emptyList()
 
                 val symbol = element.getSymbol() as? KtCallableSymbol ?: return emptyList()
 
-                val allSuperMethods = symbol.getAllOverriddenSymbols()
+                val allSuperMethods = ((symbol as? KtValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: symbol).getAllOverriddenSymbols()
                 val deepestSuperMethods = allSuperMethods.filter {
                     when (it) {
                         is KtFunctionSymbol -> !it.isOverride

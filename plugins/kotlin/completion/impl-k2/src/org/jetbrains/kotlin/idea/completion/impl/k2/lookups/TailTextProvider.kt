@@ -20,10 +20,9 @@ internal object TailTextProvider {
     fun KtAnalysisSession.getTailText(signature: KtCallableSignature<*>): String = buildString {
         if (signature is KtFunctionLikeSignature<*>) {
             if (insertLambdaBraces(signature)) {
-                append(" {...}")
-            } else {
-                append(renderFunctionParameters(signature))
+                append(" {...} ")
             }
+            append(renderFunctionParameters(signature))
         }
 
         // use unsubstituted type when rendering receiver type of extension

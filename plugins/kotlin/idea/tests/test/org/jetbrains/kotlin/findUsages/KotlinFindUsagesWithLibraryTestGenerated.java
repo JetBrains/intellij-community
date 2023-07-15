@@ -486,9 +486,24 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
             runTest("testData/findUsages/libraryUsages/kotlinLibrary/LibraryEnumEntryUsages.0.kt");
         }
 
+        @TestMetadata("LibraryEnumUsage.0.kt")
+        public void testLibraryEnumUsage() throws Exception {
+            runTest("testData/findUsages/libraryUsages/kotlinLibrary/LibraryEnumUsage.0.kt");
+        }
+
+        @TestMetadata("LibraryExtFunctionUsage.0.kt")
+        public void testLibraryExtFunctionUsage() throws Exception {
+            runTest("testData/findUsages/libraryUsages/kotlinLibrary/LibraryExtFunctionUsage.0.kt");
+        }
+
         @TestMetadata("LibraryFunctionUsages.0.kt")
         public void testLibraryFunctionUsages() throws Exception {
             runTest("testData/findUsages/libraryUsages/kotlinLibrary/LibraryFunctionUsages.0.kt");
+        }
+
+        @TestMetadata("LibraryJvmOverloads.0.kt")
+        public void testLibraryJvmOverloads() throws Exception {
+            runTest("testData/findUsages/libraryUsages/kotlinLibrary/LibraryJvmOverloads.0.kt");
         }
 
         @TestMetadata("LibraryMemberFunctionUsages.0.kt")

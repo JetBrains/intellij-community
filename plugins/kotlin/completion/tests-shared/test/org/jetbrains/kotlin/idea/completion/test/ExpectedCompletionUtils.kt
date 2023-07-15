@@ -158,6 +158,7 @@ object ExpectedCompletionUtils {
         IgnoreTests.DIRECTIVES.FIR_COMPARISON,
         IgnoreTests.DIRECTIVES.FIR_IDENTICAL,
         IgnoreTests.DIRECTIVES.FIR_COMPARISON_MULTILINE_COMMENT,
+        IgnoreTests.DIRECTIVES.IGNORE_FE10,
     )
 
     fun itemsShouldExist(fileText: String, platform: TargetPlatform?): Array<CompletionProposal> = when {

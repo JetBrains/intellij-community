@@ -24,7 +24,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 
-import static org.jetbrains.kotlin.idea.test.TestUtilsKt.checkPluginIsCorrect;
+import static org.jetbrains.kotlin.idea.test.TestUtilsKt.setUpWithKotlinPlugin;
 
 public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJavaCodeInsightFixtureTestCase {
     @NotNull
@@ -49,9 +49,7 @@ public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJav
 
     @Override
     protected void setUp() throws Exception {
-        System.setProperty("idea.kotlin.plugin.use.k2", Boolean.toString(isFirPlugin()));
-        super.setUp();
-        checkPluginIsCorrect(isFirPlugin());
+        setUpWithKotlinPlugin(isFirPlugin(), super::setUp);
     }
 
     @Override

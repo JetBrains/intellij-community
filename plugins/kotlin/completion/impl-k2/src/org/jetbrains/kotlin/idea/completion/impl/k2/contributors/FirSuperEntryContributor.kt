@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirSuperEntries
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallLookupObject
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallInsertionHandler
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
@@ -20,7 +21,8 @@ internal class FirSuperEntryContributor(
 ) : FirCompletionContributorBase<FirSuperTypeCallNameReferencePositionContext>(basicContext, priority) {
     override fun KtAnalysisSession.complete(
         positionContext: FirSuperTypeCallNameReferencePositionContext,
-        weighingContext: WeighingContext
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
     ) = getSuperClassesAvailableForSuperCall(positionContext.nameExpression).forEach { superType ->
         val tailText = superType.classIdIfNonLocal?.asString()?.let { "($it)" }
         LookupElementBuilder.create(SuperLookupObject(superType.name, superType.classIdIfNonLocal), superType.name.asString())

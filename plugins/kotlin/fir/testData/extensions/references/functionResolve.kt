@@ -4,4 +4,4 @@ fun main() {
     aaa<caret>a()
 }
 
-// REF: <function name = "aaaa"/>
+// REF: (generated.pckg).aaaa()

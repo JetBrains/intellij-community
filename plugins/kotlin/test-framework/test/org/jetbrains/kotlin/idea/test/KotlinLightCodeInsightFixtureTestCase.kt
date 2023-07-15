@@ -273,7 +273,11 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                         ?.let { version -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance(version) }
                         ?: KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
                     if (minJavaVersion != null) {
-                        object : KotlinWithJdkAndRuntimeLightProjectDescriptor(instance.libraryFiles, instance.librarySourceFiles) {
+                        object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
+                            instance.libraryFiles,
+                            instance.librarySourceFiles,
+                            LanguageLevel.parse(minJavaVersion.toString())!!,
+                        ) {
                             val sdkValue by lazy { sdk(minJavaVersion) }
                             override fun getSdk(): Sdk = sdkValue
                         }
@@ -304,7 +308,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         6 -> IdeaTestUtil.getMockJdk16()
         8 -> IdeaTestUtil.getMockJdk18()
         9 -> IdeaTestUtil.getMockJdk9()
-        11 -> {
+        11, 17 -> {
             if (SystemInfo.isJavaVersionAtLeast(javaVersion, 0, 0)) {
                 PluginTestCaseBase.fullJdk()
             } else {

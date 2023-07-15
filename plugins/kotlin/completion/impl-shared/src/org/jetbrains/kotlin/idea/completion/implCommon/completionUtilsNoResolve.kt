@@ -8,15 +8,14 @@ import com.intellij.openapi.util.Key
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.elementType
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.isAncestor
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.render
 
 @ApiStatus.Internal
@@ -200,3 +199,16 @@ fun PrefixMatcher.asNameFilter(): NameFilter {
 }
 
 infix fun <T> ((T) -> Boolean).exclude(otherFilter: (T) -> Boolean): (T) -> Boolean = { this(it) && !otherFilter(it) }
+
+/**
+ * Returns true when [position] is an identifier of a function argument or a part of a binary expression (left- or right- hand side).
+ *
+ * Here only the positions in which expected type is likely to be unresolved are taken into consideration, in other positions suitability
+ * depends on the calculated expected type.
+ */
+fun isPositionSuitableForNull(position: PsiElement): Boolean = when {
+    position.elementType != KtTokens.IDENTIFIER -> false
+    position.context?.parent is KtValueArgument -> true
+    else -> position.context?.getPrevSiblingIgnoringWhitespaceAndComments() is KtOperationReferenceExpression
+            || position.context?.getNextSiblingIgnoringWhitespaceAndComments() is KtOperationReferenceExpression
+}

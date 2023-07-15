@@ -6,4 +6,3 @@ package pckg.useSite
 fun test() {
     "x".<caret>defNotNull("x")
 }
-/* IGNORE_FIR */

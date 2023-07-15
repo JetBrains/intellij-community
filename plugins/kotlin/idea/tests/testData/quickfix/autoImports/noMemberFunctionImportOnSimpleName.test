@@ -14,6 +14,7 @@ package foo
 fun f() {
     foobar<caret>
 }
+/* IGNORE_FIR */
 
 
 // FILE: dependency.before.kt

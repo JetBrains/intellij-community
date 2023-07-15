@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// FIR_COMPARISON
+// FIR_IDENTICAL
 open class A<T> {
     open fun xxx_foo(p1: T, vararg p2: String) {}
     open fun xxx_bar(p1: Int, p2: String) {}

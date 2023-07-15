@@ -17,10 +17,12 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
+import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.references.fe10.Fe10SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -36,6 +38,10 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         ForeignUsagesRenameProcessor.processAll(element, newName, usages, fallbackHandler)
     }
 
+    override fun mapSetter(ktReference: PsiReference): PsiReference? {
+        return (ktReference as? SyntheticPropertyAccessorReference)?.takeIf { !it.getter }?.let { Fe10SyntheticPropertyAccessorReference(it.expression, getter = true) }
+    }
+
     override fun prepareForeignUsagesRenaming(
         element: PsiElement,
         newName: String,
@@ -43,10 +49,6 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         scope: SearchScope
     ) {
         ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
-    }
-
-    override fun checkRedeclarations(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
-        org.jetbrains.kotlin.idea.refactoring.rename.checkRedeclarations(declaration, newName, result)
     }
 
     override fun checkOriginalUsagesRetargeting(
@@ -60,10 +62,6 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
 
     override fun checkNewNameUsagesRetargeting(declaration: KtNamedDeclaration, newName: String, newUsages: MutableList<UsageInfo>) {
         org.jetbrains.kotlin.idea.refactoring.rename.checkNewNameUsagesRetargeting(declaration, newName, newUsages)
-    }
-
-    override fun checkAccidentalPropertyOverrides(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
-        org.jetbrains.kotlin.idea.refactoring.rename.checkAccidentalPropertyOverrides(declaration, newName, result)
     }
 
     override fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement> {
