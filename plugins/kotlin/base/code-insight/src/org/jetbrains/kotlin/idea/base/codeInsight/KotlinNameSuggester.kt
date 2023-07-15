@@ -134,7 +134,11 @@ class KotlinNameSuggester(
      */
     fun KtAnalysisSession.suggestExpressionNames(expression: KtExpression, validator: (String) -> Boolean = { true }): Sequence<String> {
         return (suggestNamesByValueArgument(expression, validator) +
-                suggestNamesByExpressionPSI(expression, validator) +
+                suggestNamesByExpressionPSI(
+                    expression,
+                    validator,
+                    filter = { name -> name.length > MIN_LENGTH_OF_NAME_BASED_ON_EXPRESSION_PSI }
+                ) +
                 suggestNamesByType(expression, validator)).distinct()
     }
 
@@ -454,15 +458,17 @@ class KotlinNameSuggester(
          *  - `point.x` -> {x}
          *  - `collection.isEmpty()` -> {empty}
          */
-        fun suggestNamesByExpressionPSI(expression: KtExpression?, validator: (String) -> Boolean): Sequence<String> {
+        fun suggestNamesByExpressionPSI(
+            expression: KtExpression?,
+            validator: (String) -> Boolean,
+            filter: (String) -> Boolean = { true }
+        ): Sequence<String> {
             if (expression == null) return emptySequence()
             return when (val deparenthesized = KtPsiUtil.safeDeparenthesize(expression)) {
-                is KtSimpleNameExpression -> getCamelNames(deparenthesized.getReferencedName(), validator).filter { name ->
-                    name.length >= MIN_LENGTH_OF_NAME_BASED_ON_EXPRESSION_PSI
-                }
-                is KtQualifiedExpression -> suggestNamesByExpressionPSI(deparenthesized.selectorExpression, validator)
-                is KtCallExpression -> suggestNamesByExpressionPSI(deparenthesized.calleeExpression, validator)
-                is KtPostfixExpression -> suggestNamesByExpressionPSI(deparenthesized.baseExpression, validator)
+                is KtSimpleNameExpression -> getCamelNames(deparenthesized.getReferencedName(), validator).filter(filter)
+                is KtQualifiedExpression -> suggestNamesByExpressionPSI(deparenthesized.selectorExpression, validator, filter)
+                is KtCallExpression -> suggestNamesByExpressionPSI(deparenthesized.calleeExpression, validator, filter)
+                is KtPostfixExpression -> suggestNamesByExpressionPSI(deparenthesized.baseExpression, validator, filter)
                 else -> emptySequence()
             }
         }
