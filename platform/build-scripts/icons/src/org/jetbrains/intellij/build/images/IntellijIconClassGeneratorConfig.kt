@@ -78,6 +78,8 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
 
       "intellij.dts" -> IntellijIconClassGeneratorModuleConfig(className = "DtsIcons", packageName = "com.intellij.dts")
 
+      "intellij.protoeditor.core" -> IntellijIconClassGeneratorModuleConfig(className = "ProtoeditorCoreIcons", packageName = "com.intellij.protobuf")
+
       else -> super.getConfigForModule(moduleName)
     }
   }
