@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -18,6 +19,7 @@ import java.util.List;
  * That storage allows raw access to the underlying {@link java.nio.ByteBuffer} -- and the subclass tries to utilize
  * that option to bypass copy into byte[], and read from it via {@link java.io.InputStream}.
  */
+@ApiStatus.Internal
 public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
   PersistentFSTreeRawAccessor(@NotNull PersistentFSAttributeAccessor attributeAccessor,
                               @NotNull PersistentFSRecordAccessor recordAccessor,

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -12,6 +13,7 @@ import java.util.function.IntPredicate;
  * Replacement of {@linkplain com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex}, keeps (name.hash -> fileId*)
  * mapping in a specialized (int->int*) hashmap.
  */
+@ApiStatus.Internal
 public class InvertedFilenameHashBasedIndex {
   // We want (names -> files) mapping, here we have names:Set<String> -> fileIds: IntPredicate
   //  Current implementation (InvertedNameIndex) uses nameId to build a map nameId->(fileId)*
