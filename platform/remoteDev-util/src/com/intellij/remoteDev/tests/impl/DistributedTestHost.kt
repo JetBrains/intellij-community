@@ -118,8 +118,6 @@ open class DistributedTestHost {
           testClassObject.performInit(testMethod)
           testMethod.invoke(testClassObject)
 
-          session.isResponding.set { _, _ -> RdTask.fromResult(true) }
-
           // Advice for processing events
           session.runNextAction.set { _, _ ->
             var actionTitle: String? = null
@@ -171,6 +169,11 @@ open class DistributedTestHost {
               return@set RdTask.faulted(AssertionError(msg, ex))
             }
           }
+        }
+
+        session.isResponding.set { _, _ ->
+          logger.info("Answering for session is responding...")
+          RdTask.fromResult(true)
         }
 
         session.closeProject.set { _, _ ->
