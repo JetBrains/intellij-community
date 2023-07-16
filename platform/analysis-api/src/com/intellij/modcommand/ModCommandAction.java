@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 /**
  * Intention action replacement that operates on {@link ModCommand}.
@@ -62,6 +63,16 @@ public interface ModCommandAction extends CommonIntentionAction {
   default @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
     ModCommand command = perform(context);
     return IntentionPreviewUtils.getModCommandPreview(command, context);
+  }
+
+  /**
+   * Returns a new {@link ModCommandAction} with a modified presentation.
+   *
+   * @param presentationModifier a {@link UnaryOperator} that modifies the presentation of the action
+   * @return a new {@link ModCommandAction} with the modified presentation
+   */
+  default @NotNull ModCommandAction withPresentation(@NotNull UnaryOperator<Presentation> presentationModifier) {
+    return new ModCommandActionPresentationDelegate(this, presentationModifier);
   }
 
   /**
