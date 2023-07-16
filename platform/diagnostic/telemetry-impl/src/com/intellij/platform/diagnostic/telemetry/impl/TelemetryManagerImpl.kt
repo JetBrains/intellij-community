@@ -9,7 +9,6 @@ import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.sdk.OpenTelemetrySdk
-import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.annotations.ApiStatus
@@ -22,10 +21,6 @@ import org.jetbrains.annotations.ApiStatus
 internal class TelemetryManagerImpl : TelemetryManager {
   private var sdk: OpenTelemetry = OpenTelemetry.noop()
 
-  override fun setSdk(sdk: OpenTelemetry) {
-    this.sdk = sdk
-  }
-
   override var verboseMode: Boolean = false
 
   override var oTelConfigurator: OpenTelemetryDefaultConfigurator = OTelConfigurator(mainScope = CoroutineScope(Dispatchers.Default),
@@ -35,13 +30,14 @@ internal class TelemetryManagerImpl : TelemetryManager {
 
   override fun getMeter(scope: Scope): Meter = sdk.getMeter(scope.toString())
 
-  override fun init(): OpenTelemetrySdkBuilder {
+  override fun init() {
     logger<TelemetryManagerImpl>().info("Initializing telemetry tracer ${this::class.java.name}")
 
     verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
-    return oTelConfigurator
+    sdk = oTelConfigurator
       .getConfiguredSdkBuilder()
       .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
+      .buildAndRegisterGlobal()
   }
 
   override fun getTracer(scopeName: String, verbose: Boolean): IJTracer {

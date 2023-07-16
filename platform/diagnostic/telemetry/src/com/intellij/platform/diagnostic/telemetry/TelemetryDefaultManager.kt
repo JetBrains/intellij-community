@@ -7,30 +7,21 @@ import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.sdk.OpenTelemetrySdk
-import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-@ApiStatus.Internal
-class TelemetryDefaultManager : TelemetryManager {
+internal class TelemetryDefaultManager : TelemetryManager {
   private var sdk: OpenTelemetry = OpenTelemetry.noop()
-
-  override fun setSdk(sdk: OpenTelemetry) {
-    this.sdk = sdk
-  }
 
   override var verboseMode: Boolean = false
   override var oTelConfigurator: OpenTelemetryDefaultConfigurator =
     OpenTelemetryDefaultConfigurator(otelSdkBuilder = OpenTelemetrySdk.builder(), enableMetricsByDefault = true)
 
-  override fun init(): OpenTelemetrySdkBuilder {
+  override fun init() {
     logger<TelemetryDefaultManager>().info("Initializing telemetry tracer ${this::class.qualifiedName}")
 
     verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
-
-    return oTelConfigurator
+    sdk = oTelConfigurator
       .getConfiguredSdkBuilder()
-      .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
+      .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance())).buildAndRegisterGlobal()
   }
 
   override fun getTracer(scopeName: String, verbose: Boolean): IJTracer {

@@ -3,9 +3,7 @@ package com.intellij.platform.diagnostic.telemetry
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
-import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
@@ -30,7 +28,7 @@ interface TelemetryManager {
 
   var oTelConfigurator: OpenTelemetryDefaultConfigurator
 
-  fun init(): OpenTelemetrySdkBuilder
+  fun init()
 
   /**
    * Method creates a tracer with the scope name.
@@ -54,9 +52,6 @@ interface TelemetryManager {
   fun addMetricsExporters(vararg exporters: MetricsExporterEntry) {
     oTelConfigurator.aggregatedMetricsExporter.addMetricsExporters(*exporters)
   }
-
-  @Internal
-  fun setSdk(sdk: OpenTelemetry)
 }
 
 private val instance = SynchronizedClearableLazy {
@@ -74,7 +69,7 @@ private val instance = SynchronizedClearableLazy {
   }
 
   log.info("Loaded telemetry tracer service ${instance::class.java.name}")
-  instance.setSdk(instance.init().buildAndRegisterGlobal())
+  instance.init()
   instance
 }
 
