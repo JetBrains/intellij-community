@@ -59,6 +59,8 @@ interface MarkdownBrowserPreviewExtension: Comparable<MarkdownBrowserPreviewExte
 
       val all: List<Provider>
         get() = EP.extensionList
+
+      const val OPEN_LINK_EVENT_NAME = "openLink"
     }
   }
 }

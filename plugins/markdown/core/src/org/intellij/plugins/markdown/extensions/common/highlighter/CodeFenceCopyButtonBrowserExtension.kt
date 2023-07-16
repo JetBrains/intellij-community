@@ -18,16 +18,19 @@ import javax.swing.Icon
 
 internal class CodeFenceCopyButtonBrowserExtension(panel: MarkdownHtmlPanel, browserPipe: BrowserPipe): MarkdownBrowserPreviewExtension, ResourceProvider {
   init {
-    browserPipe.subscribe("copy-button/copy") {
-      val content = PreviewEncodingUtil.decodeContent(it)
-      CopyPasteManager.getInstance().setContents(StringSelection(content))
-      val project = panel.project ?: return@subscribe
-      invokeLater {
-        val statusBar = WindowManager.getInstance().getStatusBar(project)
-        val text = StringUtil.shortenTextWithEllipsis(content, 32, 0)
-        statusBar?.info = LangBundle.message("status.bar.text.reference.has.been.copied", "'$text'")
+    browserPipe.subscribe("copy-button/copy", object : BrowserPipe.Handler {
+      override fun processMessageReceived(data: String): Boolean {
+        val content = PreviewEncodingUtil.decodeContent(data)
+        CopyPasteManager.getInstance().setContents(StringSelection(content))
+        val project = panel.project ?: return true
+        invokeLater {
+          val statusBar = WindowManager.getInstance().getStatusBar(project)
+          val text = StringUtil.shortenTextWithEllipsis(content, 32, 0)
+          statusBar?.info = LangBundle.message("status.bar.text.reference.has.been.copied", "'$text'")
+        }
+        return false
       }
-    }
+    })
   }
 
   override val resourceProvider = this
