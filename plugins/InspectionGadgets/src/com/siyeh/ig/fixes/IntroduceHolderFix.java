@@ -1,12 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -15,25 +12,21 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.rename.RenamePsiElementProcessor;
-import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.stream.Stream;
 
 /**
  * @author Bas Leijdekkers
  */
-public class IntroduceHolderFix extends InspectionGadgetsFix {
+public class IntroduceHolderFix extends PsiUpdateModCommandQuickFix {
 
   private IntroduceHolderFix() {}
 
@@ -45,8 +38,7 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PsiReferenceExpression referenceExpression;
     final PsiIfStatement ifStatement;
     if (element instanceof PsiKeyword) {
@@ -77,7 +69,7 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
       referenceExpression = (PsiReferenceExpression)element;
       ifStatement = PsiTreeUtil.getParentOfType(referenceExpression, PsiIfStatement.class);
     }
-    replaceWithStaticHolder(referenceExpression, ifStatement);
+    replaceWithStaticHolder(referenceExpression, ifStatement, updater);
   }
 
   public static PsiIfStatement getDoubleCheckedLockingInnerIf(PsiIfStatement ifStatement) {
@@ -90,7 +82,8 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
     return (statement instanceof PsiIfStatement) ? (PsiIfStatement)statement : null;
   }
 
-  private void replaceWithStaticHolder(PsiReferenceExpression referenceExpression, PsiIfStatement ifStatement) {
+  private static void replaceWithStaticHolder(PsiReferenceExpression referenceExpression, PsiIfStatement ifStatement,
+                                              @NotNull ModPsiUpdater updater) {
     final PsiElement resolved = referenceExpression.resolve();
     if (!(resolved instanceof PsiField field)) {
       return;
@@ -139,34 +132,7 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
     }
     field.delete();
 
-    if (isOnTheFly() && containingClass.isPhysical()) {
-      invokeInplaceRename(holderClass, holderName, suggestHolderName(field));
-    }
-  }
-
-  private static void invokeInplaceRename(PsiNameIdentifierOwner nameIdentifierOwner, final String... suggestedNames) {
-    final PsiNameIdentifierOwner elementToRename = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(nameIdentifierOwner);
-    final Editor editor = FileEditorManager.getInstance(nameIdentifierOwner.getProject()).getSelectedTextEditor();
-    if (editor == null) {
-      return;
-    }
-    final PsiElement identifier = elementToRename.getNameIdentifier();
-    if (identifier == null) {
-      return;
-    }
-    editor.getCaretModel().moveToOffset(identifier.getTextOffset());
-    final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(elementToRename);
-    if (!processor.isInplaceRenameSupported()) {
-      return;
-    }
-    processor.substituteElementToRename(elementToRename, editor, new Pass<>() {
-      @Override
-      public void pass(PsiElement substitutedElement) {
-        final MemberInplaceRenamer renamer = new MemberInplaceRenamer(elementToRename, substitutedElement, editor);
-        final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<>(Arrays.asList(suggestedNames));
-        renamer.performInplaceRefactoring(nameSuggestions);
-      }
-    });
+    updater.rename(holderClass, Stream.of(holderClass.getName(), suggestHolderName(field)).distinct().toList());
   }
 
   @NonNls
