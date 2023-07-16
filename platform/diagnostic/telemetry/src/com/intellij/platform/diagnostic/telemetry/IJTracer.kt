@@ -8,10 +8,19 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * The interface solves two problems:
  * — Isolate IJ code base from OT classes
- * — Provide a more flexible way to handle spans. In some cases we want to control how detailed OT information is,
+ * — Provide a more flexible way to handle spans. In some cases, we want to control how detailed OT information is,
  *    and in this case, the alternative signature can be used.
  */
 @ApiStatus.Internal
 interface IJTracer : Tracer {
   fun spanBuilder(spanName: String, level: TracerLevel): SpanBuilder
+}
+
+/**
+ * Defines level of details for the tracing information.
+ * In most cases, we don't need very-deep information about all possible subsystems.
+ */
+enum class TracerLevel {
+  DEFAULT,
+  DETAILED,
 }
