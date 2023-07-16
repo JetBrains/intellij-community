@@ -8,11 +8,12 @@ import java.time.Duration
 
 /**
  * EP for custom spans and metrics providers. These providers will be loaded after the application startup.
- * By this time default platform providers will be already added.
+ * By this time, default platform providers will be already added.
  * For more details @see com.intellij.diagnostic.telemetry.OpenTelemetryDefaultConfigurator
  */
 interface OTelExportersProvider {
   companion object {
+    @JvmField
     val EP: ExtensionPointName<OTelExportersProvider> = ExtensionPointName("com.intellij.oTelExportersProvider")
   }
 

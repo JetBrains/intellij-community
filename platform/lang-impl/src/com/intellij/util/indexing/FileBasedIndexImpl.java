@@ -2256,7 +2256,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       super("IndexesFlusher",
             scheduler, FLUSHING_PERIOD_MS,
             MIN_CONTENTION_QUOTA, MAX_CONTENTION_QUOTA, INITIAL_CONTENTION_QUOTA,
-            TelemetryManager.getMeter(Indexes)
+            TelemetryManager.getInstance().getMeter(Indexes)
       );
     }
 

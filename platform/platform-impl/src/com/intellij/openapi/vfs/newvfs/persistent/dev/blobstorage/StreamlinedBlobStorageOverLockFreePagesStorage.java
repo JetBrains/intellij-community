@@ -1069,7 +1069,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
 
   @NotNull
   private BatchCallback setupReportingToOpenTelemetry(final Path fileName) {
-    final Meter meter = TelemetryManager.getMeter(Storage);
+    final Meter meter = TelemetryManager.getInstance().getMeter(Storage);
 
     final var recordsAllocated = meter.counterBuilder("StreamlinedBlobStorage.recordsAllocated").buildObserver();
     final var recordsRelocated = meter.counterBuilder("StreamlinedBlobStorage.recordsRelocated").buildObserver();

@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -30,7 +29,7 @@ import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.*;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 
-public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
+public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
   public static final String SHORT_NAME = "Annotator";
   @SuppressWarnings("WeakerAccess") // made public for serialization
   public boolean highlightErrorElements = true;
@@ -48,18 +47,15 @@ public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool 
     );
   }
 
-  @NotNull
-  public HighlightVisitorBasedInspection setHighlightErrorElements(boolean value) {
+  public @NotNull HighlightVisitorBasedInspection setHighlightErrorElements(boolean value) {
     highlightErrorElements = value;
     return this;
   }
-  @NotNull
-  public HighlightVisitorBasedInspection setRunAnnotators(boolean value) {
+  public @NotNull HighlightVisitorBasedInspection setRunAnnotators(boolean value) {
     runAnnotators = value;
     return this;
   }
-  @NotNull
-  public HighlightVisitorBasedInspection setRunVisitors(boolean value) {
+  public @NotNull HighlightVisitorBasedInspection setRunVisitors(boolean value) {
     runVisitors = value;
     return this;
   }
@@ -69,9 +65,8 @@ public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool 
     return SHORT_NAME;
   }
 
-  @NotNull
   @Override
-  public HighlightDisplayLevel getDefaultLevel() {
+  public @NotNull HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
@@ -98,18 +93,15 @@ public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool 
     }
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return getGeneralGroupName();
   }
 
-  @NotNull
-  public static List<HighlightInfo> runAnnotatorsInGeneralHighlighting(@NotNull PsiFile file,
-                                                                        boolean highlightErrorElements,
-                                                                        boolean runAnnotators,
-                                                                        boolean runVisitors) {
+  public static @NotNull List<HighlightInfo> runAnnotatorsInGeneralHighlighting(@NotNull PsiFile file,
+                                                                                boolean highlightErrorElements,
+                                                                                boolean runAnnotators,
+                                                                                boolean runVisitors) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = file.getProject();
@@ -133,7 +125,7 @@ public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool 
 
     String fileName = file.getName();
     List<HighlightInfo> result = new ArrayList<>();
-    IJTracer tracer = TelemetryManager.getInstance().getTracer(HighlightVisitorScope, true);
+    IJTracer tracer = TelemetryManager.Companion.getTracer(HighlightVisitorScope);
 
     for (TextEditorHighlightingPass pass : gpasses) {
       runWithSpan(tracer, pass.getClass().getSimpleName(), span -> {

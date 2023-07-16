@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic;
 
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
@@ -1033,7 +1033,7 @@ public final class IndexLookupTimingsReporting {
     private final BatchCallback batchCallbackHandle;
 
     private IndexOperationToOTelMetricsReporter() {
-      final Meter meter = TelemetryManager.getMeter(Indexes);
+      final Meter meter = TelemetryManager.getInstance().getMeter(Indexes);
 
       allKeysTotalLookups = meter.gaugeBuilder("Indexes.allKeys.lookups").buildObserver();
       allKeysLookupDurationAvg = meter.gaugeBuilder("Indexes.allKeys.lookupDurationAvgMs").buildObserver();

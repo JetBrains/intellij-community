@@ -92,7 +92,7 @@ public final class Utils {
 
   static @NotNull Tracer getTracer(boolean checkNoop) {
     return checkNoop && !Boolean.TRUE.equals(Context.current().get(OT_ENABLE_SPANS)) ?
-           OpenTelemetry.noop().getTracer("") : TelemetryManager.getInstance().getTracer(ActionSystem, true);
+           OpenTelemetry.noop().getTracer("") : TelemetryManager.getInstance().getTracer(ActionSystem);
   }
 
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
@@ -974,7 +974,7 @@ public final class Utils {
     }
   }
 
-  static class ProcessCanceledWithReasonException extends ProcessCanceledException {
+  static final class ProcessCanceledWithReasonException extends ProcessCanceledException {
     final Object reason;
 
     ProcessCanceledWithReasonException(Object reason) {

@@ -162,7 +162,7 @@ public final class FileNameCache {
   }
 
   private static void setupReportingToOpenTelemetry() {
-    final Meter meter = TelemetryManager.getMeter(VFS);
+    final Meter meter = TelemetryManager.getInstance().getMeter(VFS);
 
     var queriesCounter = meter.counterBuilder("FileNameCache.queries").buildObserver();
     var fastMissesCounter = meter.counterBuilder("FileNameCache.fastMisses").buildObserver();

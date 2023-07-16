@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
@@ -83,7 +83,7 @@ public class OtelReportingEventWatcher implements EventWatcher, Disposable {
 
 
   public OtelReportingEventWatcher() {
-    this(TelemetryManager.getMeter(EDT));
+    this(TelemetryManager.getInstance().getMeter(EDT));
   }
 
   public OtelReportingEventWatcher(final @NotNull Meter meter) {

@@ -122,7 +122,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
-  private final OTelReadWriteActionsMonitor otelMonitor = new OTelReadWriteActionsMonitor(TelemetryManager.getMeter(PlatformScopesKt.EDT));
+  private final OTelReadWriteActionsMonitor otelMonitor = new OTelReadWriteActionsMonitor(TelemetryManager.getInstance().getMeter(PlatformScopesKt.EDT));
 
   @TestOnly
   public ApplicationImpl(boolean isHeadless, @NotNull RwLockHolder lockHolder) {

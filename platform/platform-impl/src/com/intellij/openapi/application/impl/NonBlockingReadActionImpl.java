@@ -92,7 +92,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   static {
     LOG.info("OTel monitoring for NonBlockingReadAction is " + (ENABLE_OTEL_MONITORING ? "enabled" : "disabled"));
     if (ENABLE_OTEL_MONITORING) {
-      Meter meter = TelemetryManager.getMeter(EDT);
+      Meter meter = TelemetryManager.getInstance().getMeter(EDT);
       MONITOR = new OTelMonitor(meter);
     }
     else {

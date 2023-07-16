@@ -7,6 +7,7 @@ import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 
 private val instance = SynchronizedClearableLazy {
@@ -24,7 +25,7 @@ private val instance = SynchronizedClearableLazy {
   }
 
   log.info("Loaded telemetry tracer service ${instance::class.java.name}")
-  instance.sdk = instance.init().buildAndRegisterGlobal()
+  instance.setSdk(instance.init().buildAndRegisterGlobal())
   instance
 }
 
@@ -47,9 +48,8 @@ private fun <T> getImplementationService(serviceClass: Class<T>): T {
  * [Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/#create-spans-with-events).
  */
 @ApiStatus.Experimental
-@ApiStatus.Internal
+@Internal
 interface TelemetryManager {
-  var sdk: OpenTelemetry
   var verboseMode: Boolean
   var oTelConfigurator: OpenTelemetryDefaultConfigurator
 
@@ -66,18 +66,9 @@ interface TelemetryManager {
   @ApiStatus.Obsolete
   fun getTracer(scopeName: String, verbose: Boolean = false): IJTracer
 
-  fun getTracer(scope: Scope, verbose: Boolean = false): IJTracer = scope.tracer(verbose)
+  fun getTracer(scope: Scope): IJTracer = getTracer(scopeName = scope.toString(), verbose = scope.verbose)
 
-  /**
-   * Java shortcut for getTracer(Scope, Boolean)
-   */
-  fun getTracer(scope: Scope): IJTracer = getTracer(scope = scope, verbose = false)
-
-  /**
-   * This function is now obsolete. Please use type-safe alternative getMeter(Scope)
-   */
-  @ApiStatus.Obsolete
-  fun getMeter(scopeName: String): Meter = sdk.getMeter(scopeName)
+  fun getMeter(scope: Scope): Meter
 
   fun addSpansExporters(vararg exporters: AsyncSpanExporter) {
     oTelConfigurator.aggregatedSpansProcessor.addSpansExporters(*exporters)
@@ -91,7 +82,11 @@ interface TelemetryManager {
     @JvmStatic
     fun getInstance(): TelemetryManager = instance.value
 
-    @JvmStatic
-    fun getMeter(scope: Scope): Meter = scope.meter()
+    fun getTracer(scope: Scope): IJTracer = instance.value.getTracer(scope)
+
+    fun getMeter(scope: Scope): Meter = instance.value.getMeter(scope)
   }
+
+  @Internal
+  fun setSdk(sdk: OpenTelemetry)
 }
