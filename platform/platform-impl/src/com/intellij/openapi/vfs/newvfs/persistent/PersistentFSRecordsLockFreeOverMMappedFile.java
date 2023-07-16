@@ -908,6 +908,11 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
       channel = FileChannel.open(storagePath, READ, WRITE, CREATE);
 
+      //TODO RC: keep track of number of mapped buffers allocated & their total size.
+      //         Report numbers to OTel.Metrics, and log a warn if there are >512 buffers in play.
+      //         Why: mapped buffers is a limited resource (~4096 per app by default), so it is
+      //         worth to monitor how do we use them, and issue the alarm early on as we start to
+      //         use too many
       for (int i = 0; i < pagesCount; i++) {
         pages.set(i, new Page(i, channel, pageSize));
       }
@@ -915,7 +920,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
 
     public @NotNull Page pageByOffset(final long offsetInFile) throws IOException {
-      final int pageIndex = (int)(offsetInFile >> pageSizeBits);
+      final int pageIndex = pageIndexByOffset(offsetInFile);
 
       Page page = pages.get(pageIndex);
       if (page == null) {
@@ -931,6 +936,13 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
         }
       }
       return page;
+    }
+
+    public int pageIndexByOffset(final long offsetInFile) {
+      if (offsetInFile < 0) {
+        throw new IllegalArgumentException("offsetInFile(=" + offsetInFile + ") must be >=0");
+      }
+      return (int)(offsetInFile >> pageSizeBits);
     }
 
     public int toOffsetInPage(final long offsetInFile) {
@@ -961,6 +973,10 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
       return storagePath;
     }
 
+    public int pageSize() {
+      return pageSize;
+    }
+
     @Override
     public String toString() {
       return "MMappedFileStorage[" + storagePath + "]" +
@@ -980,6 +996,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
         this.pageIndex = pageIndex;
         this.offsetInFile = pageIndex * (long)pageSize;
         this.pageBuffer = map(channel, pageSize);
+        pageBuffer.order(nativeOrder());
       }
 
       private MappedByteBuffer map(FileChannel channel,
