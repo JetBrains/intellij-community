@@ -61,7 +61,7 @@ class BatchSpanProcessor(
 
   private val queueSize = LongAdder()
 
-  // When waiting on the spans queue, exporter thread sets this atomic to the number of more
+  // When waiting on the span queue, exporter thread sets this atomic to the number of more
   // spans it needs before doing an export. Writer threads would then wait for the queue to reach
   // spansNeeded size before notifying the exporter thread about new entries.
   // Integer.MAX_VALUE is used to imply that exporter thread is not expecting any signal. Since
@@ -304,5 +304,4 @@ class BatchSpanProcessor(
       batch.clear()
     }
   }
-
 }

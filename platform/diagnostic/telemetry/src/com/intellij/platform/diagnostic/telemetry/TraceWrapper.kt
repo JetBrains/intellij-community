@@ -5,12 +5,16 @@ import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 fun wrapTracer(scopeName: String, tracer: Tracer, verbose: Boolean, verboseMode: Boolean): IJTracer {
-  if (verbose && !verboseMode) return IJNoopTracer
-  if (tracer == IJNoopTracer.noopTrace) return IJNoopTracer
-
-  return TraceWrapper(scopeName, tracer, emptySet(), verbose)
+  if ((verbose && !verboseMode) || tracer == IJNoopTracer.noopTrace) {
+    return IJNoopTracer
+  }
+  else {
+    return TraceWrapper(scopeName = scopeName, tracer = tracer, detailedTracers = emptySet(), verbose = verbose)
+  }
 }
 
 private class TraceWrapper(private val scopeName: String,
@@ -20,20 +24,20 @@ private class TraceWrapper(private val scopeName: String,
   override fun spanBuilder(spanName: String): SpanBuilder = tracer.spanBuilder(spanName)
 
   override fun spanBuilder(spanName: String, level: TracerLevel): SpanBuilder {
-    if (level == TracerLevel.DETAILED) {
-      if (!verbose && !detailedTracers.contains(scopeName)) {
-        return OpenTelemetry.noop().getTracer(scopeName).spanBuilder(spanName)
-      }
+    if (level == TracerLevel.DETAILED && !verbose && !detailedTracers.contains(scopeName)) {
+      return OpenTelemetry.noop().getTracer(scopeName).spanBuilder(spanName)
     }
-
     return spanBuilder(spanName)
   }
 }
 
+@Internal
 object IJNoopTracer : IJTracer {
-  val noopTrace: Tracer = TracerProvider.noop().get("")
+  @JvmField
+  internal val noopTrace: Tracer = TracerProvider.noop().get("")
 
   override fun spanBuilder(spanName: String): SpanBuilder = noopTrace.spanBuilder(spanName)
+
   override fun spanBuilder(spanName: String, level: TracerLevel): SpanBuilder = spanBuilder(spanName)
 }
 
