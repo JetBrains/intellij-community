@@ -199,8 +199,12 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
   }
 
   private void updateEnvFilesFromText() {
-    String paths = StringUtil.trimStart(getText(), stringifyEnvs(myData));
-    myEnvFilePaths = ContainerUtil.map(paths.split(";"), s -> s.trim());
+    String text = StringUtil.trimStart(getText(), stringifyEnvs(myData));
+    if (myEnvFilePaths.isEmpty() || text.isEmpty()) return;
+    List<String> paths = ContainerUtil.filter(ContainerUtil.map(text.split(";"), s -> s.trim()), s -> !s.isEmpty());
+    for (int i = 0; i < Math.min(myEnvFilePaths.size(), paths.size()); i++) {
+      myEnvFilePaths.set(i, paths.get(i));
+    }
   }
 
   protected static List<EnvironmentVariable> convertToVariables(Map<String, String> map, final boolean readOnly) {
