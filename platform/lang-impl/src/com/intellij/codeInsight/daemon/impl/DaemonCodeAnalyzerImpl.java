@@ -48,6 +48,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -73,7 +74,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1239,8 +1242,22 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
     // tests usually care about just one explicitly configured editor
     Collection<FileEditor> tabEditors = application.isUnitTestMode() ? Collections.emptyList() : getFileEditorManager().getSelectedEditorWithRemotes();
+
     return ContainerUtil.filter(ContainerUtil.union(activeTextEditors, tabEditors),
-                         fileEditor -> fileEditor.isValid() && fileEditor.getFile() != null && fileEditor.getFile().isValid());
+                         fileEditor -> fileEditor.isValid()
+                                       && fileEditor.getFile() != null
+                                       && fileEditor.getFile().isValid()
+                                       && isInActiveProject(fileEditor));
+  }
+
+  private static boolean isInActiveProject(@NotNull FileEditor editor) {
+    if (ProjectManager.getInstance().getOpenProjects().length <= 1 || ApplicationManager.getApplication().isUnitTestMode()) {
+      return true;
+    }
+    // optimization: in the case of two or more projects, ignore projects which are not active at the moment, e.g., inside minimized windows
+    // see IDEA-314543 Don't run LineMarkersPass on non-active(opened) projects
+    Window window = SwingUtilities.getWindowAncestor(editor.getComponent());
+    return window == null || window.isActive();
   }
 
   /**
