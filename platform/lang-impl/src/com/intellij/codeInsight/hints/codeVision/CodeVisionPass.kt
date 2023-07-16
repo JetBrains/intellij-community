@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
@@ -33,18 +33,17 @@ import kotlin.system.measureTimeMillis
 /**
  * Prepares data for [com.intellij.codeInsight.codeVision.CodeVisionHost].
  *
- * Doesn't actually apply result to the editor - just caches the result and notifies CodeVisionHost that
+ * Doesn't actually apply a result to the editor - just caches the result and notifies CodeVisionHost that
  * particular [com.intellij.codeInsight.codeVision.CodeVisionProvider] has to be invalidated.
- * Host relaunches it and takes the result of this pass from cache.
+ * Host relaunches it and takes the result of this pass from the cache.
  */
 class CodeVisionPass(
   rootElement: PsiElement,
   private val editor: Editor
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true) {
   companion object {
-    private val tracer by lazy { TelemetryManager.getInstance().getTracer(CodeVision.toString(), true) }
+    private val tracer by lazy { TelemetryManager.getTracer(CodeVision) }
 
-    @JvmStatic
     @Internal
     fun collectData(editor: Editor, file: PsiFile, providers: List<DaemonBoundCodeVisionProvider>): CodeVisionData {
       val providerIdToLenses = ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>()

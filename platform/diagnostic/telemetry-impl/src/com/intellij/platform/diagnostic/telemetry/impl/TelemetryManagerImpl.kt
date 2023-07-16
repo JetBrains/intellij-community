@@ -40,7 +40,8 @@ internal class TelemetryManagerImpl : TelemetryManager {
       .buildAndRegisterGlobal()
   }
 
-  override fun getTracer(scopeName: String, verbose: Boolean): IJTracer {
-    return wrapTracer(scopeName, sdk.getTracer(scopeName), verbose, verboseMode)
+  override fun getTracer(scope: Scope): IJTracer {
+    val name = scope.toString()
+    return wrapTracer(scopeName = name, tracer = sdk.getTracer(name), verbose = scope.verbose, verboseMode = verboseMode)
   }
 }

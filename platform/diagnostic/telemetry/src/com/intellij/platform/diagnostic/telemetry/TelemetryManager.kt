@@ -34,14 +34,8 @@ interface TelemetryManager {
    * Method creates a tracer with the scope name.
    * Separate tracers define different scopes, and as a result, separate main nodes in the result data.
    * It is expected that for different subsystems different tracers would be used to isolate the results.
-   *
-   * @param verbose provides a way to disable by default some tracers.
-   *    Such tracers will be created only if additional system property "verbose" is set to true.
    */
-  @ApiStatus.Obsolete
-  fun getTracer(scopeName: String, verbose: Boolean = false): IJTracer
-
-  fun getTracer(scope: Scope): IJTracer = getTracer(scopeName = scope.toString(), verbose = scope.verbose)
+  fun getTracer(scope: Scope): IJTracer
 
   fun getMeter(scope: Scope): Meter
 

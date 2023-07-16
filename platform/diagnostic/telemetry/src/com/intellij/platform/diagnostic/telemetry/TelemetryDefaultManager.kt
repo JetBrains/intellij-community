@@ -24,8 +24,9 @@ internal class TelemetryDefaultManager : TelemetryManager {
       .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance())).buildAndRegisterGlobal()
   }
 
-  override fun getTracer(scopeName: String, verbose: Boolean): IJTracer {
-    return wrapTracer(scopeName, sdk.getTracer(scopeName), verbose, verboseMode)
+  override fun getTracer(scope: Scope): IJTracer {
+    val name = scope.toString()
+    return wrapTracer(name, sdk.getTracer(name), scope.verbose, verboseMode)
   }
 
   override fun getMeter(scope: Scope): Meter = sdk.getMeter(scope.toString())
