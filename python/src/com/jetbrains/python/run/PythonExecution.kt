@@ -3,11 +3,13 @@ package com.jetbrains.python.run
 
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
+import com.intellij.execution.target.value.getTargetEnvironmentValueForLocalPath
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.io.File
 import java.nio.charset.Charset
+import java.nio.file.Path
 
 /**
  * Represents the Python script or module to be executed and its parameters.
@@ -24,6 +26,10 @@ sealed class PythonExecution {
   var charset: Charset = EncodingManager.getInstance().defaultConsoleEncoding
 
   var inputFile: File? = null
+
+  fun setWorkDir(localPath: Path) {
+    this.workingDir = getTargetEnvironmentValueForLocalPath(localPath)
+  }
 
   fun addParameter(value: String) {
     addParameter(constant(value))
