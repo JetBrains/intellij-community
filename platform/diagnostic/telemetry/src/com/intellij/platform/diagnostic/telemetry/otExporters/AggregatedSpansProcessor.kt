@@ -11,13 +11,13 @@ import io.opentelemetry.sdk.trace.SpanProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlin.time.Duration.Companion.seconds
 
-class AggregatedSpansProcessor(private val mainScope: CoroutineScope) : SpanProcessor{
-
+internal class AggregatedSpansProcessor(private val mainScope: CoroutineScope) : SpanProcessor {
   private var batchSpanProcessor: BatchSpanProcessor? = null
 
-  fun addSpansExporters(vararg exporters: AsyncSpanExporter) {
+  fun addSpansExporters(exporters: List<AsyncSpanExporter>) {
     batchSpanProcessor = BatchSpanProcessor(mainScope, exporters.toList(), MeterProvider.noop(), 5.seconds, 2048, 512, 30.seconds)
   }
+
   override fun onStart(parentContext: Context, span: ReadWriteSpan) {
     batchSpanProcessor?.onStart(parentContext, span)
   }

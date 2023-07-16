@@ -45,12 +45,12 @@ interface TelemetryManager {
 
   fun getMeter(scope: Scope): Meter
 
-  fun addSpansExporters(vararg exporters: AsyncSpanExporter) {
-    oTelConfigurator.aggregatedSpansProcessor.addSpansExporters(*exporters)
+  fun addSpansExporters(exporters: List<AsyncSpanExporter>) {
+    oTelConfigurator.aggregatedSpansProcessor.addSpansExporters(exporters)
   }
 
-  fun addMetricsExporters(vararg exporters: MetricsExporterEntry) {
-    oTelConfigurator.aggregatedMetricsExporter.addMetricsExporters(*exporters)
+  fun addMetricsExporters(exporters: List<MetricsExporterEntry>) {
+    oTelConfigurator.aggregatedMetricsExporter.addMetricsExporters(exporters)
   }
 }
 

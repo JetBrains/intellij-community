@@ -2,8 +2,8 @@
 package com.intellij.platform.diagnostic.telemetry.otExporters
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.platform.diagnostic.telemetry.MetricsExporterEntry
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.diagnostic.telemetry.MetricsExporterEntry
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.metrics.InstrumentType
 import io.opentelemetry.sdk.metrics.data.AggregationTemporality
@@ -11,15 +11,13 @@ import io.opentelemetry.sdk.metrics.data.MetricData
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 import java.util.concurrent.CopyOnWriteArrayList
 
-class AggregatedMetricsExporter : MetricExporter {
+private val LOG: Logger
+  get() = logger<AggregatedMetricsExporter>()
 
-  companion object {
-    val LOG: Logger = logger<AggregatedMetricsExporter>()
-  }
+internal class AggregatedMetricsExporter : MetricExporter {
+  private val metricsExporters = CopyOnWriteArrayList<MetricsExporterEntry>()
 
-  private val metricsExporters: CopyOnWriteArrayList<MetricsExporterEntry> = CopyOnWriteArrayList<MetricsExporterEntry>()
-
-  fun addMetricsExporters(vararg metrics: MetricsExporterEntry) {
+  fun addMetricsExporters(metrics: List<MetricsExporterEntry>) {
     metricsExporters.addAll(metrics)
   }
 
