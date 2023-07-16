@@ -26,20 +26,24 @@ spec:
           ports:
             - containerPort: 16686
               protocol: TCP
+            - containerPort: 4318
+              protocol: TCP
           volumeMounts:
             - name: jaeger-dev-data
               mountPath: /badger
           env:
+            - name: COLLECTOR_OTLP_ENABLED
+              value: 'true'
             - name: SPAN_STORAGE_TYPE
               value: badger
             - name: BADGER_EPHEMERAL
               value: 'false'
-            - name: COLLECTOR_OTLP_ENABLED
-              value: 'true'
             - name: BADGER_DIRECTORY_VALUE
               value: '/badger/data'
             - name: BADGER_DIRECTORY_KEY
               value: '/badger/key'
+            - name: BADGER_SPAN_STORE_TTL
+              value: '336h'
           resources:
             limits:
               cpu: 200m
@@ -61,6 +65,9 @@ spec:
     - name: http
       port: 16686
       protocol: TCP
+    - name: otlp-http
+      port: 4318
+      protocol: TCP
   selector:
     app: jaeger-dev
 ---
@@ -73,17 +80,24 @@ metadata:
 spec:
   ingressClassName: internal-nginx
   tls:
-  - secretName: jaeger-dev-labs-jb-gg-tls
-    hosts:
-    - jaeger-dev.labs.jb.gg
+    - secretName: jaeger-dev-labs-jb-gg-tls
+      hosts:
+        - jaeger-dev.labs.jb.gg
   rules:
-  - host: jaeger-dev.labs.jb.gg
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: jaeger-dev
-            port:
-              number: 16686
+    - host: jaeger-dev.labs.jb.gg
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: jaeger-dev
+                port:
+                  number: 16686
+          - path: /v1/traces
+            pathType: Prefix
+            backend:
+              service:
+                name: jaeger-dev
+                port:
+                  number: 4318
