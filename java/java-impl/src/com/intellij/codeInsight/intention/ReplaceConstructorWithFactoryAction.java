@@ -92,7 +92,8 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
     PsiClass wrContainingClass = updater.getWritable(
       constructorOrClass instanceof PsiClass cls ? cls : Objects.requireNonNull(constructorOrClass.getContainingClass()));
     PsiReferenceExpression classReferenceExpression = factory.createReferenceExpression(targetClass);
-    String factoryName = suggestName(targetClass, Objects.requireNonNull(wrContainingClass.getName()));
+    List<String> names = suggestNames(targetClass, Objects.requireNonNull(wrContainingClass.getName()));
+    String factoryName = names.get(0);
     PsiReferenceExpression qualifiedMethodReference = (PsiReferenceExpression)factory.createExpressionFromText("A." + factoryName, null);
     PsiMethod constructor = ObjectUtils.tryCast(constructorOrClass, PsiMethod.class);
 
@@ -107,8 +108,6 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
       wrConstructor = (PsiMethod)wrContainingClass.add(factory.createConstructor());
     }
     
-    // TODO: proper rename template
-    updater.select(Objects.requireNonNull(factoryMethod.getNameIdentifier()));
     PsiUtil.setModifierProperty(wrConstructor, getMinimalAccessLevel(constructorOrClass, usages.otherUsages), true);
 
     for (PsiNewExpression newExpression : writableUsages) {
@@ -127,21 +126,24 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
 
       newExpression.replace(factoryCall);
     }
+    updater.rename(factoryMethod, names);
   }
 
-  private static String suggestName(@NotNull PsiClass psiClass, @NotNull String baseName) {
+  private static List<String> suggestNames(@NotNull PsiClass psiClass, @NotNull String baseName) {
     int i = 0;
     String[] baseNames =
       {"create" + baseName, "new" + baseName, "get" + baseName, "createInstance", "getInstance", "newInstance", "create"};
-    while (true) {
+    List<String> suggestions = new ArrayList<>();
+    while (suggestions.size() < baseNames.length) {
       for (String name : baseNames) {
         String finalName = name + (i == 0 ? "" : i);
         if (psiClass.findMethodsByName(finalName, true).length == 0) {
-          return finalName;
+          suggestions.add(finalName);
         }
       }
       i++;
     }
+    return suggestions;
   }
 
   private static PsiMethod createFactoryMethod(@NotNull Project project,

@@ -35,6 +35,7 @@ import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +46,8 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.RenamePsiElementProcessor;
+import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -58,6 +61,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -329,6 +333,27 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
       int offset = nameIdentifier.getTextRange().getEndOffset();
       return executeNavigate(project, new ModNavigate(file, offset, offset, offset));
     }
+    finalEditor.getCaretModel().moveToOffset(nameIdentifier.getTextOffset());
+    final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
+    if (!processor.isInplaceRenameSupported()) {
+      fallBackRename(project, rename, element, finalEditor);
+      return true;
+    }
+    processor.substituteElementToRename(element, finalEditor, new Pass<>() {
+      @Override
+      public void pass(PsiElement substitutedElement) {
+        final MemberInplaceRenamer renamer = new MemberInplaceRenamer(element, substitutedElement, finalEditor);
+        final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<>(rename.nameSuggestions());
+        renamer.performInplaceRefactoring(nameSuggestions);
+      }
+    });
+    return true;
+  }
+
+  private static void fallBackRename(@NotNull Project project,
+                                @NotNull ModRenameSymbol rename,
+                                PsiNameIdentifierOwner element,
+                                Editor finalEditor) {
     SmartPsiElementPointer<PsiNameIdentifierOwner> pointer = SmartPointerManager.createPointer(element);
     record RenameData(Collection<PsiReference> references, PsiElement scope, PsiNameIdentifierOwner nameOwner) {
       static RenameData create(SmartPsiElementPointer<? extends PsiNameIdentifierOwner> pointer) {
@@ -365,7 +390,6 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
         }, LangBundle.message("action.rename.text"), null);
       })
       .submit(AppExecutorUtil.getAppExecutorService());
-    return true;
   }
 
   @Nullable

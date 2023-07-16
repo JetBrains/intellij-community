@@ -2,7 +2,7 @@ class A {
     private A() {
     }
 
-    static A <selection><caret>createA</selection>() {
+    static A createA<caret>() {
         return new A();
     }
 }
