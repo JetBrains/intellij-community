@@ -23,10 +23,10 @@ internal class TelemetryManagerImpl : TelemetryManager {
 
   override var verboseMode: Boolean = false
 
-  override var oTelConfigurator: OpenTelemetryDefaultConfigurator = OTelConfigurator(mainScope = CoroutineScope(Dispatchers.Default),
-                                                                                     otelSdkBuilder = OpenTelemetrySdk.builder(),
-                                                                                     appInfo = ApplicationInfoImpl.getShadowInstance(),
-                                                                                     enableMetricsByDefault = true)
+  override var oTelConfigurator: OpenTelemetryDefaultConfigurator = OpenTelemetryConfigurator(mainScope = CoroutineScope(Dispatchers.Default),
+                                                                                              otelSdkBuilder = OpenTelemetrySdk.builder(),
+                                                                                              appInfo = ApplicationInfoImpl.getShadowInstance(),
+                                                                                              enableMetricsByDefault = true)
 
   override fun getMeter(scope: Scope): Meter = sdk.getMeter(scope.toString())
 

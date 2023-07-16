@@ -11,7 +11,7 @@ import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 
-internal class OTelConfigurator(
+internal class OpenTelemetryConfigurator(
   mainScope: CoroutineScope,
   otelSdkBuilder: OpenTelemetrySdkBuilder,
   appInfo: ApplicationInfo,
