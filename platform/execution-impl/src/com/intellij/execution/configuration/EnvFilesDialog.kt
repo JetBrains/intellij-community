@@ -22,6 +22,7 @@ class EnvFilesDialog(parentComponent: JComponent,
   init {
     title = ExecutionBundle.message("dialog.title.var.files")
     init()
+    list.selectedIndex = 0
   }
   override fun createCenterPanel(): DialogPanel {
     val component = ToolbarDecorator.createDecorator(list).setAddAction {
