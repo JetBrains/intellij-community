@@ -836,7 +836,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction addMethodQualifierFix(@NotNull PsiMethodCallExpression methodCall) {
-    return new AddMethodQualifierFix(methodCall);
+    return new AddMethodQualifierFix(methodCall).asIntention();
   }
 
   @NotNull
