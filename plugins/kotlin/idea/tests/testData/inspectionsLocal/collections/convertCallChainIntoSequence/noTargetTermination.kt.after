@@ -5,6 +5,6 @@ fun test(list: List<List<Int>>): List<Int> {
         .asSequence()
         .filter { it.count() > 2 }
         .map { it + it }
+        .flatten()
         .toList()
-        .flatMap { it + it }
 }

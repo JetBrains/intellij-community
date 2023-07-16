@@ -465,6 +465,16 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/firstOrNull.kt");
             }
 
+            @TestMetadata("flatMapIndexedTo.kt")
+            public void testFlatMapIndexedTo() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/flatMapIndexedTo.kt");
+            }
+
+            @TestMetadata("flatMapTo.kt")
+            public void testFlatMapTo() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/flatMapTo.kt");
+            }
+
             @TestMetadata("fold.kt")
             public void testFold() throws Exception {
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/fold.kt");
@@ -756,6 +766,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             @TestMetadata("endsWithGroupingBy.kt")
             public void testEndsWithGroupingBy() throws Exception {
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/endsWithGroupingBy.kt");
+            }
+
+            @TestMetadata("flatMap.kt")
+            public void testFlatMap() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/flatMap.kt");
             }
 
             @TestMetadata("flatten.kt")

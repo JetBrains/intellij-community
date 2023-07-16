@@ -12,6 +12,9 @@ fun test(list: List<Int>): List<Pair<IndexedValue<List<Int>>, IndexedValue<List<
             .filterIsInstance<Int>()
             .filterNot { true }
             .filterNotNull()
+            .flatMap { listOf(it) }
+            .flatMapIndexed { _, i -> listOf(listOf(i)) }
+            .flatten()
             .map { it }
             .mapIndexed { index, i -> i }
             .mapIndexedNotNull { index, i -> i }
