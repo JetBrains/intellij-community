@@ -293,10 +293,9 @@ public final class FSRecordsImpl {
                         @NotNull NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy,
                         int currentVersion,
                         @NotNull ErrorHandler errorHandler,
-                        @NotNull PersistentFSConnector.InitializationResult initializationResult) {
-    storagesDirectory = storagesDirectoryPath;
                         @NotNull VFSInitializationResult initializationResult) {
-    this.connection = connection;
+      storagesDirectory = storagesDirectoryPath;
+      this.connection = connection;
     this.contentAccessor = contentAccessor;
     this.attributeAccessor = attributeAccessor;
     this.treeAccessor = treeAccessor;
@@ -367,7 +366,7 @@ public final class FSRecordsImpl {
   public VFSInitializationResult initializationResult(){
     return initializationResult;
   }
-  
+
   //========== modifications counters: ========================================
 
   long getInvertedNameIndexModCount() {

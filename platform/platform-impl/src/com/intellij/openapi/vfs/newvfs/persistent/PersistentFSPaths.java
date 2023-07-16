@@ -52,4 +52,8 @@ public final class PersistentFSPaths {
   public @NotNull Path storagePath(final @NotNull String storageName) {
     return storagesDir.resolve(storageName + VFS_FILES_EXTENSION);
   }
+
+  public @NotNull Path storagesSubDir(final @NotNull String name) {
+    return storagesDir.resolve(name);
+  }
 }
