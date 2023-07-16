@@ -189,11 +189,6 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
     val zip = try {
       SettingsSnapshotZipSerializer.serializeToZip(snapshot)
     }
-    catch (e: SettingsSnapshotZipSerializer.ZipSizeExceedException) {
-      LOG.warn(e)
-      NotificationService.getInstance().notifyZipSizeExceed()
-      return SettingsSyncPushResult.Error(e.message ?: "Couldn't prepare zip file")
-    }
     catch (e: Throwable) {
       LOG.warn(e)
       return SettingsSyncPushResult.Error(e.message ?: "Couldn't prepare zip file")
