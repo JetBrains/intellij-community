@@ -10,6 +10,55 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 
+/**
+ * See [Span](https://opentelemetry.io/docs/reference/specification),
+ * [Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/#create-spans-with-events).
+ */
+@ApiStatus.Experimental
+@Internal
+interface TelemetryManager {
+  companion object {
+    @JvmStatic
+    fun getInstance(): TelemetryManager = instance.value
+
+    fun getTracer(scope: Scope): IJTracer = instance.value.getTracer(scope)
+
+    fun getMeter(scope: Scope): Meter = instance.value.getMeter(scope)
+  }
+
+  var verboseMode: Boolean
+
+  var oTelConfigurator: OpenTelemetryDefaultConfigurator
+
+  fun init(): OpenTelemetrySdkBuilder
+
+  /**
+   * Method creates a tracer with the scope name.
+   * Separate tracers define different scopes, and as a result, separate main nodes in the result data.
+   * It is expected that for different subsystems different tracers would be used to isolate the results.
+   *
+   * @param verbose provides a way to disable by default some tracers.
+   *    Such tracers will be created only if additional system property "verbose" is set to true.
+   */
+  @ApiStatus.Obsolete
+  fun getTracer(scopeName: String, verbose: Boolean = false): IJTracer
+
+  fun getTracer(scope: Scope): IJTracer = getTracer(scopeName = scope.toString(), verbose = scope.verbose)
+
+  fun getMeter(scope: Scope): Meter
+
+  fun addSpansExporters(vararg exporters: AsyncSpanExporter) {
+    oTelConfigurator.aggregatedSpansProcessor.addSpansExporters(*exporters)
+  }
+
+  fun addMetricsExporters(vararg exporters: MetricsExporterEntry) {
+    oTelConfigurator.aggregatedMetricsExporter.addMetricsExporters(*exporters)
+  }
+
+  @Internal
+  fun setSdk(sdk: OpenTelemetry)
+}
+
 private val instance = SynchronizedClearableLazy {
   val log = logger<TelemetryManager>()
   log.info("Initializing TelemetryTracer ...")
@@ -41,52 +90,4 @@ private fun <T> getImplementationService(serviceClass: Class<T>): T {
   }
 
   return implementations.single()
-}
-
-/**
- * See [Span](https://opentelemetry.io/docs/reference/specification),
- * [Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/#create-spans-with-events).
- */
-@ApiStatus.Experimental
-@Internal
-interface TelemetryManager {
-  var verboseMode: Boolean
-  var oTelConfigurator: OpenTelemetryDefaultConfigurator
-
-  fun init(): OpenTelemetrySdkBuilder
-
-  /**
-   * Method creates a tracer with the scope name.
-   * Separate tracers define different scopes, and as a result, separate main nodes in the result data.
-   * It is expected that for different subsystems different tracers would be used to isolate the results.
-   *
-   * @param verbose provides a way to disable by default some tracers.
-   *    Such tracers will be created only if additional system property "verbose" is set to true.
-   */
-  @ApiStatus.Obsolete
-  fun getTracer(scopeName: String, verbose: Boolean = false): IJTracer
-
-  fun getTracer(scope: Scope): IJTracer = getTracer(scopeName = scope.toString(), verbose = scope.verbose)
-
-  fun getMeter(scope: Scope): Meter
-
-  fun addSpansExporters(vararg exporters: AsyncSpanExporter) {
-    oTelConfigurator.aggregatedSpansProcessor.addSpansExporters(*exporters)
-  }
-
-  fun addMetricsExporters(vararg exporters: MetricsExporterEntry) {
-    oTelConfigurator.aggregatedMetricsExporter.addMetricsExporters(*exporters)
-  }
-
-  companion object {
-    @JvmStatic
-    fun getInstance(): TelemetryManager = instance.value
-
-    fun getTracer(scope: Scope): IJTracer = instance.value.getTracer(scope)
-
-    fun getMeter(scope: Scope): Meter = instance.value.getMeter(scope)
-  }
-
-  @Internal
-  fun setSdk(sdk: OpenTelemetry)
 }
