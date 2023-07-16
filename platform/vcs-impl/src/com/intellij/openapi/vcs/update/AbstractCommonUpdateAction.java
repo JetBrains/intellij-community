@@ -583,7 +583,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
         if (myUpdateSessions.size() == 1 && showsCustomNotification(myVcsToVirtualFiles.keySet())) {
           // multi-vcs projects behave as before: only a compound notification & file tree is shown for them, for the sake of simplicity
-          if (isAIGeneratedSummaryEnabled()) {
+          if (isCustomPostUpdateDataEnabled()) {
             myUpdateSessions.forEach(UpdateSession::postProcess);
           } else {
             myUpdateSessions.get(0).showNotification();
@@ -615,7 +615,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
     }
 
-    public static boolean isAIGeneratedSummaryEnabled() {
+    public static boolean isCustomPostUpdateDataEnabled() {
       return Registry.is("generate.commit.messages.overview") && AdvancedSettings.getBoolean("git.ai.generated.commits.summary");
     }
 
