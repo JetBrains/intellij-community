@@ -1,14 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PythonPackageManagerExt")
+
 package com.jetbrains.python.packaging.management
 
 import com.intellij.execution.RunCanceledByUserException
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.target.TargetProgressIndicator
-import com.intellij.execution.target.value.constant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.util.net.HttpConfigurable
 import com.jetbrains.python.PySdkBundle
@@ -37,8 +39,8 @@ suspend fun PythonPackageManager.runPackagingTool(operation: String, arguments: 
   val pythonExecution = prepareHelperScriptExecution(PythonHelper.PACKAGING_TOOL, helpersAwareTargetRequest)
 
   // todo[akniazev]: check applyWorkingDir: PyTargetEnvironmentPackageManager.java:133
-  project.guessProjectDir()?.path?.let {
-    pythonExecution.workingDir = constant(it)
+  project.guessProjectDir()?.toNioPath()?.let {
+    pythonExecution.setWorkDir(it)
   }
 
   pythonExecution.addParameter(operation)
