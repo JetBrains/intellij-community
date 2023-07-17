@@ -56,7 +56,7 @@ public enum LanguageLevel {
   LanguageLevel(Supplier<@Nls String> presentableTextSupplier, int major) {
     myPresentableText = presentableTextSupplier;
     myVersion = JavaVersion.compose(major);
-    myPreview = name().endsWith("_PREVIEW");
+    myPreview = name().endsWith("_PREVIEW") || name().endsWith("_X");
   }
 
   public boolean isPreview() {

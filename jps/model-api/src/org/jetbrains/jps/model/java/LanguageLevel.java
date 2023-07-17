@@ -43,6 +43,6 @@ public enum LanguageLevel {
   }
 
   public boolean isPreview() {
-    return name().endsWith("_PREVIEW");
+    return name().endsWith("_PREVIEW") || name().endsWith("_X");
   }
 }

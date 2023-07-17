@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.java;
 
 import com.intellij.ide.IdeBundle;
@@ -89,6 +89,7 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
       }
       if (!previewLevels.isEmpty() && !PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
         LanguageLevel languageLevel = previewLevels.first();
+        if (languageLevel == LanguageLevel.JDK_X) return;
         int previewFeature = languageLevel.toJavaVersion().feature;
         PREVIEW_NOTIFICATION_GROUP.createNotification(
             JavaBundle.message("java.preview.features.notification.title"),
