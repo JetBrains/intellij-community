@@ -432,6 +432,13 @@ class BuildOptions(
 
   var isNightlyBuild: Boolean = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_IS_NIGHTLY, (buildNumber?.count { it == '.' } ?: 1) <= 1)
 
+  /**
+   * If `false`, [org.jetbrains.intellij.build.impl.projectStructureMapping.buildJarContentReport] won't be affected by
+   * neither [PluginBundlingRestrictions.includeInEapOnly] nor [PluginBundlingRestrictions.includeInNightlyOnly]
+   */
+  @ApiStatus.Internal
+  var useReleaseCycleRelatedBundlingRestrictionsForContentReport: Boolean = true
+
   init {
     val targetOsId = System.getProperty(TARGET_OS_PROPERTY, OS_ALL).lowercase()
     targetOs = when {
