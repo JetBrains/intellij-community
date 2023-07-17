@@ -36,10 +36,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.project.isNotificationSilentMode
+import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.ToolWindowManager
@@ -57,6 +54,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.io.EOFException
 import java.nio.file.Path
+import java.time.Instant
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JFrame
 import kotlin.math.min
@@ -552,6 +550,8 @@ private suspend fun findAndOpenReadmeIfNeeded(project: Project) {
     if (!readme.isDirectory) {
       readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, TextEditorWithPreview.Layout.SHOW_PREVIEW)
       FileEditorManagerEx.getInstanceEx(project).openFile(readme, FileEditorOpenOptions(requestFocus = true))
+
+      readme.putUserData(README_OPENED_ON_START_TS, Instant.now())
     }
   }
 }
