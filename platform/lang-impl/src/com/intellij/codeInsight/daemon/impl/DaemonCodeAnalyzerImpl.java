@@ -326,24 +326,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
         List<TextEditorHighlightingPass> passes = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
-          List<TextEditorHighlightingPass> mainPasses =
-            TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject).instantiateMainPasses(psiFile, document,
-                                                                                                 HighlightInfoProcessor.getEmpty());
-          mainPasses.sort((o1, o2) -> {
-            if (o1 instanceof GeneralHighlightingPass) return -1;
-            if (o2 instanceof GeneralHighlightingPass) return 1;
-            return 0;
-          });
+          List<TextEditorHighlightingPass> mainPasses = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject)
+            .instantiateMainPasses(psiFile, document, HighlightInfoProcessor.getEmpty());
 
-          try {
-            for (TextEditorHighlightingPass pass : mainPasses) {
-              pass.doCollectInformation(progress);
-            }
-          }
-          catch (ProcessCanceledException e) {
-            LOG.debug("Canceled: " + progress);
-            throw e;
-          }
+          JobLauncher.getInstance().invokeConcurrentlyUnderProgress(mainPasses, progress, pass -> ReadAction.compute(() -> {
+            pass.doCollectInformation(progress);
+            return true;
+          }));
           return mainPasses;
         });
 

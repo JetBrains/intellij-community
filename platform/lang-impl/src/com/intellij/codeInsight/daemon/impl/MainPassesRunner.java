@@ -5,12 +5,14 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -19,26 +21,23 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 public class MainPassesRunner {
@@ -56,7 +55,7 @@ public class MainPassesRunner {
   }
 
   public @NotNull Map<Document, List<HighlightInfo>> runMainPasses(@NotNull List<? extends VirtualFile> filesToCheck) {
-    Map<Document, List<HighlightInfo>> result = new HashMap<>();
+    Map<Document, List<HighlightInfo>> result = new ConcurrentHashMap<>();
     if (ApplicationManager.getApplication().isDispatchThread()) {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
@@ -93,47 +92,61 @@ public class MainPassesRunner {
     return result;
   }
 
-  private void runMainPasses(@NotNull List<? extends VirtualFile> files, @NotNull Map<? super Document, List<HighlightInfo>> result, @NotNull ProgressIndicator progress) {
+  private void runMainPasses(@NotNull List<? extends VirtualFile> files, @NotNull Map<? super Document, ? super List<HighlightInfo>> result, @NotNull ProgressIndicator progress) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    for (int i = 0; i < files.size(); i++) {
-      ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(progress);
-
-      VirtualFile file = files.get(i);
-
-      progress.setText(ReadAction.compute(() -> ProjectUtil.calcRelativeToProjectPath(file, myProject)));
-      progress.setFraction((double)i / (double)files.size());
-
-      while (true) {
-        Disposable disposable = Disposer.newDisposable();
-        try {
-          DaemonProgressIndicator daemonIndicator = new DaemonProgressIndicator();
-          GlobalInspectionContextImpl.setupCancelOnWriteProgress(disposable, daemonIndicator);
+    progress.setIndeterminate(false);
+    while (true) {
+      List<Pair<VirtualFile, DaemonProgressIndicator>> daemonIndicators = ContainerUtil.map(files, file -> Pair.create(file, new DaemonProgressIndicator()));
+      Disposable disposable = Disposer.newDisposable();
+      try {
+        ReadAction.run(() -> {
           ((ProgressIndicatorEx)progress).addStateDelegate(new AbstractProgressIndicatorExBase() {
             @Override
             public void cancel() {
               super.cancel();
-              daemonIndicator.cancel();
+              daemonIndicators.forEach(daemonIndicator -> daemonIndicator.getSecond().cancel());
             }
           });
-
-          runMainPasses(file, result, daemonIndicator);
-          break;
-        }
-        catch (ProcessCanceledException e) {
-          if (progress.isCanceled()) {
-            throw e;
+          ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
+            @Override
+            public void beforeWriteActionStart(@NotNull Object action) {
+              if (!progress.isCanceled()) {
+                progress.cancel(); // that will cancel all daemonIndicators too
+              }
+            }
+          }, disposable);
+          // there is a chance we are racing with the write action, in which case just registered listener might not be called, retry.
+          if (ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
+            throw new ProcessCanceledException();
           }
-          //retry if daemonIndicator was canceled by started write action
+        });
+
+        AtomicInteger filesCompleted = new AtomicInteger();
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(daemonIndicators, progress, pair -> {
+          VirtualFile file = pair.getFirst();
+          progress.setText(ReadAction.compute(() -> ProjectUtil.calcRelativeToProjectPath(file, myProject)));
+          DaemonProgressIndicator daemonIndicator = pair.getSecond();
+          runMainPasses(file, result, daemonIndicator);
+          int completed = filesCompleted.incrementAndGet();
+          progress.setFraction((double)completed / files.size());
+          return true;
+        });
+        break;
+      }
+      catch (ProcessCanceledException e) {
+        if (progress.isCanceled()) {
+          throw e;
         }
-        finally {
-          Disposer.dispose(disposable);
-        }
+        //retry if the daemonIndicator was canceled by started write action
+      }
+      finally {
+        Disposer.dispose(disposable);
       }
     }
   }
 
   private void runMainPasses(@NotNull VirtualFile file,
-                             @NotNull Map<? super Document, List<HighlightInfo>> result,
+                             @NotNull Map<? super Document, ? super List<HighlightInfo>> result,
                              @NotNull DaemonProgressIndicator daemonIndicator) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(file));
@@ -148,7 +161,7 @@ public class MainPassesRunner {
   }
 
   private void runMainPasses(@NotNull ProgressIndicator daemonIndicator,
-                             @NotNull Map<? super Document, List<HighlightInfo>> result,
+                             @NotNull Map<? super Document, ? super List<HighlightInfo>> result,
                              @NotNull PsiFile psiFile,
                              @NotNull Document document) {
     Project project = psiFile.getProject();
@@ -168,7 +181,7 @@ public class MainPassesRunner {
                : new InspectionProfileWrapper(currentProfile, ((InspectionProfileImpl)p).getProfileManager());
         InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile, profileProvider, () -> {
           List<HighlightInfo> infos = codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator);
-          result.computeIfAbsent(document, __ -> new ArrayList<>()).addAll(infos);
+          result.put(document, infos);
         });
         break;
       }

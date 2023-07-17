@@ -325,7 +325,7 @@ private fun getDescription(codeSmells: List<CodeSmellInfo>): String {
 private class ProgressSinkIndicatorEx(
   private val sink: ProgressSink?,
   private val contextModality: ModalityState,
-) : AbstractProgressIndicatorExBase() {
+) : AbstractProgressIndicatorExBase(), StandardProgressIndicator {
 
   override fun getModalityState(): ModalityState {
     return contextModality
