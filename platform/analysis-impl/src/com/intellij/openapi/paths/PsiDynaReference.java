@@ -26,7 +26,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   implements FileReferenceOwner, PsiPolyVariantReference, LocalQuickFixProvider, EmptyResolveMessageProvider, PsiReferencesWrapper {
 
   private final List<PsiReference> myReferences = new ArrayList<>();
-  private int myChosenOne = -1;
+  private final int myChosenOne = -1;
   private ResolveResult[] myCachedResult;
   private @Nullable TextRange myPredefinedRange = null;
 
@@ -134,23 +134,18 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
   @Nullable
   private PsiReference chooseReference() {
-    if (myChosenOne != -1) {
-      return myReferences.get(myChosenOne);
-    }
-    boolean flag = false;
-    for (int i = 0; i < myReferences.size(); i++) {
-      final PsiReference reference = myReferences.get(i);
-      if (reference.isSoft() && flag) continue;
-      if (!reference.isSoft() && !flag) {
-        myChosenOne = i;
-        flag = true;
-        continue;
-      }
-      if (reference.resolve() != null) {
-        myChosenOne = i;
-      }
-    }
-    return myChosenOne >= 0 ? myReferences.get(myChosenOne) : null;
+    if (myReferences.isEmpty()) return null;
+
+    ContainerUtil.sort(myReferences, (o1, o2) -> {
+      if(o1.isSoft() && !o2.isSoft()) return -1;
+      if(!o1.isSoft() && o2.isSoft()) return 1;
+
+      if (o1 instanceof FileReference) return -1;
+      if (o2 instanceof FileReference) return 1;
+      return 0;
+    });
+
+    return myReferences.get(0);
   }
 
   @NotNull
