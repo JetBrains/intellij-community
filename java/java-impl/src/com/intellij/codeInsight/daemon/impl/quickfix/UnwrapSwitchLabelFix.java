@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
-import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
@@ -45,7 +44,7 @@ public class UnwrapSwitchLabelFix extends PsiUpdateModCommandQuickFix {
     boolean shouldKeepDefault = block instanceof PsiSwitchExpression &&
                                 !(labelStatement instanceof PsiSwitchLabeledRuleStatement ruleStatement &&
                                   ruleStatement.getBody() instanceof PsiExpressionStatement);
-    Set<PsiCaseLabelElement> removableUnreachableBranches = new HashSet<>(DataFlowInspectionBase.findRemovableUnreachableBranches(label, block));
+    Set<PsiCaseLabelElement> removableUnreachableBranches = new HashSet<>(SwitchUtils.findRemovableUnreachableBranches(label, block));
     for (PsiSwitchLabelStatementBase otherLabel : labels) {
       if (otherLabel == labelStatement) continue;
       boolean isDefault = SwitchUtils.isDefaultLabel(otherLabel);

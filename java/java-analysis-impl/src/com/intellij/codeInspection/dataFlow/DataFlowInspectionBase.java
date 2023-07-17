@@ -294,10 +294,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       PsiSwitchBlock switchBlock = labelStatement.getEnclosingSwitchBlock();
       if (switchBlock == null) continue;
       if (!canRemoveTheOnlyReachableLabel(label, switchBlock)) continue;
-      if (findRemovableUnreachableBranches(label, switchBlock).isEmpty()) {
+      if (SwitchUtils.findRemovableUnreachableBranches(label, switchBlock).isEmpty()) {
         holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.only.switch.label"));
         continue;
-      };
+      }
       if (!StreamEx.iterate(labelStatement, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiSwitchLabelStatementBase.class))
         .skip(1).map(PsiSwitchLabelStatementBase::getCaseLabelElementList)
         .nonNull().flatArray(PsiCaseLabelElementList::getElements)
@@ -368,76 +368,6 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       }
     }
     return false;
-  }
-
-  /**
-   * Finds the removable unreachable branches in a switch statement.
-   * Default case is not included in this list and should be checked separately
-   *
-   * @param reachableLabel The label that is reachable.
-   * @param statement The switch statement to analyze.
-   * @return A list of unreachable branches that can be safely removed.
-   */
-  public static List<PsiCaseLabelElement> findRemovableUnreachableBranches(PsiCaseLabelElement reachableLabel,
-                                                                           PsiSwitchBlock statement) {
-    PsiSwitchLabelStatementBase labelStatement = PsiTreeUtil.getParentOfType(reachableLabel, PsiSwitchLabelStatementBase.class);
-    List<PsiSwitchLabelStatementBase> allBranches =
-      PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatementBase.class);
-    boolean hasDefault = false;
-    List<PsiCaseLabelElement> unreachableElements = new ArrayList<>();
-    for (PsiSwitchLabelStatementBase branch : allBranches) {
-      if (branch.isDefaultCase()) {
-        hasDefault = true;
-        continue;
-      }
-      PsiCaseLabelElementList elementList = branch.getCaseLabelElementList();
-      if (elementList == null) {
-        continue;
-      }
-      PsiCaseLabelElement[] elements = elementList.getElements();
-      unreachableElements.addAll(Arrays.asList(elements));
-    }
-    unreachableElements.remove(reachableLabel);
-    boolean canUnwrap = (statement instanceof PsiSwitchStatement && BreakConverter.from(statement) != null) ||
-                        (!(statement instanceof PsiSwitchStatement) &&
-                         labelStatement instanceof PsiSwitchLabeledRuleStatement ruleStatement &&
-                         ruleStatement.getBody() instanceof PsiExpressionStatement);
-    if (canUnwrap) {
-      return unreachableElements;
-    }
-
-    if (unreachableElements.isEmpty() || hasDefault) {
-      return unreachableElements;
-    }
-    boolean isEnhancedSwitch = JavaPsiSwitchUtil.isEnhancedSwitch(statement);
-    if (isEnhancedSwitch) {
-      PsiExpression expression = statement.getExpression();
-      if (expression == null) {
-        return List.of();
-      }
-      PsiType selectorType = expression.getType();
-      if (selectorType == null) {
-        return List.of();
-      }
-      List<PsiCaseLabelElement> toDelete = new ArrayList<>();
-      for (int i = 0; i < unreachableElements.size(); i++) {
-        PsiCaseLabelElement currentElement = unreachableElements.get(i);
-        boolean isDominated = false;
-        for (int j = i + 1; j < unreachableElements.size(); j++) {
-          PsiCaseLabelElement nextElement = unreachableElements.get(j);
-          isDominated = SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.isDominated(currentElement, nextElement, selectorType);
-          if (!isDominated) {
-            break;
-          }
-        }
-
-        if (!isDominated) {
-          toDelete.add(currentElement);
-        }
-      }
-      unreachableElements.removeAll(toDelete);
-    }
-    return unreachableElements;
   }
 
   private static boolean canRemoveTheOnlyReachableLabel(@NotNull PsiCaseLabelElement label, @NotNull PsiSwitchBlock switchBlock) {
