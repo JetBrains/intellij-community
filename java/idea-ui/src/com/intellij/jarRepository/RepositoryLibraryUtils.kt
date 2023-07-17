@@ -382,9 +382,12 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
       }.awaitAll().filterNotNull()
       val updatedCount = updatedEntitiesAndProperties.size
 
-      val failedToGuessRemoteRepositoryLibraries =
-        if (failedToGuessRemoteRepository.get()) entitiesAndProperties.filter { it.second.jarRepositoryId == null }.map { it.first.library }
-        else emptyList()
+      val failedToGuessRemoteRepositoryLibraries = if (failedToGuessRemoteRepository.get()) {
+        entitiesAndProperties.filter { it.second.jarRepositoryId == null }.map { it.first.library }
+      }
+      else {
+        emptyList()
+      }
 
       if (updatedEntitiesAndProperties.isEmpty()) {
         showUpdateCompleteNotification(disableInfoNotifications, 0, snapshot, failedToGuessRemoteRepositoryLibraries, emptyList())
@@ -429,9 +432,12 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
                                                snapshot: EntityStorage,
                                                libsFailedToGuessRemoteRepository: List<LibraryEntity>,
                                                libsFailedToResolveAfterUpdate: List<LibraryEntity>) {
-      val notificationType =
-        if (libsFailedToGuessRemoteRepository.isNotEmpty() || libsFailedToResolveAfterUpdate.isNotEmpty()) NotificationType.ERROR
-        else NotificationType.INFORMATION
+      val notificationType = if (libsFailedToGuessRemoteRepository.isNotEmpty() || libsFailedToResolveAfterUpdate.isNotEmpty()) {
+        NotificationType.ERROR
+      }
+      else {
+        NotificationType.INFORMATION
+      }
 
       @Suppress("HardCodedStringLiteral") // concatenation of localized strings
       val message = buildString {
@@ -452,9 +458,14 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
         }
       }
 
-      val action =
-        if (notificationType == NotificationType.INFORMATION) null
-        else ShowStructureSettingsAction().apply { templatePresentation.text = JavaUiBundle.message("repository.library.utils.notification.action.open.project.structure") }
+      val action = if (notificationType == NotificationType.INFORMATION) {
+        null
+      }
+      else {
+        ShowStructureSettingsAction().apply {
+          templatePresentation.text = JavaUiBundle.message("repository.library.utils.notification.action.open.project.structure")
+        }
+      }
       showNotification(message, notificationType, disableInfoNotification, action)
     }
 
