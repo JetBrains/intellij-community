@@ -1318,7 +1318,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     myLastVisualLine = 0;
   }
 
-  private LightweightHint showTooltip(TooltipRenderer tooltipObject, @NotNull HintHint hintHint) {
+  private LightweightHint showTooltip(@NotNull TooltipRenderer tooltipObject, @NotNull HintHint hintHint) {
     hideMyEditorPreviewHint();
     return TooltipController.getInstance().showTooltipByMouseMove(myEditor, hintHint.getTargetPoint(), tooltipObject,
                                                                   myEditor.getVerticalScrollbarOrientation() ==

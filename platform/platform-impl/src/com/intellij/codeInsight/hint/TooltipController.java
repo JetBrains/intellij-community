@@ -15,6 +15,7 @@ import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -42,11 +43,11 @@ public final class TooltipController {
    * Returns newly created hint, or already existing (for the same renderer)
    */
   @Nullable
-  public LightweightHint showTooltipByMouseMove(@NotNull final Editor editor,
-                                                @NotNull final RelativePoint point,
-                                                final TooltipRenderer tooltipObject,
-                                                final boolean alignToRight,
-                                                @NotNull final TooltipGroup group,
+  public LightweightHint showTooltipByMouseMove(@NotNull Editor editor,
+                                                @NotNull RelativePoint point,
+                                                @NotNull TooltipRenderer tooltipObject,
+                                                boolean alignToRight,
+                                                @NotNull TooltipGroup group,
                                                 @NotNull HintHint hintHint) {
     LightweightHint currentTooltip = myCurrentTooltip;
     if (currentTooltip == null || !currentTooltip.isVisible()) {
@@ -60,23 +61,22 @@ public final class TooltipController {
       }
     }
 
-    if (Comparing.equal(tooltipObject, myCurrentTooltipObject)) {
+    if (tooltipObject.equals(myCurrentTooltipObject)) {
       IdeTooltipManager.getInstance().cancelAutoHide();
       return myCurrentTooltip;
     }
     hideCurrentTooltip();
 
-    if (tooltipObject != null) {
-      final Point p = point.getPointOn(editor.getComponent().getRootPane().getLayeredPane()).getPoint();
-      if (!hintHint.isAwtTooltip()) {
-        p.x += alignToRight ? -10 : 10;
-      }
+    JRootPane rootPane = editor.getComponent().getRootPane();
+    Point p = point.getPointOn(rootPane.getLayeredPane()).getPoint();
+    if (!hintHint.isAwtTooltip()) {
+      p.x += alignToRight ? -10 : 10;
+    }
 
-      Project project = editor.getProject();
-      if (project != null && !project.isOpen()) return null;
-      if (editor.getContentComponent().isShowing()) {
-        return doShowTooltip(editor, p, tooltipObject, alignToRight, group, hintHint);
-      }
+    Project project = editor.getProject();
+    if (project != null && !project.isOpen()) return null;
+    if (editor.getContentComponent().isShowing()) {
+      return doShowTooltip(editor, p, tooltipObject, alignToRight, group, hintHint);
     }
     return null;
   }
@@ -91,22 +91,41 @@ public final class TooltipController {
     }
   }
 
-  public void showTooltip(@NotNull Editor editor, @NotNull Point p, @NotNull @NlsContexts.Tooltip String text, boolean alignToRight, @NotNull TooltipGroup group) {
+  public void showTooltip(@NotNull Editor editor,
+                          @NotNull Point p,
+                          @NotNull @NlsContexts.Tooltip String text,
+                          boolean alignToRight,
+                          @NotNull TooltipGroup group) {
     TooltipRenderer tooltipRenderer = ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(text);
     showTooltip(editor, p, tooltipRenderer, alignToRight, group);
   }
 
-  public void showTooltip(@NotNull Editor editor, @NotNull Point p, @NotNull @NlsContexts.Tooltip String text, int currentWidth, boolean alignToRight, @NotNull TooltipGroup group) {
+  public void showTooltip(@NotNull Editor editor,
+                          @NotNull Point p,
+                          @NotNull @NlsContexts.Tooltip String text,
+                          int currentWidth,
+                          boolean alignToRight,
+                          @NotNull TooltipGroup group) {
     TooltipRenderer tooltipRenderer = ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(text, currentWidth);
     showTooltip(editor, p, tooltipRenderer, alignToRight, group);
   }
 
-  public void showTooltip(@NotNull Editor editor, @NotNull Point p, @NotNull @NlsContexts.Tooltip String text, int currentWidth, boolean alignToRight, @NotNull TooltipGroup group, @NotNull HintHint hintHint) {
+  public void showTooltip(@NotNull Editor editor,
+                          @NotNull Point p,
+                          @NotNull @NlsContexts.Tooltip String text,
+                          int currentWidth,
+                          boolean alignToRight,
+                          @NotNull TooltipGroup group,
+                          @NotNull HintHint hintHint) {
     TooltipRenderer tooltipRenderer = ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(text, currentWidth);
     showTooltip(editor, p, tooltipRenderer, alignToRight, group, hintHint);
   }
 
-  public void showTooltip(@NotNull Editor editor, @NotNull Point p, @NotNull TooltipRenderer tooltipRenderer, boolean alignToRight, @NotNull TooltipGroup group) {
+  public void showTooltip(@NotNull Editor editor,
+                          @NotNull Point p,
+                          @NotNull TooltipRenderer tooltipRenderer,
+                          boolean alignToRight,
+                          @NotNull TooltipGroup group) {
     showTooltip(editor, p, tooltipRenderer, alignToRight, group, new HintHint(editor, p));
   }
 
@@ -148,7 +167,7 @@ public final class TooltipController {
     return hint;
   }
 
-  public boolean shouldSurvive(final MouseEvent e) {
+  public boolean shouldSurvive(MouseEvent e) {
     return myCurrentTooltip != null && myCurrentTooltip.canControlAutoHide();
   }
 
