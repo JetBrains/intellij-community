@@ -10,7 +10,6 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.TypeUtils;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -24,12 +23,21 @@ public class EscapedSpaceInspection extends AbstractBaseJavaLocalInspectionTool 
     if (!HighlightingFeature.TEXT_BLOCK_ESCAPES.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
+      public void visitFragment(@NotNull PsiFragment fragment) {
+        check(fragment, fragment.isTextBlock());
+      }
+
+      @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression literal) {
         PsiType type = literal.getType();
         if (!TypeUtils.isJavaLangString(type) && !PsiTypes.charType().equals(type)) return;
-        for (int pos : findPositions(literal)) {
-          holder.registerProblem(literal, TextRange.create(pos, pos + 2),
-                                 literal.isTextBlock()
+        check(literal, literal.isTextBlock());
+      }
+
+      private void check(@NotNull PsiElement fragment, boolean textBlock) {
+        for (int pos : findPositions(fragment.getText(), textBlock)) {
+          holder.registerProblem(fragment, TextRange.create(pos, pos + 2),
+                                 textBlock
                                  ? InspectionGadgetsBundle.message("inspection.use.of.slash.s.message")
                                  : InspectionGadgetsBundle.message("inspection.use.of.slash.s.non.text.block.message"),
                                  new ReplaceWithSpaceFix());
@@ -38,9 +46,7 @@ public class EscapedSpaceInspection extends AbstractBaseJavaLocalInspectionTool 
     };
   }
 
-  private static int[] findPositions(@NotNull PsiLiteralExpression literal) {
-    boolean block = literal.isTextBlock();
-    String text = literal.getText();
+  private static int[] findPositions(String text, boolean block) {
     int pos = 1;
     IntList list = new IntArrayList();
     while (true) {
@@ -84,10 +90,17 @@ public class EscapedSpaceInspection extends AbstractBaseJavaLocalInspectionTool 
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      PsiLiteralExpression literal = ObjectUtils.tryCast(element, PsiLiteralExpression.class);
-      if (literal == null) return;
-      int[] positions = findPositions(literal);
-      String text = literal.getText();
+      String text = element.getText();
+      int[] positions;
+      if (element instanceof PsiLiteralExpression literal) {
+        positions = findPositions(text, literal.isTextBlock());
+      }
+      else if (element instanceof PsiFragment fragment) {
+        positions = findPositions(text, fragment.isTextBlock());
+      }
+      else {
+        return;
+      }
       String newText = IntStreamEx.of(positions)
         .takeWhile(pos -> pos < text.length() - 2)
         .boxed()
@@ -95,7 +108,7 @@ public class EscapedSpaceInspection extends AbstractBaseJavaLocalInspectionTool 
         .append(text.length())
         .pairMap((start, end) -> text.substring(start + 2, end))
         .joining(" ");
-      literal.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(newText, null));
+      element.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(newText, null));
     }
   }
 }
