@@ -30,6 +30,14 @@ project.iosX64Test
 project.main
 
 project.unitTest
+    fqName: null
+    name: AndroidTest_usagesKt.use
+    type: Gradle
+    tasks: [:cleanTestDebugUnitTest, :testDebugUnitTest, --tests, "kmmApplication.AndroidTest_usagesKt.use"]
+    scriptParameters:
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
 
 
 Test configuration:
