@@ -276,6 +276,11 @@ public final class JavaCompletionContributor extends CompletionContributor imple
               !JavaResolveUtil.isAccessible(field, field.getContainingClass(), field.getModifierList(), context, null, null)) {
             return false;
           }
+
+          PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(field.getType());
+          if (aClass != null && aClass.isEnum()) {
+            return false;
+          }
           variable = field;
         }
         else if (element instanceof PsiLocalVariable local) {
