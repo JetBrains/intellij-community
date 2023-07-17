@@ -121,9 +121,8 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
       final PsiReference psiReference = byTextRanges.get(textRange);
       if (psiReference == null) {
         byTextRanges.put(textRange, reference);
-      }
-      else if (psiReference instanceof PsiDynaReference) {
-        ((PsiDynaReference<?>)psiReference).addReference(psiReference);
+      } else if (psiReference instanceof PsiDynaReference) {
+        ((PsiDynaReference<?>)psiReference).addReference(reference);
       } else {
         byTextRanges.put(textRange, createDynaReference(element, textRange, reference, psiReference));
       }
