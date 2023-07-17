@@ -2,16 +2,14 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.codeInspection.ModCommands;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.ModShowConflicts;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
@@ -19,59 +17,42 @@ import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
+import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
-public class ConvertInterfaceToClassFix extends LocalQuickFixAndIntentionActionOnPsiElement implements PriorityAction {
+public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<PsiClass> {
+  private final boolean myCheckStartPosition;
 
-  public ConvertInterfaceToClassFix(@Nullable PsiClass aClass) {
+  public ConvertInterfaceToClassIntention(@NotNull PsiClass aClass) {
     super(aClass);
+    myCheckStartPosition = false;
+  }
+
+  public ConvertInterfaceToClassIntention() {
+    super(PsiClass.class);
+    myCheckStartPosition = true;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @Nullable Editor editor,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    if (!(startElement instanceof PsiClass)) return false;
-    return canConvertToClass((PsiClass)startElement);
-  }
-
-  @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    if (!(startElement instanceof PsiClass)) return;
-    convert((PsiClass)startElement);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
-  public @NotNull Priority getPriority() {
-    return Priority.LOW;
-  }
-
-  @Override
-  public @IntentionName @NotNull String getText() {
-    return IntentionPowerPackBundle.message("convert.interface.to.class.intention.name");
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiClass cls) {
+    if (myCheckStartPosition) {
+      PsiElement lBrace = cls.getLBrace();
+      if (lBrace == null) return null;
+      if (context.offset() > lBrace.getTextOffset()) return null;
+    }
+    if (!canConvertToClass(cls)) return null;
+    return Presentation.of(IntentionPowerPackBundle.message("convert.interface.to.class.intention.name")).withPriority(
+      PriorityAction.Priority.LOW);
   }
 
   @Override
@@ -80,25 +61,23 @@ public class ConvertInterfaceToClassFix extends LocalQuickFixAndIntentionActionO
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile copyFile) {
-    PsiElement element = myStartElement.getElement();
-    if (!(element instanceof PsiClass psiClass && psiClass.isInterface())) {
-      return IntentionPreviewInfo.EMPTY;
-    }
-    PsiFile file = psiClass.getContainingFile();
-    if (copyFile.getOriginalFile() == file) {
-      PsiClass elementInCopy = PsiTreeUtil.findSameElementInCopy(psiClass, copyFile);
-      changeInterfaceToClass(elementInCopy);
-      moveExtendsToImplements(elementInCopy);
-      return IntentionPreviewInfo.DIFF;
-    }
-    //something strange happens
-    return IntentionPreviewInfo.EMPTY;
-  }
-
-  public static void convert(@NotNull PsiClass anInterface) {
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiClass anInterface) {
     final SearchScope searchScope = anInterface.getUseScope();
     final Collection<PsiClass> inheritors = ClassInheritorsSearch.search(anInterface, searchScope, false).findAll();
+    final MultiMap<PsiElement, @NlsContexts.DialogMessage String>
+      conflicts = IntentionPreviewUtils.isIntentionPreviewActive() ? MultiMap.empty() : getConflicts(anInterface, inheritors, searchScope);
+    Map<PsiElement, ModShowConflicts.Conflict> map = EntryStream.of(conflicts.entrySet().spliterator())
+      .mapValues(messages -> new ModShowConflicts.Conflict(List.copyOf(messages)))
+      .toMap();
+    return new ModShowConflicts(map, ModCommands.psiUpdate(anInterface,
+                                                           (writableInterface, updater) ->
+                                                             convertInterfaceToClass(writableInterface, inheritors, updater)));
+  }
+
+  @NotNull
+  private static MultiMap<PsiElement, @NlsContexts.DialogMessage String> getConflicts(@NotNull PsiClass anInterface,
+                                                                                      @NotNull Collection<PsiClass> inheritors,
+                                                                                      @NotNull SearchScope searchScope) {
     final MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts = new MultiMap<>();
     inheritors.forEach(aClass -> {
       final PsiReferenceList extendsList = aClass.getExtendsList();
@@ -108,7 +87,7 @@ public class ConvertInterfaceToClassFix extends LocalQuickFixAndIntentionActionO
       final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
       if (referenceElements.length > 0) {
         final PsiElement target = referenceElements[0].resolve();
-        if (target instanceof PsiClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)target).getQualifiedName())) {
+        if (target instanceof PsiClass targetClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(targetClass.getQualifiedName())) {
           conflicts.putValue(aClass, IntentionPowerPackBundle.message(
             "0.already.extends.1.and.will.not.compile.after.converting.2.to.a.class",
             RefactoringUIUtil.getDescription(aClass, true),
@@ -125,22 +104,7 @@ public class ConvertInterfaceToClassFix extends LocalQuickFixAndIntentionActionO
         ClassPresentationUtil.getFunctionalExpressionPresentation(functionalExpression, true),
         RefactoringUIUtil.getDescription(anInterface, false)));
     }
-    final boolean conflictsDialogOK;
-    if (conflicts.isEmpty()) {
-      conflictsDialogOK = true;
-    }
-    else {
-      final Application application = ApplicationManager.getApplication();
-      if (application.isUnitTestMode()) {
-        throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
-      }
-      final ConflictsDialog conflictsDialog =
-        new ConflictsDialog(anInterface.getProject(), conflicts, () -> convertInterfaceToClass(anInterface, inheritors));
-      conflictsDialogOK = conflictsDialog.showAndGet();
-    }
-    if (conflictsDialogOK) {
-      convertInterfaceToClass(anInterface, inheritors);
-    }
+    return conflicts;
   }
 
   public static boolean canConvertToClass(@NotNull PsiClass aClass) {
@@ -215,18 +179,11 @@ public class ConvertInterfaceToClassFix extends LocalQuickFixAndIntentionActionO
     }
   }
 
-  private static void convertInterfaceToClass(PsiClass anInterface, Collection<PsiClass> inheritors) {
-    final List<PsiClass> prepare = new ArrayList<>();
-    prepare.add(anInterface);
-    prepare.addAll(inheritors);
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(prepare)) {
-      return;
-    }
-    WriteAction.run(() -> {
-      moveSubClassImplementsToExtends(anInterface, inheritors);
-      changeInterfaceToClass(anInterface);
-      moveExtendsToImplements(anInterface);
-    });
+  private static void convertInterfaceToClass(PsiClass anInterface, Collection<PsiClass> inheritors, @NotNull ModPsiUpdater updater) {
+    List<PsiClass> writableInheritors = ContainerUtil.map(inheritors, updater::getWritable);
+    moveSubClassImplementsToExtends(anInterface, writableInheritors);
+    changeInterfaceToClass(anInterface);
+    moveExtendsToImplements(anInterface);
   }
 
   private static void moveExtendsToImplements(PsiClass anInterface) {

@@ -1091,7 +1091,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createConvertInterfaceToClassFix(@NotNull PsiClass aClass) {
-    return new ConvertInterfaceToClassFix(aClass);
+    return new ConvertInterfaceToClassIntention(aClass).asIntention();
   }
 
   @Override

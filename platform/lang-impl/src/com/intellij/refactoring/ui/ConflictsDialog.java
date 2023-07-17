@@ -15,6 +15,7 @@ import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.UiInterceptors;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtilRt;
@@ -32,6 +33,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBase {
@@ -87,6 +89,19 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     setTitle(RefactoringBundle.message("problems.detected.title"));
     setOKButtonText(RefactoringBundle.message("continue.button"));
     init();
+  }
+
+  public List<String> getConflictDescriptions() {
+    return List.of(myConflictDescriptions);
+  }
+
+  @Override
+  public boolean showAndGet() {
+    if (UiInterceptors.tryIntercept(this)) {
+      disposeIfNeeded();
+      return true;
+    }
+    return super.showAndGet();
   }
 
   @Override

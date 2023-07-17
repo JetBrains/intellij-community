@@ -129,7 +129,7 @@
 
     <intentionAction>
       <language>JAVA</language>
-      <className>com.siyeh.ipp.interfacetoclass.ConvertInterfaceToClassIntention</className>
+      <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertInterfaceToClassIntention</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
