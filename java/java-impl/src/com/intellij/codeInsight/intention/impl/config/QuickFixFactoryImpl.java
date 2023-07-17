@@ -29,6 +29,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.request.CreateConstructorFromUsage;
 import com.intellij.lang.java.request.CreateMethodFromUsage;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -132,9 +133,10 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                          @NotNull PsiClassType exceptionClass,
                                                          boolean shouldThrow,
                                                          boolean showContainingClass) {
-    return shouldThrow
-           ? new MethodThrowsFix.Add(method, exceptionClass, showContainingClass)
-           : new MethodThrowsFix.Remove(method, exceptionClass, showContainingClass);
+    ModCommandAction action = shouldThrow
+                              ? new MethodThrowsFix.Add(method, exceptionClass, showContainingClass)
+                              : new MethodThrowsFix.Remove(method, exceptionClass, showContainingClass);
+    return LocalQuickFixAndIntentionActionOnPsiElement.from(action, method);
   }
 
   @NotNull
