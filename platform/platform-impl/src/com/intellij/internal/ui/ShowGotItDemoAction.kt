@@ -13,22 +13,18 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.Balloon.Position
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.GotItTextBuilder
 import com.intellij.ui.GotItTooltip
+import com.intellij.ui.LottieUtils
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.not
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
 import java.io.File
@@ -255,8 +251,9 @@ class ShowGotItDemoAction : DumbAwareAction() {
       if (showImageOrLottie && showImage) gotItBuilder.withImage(image, withImageBorder)
       if (showImageOrLottie && showLottieAnimation && lottieJsonPath.isNotEmpty()) {
         val lottieJson = File(lottieJsonPath).readText()
-        val htmlPage = createLottieAnimationPage(lottieJson)
-        gotItBuilder.withBrowserPage(htmlPage.htmlText, htmlPage.size, withImageBorder)
+        val htmlPage = LottieUtils.createLottieAnimationPage(lottieJson, lottieScript = null)
+        val size = LottieUtils.getLottieImageSize(lottieJson)
+        gotItBuilder.withBrowserPage(htmlPage, size, withImageBorder)
         PropertiesComponent.getInstance().setValue(LAST_OPENED_LOTTIE_FILE, lottieJsonPath)
       }
       if (showIconOrStep && showIcon) gotItBuilder.withIcon(icon)
@@ -306,67 +303,6 @@ class ShowGotItDemoAction : DumbAwareAction() {
         }
       }
     }
-
-    private fun createLottieAnimationPage(lottieJson: String): LottiePageData {
-      val head = HtmlBuilder().append(
-        HtmlChunk.tag("style").addRaw("""
-          body {
-              background-color: black;
-              margin: 0;
-              height: 100%;
-              overflow: hidden;
-          }
-          #lottie {
-              background-color: black;
-              width: 100%;
-              height: 100%;
-              display: block;
-              overflow: hidden;
-              transform: translate3d(0,0,0);
-              text-align: center;
-              opacity: 1;
-          }
-          """.trimIndent())
-      ).wrapWith(HtmlChunk.head())
-
-      val body = HtmlBuilder()
-        .append(HtmlChunk.tag("script")
-                  .attr("src", "https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.14/lottie_light.min.js")
-                  .attr("integrity", "sha512-oquI7otdlqWnBjPa+cwKQo10s3Bsle+P3zqFgwrfR+DFNKXdv6zYKcqvy/U923mampnzlw1nimkURrvftrQmSA==")
-                  .attr("crossorigin", "anonymous")
-                  .attr("referrerpolicy", "no-referrer").addRaw(""))
-        .append(HtmlChunk.div().attr("id", "lottie").addRaw(""))
-        .append(HtmlChunk.tag("script").addRaw("""
-           const animationData = $lottieJson;
-           const params = {
-               container: document.getElementById('lottie'),
-               renderer: 'svg',
-               loop: true,
-               autoplay: true,
-               animationData: animationData
-           };
-           lottie.loadAnimation(params);
-           """.trimIndent()))
-        .wrapWith(HtmlChunk.body())
-
-      val htmlText = HtmlBuilder()
-        .append(head)
-        .append(body)
-        .wrapWith(HtmlChunk.html())
-        .toString()
-
-      val json = Json { ignoreUnknownKeys = true }
-      val size = json.decodeFromString<LottieImageSize>(lottieJson)
-      return LottiePageData(htmlText, Dimension(size.width, size.height))
-    }
-
-    private data class LottiePageData(val htmlText: String, val size: Dimension)
-
-    @Serializable
-    private data class LottieImageSize(
-      @SerialName("w") val width: Int,
-      @SerialName("h") val height: Int
-    )
 
     companion object {
       private const val LAST_OPENED_LOTTIE_FILE = "LAST_OPENED_LOTTIE_FILE"
