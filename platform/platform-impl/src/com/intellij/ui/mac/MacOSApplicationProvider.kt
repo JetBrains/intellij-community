@@ -91,7 +91,7 @@ internal object MacOSApplicationProvider {
         val list = files.map(File::toPath)
         if (LoadingState.COMPONENTS_LOADED.isOccurred) {
           val project = getProject(false)
-          (project?.coroutineScope ?: ApplicationManager.getApplication().coroutineScope).launch {
+          ApplicationManager.getApplication().coroutineScope.launch {
             ProjectUtil.openOrImportFilesAsync(list = list, location = "MacMenu", projectToClose = project)
           }
         }
