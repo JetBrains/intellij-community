@@ -16,7 +16,7 @@ class VisualFormattingLayerHighlightingPassFactory(registrar: TextEditorHighligh
     }
   }
 
-  private val passId = registrar.registerTextEditorHighlightingPass(this, null, null, true, -1)
+  private val passId = registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
 
   override fun getPassId(): Int = passId
 
