@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -20,6 +21,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -302,10 +304,18 @@ public final class DuplicatesFinder {
       if (type1 instanceof PsiImmediateClassType && type2 instanceof PsiImmediateClassType) {
         final PsiClass psiClass1 = ((PsiImmediateClassType)type1).resolve();
         final PsiClass psiClass2 = ((PsiImmediateClassType)type2).resolve();
-        if (!(psiClass1 instanceof PsiAnonymousClass &&
-              psiClass2 instanceof PsiAnonymousClass &&
-              psiClass1.getManager().areElementsEquivalent(((PsiAnonymousClass)psiClass1).getBaseClassType().resolve(),
-                                                           ((PsiAnonymousClass)psiClass2).getBaseClassType().resolve()))) {
+        if (!(psiClass1 instanceof PsiAnonymousClass anonymousClass1 &&
+              psiClass2 instanceof PsiAnonymousClass anonymousClass2 &&
+              psiClass1.getManager().areElementsEquivalent(anonymousClass1.getBaseClassType().resolve(),
+                                                           anonymousClass2.getBaseClassType().resolve()) &&
+              //it is important for anonymous classes to take into account parameters, because
+              //it is a popular pattern to catch generics, it is used, for example, in Jackson:
+              StreamEx.zip(anonymousClass1.getBaseClassType().getParameters(),
+                           anonymousClass2.getBaseClassType().getParameters(), (u, v) -> Pair.create(u, v))
+                //prevent deep recursion
+                .filter(pair -> !(pair.first instanceof PsiImmediateClassType) && !(pair.second instanceof PsiImmediateClassType))
+                .allMatch((Pair<PsiType, PsiType> pair) -> canTypesBeEquivalent(pair.first, pair.second))
+        )) {
           return false;
         }
       }
