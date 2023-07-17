@@ -227,7 +227,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   public static boolean canStopOnConditionalReturn(@NotNull PsiFile file) {
     // We haven't implemented Dalvik bytecode parsing yet.
     Module module = ModuleUtilCore.findModuleForFile(file);
-    return module != null &&
+    return module == null ||
            !ContainerUtil.exists(FacetManager.getInstance(module).getAllFacets(), f -> f.getName().equals("Android"));
   }
 
