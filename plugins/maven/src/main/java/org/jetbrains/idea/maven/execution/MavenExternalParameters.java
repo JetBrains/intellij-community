@@ -57,6 +57,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static com.intellij.execution.util.ProgramParametersUtil.expandPathAndMacros;
 import static org.jetbrains.idea.maven.utils.MavenUtil.verifyMavenSdkRequirements;
 
 public final class MavenExternalParameters {
@@ -90,8 +91,9 @@ public final class MavenExternalParameters {
     if (runnerSettings == null) {
       runnerSettings = project == null ? new MavenRunnerSettings() : MavenRunner.getInstance(project).getState();
     }
+    params.getProgramParametersList().patchMacroWithEnvs(runnerSettings.getEnvironmentProperties());
 
-    params.setWorkingDirectory(parameters.getWorkingDirFile());
+    params.setWorkingDirectory(expandPathAndMacros(parameters.getWorkingDirPath(), null, project));
 
     Sdk jdk = getJdk(project, runnerSettings, project != null && MavenRunner.getInstance(project).getState() == runnerSettings);
     params.setJdk(jdk);
@@ -111,11 +113,12 @@ public final class MavenExternalParameters {
       String mavenMultimoduleDir;
 
       if (!StringUtil.isEmptyOrSpaces(parameters.getMultimoduleDir())) {
-        mavenMultimoduleDir = parameters.getMultimoduleDir();
+        mavenMultimoduleDir = expandPathAndMacros(parameters.getMultimoduleDir(), null, project);
       }
       else {
         mavenMultimoduleDir = MavenServerUtil.findMavenBasedir(parameters.getWorkingDirFile()).getPath();
       }
+
 
       params.getVMParametersList().addProperty("maven.multiModuleProjectDirectory", mavenMultimoduleDir);
     }
@@ -125,6 +128,7 @@ public final class MavenExternalParameters {
     }
 
     String vmOptions = getRunVmOptions(runnerSettings, project, parameters.getWorkingDirPath());
+    vmOptions = expandPathAndMacros(vmOptions, null, project);
     addVMParameters(params.getVMParametersList(), mavenHome, vmOptions);
 
     File confFile = MavenUtil.getMavenConfFile(new File(mavenHome));
