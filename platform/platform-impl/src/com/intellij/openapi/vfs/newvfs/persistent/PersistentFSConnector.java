@@ -98,8 +98,10 @@ final class PersistentFSConnector {
           useContentHashes,
           interceptors
         );
-        //heuristics: just created VFS contains only 1 record (=super-root)
-        boolean justCreated = connection.getRecords().recordsCount() == 1 && connection.isDirty();
+        //heuristics: just created VFS contains only 1 record (=super-root):
+        boolean justCreated = connection.getRecords().recordsCount() == 1
+                              && connection.isDirty()
+                              && attempt == 0;
 
         return new InitializationResult(
           connection,
