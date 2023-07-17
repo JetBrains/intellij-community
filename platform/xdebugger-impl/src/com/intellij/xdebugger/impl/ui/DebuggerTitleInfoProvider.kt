@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.openapi.Disposable
@@ -59,7 +59,7 @@ private class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption
     }
   }
 
-  @Service
+  @Service(Service.Level.PROJECT)
   private class DebuggerTitleInfoProviderService(private val project: Project) {
     var debuggerSessionStarted = false
     var subscriptionDisposable: Disposable? = null
