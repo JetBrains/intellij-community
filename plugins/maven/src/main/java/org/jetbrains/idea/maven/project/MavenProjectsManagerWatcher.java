@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
@@ -39,8 +38,6 @@ import java.util.function.Predicate;
 import static org.jetbrains.idea.maven.project.MavenGeneralSettingsWatcher.registerGeneralSettingsWatcher;
 
 public final class MavenProjectsManagerWatcher {
-
-  private static final Logger LOG = Logger.getInstance(MavenProjectsManagerWatcher.class);
 
   private final Project myProject;
   private MavenProjectsTree myProjectsTree;
