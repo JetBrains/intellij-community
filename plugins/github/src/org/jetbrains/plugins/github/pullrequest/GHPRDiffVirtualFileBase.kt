@@ -34,7 +34,7 @@ internal abstract class GHPRDiffVirtualFileBase(val fileManagerId: String,
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as GHPRDiffVirtualFile
+    other as GHPRDiffVirtualFileBase
 
     if (fileManagerId != other.fileManagerId) return false
     if (project != other.project) return false
