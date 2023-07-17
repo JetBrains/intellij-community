@@ -21,6 +21,8 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.README_OPENED_ON_START_TS
+import com.intellij.openapi.project.logReadmeClosedIn
 import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.*
@@ -47,6 +49,7 @@ import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
+import java.time.Instant
 import java.util.function.Function
 import javax.swing.*
 import kotlin.math.roundToInt
@@ -585,6 +588,13 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
         }
       }
       finally {
+        val openedTs = file.getUserData(README_OPENED_ON_START_TS)
+        if (openedTs != null) {
+          val wasOpenedMillis = Instant.now().toEpochMilli() - openedTs.toEpochMilli()
+          logReadmeClosedIn(wasOpenedMillis)
+          file.removeUserData(README_OPENED_ON_START_TS)
+        }
+
         fileEditorManager.removeSelectionRecord(file, this)
         (TransactionGuard.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
         fileEditorManager.notifyPublisher {
