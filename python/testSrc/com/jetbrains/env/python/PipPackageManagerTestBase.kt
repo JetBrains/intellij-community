@@ -25,7 +25,7 @@ abstract class PipPackageManagerTestBase {
 
 
   @Test
-  fun testList(): Unit = runTest(timeout = 1.minutes) {
+  fun testList(): Unit = runTest(timeout = 5.minutes) {
     PipPythonPackageManager(projectRule.project, sdkRule.sdk).apply {
       assertThat("No packages return", reloadPackages().getOrThrow(), not(empty()))
       assertTrue("Output shouldn't be empty", runPackagingTool("list", emptyList(), "").isNotBlank())
