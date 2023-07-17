@@ -26,16 +26,25 @@ import com.sun.jdi.Value
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.eval4j.*
-import org.jetbrains.eval4j.jdi.*
+import org.jetbrains.eval4j.jdi.JDIEval
+import org.jetbrains.eval4j.jdi.asJdiValue
+import org.jetbrains.eval4j.jdi.asValue
+import org.jetbrains.eval4j.jdi.makeInitialFrame
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.compile.CodeFragmentCapturedValue
-import org.jetbrains.kotlin.analysis.api.components.*
+import org.jetbrains.kotlin.analysis.api.components.KtCompilationResult
+import org.jetbrains.kotlin.analysis.api.components.KtCompilerFacility
+import org.jetbrains.kotlin.analysis.api.components.KtCompilerTarget
+import org.jetbrains.kotlin.analysis.api.components.isClassFile
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.diagnostics.*
+import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
+import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter
 import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
@@ -69,8 +78,6 @@ import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
 import org.jetbrains.eval4j.Value as Eval4JValue
 
 internal val LOG = Logger.getInstance(KotlinEvaluator::class.java)
@@ -228,7 +235,9 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 }
             } catch (e: ProcessCanceledException) {
                 throw e
-            } catch (e: Exception) {
+            } catch (e: EvaluateException) {
+                throw e
+            } catch (e: Throwable) {
                 reportErrorWithAttachments(context, codeFragment, CodeFragmentCodegenException(e))
                 throw EvaluateExceptionUtil.createEvaluateException(e)
             }
