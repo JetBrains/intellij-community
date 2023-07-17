@@ -7,6 +7,7 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
 import java.util.*
@@ -431,6 +432,14 @@ class BuildOptions(
   var randomSeedNumber: Long = 0
 
   var isNightlyBuild: Boolean = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_IS_NIGHTLY, (buildNumber?.count { it == '.' } ?: 1) <= 1)
+
+  /**
+   * If `false`, [org.jetbrains.intellij.build.impl.projectStructureMapping.buildJarContentReport] won't be affected by
+   * neither [PluginBundlingRestrictions.includeInEapOnly] nor [PluginBundlingRestrictions.includeInNightlyOnly]
+   */
+  @set:TestOnly
+  @ApiStatus.Internal
+  var useReleaseCycleRelatedBundlingRestrictionsForContentReport: Boolean = true
 
   init {
     val targetOsId = System.getProperty(TARGET_OS_PROPERTY, OS_ALL).lowercase()
