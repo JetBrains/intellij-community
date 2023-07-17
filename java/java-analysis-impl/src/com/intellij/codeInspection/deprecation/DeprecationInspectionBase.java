@@ -70,8 +70,16 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
 
     if (ignoreImportStatements && isElementInsideImportStatement(elementToHighlight)) return;
 
-    String description = JavaErrorBundle.message(forRemoval ? "marked.for.removal.symbol" : "deprecated.symbol",
-                                                 getPresentableName(element));
+    String sinceString = getSinceString(element);
+
+    String description;
+    if (sinceString == null || sinceString.isBlank()) {
+      description = JavaErrorBundle.message(forRemoval ? "marked.for.removal.symbol" : "deprecated.symbol",
+                                            getPresentableName(element));
+    } else {
+      description = JavaErrorBundle.message(forRemoval ? "marked.for.removal.symbol.since" : "deprecated.since.symbol",
+                                            getPresentableName(element), sinceString);
+    }
 
     LocalQuickFix replacementQuickFix = getReplacementQuickFix(element, elementToHighlight);
 
@@ -121,6 +129,18 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
       return ((PsiMethod)psiElement).getName();
     }
     return HighlightMessageUtil.getSymbolName(psiElement);
+  }
+  
+  protected static String getSinceString(@NotNull PsiModifierListOwner element) {
+    PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, CommonClassNames.JAVA_LANG_DEPRECATED);
+    if (annotation != null) {
+      PsiAnnotationMemberValue value = annotation.findAttributeValue("since");
+      if (value instanceof PsiExpression expression &&
+          ExpressionUtils.computeConstantExpression(expression) instanceof String since) {
+        return since;
+      }
+    }
+    return null;
   }
 
   protected static boolean isForRemovalAttributeSet(@NotNull PsiModifierListOwner element) {
