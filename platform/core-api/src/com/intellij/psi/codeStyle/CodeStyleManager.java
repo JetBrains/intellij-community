@@ -15,7 +15,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -257,15 +256,6 @@ public abstract class CodeStyleManager  {
    */
   @Nullable
   public String getLineIndent(@NotNull PsiFile file, int offset, FormattingMode mode) {
-    return getLineIndent(file, offset);
-  }
-
-  /**
-   * @see #getLineIndent(PsiFile, int, FormattingMode)
-   */
-  @Nullable
-  @ApiStatus.Experimental
-  public String getLineIndent(@NotNull PsiFile file, int offset, FormattingMode mode, boolean useDocumentBaseFormattingModel) {
     return getLineIndent(file, offset);
   }
 
