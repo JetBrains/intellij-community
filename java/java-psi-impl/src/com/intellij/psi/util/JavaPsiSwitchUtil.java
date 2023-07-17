@@ -15,13 +15,13 @@ import java.util.List;
 public final class JavaPsiSwitchUtil {
 
   /**
-   * Checks if the given switch statement is enhanced.
+   * Checks if the given switch is enhanced.
    *
-   * @param statement the switch statement to check
-   * @return true if the switch statement is an enhanced switch statement, false otherwise
+   * @param statement the switch to check
+   * @return true if the switch is an enhanced switch, false otherwise
    */
-  public static boolean isEnhancedSwitchStatement(@NotNull PsiSwitchBlock statement) {
-    if(!(statement instanceof PsiSwitchStatement)) return false;
+  public static boolean isEnhancedSwitch(@NotNull PsiSwitchBlock statement) {
+    if(statement instanceof PsiSwitchExpression) return true;
 
     PsiExpression selector = statement.getExpression();
     if (selector == null) {
