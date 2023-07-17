@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class AbstractLightClass extends LightElement implements PsiClass {
+public abstract class AbstractLightClass extends LightElement implements PsiClass, SyntheticElement {
   protected AbstractLightClass(PsiManager manager, Language language) {
     super(manager, language);
   }
@@ -329,4 +329,18 @@ public abstract class AbstractLightClass extends LightElement implements PsiClas
            getDelegate().isEquivalentTo(another);
   }
 
+  @Override
+  @NotNull
+  public PsiElement findSameElementInCopy(@NotNull PsiFile copy) {
+    PsiElement parent = getParent();
+    if (parent instanceof PsiClassOwner && copy instanceof PsiClassOwner) {
+      PsiClass[] copyClasses = ((PsiClassOwner)copy).getClasses();
+      for (PsiClass copyClass : copyClasses) {
+        if (copyClass.isEquivalentTo(this)) {
+          return copyClass;
+        }
+      }
+    }
+    return SyntheticElement.super.findSameElementInCopy(copy);
+  }
 }

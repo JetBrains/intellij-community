@@ -197,6 +197,10 @@ final class PsiUpdateImpl {
     var manager = InjectedLanguageManager.getInstance(project);
     boolean injectedFragment = manager.isInjectedFragment(origFile);
     if (!injectedFragment) {
+      PsiElement navigationElement = origFile.getNavigationElement();
+      if (navigationElement != origFile && navigationElement instanceof PsiFile) {
+        return (PsiFile)navigationElement.copy();
+      }
       return (PsiFile)origFile.copy();
     }
     else {

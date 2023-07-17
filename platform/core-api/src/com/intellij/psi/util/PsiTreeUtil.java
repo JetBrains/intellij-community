@@ -1354,7 +1354,10 @@ public class PsiTreeUtil {
   @Contract("null, _ -> null; !null, _ -> !null")
   public static <T extends PsiElement> T findSameElementInCopy(@Nullable T element, @NotNull PsiFile copy) throws IllegalStateException {
     if (element == null) return null;
-
+    if (element instanceof SyntheticElement) {
+      //noinspection unchecked
+      return (T)((SyntheticElement)element).findSameElementInCopy(copy);
+    }
     IntArrayList offsets = new IntArrayList();
     PsiElement cur = element;
     while (!cur.getClass().equals(copy.getClass())) {
