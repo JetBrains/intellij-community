@@ -12,7 +12,8 @@ fun Finder.table(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@
 class JTableUiComponent(data: ComponentData) : UiComponent(data) {
   private val fixture by lazy {  driver.new(JTableFixtureRef::class, robotService.robot, component) }
 
-  fun content(): StringTable = fixture.collectItems()
+  // content()[ROW][COLUMN]
+  fun content(): Map<Int, Map<Int, String>> = fixture.collectItems()
   fun rowCount(): Int = fixture.rowCount()
   fun selectionValue(): String = fixture.selectionValue()
   fun clickCell(row: Int, column: Int) = fixture.clickCell(row, column)
