@@ -239,6 +239,15 @@ class C {
     System.out.println(<error descr="Variable 'i' might not have been initialized">i</error>);
   }
 
+  private void testStatement3(Integer obj) {
+    int i;
+    switch (obj) {
+      case 1 -> i = 1;
+      case 2 -> i = 2;
+    };
+    System.out.println(<error descr="Variable 'i' might not have been initialized">i</error>);
+  }
+
   private void testExpressions1(T obj) {
     int i;
     int y = switch (obj) {

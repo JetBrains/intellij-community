@@ -65,6 +65,7 @@ public final class JavaPsiSwitchUtil {
   }
 
   private static boolean isClassSelectorType(@NotNull PsiType type) {
+    if (TypeConversionUtil.getTypeRank(type) <= TypeConversionUtil.INT_RANK) return false;
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) return false;
     PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (psiClass != null) {
