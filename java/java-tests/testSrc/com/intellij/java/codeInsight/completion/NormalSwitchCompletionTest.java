@@ -2,6 +2,8 @@
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +83,11 @@ public class NormalSwitchCompletionTest extends NormalCompletionTestCase {
 
   public void testQualifierEnumConstantInSwitch1() { doTest(); }
   public void testQualifierEnumConstantInSwitch2() { doTest(); }
+  public void testQualifierEnumConstantInSwitch3() { doTest(); }
+  public void testQualifierEnumConstantInSwitch4() { doTest(); }
+  public void testQualifierEnumConstantInSwitchInJava20() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_19, () -> doTest());
+  }
   public void testClassPatternInSwitch1() { doTest(); }
   public void testClassPatternInSwitch2() { doTest(); }
   private void doTestPostfixCompletion() {
