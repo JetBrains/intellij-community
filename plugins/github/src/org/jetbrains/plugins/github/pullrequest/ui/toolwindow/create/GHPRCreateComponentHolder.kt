@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase.Companion.createAndSetupDiffPreview
+import org.jetbrains.plugins.github.pullrequest.GHPRDiffPreview
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -245,7 +246,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
                                 emptyTextText: @Nls String): JComponent {
     val tree = CodeReviewChangesTreeFactory(project, model).create(emptyTextText)
 
-    val diffPreviewHolder = createAndSetupDiffPreview(tree, null, dataContext.filesManager)
+    val diffPreviewHolder = createAndSetupDiffPreview(tree, GHPRDiffPreview(null, dataContext.filesManager))
 
     DataManager.registerDataProvider(parentPanel) { dataId ->
       when {

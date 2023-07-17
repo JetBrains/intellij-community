@@ -38,6 +38,7 @@ import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase.Companion.createAndSetupDiffPreview
+import org.jetbrains.plugins.github.pullrequest.GHPRDiffPreview
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
@@ -277,7 +278,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       }
     }
 
-    val diffPreviewController = createAndSetupDiffPreview(tree, dataProvider, dataContext.filesManager)
+    val diffPreviewController = createAndSetupDiffPreview(tree, GHPRDiffPreview(dataProvider.id, dataContext.filesManager))
 
     tree.installPopupHandler(actionManager.getAction("Github.PullRequest.Changes.Popup") as ActionGroup)
 

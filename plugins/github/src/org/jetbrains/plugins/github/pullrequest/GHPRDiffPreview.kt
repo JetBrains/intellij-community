@@ -133,11 +133,9 @@ internal abstract class GHPRCombinedDiffPreviewBase(private val dataProvider: GH
   abstract fun doOpenPreview(requestFocus: Boolean): Boolean
 
   companion object {
-    fun createAndSetupDiffPreview(tree: ChangesTree,
-                                  dataProvider: GHPRDataProvider?,
-                                  filesManager: GHPRFilesManager): DiffPreviewController {
+    fun createAndSetupDiffPreview(tree: ChangesTree, preview: GHPRDiffPreview): DiffPreviewController {
       val diffPreviewHolder = DiffPreviewControllerImpl(
-        simpleDiffPreviewBuilder = { GHPRDiffPreview(dataProvider?.id, filesManager) },
+        simpleDiffPreviewBuilder = { preview },
         //combinedDiffPreviewBuilder = { GHPRCombinedDiffPreview(dataProvider, filesManager, producerFactory, tree) }
       )
 
