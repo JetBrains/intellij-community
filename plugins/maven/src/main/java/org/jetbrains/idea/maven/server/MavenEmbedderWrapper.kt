@@ -1,247 +1,221 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.server;
+package org.jetbrains.idea.maven.server
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
-import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.project.MavenConsole;
-import org.jetbrains.idea.maven.server.RemotePathTransformerFactory.Transformer;
-import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
+import org.jetbrains.idea.maven.model.*
+import org.jetbrains.idea.maven.project.MavenConsole
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper.LongRunningEmbedderTask
+import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
+import java.io.File
+import java.nio.file.Path
+import java.rmi.RemoteException
 
-import java.io.File;
-import java.nio.file.Path;
-import java.rmi.RemoteException;
-import java.util.*;
-import java.util.stream.Collectors;
+abstract class MavenEmbedderWrapper internal constructor(private val myProject: Project) :
+  MavenRemoteObjectWrapper<MavenServerEmbedder?>(null) {
 
-public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<MavenServerEmbedder> {
-  private final Project myProject;
-
-  MavenEmbedderWrapper(@NotNull Project project) {
-    super(null);
-    myProject = project;
-  }
-
-  @Override
-  @NotNull
-  protected synchronized MavenServerEmbedder getOrCreateWrappee() throws RemoteException {
-    var embedder = super.getOrCreateWrappee();
+  @Synchronized
+  @Throws(RemoteException::class)
+  override fun getOrCreateWrappee(): MavenServerEmbedder {
+    var embedder = super.getOrCreateWrappee()
     try {
-      embedder.ping(ourToken);
+      embedder.ping(ourToken)
     }
-    catch (RemoteException e) {
-      onError();
-      embedder = super.getOrCreateWrappee();
+    catch (e: RemoteException) {
+      onError()
+      embedder = super.getOrCreateWrappee()
     }
-    return embedder;
+    return embedder
   }
 
-  private MavenWorkspaceMap convertWorkspaceMap(@Nullable MavenWorkspaceMap map) {
-    if (null == map) return null;
-    Transformer transformer = RemotePathTransformerFactory.createForProject(myProject);
-    if (transformer == Transformer.ID) return map;
-    return MavenWorkspaceMap.copy(map, transformer::toRemotePath);
+  private fun convertWorkspaceMap(map: MavenWorkspaceMap?): MavenWorkspaceMap? {
+    if (null == map) return null
+    val transformer = RemotePathTransformerFactory.createForProject(myProject)
+    return if (transformer === RemotePathTransformerFactory.Transformer.ID) map
+    else MavenWorkspaceMap.copy(map) {
+      transformer.toRemotePath(it!!)
+    }
   }
 
-  @NotNull
-  public Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<VirtualFile> files,
-                                                               @NotNull MavenExplicitProfiles explicitProfiles,
-                                                               @Nullable ProgressIndicator indicator,
-                                                               @Nullable MavenSyncConsole syncConsole,
-                                                               @Nullable MavenConsole console,
-                                                               @Nullable MavenWorkspaceMap workspaceMap,
-                                                               boolean updateSnapshots)
-    throws MavenProcessCanceledException {
-    Transformer transformer = files.isEmpty() ?
-                              Transformer.ID :
-                              RemotePathTransformerFactory.createForProject(myProject);
-    List<File> ioFiles = ContainerUtil.map(files, file -> new File(transformer.toRemotePath(file.getPath())));
-    MavenWorkspaceMap serverWorkspaceMap = convertWorkspaceMap(workspaceMap);
-    var request = new ProjectResolutionRequest(
+  @Throws(MavenProcessCanceledException::class)
+  fun resolveProject(files: Collection<VirtualFile>,
+                     explicitProfiles: MavenExplicitProfiles,
+                     indicator: ProgressIndicator?,
+                     syncConsole: MavenSyncConsole?,
+                     console: MavenConsole?,
+                     workspaceMap: MavenWorkspaceMap?,
+                     updateSnapshots: Boolean): Collection<MavenServerExecutionResult> {
+    val transformer = if (files.isEmpty()) RemotePathTransformerFactory.Transformer.ID
+    else RemotePathTransformerFactory.createForProject(myProject)
+    val ioFiles = files.map { file: VirtualFile -> transformer.toRemotePath(file.getPath())?.let { File(it) } }
+    val serverWorkspaceMap = convertWorkspaceMap(workspaceMap)
+    val request = ProjectResolutionRequest(
       ioFiles,
-      explicitProfiles.getEnabledProfiles(),
-      explicitProfiles.getDisabledProfiles(),
+      explicitProfiles.enabledProfiles,
+      explicitProfiles.disabledProfiles,
       serverWorkspaceMap,
       updateSnapshots
-    );
-
-    var results = runLongRunningTask(
-      (embedder, taskId) -> embedder.resolveProjects(taskId, request, ourToken), indicator, syncConsole, console);
-
-    if (transformer != Transformer.ID) {
-      for (MavenServerExecutionResult result : results) {
-        MavenServerExecutionResult.ProjectData data = result.projectData;
-        if (data == null) continue;
-        new MavenBuildPathsChange((String s) -> transformer.toIdePath(s), s -> transformer.canBeRemotePath(s)).perform(data.mavenModel);
+    )
+    val results = runLongRunningTask(
+      LongRunningEmbedderTask { embedder, taskId -> embedder.resolveProjects(taskId, request, ourToken) },
+      indicator, syncConsole, console)
+    if (transformer !== RemotePathTransformerFactory.Transformer.ID) {
+      for (result in results) {
+        val data = result.projectData ?: continue
+        MavenBuildPathsChange({ transformer.toIdePath(it)!! }, { transformer.canBeRemotePath(it) }).perform(data.mavenModel)
       }
     }
-    return results;
+    return results
   }
 
-  @Nullable
-  public String evaluateEffectivePom(@NotNull VirtualFile file,
-                                     @NotNull Collection<String> activeProfiles,
-                                     @NotNull Collection<String> inactiveProfiles) throws MavenProcessCanceledException {
-    return evaluateEffectivePom(new File(file.getPath()), activeProfiles, inactiveProfiles);
+  @Throws(MavenProcessCanceledException::class)
+  fun evaluateEffectivePom(file: VirtualFile, activeProfiles: Collection<String>, inactiveProfiles: Collection<String>): String? {
+    return evaluateEffectivePom(File(file.getPath()), activeProfiles, inactiveProfiles)
   }
 
-  @Nullable
-  public String evaluateEffectivePom(@NotNull File file,
-                                     @NotNull Collection<String> activeProfiles,
-                                     @NotNull Collection<String> inactiveProfiles) throws MavenProcessCanceledException {
-    return performCancelable(() -> getOrCreateWrappee()
-      .evaluateEffectivePom(file, new ArrayList<>(activeProfiles), new ArrayList<>(inactiveProfiles), ourToken));
+  @Throws(MavenProcessCanceledException::class)
+  fun evaluateEffectivePom(file: File, activeProfiles: Collection<String>, inactiveProfiles: Collection<String>): String? {
+    return performCancelable<String, RuntimeException> {
+      getOrCreateWrappee().evaluateEffectivePom(file, ArrayList(activeProfiles), ArrayList(inactiveProfiles), ourToken)
+    }
   }
 
-  /**
-   * @deprecated use {@link MavenEmbedderWrapper#resolveArtifacts()}
-   */
-  @Deprecated
-  @NotNull
-  public MavenArtifact resolve(@NotNull MavenArtifactInfo info,
-                               @NotNull List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
-    var requests = List.of(new MavenArtifactResolutionRequest(info, remoteRepositories));
-    return resolveArtifacts(requests, null, null, null).get(0);
+  @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifacts()}")
+  @Throws(MavenProcessCanceledException::class)
+  fun resolve(info: MavenArtifactInfo, remoteRepositories: List<MavenRemoteRepository>): MavenArtifact {
+    val requests = listOf(MavenArtifactResolutionRequest(info, remoteRepositories))
+    return resolveArtifacts(requests, null, null, null)[0]
   }
 
-  @NotNull
-  public List<MavenArtifact> resolveArtifacts(@NotNull Collection<MavenArtifactResolutionRequest> requests,
-                                              @Nullable ProgressIndicator indicator,
-                                              @Nullable MavenSyncConsole syncConsole,
-                                              @Nullable MavenConsole console) throws MavenProcessCanceledException {
+  @Throws(MavenProcessCanceledException::class)
+  fun resolveArtifacts(requests: Collection<MavenArtifactResolutionRequest>,
+                       indicator: ProgressIndicator?,
+                       syncConsole: MavenSyncConsole?,
+                       console: MavenConsole?): List<MavenArtifact> {
     return runLongRunningTask(
-      (embedder, taskId) -> embedder.resolveArtifacts(taskId, requests, ourToken), indicator, syncConsole, console
-    );
+      LongRunningEmbedderTask { embedder, taskId -> embedder.resolveArtifacts(taskId, requests, ourToken) },
+      indicator, syncConsole, console)
   }
 
-  /**
-   * @deprecated use {@link MavenEmbedderWrapper#resolveArtifactTransitively()}
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public List<MavenArtifact> resolveTransitively(
-    @NotNull final List<MavenArtifactInfo> artifacts,
-    @NotNull final List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
-
-    return performCancelable(
-      () -> getOrCreateWrappee().resolveArtifactsTransitively(artifacts, remoteRepositories, ourToken)).mavenResolvedArtifacts;
+  @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifactTransitively()}")
+  @Throws(MavenProcessCanceledException::class)
+  fun resolveTransitively(artifacts: List<MavenArtifactInfo>, remoteRepositories: List<MavenRemoteRepository>): List<MavenArtifact> {
+    return performCancelable<MavenArtifactResolveResult, RuntimeException> {
+      getOrCreateWrappee().resolveArtifactsTransitively(artifacts, remoteRepositories, ourToken)
+    }.mavenResolvedArtifacts
   }
 
-  @NotNull
-  public MavenArtifactResolveResult resolveArtifactTransitively(
-    @NotNull final List<MavenArtifactInfo> artifacts,
-    @NotNull final List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
-    return performCancelable(() -> getOrCreateWrappee().resolveArtifactsTransitively(artifacts, remoteRepositories, ourToken));
+  @Throws(MavenProcessCanceledException::class)
+  fun resolveArtifactTransitively(artifacts: List<MavenArtifactInfo>,
+                                  remoteRepositories: List<MavenRemoteRepository>): MavenArtifactResolveResult {
+    return performCancelable<MavenArtifactResolveResult, RuntimeException> {
+      getOrCreateWrappee().resolveArtifactsTransitively(artifacts, remoteRepositories, ourToken)
+    }
   }
 
-  public List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<Pair<MavenId, NativeMavenProjectHolder>> mavenPluginRequests,
-                                                       @Nullable MavenProgressIndicator progressIndicator,
-                                                       @Nullable MavenConsole console)
-    throws MavenProcessCanceledException {
-    var pluginResolutionRequests = new ArrayList<PluginResolutionRequest>();
-    for (var mavenPluginRequest : mavenPluginRequests) {
-      var mavenPluginId = mavenPluginRequest.first;
+  @Throws(MavenProcessCanceledException::class)
+  fun resolvePlugins(mavenPluginRequests: Collection<Pair<MavenId, NativeMavenProjectHolder>>,
+                     progressIndicator: MavenProgressIndicator?,
+                     console: MavenConsole?): List<PluginResolutionResponse> {
+    val pluginResolutionRequests = ArrayList<PluginResolutionRequest>()
+    for (mavenPluginRequest in mavenPluginRequests) {
+      val mavenPluginId = mavenPluginRequest.first
       try {
-        var id = mavenPluginRequest.second.getId();
-        pluginResolutionRequests.add(new PluginResolutionRequest(mavenPluginId, id));
+        val id = mavenPluginRequest.second.getId()
+        pluginResolutionRequests.add(PluginResolutionRequest(mavenPluginId, id))
       }
-      catch (RemoteException e) {
+      catch (e: RemoteException) {
         // do not call handleRemoteError here since this error occurred because of previous remote error
-        MavenLog.LOG.warn("Cannot resolve plugin: " + mavenPluginId);
+        MavenLog.LOG.warn("Cannot resolve plugin: $mavenPluginId")
       }
     }
-
-    var indicator = null == progressIndicator ? null : progressIndicator.getIndicator();
-    var syncConsole = null == progressIndicator ? null : progressIndicator.getSyncConsole();
+    val indicator = progressIndicator?.indicator
+    val syncConsole = progressIndicator?.syncConsole
     return runLongRunningTask(
-      (embedder, taskId) -> embedder.resolvePlugins(taskId, pluginResolutionRequests, ourToken), indicator, syncConsole, console);
+      LongRunningEmbedderTask { embedder, taskId -> embedder.resolvePlugins(taskId, pluginResolutionRequests, ourToken) },
+      indicator, syncConsole, console)
   }
 
-  public Collection<MavenArtifact> resolvePlugin(@NotNull MavenPlugin plugin, @NotNull NativeMavenProjectHolder nativeMavenProject)
-    throws MavenProcessCanceledException {
-    MavenId mavenId = plugin.getMavenId();
-    return resolvePlugins(List.of(Pair.create(mavenId, nativeMavenProject)), null, null).stream()
-      .flatMap(resolutionResult -> resolutionResult.getArtifacts().stream())
-      .collect(Collectors.toSet());
+  @Throws(MavenProcessCanceledException::class)
+  fun resolvePlugin(plugin: MavenPlugin, nativeMavenProject: NativeMavenProjectHolder): Collection<MavenArtifact> {
+    val mavenId = plugin.mavenId
+    return resolvePlugins(listOf(Pair.create(mavenId, nativeMavenProject)), null, null)
+      .flatMap { resolutionResult: PluginResolutionResponse -> resolutionResult.artifacts }.toSet()
   }
 
-  public MavenModel readModel(final File file) throws MavenProcessCanceledException {
-    return performCancelable(() -> getOrCreateWrappee().readModel(file, ourToken));
+  @Throws(MavenProcessCanceledException::class)
+  fun readModel(file: File?): MavenModel {
+    return performCancelable<MavenModel, RuntimeException> { getOrCreateWrappee().readModel(file, ourToken) }
   }
 
-  @NotNull
-  public List<MavenGoalExecutionResult> executeGoal(@NotNull Collection<MavenGoalExecutionRequest> requests,
-                                                    @NotNull String goal,
-                                                    @Nullable MavenProgressIndicator progressIndicator,
-                                                    @Nullable MavenConsole console)
-    throws MavenProcessCanceledException {
-    var indicator = null == progressIndicator ? null : progressIndicator.getIndicator();
-    var syncConsole = null == progressIndicator ? null : progressIndicator.getSyncConsole();
+  @Throws(MavenProcessCanceledException::class)
+  fun executeGoal(requests: Collection<MavenGoalExecutionRequest?>,
+                  goal: String,
+                  progressIndicator: MavenProgressIndicator?,
+                  console: MavenConsole?): List<MavenGoalExecutionResult> {
+    val indicator = progressIndicator?.indicator
+    val syncConsole = progressIndicator?.syncConsole
     return runLongRunningTask(
-      (embedder, taskId) -> embedder.executeGoal(taskId, requests, goal, ourToken), indicator, syncConsole, console);
+      LongRunningEmbedderTask { embedder, taskId -> embedder.executeGoal(taskId, requests, goal, ourToken) },
+      indicator, syncConsole, console)
   }
 
-  @NotNull
-  public Set<MavenRemoteRepository> resolveRepositories(@NotNull Collection<MavenRemoteRepository> repositories) {
-    return perform(() -> getOrCreateWrappee().resolveRepositories(repositories, ourToken));
+  fun resolveRepositories(repositories: Collection<MavenRemoteRepository?>): Set<MavenRemoteRepository> {
+    return perform<Set<MavenRemoteRepository>, RuntimeException> { getOrCreateWrappee().resolveRepositories(repositories, ourToken) }
   }
 
-  public Collection<MavenArchetype> getInnerArchetypes(@NotNull Path catalogPath) {
-    return perform(() -> getOrCreateWrappee().getLocalArchetypes(ourToken, catalogPath.toString()));
+  fun getInnerArchetypes(catalogPath: Path): Collection<MavenArchetype> {
+    return perform<Collection<MavenArchetype>, RuntimeException> {
+      getOrCreateWrappee().getLocalArchetypes(ourToken, catalogPath.toString())
+    }
   }
 
-  public Collection<MavenArchetype> getRemoteArchetypes(@NotNull String url) {
-    return perform(() -> getOrCreateWrappee().getRemoteArchetypes(ourToken, url));
+  fun getRemoteArchetypes(url: String): Collection<MavenArchetype> {
+    return perform<Collection<MavenArchetype>, RuntimeException> { getOrCreateWrappee().getRemoteArchetypes(ourToken, url) }
   }
 
-  @Nullable
-  public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
-                                                              @NotNull List<MavenRemoteRepository> repositories,
-                                                              @Nullable String url) {
-    return perform(() -> getOrCreateWrappee().resolveAndGetArchetypeDescriptor(groupId, artifactId, version, repositories, url, ourToken));
+  fun resolveAndGetArchetypeDescriptor(groupId: String, artifactId: String, version: String,
+                                       repositories: List<MavenRemoteRepository?>,
+                                       url: String?): Map<String, String>? {
+    return perform<Map<String, String>, RuntimeException> {
+      getOrCreateWrappee().resolveAndGetArchetypeDescriptor(groupId, artifactId, version, repositories, url, ourToken)
+    }
   }
 
+  @get:Throws(RemoteException::class)
+  @get:TestOnly
+  val embedder: MavenServerEmbedder
+    get() = getOrCreateWrappee()
 
-  @TestOnly
-  public MavenServerEmbedder getEmbedder() throws RemoteException {
-    return getOrCreateWrappee();
-  }
-  public void release() {
-    MavenServerEmbedder w = getWrappee();
-    if (w == null) return;
+  fun release() {
+    val w = wrappee ?: return
     try {
-      w.release(ourToken);
+      w.release(ourToken)
     }
-    catch (RemoteException e) {
-      handleRemoteError(e);
+    catch (e: RemoteException) {
+      handleRemoteError(e)
     }
   }
 
-  /**
-   * @deprecated This method does nothing (kept for a while for compatibility reasons).
-   */
   // used in https://plugins.jetbrains.com/plugin/8053-azure-toolkit-for-intellij
-  @Deprecated(forRemoval = true)
-  public void clearCachesFor(MavenId projectId) {
+  @Deprecated("This method does nothing (kept for a while for compatibility reasons).")
+  fun clearCachesFor(projectId: MavenId?) {
   }
 
-  protected abstract <R> R runLongRunningTask(@NotNull LongRunningEmbedderTask<R> task,
-                                              @Nullable ProgressIndicator progressIndicator,
-                                              @Nullable MavenSyncConsole syncConsole,
-                                              @Nullable MavenConsole console) throws MavenProcessCanceledException;
+  @Throws(MavenProcessCanceledException::class)
+  protected abstract fun <R> runLongRunningTask(task: LongRunningEmbedderTask<R>,
+                                                progressIndicator: ProgressIndicator?,
+                                                syncConsole: MavenSyncConsole?,
+                                                console: MavenConsole?): R
 
-  @FunctionalInterface
-  protected interface LongRunningEmbedderTask<R> {
-    R run(MavenServerEmbedder embedder, String longRunningTaskId) throws RemoteException, MavenServerProcessCanceledException;
+  protected fun interface LongRunningEmbedderTask<R> {
+    @Throws(RemoteException::class, MavenServerProcessCanceledException::class)
+    fun run(embedder: MavenServerEmbedder, longRunningTaskId: String): R
   }
-
 }
