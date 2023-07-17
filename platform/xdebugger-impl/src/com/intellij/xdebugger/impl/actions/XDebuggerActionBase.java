@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions;
 
-import com.intellij.execution.ui.RunWidgetManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,9 +40,7 @@ public abstract class XDebuggerActionBase extends AnAction {
   protected boolean isEnabled(final AnActionEvent e) {
     Project project = e.getProject();
     if (project != null && !project.isDisposed()) {
-      DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
-      return e.getUpdateSession().compute(this, "isEnabled", ActionUpdateThread.EDT, () ->
-        ContainerUtil.exists(supports, support -> isEnabled(project, e, support)));
+      return ContainerUtil.exists(DebuggerSupport.getDebuggerSupports(), support -> isEnabled(project, e, support));
     }
     return false;
   }
@@ -82,9 +79,7 @@ public abstract class XDebuggerActionBase extends AnAction {
   protected boolean isHidden(AnActionEvent event) {
     Project project = event.getProject();
     if (project != null && !project.isDisposed()) {
-      DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
-      return event.getUpdateSession().compute(this, "isHidden", ActionUpdateThread.EDT, () ->
-        ContainerUtil.and(supports, support -> getHandler(support).isHidden(project, event)));
+      return ContainerUtil.and(DebuggerSupport.getDebuggerSupports(), support -> getHandler(support).isHidden(project, event));
     }
     return true;
   }
