@@ -202,7 +202,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     }
   }
 
-  sealed class GitWidgetState {
+  internal sealed class GitWidgetState {
     object NoVcs : GitWidgetState()
 
     class Repo(val repository: GitRepository) : GitWidgetState()
