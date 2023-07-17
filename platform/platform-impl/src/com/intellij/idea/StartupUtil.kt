@@ -334,10 +334,10 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 }
 
-fun isConfigImportNeeded(configPath: Path): Boolean {
-  return !Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME))
-         || customTargetDirectoryToImportConfig != null
-}
+fun isConfigImportNeeded(configPath: Path): Boolean =
+  !Files.exists(configPath) ||
+  Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)) ||
+  customTargetDirectoryToImportConfig != null
 
 /**
  * Directory where the configuration files should be imported to.
