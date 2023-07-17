@@ -804,12 +804,15 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout,
                                   withEphemeral: Boolean,
                                   context: BuildContext): Boolean {
   val bundlingRestrictions = plugin.bundlingRestrictions
-  if (bundlingRestrictions.includeInEapOnly && !context.applicationInfo.isEAP) {
-    return false
-  }
 
-  if (bundlingRestrictions.includeInNightlyOnly && !context.options.isNightlyBuild) {
-    return false
+  if (context.options.useReleaseCycleRelatedBundlingRestrictionsForContentReport) {
+    if (bundlingRestrictions.includeInEapOnly && !context.applicationInfo.isEAP) {
+      return false
+    }
+
+    if (bundlingRestrictions.includeInNightlyOnly && !context.options.isNightlyBuild) {
+      return false
+    }
   }
 
   if (bundlingRestrictions == PluginBundlingRestrictions.EPHEMERAL) {
