@@ -17,7 +17,7 @@ data class JsonProcessingSpeed(val totalBytes: BytesNumber = 0, val totalCpuTime
     return StringUtil.formatFileSize(bytesPerSecond) + "/s"
   }
 
-  fun toKiloBitsPerSecond(): Int {
+  fun toKiloBytesPerSecond(): Int {
     return ((totalBytes.toDouble() * 0.001 / totalCpuTime) * TimeUnit.SECONDS.toNanos(1).toDouble()).toInt()
   }
 }
