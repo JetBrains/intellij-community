@@ -20,6 +20,7 @@ import com.intellij.model.psi.impl.referencesAt
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -404,29 +405,29 @@ fun CodeInsightTestFixture.checkGTDUOutcome(expectedOutcome: GotoDeclarationOrUs
   if (signature != null) {
     moveToOffsetBySignature(signature)
   }
-  var file = file
-  var offset = caretOffset
   val editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file)
-  if (editor is EditorWindow) {
-    file = editor.injectedFile
-    offset -= InjectedLanguageManager.getInstance(project).injectedToHost(file, 0)
-  }
+  val offset = editor.caretModel.offset
+  val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: file
   val gtduOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcomeInNonBlockingReadAction(editor, file, offset)
   Assert.assertEquals(signature,
                       expectedOutcome,
                       gtduOutcome)
 }
 
-fun CodeInsightTestFixture.checkGotoDeclaration(signature: String, expectedOffset: Int, expectedFileName: String? = null) {
+fun CodeInsightTestFixture.checkGotoDeclaration(expectedOffset: Int, expectedFileName: String? = null) {
+  checkGotoDeclaration(null, expectedOffset, expectedFileName)
+}
+
+fun CodeInsightTestFixture.checkGotoDeclaration(signature: String?, expectedOffset: Int, expectedFileName: String? = null) {
   checkGTDUOutcome(GotoDeclarationOrUsageHandler2.GTDUOutcome.GTD, signature)
   performEditorAction("GotoDeclaration")
-  val targetEditor = FileEditorManager.getInstance(project).selectedTextEditor
+  val targetEditor = FileEditorManager.getInstance(project).selectedTextEditor?.topLevel
   if (targetEditor == null) throw NullPointerException(signature)
   if (expectedFileName != null) {
     assertEquals(signature, expectedFileName, PsiDocumentManager.getInstance(project).getPsiFile(targetEditor.document)?.name)
   }
   else {
-    assertEquals(signature, targetEditor, editor)
+    assertEquals(signature, targetEditor, editor.topLevel)
   }
   assertEquals(signature, expectedOffset, targetEditor.caretModel.offset)
 }
@@ -543,3 +544,6 @@ fun doCompletionItemsTest(fixture: CodeInsightTestFixture,
     }
   }
 }
+
+private val Editor.topLevel
+  get() = if (this is EditorWindow) delegate else this
