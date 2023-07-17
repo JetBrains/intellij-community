@@ -384,21 +384,29 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
     @Override
     public PsiFile resolve(MavenId id, ConvertContext context) {
+      if (StringUtil.isEmpty(id.getGroupId())) {
+        for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
+          MavenId withGroupId = new MavenId(each, id.getArtifactId(), id.getVersion());
+          PsiFile res = super.resolve(withGroupId, context);
+          if (res != null) return res;
+        }
+      }
+
       PsiFile res = super.resolve(id, context);
       if (res != null) return res;
 
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(context.getProject());
-      VirtualFile file = getMavenProjectFile(context);
 
-      // Try to resolve to imported plugin
-      MavenProject mavenProject = file == null ? null : projectsManager.findProject(file);
-      if (mavenProject != null) {
-        for (MavenPlugin plugin : mavenProject.getPlugins()) {
-          if (MavenArtifactUtil.isPluginIdEquals(id.getGroupId(), id.getArtifactId(), plugin.getGroupId(), plugin.getArtifactId())) {
-            return super.resolve(plugin.getMavenId(), context);
-          }
+      if (StringUtil.isEmpty(id.getGroupId())) {
+        for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
+          MavenId withGroupId = new MavenId(each, id.getArtifactId(), id.getVersion());
+          res = super.resolve(withGroupId, context);
+          if (res != null) return res;
         }
       }
+
+      res = tryToResolveToImportedPlugins(id, context);
+      if (res != null) return res;
 
       // Try to resolve to plugin with latest version
       PsiManager psiManager = context.getPsiManager();
@@ -411,6 +419,21 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
         return psiManager.findFile(virtualFile);
       }
 
+      return null;
+    }
+
+    private @Nullable PsiFile tryToResolveToImportedPlugins(MavenId id, ConvertContext context) {
+      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(context.getProject());
+      VirtualFile file = getMavenProjectFile(context);
+
+      MavenProject mavenProject = file == null ? null : projectsManager.findProject(file);
+      if (mavenProject != null) {
+        for (MavenPlugin plugin : mavenProject.getPlugins()) {
+          if (MavenArtifactUtil.isPluginIdEquals(id.getGroupId(), id.getArtifactId(), plugin.getGroupId(), plugin.getArtifactId())) {
+            return super.resolve(plugin.getMavenId(), context);
+          }
+        }
+      }
       return null;
     }
   }

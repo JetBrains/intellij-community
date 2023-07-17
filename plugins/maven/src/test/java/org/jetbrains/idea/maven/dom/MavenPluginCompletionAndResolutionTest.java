@@ -10,6 +10,7 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -103,6 +104,30 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     else {
       assertCompletionVariants(myProjectPom, "2.0.2", "3.1");
     }
+  }
+
+  @Test
+  public void testPluginWithoutGroupIdResolution() throws IOException {
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <build>
+                         <plugins>
+                           <plugin>
+                             <artifactId><caret>maven-surefire-plugin</artifactId>
+                             <version>2.12.4</version>
+                           </plugin>
+                         </plugins>
+                       </build>
+                       """);
+
+    String pluginPath =
+      "plugins/org/apache/maven/plugins/maven-surefire-plugin/2.12.4/maven-surefire-plugin-2.12.4.pom";
+    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
+    VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
+    assertNotNull("file: " + filePath + " not exists!", f);
+    assertResolved(myProjectPom, findPsiFile(f));
   }
 
   @Test 
