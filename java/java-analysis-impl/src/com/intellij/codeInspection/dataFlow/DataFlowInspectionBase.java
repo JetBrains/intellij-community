@@ -409,7 +409,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (unreachableElements.isEmpty() || hasDefault) {
       return unreachableElements;
     }
-    boolean isEnhancedSwitch = JavaPsiSwitchUtil.isEnhancedSwitchStatement(statement) || statement instanceof PsiSwitchExpression;
+    boolean isEnhancedSwitch = JavaPsiSwitchUtil.isEnhancedSwitch(statement);
     if (isEnhancedSwitch) {
       PsiExpression expression = statement.getExpression();
       if (expression == null) {
