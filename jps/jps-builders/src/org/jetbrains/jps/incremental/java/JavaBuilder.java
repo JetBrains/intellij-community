@@ -1045,21 +1045,24 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       context.getProjectDescriptor().getProject()
     );
 
-    final int languageLevel = getLanguageLevel(chunk.representativeTarget().getModule());
+    @NotNull JpsModule module = chunk.representativeTarget().getModule();
+    final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
+    final int languageLevel = level != null ? level.toJavaVersion().feature : 0;
     final int chunkSdkVersion = getChunkSdkVersion(chunk);
 
-    int bytecodeTarget = getModuleBytecodeTarget(context, chunk, compilerConfiguration, languageLevel);
+    int bytecodeTarget = getModuleBytecodeTarget(context, chunk, compilerConfiguration,
+                                                 (level == LanguageLevel.JDK_X) ? chunkSdkVersion : languageLevel);
 
     if (shouldUseReleaseOption(compilerConfiguration, compilerSdkVersion, chunkSdkVersion, bytecodeTarget)) {
       options.add(RELEASE_OPTION);
-      options.add(complianceOption(bytecodeTarget));
+      options.add(level == LanguageLevel.JDK_X ? complianceOption(chunkSdkVersion) : complianceOption(bytecodeTarget));
       return;
     }
 
     // using older -source, -target and -bootclasspath options
     if (languageLevel > 0 && !options.contains(SOURCE_OPTION)) {
       options.add(SOURCE_OPTION);
-      options.add(complianceOption(languageLevel));
+      options.add(level == LanguageLevel.JDK_X ? complianceOption(chunkSdkVersion) : complianceOption(languageLevel));
     }
 
     if (bytecodeTarget > 0) {
