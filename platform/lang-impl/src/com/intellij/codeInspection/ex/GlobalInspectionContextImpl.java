@@ -429,11 +429,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     addProblemsToView(globalSimpleTools);
   }
 
-  public static void setupCancelOnWriteProgress(Disposable disposable, ProgressIndicator wrapper) {
+  public static void setupCancelOnWriteProgress(@NotNull Disposable disposable, @NotNull ProgressIndicator progressIndicator) {
     // avoid "attach listener"/"write action" race
     ReadAction.run(() -> {
-      wrapper.start();
-      ProgressIndicatorUtils.forceWriteActionPriority(wrapper, disposable);
+      progressIndicator.start();
+      ProgressIndicatorUtils.forceWriteActionPriority(progressIndicator, disposable);
       // there is a chance we are racing with write action, in which case just registered listener might not be called, retry.
       if (ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
         throw new ProcessCanceledException();

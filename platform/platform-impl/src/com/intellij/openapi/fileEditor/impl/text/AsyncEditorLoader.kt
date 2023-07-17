@@ -140,6 +140,7 @@ class AsyncEditorLoader internal constructor(private val project: Project,
 
 private class DelayedScrollState(@JvmField val relativeCaretPosition: Int, @JvmField val exactState: Boolean)
 
+@RequiresEdt
 private fun restoreCaretPosition(editor: EditorEx, delayedScrollState: DelayedScrollState, coroutineScope: CoroutineScope) {
   fun doScroll() {
     scrollToCaret(editor = editor,
