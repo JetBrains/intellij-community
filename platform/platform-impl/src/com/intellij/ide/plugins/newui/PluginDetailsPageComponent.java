@@ -874,19 +874,21 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   public static void loadAllPluginDetails(@NotNull MarketplaceRequests marketplace,
-                                           @NotNull PluginNode node,
-                                           @NotNull PluginNode pluginNode) {
+                                          @NotNull PluginNode node,
+                                          @NotNull PluginNode resultNode) {
+    resultNode.setSuggestedFeatures(node.getSuggestedFeatures());
+
     IntellijPluginMetadata metadata = marketplace.loadPluginMetadata(node);
     if (metadata != null) {
       if (metadata.getScreenshots() != null) {
-        pluginNode.setScreenShots(metadata.getScreenshots());
-        pluginNode.setExternalPluginIdForScreenShots(node.getExternalPluginId());
+        resultNode.setScreenShots(metadata.getScreenshots());
+        resultNode.setExternalPluginIdForScreenShots(node.getExternalPluginId());
       }
-      metadata.toPluginNode(pluginNode);
+      metadata.toPluginNode(resultNode);
     }
 
-    loadReviews(marketplace, node, pluginNode);
-    loadDependencyNames(marketplace, pluginNode);
+    loadReviews(marketplace, node, resultNode);
+    loadDependencyNames(marketplace, resultNode);
   }
 
   private static void loadReviews(@NotNull MarketplaceRequests marketplace, @NotNull PluginNode node, @NotNull PluginNode resultNode) {
