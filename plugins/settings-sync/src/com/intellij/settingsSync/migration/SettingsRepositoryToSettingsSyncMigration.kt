@@ -75,7 +75,7 @@ internal class SettingsRepositoryToSettingsSyncMigration {
             val relativeWithFixedPrefix = if (prefix != null) relative.replaceFirst(prefix.first, prefix.second) else relative
 
             val fileSpec =
-              if (prefix != null || file == topLevelFile) { // all settings under options/ are either on top level, or under the per-os folder
+              if (prefix != null || file == topLevelFile) { // all settings under options/ are either on top level or under the per-os folder
                 "options/$relativeWithFixedPrefix"
               }
               else relativeWithFixedPrefix
@@ -145,7 +145,7 @@ internal class SettingsRepositoryToSettingsSyncMigration {
             TemplateSettings.getInstance() // Required for live templates to be migrated correctly, see IDEA-303831
 
             SettingsSyncIdeMediatorImpl(ApplicationManager.getApplication().stateStore as ComponentStoreImpl,
-                                        PathManager.getConfigDir(), { false }).applyToIde(snapshot, null)
+                                        PathManager.getConfigDir()) { false }.applyToIde(snapshot, null)
             settingsRepositoryMigration.showNotificationAboutUnbundling(executorService)
             SettingsSyncEventsStatistics.MIGRATED_FROM_SETTINGS_REPOSITORY.log()
           }
@@ -155,9 +155,9 @@ internal class SettingsRepositoryToSettingsSyncMigration {
 
     private fun backupCurrentConfig() {
       val configDir = PathManager.getConfigDir()
-      val tempBackupDir = FileUtil.createTempDirectory(configDir.fileName.toString(), "-backup-" + UUID.randomUUID())
-      LOG.info("Backup config from $configDir to $tempBackupDir")
-      FileUtil.copyDir(configDir.toFile(), tempBackupDir)
+      val tempBackupDir = Files.createTempDirectory(configDir.fileName.toString() + "-backup-" + UUID.randomUUID())
+      LOG.info("Backup config from ${configDir} to ${tempBackupDir}")
+      FileUtil.copyDir(configDir.toFile(), tempBackupDir.toFile())
       ConfigBackup(PathManager.getConfigDir()).moveToBackup(tempBackupDir)
     }
   }

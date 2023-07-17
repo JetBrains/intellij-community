@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment")
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.idea
 
@@ -103,14 +103,9 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   val isHeadless = AppMode.isHeadless()
 
-  val configImportNeededDeferred = if (isHeadless) {
-    CompletableDeferred(false)
-  }
-  else {
-    async {
-      val configPath = PathManager.getConfigDir()
-      withContext(Dispatchers.IO) { isConfigImportNeeded(configPath) }
-    }
+  val configImportNeededDeferred = if (isHeadless) CompletableDeferred(false)
+  else async(Dispatchers.IO) {
+    isConfigImportNeeded(PathManager.getConfigDir())
   }
 
   val lockSystemDirsJob = launch {
@@ -700,7 +695,7 @@ fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<S
     ${PathManager.PROPERTY_LOG_PATH}=${logPath(PathManager.getLogPath())}""")
   val cores = Runtime.getRuntime().availableProcessors()
   val pool = ForkJoinPool.commonPool()
-  log.info("CPU cores: $cores; ForkJoinPool.commonPool: $pool; factory: ${pool.factory}")
+  log.info("CPU cores: ${cores}; ForkJoinPool.commonPool: ${pool}; factory: ${pool.factory}")
 }
 
 private fun logEnvVar(log: Logger, variable: String) {
@@ -713,13 +708,11 @@ private fun logPath(path: String): String {
   try {
     val configured = Path.of(path)
     val real = configured.toRealPath()
-    return if (configured == real) path else "$path -> $real"
+    return if (configured == real) path else "${path} -> ${real}"
   }
-  catch (ignored: IOException) {
-  }
-  catch (ignored: InvalidPathException) {
-  }
-  return "$path -> ?"
+  catch (_: IOException) { }
+  catch (_: InvalidPathException) { }
+  return "${path} -> ?"
 }
 
 interface AppStarter {
