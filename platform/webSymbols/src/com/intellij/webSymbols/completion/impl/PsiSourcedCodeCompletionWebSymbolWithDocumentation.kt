@@ -4,6 +4,8 @@ package com.intellij.webSymbols.completion.impl
 import com.intellij.model.Pointer
 import com.intellij.platform.backend.documentation.DocumentationSymbol
 import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.psi.PsiElement
+import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.PsiSourcedWebSymbolDelegate
 
@@ -12,15 +14,18 @@ import com.intellij.webSymbols.PsiSourcedWebSymbolDelegate
  * `DocumentationSymbol` to have a context aware documentation, so the symbol needs to be wrapped
  * for code completion.
  */
-class PsiSourcedCodeCompletionWebSymbolWithDocumentation(delegate: PsiSourcedWebSymbol)
+class PsiSourcedCodeCompletionWebSymbolWithDocumentation(delegate: PsiSourcedWebSymbol, private val location: PsiElement)
   : PsiSourcedWebSymbolDelegate<PsiSourcedWebSymbol>(delegate), DocumentationSymbol {
   override fun createPointer(): Pointer<PsiSourcedCodeCompletionWebSymbolWithDocumentation> {
-    val delegate = delegate.createPointer()
+    val delegatePtr = delegate.createPointer()
+    val locationPtr = location.createSmartPointer()
     return Pointer {
-      delegate.dereference()?.let { PsiSourcedCodeCompletionWebSymbolWithDocumentation(it) }
+      val location = locationPtr.dereference() ?: return@Pointer null
+      val delegate = delegatePtr.dereference() ?: return@Pointer null
+      PsiSourcedCodeCompletionWebSymbolWithDocumentation(delegate, location)
     }
   }
 
   override fun getDocumentationTarget(): DocumentationTarget =
-    delegate.getDocumentationTarget(null)
+    delegate.getDocumentationTarget(location)
 }
