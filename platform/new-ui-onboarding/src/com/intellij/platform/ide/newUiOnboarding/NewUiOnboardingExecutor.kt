@@ -29,7 +29,9 @@ internal class NewUiOnboardingExecutor(private val project: Project,
       return
     }
     val step = steps[ind]
-    val gotItData = step.performStep(project)
+    val stepDisposable = Disposer.newCheckedDisposable()
+    Disposer.register(disposable, stepDisposable)
+    val gotItData = step.performStep(project, stepDisposable)
     if (gotItData == null) {
       runStep(ind + 1)
       return
@@ -42,7 +44,10 @@ internal class NewUiOnboardingExecutor(private val project: Project,
     if (ind < steps.lastIndex) {
       builder.withButtonLabel(NewUiOnboardingBundle.message("gotIt.button.next"))
         .onButtonClick {
-          cs.launch(Dispatchers.EDT) { runStep(ind + 1) }
+          Disposer.dispose(stepDisposable)
+          cs.launch(Dispatchers.EDT) {
+            runStep(ind + 1)
+          }
         }
         .withSecondaryButton(NewUiOnboardingBundle.message("gotIt.button.skipAll")) {
           Disposer.dispose(disposable)
@@ -56,7 +61,7 @@ internal class NewUiOnboardingExecutor(private val project: Project,
         }
     }
 
-    val balloon = builder.build(disposable) {
+    val balloon = builder.build(stepDisposable) {
       // do not show the pointer if the balloon should be centered
       setShowCallout(!showInCenter)
     }

@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
@@ -30,7 +31,7 @@ import java.awt.Point
 import java.net.URL
 
 class GitWidgetStep : NewUiOnboardingStep {
-  override suspend fun performStep(project: Project): NewUiOnboardingStepData? {
+  override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val widget = NewUiOnboardingUtil.findUiComponent(project) { widget: ToolbarComboWidget ->
       ClientProperty.get(widget, CustomComponentAction.ACTION_KEY) is GitToolbarWidgetAction
     } ?: return null
