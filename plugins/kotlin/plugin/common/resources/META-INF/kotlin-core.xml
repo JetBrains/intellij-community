@@ -90,8 +90,8 @@
             serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.RootKindMatcherImpl"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.lifetime.KtDefaultLifetimeTokenProvider"
-            serviceImplementation="org.jetbrains.kotlin.analysis.api.lifetime.KtReadActionConfinementDefaultLifetimeTokenProvider"/>
+            serviceInterface="org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeTokenProvider"
+            serviceImplementation="org.jetbrains.kotlin.analysis.api.lifetime.KtReadActionConfinementLifetimeTokenProvider"/>
 
     <applicationConfigurable
             groupId="language"

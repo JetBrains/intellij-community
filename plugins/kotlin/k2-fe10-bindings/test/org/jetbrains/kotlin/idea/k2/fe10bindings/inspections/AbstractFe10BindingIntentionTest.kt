@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.k2.fe10bindings.inspections
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.mock.MockProject
 import com.intellij.psi.PsiFile
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
@@ -23,6 +24,11 @@ abstract class AbstractFe10BindingIntentionTest : AbstractIntentionTestBase() {
     // left empty because error reporting in FIR and old FE is different
     override fun checkForErrorsBefore(fileText: String) {}
     override fun checkForErrorsAfter(fileText: String) {}
+
+    override fun setUp() {
+        super.setUp()
+        project.registerLifetimeTokenFactoryForFe10Binding(myFixture.testRootDisposable)
+    }
 
     override fun tearDown() {
         runAll(

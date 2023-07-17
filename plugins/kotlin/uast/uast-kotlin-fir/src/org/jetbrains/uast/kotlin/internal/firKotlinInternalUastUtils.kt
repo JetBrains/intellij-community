@@ -5,13 +5,14 @@ package org.jetbrains.uast.kotlin.internal
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.getModule
-import org.jetbrains.kotlin.analysis.api.lifetime.KtAlwaysAccessibleLifetimeTokenFactory
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
@@ -35,11 +36,13 @@ val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
         ?: FirKotlinUastLanguagePlugin()
 }
 
+@OptIn(KtAllowAnalysisOnEdt::class)
 internal inline fun <R> analyzeForUast(
     useSiteKtElement: KtElement,
     action: KtAnalysisSession.() -> R
-): R =
-    analyze(useSiteKtElement, KtAlwaysAccessibleLifetimeTokenFactory, action)
+): R = allowAnalysisOnEdt {
+    analyze(useSiteKtElement, action)
+}
 
 internal fun KtAnalysisSession.containingKtClass(
     ktConstructorSymbol: KtConstructorSymbol,
