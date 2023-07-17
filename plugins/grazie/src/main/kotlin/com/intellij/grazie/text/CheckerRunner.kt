@@ -2,6 +2,7 @@
 
 package com.intellij.grazie.text
 
+import ai.grazie.nlp.tokenizer.Tokenizer
 import ai.grazie.nlp.tokenizer.sentence.StandardSentenceTokenizer
 import ai.grazie.utils.toLinkedSet
 import com.intellij.codeInspection.LocalQuickFix
@@ -16,11 +17,14 @@ import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuic
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
@@ -33,7 +37,17 @@ class CheckerRunner(val text: TextContent) {
   private val tokenizer
     get() = StandardSentenceTokenizer.Default
 
-  private val sentences by lazy { tokenizer.tokenize(text.toString()) }
+  private val sentences by lazy { tokenize(text) }
+
+  private fun tokenize(text: TextContent): List<Tokenizer.Token> {
+    val sequence = object: BombedCharSequence(text.toString()) {
+      override fun checkCanceled() {
+        ProgressManager.checkCanceled()
+      }
+    }
+    val ranges = tokenizer.tokenRanges(sequence)
+    return ranges.map { Tokenizer.Token(text.substring(it.start, it.endExclusive), it.start..it.endExclusive) }
+  }
 
   fun run(checkers: List<TextChecker>, consumer: (TextProblem) -> Unit) {
     runBlockingCancellable {
@@ -53,9 +67,11 @@ class CheckerRunner(val text: TextContent) {
       val filtered = ArrayList<TextProblem>()
       for (job in deferred) {
         val problems = job.await()
-        for (problem in problems) {
-          if (processProblem(problem, filtered)) {
-            consumer(problem)
+        coroutineToIndicator {
+          for (problem in problems) {
+            if (processProblem(problem, filtered)) {
+              consumer(problem)
+            }
           }
         }
       }
@@ -167,8 +183,9 @@ class CheckerRunner(val text: TextContent) {
 
   // used in rider
   @ApiStatus.Experimental
-  fun findSentence(problem: TextProblem) =
-    sentences.find { problem.highlightRanges.any { range -> range.intersects(it.range.first, it.range.last + 1) } }?.token
+  fun findSentence(problem: TextProblem): String? {
+    return sentences.find { problem.highlightRanges.any { range -> range.intersects(it.range.first, it.range.last + 1) } }?.token
+  }
 
   fun toFixes(problem: TextProblem, descriptor: ProblemDescriptor): Array<LocalQuickFix> {
     val file = text.containingFile
