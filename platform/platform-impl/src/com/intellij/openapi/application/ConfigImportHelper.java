@@ -48,6 +48,7 @@ import com.intellij.util.ui.IoErrorText;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.awt.*;
@@ -106,10 +107,11 @@ public final class ConfigImportHelper {
     log.info("Importing configs to " + newConfigDir);
     System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
-    CustomConfigMigrationOption customMigrationOption = CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile(newConfigDir);
+    var customMigrationOption = CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile(newConfigDir);
+    log.info("Custom migration option: " + customMigrationOption);
 
-    if (customMigrationOption instanceof CustomConfigMigrationOption.SetProperties) {
-      List<String> properties = ((CustomConfigMigrationOption.SetProperties)customMigrationOption).getProperties();
+    if (customMigrationOption instanceof CustomConfigMigrationOption.SetProperties sp) {
+      List<String> properties = sp.getProperties();
       log.info("Enabling system properties after restart: " + properties);
       for (String property : properties) {
         System.setProperty(property, Boolean.TRUE.toString());
@@ -127,14 +129,13 @@ public final class ConfigImportHelper {
 
     try {
       Pair<Path, Path> oldConfigDirAndOldIdePath = null;
-      if (customMigrationOption != null) {
-        log.info("Custom migration option: " + customMigrationOption);
+      if (customMigrationOption instanceof CustomConfigMigrationOption.MigrateFromCustomPlace ||
+          customMigrationOption instanceof CustomConfigMigrationOption.StartWithCleanConfig) {
         vmOptionFileChanged = doesVmOptionsFileExist(newConfigDir);
         try {
-          if (customMigrationOption instanceof CustomConfigMigrationOption.MigrateFromCustomPlace) {
+          if (customMigrationOption instanceof CustomConfigMigrationOption.MigrateFromCustomPlace mcp) {
             tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log, false, settings);
-            Path location = ((CustomConfigMigrationOption.MigrateFromCustomPlace)customMigrationOption).getLocation();
-            oldConfigDirAndOldIdePath = findConfigDirectoryByPath(location);
+            oldConfigDirAndOldIdePath = findConfigDirectoryByPath(mcp.getLocation());
             importScenarioStatistics = IMPORT_SETTINGS_ACTION;
           }
           else {
@@ -186,8 +187,9 @@ public final class ConfigImportHelper {
         Path oldConfigDir = oldConfigDirAndOldIdePath.first;
         Path oldIdeHome = oldConfigDirAndOldIdePath.second;
 
-        ConfigImportOptions configImportOptions = new ConfigImportOptions(log);
+        var configImportOptions = new ConfigImportOptions(log);
         configImportOptions.importSettings = settings;
+        configImportOptions.merge = customMigrationOption instanceof CustomConfigMigrationOption.MergeConfigs;
         if (!guessedOldConfigDirs.fromSameProduct) {
           importScenarioStatistics = IMPORTED_FROM_OTHER_PRODUCT;
         }
@@ -449,10 +451,6 @@ public final class ConfigImportHelper {
     @NotNull List<Path> findRelatedDirectories(@NotNull Path config, boolean forAutoClean) {
       return getRelatedDirectories(config, forAutoClean);
     }
-  }
-
-  public static @NotNull List<Path> findConfigDirectoryCandidates(@NotNull Path newConfigDir) {
-    return findConfigDirectories(newConfigDir).getPaths();
   }
 
   static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir) {
@@ -764,12 +762,14 @@ public final class ConfigImportHelper {
     MarketplacePluginDownloadService downloadService;
     Path bundledPluginPath = null;
     @Nullable Map<PluginId, Set<String>> brokenPluginVersions = null;
+    boolean merge = false;
 
     ConfigImportOptions(Logger log) {
       this.log = log;
     }
   }
 
+  @VisibleForTesting
   static void doImport(@NotNull Path oldConfigDir,
                        @NotNull Path newConfigDir,
                        @Nullable Path oldIdeHome,
@@ -792,8 +792,11 @@ public final class ConfigImportHelper {
 
       @Override
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        if (!blockImport(file, oldConfigDir, newConfigDir, oldPluginsDir, options.importSettings)) {
-          Path target = newConfigDir.resolve(oldConfigDir.relativize(file));
+        Path target = newConfigDir.resolve(oldConfigDir.relativize(file));
+        if (options.merge && file.getFileName().toString().endsWith(".vmoptions") && Files.exists(target)) {
+          mergeVmOptions(file, target, options.log);
+        }
+        else if (!blockImport(file, oldConfigDir, newConfigDir, oldPluginsDir, options.importSettings)) {
           NioFiles.createDirectories(target.getParent());
           Files.copy(file, target, LinkOption.NOFOLLOW_LINKS);
         }
@@ -1100,6 +1103,45 @@ public final class ConfigImportHelper {
           }
         }
       }
+    }
+  }
+
+  /* Merging imported VM option file with the one pre-created by an external tool (like the Toolbox app). */
+  private static void mergeVmOptions(Path importFile, Path currentFile, Logger log) {
+    try {
+      var cs = VMOptions.getFileCharset();
+      var importLines = Files.readAllLines(importFile, cs);
+      var currentLines = Files.readAllLines(currentFile, cs);
+      var result = new ArrayList<String>(importLines.size() + currentLines.size());
+
+      nextLine:
+      for (var line : importLines) {
+        // preventing duplicated system properties from accumulating
+        if (line.startsWith("-D")) {
+          var p = line.indexOf('=', 3);
+          if (p > 0) {
+            var prefix = line.substring(0, p + 1);
+            for (var l : currentLines) {
+              if (l.startsWith(prefix)) {
+                continue nextLine;
+              }
+            }
+          }
+        }
+        result.add(line);
+      }
+
+      for (var line : currentLines) {
+        // a pre-created value might be lower than the one set by a user
+        if (!(line.startsWith("-Xmx") && isLowerValue("-Xmx", line.substring(4), importLines))) {
+          result.add(line);
+        }
+      }
+
+      Files.write(currentFile, result, cs);
+    }
+    catch (IOException e) {
+      log.warn("Failed to merge VM option files " + importFile + " and " + currentFile, e);
     }
   }
 

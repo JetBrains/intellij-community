@@ -29,6 +29,8 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Predicate
+import kotlin.io.path.readLines
+import kotlin.io.path.writeLines
 
 class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   private val LOG = logger<ConfigImportHelperTest>()
@@ -544,5 +546,19 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val current = createConfigDir(product = "CLion", version = "2023.2")
     val result = ConfigImportHelper.findConfigDirectories(current)
     assertThat(result.paths).isEmpty()
+  }
+
+  @Suppress("SpellCheckingInspection")
+  @Test fun `merging VM options`() {
+    val oldConfigDir = createConfigDir(version = "2023.1")
+    oldConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx4g", "-Dsome.prop=old.val"))
+
+    val newConfigDir = createConfigDir(version = "2023.2")
+    val newVmOptionsFile = newConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx2048m", "-Dsome.prop=new.val"))
+
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true; merge = true }
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
+
+    assertThat(newVmOptionsFile.readLines()).containsExactly("-Xmx4g", "-Dsome.prop=new.val")
   }
 }
