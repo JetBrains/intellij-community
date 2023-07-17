@@ -157,7 +157,6 @@ public abstract class DialogWrapper {
   private final List<JBOptionButton> myOptionsButtons = new ArrayList<>();
   private final Alarm myValidationAlarm = new Alarm(getValidationThreadToUse(), myDisposable);
 
-  private JComponent centerPanel;
   private boolean myClosed;
   private boolean myDisposed;
   private int myExitCode = CANCEL_EXIT_CODE;
@@ -390,7 +389,7 @@ public abstract class DialogWrapper {
     if (vi != null) {
       result.add(vi);
     }
-    var dialogPanel = getDialogPanel();
+    var dialogPanel = myDialogPanel;
     if (dialogPanel != null) {
       result.addAll(dialogPanel.validateAll());
     }
@@ -1313,7 +1312,7 @@ public abstract class DialogWrapper {
       centerSection.add(n, BorderLayout.NORTH);
     }
 
-    centerPanel = createCenterPanel();
+    JComponent centerPanel = createCenterPanel();
     if (centerPanel != null) {
       centerPanel.putClientProperty(DIALOG_CONTENT_PANEL_PROPERTY, true);
       centerSection.add(centerPanel, BorderLayout.CENTER);
@@ -2154,9 +2153,5 @@ public abstract class DialogWrapper {
   @Deprecated(forRemoval = true)
   public interface DoNotAskOption extends com.intellij.openapi.ui.DoNotAskOption {
     abstract class Adapter extends com.intellij.openapi.ui.DoNotAskOption.Adapter implements DoNotAskOption {}
-  }
-
-  private @Nullable DialogPanel getDialogPanel() {
-    return centerPanel instanceof DialogPanel ? ((DialogPanel)centerPanel) : null;
   }
 }
