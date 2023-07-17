@@ -156,6 +156,12 @@ public class GradleExecutionHelper {
       });
   }
 
+  /** This method masks some system properties while computing the action.
+   * <p/>
+   * This is a workaround <a href="for">https://github.com/gradle/gradle/issues/17745</a><br>
+   * Gradle <7.6 will pass all TAPI client's system properties to Gradle daemon.
+   *
+   */
   private static <T> T maybeFixSystemProperties(@NotNull Computable<T> action, String projectDir) {
     Map<String, String> keyToMask = ApplicationManager.getApplication().getService(SystemPropertiesAdjuster.class).getKeyToMask(projectDir);
     Map<String, String> oldValues = new HashMap<>();
@@ -345,6 +351,8 @@ public class GradleExecutionHelper {
     @NotNull GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskNotificationListener listener
   ) {
+    clearSystemProperties(operation);
+
     applyIdeaParameters(settings);
 
     BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, settings);
@@ -365,6 +373,11 @@ public class GradleExecutionHelper {
 
     GradleOperationHelperExtension.EP_NAME
       .forEachExtensionSafe(proc -> proc.prepareForExecution(id, operation, settings));
+  }
+
+  private static void clearSystemProperties(LongRunningOperation operation) {
+    // for Gradle 7.6+ this will cancel implicit transfer of current System.properties to Gradle Daemon.
+    operation.withSystemProperties(Collections.emptyMap());
   }
 
   private static void applyIdeaParameters(@NotNull GradleExecutionSettings settings) {
