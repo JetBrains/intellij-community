@@ -305,6 +305,9 @@ object CommunityRepositoryModules {
     },
     plugin("intellij.serial.monitor") { spec ->
       spec.withProjectLibrary("io.github.java.native.jssc", LibraryPackMode.STANDALONE_SEPARATE)
+    },
+    plugin("intellij.dts") { spec ->
+      spec.withModule("intellij.dts.pp")
     }
   )
 
