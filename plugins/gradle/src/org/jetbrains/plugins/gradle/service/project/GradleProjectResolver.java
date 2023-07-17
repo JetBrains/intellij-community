@@ -281,6 +281,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     var initScript = GradleInitScriptUtil.createMainInitScript(isBuildSrcProject, toolingExtensionClasses);
     executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString());
 
+    if (!executionSettings.isDownloadSources()) {
+      GradleExecutionHelper.attachIdeaPluginConfigurator(executionSettings);
+    }
+
     BuildActionRunner buildActionRunner = new BuildActionRunner(resolverCtx, projectImportAction, executionSettings, myHelper);
     resolverCtx.checkCancelled();
 

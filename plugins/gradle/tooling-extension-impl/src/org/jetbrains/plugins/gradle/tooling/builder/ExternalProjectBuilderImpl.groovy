@@ -280,17 +280,6 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         downloadSources = ideaPluginModule.downloadSources
       }
     }
-    if (ideaPluginModule == null && downloadSourcesFlag != null) {
-      project.plugins.whenPluginAdded { plugin ->
-        if (plugin instanceof IdeaPlugin) {
-          def module = plugin?.model?.module
-          if (module != null) {
-            module.downloadJavadoc = downloadJavadoc
-            module.downloadSources = downloadSources
-          }
-        }
-      }
-    }
 
     def projectSourceCompatibility = getSourceCompatibility(project)
     def projectTargetCompatibility = getTargetCompatibility(project)

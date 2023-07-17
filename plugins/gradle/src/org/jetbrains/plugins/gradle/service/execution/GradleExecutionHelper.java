@@ -723,6 +723,12 @@ public class GradleExecutionHelper {
     executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.toString());
   }
 
+  @ApiStatus.Internal
+  public static void attachIdeaPluginConfigurator(@NotNull GradleExecutionSettings executionSettings) {
+    Path initScriptPath = GradleInitScriptUtil.createIdeaPluginConfiguratorInitScript();
+    executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
+  }
+
   @ApiStatus.Experimental
   @NotNull
   public static Map<String, String> getConfigurationInitScripts(@NonNls GradleRunConfiguration configuration) {

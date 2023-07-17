@@ -18,6 +18,7 @@ const val MAIN_INIT_SCRIPT_NAME = "ijInit"
 const val MAPPER_INIT_SCRIPT_NAME = "ijMapper"
 const val WRAPPER_INIT_SCRIPT_NAME = "ijWrapper"
 const val TEST_INIT_SCRIPT_NAME = "ijTestInit"
+const val IDEA_PLUGIN_CONFIGURATOR_SCRIPT_NAME = "ijIdeaPluginConfigurator"
 
 fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Set<Class<*>>): Path {
   val jarPaths = GradleExecutionHelper.getToolingExtensionsJarPaths(toolingExtensionClasses)
@@ -30,6 +31,11 @@ fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Se
     ))
   )
   return createInitScript(MAIN_INIT_SCRIPT_NAME, initScript)
+}
+
+fun createIdeaPluginConfiguratorInitScript() : Path {
+  val initScript = loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/IdeaPluginConfigurator.gradle")
+  return createInitScript(IDEA_PLUGIN_CONFIGURATOR_SCRIPT_NAME, initScript)
 }
 
 fun loadTaskInitScript(
