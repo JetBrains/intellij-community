@@ -183,8 +183,10 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     return perform<Collection<MavenArchetype>, RuntimeException> { getOrCreateWrappee().getRemoteArchetypes(ourToken, url) }
   }
 
-  fun resolveAndGetArchetypeDescriptor(groupId: String, artifactId: String, version: String,
-                                       repositories: List<MavenRemoteRepository?>,
+  fun resolveAndGetArchetypeDescriptor(groupId: String,
+                                       artifactId: String,
+                                       version: String,
+                                       repositories: List<MavenRemoteRepository>,
                                        url: String?): Map<String, String>? {
     return perform<Map<String, String>, RuntimeException> {
       getOrCreateWrappee().resolveAndGetArchetypeDescriptor(groupId, artifactId, version, repositories, url, ourToken)
@@ -212,9 +214,9 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
 
   @Throws(MavenProcessCanceledException::class)
   protected fun <R> runLongRunningTask(task: LongRunningEmbedderTask<R>,
-                             indicator: ProgressIndicator?,
-                             syncConsole: MavenSyncConsole?,
-                             console: MavenConsole?): R {
+                                       indicator: ProgressIndicator?,
+                                       syncConsole: MavenSyncConsole?,
+                                       console: MavenConsole?): R {
     val longRunningTaskId = UUID.randomUUID().toString()
     val embedder = getOrCreateWrappee()
 
