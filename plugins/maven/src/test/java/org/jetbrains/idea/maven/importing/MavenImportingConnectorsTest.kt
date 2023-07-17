@@ -287,7 +287,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                                                        }, testRootDisposable)
     MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings().mavenHome = MavenServerManager.WRAPPED_MAVEN;
     assertThrows(UnsupportedOperationException::class.java) {
-      MavenServerManager.getInstance().createEmbedder(myProject, true, myProjectRoot.path).embedder
+      MavenServerManager.getInstance().createEmbedder(myProject, true, myProjectRoot.path).getEmbedder()
     }
     TestCase.assertNotNull(settingsRef.get())
     TestCase.assertNull(settingsRef.get().settings.globalSettingsPath)

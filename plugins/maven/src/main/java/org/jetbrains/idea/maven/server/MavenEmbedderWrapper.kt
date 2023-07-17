@@ -2,9 +2,11 @@
 package org.jetbrains.idea.maven.server
 
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.model.*
@@ -16,8 +18,9 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.io.File
 import java.nio.file.Path
 import java.rmi.RemoteException
+import java.util.*
 
-abstract class MavenEmbedderWrapper internal constructor(private val myProject: Project) :
+abstract class MavenEmbedderWrapper internal constructor(private val project: Project) :
   MavenRemoteObjectWrapper<MavenServerEmbedder?>(null) {
 
   @Synchronized
@@ -36,7 +39,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val myProject: 
 
   private fun convertWorkspaceMap(map: MavenWorkspaceMap?): MavenWorkspaceMap? {
     if (null == map) return null
-    val transformer = RemotePathTransformerFactory.createForProject(myProject)
+    val transformer = RemotePathTransformerFactory.createForProject(project)
     return if (transformer === RemotePathTransformerFactory.Transformer.ID) map
     else MavenWorkspaceMap.copy(map) {
       transformer.toRemotePath(it!!)
@@ -52,7 +55,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val myProject: 
                      workspaceMap: MavenWorkspaceMap?,
                      updateSnapshots: Boolean): Collection<MavenServerExecutionResult> {
     val transformer = if (files.isEmpty()) RemotePathTransformerFactory.Transformer.ID
-    else RemotePathTransformerFactory.createForProject(myProject)
+    else RemotePathTransformerFactory.createForProject(project)
     val ioFiles = files.map { file: VirtualFile -> transformer.toRemotePath(file.getPath())?.let { File(it) } }
     val serverWorkspaceMap = convertWorkspaceMap(workspaceMap)
     val request = ProjectResolutionRequest(
@@ -188,10 +191,9 @@ abstract class MavenEmbedderWrapper internal constructor(private val myProject: 
     }
   }
 
-  @get:Throws(RemoteException::class)
-  @get:TestOnly
-  val embedder: MavenServerEmbedder
-    get() = getOrCreateWrappee()
+  @Throws(RemoteException::class)
+  @TestOnly
+  fun getEmbedder(): MavenServerEmbedder = getOrCreateWrappee()
 
   fun release() {
     val w = wrappee ?: return
@@ -209,10 +211,68 @@ abstract class MavenEmbedderWrapper internal constructor(private val myProject: 
   }
 
   @Throws(MavenProcessCanceledException::class)
-  protected abstract fun <R> runLongRunningTask(task: LongRunningEmbedderTask<R>,
-                                                progressIndicator: ProgressIndicator?,
-                                                syncConsole: MavenSyncConsole?,
-                                                console: MavenConsole?): R
+  protected fun <R> runLongRunningTask(task: LongRunningEmbedderTask<R>,
+                             indicator: ProgressIndicator?,
+                             syncConsole: MavenSyncConsole?,
+                             console: MavenConsole?): R {
+    val longRunningTaskId = UUID.randomUUID().toString()
+    val embedder = getOrCreateWrappee()
+
+    return runLongRunningTask(embedder, longRunningTaskId, task, indicator, syncConsole, console)
+  }
+
+  private fun <R> runLongRunningTask(embedder: MavenServerEmbedder,
+                                     longRunningTaskId: String,
+                                     task: LongRunningEmbedderTask<R>,
+                                     indicator: ProgressIndicator?,
+                                     syncConsole: MavenSyncConsole?,
+                                     console: MavenConsole?): R {
+    @Suppress("RAW_RUN_BLOCKING")
+    return runBlocking {
+      return@runBlocking runLongRunningTaskAsync(embedder, longRunningTaskId, indicator, syncConsole, console, task)
+    }
+  }
+
+  private suspend fun <R> runLongRunningTaskAsync(embedder: MavenServerEmbedder,
+                                                  longRunningTaskId: String,
+                                                  indicator: ProgressIndicator?,
+                                                  syncConsole: MavenSyncConsole?,
+                                                  console: MavenConsole?,
+                                                  task: LongRunningEmbedderTask<R>): R {
+
+    return coroutineScope {
+      val progressIndication = launch {
+        while (isActive) {
+          delay(500)
+          blockingContext {
+            val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
+            indicator?.fraction = status.fraction()
+            console?.handleConsoleEvents(status.consoleEvents())
+            syncConsole?.handleDownloadEvents(status.downloadEvents())
+            if (null != indicator && indicator.isCanceled) {
+              if (embedder.cancelLongRunningTask(longRunningTaskId, ourToken)) {
+                throw CancellationException()
+              }
+            }
+          }
+        }
+      }
+
+      try {
+        withContext(Dispatchers.IO) {
+          blockingContext {
+            task.run(embedder, longRunningTaskId)
+          }
+        }
+      }
+      catch (e: Exception) {
+        throw MavenProcessCanceledException(e)
+      }
+      finally {
+        progressIndication.cancelAndJoin()
+      }
+    }
+  }
 
   protected fun interface LongRunningEmbedderTask<R> {
     @Throws(RemoteException::class, MavenServerProcessCanceledException::class)

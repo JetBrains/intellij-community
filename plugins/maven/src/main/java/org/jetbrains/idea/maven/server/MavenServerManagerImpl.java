@@ -298,7 +298,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
                                              final boolean alwaysOnline,
                                              @NotNull String multiModuleProjectDirectory) {
 
-    return new MavenEmbedderWrapperEx(project) {
+    return new MavenEmbedderWrapper(project) {
       private MavenServerConnector myConnector;
 
       @NotNull
