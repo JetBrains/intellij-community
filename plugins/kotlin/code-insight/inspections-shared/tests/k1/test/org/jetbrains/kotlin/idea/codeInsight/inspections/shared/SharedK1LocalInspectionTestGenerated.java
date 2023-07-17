@@ -96,6 +96,34 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument")
+    public static class FilterIsInstanceCallWithClassLiteralArgument extends AbstractSharedK1LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("array.kt")
+        public void testArray() throws Exception {
+            runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/array.kt");
+        }
+
+        @TestMetadata("list.kt")
+        public void testList() throws Exception {
+            runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/list.kt");
+        }
+
+        @TestMetadata("notClassLiteralArgument.kt")
+        public void testNotClassLiteralArgument() throws Exception {
+            runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/notClassLiteralArgument.kt");
+        }
+
+        @TestMetadata("withExistingTypeArgument.kt")
+        public void testWithExistingTypeArgument() throws Exception {
+            runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/withExistingTypeArgument.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve")
     public static class JavaIoSerializableObjectMustHaveReadResolve extends AbstractSharedK1LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
