@@ -599,7 +599,7 @@
       "separatorColor": "Grey4"
     },
 
-    "Window.undecorated.border" : "1,1,1,1,#1E1F22",
+    "Window.undecorated.border" : "1,1,1,1,#6F737A",
 
     "Tree": {
       "collapsedIcon": "/expui/general/chevronRight.svg",
