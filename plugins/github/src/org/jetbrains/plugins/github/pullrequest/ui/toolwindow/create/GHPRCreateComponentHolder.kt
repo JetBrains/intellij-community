@@ -245,7 +245,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
                                 emptyTextText: @Nls String): JComponent {
     val tree = CodeReviewChangesTreeFactory(project, model).create(emptyTextText)
 
-    val diffPreviewHolder = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, null, dataContext.filesManager)
+    val diffPreviewHolder = createAndSetupDiffPreview(tree, null, dataContext.filesManager)
 
     DataManager.registerDataProvider(parentPanel) { dataId ->
       when {
