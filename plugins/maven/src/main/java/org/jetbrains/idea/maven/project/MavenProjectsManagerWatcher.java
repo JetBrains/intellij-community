@@ -53,7 +53,7 @@ public final class MavenProjectsManagerWatcher {
     myProject = project;
     myProjectsTree = projectsTree;
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-    myProjectsAware = new MavenProjectsAware(project, projectsManager, this, myBackgroundExecutor);
+    myProjectsAware = new MavenProjectsAware(project, projectsManager, myBackgroundExecutor);
     myDisposable = Disposer.newDisposable(projectsManager, MavenProjectsManagerWatcher.class.toString());
   }
 

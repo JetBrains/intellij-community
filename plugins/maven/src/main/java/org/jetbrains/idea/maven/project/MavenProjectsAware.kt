@@ -21,7 +21,6 @@ import java.util.concurrent.ExecutorService
 class MavenProjectsAware(
   project: Project,
   private val manager: MavenProjectsManager,
-  private val watcher: MavenProjectsManagerWatcher,
   private val backgroundExecutor: ExecutorService
 ) : ExternalSystemProjectAware {
 
