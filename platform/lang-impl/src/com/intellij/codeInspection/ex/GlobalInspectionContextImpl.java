@@ -90,6 +90,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInsight.util.GlobalInspectionScopeKt.GlobalInspectionScope;
 import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.HighlightVisitorScope;
 import static com.intellij.codeInspection.ex.GlobalInspectionContextImpl.InspectionPerformanceCollector.logPerformance;
 import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.GLOBAL;
@@ -281,7 +282,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
   @Override
   protected void runTools(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
-    IJTracer tracer = TelemetryManager.getInstance().getTracer(HighlightVisitorScope);
+    IJTracer tracer = TelemetryManager.getInstance().getTracer(GlobalInspectionScope);
     runToolsSpan = tracer.spanBuilder("globalInspections").setNoParent().startSpan();
     myInspectionStartedTimestamp = System.currentTimeMillis();
     ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
