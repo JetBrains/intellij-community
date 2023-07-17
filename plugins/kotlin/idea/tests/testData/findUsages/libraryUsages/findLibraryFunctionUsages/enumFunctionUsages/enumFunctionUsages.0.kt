@@ -10,5 +10,3 @@ fun test(e: E) {
     E.A.foo(4)
     E.O.foo(3)
 }
-
-// FIR_IGNORE

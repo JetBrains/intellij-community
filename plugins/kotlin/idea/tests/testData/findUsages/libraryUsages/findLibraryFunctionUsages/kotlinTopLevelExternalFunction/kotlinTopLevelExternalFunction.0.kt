@@ -9,5 +9,3 @@ import server.A
 fun test(a: A) {
     a.extFun<caret>()
 }
-
-// FIR_IGNORE

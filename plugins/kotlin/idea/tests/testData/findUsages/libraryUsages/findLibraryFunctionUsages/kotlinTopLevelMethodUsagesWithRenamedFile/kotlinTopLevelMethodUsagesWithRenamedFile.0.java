@@ -12,5 +12,3 @@ class JClient {
         return RequestProcessor.processRequest();
     }
 }
-
-// FIR_IGNORE

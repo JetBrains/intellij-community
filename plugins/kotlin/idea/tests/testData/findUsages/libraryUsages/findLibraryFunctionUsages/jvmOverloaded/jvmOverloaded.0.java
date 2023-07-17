@@ -21,5 +21,3 @@ class Usages {
         Foo.foo(1, 1.0, "1");
     }
 }
-
-// FIR_IGNORE

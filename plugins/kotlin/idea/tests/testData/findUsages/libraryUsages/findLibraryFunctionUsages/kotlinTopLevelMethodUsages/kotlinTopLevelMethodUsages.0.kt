@@ -13,5 +13,3 @@ class Client {
         processRequest<caret>()
     }
 }
-
-// FIR_IGNORE
