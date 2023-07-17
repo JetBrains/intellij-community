@@ -106,22 +106,18 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         dropDownTask = taskId
       }
 
-      task {
-        text(LessonsBundle.message("run.configuration.open.run.configurations.popup"))
-        triggerAndBorderHighlight().listItem { item ->
-          item is PopupFactoryImpl.ActionItem && item.text.contains(ExecutionBundle.message("run.toolbar.widget.all.configurations", ""))
-        }
-        test {
-          ideFrame {
-            highlightedArea.click()
-          }
-        }
-      }
-
       var foundItem = 0
 
       task {
-        text(LessonsBundle.message("run.configuration.open.expand.all.configurations"))
+        before {
+          // Just for sure
+          RunConfigurationStartHistory.getInstance(project).let {
+            it.state.allConfigurationsExpanded = true
+            it.state.history = mutableSetOf()
+            it.state.pinned = mutableSetOf()
+          }
+        }
+        text(LessonsBundle.message("run.configuration.open.run.configurations.popup"))
         triggerAndBorderHighlight().componentPart { jList: JList<*> ->
           foundItem = LessonUtil.findItem(jList) { item ->
             item is PopupFactoryImpl.ActionItem && item.text == demoWithParametersName
@@ -129,7 +125,6 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
 
           jList.getCellBounds(foundItem, foundItem)
         }
-        restoreByUi(restoreId = dropDownTask)
         test {
           ideFrame {
             highlightedArea.click()
@@ -165,7 +160,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         }
         text(LessonsBundle.message("run.configuration.run.generated.configuration"))
         stateCheck {
-          RunConfigurationStartHistory.getInstance(project).history().first().configuration.name == demoWithParametersName
+          RunConfigurationStartHistory.getInstance(project).history().firstOrNull()?.configuration?.name == demoWithParametersName
         }
         restoreByUi(restoreId = dropDownTask)
         test {
