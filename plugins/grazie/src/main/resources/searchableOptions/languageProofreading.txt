@@ -1,0 +1,37 @@
+Arabic العربيةُ
+Asturian Asturianu
+Belarusian Беларуская
+Breton Brezhoneg
+Catalan (Valencian) Català (Valencià)
+Catalan Català
+Chinese 中文
+Danish Dansk
+Dutch Nederlands
+English (Canadian) English (Canada)
+English (GB) English (Great Britain)
+English (US) English (USA)
+Esperanto Esperanto
+French Français
+Galician Galego
+German (Austria) Deutsch (Österreich)
+German (Germany) Deutsch (Deutschland)
+Greek Ελληνικά
+Irish Gaeilge
+Italian Italiano
+Japanese 日本語
+Khmer ភាសាខ្មែរ
+Persian فارسی
+Polish Polski
+Portuguese (Angola) Português (Angola)
+Portuguese (Brazil) Português (Brasil)
+Portuguese (Mozambique) Português (Moçambique)
+Portuguese (Portugal) Português (Portugal)
+Romanian Română
+Russian Русский
+Slovak Slovenčina
+Slovenian Slovenščina
+Spanish Español
+Swedish Svenska
+Tagalog Tagalog
+Tamil தமிழ்
+Ukrainian Українська

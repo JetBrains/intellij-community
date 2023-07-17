@@ -3,8 +3,6 @@ package com.intellij.grazie.ide.ui.search
 
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.ide.ui.components.dsl.msg
-import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.allRules
-import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
@@ -29,22 +27,18 @@ private class GrazieSearchableOptionContributor : SearchableOptionContributor() 
   }
 
   override fun processOptions(processor: SearchableOptionProcessor) {
-    for (lang in Lang.values()) {
-      processor.addProofreadOptions("${lang.displayName} ${lang.nativeName}", hit = msg("grazie.settings.proofreading.languages.text"))
+    GrazieStaticSearchableOptions.LanguageProofreading.process { option ->
+      processor.addProofreadOptions(option, hit = msg("grazie.settings.proofreading.languages.text"))
     }
     for (language in TextExtractor.getSupportedLanguages()) {
       processor.addGrammarOptions(language.displayName, hit = msg("grazie.settings.grammar.scope.file-types.text"))
     }
     processor.addGrammarOptions("grazie", null, null)
-
-    val categories = HashSet<String>()
-    for (rule in allRules().values.flatten()) {
-      processor.addGrammarOptions(rule.presentableName, hit = msg("grazie.settings.grammar.scope.rules.text"))
-      for (cat in rule.categories) {
-        if (categories.add(cat)) {
-          processor.addGrammarOptions(cat, hit = msg("grazie.settings.grammar.scope.rules.text"))
-        }
-      }
+    GrazieStaticSearchableOptions.Rules.process { option ->
+      processor.addGrammarOptions(option, hit = msg("grazie.settings.grammar.scope.rules.text"))
+    }
+    GrazieStaticSearchableOptions.RuleCategories.process { option ->
+      processor.addGrammarOptions(option, hit = msg("grazie.settings.grammar.scope.rules.text"))
     }
   }
 }
