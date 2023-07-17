@@ -404,7 +404,7 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
         td {
           text(fileCount.numberOfFilesIndexedWithLoadingContent.toString())
           br()
-          text("(incl. ${fileCount.numberOfChangedDuringIndexingFiles} changed during indexing)")
+          text("(incl. ${fileCount.numberOfChangedDuringIndexingFiles} changed in VFS)")
         }
       }
       else {
@@ -1317,7 +1317,14 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                   td(String.format("%.2f", visibleTimeToAllThreadTimeRatio))
                 }
               }
-              tr { td("Time of retrieving files changed during indexing"); td(times.retrievingChangedDuringIndexingFilesTime.presentableDuration()) }
+              tr {
+                td {
+                  text("Time of retrieving list of the files changed in VFS")
+                  br()
+                  small { text("Indexing handles both files found by scanning(s) and files reported as changed by VFS") }
+                };
+                td(times.retrievingChangedDuringIndexingFilesTime.presentableDuration())
+              }
               tr { td("Content loading time"); td(times.contentLoadingVisibleTime.presentableDuration()) }
               tr {
                 td("Index writing time")
@@ -1341,7 +1348,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                 td(fileProviderStatistics.sumOf { it.numberOfTooLargeForIndexingFiles }.toString())
               }
               tr {
-                td("Number of files changed during indexing")
+                td("Number of files changed in VFS")
                 td(statisticsOfChangedDuringIndexingFiles.numberOfFiles.toString())
               }
             }
