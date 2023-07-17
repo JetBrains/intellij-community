@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
@@ -43,7 +44,7 @@ internal data class WebSymbolCodeCompletionItemImpl(override val name: String,
     val priorityOffset = baselinePriorityValue - WebSymbol.Priority.NORMAL.value
     val deprecatedOrObsolete = apiStatus.isDeprecatedOrObsolete()
     LookupElementBuilder
-      .create(wrapSymbolForDocumentation(symbol)?.createPointer() ?: name, name)
+      .create(wrapSymbolForDocumentation(symbol, parameters.position)?.createPointer() ?: name, name)
       .withLookupStrings(aliases)
       .withIcon(icon?.scaleToHeight(16))
       .withTypeText(typeText, true)
@@ -80,10 +81,10 @@ internal data class WebSymbolCodeCompletionItemImpl(override val name: String,
       }
   }
 
-  private fun wrapSymbolForDocumentation(symbol: WebSymbol?) =
+  private fun wrapSymbolForDocumentation(symbol: WebSymbol?, location: PsiElement) =
     when (symbol) {
-      is PsiSourcedWebSymbol -> PsiSourcedCodeCompletionWebSymbolWithDocumentation(symbol)
-      is WebSymbol -> CodeCompletionWebSymbolWithDocumentation(symbol)
+      is PsiSourcedWebSymbol -> PsiSourcedCodeCompletionWebSymbolWithDocumentation(symbol, location)
+      is WebSymbol -> CodeCompletionWebSymbolWithDocumentation(symbol, location)
       else -> null
     }
 
