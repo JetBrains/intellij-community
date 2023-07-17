@@ -403,7 +403,7 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferr
     return
   }
 
-  launch {
+  launch(CoroutineName("showSplashIfNeeded")) {
     if (CommandLineArgs.isSplashNeeded(args)) {
       showSplashIfNeeded(initUiDeferred = initUiDeferred, appInfoDeferred = appInfoDeferred)
     }

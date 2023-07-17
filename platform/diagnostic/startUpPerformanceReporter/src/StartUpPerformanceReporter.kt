@@ -51,7 +51,7 @@ open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope
 
     internal const val VERSION: String = "38"
 
-    fun logStats(projectName: String) {
+    suspend fun logStats(projectName: String) {
       logAndClearStats(projectName, perfFilePath)
     }
   }
@@ -80,7 +80,7 @@ open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope
   }
 }
 
-private fun logAndClearStats(projectName: String, perfFilePath: String?): StartUpPerformanceReporterValues {
+private suspend fun logAndClearStats(projectName: String, perfFilePath: String?): StartUpPerformanceReporterValues {
   val instantEvents = mutableListOf<ActivityImpl>()
   // write activity category in the same order as first reported
   val activities = LinkedHashMap<String, MutableList<ActivityImpl>>()
@@ -125,6 +125,9 @@ private fun logAndClearStats(projectName: String, perfFilePath: String?): StartU
     Files.newBufferedWriter(file).use { writer ->
       writeInJaegerJsonFormat(activities.get(ActivityCategory.DEFAULT.jsonName) ?: emptyList(), output = writer)
     }
+  }
+  System.getProperty("idea.diagnostic.opentelemetry.otlp")?.takeIf(String::isNotEmpty)?.let {
+    sendStartupTraceUsingOtlp(activities.get(ActivityCategory.DEFAULT.jsonName) ?: emptyList(), endpoint = it)
   }
 
   val pluginCostMap = computePluginCostMap()

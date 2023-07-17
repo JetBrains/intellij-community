@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
-import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.getTraceActivity
+import com.intellij.diagnostic.subtask
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.RawSwingDispatcher
@@ -29,6 +30,7 @@ import javax.swing.WindowConstants
 
 @Volatile
 private var PROJECT_FRAME: JFrame? = null
+
 @Volatile
 private var SPLASH_WINDOW: Splash? = null
 
@@ -40,19 +42,19 @@ internal suspend fun showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: De
 
   val appInfo = appInfoDeferred.await()
   try {
-    val prepareActivity = StartUpMeasurer.startActivity("splash preparation")
-    if (showLastProjectFrameIfAvailable(prepareActivity)) {
+    if (showLastProjectFrameIfAvailable()) {
       return
     }
 
-    assert(SPLASH_WINDOW == null)
-    val image = loadSplashImage(appInfo = appInfo)
-    val activity = prepareActivity.endAndStart("splash initialization")
-    val queueActivity = activity.startChild("splash initialization (in queue)")
-    withContext(RawSwingDispatcher) {
-      queueActivity.end()
-      SPLASH_WINDOW = Splash(image)
-      activity.end()
+    val image = subtask("splash preparation") {
+      assert(SPLASH_WINDOW == null)
+      loadSplashImage(appInfo = appInfo)
+    }
+    // by intention out of withContext(RawSwingDispatcher) - measure "schedule" time
+    subtask("splash initialization") {
+      withContext(RawSwingDispatcher) {
+        SPLASH_WINDOW = Splash(image, getTraceActivity()!!    )
+      }
     }
   }
   catch (e: CancellationException) {
@@ -63,43 +65,46 @@ internal suspend fun showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: De
   }
 }
 
-private suspend fun showLastProjectFrameIfAvailable(prepareActivity: Activity): Boolean {
-  val activity = StartUpMeasurer.startActivity("splash as project frame initialization")
-  val infoFile = Path.of(PathManager.getSystemPath(), "lastProjectFrameInfo")
-  val buffer = try {
-    withContext(Dispatchers.IO) {
-      Files.newByteChannel(infoFile).use { channel ->
-        val buffer = ByteBuffer.allocate(channel.size().toInt())
-        do {
-          channel.read(buffer)
+private suspend fun showLastProjectFrameIfAvailable(): Boolean {
+  lateinit var backgroundColor: Color
+  var extendedState = 0
+  val savedBounds: Rectangle = subtask("splash as project frame initialization") {
+    val infoFile = Path.of(PathManager.getSystemPath(), "lastProjectFrameInfo")
+    val buffer = try {
+      withContext(Dispatchers.IO) {
+        Files.newByteChannel(infoFile).use { channel ->
+          val buffer = ByteBuffer.allocate(channel.size().toInt())
+          do {
+            channel.read(buffer)
+          }
+          while (buffer.hasRemaining())
+          buffer.flip()
+          if (buffer.getShort().toInt() != 0) {
+            return@withContext null
+          }
+
+          buffer
         }
-        while (buffer.hasRemaining())
-        buffer.flip()
-        if (buffer.getShort().toInt() != 0) {
-          return@withContext null
-        }
+      } ?: return@subtask null
+    }
+    catch (ignore: NoSuchFileException) {
+      return@subtask null
+    }
 
-        buffer
-      }
-    } ?: return false
-  }
-  catch (ignore: NoSuchFileException) {
-    return false
-  }
+    val savedBounds = Rectangle(buffer.getInt(), buffer.getInt(), buffer.getInt(), buffer.getInt())
 
-  val savedBounds = Rectangle(buffer.getInt(), buffer.getInt(), buffer.getInt(), buffer.getInt())
+    @Suppress("UseJBColor")
+    backgroundColor = Color(buffer.getInt(), true)
 
-  @Suppress("UseJBColor")
-  val backgroundColor = Color(buffer.getInt(), true)
-
-  @Suppress("UNUSED_VARIABLE")
-  val isFullScreen = buffer.get().toInt() == 1
-  val extendedState = buffer.getInt()
-
-  activity.end()
-  prepareActivity.end()
-  withContext(RawSwingDispatcher) {
-    PROJECT_FRAME = doShowFrame(savedBounds = savedBounds, backgroundColor = backgroundColor, extendedState = extendedState)
+    @Suppress("UNUSED_VARIABLE")
+    val isFullScreen = buffer.get().toInt() == 1
+    extendedState = buffer.getInt()
+    savedBounds
+  } ?: return false
+  subtask("splash as project frame creation") {
+    withContext(RawSwingDispatcher) {
+      PROJECT_FRAME = doShowFrame(savedBounds = savedBounds, backgroundColor = backgroundColor, extendedState = extendedState)
+    }
   }
   return true
 }

@@ -4,6 +4,8 @@ package com.intellij.platform.ide.diagnostic.startUpPerformanceReporter
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +22,9 @@ private class IdeStartUpPerformanceService(coroutineScope: CoroutineScope) : Sta
       val projectName = ProjectManagerEx.getOpenProjects().firstOrNull()?.name ?: "unknown"
       ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
         override fun appWillBeClosed(isRestart: Boolean) {
-          logStats(projectName)
+          runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+            logStats(projectName)
+          }
         }
       })
     }

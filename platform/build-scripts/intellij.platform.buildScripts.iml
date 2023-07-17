@@ -77,8 +77,6 @@
     <orderEntry type="library" name="blockmap" level="project" />
     <orderEntry type="library" name="commons-io" level="project" />
     <orderEntry type="library" name="ktor-client-auth" level="project" />
-    <orderEntry type="library" name="ktor-client-cio" level="project" />
-    <orderEntry type="library" name="ktor-client-encoding" level="project" />
     <orderEntry type="library" name="bouncy-castle-provider" level="project" />
     <orderEntry type="module-library">
       <library name="jetbrains.format.ripper" type="repository">

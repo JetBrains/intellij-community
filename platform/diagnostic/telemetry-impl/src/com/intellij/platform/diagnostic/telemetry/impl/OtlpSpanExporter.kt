@@ -7,32 +7,12 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.HttpRequestRetry
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.content.OutputStreamContent
+import com.intellij.platform.util.http.ContentType
+import com.intellij.platform.util.http.post
 import io.opentelemetry.exporter.internal.otlp.traces.TraceRequestMarshaler
 import io.opentelemetry.sdk.trace.data.SpanData
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus.Internal
-
-private val httpClient by lazy {
-  // HttpTimeout is not used - CIO engine handles that
-  HttpClient(CIO) {
-    expectSuccess = true
-
-    install(HttpRequestRetry) {
-      retryOnExceptionOrServerErrors(maxRetries = 3)
-      exponentialDelay()
-    }
-  }
-}
-
-// ktor type for protobuf uses "protobuf", but go otlp requires "x-" prefix
-private val Protobuf = ContentType("application", "x-protobuf")
 
 @Internal
 class OtlpSpanExporter(endpoint: String) : AsyncSpanExporter {
@@ -44,12 +24,10 @@ class OtlpSpanExporter(endpoint: String) : AsyncSpanExporter {
       return
     }
 
-    val item = TraceRequestMarshaler.create(spans)
     try {
-      httpClient.post(traceUrl) {
-        setBody(OutputStreamContent(contentType = Protobuf, contentLength = item.binarySerializedSize.toLong(), body = {
-          item.writeBinaryTo(this)
-        }))
+      val item = TraceRequestMarshaler.create(spans)
+      post(traceUrl, contentLength = item.binarySerializedSize.toLong(), contentType = ContentType.XProtobuf) {
+        item.writeBinaryTo(this)
       }
     }
     catch (e: CancellationException) {
@@ -60,13 +38,9 @@ class OtlpSpanExporter(endpoint: String) : AsyncSpanExporter {
     }
   }
 
-  suspend fun exportBackendData(receivedBytes: Collection<Byte>) {
+  suspend fun exportBackendData(receivedBytes: ByteArray) {
     runCatching {
-      httpClient.post(traceUrl) {
-        setBody(OutputStreamContent(contentType = Protobuf, contentLength = receivedBytes.size.toLong(), body = {
-          this.write(receivedBytes.toByteArray())
-        }))
-      }
+      post(url = traceUrl, contentType = ContentType.XProtobuf, body = receivedBytes)
     }.getOrLogException(thisLogger())
   }
 }

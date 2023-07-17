@@ -19,7 +19,9 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
@@ -129,7 +131,9 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
     if (ApplicationManagerEx.getApplicationEx().isLightEditMode) {
       LightEditService.getInstance().editorManager.addListener(object : LightEditorListener {
         override fun afterSelect(editorInfo: LightEditorInfo?) {
-          logStats("LightEditor")
+          runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+            logStats("LightEditor")
+          }
           runActivity(LightEditService.getInstance().project!!)
         }
       })
