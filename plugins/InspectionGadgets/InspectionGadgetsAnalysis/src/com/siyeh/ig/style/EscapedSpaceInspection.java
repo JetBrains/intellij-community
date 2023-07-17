@@ -26,10 +26,12 @@ public class EscapedSpaceInspection extends AbstractBaseJavaLocalInspectionTool 
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression literal) {
         PsiType type = literal.getType();
-        if (!TypeUtils.isJavaLangString(type)) return;
+        if (!TypeUtils.isJavaLangString(type) && !PsiTypes.charType().equals(type)) return;
         for (int pos : findPositions(literal)) {
           holder.registerProblem(literal, TextRange.create(pos, pos + 2),
-                                 InspectionGadgetsBundle.message("inspection.use.of.slash.s.message"),
+                                 literal.isTextBlock()
+                                 ? InspectionGadgetsBundle.message("inspection.use.of.slash.s.message")
+                                 : InspectionGadgetsBundle.message("inspection.use.of.slash.s.non.text.block.message"),
                                  new ReplaceWithSpaceFix());
         }
       }
