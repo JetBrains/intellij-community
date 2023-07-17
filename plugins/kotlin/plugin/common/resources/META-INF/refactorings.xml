@@ -7,7 +7,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <refactoring.helper implementation="org.jetbrains.kotlin.idea.refactoring.helper.KotlinOptimizeImportsRefactoringHelper"/>
+    <refactoring.helper implementation="org.jetbrains.kotlin.idea.refactoring.helper.KotlinOptimizeImportsRefactoringHelper" order="last"/>
 
     <vetoRenameCondition implementation="org.jetbrains.kotlin.idea.refactoring.KotlinVetoRenameCondition"/>
 
