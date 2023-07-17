@@ -247,11 +247,11 @@ public class HtmlCompletionTest extends BasePlatformTestCase {
   }
 
   public void testDotTypeWhileActiveLookupInFileReference() throws Throwable {
-    configureByFile(getTestName(false) + ".html");
+    final String path = getTestName(false) + ".html";
+    configureByFile(path);
     Assert.assertNotNull(getActiveLookup());
     myFixture.type('.');
-    checkResultByFile(getTestName(false) + "_after.html");
-    Assert.assertNotNull(getActiveLookup());
+    myFixture.testCompletionVariants(path, path);
   }
 
   private LookupImpl getActiveLookup() {
