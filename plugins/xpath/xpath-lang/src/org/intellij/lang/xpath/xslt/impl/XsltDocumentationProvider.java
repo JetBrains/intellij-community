@@ -36,6 +36,7 @@ import org.intellij.lang.xpath.xslt.psi.XsltElement;
 import org.intellij.lang.xpath.xslt.psi.impl.XsltLanguage;
 import org.jdom.Element;
 import org.jdom.Namespace;
+import org.jdom.filter2.Filters;
 import org.jdom.xpath.XPathFactory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -111,8 +112,8 @@ final class XsltDocumentationProvider implements DocumentationProvider {
 
     try {
       Element element = JDOMUtil.load(documentSupplier.get());
-      Element e = (Element)XPathFactory.instance()
-        .compile("//x:" + category + "[@name = '" + name + "']", null, null, Namespace.getNamespace("x", element.getNamespaceURI()))
+      Element e = XPathFactory.instance()
+        .compile("//x:" + category + "[@name = '" + name + "']", Filters.element(), null, Namespace.getNamespace("x", element.getNamespaceURI()))
         .evaluateFirst(element);
       if (e != null) {
         return Collections.singletonList(e.getParentElement().getAttributeValue("base") + e.getAttributeValue("href"));
