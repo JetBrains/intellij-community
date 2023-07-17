@@ -1,9 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.annotation;
 
 import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -14,16 +18,18 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 /**
  * @author Bas Leijdekkers
  */
-public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
+public class AnnotateOverriddenMethodsIntention extends BaseElementAtCaretIntentionAction {
+  private final PsiElementPredicate myPredicate = new AnnotateOverriddenMethodsPredicate();
+  private @IntentionName String m_text = null;
 
   @Override
   public @NotNull String getFamilyName() {
@@ -32,21 +38,42 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
 
   @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
-    return new AnnotateOverriddenMethodsPredicate();
+  public final String getText() {
+    return m_text == null ? "" : m_text;
+  }
+
+  @Nullable
+  PsiElement findMatchingElement(@Nullable PsiElement element) {
+    if (element == null || !JavaLanguage.INSTANCE.equals(element.getLanguage())) return null;
+
+    while (element != null) {
+      if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) {
+        break;
+      }
+      else if (myPredicate.satisfiedBy(element)) {
+        return element;
+      }
+      element = element.getParent();
+      if (element instanceof PsiFile) {
+        break;
+      }
+    }
+    return null;
   }
 
   @Override
-  protected String getTextForElement(PsiElement element) {
-    final PsiAnnotation annotation = (PsiAnnotation)element;
+  public final boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement node) {
+    final PsiAnnotation annotation = (PsiAnnotation)findMatchingElement(node);
+    if (annotation == null) return false;
     final String annotationText = annotation.getText();
-    final PsiElement grandParent = element.getParent().getParent();
+    final PsiElement grandParent = annotation.getParent().getParent();
     if (grandParent instanceof PsiMethod) {
-      return IntentionPowerPackBundle.message("annotate.overridden.methods.intention.method.name", annotationText);
+      m_text = IntentionPowerPackBundle.message("annotate.overridden.methods.intention.method.name", annotationText);
     }
     else {
-      return IntentionPowerPackBundle.message("annotate.overridden.methods.intention.parameters.name", annotationText);
+      m_text = IntentionPowerPackBundle.message("annotate.overridden.methods.intention.parameters.name", annotationText);
     }
+    return true;
   }
 
   @Override
@@ -55,13 +82,13 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
-    final PsiAnnotation annotation = (PsiAnnotation)element;
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element){
+    final PsiAnnotation annotation = (PsiAnnotation)findMatchingElement(element);
+    if (annotation == null) return;
     final String annotationName = annotation.getQualifiedName();
     if (annotationName == null) {
       return;
     }
-    final Project project = element.getProject();
     final NullableNotNullManager notNullManager = NullableNotNullManager.getInstance(project);
     final List<String> notNulls = notNullManager.getNotNulls();
     final List<String> nullables = notNullManager.getNullables();
