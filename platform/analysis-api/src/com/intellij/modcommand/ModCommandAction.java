@@ -241,12 +241,27 @@ public interface ModCommandAction extends CommonIntentionAction {
     /**
      * @param thisAction the action the presentation is created for
      * @return a presentation for an action that has a standard "Fix all" option 
-     * to fix all the issues like this in the file.
+     * to fix all the issues like this in the file. Inapplicable to intention quick-fixes.
      */
     public @NotNull Presentation withFixAllOption(@NotNull ModCommandAction thisAction) {
       FixAllOption fixAllOption = new FixAllOption(
         AnalysisBundle.message("intention.name.apply.all.fixes.in.file", thisAction.getFamilyName()),
         action -> action.getClass().equals(thisAction.getClass()));
+      return new Presentation(name, priority, rangesToHighlight, icon, fixAllOption);
+    }
+
+    /**
+     * @param thisAction        the action the presentation is created for
+     * @param belongsToMyFamily a predicate that checks if another action belongs to this action family,
+     *                          and should be applied together with this action
+     * @return a presentation for an action that has a standard "Fix all" option
+     * to fix all the issues like this in the file. Inapplicable to intention quick-fixes.
+     */
+    public @NotNull Presentation withFixAllOption(@NotNull ModCommandAction thisAction,
+                                                  @NotNull Predicate<@NotNull ModCommandAction> belongsToMyFamily) {
+      FixAllOption fixAllOption = new FixAllOption(
+        AnalysisBundle.message("intention.name.apply.all.fixes.in.file", thisAction.getFamilyName()),
+        belongsToMyFamily);
       return new Presentation(name, priority, rangesToHighlight, icon, fixAllOption);
     }
 
