@@ -9,6 +9,7 @@ import com.intellij.execution.util.ProgramParametersConfigurator
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.getPathMapper
+import com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedScriptName
 import com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir
 import com.jetbrains.python.sdk.PythonEnvUtil
 import org.jetbrains.annotations.ApiStatus
@@ -78,7 +79,7 @@ private fun <T> buildScriptFunctionWithConsoleRun(config: PythonRunConfiguration
       scriptBuilder.append(t("os.environ[${key.toStringLiteral()}] = ${value.toStringLiteral()}\n"))
     }
   }
-  val scriptPath = config.scriptName
+  val scriptPath = getExpandedScriptName(config)
   val workingDir = config.workingDirectory
   scriptBuilder.append(t("runfile("))
   scriptBuilder.append(toStringLiteral(toTargetPath(scriptPath)))

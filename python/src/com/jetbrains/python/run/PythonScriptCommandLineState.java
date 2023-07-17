@@ -271,6 +271,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       PythonScriptExecution pythonScriptExecution = new PythonScriptExecution();
       String scriptPath = myConfig.getScriptName();
       if (!StringUtil.isEmptyOrSpaces(scriptPath)) {
+        scriptPath = getExpandedScriptName(myConfig);
         pythonScriptExecution.setPythonScriptPath(getTargetPath(targetEnvironmentRequest, Path.of(scriptPath)));
       }
       pythonExecution = pythonScriptExecution;
@@ -302,7 +303,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     }
     else {
       if (!StringUtil.isEmptyOrSpaces(myConfig.getScriptName())) {
-        scriptParameters.addParameter(myConfig.getScriptName());
+        scriptParameters.addParameter(getExpandedScriptName(myConfig));
       }
     }
 
@@ -332,5 +333,10 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   public static @NotNull String getExpandedWorkingDir(@NotNull AbstractPythonRunConfiguration config) {
     final String workingDirectory = config.getWorkingDirectory();
     return ProgramParametersUtil.expandPathAndMacros(workingDirectory, config.getModule(), config.getProject());
+  }
+
+  public static @NotNull String getExpandedScriptName(@NotNull PythonRunConfiguration config) {
+    final String scriptName = config.getScriptName();
+    return ProgramParametersUtil.expandPathAndMacros(scriptName, config.getModule(), config.getProject());
   }
 }
