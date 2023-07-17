@@ -17,6 +17,8 @@ import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingUtil
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.components.JBList
 import com.intellij.util.ui.JBPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import java.awt.event.MouseEvent
 import java.net.URL
@@ -55,7 +57,18 @@ class RunWidgetStep : NewUiOnboardingStep {
     }
     builder.withHeader(NewUiOnboardingBundle.message("run.widget.step.header"))
 
+    val lottiePageData = withContext(Dispatchers.IO) {
+      NewUiOnboardingUtil.createLottieAnimationPage(LOTTIE_JSON_PATH, RunWidgetStep::class.java.classLoader)
+    }
+    lottiePageData?.let { (html, size) ->
+      builder.withBrowserPage(html, size, withBorder = true)
+    }
+
     val point = NewUiOnboardingUtil.convertPointToFrame(project, actionsList, JBPoint(-4, 27)) ?: return null
     return NewUiOnboardingStepData(builder, point, Balloon.Position.atLeft)
+  }
+
+  companion object {
+    private const val LOTTIE_JSON_PATH = "newUiOnboarding/RunWidgetAnimation.json"
   }
 }
