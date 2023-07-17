@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.paths.PathReferenceManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiReference;
@@ -101,7 +100,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       final Converter converter = WrappingConverter.getDeepestConverter(element.getConverter(), element);
       boolean hasBadResolve = false;
       if (domReference == null || !isDomResolveOK(element, domReference, converter)) {
-        for (final PsiReference reference : ContainerUtil.concat(psiReferences, PathReferenceManagerImpl::remergeWrappedReferences)) {
+        for (final PsiReference reference : psiReferences) {
           if (reference != domReference && hasBadResolve(reference)) {
             hasBadResolve = true;
             list.add(holder.createResolveProblem(element, reference));

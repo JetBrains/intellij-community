@@ -43,7 +43,7 @@ public final class FileReferenceUtil {
       }
       if (ref instanceof PsiFileReference) {
         PsiElement file = references[i].resolve();
-        return file instanceof PsiFile ? (PsiFile)file : null;
+        if(file instanceof PsiFile ) return (PsiFile)file;
       }
     }
     return null;

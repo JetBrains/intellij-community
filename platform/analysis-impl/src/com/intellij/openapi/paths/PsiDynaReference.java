@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.paths;
 
@@ -22,7 +8,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
@@ -70,35 +55,6 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   public void setRangeInElement(TextRange rangeInElement) {
     super.setRangeInElement(rangeInElement);
     this.myPredefinedRange = rangeInElement;
-  }
-
-  @NotNull
-  @Override
-  public TextRange getRangeInElement() {
-
-    PsiReference resolved = null;
-    List<PsiReference> references =
-      ContainerUtil.filter(myReferences, ref -> !(ref instanceof PsiReferencesWrapper) ||
-                                                !((PsiReferencesWrapper)ref).getReferences().isEmpty());
-    PsiReference reference = !references.isEmpty() ? references.get(0) : myReferences.get(0);
-
-    if (reference.resolve() != null) {
-      resolved = reference;
-    }
-
-    final TextRange range = reference.getRangeInElement();
-    int start = range.getStartOffset();
-    int end = range.getEndOffset();
-    for (int i = 1; i < references.size(); i++) {
-      reference = references.get(i);
-      TextRange textRange = PsiMultiReference.getReferenceRange(reference, myElement);
-      start = Math.min(start, textRange.getStartOffset());
-      if (resolved == null) {
-        end = Math.max(end, textRange.getEndOffset());
-      }
-    }
-    if (myPredefinedRange != null && myPredefinedRange.containsRange(start, end)) return myPredefinedRange;
-    return new TextRange(start, end);
   }
 
   @Override
@@ -199,7 +155,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
   @NotNull
   @Override
-  @SuppressWarnings({"UnresolvedPropertyKey"})
+  @SuppressWarnings("UnresolvedPropertyKey")
   public String getUnresolvedMessagePattern() {
     final PsiReference reference = chooseReference();
 
@@ -221,7 +177,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
   public String toString() {
     //noinspection HardCodedStringLiteral
-    return "PsiDynaReference containing " + myReferences.toString();
+    return "PsiDynaReference containing " + myReferences;
   }
 
   @Override
