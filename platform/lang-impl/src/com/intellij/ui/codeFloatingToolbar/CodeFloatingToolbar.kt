@@ -118,8 +118,8 @@ class CodeFloatingToolbar(
     return editor.visualToLogicalPosition(lineStartPosition).line
   }
 
-  override fun createActionGroup(): ActionGroup {
-    val contextAwareActionGroupId = getContextAwareGroupId(editor) ?: FloatingToolbarCustomizer.DefaultGroup().getActionGroup()
+  override fun createActionGroup(): ActionGroup? {
+    val contextAwareActionGroupId = getContextAwareGroupId(editor) ?: return null
     val mainActionGroup = CustomActionsSchema.getInstance().getCorrectedAction(contextAwareActionGroupId) ?: error("Can't find groupId action")
     val showIntentionsAction = CustomActionsSchema.getInstance().getCorrectedAction("ShowIntentionActions")
                                ?: error("Can't find ShowIntentionActions action")
