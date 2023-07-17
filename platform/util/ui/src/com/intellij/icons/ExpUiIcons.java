@@ -559,7 +559,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon RestartDebug = load("expui/run/restartDebug.svg", -223933424, 10);
     /** 16x16 */ public static final @NotNull Icon RestartFailedTests = load("expui/run/restartFailedTests.svg", 738772164, 2);
     /** 16x16 */ public static final @NotNull Icon RestartFrame = load("expui/run/restartFrame.svg", 1963242090, 2);
-    /** 16x16 */ public static final @NotNull Icon Resume = load("expui/run/resume.svg", -73041368, 2);
+    /** 16x16 */ public static final @NotNull Icon Resume = load("expui/run/resume.svg", -73041368, 10);
     /** 16x16 */ public static final @NotNull Icon Run = load("expui/run/run.svg", 1480198900, 10);
     /** 16x16 */ public static final @NotNull Icon RunToCursor = load("expui/run/runToCursor.svg", 847988141, 2);
     /** 16x16 */ public static final @NotNull Icon RunWithCoverage = load("expui/run/runWithCoverage.svg", 1295119429, 2);
