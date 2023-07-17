@@ -20,7 +20,6 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.gradle.util.GradleVersion
@@ -30,7 +29,6 @@ import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants.GRADLE_PLUGIN_ID
@@ -243,7 +241,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             }
             if (addVersionToSettings) {
                 rootModule.getBuildScriptSettingsPsiFile()?.let {
-                    if (configureSettingsFile(it, kotlinVersion, filesToOpen)) { // This happens only for JVM, not for Android
+                    if (it.canBeConfigured() && configureSettingsFile(it, kotlinVersion, filesToOpen)) { // This happens only for JVM, not for Android
                         addVersionToModuleBuildScript = false
                     }
                 }
@@ -263,7 +261,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                 } else {
                     getTargetBytecodeVersionFromModule(rootModule, kotlinVersion)
                 }
-                if (canConfigureFile(topLevelBuildScript)) {
+                if (topLevelBuildScript.canBeConfigured()) {
                     configureModule(
                         rootModule,
                         topLevelBuildScript,
@@ -308,7 +306,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
         for (module in modulesToConfigure) {
             val file = module.getBuildScriptPsiFile()
-            if (file != null && canConfigureFile(file)) {
+            if (file != null && file.canBeConfigured()) {
                 if (file == topLevelBuildScript) { // We configured the root module separately above
                     continue
                 }
@@ -522,7 +520,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
         fun addKotlinLibraryToModule(module: Module, scope: DependencyScope, libraryDescriptor: ExternalLibraryDescriptor) {
             val buildScript = module.getBuildScriptPsiFile() ?: return
-            if (!canConfigureFile(buildScript)) {
+            if (!buildScript.canBeConfigured()) {
                 return
             }
 
@@ -560,7 +558,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             }
 
         private fun changeBuildGradle(module: Module, body: (PsiFile) -> PsiElement?): PsiElement? = module.getBuildScriptPsiFile()
-            ?.takeIf { canConfigureFile(it) }
+            ?.takeIf { it.canBeConfigured() }
             ?.let {
                 it.project.executeWriteCommand(KotlinIdeaGradleBundle.message("change.build.gradle.configuration"), null) { body(it) }
             }
@@ -568,8 +566,6 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         fun getKotlinStdlibVersion(module: Module): String? = module.getBuildScriptPsiFile()?.let {
             GradleBuildScriptSupport.getManipulator(it).getKotlinStdlibVersion()
         }
-
-        private fun canConfigureFile(file: PsiFile): Boolean = WritingAccessProvider.isPotentiallyWritable(file.virtualFile, null)
 
         private fun showErrorMessage(project: Project, @Nls message: String?) {
             Messages.showErrorDialog(

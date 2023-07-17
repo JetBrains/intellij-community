@@ -407,8 +407,33 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
         }
     }
 
+    @Test
+    @TargetVersions("7.6+")
+    fun testBuildScriptWithWhitespacesKts() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val moduleApp = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(moduleApp),
+                    IdeKotlinVersion.get("1.9.0"),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+
+                val subModules = listOf("app", "app1")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
     /**
-     * This test fails expectedly:
+     * This test fails expectedly because the root module contains 1.8.0 and a submodule contains 1.7.0:
      * Error resolving plugin [id: 'org.jetbrains.kotlin.jvm', version: '1.7.0']
      * > The request for this plugin could not be satisfied because the plugin is already on the classpath with a different version (1.8.0).
      *

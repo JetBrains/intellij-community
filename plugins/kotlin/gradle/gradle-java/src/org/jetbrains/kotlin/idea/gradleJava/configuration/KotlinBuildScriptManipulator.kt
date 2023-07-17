@@ -65,10 +65,11 @@ class KotlinBuildScriptManipulator(
     override fun configureSettingsFile(pluginName: String, version: IdeKotlinVersion): Boolean {
         val originalText = scriptFile.text
         scriptFile.getPluginManagementBlock()?.findOrCreateBlock("plugins")?.let {
-            it.findPluginInPluginsGroup(pluginName)
-                ?: it.addExpressionIfMissing(
+            if (it.findPluginInPluginsGroup(pluginName) == null) {
+                it.addExpressionIfMissing(
                     "$pluginName version \"${version.artifactVersion}\""
                 ) as? KtCallExpression
+            }
         }
         return originalText != scriptFile.text
     }
@@ -80,7 +81,7 @@ class KotlinBuildScriptManipulator(
     override fun findAndRemoveKotlinVersionFromBuildScript(): Boolean {
         val pluginsBlock = scriptFile.findScriptInitializer("plugins")?.getBlock()
         return pluginsBlock?.let {
-            if (!it.findAndRemoveVersionExpressionInPluginsGroup("kotlin(\"jvm\")")) { //.findPluginInPluginsGroup("kotlin")
+            if (!it.findAndRemoveVersionExpressionInPluginsGroup("kotlin(\"jvm\")")) {
                 it.findAndRemoveVersionExpressionInPluginsGroup("id(\"org.jetbrains.kotlin.jvm\")")
             } else {
                 true
@@ -91,15 +92,17 @@ class KotlinBuildScriptManipulator(
     override fun PsiElement.findParentBlock(name: String): PsiElement? {
         val parent = PsiTreeUtil.findFirstParent(this) { elem ->
             (elem is KtCallExpression && elem.calleeExpression?.text?.contains(name) == true) ||
-            (elem is KtDotQualifiedExpression && elem.text?.contains(name) == true)
+                    (elem is KtDotQualifiedExpression && elem.text?.contains(name) == true)
         }
         when (parent) {
             is KtCallExpression -> {
                 return parent.getBlock()
             }
+
             is KtDotQualifiedExpression -> {
                 return parent
             }
+
             else -> {
                 return null
             }
@@ -243,9 +246,13 @@ class KotlinBuildScriptManipulator(
             it.getTopLevelBuildScriptSettingsPsiFile() as? KtFile
         } ?: return null
 
+        if (!settingsFile.canBeConfigured()) {
+            return null
+        }
+
         val originalText = settingsFile.text
 
-        val pluginBlock = settingsFile.getPluginsBlock() ?: return null
+        val pluginBlock = settingsFile.getSettingsPluginsBlock() ?: return null
         if (pluginBlock.findPluginInPluginsGroup("id(\"$FOOJAY_RESOLVER_NAME\")") != null) return null
         if (pluginBlock.findPluginInPluginsGroup("id(\"$FOOJAY_RESOLVER_CONVENTION_NAME\")") != null) return null
         val foojayVersion = Versions.GRADLE_PLUGINS.FOOJAY_VERSION
@@ -305,10 +312,12 @@ class KotlinBuildScriptManipulator(
 
     private fun KtBlockExpression.addNoVersionCompileStdlibIfMissing(stdlibArtifactName: String): KtCallExpression? =
         findStdLibDependency() ?: addExpressionIfMissing(
-            "implementation(${getKotlinModuleDependencySnippet(
-                stdlibArtifactName,
-                null
-            )})"
+            "implementation(${
+                getKotlinModuleDependencySnippet(
+                    stdlibArtifactName,
+                    null
+                )
+            })"
         ) as? KtCallExpression
 
     private fun KtFile.containsCompileStdLib(): Boolean =
@@ -344,6 +353,7 @@ class KotlinBuildScriptManipulator(
         val receivedPluginName = when {
             receiverCalleeExpressionText == "id" ->
                 receiverCalleeExpression.valueArguments.firstOrNull()?.text?.trim()?.removeSurrounding("\"")
+
             operatorName == "version" -> receiverCalleeExpressionText
             else -> null
         }
@@ -361,6 +371,7 @@ class KotlinBuildScriptManipulator(
                         it.right,
                         it.left as? KtCallExpression
                     )
+
                     is KtDotQualifiedExpression ->
                         (it.selectorExpression as? KtCallExpression)?.run {
                             getPluginInfoFromBuildScript(
@@ -369,6 +380,7 @@ class KotlinBuildScriptManipulator(
                                 it.receiverExpression as? KtCallExpression
                             )
                         }
+
                     else -> null
                 }
             }.toMap()
@@ -387,11 +399,13 @@ class KotlinBuildScriptManipulator(
                 is KtBinaryExpression -> {
                     if (it.operationReference.text == "version") it.left as? KtCallExpression else null
                 }
+
                 is KtDotQualifiedExpression -> {
                     if ((it.selectorExpression as? KtCallExpression)?.calleeExpression?.text == "version") {
                         it.receiverExpression as? KtCallExpression
                     } else null
                 }
+
                 else -> null
             }
         }.find {
@@ -400,16 +414,27 @@ class KotlinBuildScriptManipulator(
     }
 
     private fun KtBlockExpression.findAndRemoveVersionExpressionInPluginsGroup(pluginName: String): Boolean {
+        val pluginNameWithoutWhitespaces = pluginName.filter { letter -> !letter.isWhitespace() }
         PsiTreeUtil.getChildrenOfAnyType(
             this,
-            KtCallExpression::class.java,
             KtBinaryExpression::class.java,
             KtDotQualifiedExpression::class.java
         ).forEach {
-            if (it is KtBinaryExpression) {
-                if (it.text.contains(pluginName) && it.text.contains("version")) {
-                    it.replace(scriptFile.psiFactory.createExpression(pluginName))
-                    return true
+            when (it) {
+                is KtBinaryExpression -> {
+                    val textWithoutWhitespaces = it.text.filter { letter -> !letter.isWhitespace() }
+                    if (textWithoutWhitespaces.contains(pluginNameWithoutWhitespaces) && textWithoutWhitespaces.contains("version")) {
+                        it.replace(scriptFile.psiFactory.createExpression(pluginName))
+                        return true
+                    }
+                }
+
+                is KtDotQualifiedExpression -> {
+                    val textWithoutWhitespaces = it.text.filter { letter -> !letter.isWhitespace() }
+                    if (textWithoutWhitespaces.contains(pluginNameWithoutWhitespaces) && textWithoutWhitespaces.contains("version")) {
+                        it.replace(scriptFile.psiFactory.createExpression(pluginName))
+                        return true
+                    }
                 }
             }
         }
@@ -457,6 +482,7 @@ class KotlinBuildScriptManipulator(
             (calleeText == "kotlinModule" || calleeText == "kotlin") &&
                     valueArguments.firstOrNull()?.getArgumentExpression()?.text?.startsWith("\"stdlib") ?: false
         }
+
         is KtStringTemplateExpression -> text.startsWith("\"$STDLIB_ARTIFACT_PREFIX")
         else -> false
     }
@@ -471,7 +497,9 @@ class KotlinBuildScriptManipulator(
 
     private fun KtFile.getDependenciesBlock(): KtBlockExpression? = findOrCreateScriptInitializer("dependencies")
 
-    private fun KtFile.getPluginsBlock(): KtBlockExpression? {
+    private fun KtFile.getPluginsBlock(): KtBlockExpression? = findOrCreateScriptInitializer("plugins", true)
+
+    private fun KtFile.getSettingsPluginsBlock(): KtBlockExpression? {
         val pluginsInitializer = findScriptInitializer("plugins")?.getBlock()
         if (pluginsInitializer != null) {
             return pluginsInitializer

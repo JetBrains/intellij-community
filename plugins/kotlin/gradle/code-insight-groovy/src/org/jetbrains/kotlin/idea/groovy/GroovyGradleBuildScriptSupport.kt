@@ -78,7 +78,8 @@ class GroovyBuildScriptManipulator(
         val setExpressions = PsiTreeUtil.findChildrenOfType(this, GrMethodCallExpression::class.java)
             .filter {
                 (it.invokedExpression.text.contains("$variableName.set") || it.invokedExpression.text == "set${variableName.capitalize()}")
-                    && it.expressionArguments.size == 1 }
+                        && it.expressionArguments.size == 1
+            }
 
         return (assignments + setExpressions).sortedBy { it.startOffset }
     }
@@ -195,12 +196,20 @@ class GroovyBuildScriptManipulator(
 
     override fun findAndRemoveKotlinVersionFromBuildScript(): Boolean {
         val pluginsBlock = scriptFile.getBlockByName("plugins")
-        return pluginsBlock?.findAndRemoveVersionExpressionInPluginsGroup("id 'org.jetbrains.kotlin.jvm'") ?: false
+        return pluginsBlock?.let {
+            if (!pluginsBlock.findAndRemoveVersionExpressionInPluginsGroup("id 'org.jetbrains.kotlin.jvm'")) {
+                pluginsBlock.findAndRemoveVersionExpressionInPluginsGroup("id \"org.jetbrains.kotlin.jvm\"")
+            } else {
+                true
+            }
+        } ?: false
     }
 
     private fun GrClosableBlock.findAndRemoveVersionExpressionInPluginsGroup(pluginName: String): Boolean {
         getChildrenOfType<GrStatement>().forEach {
-            if (it.text.contains(pluginName) && it.text.contains("version")) {
+            val textWithoutWhitespaces = it.text.filter { letter -> !letter.isWhitespace() }
+            val pluginNameWithoutWhitespaces = pluginName.filter { letter -> !letter.isWhitespace() }
+            if (textWithoutWhitespaces.contains(pluginNameWithoutWhitespaces) && textWithoutWhitespaces.contains("version")) {
                 val psiFactory = GroovyPsiElementFactory.getInstance(project)
                 val newStatement = psiFactory.createStatementFromText(pluginName)
                 it.replace(newStatement)
@@ -314,9 +323,13 @@ class GroovyBuildScriptManipulator(
             it.getTopLevelBuildScriptSettingsPsiFile() as? GroovyFile
         } ?: return null
 
+        if (!settingsFile.canBeConfigured()) {
+            return null
+        }
+
         val originalText = settingsFile.text
 
-        val pluginBlock = settingsFile.getPluginsBlock()
+        val pluginBlock = settingsFile.getSettingsPluginsBlock()
         if (pluginBlock.text.contains(FOOJAY_RESOLVER_NAME)) return null
         val foojayVersion = Versions.GRADLE_PLUGINS.FOOJAY_VERSION
         pluginBlock.addLastStatementInBlockIfNeeded("id '$FOOJAY_RESOLVER_CONVENTION_NAME' version '$foojayVersion'")
@@ -566,6 +579,11 @@ class GroovyBuildScriptManipulator(
         }
 
         fun GrStatementOwner.getPluginsBlock() = getBlockOrCreate("plugins") { newBlock ->
+            addAfter(newBlock, getBlockByName("buildscript"))
+            true
+        }
+
+        fun GrStatementOwner.getSettingsPluginsBlock() = getBlockOrCreate("plugins") { newBlock ->
             val beforeBlock = getBlockByName("buildscript") ?: getBlockByName("pluginManagement")
             addAfter(newBlock, beforeBlock?.parent)
             true
