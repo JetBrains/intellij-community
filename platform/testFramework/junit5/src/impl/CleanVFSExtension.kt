@@ -57,6 +57,6 @@ private constructor(private val cleanBeforeEach: Boolean = false,
   private fun cleanVFS(context: ExtensionContext) {
     context.publishReportEntry("Request VFS rebuild (for better tests isolation)")
 
-    FSRecords.invalidateCaches("Rebuild VFS (for better tests isolation)")
+    FSRecords.getInstance().scheduleRebuild("Rebuild VFS (for better tests isolation)", null)
   }
 }

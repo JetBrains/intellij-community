@@ -233,10 +233,11 @@ public final class FSRecordsImpl {
 
       PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(USE_CONTENT_HASHES, connection);
       PersistentFSAttributeAccessor attributeAccessor = new PersistentFSAttributeAccessor(connection);
-      PersistentFSTreeAccessor treeAccessor = attributeAccessor.supportsRawAccess() && USE_RAW_ACCESS_TO_READ_CHILDREN ?
-                                              new PersistentFSTreeRawAccessor(attributeAccessor, connection) :
-                                              new PersistentFSTreeAccessor(attributeAccessor, connection);
       PersistentFSRecordAccessor recordAccessor = new PersistentFSRecordAccessor(contentAccessor, attributeAccessor, connection);
+      PersistentFSTreeAccessor treeAccessor = attributeAccessor.supportsRawAccess() && USE_RAW_ACCESS_TO_READ_CHILDREN ?
+                                              new PersistentFSTreeRawAccessor(attributeAccessor, recordAccessor, connection) :
+                                              new PersistentFSTreeAccessor(attributeAccessor, recordAccessor, connection);
+
 
       try {
         treeAccessor.ensureLoaded();
@@ -1189,14 +1190,13 @@ public final class FSRecordsImpl {
   //========== aux: ========================================
 
   /**
-   * With method create 'VFS corruption marker', which forces VFS to rebuild on next startup.
+   * This method creates 'VFS rebuild marker', which forces VFS to rebuild on the next startup.
    * If cause argument is not null -- this scenario is considered an 'error', and warnings are
    * logged, if cause is null -- the scenario is considered not an 'error', but a regular
    * request -- e.g. no errors logged.
-   * TODO rename to scheduleRebuild()?
    */
-  void invalidateCaches(final @Nullable String diagnosticMessage,
-                        final @Nullable Throwable cause) {
+  public void scheduleRebuild(final @Nullable String diagnosticMessage,
+                              final @Nullable Throwable cause) {
     checkNotDisposed();
     connection.scheduleVFSRebuild(diagnosticMessage, cause);
   }

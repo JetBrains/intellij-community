@@ -45,8 +45,9 @@ public class VFSChildrenAccessBenchmark {
 
     folderId = vfs.createRecord();
 
-    oldTreeAccessor = new PersistentFSTreeAccessor(attributeAccessor, connection);
-    newTreeAccessor = new PersistentFSTreeRawAccessor(attributeAccessor, connection);
+    PersistentFSRecordAccessor recordsAccessor = vfs.recordAccessor();
+    oldTreeAccessor = new PersistentFSTreeAccessor(attributeAccessor, recordsAccessor, connection);
+    newTreeAccessor = new PersistentFSTreeRawAccessor(attributeAccessor, recordsAccessor, connection);
 
 
     ArrayList<ChildInfo> childrenInfos = new ArrayList<>();

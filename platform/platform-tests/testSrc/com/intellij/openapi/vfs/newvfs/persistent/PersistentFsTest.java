@@ -99,27 +99,27 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   public void testFileContentHash() throws Exception {
     File file = tempDirectory.newFile("test.txt", "one".getBytes(UTF_8));
     VirtualFile vFile = refreshAndFind(file);
-    PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
+    PersistentFSImpl pfs = (PersistentFSImpl)PersistentFS.getInstance();
 
-    byte[] hash = PersistentFSImpl.getContentHashIfStored(vFile);
+    byte[] hash = pfs.contentHashIfStored(vFile);
     assertNull(hash);  // content is not yet loaded
 
     vFile.contentsToByteArray();
-    hash = PersistentFSImpl.getContentHashIfStored(vFile);
+    hash = pfs.contentHashIfStored(vFile);
     assertNotNull(hash);
 
     WriteAction.runAndWait(() -> VfsUtil.saveText(vFile, "two"));
-    byte[] newHash = PersistentFSImpl.getContentHashIfStored(vFile);
+    byte[] newHash = pfs.contentHashIfStored(vFile);
     assertNotNull(newHash);
     assertFalse(Arrays.equals(hash, newHash));  // different contents should have different hashes
 
     WriteAction.runAndWait(() -> VfsUtil.saveText(vFile, "one"));
-    newHash = PersistentFSImpl.getContentHashIfStored(vFile);
+    newHash = pfs.contentHashIfStored(vFile);
     assertArrayEquals(hash, newHash);  // equal contents should have the equal hashes
 
     VfsTestUtil.deleteFile(vFile);
-    assertNotNull(fs.contentsToByteArray(vFile));  // deleted files preserve content, and thus hash
-    assertArrayEquals(hash, PersistentFSImpl.getContentHashIfStored(vFile));
+    assertNotNull(pfs.contentsToByteArray(vFile));  // deleted files preserve content, and thus hash
+    assertArrayEquals(hash, pfs.contentHashIfStored(vFile));
   }
 
   @Test

@@ -12,6 +12,6 @@ class FSRecordsCacheInvalidator : CachesInvalidator() {
   override fun optionalCheckboxDefaultValue(): Boolean = Registry.`is`("idea.invalidate.caches.invalidates.vfs")
 
   override fun invalidateCaches() {
-    FSRecords.invalidateCaches("By FSRecordsCacheInvalidator request")
+    FSRecords.getInstance().scheduleRebuild("By FSRecordsCacheInvalidator request", /* error: */ null)
   }
 }

@@ -36,6 +36,17 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 /**
  * This class is just an 'instance holder' -- actual implementation is an {@link FSRecordsImpl} instance,
  * all methods delegate to it.
+ *
+ * Current policy: avoid use of this class outside of VFS impl code, inside VFS impl code migrate to use
+ * the {@link FSRecordsImpl} _instance_ obtained by {@link #connect(List)}.
+ *
+ * This is very low-level API, intended to be used only by VFS implementation code only -- mainly
+ * {@link PersistentFSImpl}. Inside VFS implementation all the calls should go through the instance
+ * obtained by {@link #connect(List)}. Current usages of static methods should be gradually migrated.
+ * {@link FSRecords#getInstance()} method could be used to help with migration.
+ *
+ * At the end I plan to convert {@link FSRecordsImpl} a regular {@link com.intellij.openapi.components.Service},
+ * and {@link FSRecords#implOrFail()} -- to a usual .getInstance() method.
  */
 @ApiStatus.Internal
 public final class FSRecords {
@@ -84,16 +95,18 @@ public final class FSRecords {
 
   //========== lifecycle: =====================================================
 
-  static synchronized void connect(@NotNull List<ConnectionInterceptor> connectionInterceptors) throws UncheckedIOException {
-    connect(connectionInterceptors, FSRecordsImpl.getDefaultErrorHandler());
+  static synchronized FSRecordsImpl connect(@NotNull List<ConnectionInterceptor> connectionInterceptors) throws UncheckedIOException {
+    return connect(connectionInterceptors, FSRecordsImpl.getDefaultErrorHandler());
   }
 
-  static synchronized void connect(@NotNull List<ConnectionInterceptor> connectionInterceptors,
-                                   @NotNull FSRecordsImpl.ErrorHandler errorHandler) throws UncheckedIOException {
-    impl = FSRecordsImpl.connect(Path.of(getCachesDir()), connectionInterceptors, errorHandler);
+  static synchronized FSRecordsImpl connect(@NotNull List<ConnectionInterceptor> connectionInterceptors,
+                                            @NotNull FSRecordsImpl.ErrorHandler errorHandler) throws UncheckedIOException {
+    FSRecordsImpl _impl = FSRecordsImpl.connect(Path.of(getCachesDir()), connectionInterceptors, errorHandler);
+    impl = _impl;
+    return _impl;
   }
 
-  static synchronized void dispose() {
+  static synchronized void disconnect() {
     FSRecordsImpl _impl = impl;
     if (_impl != null) {
       _impl.dispose();
@@ -110,6 +123,10 @@ public final class FSRecords {
     }
 
     return _impl;
+  }
+
+  public static @NotNull FSRecordsImpl getInstance(){
+    return implOrFail();
   }
 
 
@@ -452,7 +469,7 @@ public final class FSRecords {
   /** Method creates 'VFS corruption marker', which forces VFS to rebuild on the next startup */
   public static void invalidateCaches(@NotNull String diagnosticMessage,
                                       @NotNull Throwable errorCause) {
-    implOrFail().invalidateCaches(diagnosticMessage, errorCause);
+    implOrFail().scheduleRebuild(diagnosticMessage, errorCause);
   }
 
   /**
@@ -461,7 +478,7 @@ public final class FSRecords {
    * considered a scenario as 'an error', but as a regular request -- e.g. no errors logged.
    */
   public static void invalidateCaches(@NotNull String diagnosticMessage) {
-    implOrFail().invalidateCaches(diagnosticMessage, null);
+    implOrFail().scheduleRebuild(diagnosticMessage, null);
   }
 
   /** @deprecated please use {@link #invalidateCaches(String)} instead -> provide explicit reason for invalidate caches */
@@ -491,11 +508,6 @@ public final class FSRecords {
   }
 
   //========== diagnostic, sanity checks: ==================================
-
-
-  static void checkSanity() {
-    implOrFail().checkSanity();
-  }
 
   /**
    * @return human-readable description of file fileId -- as much information as VFS now contains

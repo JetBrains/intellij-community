@@ -312,7 +312,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private void updateCaseSensitivityIfUnknown(@NotNull String childName) {
     VFilePropertyChangeEvent caseSensitivityEvent = generateCaseSensitivityChangedEventForUnknownCase(this, childName);
     if (caseSensitivityEvent != null) {
-      PersistentFSImpl.executeChangeCaseSensitivity(this, (FileAttributes.CaseSensitivity)caseSensitivityEvent.getNewValue());
+
+      changeCaseSensitivity(this, (FileAttributes.CaseSensitivity)caseSensitivityEvent.getNewValue());
       // fire event asynchronously to avoid deadlocks with possibly currently-held VFP/Refresh queue locks
       RefreshQueue.getInstance().processEvents(true, List.of(caseSensitivityEvent));
       // when the case-sensitivity changes, the "children must be sorted by name" invariant must be restored
@@ -905,9 +906,17 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                             actualCaseSensitivity, true);
       }
       else {
-        PersistentFSImpl.executeChangeCaseSensitivity(dir, actualCaseSensitivity);
+        changeCaseSensitivity(dir, actualCaseSensitivity);
       }
     }
     return null;
+  }
+
+  private static void changeCaseSensitivity(@NotNull VirtualFile vFile,
+                                            @NotNull FileAttributes.CaseSensitivity newValue) {
+    ((PersistentFSImpl)PersistentFS.getInstance()).executeChangeCaseSensitivity(
+      vFile,
+      newValue
+    );
   }
 }

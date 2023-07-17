@@ -19,9 +19,11 @@ import java.util.List;
  * that option to bypass copy into byte[], and read from it via {@link java.io.InputStream}.
  */
 public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
-  PersistentFSTreeRawAccessor(final @NotNull PersistentFSAttributeAccessor attributeAccessor,
-                              final @NotNull PersistentFSConnection connection) {
-    super(attributeAccessor, connection);
+  PersistentFSTreeRawAccessor(@NotNull PersistentFSAttributeAccessor attributeAccessor,
+                              @NotNull PersistentFSRecordAccessor recordAccessor,
+                              @NotNull PersistentFSConnection connection) {
+    super(attributeAccessor, recordAccessor, connection);
+    
     if (!myAttributeAccessor.supportsRawAccess()) {
       throw new IllegalArgumentException("attributesAccessor must .supportsRawAccess(): " + attributeAccessor);
     }

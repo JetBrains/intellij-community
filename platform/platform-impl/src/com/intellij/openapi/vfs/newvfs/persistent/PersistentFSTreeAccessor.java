@@ -43,13 +43,18 @@ class PersistentFSTreeAccessor {
   protected static final int SUPER_ROOT_ID = FSRecords.ROOT_FILE_ID;
 
   protected final PersistentFSAttributeAccessor myAttributeAccessor;
+  protected final PersistentFSRecordAccessor recordAccessor;
   protected final PersistentFSConnection connection;
+
   protected final @Nullable FsRootDataLoader myFsRootDataLoader;
+
   protected final Lock myRootsAccessLock = new ReentrantLock();
 
   PersistentFSTreeAccessor(@NotNull PersistentFSAttributeAccessor attributeAccessor,
+                           @NotNull PersistentFSRecordAccessor recordAccessor,
                            @NotNull PersistentFSConnection connection) {
     myAttributeAccessor = attributeAccessor;
+    this.recordAccessor = recordAccessor;
     this.connection = connection;
     myFsRootDataLoader = SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false)
                          ? ApplicationManager.getApplication().getService(FsRootDataLoader.class)
@@ -237,7 +242,7 @@ class PersistentFSTreeAccessor {
       rootUrlId = connection.getNames().enumerate(rootUrl);
 
       try (DataOutputStream output = myAttributeAccessor.writeAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
-        final int newRootFileId = FSRecords.createRecord();
+        final int newRootFileId = recordAccessor.createRecord();
 
         final int index = Arrays.binarySearch(rootIds, newRootFileId);
         if (index >= 0) {
