@@ -76,9 +76,9 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
           renderer = SimpleListCellRenderer.create("")
           {
             when (it) {
-              EditorSettings.LineNumerationType.ABSOLUTE -> "Absolute"
-              EditorSettings.LineNumerationType.RELATIVE -> "Relative"
-              EditorSettings.LineNumerationType.HYBRID -> "Hybrid"
+              EditorSettings.LineNumerationType.ABSOLUTE -> ApplicationBundle.message("line.numeration.type.absolute")
+              EditorSettings.LineNumerationType.RELATIVE -> ApplicationBundle.message("line.numeration.type.relative")
+              EditorSettings.LineNumerationType.HYBRID -> ApplicationBundle.message("line.numeration.type.hybrid")
               else -> "null"
             }
           }
