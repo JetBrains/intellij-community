@@ -963,7 +963,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       final GridBag constraint = new GridBag()
         .setDefaultWeightX(1.0)
         .setDefaultWeightY(1.0);
-      if(showDefaultConfigurationOptions){
+      if (showDefaultConfigurationOptions) {
         myOptionsPanel.add(severityPanel, constraint.nextLine().weighty(severityPanelWeightY).fillCell().insetTop(SECTION_GAP));
       }
 
