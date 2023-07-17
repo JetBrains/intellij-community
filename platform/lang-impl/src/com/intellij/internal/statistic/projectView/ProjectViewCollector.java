@@ -33,7 +33,7 @@ public final class ProjectViewCollector extends ProjectUsagesCollector {
 
   @Override
   protected @NotNull Set<MetricEvent> getMetrics(final @NotNull Project project) {
-    final ProjectView projectView = ProjectView.getInstance(project);
+    final ProjectView projectView = project.getServiceIfCreated(ProjectView.class);
     if (projectView == null) {
       return Collections.emptySet();
     }
