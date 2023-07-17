@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -47,22 +46,10 @@ interface CombinedDiffBlock<ID : CombinedBlockId> : Disposable {
 class CombinedDiffBlockContent(val viewer: FrameDiffTool.DiffViewer, val blockId: CombinedBlockId)
 
 interface CombinedDiffBlockFactory<ID : CombinedBlockId> {
-  companion object {
-    private val EP_COMBINED_DIFF_BLOCK_FACTORY =
-      ExtensionPointName<CombinedDiffBlockFactory<*>>("com.intellij.diff.tools.combined.diffBlockFactory")
-
-    @Suppress("UNCHECKED_CAST")
-    fun <ID : CombinedBlockId> findApplicable(content: CombinedDiffBlockContent): CombinedDiffBlockFactory<ID>? {
-      return EP_COMBINED_DIFF_BLOCK_FACTORY.findFirstSafe { it.isApplicable(content) } as? CombinedDiffBlockFactory<ID>
-    }
-  }
-
-  fun isApplicable(content: CombinedDiffBlockContent): Boolean
   fun createBlock(project: Project, content: CombinedDiffBlockContent): CombinedDiffBlock<ID>
 }
 
 class CombinedSimpleDiffBlockFactory : CombinedDiffBlockFactory<CombinedPathBlockId> {
-  override fun isApplicable(content: CombinedDiffBlockContent) = true //default factory
   override fun createBlock(project: Project,
                            content: CombinedDiffBlockContent): CombinedDiffBlock<CombinedPathBlockId> =
     with(content.blockId as CombinedPathBlockId) {

@@ -212,7 +212,7 @@ class CombinedDiffViewer(
       focusListener.register(viewer.component, this)
     }
 
-    val diffBlockFactory = CombinedDiffBlockFactory.findApplicable<CombinedBlockId>(content)!!
+    val diffBlockFactory = CombinedSimpleDiffBlockFactory()
 
     val diffBlock = diffBlockFactory.createBlock(project, content)
     val blockId = diffBlock.id
