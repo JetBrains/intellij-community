@@ -8,7 +8,9 @@ import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
+import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
@@ -63,6 +65,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
+import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -107,6 +110,12 @@ fun loadApp() {
 @Internal
 fun loadApp(setupEventQueue: Runnable) {
   enableCoroutineDump()
+  JBR.getJstack()?.includeInfoFrom {
+    """
+    $COROUTINE_DUMP_HEADER
+    ${dumpCoroutines(stripDump = false)}
+    """
+  }
   val isHeadless = UITestUtil.getAndSetHeadlessProperty()
   AppMode.setHeadlessInTestMode(isHeadless)
   PluginManagerCore.isUnitTestMode = true
