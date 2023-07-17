@@ -3,9 +3,10 @@ package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
+import com.intellij.execution.services.ServiceViewNavBarService.ServiceViewNavBarSelector;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDManager;
-import com.intellij.ide.navigationToolbar.NavBarModel;
+import com.intellij.ide.navbar.vm.NavBarVm;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -32,6 +33,7 @@ import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -70,9 +72,6 @@ final class ServiceTreeView extends ServiceView {
     myTreeModel = new ServiceViewTreeModel(model);
     myTree = new ServiceViewTree(myTreeModel, this);
 
-    myListener = new ServiceViewTreeModelListener();
-    model.addModelListener(myListener);
-
     ServiceViewActionProvider actionProvider = ServiceViewActionProvider.getInstance();
     ui.setServiceToolbar(actionProvider);
     ui.setMasterComponent(myTree, actionProvider);
@@ -86,17 +85,29 @@ final class ServiceTreeView extends ServiceView {
     myTree.addTreeSelectionListener(new RestoreSelectionListener());
     myTree.addTreeSelectionListener(e -> onSelectionChanged());
 
-    Consumer<ServiceViewItem> selector = item ->
-      select(item.getValue(), item.getRootContributor().getClass())
-        .onSuccess(result -> AppUIExecutor.onUiThread().expireWith(this).submit(() -> {
-          JComponent component = getUi().getDetailsComponent();
-          if (component != null) {
-            IdeFocusManager.getInstance(getProject()).requestFocus(component, false);
-          }
-        }));
-    myNavBarPanel = new ServiceViewNavBarPanel(getProject(), true, getModel(), selector);
-    myNavBarPanel.getModel().updateModel((Object)null);
+    ServiceViewNavBarSelector selector = new ServiceViewNavBarSelector() {
+      @Override
+      public void select(@NotNull ServiceModel.ServiceViewItem item) {
+        ServiceTreeView.this.select(item.getValue(), item.getRootContributor().getClass())
+          .onSuccess(result -> AppUIExecutor.onUiThread().expireWith(ServiceTreeView.this).submit(() -> {
+            JComponent component = getUi().getDetailsComponent();
+            if (component != null) {
+              IdeFocusManager.getInstance(getProject()).requestFocus(component, false);
+            }
+          }));
+      }
+
+      @Nullable
+      @Override
+      public ServiceViewItem getSelectedItem() {
+        return myLastSelection;
+      }
+    };
+    myNavBarPanel = ServiceViewNavBarService.getInstance(project).createNavBarPanel(this, selector);
     myUi.setNavBar(myNavBarPanel);
+
+    myListener = new ServiceViewTreeModelListener();
+    model.addModelListener(myListener);
 
     if (model instanceof ServiceViewModel.AllServicesModel) {
       setEmptyText(myTree, myTree.getEmptyText());
@@ -241,7 +252,11 @@ final class ServiceTreeView extends ServiceView {
       IdeFocusManager.getInstance(getProject()).requestFocus(myTree, false);
     }
     else {
-      myNavBarPanel.rebuildAndSelectTail(true);
+      NavBarVm vm = myNavBarPanel.getModel();
+      if (vm != null) {
+        myNavBarPanel.updateModel();
+        vm.selectTail();
+      }
     }
   }
 
@@ -271,7 +286,7 @@ final class ServiceTreeView extends ServiceView {
     }
 
     myLastSelection = newSelection;
-    myNavBarPanel.getModel().updateModel(newSelection);
+    myNavBarPanel.updateModel();
 
     if (!mySelected) return;
 
@@ -323,40 +338,6 @@ final class ServiceTreeView extends ServiceView {
         }
       }
     });
-  }
-
-  private void updateNavBar() {
-    AppUIExecutor.onUiThread().expireWith(this).submit(() -> {
-      ServiceViewItem item = getNavBarItem();
-      if (item == null) return;
-
-      WeakReference<ServiceViewItem> itemRef = new WeakReference<>(item);
-      getModel().getInvoker().invoke(() -> {
-        ServiceViewItem viewItem = itemRef.get();
-        if (viewItem == null) return;
-
-        ServiceViewItem updatedItem = getModel().findItemSafe(viewItem);
-        if (updatedItem != null) {
-          WeakReference<ServiceViewItem> updatedRef = new WeakReference<>(updatedItem);
-          AppUIExecutor.onUiThread().expireWith(this).submit(() -> {
-            ServiceViewItem updatedViewItem = updatedRef.get();
-            if (updatedViewItem == null) return;
-
-            ServiceViewItem navBarItem = getNavBarItem();
-            if (updatedViewItem.equals(navBarItem) && !updatedViewItem.isRemoved()) {
-              myNavBarPanel.getModel().updateModel(updatedItem);
-            }
-          });
-        }
-      });
-    });
-  }
-
-  private ServiceViewItem getNavBarItem() {
-    NavBarModel navBarModel = myNavBarPanel.getModel();
-    if (navBarModel.isEmpty()) return null;
-
-    return ObjectUtils.tryCast(navBarModel.getElement(navBarModel.size() - 1), ServiceViewItem.class);
   }
 
   private void updateSelectionPaths() {
@@ -558,11 +539,7 @@ final class ServiceTreeView extends ServiceView {
     }
 
     private void updateNavBar() {
-      AppUIExecutor.onUiThread().expireWith(myNavBarPanel).submit(() -> {
-        myNavBarPanel.hidePopup();
-        myNavBarPanel.getModel().updateModel((Object)null);
-        myNavBarPanel.getUpdateQueue().rebuildUi();
-      });
+      myNavBarPanel.updateModel();
     }
   }
 
