@@ -13,14 +13,36 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class MavenServerForIndexer extends MavenWatchdogAware implements MavenServer {
   private volatile MavenIdeaIndexerImpl myIndexerRef;
   private volatile PlexusContainer myPlexusContainer;
 
   public MavenServerForIndexer() {
-    if (!System.getProperties().containsKey("org.slf4j.simpleLogger.defaultLogLevel")) {
-      System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "error");
+    String logLevel = System.getProperty("maven.indexer.log.level", "error");
+    System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", logLevel);
+
+    Level utilLevel = getLogLevel(logLevel);
+    Logger rootLogger = LogManager.getLogManager().getLogger("");
+    Handler[] handlers = rootLogger.getHandlers();
+    rootLogger.setLevel(utilLevel);
+    for (Handler h : handlers) {
+      h.setLevel(utilLevel);
+    }
+  }
+
+  private Level getLogLevel(String level) {
+    switch (level) {
+      case "error":
+        return Level.SEVERE;
+      case "debug":
+        return Level.ALL;
+      default:
+        return Level.INFO;
     }
   }
 
