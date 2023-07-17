@@ -20,6 +20,9 @@ import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesFirTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesWithDisableComponentSearchFirTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithLibraryFirTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithStdlibFirTest
+import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinGroupUsagesBySimilarityFeaturesFirTest
+import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinGroupUsagesBySimilarityFirTest
+import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinScriptFindUsagesFirTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractFirJvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDeclarationResolveTest
 import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoTypeDeclarationTest
@@ -36,6 +39,7 @@ import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.JAVA
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_PREFIX
@@ -276,6 +280,18 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractKotlinFindUsagesWithStdlibFirTest> {
             model("stdlibUsages", pattern = Patterns.forRegex("""^(.+)\.0\.kt$"""))
+        }
+
+        testClass<AbstractKotlinGroupUsagesBySimilarityFirTest> {
+            model("similarity/grouping", pattern = KT)
+        }
+
+        testClass<AbstractKotlinGroupUsagesBySimilarityFeaturesFirTest> {
+            model("similarity/features", pattern = KT)
+        }
+
+        testClass<AbstractKotlinScriptFindUsagesFirTest> {
+            model("kotlinScript", pattern = Patterns.forRegex("""^(.+)\.0\.kts$"""))
         }
     }
 
