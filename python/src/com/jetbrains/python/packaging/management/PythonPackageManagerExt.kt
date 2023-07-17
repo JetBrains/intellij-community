@@ -6,6 +6,7 @@ package com.jetbrains.python.packaging.management
 import com.intellij.execution.RunCanceledByUserException
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.value.getTargetEnvironmentValueForLocalPath
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -40,7 +41,7 @@ suspend fun PythonPackageManager.runPackagingTool(operation: String, arguments: 
 
   // todo[akniazev]: check applyWorkingDir: PyTargetEnvironmentPackageManager.java:133
   project.guessProjectDir()?.toNioPath()?.let {
-    pythonExecution.setWorkDir(it)
+    pythonExecution.workingDir = getTargetEnvironmentValueForLocalPath(it)
   }
 
   pythonExecution.addParameter(operation)
@@ -79,7 +80,7 @@ suspend fun PythonPackageManager.runPackagingTool(operation: String, arguments: 
   val handler = CapturingProcessHandler(process, targetedCommandLine.charset, commandLineString)
 
   val result = withBackgroundProgress(project, text, cancellable = true) {
-      handler.runProcess(10 * 60 * 1000)
+    handler.runProcess(10 * 60 * 1000)
   }
 
   if (result.isCancelled) throw RunCanceledByUserException()
@@ -119,7 +120,9 @@ fun PythonPackageManager.isInstalled(name: String): Boolean {
   return installedPackages.any { it.name.lowercase() == name.lowercase() }
 }
 
-fun PythonRepositoryManager.createSpecification(name: String, version: String? = null, relation: PyRequirementRelation? = null): PythonPackageSpecification {
+fun PythonRepositoryManager.createSpecification(name: String,
+                                                version: String? = null,
+                                                relation: PyRequirementRelation? = null): PythonPackageSpecification {
   val repository = packagesByRepository().first { it.second.any { pkg -> pkg.lowercase() == name.lowercase() } }.first
   return repository.createPackageSpecification(name, version, relation)
 }
