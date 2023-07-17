@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.newUiOnboarding.steps
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
@@ -15,7 +16,7 @@ import java.awt.Point
 import java.net.URL
 
 class ToolWindowLayoutsStep : NewUiOnboardingStep {
-  override suspend fun performStep(project: Project): NewUiOnboardingStepData? {
+  override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val ideFrame = WindowManager.getInstance().getFrame(project) ?: return null
     val builder = GotItComponentBuilder(NewUiOnboardingBundle.message("tool.window.layouts.step.text"))
       .withHeader(NewUiOnboardingBundle.message("tool.window.layouts.step.header"))

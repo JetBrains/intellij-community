@@ -4,6 +4,7 @@ package com.intellij.platform.ide.newUiOnboarding.steps
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
@@ -13,7 +14,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBPoint
 
 class NavigationBarStep : NewUiOnboardingStep {
-  override suspend fun performStep(project: Project): NewUiOnboardingStepData? {
+  override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val statusBar = WindowManager.getInstance().getStatusBar(project).component ?: return null
     val builder = GotItComponentBuilder(NewUiOnboardingBundle.message("navigation.bar.step.text"))
       .withHeader(NewUiOnboardingBundle.message("navigation.bar.step.header"))

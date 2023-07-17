@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
@@ -17,7 +18,7 @@ import com.intellij.util.ui.JBUI
 import java.awt.Point
 
 class MainMenuStep : NewUiOnboardingStep {
-  override suspend fun performStep(project: Project): NewUiOnboardingStepData? {
+  override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val button = NewUiOnboardingUtil.findUiComponent(project) { button: ActionButton ->
       button.action is MainMenuButton.ShowMenuAction
     } ?: return null

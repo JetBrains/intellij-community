@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepData
@@ -24,7 +25,7 @@ import java.awt.event.MouseEvent
 import java.net.URL
 
 class RunWidgetStep : NewUiOnboardingStep {
-  override suspend fun performStep(project: Project): NewUiOnboardingStepData? {
+  override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val runConfigurationsSelectorAction = ActionManager.getInstance().getAction("RedesignedRunConfigurationSelector")
                                           ?: return null
     val actionButton = NewUiOnboardingUtil.findUiComponent(project) { button: ActionButtonWithText ->

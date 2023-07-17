@@ -3,12 +3,13 @@ package com.intellij.platform.ide.newUiOnboarding
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.util.KeyedLazyInstanceEP
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface NewUiOnboardingStep {
-  suspend fun performStep(project: Project): NewUiOnboardingStepData?
+  suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData?
 
   fun isAvailable(): Boolean = true
 
