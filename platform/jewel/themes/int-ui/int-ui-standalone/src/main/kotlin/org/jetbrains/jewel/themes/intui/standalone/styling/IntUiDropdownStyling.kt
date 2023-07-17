@@ -19,8 +19,8 @@ import org.jetbrains.jewel.styling.DropdownStyle
 import org.jetbrains.jewel.styling.MenuStyle
 import org.jetbrains.jewel.styling.ResourcePainterProvider
 import org.jetbrains.jewel.styling.StatefulPainterProvider
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiDarkPalette
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiLightPalette
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 
 @Stable
 data class IntUiDropdownStyle(
@@ -91,29 +91,29 @@ data class IntUiDropdownColors(
 
         @Composable
         fun light(
-            background: Color = IntUiLightPalette.grey(14),
-            backgroundDisabled: Color = IntUiLightPalette.grey(13),
+            background: Color = IntUiLightTheme.colors.grey(14),
+            backgroundDisabled: Color = IntUiLightTheme.colors.grey(13),
             backgroundFocused: Color = background,
             backgroundPressed: Color = background,
             backgroundHovered: Color = background,
             backgroundWarning: Color = background,
             backgroundError: Color = background,
-            content: Color = IntUiLightPalette.grey(1),
-            contentDisabled: Color = IntUiLightPalette.grey(8),
+            content: Color = IntUiLightTheme.colors.grey(1),
+            contentDisabled: Color = IntUiLightTheme.colors.grey(8),
             contentFocused: Color = content,
             contentPressed: Color = content,
             contentHovered: Color = content,
             contentWarning: Color = content,
             contentError: Color = content,
-            border: Color = IntUiLightPalette.grey(9),
-            borderDisabled: Color = IntUiLightPalette.grey(11),
-            borderFocused: Color = IntUiLightPalette.blue(4),
+            border: Color = IntUiLightTheme.colors.grey(9),
+            borderDisabled: Color = IntUiLightTheme.colors.grey(11),
+            borderFocused: Color = IntUiLightTheme.colors.blue(4),
             borderPressed: Color = border,
             borderHovered: Color = border,
-            borderWarning: Color = IntUiLightPalette.yellow(4),
-            borderError: Color = IntUiLightPalette.red(4),
-            iconTint: Color = IntUiLightPalette.grey(7),
-            iconTintDisabled: Color = IntUiLightPalette.grey(9),
+            borderWarning: Color = IntUiLightTheme.colors.yellow(4),
+            borderError: Color = IntUiLightTheme.colors.red(4),
+            iconTint: Color = IntUiLightTheme.colors.grey(7),
+            iconTintDisabled: Color = IntUiLightTheme.colors.grey(9),
             iconTintFocused: Color = iconTint,
             iconTintPressed: Color = iconTint,
             iconTintHovered: Color = iconTint,
@@ -152,29 +152,29 @@ data class IntUiDropdownColors(
 
         @Composable
         fun dark(
-            background: Color = IntUiDarkPalette.grey(2),
+            background: Color = IntUiDarkTheme.colors.grey(2),
             backgroundDisabled: Color = background,
             backgroundFocused: Color = background,
             backgroundPressed: Color = background,
             backgroundHovered: Color = background,
             backgroundWarning: Color = background,
             backgroundError: Color = background,
-            content: Color = IntUiDarkPalette.grey(12),
-            contentDisabled: Color = IntUiDarkPalette.grey(7),
+            content: Color = IntUiDarkTheme.colors.grey(12),
+            contentDisabled: Color = IntUiDarkTheme.colors.grey(7),
             contentFocused: Color = content,
             contentPressed: Color = content,
             contentHovered: Color = content,
             contentWarning: Color = content,
             contentError: Color = content,
-            border: Color = IntUiDarkPalette.grey(5),
-            borderDisabled: Color = IntUiDarkPalette.grey(11),
-            borderFocused: Color = IntUiDarkPalette.blue(6),
+            border: Color = IntUiDarkTheme.colors.grey(5),
+            borderDisabled: Color = IntUiDarkTheme.colors.grey(11),
+            borderFocused: Color = IntUiDarkTheme.colors.blue(6),
             borderPressed: Color = border,
             borderHovered: Color = border,
-            borderWarning: Color = IntUiDarkPalette.yellow(4),
-            borderError: Color = IntUiDarkPalette.red(4),
-            iconTint: Color = IntUiDarkPalette.grey(10),
-            iconTintDisabled: Color = IntUiDarkPalette.grey(6),
+            borderWarning: Color = IntUiDarkTheme.colors.yellow(4),
+            borderError: Color = IntUiDarkTheme.colors.red(4),
+            iconTint: Color = IntUiDarkTheme.colors.grey(10),
+            iconTintDisabled: Color = IntUiDarkTheme.colors.grey(6),
             iconTintFocused: Color = iconTint,
             iconTintPressed: Color = iconTint,
             iconTintHovered: Color = iconTint,

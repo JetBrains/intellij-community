@@ -5,9 +5,9 @@ plugins {
 
 gradlePlugin {
     plugins {
-        register("intui-palette-generator") {
-            id = "intui-palette-generator"
-            implementationClass = "org.jetbrains.jewel.buildlogic.palette.IntUiPaletteGeneratePlugin"
+        register("intellij-theme-generator") {
+            id = "intellij-theme-generator"
+            implementationClass = "org.jetbrains.jewel.buildlogic.theme.IntelliJThemeGeneratorPlugin"
         }
     }
 }

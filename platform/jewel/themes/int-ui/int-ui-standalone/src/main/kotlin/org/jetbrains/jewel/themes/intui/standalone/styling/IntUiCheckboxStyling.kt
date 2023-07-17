@@ -14,8 +14,8 @@ import org.jetbrains.jewel.styling.CheckboxMetrics
 import org.jetbrains.jewel.styling.CheckboxStyle
 import org.jetbrains.jewel.styling.OutlineResourcePainterProvider
 import org.jetbrains.jewel.styling.StatefulPainterProvider
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiDarkPalette
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiLightPalette
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 
 @Immutable
 data class IntUiCheckboxStyle(
@@ -59,15 +59,15 @@ data class IntUiCheckboxColors(
 
         @Composable
         fun light(
-            background: Color = IntUiLightPalette.grey(14),
-            backgroundDisabled: Color = IntUiLightPalette.grey(13),
-            backgroundSelected: Color = IntUiLightPalette.blue(4),
-            content: Color = IntUiLightPalette.grey(1),
-            contentDisabled: Color = IntUiLightPalette.grey(8),
+            background: Color = IntUiLightTheme.colors.grey(14),
+            backgroundDisabled: Color = IntUiLightTheme.colors.grey(13),
+            backgroundSelected: Color = IntUiLightTheme.colors.blue(4),
+            content: Color = IntUiLightTheme.colors.grey(1),
+            contentDisabled: Color = IntUiLightTheme.colors.grey(8),
             contentSelected: Color = content,
-            checkboxBorder: Color = IntUiLightPalette.grey(8),
-            borderDisabled: Color = IntUiLightPalette.grey(11),
-            borderSelected: Color = IntUiLightPalette.blue(4)
+            checkboxBorder: Color = IntUiLightTheme.colors.grey(8),
+            borderDisabled: Color = IntUiLightTheme.colors.grey(11),
+            borderSelected: Color = IntUiLightTheme.colors.blue(4)
         ) = IntUiCheckboxColors(
             background,
             backgroundDisabled,
@@ -83,13 +83,13 @@ data class IntUiCheckboxColors(
         @Composable
         fun dark(
             background: Color = Color.Unspecified,
-            backgroundDisabled: Color = IntUiDarkPalette.grey(3),
-            backgroundSelected: Color = IntUiDarkPalette.blue(6),
-            content: Color = IntUiDarkPalette.grey(12),
-            contentDisabled: Color = IntUiDarkPalette.grey(7),
+            backgroundDisabled: Color = IntUiDarkTheme.colors.grey(3),
+            backgroundSelected: Color = IntUiDarkTheme.colors.blue(6),
+            content: Color = IntUiDarkTheme.colors.grey(12),
+            contentDisabled: Color = IntUiDarkTheme.colors.grey(7),
             contentSelected: Color = content,
-            checkboxBorder: Color = IntUiDarkPalette.grey(6),
-            borderDisabled: Color = IntUiDarkPalette.grey(6),
+            checkboxBorder: Color = IntUiDarkTheme.colors.grey(6),
+            borderDisabled: Color = IntUiDarkTheme.colors.grey(6),
             borderSelected: Color = Color.Unspecified
         ) = IntUiCheckboxColors(
             background,

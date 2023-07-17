@@ -16,8 +16,8 @@ import org.jetbrains.jewel.styling.LinkMetrics
 import org.jetbrains.jewel.styling.LinkStyle
 import org.jetbrains.jewel.styling.LinkTextStyles
 import org.jetbrains.jewel.styling.ResourcePainterProvider
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiDarkPalette
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiLightPalette
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
 
 @Immutable
@@ -64,14 +64,14 @@ data class IntUiLinkColors(
 
         @Composable
         fun light(
-            content: Color = IntUiLightPalette.blue(2),
-            contentDisabled: Color = IntUiLightPalette.grey(8),
+            content: Color = IntUiLightTheme.colors.blue(2),
+            contentDisabled: Color = IntUiLightTheme.colors.grey(8),
             contentFocused: Color = content,
             contentPressed: Color = content,
             contentHovered: Color = content,
             contentVisited: Color = content,
             iconTint: Color = Color.Unspecified,
-            iconTintDisabled: Color = IntUiLightPalette.grey(9)
+            iconTintDisabled: Color = IntUiLightTheme.colors.grey(9)
         ) = IntUiLinkColors(
             content,
             contentDisabled,
@@ -85,14 +85,14 @@ data class IntUiLinkColors(
 
         @Composable
         fun dark(
-            content: Color = IntUiDarkPalette.blue(9),
-            contentDisabled: Color = IntUiDarkPalette.grey(7),
+            content: Color = IntUiDarkTheme.colors.blue(9),
+            contentDisabled: Color = IntUiDarkTheme.colors.grey(7),
             contentFocused: Color = content,
             contentPressed: Color = content,
             contentHovered: Color = content,
             contentVisited: Color = content,
             iconTint: Color = Color.Unspecified,
-            iconTintDisabled: Color = IntUiDarkPalette.grey(6)
+            iconTintDisabled: Color = IntUiDarkTheme.colors.grey(6)
         ) = IntUiLinkColors(
             content,
             contentDisabled,

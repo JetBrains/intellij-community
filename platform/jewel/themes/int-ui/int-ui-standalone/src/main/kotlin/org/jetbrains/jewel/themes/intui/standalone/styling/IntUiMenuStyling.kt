@@ -18,8 +18,8 @@ import org.jetbrains.jewel.styling.MenuItemMetrics
 import org.jetbrains.jewel.styling.MenuMetrics
 import org.jetbrains.jewel.styling.MenuStyle
 import org.jetbrains.jewel.styling.SubmenuMetrics
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiDarkPalette
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiLightPalette
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 
 @Stable
 data class IntUiMenuStyle(
@@ -58,16 +58,16 @@ data class IntUiMenuColors(
 
         @Composable
         fun light(
-            background: Brush = SolidColor(IntUiLightPalette.grey(14)),
-            border: Color = IntUiLightPalette.grey(9),
+            background: Brush = SolidColor(IntUiLightTheme.colors.grey(14)),
+            border: Color = IntUiLightTheme.colors.grey(9),
             shadow: Color = Color(0x78919191), // Not a palette color
             itemColors: IntUiMenuItemColors = IntUiMenuItemColors.light()
         ) = IntUiMenuColors(background, border, shadow, itemColors)
 
         @Composable
         fun dark(
-            background: Brush = SolidColor(IntUiDarkPalette.grey(2)),
-            border: Color = IntUiDarkPalette.grey(3),
+            background: Brush = SolidColor(IntUiDarkTheme.colors.grey(2)),
+            border: Color = IntUiDarkTheme.colors.grey(3),
             shadow: Color = Color(0x66000000), // Not a palette color
             itemColors: IntUiMenuItemColors = IntUiMenuItemColors.dark()
         ) = IntUiMenuColors(background, border, shadow, itemColors)
@@ -98,22 +98,22 @@ data class IntUiMenuItemColors(
 
         @Composable
         fun light(
-            background: Color = IntUiLightPalette.grey(1),
-            backgroundDisabled: Color = IntUiLightPalette.grey(14),
-            backgroundFocused: Color = IntUiLightPalette.blue(11),
+            background: Color = IntUiLightTheme.colors.grey(1),
+            backgroundDisabled: Color = IntUiLightTheme.colors.grey(14),
+            backgroundFocused: Color = IntUiLightTheme.colors.blue(11),
             backgroundPressed: Color = background,
             backgroundHovered: Color = background,
-            content: Color = IntUiLightPalette.grey(1),
-            contentDisabled: Color = IntUiLightPalette.grey(8),
+            content: Color = IntUiLightTheme.colors.grey(1),
+            contentDisabled: Color = IntUiLightTheme.colors.grey(8),
             contentFocused: Color = content,
             contentPressed: Color = content,
             contentHovered: Color = content,
-            iconTint: Color = IntUiLightPalette.grey(7),
+            iconTint: Color = IntUiLightTheme.colors.grey(7),
             iconTintDisabled: Color = iconTint,
             iconTintFocused: Color = iconTint,
             iconTintPressed: Color = iconTint,
             iconTintHovered: Color = iconTint,
-            separator: Color = IntUiLightPalette.grey(12)
+            separator: Color = IntUiLightTheme.colors.grey(12)
         ) = IntUiMenuItemColors(
             background,
             backgroundDisabled,
@@ -135,22 +135,22 @@ data class IntUiMenuItemColors(
 
         @Composable
         fun dark(
-            background: Color = IntUiDarkPalette.grey(2),
-            backgroundDisabled: Color = IntUiDarkPalette.grey(2),
-            backgroundFocused: Color = IntUiDarkPalette.blue(2),
+            background: Color = IntUiDarkTheme.colors.grey(2),
+            backgroundDisabled: Color = IntUiDarkTheme.colors.grey(2),
+            backgroundFocused: Color = IntUiDarkTheme.colors.blue(2),
             backgroundPressed: Color = background,
             backgroundHovered: Color = background,
-            content: Color = IntUiDarkPalette.grey(12),
-            contentDisabled: Color = IntUiDarkPalette.grey(7),
+            content: Color = IntUiDarkTheme.colors.grey(12),
+            contentDisabled: Color = IntUiDarkTheme.colors.grey(7),
             contentFocused: Color = content,
             contentPressed: Color = content,
             contentHovered: Color = content,
-            iconTint: Color = IntUiDarkPalette.grey(10),
+            iconTint: Color = IntUiDarkTheme.colors.grey(10),
             iconTintDisabled: Color = iconTint,
             iconTintFocused: Color = iconTint,
             iconTintPressed: Color = iconTint,
             iconTintHovered: Color = iconTint,
-            separator: Color = IntUiDarkPalette.grey(3)
+            separator: Color = IntUiDarkTheme.colors.grey(3)
         ) = IntUiMenuItemColors(
             background,
             backgroundDisabled,

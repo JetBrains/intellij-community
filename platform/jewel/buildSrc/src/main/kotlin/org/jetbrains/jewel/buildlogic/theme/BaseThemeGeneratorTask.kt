@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.buildlogic.palette
+package org.jetbrains.jewel.buildlogic.theme
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
@@ -6,7 +6,7 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.kotlin.dsl.property
 
-abstract class BasePaletteGenerateTask : DefaultTask() {
+abstract class BaseThemeGeneratorTask : DefaultTask() {
 
     @get:OutputFile
     val output = project.objects.fileProperty()
@@ -18,7 +18,7 @@ abstract class BasePaletteGenerateTask : DefaultTask() {
     val themeFile = project.objects.property<String>()
 
     @get:Input
-    val paletteClassName = project.objects.property<String>()
+    val themeClassName = project.objects.property<String>()
 
     init {
         group = "jewel"

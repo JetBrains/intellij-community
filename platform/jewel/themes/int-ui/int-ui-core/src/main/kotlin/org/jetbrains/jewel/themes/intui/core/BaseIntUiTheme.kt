@@ -39,10 +39,15 @@ import org.jetbrains.jewel.styling.TextFieldStyle
 
 interface BaseIntUiTheme : IntelliJTheme {
 
-    val palette: IntUiColorPalette
+    val palette: IntelliJThemeColorPalette
         @Composable
         @ReadOnlyComposable
         get() = LocalIntUiPalette.current
+
+    val icons: IntelliJThemeIcons
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalIntUiIcons.current
 }
 
 @OptIn(ExperimentalJewelApi::class)
@@ -61,6 +66,7 @@ fun BaseIntUiTheme(
 ) {
     CompositionLocalProvider(
         LocalIntUiPalette provides theme.palette,
+        LocalIntUiIcons provides theme.icons,
         LocalCheckboxStyle provides componentStyling.checkboxStyle,
         LocalChipStyle provides componentStyling.chipStyle,
         LocalContextMenuRepresentation provides IntelliJContextMenuRepresentation,

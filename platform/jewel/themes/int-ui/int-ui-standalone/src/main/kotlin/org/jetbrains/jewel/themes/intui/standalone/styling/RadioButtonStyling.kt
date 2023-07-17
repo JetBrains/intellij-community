@@ -13,8 +13,8 @@ import org.jetbrains.jewel.styling.RadioButtonColors
 import org.jetbrains.jewel.styling.RadioButtonIcons
 import org.jetbrains.jewel.styling.RadioButtonMetrics
 import org.jetbrains.jewel.styling.RadioButtonStyle
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiDarkPalette
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiLightPalette
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 
 @Immutable
 data class IntUiRadioButtonStyle(
@@ -56,8 +56,8 @@ data class IntUiRadioButtonColors(
 
         @Composable
         fun light(
-            content: Color = IntUiLightPalette.grey(1),
-            contentHovered: Color = IntUiLightPalette.grey(8),
+            content: Color = IntUiLightTheme.colors.grey(1),
+            contentHovered: Color = IntUiLightTheme.colors.grey(8),
             contentDisabled: Color = content,
             contentSelected: Color = content,
             contentSelectedHovered: Color = content,
@@ -75,8 +75,8 @@ data class IntUiRadioButtonColors(
 
         @Composable
         fun dark(
-            content: Color = IntUiDarkPalette.grey(1),
-            contentHovered: Color = IntUiDarkPalette.grey(8),
+            content: Color = IntUiDarkTheme.colors.grey(1),
+            contentHovered: Color = IntUiDarkTheme.colors.grey(8),
             contentDisabled: Color = content,
             contentSelected: Color = content,
             contentSelectedHovered: Color = content,
@@ -117,21 +117,21 @@ data class IntUiRadioButtonButtonColors(
 
         @Composable
         fun light(
-            fill: Color = IntUiLightPalette.grey(14),
+            fill: Color = IntUiLightTheme.colors.grey(14),
             fillHovered: Color = fill,
-            fillDisabled: Color = IntUiLightPalette.grey(13),
-            fillSelected: Color = IntUiLightPalette.blue(4),
-            fillSelectedHovered: Color = IntUiLightPalette.blue(3),
+            fillDisabled: Color = IntUiLightTheme.colors.grey(13),
+            fillSelected: Color = IntUiLightTheme.colors.blue(4),
+            fillSelectedHovered: Color = IntUiLightTheme.colors.blue(3),
             fillSelectedDisabled: Color = fillDisabled,
-            border: Color = IntUiLightPalette.grey(8),
-            borderHovered: Color = IntUiLightPalette.grey(6),
-            borderDisabled: Color = IntUiLightPalette.grey(11),
+            border: Color = IntUiLightTheme.colors.grey(8),
+            borderHovered: Color = IntUiLightTheme.colors.grey(6),
+            borderDisabled: Color = IntUiLightTheme.colors.grey(11),
             borderSelected: Color = Color.Unspecified,
             borderSelectedHovered: Color = borderSelected,
             borderSelectedDisabled: Color = borderDisabled,
-            markSelected: Color = IntUiLightPalette.grey(14),
+            markSelected: Color = IntUiLightTheme.colors.grey(14),
             markSelectedHovered: Color = markSelected,
-            markSelectedDisabled: Color = IntUiLightPalette.grey(9)
+            markSelectedDisabled: Color = IntUiLightTheme.colors.grey(9)
         ) = IntUiRadioButtonButtonColors(
             fill,
             fillHovered,
@@ -154,19 +154,19 @@ data class IntUiRadioButtonButtonColors(
         fun dark(
             fill: Color = Color.Unspecified,
             fillHovered: Color = fill,
-            fillDisabled: Color = IntUiDarkPalette.grey(3),
-            fillSelected: Color = IntUiDarkPalette.blue(6),
-            fillSelectedHovered: Color = IntUiDarkPalette.blue(5),
+            fillDisabled: Color = IntUiDarkTheme.colors.grey(3),
+            fillSelected: Color = IntUiDarkTheme.colors.blue(6),
+            fillSelectedHovered: Color = IntUiDarkTheme.colors.blue(5),
             fillSelectedDisabled: Color = fillDisabled,
-            border: Color = IntUiDarkPalette.grey(6),
-            borderHovered: Color = IntUiDarkPalette.grey(9),
-            borderDisabled: Color = IntUiDarkPalette.grey(6),
+            border: Color = IntUiDarkTheme.colors.grey(6),
+            borderHovered: Color = IntUiDarkTheme.colors.grey(9),
+            borderDisabled: Color = IntUiDarkTheme.colors.grey(6),
             borderSelected: Color = Color.Unspecified,
             borderSelectedHovered: Color = borderSelected,
             borderSelectedDisabled: Color = borderDisabled,
-            markSelected: Color = IntUiDarkPalette.grey(14),
+            markSelected: Color = IntUiDarkTheme.colors.grey(14),
             markSelectedHovered: Color = markSelected,
-            markSelectedDisabled: Color = IntUiDarkPalette.grey(7)
+            markSelectedDisabled: Color = IntUiDarkTheme.colors.grey(7)
         ) = IntUiRadioButtonButtonColors(
             fill,
             fillHovered,

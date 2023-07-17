@@ -8,8 +8,8 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.styling.GroupHeaderColors
 import org.jetbrains.jewel.styling.GroupHeaderMetrics
 import org.jetbrains.jewel.styling.GroupHeaderStyle
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiDarkPalette
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiLightPalette
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 
 @Immutable
 data class IntUiGroupHeaderStyle(
@@ -43,14 +43,14 @@ data class IntUiGroupHeaderColors(
 
         @Composable
         fun light(
-            content: Color = IntUiLightPalette.grey(1),
-            divider: Color = IntUiLightPalette.grey(12)
+            content: Color = IntUiLightTheme.colors.grey(1),
+            divider: Color = IntUiLightTheme.colors.grey(12)
         ) = IntUiGroupHeaderColors(content, divider)
 
         @Composable
         fun dark(
-            content: Color = IntUiDarkPalette.grey(12),
-            divider: Color = IntUiDarkPalette.grey(3)
+            content: Color = IntUiDarkTheme.colors.grey(12),
+            divider: Color = IntUiDarkTheme.colors.grey(3)
         ) = IntUiGroupHeaderColors(content, divider)
     }
 }

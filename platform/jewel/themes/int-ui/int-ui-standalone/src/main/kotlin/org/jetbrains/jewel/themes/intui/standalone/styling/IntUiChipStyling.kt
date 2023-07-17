@@ -14,8 +14,8 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.styling.ChipColors
 import org.jetbrains.jewel.styling.ChipMetrics
 import org.jetbrains.jewel.styling.ChipStyle
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiDarkPalette
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiLightPalette
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 
 @Stable
 data class IntUiChipStyle(
@@ -62,21 +62,21 @@ data class IntUiChipColors(
 
         @Composable
         fun light(
-            background: Brush = SolidColor(IntUiLightPalette.grey(14)),
-            backgroundDisabled: Brush = SolidColor(IntUiLightPalette.grey(12)),
+            background: Brush = SolidColor(IntUiLightTheme.colors.grey(14)),
+            backgroundDisabled: Brush = SolidColor(IntUiLightTheme.colors.grey(12)),
             backgroundFocused: Brush = background,
-            backgroundPressed: Brush = SolidColor(IntUiLightPalette.grey(13)),
+            backgroundPressed: Brush = SolidColor(IntUiLightTheme.colors.grey(13)),
             backgroundHovered: Brush = background,
-            content: Color = IntUiLightPalette.grey(1),
-            contentDisabled: Color = IntUiLightPalette.grey(8),
+            content: Color = IntUiLightTheme.colors.grey(1),
+            contentDisabled: Color = IntUiLightTheme.colors.grey(8),
             contentFocused: Color = content,
             contentPressed: Color = content,
             contentHovered: Color = content,
-            border: Color = IntUiLightPalette.grey(9),
-            borderDisabled: Color = IntUiLightPalette.grey(6),
+            border: Color = IntUiLightTheme.colors.grey(9),
+            borderDisabled: Color = IntUiLightTheme.colors.grey(6),
             borderFocused: Color = Color.Unspecified,
-            borderPressed: Color = IntUiLightPalette.grey(7),
-            borderHovered: Color = IntUiLightPalette.grey(8)
+            borderPressed: Color = IntUiLightTheme.colors.grey(7),
+            borderHovered: Color = IntUiLightTheme.colors.grey(8)
         ) = IntUiChipColors(
             background,
             backgroundDisabled,
@@ -97,20 +97,20 @@ data class IntUiChipColors(
 
         @Composable
         fun dark(
-            background: Brush = SolidColor(IntUiDarkPalette.grey(2)),
-            backgroundDisabled: Brush = SolidColor(IntUiDarkPalette.grey(5)),
+            background: Brush = SolidColor(IntUiDarkTheme.colors.grey(2)),
+            backgroundDisabled: Brush = SolidColor(IntUiDarkTheme.colors.grey(5)),
             backgroundFocused: Brush = background,
             backgroundPressed: Brush = background,
             backgroundHovered: Brush = background,
-            content: Color = IntUiDarkPalette.grey(12),
-            contentDisabled: Color = IntUiDarkPalette.grey(8),
+            content: Color = IntUiDarkTheme.colors.grey(12),
+            contentDisabled: Color = IntUiDarkTheme.colors.grey(8),
             contentFocused: Color = content,
             contentPressed: Color = content,
             contentHovered: Color = content,
-            border: Color = IntUiDarkPalette.grey(5),
-            borderDisabled: Color = IntUiDarkPalette.grey(6),
+            border: Color = IntUiDarkTheme.colors.grey(5),
+            borderDisabled: Color = IntUiDarkTheme.colors.grey(6),
             borderFocused: Color = Color.Unspecified,
-            borderPressed: Color = IntUiDarkPalette.grey(7),
+            borderPressed: Color = IntUiDarkTheme.colors.grey(7),
             borderHovered: Color = borderPressed
         ) = IntUiChipColors(
             background,

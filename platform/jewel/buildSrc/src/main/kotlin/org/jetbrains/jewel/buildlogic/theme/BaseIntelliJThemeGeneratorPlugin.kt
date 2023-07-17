@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.buildlogic.palette
+package org.jetbrains.jewel.buildlogic.theme
 
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Plugin
@@ -11,7 +11,7 @@ import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.property
 import java.io.File
 
-abstract class BaseJewelPaletteGeneratePlugin : Plugin<Project> {
+abstract class BaseIntelliJThemeGeneratorPlugin : Plugin<Project> {
 
     final override fun apply(target: Project) {
         val extension = createExtension(target)
@@ -32,18 +32,18 @@ abstract class BaseJewelPaletteGeneratePlugin : Plugin<Project> {
         }
     }
 
-    protected abstract fun createExtension(project: Project): PaletteGenerateContainer
+    protected abstract fun createExtension(project: Project): ThemeGeneratorContainer
 
-    protected abstract fun createGenerateTask(project: Project, extension: PaletteGenerateContainer): List<TaskProvider<out BasePaletteGenerateTask>>
+    protected abstract fun createGenerateTask(project: Project, extension: ThemeGeneratorContainer): List<TaskProvider<out BaseThemeGeneratorTask>>
 }
 
-class PaletteGenerateContainer(container: NamedDomainObjectContainer<PaletteGeneration>) : NamedDomainObjectContainer<PaletteGeneration> by container
+class ThemeGeneratorContainer(container: NamedDomainObjectContainer<ThemeGeneration>) : NamedDomainObjectContainer<ThemeGeneration> by container
 
-class PaletteGeneration(val name: String, private val project: Project) {
+class ThemeGeneration(val name: String, private val project: Project) {
 
     val targetDir: DirectoryProperty = project.objects.directoryProperty()
     val ideaVersion = project.objects.property<String>()
-    val paletteClassName = project.objects.property<String>()
+    val themeClassName = project.objects.property<String>()
     val themeFile = project.objects.property<String>()
 
     fun targetDir(): String = targetDir.get().asFile.absolutePath
@@ -62,10 +62,10 @@ class PaletteGeneration(val name: String, private val project: Project) {
         ideaVersion.set(version)
     }
 
-    fun paletteClassName(): String = paletteClassName.get()
+    fun themeClassName(): String = themeClassName.get()
 
-    fun paletteClassName(name: String) {
-        paletteClassName.set(name)
+    fun themeClassName(name: String) {
+        themeClassName.set(name)
     }
 
     fun themeFile(): String = themeFile.get()

@@ -9,8 +9,8 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.styling.HorizontalProgressBarColors
 import org.jetbrains.jewel.styling.HorizontalProgressBarMetrics
 import org.jetbrains.jewel.styling.HorizontalProgressBarStyle
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiDarkPalette
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiLightPalette
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -50,16 +50,16 @@ data class IntUiHorizontalProgressBarColors(
 
         @Composable
         fun light(
-            track: Color = IntUiLightPalette.grey(11),
-            progress: Color = IntUiLightPalette.blue(4),
-            indeterminateHighlight: Color = IntUiLightPalette.grey(9)
+            track: Color = IntUiLightTheme.colors.grey(11),
+            progress: Color = IntUiLightTheme.colors.blue(4),
+            indeterminateHighlight: Color = IntUiLightTheme.colors.grey(9)
         ) = IntUiHorizontalProgressBarColors(track, progress, indeterminateHighlight)
 
         @Composable
         fun dark(
-            track: Color = IntUiDarkPalette.grey(4),
-            progress: Color = IntUiDarkPalette.blue(6),
-            indeterminateHighlight: Color = IntUiDarkPalette.grey(11)
+            track: Color = IntUiDarkTheme.colors.grey(4),
+            progress: Color = IntUiDarkTheme.colors.blue(6),
+            indeterminateHighlight: Color = IntUiDarkTheme.colors.grey(11)
         ) = IntUiHorizontalProgressBarColors(track, progress, indeterminateHighlight)
     }
 }

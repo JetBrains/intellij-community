@@ -17,8 +17,8 @@ import org.jetbrains.jewel.styling.LabelledTextFieldColors
 import org.jetbrains.jewel.styling.LabelledTextFieldMetrics
 import org.jetbrains.jewel.styling.LabelledTextFieldStyle
 import org.jetbrains.jewel.styling.LabelledTextFieldTextStyles
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiDarkPalette
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiLightPalette
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
 
 @Stable
@@ -88,37 +88,37 @@ data class IntUiLabelledTextFieldColors(
 
         @Composable
         fun light(
-            background: Color = IntUiLightPalette.grey(14),
-            backgroundDisabled: Color = IntUiLightPalette.grey(13),
+            background: Color = IntUiLightTheme.colors.grey(14),
+            backgroundDisabled: Color = IntUiLightTheme.colors.grey(13),
             backgroundFocused: Color = background,
             backgroundPressed: Color = background,
             backgroundHovered: Color = background,
             backgroundWarning: Color = background,
             backgroundError: Color = background,
-            content: Color = IntUiLightPalette.grey(1),
-            contentDisabled: Color = IntUiLightPalette.grey(8),
+            content: Color = IntUiLightTheme.colors.grey(1),
+            contentDisabled: Color = IntUiLightTheme.colors.grey(8),
             contentFocused: Color = content,
             contentPressed: Color = content,
             contentHovered: Color = content,
             contentWarning: Color = content,
             contentError: Color = content,
-            border: Color = IntUiLightPalette.grey(9),
-            borderDisabled: Color = IntUiLightPalette.grey(11),
-            borderFocused: Color = IntUiLightPalette.blue(4),
+            border: Color = IntUiLightTheme.colors.grey(9),
+            borderDisabled: Color = IntUiLightTheme.colors.grey(11),
+            borderFocused: Color = IntUiLightTheme.colors.blue(4),
             borderPressed: Color = border,
             borderHovered: Color = border,
-            borderWarning: Color = IntUiLightPalette.yellow(4),
-            borderError: Color = IntUiLightPalette.red(4),
-            cursor: Brush = SolidColor(IntUiLightPalette.grey(1)),
+            borderWarning: Color = IntUiLightTheme.colors.yellow(4),
+            borderError: Color = IntUiLightTheme.colors.red(4),
+            cursor: Brush = SolidColor(IntUiLightTheme.colors.grey(1)),
             cursorDisabled: Brush = cursor,
             cursorFocused: Brush = cursor,
             cursorPressed: Brush = cursor,
             cursorHovered: Brush = cursor,
             cursorWarning: Brush = cursor,
             cursorError: Brush = cursor,
-            placeholder: Color = IntUiLightPalette.grey(8),
-            label: Color = IntUiLightPalette.grey(1),
-            hint: Color = IntUiLightPalette.grey(6)
+            placeholder: Color = IntUiLightTheme.colors.grey(8),
+            label: Color = IntUiLightTheme.colors.grey(1),
+            hint: Color = IntUiLightTheme.colors.grey(6)
         ) = IntUiLabelledTextFieldColors(
             background,
             backgroundDisabled,
@@ -155,37 +155,37 @@ data class IntUiLabelledTextFieldColors(
 
         @Composable
         fun dark(
-            background: Color = IntUiDarkPalette.grey(2),
+            background: Color = IntUiDarkTheme.colors.grey(2),
             backgroundDisabled: Color = background,
             backgroundFocused: Color = background,
             backgroundPressed: Color = background,
             backgroundHovered: Color = background,
             backgroundWarning: Color = background,
             backgroundError: Color = background,
-            content: Color = IntUiDarkPalette.grey(12),
-            contentDisabled: Color = IntUiDarkPalette.grey(7),
+            content: Color = IntUiDarkTheme.colors.grey(12),
+            contentDisabled: Color = IntUiDarkTheme.colors.grey(7),
             contentFocused: Color = content,
             contentPressed: Color = content,
             contentHovered: Color = content,
             contentWarning: Color = content,
             contentError: Color = content,
-            border: Color = IntUiDarkPalette.grey(5),
+            border: Color = IntUiDarkTheme.colors.grey(5),
             borderDisabled: Color = border,
-            borderFocused: Color = IntUiDarkPalette.blue(6),
+            borderFocused: Color = IntUiDarkTheme.colors.blue(6),
             borderPressed: Color = border,
             borderHovered: Color = border,
-            borderWarning: Color = IntUiDarkPalette.yellow(4),
-            borderError: Color = IntUiDarkPalette.red(4),
-            cursor: Brush = SolidColor(IntUiDarkPalette.grey(12)),
+            borderWarning: Color = IntUiDarkTheme.colors.yellow(4),
+            borderError: Color = IntUiDarkTheme.colors.red(4),
+            cursor: Brush = SolidColor(IntUiDarkTheme.colors.grey(12)),
             cursorDisabled: Brush = cursor,
             cursorFocused: Brush = cursor,
             cursorPressed: Brush = cursor,
             cursorHovered: Brush = cursor,
             cursorWarning: Brush = cursor,
             cursorError: Brush = cursor,
-            placeholder: Color = IntUiDarkPalette.grey(7),
-            label: Color = IntUiDarkPalette.grey(12),
-            hint: Color = IntUiDarkPalette.grey(7)
+            placeholder: Color = IntUiDarkTheme.colors.grey(7),
+            label: Color = IntUiDarkTheme.colors.grey(12),
+            hint: Color = IntUiDarkTheme.colors.grey(7)
         ) = IntUiLabelledTextFieldColors(
             background,
             backgroundDisabled,

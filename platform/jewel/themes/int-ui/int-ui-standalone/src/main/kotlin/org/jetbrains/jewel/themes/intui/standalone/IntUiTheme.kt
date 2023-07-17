@@ -29,10 +29,11 @@ import org.jetbrains.jewel.styling.TextAreaStyle
 import org.jetbrains.jewel.styling.TextFieldStyle
 import org.jetbrains.jewel.themes.intui.core.BaseIntUiTheme
 import org.jetbrains.jewel.themes.intui.core.ComponentStyling
-import org.jetbrains.jewel.themes.intui.core.IntUiColorPalette
 import org.jetbrains.jewel.themes.intui.core.IntUiThemeDefinition
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiDarkPalette
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiLightPalette
+import org.jetbrains.jewel.themes.intui.core.IntelliJThemeColorPalette
+import org.jetbrains.jewel.themes.intui.core.IntelliJThemeIcons
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiButtonStyle
 import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiCheckboxStyle
 import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiChipStyle
@@ -61,29 +62,19 @@ object IntUiTheme : BaseIntUiTheme {
     fun light(
         colors: ThemeColors = IntUiThemeColors.light(),
         metrics: ThemeMetrics = IntUiThemeMetrics(),
-        palette: IntUiColorPalette = IntUiLightPalette,
+        palette: IntelliJThemeColorPalette = IntUiLightTheme.colors,
+        icons: IntelliJThemeIcons = IntUiLightTheme.icons,
         defaultTextStyle: TextStyle = intUiDefaultTextStyle
-    ) = IntUiThemeDefinition(
-        isDark = false,
-        colors,
-        palette,
-        metrics,
-        defaultTextStyle
-    )
+    ) = IntUiThemeDefinition(isDark = false, colors, palette, icons, metrics, defaultTextStyle)
 
     @Composable
     fun dark(
         colors: ThemeColors = IntUiThemeColors.dark(),
         metrics: ThemeMetrics = IntUiThemeMetrics(),
-        palette: IntUiColorPalette = IntUiDarkPalette,
+        palette: IntelliJThemeColorPalette = IntUiDarkTheme.colors,
+        icons: IntelliJThemeIcons = IntUiDarkTheme.icons,
         defaultTextStyle: TextStyle = intUiDefaultTextStyle
-    ) = IntUiThemeDefinition(
-        isDark = true,
-        colors,
-        palette,
-        metrics,
-        defaultTextStyle
-    )
+    ) = IntUiThemeDefinition(isDark = true, colors, palette, icons, metrics, defaultTextStyle)
 
     val colors: ThemeColors
         @Composable

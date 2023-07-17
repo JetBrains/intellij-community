@@ -9,8 +9,8 @@ import org.jetbrains.jewel.OutlineColors
 import org.jetbrains.jewel.SwingLafKey
 import org.jetbrains.jewel.ThemeColors
 import org.jetbrains.jewel.themes.intui.core.LocalIntUiPalette
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiDarkPalette
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiLightPalette
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 
 data class IntUiThemeColors(
     override val borders: BorderColors,
@@ -55,16 +55,16 @@ data class IntUiBorderColors(
 
         @Composable
         fun light(
-            normal: Color = IntUiLightPalette.grey(9),
-            focused: Color = IntUiLightPalette.grey(14),
-            disabled: Color = IntUiLightPalette.grey(11)
+            normal: Color = IntUiLightTheme.colors.grey(9),
+            focused: Color = IntUiLightTheme.colors.grey(14),
+            disabled: Color = IntUiLightTheme.colors.grey(11)
         ) = IntUiBorderColors(normal, focused, disabled)
 
         @Composable
         fun dark(
-            normal: Color = IntUiDarkPalette.grey(5),
-            focused: Color = IntUiDarkPalette.grey(2),
-            disabled: Color = IntUiDarkPalette.grey(4)
+            normal: Color = IntUiDarkTheme.colors.grey(5),
+            focused: Color = IntUiDarkTheme.colors.grey(2),
+            disabled: Color = IntUiDarkTheme.colors.grey(4)
         ) = IntUiBorderColors(normal, focused, disabled)
     }
 }
@@ -82,20 +82,20 @@ data class IntUiOutlineColors(
 
         @Composable
         fun light(
-            focused: Color = IntUiLightPalette.blue(4),
-            focusedWarning: Color = IntUiLightPalette.yellow(4),
-            focusedError: Color = IntUiLightPalette.red(4),
-            warning: Color = IntUiLightPalette.yellow(7),
-            error: Color = IntUiLightPalette.red(9)
+            focused: Color = IntUiLightTheme.colors.blue(4),
+            focusedWarning: Color = IntUiLightTheme.colors.yellow(4),
+            focusedError: Color = IntUiLightTheme.colors.red(4),
+            warning: Color = IntUiLightTheme.colors.yellow(7),
+            error: Color = IntUiLightTheme.colors.red(9)
         ) = IntUiOutlineColors(focused, focusedWarning, focusedError, warning, error)
 
         @Composable
         fun dark(
-            focused: Color = IntUiDarkPalette.blue(6),
-            focusedWarning: Color = IntUiDarkPalette.yellow(4),
-            focusedError: Color = IntUiDarkPalette.red(4),
-            warning: Color = IntUiDarkPalette.yellow(2),
-            error: Color = IntUiDarkPalette.red(2)
+            focused: Color = IntUiDarkTheme.colors.blue(6),
+            focusedWarning: Color = IntUiDarkTheme.colors.yellow(4),
+            focusedError: Color = IntUiDarkTheme.colors.red(4),
+            warning: Color = IntUiDarkTheme.colors.yellow(2),
+            error: Color = IntUiDarkTheme.colors.red(2)
         ) = IntUiOutlineColors(focused, focusedWarning, focusedError, warning, error)
     }
 }

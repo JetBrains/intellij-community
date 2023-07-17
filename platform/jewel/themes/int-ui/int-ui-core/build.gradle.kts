@@ -1,7 +1,7 @@
 plugins {
     jewel
     alias(libs.plugins.composeDesktop)
-    `intui-palette-generator`
+    `intellij-theme-generator`
 }
 
 dependencies {
@@ -10,16 +10,16 @@ dependencies {
     api(projects.foundation)
 }
 
-intUiPaletteGenerator {
+intelliJThemeGenerator {
     val ideaVersion = "232.6734"
 
     create("intUiLight") {
-        paletteClassName("org.jetbrains.jewel.themes.intui.core.palette.IntUiLightPalette")
+        themeClassName("org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme")
         themeFile("platform/platform-resources/src/themes/expUI/expUI_light.theme.json")
         ideaVersion(ideaVersion)
     }
     create("intUiDark") {
-        paletteClassName("org.jetbrains.jewel.themes.intui.core.palette.IntUiDarkPalette")
+        themeClassName("org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme")
         themeFile("platform/platform-resources/src/themes/expUI/expUI_dark.theme.json")
         ideaVersion(ideaVersion)
     }

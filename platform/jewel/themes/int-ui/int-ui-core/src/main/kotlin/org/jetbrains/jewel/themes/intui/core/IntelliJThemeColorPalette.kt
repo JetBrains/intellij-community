@@ -2,9 +2,9 @@ package org.jetbrains.jewel.themes.intui.core
 
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiLightPalette
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 
-interface IntUiColorPalette {
+interface IntelliJThemeColorPalette {
 
     fun grey(): List<Color>
 
@@ -37,10 +37,12 @@ interface IntUiColorPalette {
     fun teal(): List<Color>
 
     fun teal(index: Int): Color
-
-    fun isDark(): Boolean
 }
 
-val LocalIntUiPalette = staticCompositionLocalOf<IntUiColorPalette> {
-    IntUiLightPalette
+val LocalIntUiPalette = staticCompositionLocalOf {
+    IntUiLightTheme.colors
+}
+
+val LocalIntUiIcons = staticCompositionLocalOf {
+    IntUiLightTheme.icons
 }

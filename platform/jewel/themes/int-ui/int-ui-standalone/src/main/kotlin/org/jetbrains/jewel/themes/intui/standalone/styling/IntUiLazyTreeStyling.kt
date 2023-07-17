@@ -12,8 +12,8 @@ import org.jetbrains.jewel.styling.LazyTreeColors
 import org.jetbrains.jewel.styling.LazyTreeIcons
 import org.jetbrains.jewel.styling.LazyTreeMetrics
 import org.jetbrains.jewel.styling.LazyTreeStyle
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiDarkPalette
-import org.jetbrains.jewel.themes.intui.core.palette.IntUiLightPalette
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 
 @Stable
 data class IntUiLazyTreeStyle(
@@ -56,9 +56,9 @@ data class IntUiLazyTreeColors(
         @Composable
         fun light(
             nodeBackgroundFocused: Color = Color.Unspecified,
-            nodeBackgroundSelected: Color = IntUiLightPalette.grey(11),
-            nodeBackgroundSelectedFocused: Color = IntUiLightPalette.blue(11),
-            chevronTint: Color = IntUiLightPalette.grey(7),
+            nodeBackgroundSelected: Color = IntUiLightTheme.colors.grey(11),
+            nodeBackgroundSelectedFocused: Color = IntUiLightTheme.colors.blue(11),
+            chevronTint: Color = IntUiLightTheme.colors.grey(7),
             chevronTintSelected: Color = chevronTint,
             chevronTintFocused: Color = chevronTint,
             chevronTintSelectedFocused: Color = chevronTint
@@ -75,9 +75,9 @@ data class IntUiLazyTreeColors(
         @Composable
         fun dark(
             nodeBackgroundFocused: Color = Color.Unspecified,
-            nodeBackgroundSelected: Color = IntUiDarkPalette.grey(4),
-            nodeBackgroundSelectedFocused: Color = IntUiDarkPalette.blue(2),
-            chevronTint: Color = IntUiDarkPalette.grey(10),
+            nodeBackgroundSelected: Color = IntUiDarkTheme.colors.grey(4),
+            nodeBackgroundSelectedFocused: Color = IntUiDarkTheme.colors.blue(2),
+            chevronTint: Color = IntUiDarkTheme.colors.grey(10),
             chevronTintSelected: Color = chevronTint,
             chevronTintFocused: Color = chevronTint,
             chevronTintSelectedFocused: Color = chevronTint
