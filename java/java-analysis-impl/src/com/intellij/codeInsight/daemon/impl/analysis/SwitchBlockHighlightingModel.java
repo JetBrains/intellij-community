@@ -336,6 +336,7 @@ public class SwitchBlockHighlightingModel {
         HighlightInfo.Builder info = createDuplicateInfo(duplicateKey, duplicateElement);
         results.add(info.create());
       }
+      //No two of the case constants associated with a switch block may have the same value. (enum is constant here)
       for (Map.Entry<PsiEnumConstant, Collection<PsiElement>> references : psiByEnums.entrySet()) {
         if (references.getValue().size() <= 1) continue;
         for (PsiElement referenceToEnum : references.getValue()) {
