@@ -333,8 +333,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
   open fun getToolWindowPane(): ToolWindowPane = toolWindowPane!!
 
   private fun installBorder() {
-    val useUndecoratedBorder = frame?.let { X11UiUtil.useUndecoratedBorder(it) }
-    border = JBUI.CurrentTheme.Window.getBorder(!fullScreen && useUndecoratedBorder == true)
+    border = JBUI.CurrentTheme.Window.getBorder(!fullScreen && hideNativeLinuxTitle)
   }
 
   private fun updateScreenState(fullScreen: Boolean) {
