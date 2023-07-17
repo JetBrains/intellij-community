@@ -558,7 +558,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createReplaceAddAllArrayToCollectionFix(@NotNull PsiMethodCallExpression call) {
-    return new ReplaceAddAllArrayToCollectionFix(call);
+    return new ReplaceAddAllArrayToCollectionFix(call).asIntention();
   }
 
   @NotNull

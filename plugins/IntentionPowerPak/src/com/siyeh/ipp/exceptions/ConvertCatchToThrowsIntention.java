@@ -2,13 +2,11 @@
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +15,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class ConvertCatchToThrowsIntention extends Intention {
+public class ConvertCatchToThrowsIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -25,7 +23,7 @@ public class ConvertCatchToThrowsIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  protected @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("convert.catch.to.throws.intention.name");
   }
 
@@ -33,11 +31,6 @@ public class ConvertCatchToThrowsIntention extends Intention {
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
     return new ConvertCatchToThrowsPredicate();
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 
   @Override
@@ -54,7 +47,7 @@ public class ConvertCatchToThrowsIntention extends Intention {
     else {
       return;
     }
-    if (method == null || !FileModificationService.getInstance().preparePsiElementsForWrite(method)) {
+    if (method == null) {
       return;
     }
     // todo warn if method implements or overrides some base method
@@ -62,16 +55,14 @@ public class ConvertCatchToThrowsIntention extends Intention {
     // "Method xx() of class XX implements/overrides method of class
     // YY. Do you want to modify the base method?"
     //                                             [Yes][No][Cancel]
-    WriteAction.run(() -> {
-      addToThrowsList(method.getThrowsList(), catchSection.getCatchType());
-      final PsiTryStatement tryStatement = catchSection.getTryStatement();
-      if (tryStatement.getCatchSections().length > 1 || tryStatement.getResourceList() != null || tryStatement.getFinallyBlock() != null) {
-        catchSection.delete();
-      }
-      else {
-        BlockUtils.unwrapTryBlock(tryStatement);
-      }
-    });
+    addToThrowsList(method.getThrowsList(), catchSection.getCatchType());
+    final PsiTryStatement tryStatement = catchSection.getTryStatement();
+    if (tryStatement.getCatchSections().length > 1 || tryStatement.getResourceList() != null || tryStatement.getFinallyBlock() != null) {
+      catchSection.delete();
+    }
+    else {
+      BlockUtils.unwrapTryBlock(tryStatement);
+    }
   }
 
   private static void addToThrowsList(PsiReferenceList throwsList, PsiType catchType) {
