@@ -22,9 +22,11 @@ import javax.swing.JLabel
 const val IDE_UPDATE = "ide.update"
 private val LOG = logger<IdeUpdateStep>()
 
-class IdeUpdateStep: SmartUpdateStep {
+class IdeUpdateStep: StepOption {
   override val id = IDE_UPDATE
   override val stepName: String = SmartUpdateBundle.message("checkbox.update.ide")
+  override val optionName: String = SmartUpdateBundle.message("update.ide.option.toolbox")
+  override val groupName: String = SmartUpdateBundle.message("update.ide.group")
 
   override fun performUpdateStep(project: Project, e: AnActionEvent?, onSuccess: () -> Unit) {
     val updateAction = getUpdateAction()

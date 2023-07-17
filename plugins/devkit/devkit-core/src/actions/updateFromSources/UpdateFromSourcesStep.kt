@@ -5,18 +5,19 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
-import com.intellij.smartUpdate.SmartUpdateStep
+import com.intellij.smartUpdate.SmartUpdateBundle
+import com.intellij.smartUpdate.StepOption
 import com.intellij.smartUpdate.beforeRestart
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.util.PsiUtil
 import javax.swing.JComponent
 
-class UpdateFromSourcesStep: SmartUpdateStep {
+class UpdateFromSourcesStep: StepOption {
   override val id = "update.from.sources"
   override val stepName: @Nls String = DevKitBundle.message("update.ide.from.sources")
+  override val optionName: @Nls String = DevKitBundle.message("update.ide.from.sources.option")
+  override val groupName: @Nls String = SmartUpdateBundle.message("update.ide.group")
 
   override fun performUpdateStep(project: Project, e: AnActionEvent?, onSuccess: () -> Unit) {
     if (e == null) { // skip after restart
@@ -26,7 +27,7 @@ class UpdateFromSourcesStep: SmartUpdateStep {
     updateFromSources(project, ::beforeRestart, { Notification("Update from Sources", it, NotificationType.ERROR) }, true)
   }
 
-  override fun isAvailable(project: Project) = ExternalUpdateManager.ACTUAL == null && PsiUtil.isIdeaProject(project)
+  override fun isAvailable(project: Project) = true //ExternalUpdateManager.ACTUAL == null && PsiUtil.isIdeaProject(project)
 
   override fun getDetailsComponent(project: Project): JComponent {
     return panel {

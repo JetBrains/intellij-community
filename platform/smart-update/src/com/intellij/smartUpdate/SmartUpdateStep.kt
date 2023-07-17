@@ -16,3 +16,8 @@ interface SmartUpdateStep {
   fun isAvailable(project: Project): Boolean = true
   fun getDetailsComponent(project: Project): JComponent? = null
 }
+
+interface StepOption: SmartUpdateStep {
+  val optionName: @Nls String
+  val groupName: @Nls String
+}

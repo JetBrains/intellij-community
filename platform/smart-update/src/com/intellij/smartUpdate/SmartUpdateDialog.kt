@@ -3,13 +3,17 @@ package com.intellij.smartUpdate
 import com.intellij.CommonBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.layout.and
+import com.intellij.ui.layout.selectedValueIs
 import java.time.LocalTime
 import javax.swing.JSpinner
 import javax.swing.SpinnerNumberModel
@@ -25,14 +29,26 @@ class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
   override fun createCenterPanel(): DialogPanel {
     val smartUpdate = project.service<SmartUpdate>()
     val options = smartUpdate.state
+    val steps = smartUpdate.availableSteps()
+    val groups = steps.groupBy { (it as? StepOption)?.groupName ?: it.stepName }
     return panel {
-      for (step in smartUpdate.availableSteps()) {
+      for (group in groups) {
         lateinit var checkbox: Cell<JBCheckBox>
+        lateinit var combobox: Cell<ComboBox<SmartUpdateStep>>
         row {
-          checkbox = checkBox(step.stepName).bindSelected(options.property(step.id))
+          checkbox = checkBox(group.key)
+          combobox = comboBox(group.value, SimpleListCellRenderer.create("") { (it as? StepOption)?.optionName })
+            .visible(group.value.size > 1)
         }
-        step.getDetailsComponent(project)?.let {
-          indent { row { cell(it) } }.visibleIf(checkbox.selected)
+        for (step in group.value) {
+          step.getDetailsComponent(project)?.let {
+            indent { row { cell(it) } }.visibleIf(checkbox.selected.and(combobox.component.selectedValueIs(step)))
+          }
+        }
+        combobox.component.selectedItem = group.value.find { options.value(it.id) } ?: group.value.first()
+        checkbox.component.isSelected = options.value((combobox.component.selectedItem as SmartUpdateStep).id)
+        combobox.onApply {
+          group.value.forEach { options.property(it.id).set(checkbox.component.isSelected && it == combobox.component.item) }
         }
       }
       separator()
