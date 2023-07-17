@@ -831,7 +831,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPopupHandlers.add(popupHandler);
   }
 
-  public List<EditorPopupHandler> getPopupHandlers() {
+  @ApiStatus.Internal
+  public @NotNull List<EditorPopupHandler> getPopupHandlers() {
     return myPopupHandlers;
   }
 
