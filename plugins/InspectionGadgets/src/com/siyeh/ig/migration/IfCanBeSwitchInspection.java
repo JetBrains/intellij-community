@@ -377,7 +377,12 @@ public class IfCanBeSwitchInspection extends BaseInspection {
                                  @NonNls StringBuilder switchStatementText) {
     dumpComments(branch.getComments(), switchStatementText);
     for (PsiExpression caseExpression : branch.getCaseExpressions()) {
-      switchStatementText.append("case ").append(getCaseLabelText(caseExpression, castToInt)).append(": ");
+      if (caseExpression instanceof PsiLiteralExpression literalExpression && PsiTypes.nullType().equals(literalExpression.getType())) {
+        switchStatementText.append("case null:");
+      }
+      else {
+        switchStatementText.append("case ").append(getCaseLabelText(caseExpression, castToInt)).append(": ");
+      }
     }
     if (branch.isElse()) {
       switchStatementText.append("default: ");
