@@ -15,9 +15,13 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent =
     object : ToolbarComboWidget() {
       override fun doExpand(e: InputEvent?) {
+        createPopup(e)?.showUnderneathOf(this)
+      }
+
+      override fun createPopup(e: InputEvent?): JBPopup? {
         val dataContext = DataManager.getInstance().getDataContext(this)
         val anActionEvent = AnActionEvent.createFromInputEvent(e, place, presentation, dataContext)
-        createPopup(anActionEvent)?.showUnderneathOf(this)
+        return createPopup(anActionEvent)
       }
     }
 

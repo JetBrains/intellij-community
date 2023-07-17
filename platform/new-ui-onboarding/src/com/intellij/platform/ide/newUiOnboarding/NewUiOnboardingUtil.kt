@@ -3,10 +3,19 @@ package com.intellij.platform.ide.newUiOnboarding
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.CheckedDisposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.LottieUtils
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.AbstractPopup
+import com.intellij.ui.popup.WizardPopup
+import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -37,6 +46,35 @@ object NewUiOnboardingUtil {
       it is T && it.isVisible && it.isShowing && predicate(it)
     }
     return component as? T
+  }
+
+  fun showToolbarWidgetPopup(widget: ToolbarComboWidget, disposable: CheckedDisposable): JBPopup? {
+    val popup = widget.createPopup(e = null) ?: return null
+    Disposer.register(disposable) { popup.closeOk(null) }
+
+    if (popup is WizardPopup) {
+      // do not install PopupDispatcher, otherwise some cancel settings that are installed below won't work.
+      popup.setActiveRoot(false)
+    }
+    (popup as AbstractPopup).apply {
+      setCancelOnMouseOutCallback(null)
+      setCancelOnOtherWindowOpen(false)
+      setCancelOnWindowDeactivation(false)
+      isCancelOnClickOutside = false
+      isCancelKeyEnabled = false
+    }
+
+    popup.addListener(object : JBPopupListener {
+      override fun onClosed(event: LightweightWindowEvent) {
+        Alarm().addRequest(Runnable {
+          if (!disposable.isDisposed) {
+            showToolbarWidgetPopup(widget, disposable)
+          }
+        }, 500)
+      }
+    })
+    popup.showUnderneathOf(widget)
+    return popup
   }
 
   fun convertPointToFrame(project: Project, source: Component, point: Point): RelativePoint? {
