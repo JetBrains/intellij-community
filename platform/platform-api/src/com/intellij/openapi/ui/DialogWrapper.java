@@ -356,7 +356,7 @@ public abstract class DialogWrapper {
    * @return {@code false} to disable continuous validation
    */
   protected boolean continuousValidation() {
-    return true;
+    return myDialogPanel == null;
   }
 
   /**
