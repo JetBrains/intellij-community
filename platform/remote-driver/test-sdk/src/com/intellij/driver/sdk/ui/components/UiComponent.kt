@@ -1,4 +1,4 @@
-package com.intellij.driver.sdk.ui.compenents
+package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.model.RemoteMouseButton

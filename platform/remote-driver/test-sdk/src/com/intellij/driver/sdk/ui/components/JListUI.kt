@@ -1,4 +1,4 @@
-package com.intellij.driver.sdk.ui.compenents
+package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.StringList

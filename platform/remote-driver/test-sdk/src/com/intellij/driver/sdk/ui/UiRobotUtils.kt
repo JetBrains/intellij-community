@@ -1,8 +1,7 @@
 package com.intellij.driver.sdk.ui
 
-import com.intellij.driver.sdk.ui.compenents.UiComponent
+import com.intellij.driver.sdk.ui.components.UiComponent
 import java.time.Duration
-
 
 fun waitFor(
   duration: Duration = Duration.ofSeconds(5),

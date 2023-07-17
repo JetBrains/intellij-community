@@ -1,9 +1,9 @@
 package com.intellij.driver.sdk.ui
 
 import com.intellij.driver.client.Driver
-import com.intellij.driver.sdk.ui.compenents.ComponentData
-import com.intellij.driver.sdk.ui.compenents.UIComponentsList
-import com.intellij.driver.sdk.ui.compenents.UiComponent
+import com.intellij.driver.sdk.ui.components.ComponentData
+import com.intellij.driver.sdk.ui.components.UIComponentsList
+import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.RobotService
 import org.intellij.lang.annotations.Language

@@ -1,7 +1,7 @@
 package com.intellij.driver.sdk.ui
 
 import com.intellij.driver.model.TextData
-import com.intellij.driver.sdk.ui.compenents.UiComponent
+import com.intellij.driver.sdk.ui.components.UiComponent
 
 class UiText(private val component: UiComponent, private val textData: TextData) {
   val text = textData.text
