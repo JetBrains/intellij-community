@@ -166,6 +166,10 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     myBeforeRunStepsPanel.addTask(task);
   }
 
+  public void replaceBeforeLaunchSteps(@NotNull List<BeforeRunTask<?>> tasks) {
+    myBeforeRunStepsPanel.replaceTasks(tasks);
+  }
+
   /**
    * You MUST NOT modify tasks in the returned list.
    */
