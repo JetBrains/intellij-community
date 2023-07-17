@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -94,6 +95,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private SpeedSearch mySpeedSearchFoundInRootComponent;
   private String myDimensionServiceKey;
   private Computable<Boolean> myCallBack;
+  private ModalityState myModalityStateWhenShown;
   private Project myProject;
   private boolean myCancelOnClickOutside;
   private final List<JBPopupListener> myListeners = new CopyOnWriteArrayList<>();
@@ -906,7 +908,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public boolean canClose() {
-    return (myCallBack == null || myCallBack.compute().booleanValue()) && !preventImmediateClosingAfterOpening();
+    return
+      (myModalityStateWhenShown == null || !ModalityState.current().dominates(myModalityStateWhenShown)) &&
+      (myCallBack == null || myCallBack.compute().booleanValue()) &&
+      !preventImmediateClosingAfterOpening();
   }
 
   private boolean preventImmediateClosingAfterOpening() {
@@ -1190,6 +1195,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     TouchbarSupport.showPopupItems(this, myContent);
 
+    myModalityStateWhenShown = ModalityState.current();
     myPopup.show();
     Rectangle bounds = window.getBounds();
 
