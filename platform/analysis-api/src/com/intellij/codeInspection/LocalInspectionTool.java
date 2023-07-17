@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -42,7 +43,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
-   * If you want to change suppression id you have to define it in XML as well.
+   * If you want to change the suppression ID, you have to define it in XML as well.
    *
    * <p>Inspection tool ID is a descriptive name to be used in "suppress" comments and annotations.
    * <p>It must satisfy {@link #VALID_ID_PATTERN} regexp pattern.
@@ -77,11 +78,11 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * Override and return {@code true} if your inspection (unlike almost all others)
    * must be called for every element in the whole file for each change, whatever small it was.
    * <p>
-   * For example, 'Field can be local' inspection can report the field declaration when reference to it was added inside method hundreds lines below.
-   * Hence, this inspection must be rerun on every change.
+   * For example, 'Field can be local' inspection should revisit the field declaration,
+   * when the reference to it is added hundreds lines below, from inside some other method.
    * <p>
    * Please note that re-scanning the whole file can take considerable time and thus seriously impact the responsiveness, so
-   * beg please use this mechanism once in a blue moon.
+   * please return {@code true} from this method only when absolutely necessary.
    *
    * @return true if inspection should be called for every element.
    */
@@ -102,14 +103,14 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
-   * Override to provide your own inspection visitor, if you need to store additional state in the
-   * LocalInspectionToolSession user data or get information about the inspection scope.
-   * Created visitor must not be recursive (e.g. it must not inherit {@link PsiRecursiveElementVisitor})
+   * Override to provide your own inspection visitor if you need to store additional state in the
+   * {@link LocalInspectionToolSession} user data or get information about the inspection scope.
+   * Created visitor must not be recursive (e.g., it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
    * Visitor created must be thread-safe since it might be called on several elements concurrently.
    * If the inspection should not run in the given context return {@link PsiElementVisitor#EMPTY_VISITOR}
    *
-   * @param holder     where visitor will register problems found.
+   * @param holder     where the visitor will register problems it found.
    * @param isOnTheFly true if inspection was run in non-batch mode
    * @param session    the session in the context of which the tool runs.
    * @return not-null visitor for this inspection.
@@ -126,7 +127,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * Visitor created must be thread-safe since it might be called on several elements concurrently.
    * If the inspection should not run in the given context return {@link PsiElementVisitor#EMPTY_VISITOR}
    *
-   * @param holder     where visitor will register problems found.
+   * @param holder     where the visitor will register problems it found.
    * @param isOnTheFly true if inspection was run in non-batch mode
    * @return not-null visitor for this inspection.
    * @see PsiRecursiveVisitor
@@ -138,7 +139,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
         addDescriptors(checkFile(file, holder.getManager(), isOnTheFly));
       }
 
-      private void addDescriptors(ProblemDescriptor[] descriptors) {
+      private void addDescriptors(ProblemDescriptor @Nullable [] descriptors) {
         if (descriptors != null) {
           for (ProblemDescriptor descriptor : descriptors) {
             if (descriptor != null) {
@@ -146,7 +147,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
             }
             else {
               Class<?> inspectionToolClass = LocalInspectionTool.this.getClass();
-              LOG.error(PluginException.createByClass("Array returned from checkFile() method of " + inspectionToolClass + " contains null element",
+              LOG.error(PluginException.createByClass("Array returned from checkFile() method of " + inspectionToolClass + " contains null element: " +
+                                                      Arrays.toString(descriptors),
                                                       null, inspectionToolClass));
             }
           }
@@ -159,7 +161,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * Returns problem container (e.g., method, class, file) that is used as inspection view tree node.
    * <p>
    * Consider {@link com.intellij.codeInspection.lang.RefManagerExtension#getElementContainer(PsiElement)}
-   * to override container element for any inspection for given language.
+   * to override the container element for any inspection for given language.
    *
    * @param psiElement: problem element
    * @return problem container element
@@ -169,13 +171,13 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
-   * Called before this inspection tool' visitor started processing any PSI elements the IDE wanted it to process in this session.
+   * Called before this inspection tool's visitor started processing any PSI elements the IDE wanted it to process in this session.
    * There are no guarantees about which thread it's called from or whether there is a read/write action it's called under.
    */
   public void inspectionStarted(@NotNull LocalInspectionToolSession session, boolean isOnTheFly) {}
 
   /**
-   * Called when this inspection tool' visitor finished processing all PSI elements the IDE wanted it to process in this session.
+   * Called when this inspection tool's visitor finished processing all the PSI elements the IDE wanted to process in this session.
    * There are no guarantees about which thread it's called from or whether there is a read/write action it's called under.
    */
   public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
