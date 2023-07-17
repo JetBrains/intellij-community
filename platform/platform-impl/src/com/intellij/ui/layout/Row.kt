@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.layout
 
-import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
 import com.intellij.ui.components.noteComponent
@@ -22,20 +20,8 @@ interface BaseBuilder {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
-    withButtonGroup(null, buttonGroup, body)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
   fun buttonGroup(init: () -> Unit) {
     withButtonGroup(null, ButtonGroup(), init)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun buttonGroup(@NlsContexts.BorderTitle title:String? = null, init: () -> Unit) {
-    withButtonGroup(title, ButtonGroup(), init)
   }
 }
 
@@ -55,10 +41,6 @@ interface RowBuilder : BaseBuilder {
   fun createNoteOrCommentRow(component: JComponent): Row
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun checkBoxGroup(@Nls title: String?, body: () -> Unit)
-
-  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
     return createChildRow(label = label, isSeparated = separated).apply(init)
@@ -75,28 +57,6 @@ interface RowBuilder : BaseBuilder {
   fun titledRow(@NlsContexts.BorderTitle title: String, init: Row.() -> Unit): Row
 
   /**
-   * Creates row with a huge gap after it, that can be used to group related components.
-   * Think of [titledRow] without a title and additional indent.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun blockRow(init: Row.() -> Unit): Row
-
-  /**
-   * Creates row with hideable decorator.
-   * It allows to hide some information under the titled decorator
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun hideableRow(@NlsContexts.Separator title: String, incrementsIndent: Boolean = true, init: Row.() -> Unit): Row
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun hideableRow(@NlsContexts.Separator title: String, init: Row.() -> Unit): Row {
-    return hideableRow(title = title, true, init)
-  }
-
-  /**
    * Hyperlinks are supported (`<a href=""></a>`), new lines and `<br>` are supported only if no links (file issue if need).
    */
   @ApiStatus.ScheduledForRemoval
@@ -104,19 +64,6 @@ interface RowBuilder : BaseBuilder {
   fun noteRow(@Nls text: String, linkHandler: ((url: String) -> Unit)? = null) {
     createNoteOrCommentRow(noteComponent(text, linkHandler))
   }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun commentRow(@Nls text: String) {
-    createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true, -1, true))
-  }
-
-  /**
-   * Creates a nested UI DSL panel, with a grid which is independent of this pane.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun nestedPanel(@NlsContexts.BorderTitle title: String? = null, init: LayoutBuilder.() -> Unit): CellBuilder<DialogPanel>
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -224,7 +171,3 @@ fun Row.enableIf(predicate: ComponentPredicate) {
   enabled = predicate()
   predicate.addListener { enabled = it }
 }
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
-fun RowBuilder.fullRow(init: InnerCell.() -> Unit): Row = row { cell(isFullWidth = true, init = init) }

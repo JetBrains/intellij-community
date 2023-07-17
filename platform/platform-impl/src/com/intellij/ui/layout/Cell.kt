@@ -36,7 +36,6 @@ import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
-import java.util.*
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.jvm.internal.CallableReference
@@ -204,7 +203,7 @@ interface CellBuilder<out T : JComponent> {
   fun visibleIf(predicate: ComponentPredicate): CellBuilder<T>
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun withErrorOnApplyIf(@DialogMessage message: String, callback: (T) -> Boolean): CellBuilder<T> {
     withValidationOnApply { if (callback(it)) error(message) else null }
     return this
@@ -699,12 +698,6 @@ abstract class Cell : BaseBuilder {
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun placeholder(): CellBuilder<JComponent> {
-    return internalPlaceholder()
-  }
-
-  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   abstract fun <T : JComponent> component(component: T): CellBuilder<T>
 
@@ -767,34 +760,6 @@ fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: 
       }
     }
   }
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder<JSlider> {
-  val slider = JSlider()
-  UIUtil.setSliderIsFilled(slider, true)
-  slider.paintLabels = true
-  slider.paintTicks = true
-  slider.paintTrack = true
-  slider.minimum = min
-  slider.maximum = max
-  slider.minorTickSpacing = minorTick
-  slider.majorTickSpacing = majorTick
-  return slider()
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-fun <T : JSlider> CellBuilder<T>.labelTable(table: Hashtable<Int, JComponent>.() -> Unit): CellBuilder<T> {
-  component.labelTable = Hashtable<Int, JComponent>().apply(table)
-  return this
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-fun <T : JSlider> CellBuilder<T>.withValueBinding(modelBinding: PropertyBinding<Int>): CellBuilder<T> {
-  return withBinding(JSlider::getValue, JSlider::setValue, modelBinding)
 }
 
 @ApiStatus.ScheduledForRemoval

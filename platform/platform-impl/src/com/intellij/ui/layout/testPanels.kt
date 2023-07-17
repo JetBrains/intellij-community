@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JPanel
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
 fun separatorAndComment() : JPanel {
   return panel {
     row("Label", separated = true) {
