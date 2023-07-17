@@ -15,6 +15,8 @@ import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
+import org.jetbrains.kotlin.load.java.propertyNameBySetMethodName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.plugin.references.SimpleNameReferenceExtension
@@ -40,16 +42,34 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
             ?: simpleNameReference.expression
     }
 
-    protected fun KtSimpleReference<KtNameReferenceExpression>.renameToOrdinaryMethod(newElementName: String, getter: Boolean): KtElement? {
-        val psiFactory = KtPsiFactory(expression.project)
+    protected fun KtSimpleReference<KtNameReferenceExpression>.getAdjustedNewName(newElementName: String): Name? {
+        val newNameAsName = Name.identifier(newElementName)
+        val newName = if (JvmAbi.isGetterName(newElementName)) {
+            propertyNameByGetMethodName(newNameAsName)
+        }
+        else if (JvmAbi.isSetterName(newElementName)) {
+            //TODO: it's not correct
+            //TODO: setIsY -> setIsIsY bug
+            propertyNameBySetMethodName(
+              newNameAsName,
+              withIsPrefix = expression.getReferencedName().startsWith("is")
+            )
+        }
+        else null
+        return newName
+    }
 
-        val newGetterName = if (getter) newElementName else JvmAbi.getterName(expression.getReferencedName())
+    protected fun KtSimpleReference<KtNameReferenceExpression>.renameToOrdinaryMethod(newElementName: String): KtElement? {
+        val psiFactory = KtPsiFactory(expression.project)
+        val isGetterRename = isKotlinAwareJavaGetterRename(this)
+
+        val newGetterName = if (isGetterRename) newElementName else JvmAbi.getterName(expression.getReferencedName())
 
         if (expression.readWriteAccess(false) == ReferenceAccess.READ) {
             return expression.replaced(expression.createCall(psiFactory, newGetterName))
         }
 
-        val newSetterName = if (getter) JvmAbi.setterName(expression.getReferencedName()) else newElementName
+        val newSetterName = if (isGetterRename) JvmAbi.setterName(expression.getReferencedName()) else newElementName
 
         val fullExpression = expression.getQualifiedExpressionForSelectorOrThis()
         fullExpression.getAssignmentByLHS()?.let { assignment ->
@@ -57,7 +77,7 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
             val operationToken = assignment.operationToken as? KtSingleValueToken ?: return expression
             val counterpartOp = OperatorConventions.ASSIGNMENT_OPERATION_COUNTERPARTS[operationToken]
             val setterArgument = if (counterpartOp != null) {
-                val getterCall = if (getter) fullExpression.createCall(psiFactory, newGetterName) else fullExpression
+                val getterCall = if (isGetterRename) fullExpression.createCall(psiFactory, newGetterName) else fullExpression
                 psiFactory.createExpressionByPattern("$0 ${counterpartOp.value} $1", getterCall, rhs)
             } else {
                 rhs
@@ -70,7 +90,7 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
             val operationToken = unaryExpr.operationToken as? KtSingleValueToken ?: return expression
             if (operationToken !in OperatorConventions.INCREMENT_OPERATIONS) return expression
             val operationName = OperatorConventions.getNameForOperationSymbol(operationToken)
-            val originalValue = if (getter) fullExpression.createCall(psiFactory, newGetterName) else fullExpression
+            val originalValue = if (isGetterRename) fullExpression.createCall(psiFactory, newGetterName) else fullExpression
             val incDecValue = psiFactory.createExpressionByPattern("$0.$operationName()", originalValue)
             val parent = unaryExpr.parent
             val context = parent.parents(true).firstOrNull { it is KtBlockExpression || it is KtDeclarationContainer }

@@ -2,14 +2,16 @@
 package org.jetbrains.kotlin.idea.k2.refactoring
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
@@ -18,22 +20,12 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
-import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
-import org.jetbrains.kotlin.load.java.propertyNameBySetMethodName
-import org.jetbrains.kotlin.name.Name.identifier
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 /**
  * At the moment, this implementation of [org.jetbrains.kotlin.idea.references.KtReferenceMutateService] is not able to do some of the
  * required operations. It is OK and on purpose - this functionality will be added later.
  */
+@Suppress("UNCHECKED_CAST")
 internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     @RequiresWriteLock
     override fun bindToFqName(
@@ -116,25 +108,14 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     }
 
     override fun handleElementRename(ktReference: KtReference, newElementName: String): PsiElement? {
-        val newNameAsName = identifier(newElementName)
-        val newName = if (ktReference is KtSimpleNameReference && JvmAbi.isSetterName(newElementName)) {
-            propertyNameBySetMethodName(newNameAsName,
-                                        withIsPrefix = ktReference.expression.getReferencedNameAsName().asString().startsWith("is"))
-        }
-        else if (ktReference is KtSimpleNameReference && JvmAbi.isGetterName(newElementName)) {
-            propertyNameByGetMethodName(newNameAsName)
-        }
-        else null
-
+        val newName = (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.getAdjustedNewName(newElementName)
         if (newName == null && ktReference is KtSymbolBasedReference) {
             @OptIn(KtAllowAnalysisOnEdt::class)
             allowAnalysisOnEdt {
                 analyze(ktReference.element) {
                     val symbol = ktReference.resolveToSymbol() as? KtSyntheticJavaPropertySymbol
                     if (symbol != null) {
-                        val isGetter = (ktReference.resolve() as? PsiMethod)?.let { JvmAbi.isGetterName(it.name) }?: false
-                        @Suppress("UNCHECKED_CAST")
-                        return (ktReference as KtSimpleReference<KtNameReferenceExpression>).renameToOrdinaryMethod(newElementName, isGetter)
+                        return (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.renameToOrdinaryMethod(newElementName)
                     }
                 }
             }
