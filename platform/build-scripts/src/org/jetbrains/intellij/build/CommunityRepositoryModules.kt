@@ -204,7 +204,8 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.java.decompiler.engine", spec.mainJarName)
     },
     javaFXPlugin("intellij.javaFX.community"),
-    pluginAuto(listOf("intellij.terminal")) { spec ->
+    plugin("intellij.terminal") { spec ->
+      spec.withModule("intellij.terminal.sh")
       spec.withResource("resources/shell-integrations", "shell-integrations")
     },
     plugin("intellij.emojipicker") { spec ->

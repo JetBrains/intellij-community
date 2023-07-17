@@ -86,6 +86,5 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.terminal.sh" scope="RUNTIME" />
   </component>
 </module>
