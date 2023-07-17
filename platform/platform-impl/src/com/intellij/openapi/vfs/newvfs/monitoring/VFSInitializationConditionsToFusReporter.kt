@@ -22,7 +22,7 @@ class VFSInitializationConditionsToFusReporter : ProjectActivity {
     val creationTimestamp = FSRecords.getCreationTimestamp()
     val totalInitializationDurationMs = FSRecords.totalInitializationDuration(MILLISECONDS)
 
-    val rebuildCause = if (wasCreateANew) {
+    val rebuildCause = if (wasCreateANew && initializationFailures.isEmpty()) {
       INITIAL
     }
     else if (initializationFailures.isEmpty()) {
