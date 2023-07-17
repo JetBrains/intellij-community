@@ -34,7 +34,7 @@ class GradleActionDelegatesToProvider : GrDelegatesToProvider {
     }
     else {
       typeArgument
-    }?.let(::decoratePsiType)
+    }
     return DelegatesToInfo(delegateType, Closure.DELEGATE_FIRST)
   }
 }

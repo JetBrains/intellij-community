@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory
@@ -34,10 +34,6 @@ class GradleTaskProperty(
     result.append("</PRE>")
     description?.let(result::append)
     result.toString()
-  }
-
-  override fun decorateType(type: PsiClassType): PsiClassType {
-    return org.jetbrains.plugins.gradle.service.resolve.decoratePsiClassType(type)
   }
 
   override fun <T : Any?> getUserData(key: Key<T>): T? {
