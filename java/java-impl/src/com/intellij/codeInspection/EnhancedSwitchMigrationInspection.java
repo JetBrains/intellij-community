@@ -239,7 +239,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     return completenessResult == CompletenessResult.COMPLETE_WITHOUT_UNCONDITIONAL || completenessResult == CompletenessResult.COMPLETE_WITH_UNCONDITIONAL;
   }
 
-  private static boolean isConvertibleBranch(OldSwitchStatementBranch branch, boolean hasNext) {
+  private static boolean isConvertibleBranch(@NotNull OldSwitchStatementBranch branch, boolean hasNext) {
     int length = branch.getStatements().length;
     if (length == 0) return (branch.isFallthrough() && hasNext) || (!branch.isFallthrough() && branch.isDefault());
     return !branch.isFallthrough();
@@ -388,6 +388,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     @NotNull final PsiStatement myStatement;
     final List<SwitchBranch> myNewBranches;
     final @Nullable PsiReturnStatement myReturnToDelete;
+    final @Nullable PsiThrowStatement myThrowStatementToDelete;
     private final @NotNull List<? extends PsiStatement> myStatementsToDelete;
     private final boolean myIsInfo;
     private final int myMaxNumberStatementsInBranch;
@@ -395,12 +396,14 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     private ReturningSwitchReplacer(@NotNull PsiStatement statement,
                                     @NotNull List<SwitchBranch> newBranches,
                                     @Nullable PsiReturnStatement returnToDelete,
+                                    @Nullable PsiThrowStatement throwToDelete,
                                     @NotNull List<? extends PsiStatement> statementsToDelete,
                                     boolean isInfo,
                                     int maxNumberStatementsInBranch) {
       myStatement = statement;
       myNewBranches = rearrangeBranches(newBranches, statement);
       myReturnToDelete = returnToDelete;
+      myThrowStatementToDelete = throwToDelete;
       myStatementsToDelete = statementsToDelete;
       myIsInfo = isInfo;
       myMaxNumberStatementsInBranch = maxNumberStatementsInBranch;
@@ -426,6 +429,11 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         CommentTracker ct = new CommentTracker();
         commentTracker.markUnchanged(myReturnToDelete.getReturnValue());
         ct.delete(myReturnToDelete);
+      }
+      if (myThrowStatementToDelete != null) {
+        CommentTracker ct = new CommentTracker();
+        commentTracker.markUnchanged(myThrowStatementToDelete.getException());
+        ct.delete(myThrowStatementToDelete);
       }
       for (PsiStatement toDelete : myStatementsToDelete) {
         commentTracker.delete(toDelete);
@@ -460,7 +468,9 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                                                        boolean isExhaustive, int maxNumberStatementsForExpression) {
     PsiReturnStatement returnAfterSwitch =
       tryCast(PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class), PsiReturnStatement.class);
-    if (returnAfterSwitch == null && !isExhaustive) return null;
+    PsiThrowStatement throwAfterSwitch =
+      tryCast(PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class), PsiThrowStatement.class);
+    if (returnAfterSwitch == null && throwAfterSwitch==null && !isExhaustive) return null;
     List<SwitchBranch> newBranches = new ArrayList<>();
     boolean hasReturningBranch = false;
     boolean isInfo = false;
@@ -474,7 +484,17 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         statements = psiCodeBlock.getCodeBlock().getStatements();
       }
       if (statements.length == 0) {
-        return null;
+        if (i == branches.size() - 1) {
+          if (returnAfterSwitch != null) {
+            statements = new PsiStatement[]{returnAfterSwitch};
+          }
+          else if (throwAfterSwitch != null) {
+            statements = new PsiStatement[]{throwAfterSwitch};
+          }
+          else {
+            return null;
+          }
+        }
       }
       if (maxLines < statements.length) {
         maxLines = statements.length;
@@ -492,7 +512,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       if (returnStmt == null) {
         PsiThrowStatement throwStatement = tryCast(statements[lastIndex], PsiThrowStatement.class);
         if (throwStatement == null) return null;
-        PsiStatement[]psiStatements = replaceAllReturnWithYield(statements);
+        PsiStatement[] psiStatements = replaceAllReturnWithYield(statements);
         if (psiStatements == null) {
           return null;
         }
@@ -519,7 +539,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                                        branch.getUsedElements()));
     }
     if (!hasReturningBranch) return null;
-    if (!isExhaustive) {
+    if (!isExhaustive && returnAfterSwitch != null) {
       PsiExpression returnExpr = returnAfterSwitch.getReturnValue();
       if (returnExpr == null) return null;
       newBranches.add(new SwitchBranch(true,
@@ -527,8 +547,14 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                                        new SwitchRuleExpressionResult(returnExpr),
                                        Collections.emptyList()));
     }
+    if (!isExhaustive && throwAfterSwitch != null) {
+      newBranches.add(new SwitchBranch(true,
+                                       Collections.emptyList(),
+                                       new SwitchStatementBranch(new PsiStatement[]{throwAfterSwitch}),
+                                       Collections.emptyList()));
+    }
     List<PsiStatement> statementsToDelete = new ArrayList<>();
-    if (isExhaustive && returnAfterSwitch == null) {
+    if (isExhaustive && returnAfterSwitch == null && throwAfterSwitch == null) {
       PsiElement current = statement.getNextSibling();
       while (current != null) {
         if (current instanceof PsiStatement stmt) {
@@ -543,7 +569,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         current = current.getNextSibling();
       }
     }
-    return new ReturningSwitchReplacer(statement, newBranches, returnAfterSwitch, statementsToDelete, isInfo, maxLines);
+    return new ReturningSwitchReplacer(statement, newBranches, returnAfterSwitch, throwAfterSwitch, statementsToDelete, isInfo, maxLines);
   }
 
   private static PsiStatement @Nullable [] replaceAllReturnWithYield(PsiStatement[] statements) {
