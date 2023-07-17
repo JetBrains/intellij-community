@@ -75,6 +75,19 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
+  fun testGeneratedSetter3(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
+      testHighlighting("""
+        tasks.withType(JavaCompile).configureEach {
+            options.verbose = true
+        }
+      """.trimIndent())
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
   fun testGradleGroovyImplicitUsages(gradleVersion: GradleVersion) {
     test(gradleVersion, BUILD_SRC_FIXTURE) {
       fixture.enableInspections(GroovyUnusedDeclarationInspection(), UnusedDeclarationInspectionBase(true))
