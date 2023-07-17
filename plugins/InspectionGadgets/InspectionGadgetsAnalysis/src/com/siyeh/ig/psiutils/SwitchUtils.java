@@ -16,14 +16,12 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.JavaPsiPatternUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -629,6 +627,76 @@ public final class SwitchUtils {
       .anyMatch(pattern -> JavaPsiPatternUtil.isUnconditionalForType(pattern, type));
   }
 
+
+  /**
+   * Finds the removable unreachable branches in a switch statement.
+   * Default case is not included in this list and should be checked separately
+   *
+   * @param reachableLabel The label that is reachable.
+   * @param statement The switch statement to analyze.
+   * @return A list of unreachable branches that can be safely removed.
+   */
+  public static List<PsiCaseLabelElement> findRemovableUnreachableBranches(PsiCaseLabelElement reachableLabel,
+                                                                           PsiSwitchBlock statement) {
+    PsiSwitchLabelStatementBase labelStatement = PsiTreeUtil.getParentOfType(reachableLabel, PsiSwitchLabelStatementBase.class);
+    List<PsiSwitchLabelStatementBase> allBranches =
+      PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatementBase.class);
+    boolean hasDefault = false;
+    List<PsiCaseLabelElement> unreachableElements = new ArrayList<>();
+    for (PsiSwitchLabelStatementBase branch : allBranches) {
+      if (branch.isDefaultCase()) {
+        hasDefault = true;
+        continue;
+      }
+      PsiCaseLabelElementList elementList = branch.getCaseLabelElementList();
+      if (elementList == null) {
+        continue;
+      }
+      PsiCaseLabelElement[] elements = elementList.getElements();
+      unreachableElements.addAll(Arrays.asList(elements));
+    }
+    unreachableElements.remove(reachableLabel);
+    boolean canUnwrap = (statement instanceof PsiSwitchStatement && BreakConverter.from(statement) != null) ||
+                        (!(statement instanceof PsiSwitchStatement) &&
+                         labelStatement instanceof PsiSwitchLabeledRuleStatement ruleStatement &&
+                         ruleStatement.getBody() instanceof PsiExpressionStatement);
+    if (canUnwrap) {
+      return unreachableElements;
+    }
+
+    if (unreachableElements.isEmpty() || hasDefault) {
+      return unreachableElements;
+    }
+    boolean isEnhancedSwitch = JavaPsiSwitchUtil.isEnhancedSwitch(statement);
+    if (isEnhancedSwitch) {
+      PsiExpression expression = statement.getExpression();
+      if (expression == null) {
+        return List.of();
+      }
+      PsiType selectorType = expression.getType();
+      if (selectorType == null) {
+        return List.of();
+      }
+      List<PsiCaseLabelElement> toDelete = new ArrayList<>();
+      for (int i = 0; i < unreachableElements.size(); i++) {
+        PsiCaseLabelElement currentElement = unreachableElements.get(i);
+        boolean isDominated = false;
+        for (int j = i + 1; j < unreachableElements.size(); j++) {
+          PsiCaseLabelElement nextElement = unreachableElements.get(j);
+          isDominated = SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.isDominated(currentElement, nextElement, selectorType);
+          if (!isDominated) {
+            break;
+          }
+        }
+
+        if (!isDominated) {
+          toDelete.add(currentElement);
+        }
+      }
+      unreachableElements.removeAll(toDelete);
+    }
+    return unreachableElements;
+  }
   private static class LabelSearchVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final String m_labelName;
