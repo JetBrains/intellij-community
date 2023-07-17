@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
@@ -18,11 +19,11 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
   private val myProject: Project = myTree.project
 
   @Throws(MavenProcessCanceledException::class)
-  fun resolvePlugins(mavenProjectsToResolvePlugins: Collection<MavenProjectWithHolder>,
-                     embeddersManager: MavenEmbeddersManager,
-                     console: MavenConsole,
-                     process: MavenProgressIndicator,
-                     reportUnresolvedToSyncConsole: Boolean) {
+  suspend fun resolvePlugins(mavenProjectsToResolvePlugins: Collection<MavenProjectWithHolder>,
+                             embeddersManager: MavenEmbeddersManager,
+                             console: MavenConsole,
+                             process: MavenProgressIndicator,
+                             reportUnresolvedToSyncConsole: Boolean) {
     val mavenProjects = mavenProjectsToResolvePlugins.filter {
       !it.mavenProject.hasReadingProblems()
       && it.mavenProject.hasUnresolvedPlugins()
@@ -63,7 +64,9 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
     }
     finally {
       if (filesToRefresh.size > 0) {
-        LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh)
+        blockingContext {
+          LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh)
+        }
       }
       embeddersManager.release(embedder)
     }

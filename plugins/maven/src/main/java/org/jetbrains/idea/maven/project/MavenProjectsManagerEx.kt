@@ -350,12 +350,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
           val pluginResolver = MavenPluginResolver(projectsTree)
           withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
             runMavenImportActivity(project, MavenProjectsProcessorPluginsResolvingTask::class.java) {
-              withRawProgressReporter {
-                coroutineToIndicator {
-                  for (mavenProjects in resolutionResult.mavenProjectMap) {
-                    pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, indicator, true)
-                  }
-                }
+              for (mavenProjects in resolutionResult.mavenProjectMap) {
+                pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, indicator, true)
               }
             }
           }

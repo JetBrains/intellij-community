@@ -218,12 +218,14 @@ class MavenImportFlow {
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
 
-    resolver.resolvePlugins(
-      context.projectsWithUnresolvedPlugins,
-      embeddersManager,
-      consoleToBeRemoved,
-      context.initialContext.indicator,
-      false)
+    runBlockingMaybeCancellable {
+      resolver.resolvePlugins(
+        context.projectsWithUnresolvedPlugins,
+        embeddersManager,
+        consoleToBeRemoved,
+        context.initialContext.indicator,
+        false)
+    }
 
     return MavenPluginResolvedContext(context.project, context)
   }

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.server
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
@@ -123,9 +124,9 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   @Throws(MavenProcessCanceledException::class)
-  fun resolvePlugins(mavenPluginRequests: Collection<Pair<MavenId, NativeMavenProjectHolder>>,
-                     progressIndicator: MavenProgressIndicator?,
-                     console: MavenConsole?): List<PluginResolutionResponse> {
+  suspend fun resolvePlugins(mavenPluginRequests: Collection<Pair<MavenId, NativeMavenProjectHolder>>,
+                             progressIndicator: MavenProgressIndicator?,
+                             console: MavenConsole?): List<PluginResolutionResponse> {
     val pluginResolutionRequests = ArrayList<PluginResolutionRequest>()
     for (mavenPluginRequest in mavenPluginRequests) {
       val mavenPluginId = mavenPluginRequest.first
@@ -140,7 +141,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     }
     val indicator = progressIndicator?.indicator
     val syncConsole = progressIndicator?.syncConsole
-    return runLongRunningTask(
+    return runLongRunningTaskAsync(
       LongRunningEmbedderTask { embedder, taskId -> embedder.resolvePlugins(taskId, pluginResolutionRequests, ourToken) },
       indicator, syncConsole, console)
   }
@@ -148,8 +149,10 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   @Throws(MavenProcessCanceledException::class)
   fun resolvePlugin(plugin: MavenPlugin, nativeMavenProject: NativeMavenProjectHolder): Collection<MavenArtifact> {
     val mavenId = plugin.mavenId
-    return resolvePlugins(listOf(Pair.create(mavenId, nativeMavenProject)), null, null)
+    return runBlockingMaybeCancellable {
+      resolvePlugins(listOf(Pair.create(mavenId, nativeMavenProject)), null, null)
       .flatMap { resolutionResult: PluginResolutionResponse -> resolutionResult.artifacts }.toSet()
+    }
   }
 
   @Throws(MavenProcessCanceledException::class)
@@ -221,6 +224,17 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     val embedder = getOrCreateWrappee()
 
     return runLongRunningTask(embedder, longRunningTaskId, task, indicator, syncConsole, console)
+  }
+
+  @Throws(MavenProcessCanceledException::class)
+  protected suspend fun <R> runLongRunningTaskAsync(task: LongRunningEmbedderTask<R>,
+                                                    indicator: ProgressIndicator?,
+                                                    syncConsole: MavenSyncConsole?,
+                                                    console: MavenConsole?): R {
+    val longRunningTaskId = UUID.randomUUID().toString()
+    val embedder = getOrCreateWrappee()
+
+    return runLongRunningTaskAsync(embedder, longRunningTaskId, indicator, syncConsole, console, task)
   }
 
   private fun <R> runLongRunningTask(embedder: MavenServerEmbedder,
