@@ -778,9 +778,6 @@
 
     <vcs.commitMessageProvider implementation="git4idea.commit.GitTemplateCommitMessageProvider" order="first"/>
     <jbProtocolRevisionResolver implementation="git4idea.GitNavigateRevisionResolver"/>
-    <registryKey key="generate.commit.messages.overview"
-                 defaultValue="false"
-                 description="Adds the action 'AI Generated Summary' onto the git 'successfully updated' notification."/>
   </extensions>
 
   <extensionPoints>

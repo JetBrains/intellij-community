@@ -52,7 +52,7 @@ class GitUpdateInfoAsLog(private val project: Project,
                          val receivedCommitsCount: Int,
                          val filteredCommitsCount: Int?,
                          val viewCommitAction: Runnable,
-                         val ranges: Map<GitRepository, HashRange>?,
+                         val ranges: Map<GitRepository, HashRange>,
                          var postUpdateData: PostUpdateData? = null
   )
 
@@ -144,7 +144,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     val logUi = logManager.findLogUi(VcsLogTabLocation.TOOL_WINDOW, VcsLogUiEx::class.java, select) {
       isUpdateTabId(it.id)
       && it.filterUi.filters.get(RANGE_FILTER) == rangeFilter
-      && userFilter?.key?.let { key -> it.filterUi.filters.matches(key) } == true
+      && (userFilter == null || userFilter.key.let { key -> it.filterUi.filters.matches(key) })
     }
     if (logUi != null) return
 
@@ -161,10 +161,10 @@ class GitUpdateInfoAsLog(private val project: Project,
     })
   }
 
-  fun getViewUserCommitsAction(user: VcsUser): Runnable {
+  fun viewUserCommitsInLogUi(user: VcsUser) {
     val userFilter = VcsLogFilterObject.fromUser(user)
     val rangeFilter = createRangeFilter()
-    return Runnable { findOrCreateLogUi(rangeFilter, true, userFilter) }
+    findOrCreateLogUi(rangeFilter, true, userFilter)
   }
 
   private fun createLogUi(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, select: Boolean) {
@@ -204,7 +204,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     override fun getFilterValues(filterName: String): List<String>? {
       when (filterName) {
         RANGE_FILTER.name -> return ArrayList(rangeFilter.getTextPresentation())
-        USER_FILTER.name -> return userFilter?.let { listOf(it.displayText) }
+        USER_FILTER.name -> return userFilter?.valuesAsText?.toList()
         STRUCTURE_FILTER.name, ROOT_FILTER.name -> {
           if (explicitlyRemovedPathsFilter) return null
           return filters[filterName] ?: mainProperties.getFilterValues(filterName)

@@ -60,13 +60,6 @@ public interface UpdateSession {
   }
 
   /**
-   * Executed once the update session is finished
-   */
-  @RequiresEdt
-  default void postProcess() {
-  }
-
-  /**
    * Show notification with results of this UpdateSession, instead of the common standard notification and the standard file tree.
    * @see UpdateEnvironment#hasCustomNotification()
    */

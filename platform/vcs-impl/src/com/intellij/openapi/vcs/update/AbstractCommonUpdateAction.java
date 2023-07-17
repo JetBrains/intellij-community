@@ -15,14 +15,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter;
@@ -583,11 +581,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
         if (myUpdateSessions.size() == 1 && showsCustomNotification(myVcsToVirtualFiles.keySet())) {
           // multi-vcs projects behave as before: only a compound notification & file tree is shown for them, for the sake of simplicity
-          if (isCustomPostUpdateDataEnabled()) {
-            myUpdateSessions.forEach(UpdateSession::postProcess);
-          } else {
-            myUpdateSessions.get(0).showNotification();
-          }
+          myUpdateSessions.get(0).showNotification();
         }
         else {
           final UpdateInfoTree tree = showUpdateTree(continueChainFinal && updateSuccess && noMerged, someSessionWasCancelled);
@@ -613,10 +607,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           ProgressManager.getInstance().run(this);
         }
       }
-    }
-
-    public static boolean isCustomPostUpdateDataEnabled() {
-      return Registry.is("generate.commit.messages.overview") && AdvancedSettings.getBoolean("git.ai.generated.commits.summary");
     }
 
     private void showContextInterruptedError() {

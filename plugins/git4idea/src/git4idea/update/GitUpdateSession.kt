@@ -9,11 +9,11 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction.Updater.isCustomPostUpdateDataEnabled
 import com.intellij.openapi.vcs.update.UpdateSession
 import com.intellij.util.containers.MultiMap
 import git4idea.GitNotificationIdsHolder
@@ -66,32 +66,34 @@ class GitUpdateSession(private val project: Project,
     return result
   }
 
-  override fun postProcess() {
-    if (notificationData?.ranges != null) {
+  override fun showNotification() {
+    if (notificationData == null) return
+
+    if (isAiGeneratedSummaryEnabled()) {
       GitPostUpdateHandler.execute(project, notificationData.ranges) {
         notificationData.postUpdateData = it
-        showNotification()
+        showNotificationImpl(notificationData)
       }
+    } else {
+      showNotificationImpl(notificationData)
     }
   }
 
-  override fun showNotification() {
-    if (notificationData != null) {
-      val notification = prepareNotification(notificationData.updatedFilesCount,
-                                             notificationData.receivedCommitsCount,
-                                             notificationData.filteredCommitsCount,
-                                             notificationData.postUpdateData)
+  private fun showNotificationImpl(notificationData: GitUpdateInfoAsLog.NotificationData) {
+    val notification = prepareNotification(notificationData.updatedFilesCount,
+                                           notificationData.receivedCommitsCount,
+                                           notificationData.filteredCommitsCount,
+                                           notificationData.postUpdateData)
 
-      notification.addAction(NotificationAction.createSimple(Supplier { GitBundle.message("action.NotificationAction.GitUpdateSession.text.view.commits") },
-                                                             notificationData.viewCommitAction))
+    notification.addAction(NotificationAction.createSimple(
+      Supplier { GitBundle.message("action.NotificationAction.GitUpdateSession.text.view.commits") }, notificationData.viewCommitAction))
 
-      if (isCustomPostUpdateDataEnabled()) {
-        val group = ActionManager.getInstance().getAction("Git.Update.Notification.Group") as ActionGroup
-        group.getChildren(null).forEach { notification.addAction(it) }
-      }
-
-      VcsNotifier.getInstance(project).notify(notification)
+    if (isAiGeneratedSummaryEnabled()) {
+      val group = ActionManager.getInstance().getAction("Git.Update.Notification.Group") as ActionGroup
+      group.getChildren(null).forEach { notification.addAction(it) }
     }
+
+    VcsNotifier.getInstance(project).notify(notification)
   }
 
   class DataProviderNotification(groupId: String,
@@ -132,7 +134,7 @@ class GitUpdateSession(private val project: Project,
       content += additionalContent
     }
 
-    return if (isCustomPostUpdateDataEnabled()) {
+    return if (isAiGeneratedSummaryEnabled()) {
       DataProviderNotification(VcsNotifier.STANDARD_NOTIFICATION.displayId, title, content, type, data).also {
         it.setDisplayId(displayId)
       }
@@ -140,6 +142,8 @@ class GitUpdateSession(private val project: Project,
       VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, type).also { it.setDisplayId(displayId) }
     }
   }
+
+  private fun isAiGeneratedSummaryEnabled() = getBoolean("git.ai.generated.commits.summary")
 }
 
 @NlsContexts.NotificationTitle
