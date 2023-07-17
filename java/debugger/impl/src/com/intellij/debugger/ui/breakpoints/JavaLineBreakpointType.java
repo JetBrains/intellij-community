@@ -250,7 +250,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     JavaBreakpointProperties properties = breakpoint.getProperties();
     if (properties instanceof JavaLineBreakpointProperties && !(breakpoint instanceof RunToCursorBreakpoint)) {
       Integer ordinal = ((JavaLineBreakpointProperties)properties).getLambdaOrdinal();
-      if (ordinal > -1) {
+      if (ordinal != null && ordinal != -1) {
         List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(position, true);
         if (ordinal < lambdas.size()) {
           return lambdas.get(ordinal);
@@ -431,7 +431,8 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
     boolean condRet = properties.isConditionalReturn();
     Integer lambdaOrdinal = properties.getLambdaOrdinal();
-    if (!condRet && (lambdaOrdinal == null || lambdaOrdinal == -1)) return null;
+    boolean isLambda = lambdaOrdinal != null && lambdaOrdinal != -1;
+    if (!condRet && !isLambda) return null;
 
     return ReadAction.compute(() -> {
       SourcePosition linePosition = createLineSourcePosition((XLineBreakpointImpl)breakpoint);
@@ -439,7 +440,8 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
         PsiElement theReturn = condRet ? findSingleConditionalReturn(linePosition) : null;
         if (theReturn != null) {
           return XSourcePositionImpl.createByElement(theReturn);
-        } else {
+        }
+        else if (isLambda) {
           return DebuggerUtilsEx.toXSourcePosition(new PositionManagerImpl.JavaSourcePosition(linePosition, lambdaOrdinal));
         }
       }
