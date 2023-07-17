@@ -262,10 +262,15 @@ public final class PersistentFSConnection {
     if (flushingTask != null) {
       flushingTask.close();
     }
-    //ensure async loading is finished
-    ExceptionUtil.runAndCatch(() -> freeRecords.getValue());
 
     doForce();
+
+    //ensure async loading is finished
+    Exception freeRecordsLoadingError = ExceptionUtil.runAndCatch(() -> freeRecords.getValue());
+    if (freeRecordsLoadingError != null) {
+      //not an issue on close, but could provide some insights
+      LOG.info("Free records loading is failed", freeRecordsLoadingError);
+    }
     closeStorages(myRecords,
                   myNames,
                   myAttributesStorage,
