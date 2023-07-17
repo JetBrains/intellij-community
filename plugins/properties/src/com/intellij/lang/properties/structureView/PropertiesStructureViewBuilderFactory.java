@@ -23,7 +23,6 @@ import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
-import com.intellij.lang.properties.structureView.PropertiesFileStructureViewComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -33,11 +32,14 @@ public class PropertiesStructureViewBuilderFactory implements PsiStructureViewFa
   @Override
   @NotNull
   public StructureViewBuilder getStructureViewBuilder(@NotNull final PsiFile psiFile) {
+    PropertiesFileImpl file = (PropertiesFileImpl)psiFile;
+    String separator = PropertiesSeparatorManager.getInstance(file.getProject()).getSeparator(file.getResourceBundle());
+
     return new StructureViewBuilder() {
       @Override
       @NotNull
       public StructureView createStructureView(FileEditor fileEditor, @NotNull Project project) {
-        return new PropertiesFileStructureViewComponent(project, (PropertiesFileImpl)psiFile, fileEditor);
+        return new PropertiesFileStructureViewComponent(project, file, fileEditor, separator);
       }
     };
   }
