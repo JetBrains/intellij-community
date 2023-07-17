@@ -17,9 +17,7 @@ internal class FloatingCodeToolbarEditorCustomizer: TextEditorCustomizer {
     val project = editor.project ?: return
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
     val languages = file.viewProvider.languages
-    val isCustomizationAvailable = languages.any { language -> FloatingToolbarCustomizer.findActionGroupFor(language) != null }
-    val isEnabledExplicitly = FloatingToolbarFilter.isEnabledForLanguage(file.language)
-    if (!isCustomizationAvailable && !isEnabledExplicitly) return
+    if (languages.none { language -> FloatingToolbarCustomizer.findActionGroupFor(language) != null }) return
     val coroutineScope = FloatingCodeToolbarScope.createChildScope(project)
     val toolbar = CodeFloatingToolbar(editor, coroutineScope)
     Disposer.register(textEditor, toolbar)
