@@ -1,4 +1,4 @@
-// "Create missing switch branch 'PairString<Boxed>(Box2 t, java.lang.String t2)'" "true-preview"
+// "Create missing switch branch 'PairString<Boxed>(Box2 t, String t2)'" "true-preview"
 
 record Rec(L1 l1) {}
 

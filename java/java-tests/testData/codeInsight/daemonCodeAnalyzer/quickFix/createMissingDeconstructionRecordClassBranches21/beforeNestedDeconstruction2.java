@@ -1,7 +1,4 @@
 // "Create missing switch branch 'Pair<Boxed,Boxed>(Box b1, Boxed b2)'" "true-preview"
-
-record Rec(L1 l1) {}
-
 record Pair<T, K>(T b1, K b2) {}
 
 sealed interface Boxed permits Box, Box2 {}

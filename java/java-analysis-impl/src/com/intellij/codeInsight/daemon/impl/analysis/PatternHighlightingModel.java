@@ -782,7 +782,8 @@ final class PatternHighlightingModel {
     return filtered;
   }
 
-  private static boolean oneOfUnconditional(PatternDeconstructionDescription whoType, PatternDeconstructionDescription overWhom) {
+  private static boolean oneOfUnconditional(@NotNull PatternDeconstructionDescription whoType,
+                                            @NotNull PatternDeconstructionDescription overWhom) {
     if (!whoType.type().equals(overWhom.type())) {
       return false;
     }

@@ -1,8 +1,4 @@
-// "Create missing switch branch 'StringPair<Boxed>(java.lang.String t2, Box t)'" "true-preview"
-
-record Rec(L1 l1) {}
-
-record Pair<T, K>(T b1, K b2) {}
+// "Create missing switch branch 'StringPair<Boxed>(String t2, Box t)'" "true-preview"
 
 sealed interface Boxed permits Box, Box2 {}
 
@@ -15,8 +11,6 @@ sealed interface L1 {}
 final class L21 implements L1 {}
 
 final class L22 implements L1 {}
-
-record PairString<T>(T t, String t2) { }
 
 record StringPair<T>(String t2, T t) { }
 
