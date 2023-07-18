@@ -53,7 +53,7 @@ internal class VcsLogToolWindowTabsWatcher(private val project: Project,
 
   override fun closeTabs(tabs: List<VcsLogWindow>) {
     toolWindow?.let { window ->
-      val tabIds = tabs.filterIsInstance(VcsLogToolWindowTab::class.java).filter { it.isClosedOnDispose }.map { it.id }
+      val tabIds = tabs.filterIsInstance<VcsLogToolWindowTab>().filter { it.isClosedOnDispose }.map { it.id }
       for (tabId in tabIds) {
         val closed = VcsLogContentUtil.closeLogTab(window.contentManager, tabId)
         LOG.assertTrue(closed, """
