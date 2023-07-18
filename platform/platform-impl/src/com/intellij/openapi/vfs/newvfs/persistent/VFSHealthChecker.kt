@@ -273,7 +273,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             val parentIsDirectory = BitUtil.isSet(parentFlags, IS_DIRECTORY)
             if (!parentIsDirectory) {
               inconsistentParentChildRelationships++.alsoLogThrottled(
-                "file[#$fileId]{$fileName}: parent[#$parentId] is !directory (flags: ${Integer.toBinaryString(parentFlags)}"
+                "file[#$fileId]{$fileName}: parent[#$parentId] is !directory (flags: ${Integer.toBinaryString(parentFlags)})"
               )
             }
 
