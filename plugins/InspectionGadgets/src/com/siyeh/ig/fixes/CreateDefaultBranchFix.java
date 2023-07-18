@@ -8,6 +8,7 @@ import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -128,7 +129,7 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix {
       }
     }
     catch (IOException | IncorrectOperationException e) {
-      String templateName = "Switch Default Branch";
+      String templateName = StringUtil.trimExtensions(JavaTemplateUtil.TEMPLATE_SWITCH_DEFAULT_BRANCH);
       updater.cancel(JavaBundle.message("tooltip.incorrect.file.template", templateName));
       return List.of();
     }
