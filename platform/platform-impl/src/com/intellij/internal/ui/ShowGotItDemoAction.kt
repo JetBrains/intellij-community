@@ -251,7 +251,8 @@ class ShowGotItDemoAction : DumbAwareAction() {
       if (showImageOrLottie && showImage) gotItBuilder.withImage(image, withImageBorder)
       if (showImageOrLottie && showLottieAnimation && lottieJsonPath.isNotEmpty()) {
         val lottieJson = File(lottieJsonPath).readText()
-        val htmlPage = LottieUtils.createLottieAnimationPage(lottieJson, lottieScript = null)
+        val htmlPage = LottieUtils.createLottieAnimationPage(lottieJson, lottieScript = null,
+                                                             JBUI.CurrentTheme.GotItTooltip.animationBackground(false))
         val size = LottieUtils.getLottieImageSize(lottieJson)
         gotItBuilder.withBrowserPage(htmlPage, size, withImageBorder)
         PropertiesComponent.getInstance().setValue(LAST_OPENED_LOTTIE_FILE, lottieJsonPath)

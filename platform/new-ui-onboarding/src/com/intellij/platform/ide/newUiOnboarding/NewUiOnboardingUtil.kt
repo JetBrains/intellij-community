@@ -63,7 +63,8 @@ object NewUiOnboardingUtil {
       LOG.error("Failed to read resource by path: $LOTTIE_SCRIPT_PATH")
       return null
     }
-    val htmlPage = LottieUtils.createLottieAnimationPage(lottieJson, lottieScript)
+    val background = JBUI.CurrentTheme.GotItTooltip.animationBackground(false)
+    val htmlPage = LottieUtils.createLottieAnimationPage(lottieJson, lottieScript, background)
     return htmlPage to size
   }
 

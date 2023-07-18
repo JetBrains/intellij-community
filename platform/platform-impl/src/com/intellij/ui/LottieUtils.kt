@@ -8,23 +8,24 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 import java.awt.Dimension
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
 object LottieUtils {
   @Suppress("HardCodedStringLiteral")
-  fun createLottieAnimationPage(lottieJson: String, lottieScript: String? = null): String {
+  fun createLottieAnimationPage(lottieJson: String, lottieScript: String? = null, background: Color): String {
     val head = HtmlBuilder().append(
       HtmlChunk.tag("style").addRaw("""
           body {
-              background-color: black;
+              background-color: ${ColorUtil.toHex(background)};
               margin: 0;
               height: 100%;
               overflow: hidden;
           }
           #lottie {
-              background-color: black;
+              background-color: ${ColorUtil.toHex(background)};
               width: 100%;
               height: 100%;
               display: block;
