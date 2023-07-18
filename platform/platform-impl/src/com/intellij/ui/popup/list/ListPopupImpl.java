@@ -94,6 +94,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   public void setMaxRowCount(int maxRowCount) {
     if (maxRowCount <= 0) return;
     myMaxRowCount = maxRowCount;
+    myList.setVisibleRowCount(myMaxRowCount);
   }
 
   public void showUnderneathOfLabel(@NotNull JLabel label) {
@@ -112,7 +113,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   protected boolean beforeShow() {
     myList.addMouseMotionListener(myMouseMotionListener);
     myList.addMouseListener(myMouseListener);
-    myList.setVisibleRowCount(myMaxRowCount);
 
     boolean shouldShow = super.beforeShow();
     if (myAutoHandleBeforeShow) {
@@ -259,6 +259,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     ListPopupStep<Object> step = getListStep();
     myListModel = new ListPopupModel(this, getSpeedSearch(), step);
     myList = new MyList();
+    myList.setVisibleRowCount(myMaxRowCount);
     if (myStep.getTitle() != null) {
       myList.getAccessibleContext().setAccessibleName(myStep.getTitle());
     }
