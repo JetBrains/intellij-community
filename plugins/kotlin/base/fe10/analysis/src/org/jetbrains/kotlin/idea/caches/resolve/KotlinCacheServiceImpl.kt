@@ -202,7 +202,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             }
         }
 
-    private val facadeForScriptDependenciesForProject = createFacadeForScriptDependencies(ScriptDependenciesInfo.ForProject(project))
+    private val facadeForScriptDependenciesForProject = lazy { createFacadeForScriptDependencies(ScriptDependenciesInfo.ForProject(project)) }
 
     private fun createFacadeForScriptDependencies(
         dependenciesModuleInfo: ScriptDependenciesInfo
@@ -370,17 +370,17 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
                     moduleFilter = { it == specialModuleInfo }
                 )
             }
-            specialModuleInfo is ScriptDependenciesInfo -> facadeForScriptDependenciesForProject
+            specialModuleInfo is ScriptDependenciesInfo -> facadeForScriptDependenciesForProject.value
             specialModuleInfo is ScriptDependenciesSourceInfo -> {
                 val globalContext =
-                    facadeForScriptDependenciesForProject.globalContext.contextWithCompositeExceptionTracker(
+                    facadeForScriptDependenciesForProject.value.globalContext.contextWithCompositeExceptionTracker(
                         project,
                         "facadeForSpecialModuleInfo (ScriptDependenciesSourceInfo)"
                     )
                 makeProjectResolutionFacade(
                     "facadeForSpecialModuleInfo (ScriptDependenciesSourceInfo)",
                     globalContext,
-                    reuseDataFrom = facadeForScriptDependenciesForProject,
+                    reuseDataFrom = facadeForScriptDependenciesForProject.value,
                     allModules = specialModuleInfo.dependencies(),
                     moduleFilter = { it == specialModuleInfo }
                 )
@@ -561,7 +561,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     ): ResolutionFacade {
         val projectFacade = when (moduleInfo) {
             is ScriptDependenciesInfo.ForProject,
-            is ScriptDependenciesSourceInfo.ForProject -> facadeForScriptDependenciesForProject
+            is ScriptDependenciesSourceInfo.ForProject -> facadeForScriptDependenciesForProject.value
             is ScriptDependenciesInfo.ForFile -> createFacadeForScriptDependencies(moduleInfo)
             else -> facadeForModules(settings)
         }
