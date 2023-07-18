@@ -601,22 +601,35 @@ public class ContainerUtilCollectionsTest extends Assert {
     checkClearsEventuallyAfterGCPressure(set);
   }
 
+  @Test
+  public void testWeakSet() {
+    Set<Object> set = ContainerUtil.createWeakSet();
+    set.add("");
+    set.add("");
+    assertEquals(1, set.size());
+    assertTrue(set.remove(""));
+    assertEquals(0, set.size());
+    assertTrue(set.isEmpty());
+  }
+
   private void checkClearsEventuallyAfterGCPressure(Set<Object> set) {
     assertTrue(set.isEmpty());
     Ref<Object> ref = Ref.create(new Object());
     set.add(ref.get());
 
     GCWatcher.fromClearedRef(ref).ensureCollected();
+    assertFalse(set.remove(this)); // to run processQueue
+    assertTrue(set.isEmpty());
 
-    set.add(this);  // to run processQueues();
+    assertTrue(set.add(this));  // to run processQueues();
     //noinspection ConstantValue -- set contract is tested, not implied here
     assertFalse(set.isEmpty());
-    set.remove(this);
+    assertTrue(set.remove(this));
 
     assertTrue(set.isEmpty());
     //noinspection ConstantConditions
     assertEquals(0, set.size());
-    set.add(this);
+    assertTrue(set.add(this));
     assertEquals(1, set.size());
   }
 
