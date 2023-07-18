@@ -2,7 +2,10 @@
 
 package org.jetbrains.uast.kotlin
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -10,7 +13,6 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.KotlinUElementWithComments
-import java.util.ArrayList
 
 @ApiStatus.Internal
 class KotlinUFile(
@@ -27,7 +29,7 @@ class KotlinUFile(
         else
             object : PsiClassOwner by lightFile {
                 override fun getClasses() = lightClasses
-                override fun setPackageName(packageName: String?) = error("Incorrect operation for non-physical Java PSI")
+                override fun setPackageName(packageName: String) = error("Incorrect operation for non-physical Java PSI")
             }
     }
 

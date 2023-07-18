@@ -182,7 +182,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   @Override
-  public void setPackageName(String packageName) throws IncorrectOperationException {
+  public void setPackageName(@NotNull String packageName) throws IncorrectOperationException {
     throw new IncorrectOperationException("Cannot set package name for compiled files");
   }
 

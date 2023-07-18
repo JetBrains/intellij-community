@@ -225,10 +225,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
   }
 
   @Override
-  public void setPackageName(String packageName) {
+  public void setPackageName(@NotNull String packageName) {
     final ASTNode fileNode = getNode();
     final GrPackageDefinition currentPackage = getPackageDefinition();
-    if (packageName == null || packageName.isEmpty()) {
+    if (packageName.isEmpty()) {
       if (currentPackage != null) {
         final ASTNode currNode = currentPackage.getNode();
         fileNode.removeChild(currNode);
