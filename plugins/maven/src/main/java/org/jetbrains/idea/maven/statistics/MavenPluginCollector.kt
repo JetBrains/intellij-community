@@ -40,7 +40,7 @@ class MavenPluginCollector : ProjectUsagesCollector() {
     private val GROUP = EventLogGroup("maven.plugins", 3)
 
     val groupArtifactId = EventFields.StringValidatedByCustomRule<MavenPluginCoordinatesWhitelistValidationRule>("group_artifact_id")
-    val version = EventFields.StringValidatedByCustomRule<MavenPluginVersionAllowAllValidationRule>("version")
+    val version = EventFields.StringValidatedByCustomRule<MavenPluginVersionValidationRule>("version")
     val isExtension = EventFields.Boolean("extension")
     val hasConfiguration = EventFields.Boolean("has_configuration")
 
@@ -48,7 +48,7 @@ class MavenPluginCollector : ProjectUsagesCollector() {
 }
 
 
-internal class MavenPluginCoordinatesWhitelistValidationRule : CustomValidationRule() {
+class MavenPluginCoordinatesWhitelistValidationRule : CustomValidationRule() {
   private val whiteList: Set<String>
 
   init {
@@ -74,12 +74,16 @@ internal class MavenPluginCoordinatesWhitelistValidationRule : CustomValidationR
 
 }
 
-internal class MavenPluginVersionAllowAllValidationRule : CustomValidationRule() {
+class MavenPluginVersionValidationRule : CustomValidationRule() {
   override fun getRuleId(): String {
-    return "maven_plugin_version_validation_rule_allow_all"
+    return "maven_plugin_version_validation_rule"
   }
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
+    val splitted = data.split('.')
+    if (splitted.isEmpty()) return ValidationResultType.REJECTED
+    if (!splitted[0].all { it.isDigit() }) return ValidationResultType.REJECTED
+    if (splitted.size > 1 && !splitted[1].all { it.isDigit() }) return ValidationResultType.REJECTED
     return ValidationResultType.ACCEPTED
   }
 }
