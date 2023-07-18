@@ -3,11 +3,11 @@ project
 
 project.appleMain
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
 
 project.appleTest
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
 
 project.commonMain
     languageLevel = {{LATEST_STABLE}}
@@ -19,19 +19,19 @@ project.commonTest
 
 project.iosArm64Main
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
 
 project.iosArm64Test
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
 
 project.iosMain
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
 
 project.iosTest
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
 
 project.iosX64Main
     languageLevel = 1.6
@@ -46,12 +46,10 @@ project.iosX64Test
 project.jsMain
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
-    compilerSettings = -main call
 
 project.jsTest
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
-    compilerSettings = -main call
 
 project.jvmMain
     languageLevel = 1.7
@@ -66,11 +64,11 @@ project.main
 
 project.nativeMain
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
 
 project.nativeTest
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
 
 project.test
 
