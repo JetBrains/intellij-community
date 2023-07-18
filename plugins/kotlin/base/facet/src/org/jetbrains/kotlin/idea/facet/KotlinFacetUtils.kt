@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.isKotlinNative
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import kotlin.reflect.KProperty1
@@ -61,6 +62,7 @@ fun KotlinFacetSettings.initializeIfNeeded(
                 when {
                     argumentsForPlatform is K2JVMCompilerArguments &&
                             this is K2JVMCompilerArguments -> copyK2JVMCompilerArguments(argumentsForPlatform, this)
+
                     argumentsForPlatform is K2JSCompilerArguments &&
                             this is K2JSCompilerArguments -> copyK2JSCompilerArguments(argumentsForPlatform, this)
 
@@ -80,16 +82,27 @@ fun KotlinFacetSettings.initializeIfNeeded(
     }
 
     if (shouldInferAPILevel) {
-        apiLevel = if (useProjectSettings) {
-            LanguageVersion.fromVersionString(commonArguments.apiVersion) ?: languageLevel
-        } else {
-            val maximumValue = getLibraryVersion(
-                module,
-                rootModel,
-                this.targetPlatform?.idePlatformKind,
-                coerceRuntimeLibraryVersionToReleased = compilerVersion == null
-            )
-            languageLevel?.coerceAtMostVersion(maximumValue)
+        apiLevel = when {
+            useProjectSettings -> {
+                LanguageVersion.fromVersionString(commonArguments.apiVersion) ?: languageLevel
+            }
+            /*
+            The below 'getLibraryVersion' call tries to figure out apiVersion by inspecting the stdlib available in dependencies.
+            This is not supported for K/N (07.2023), we therefore just fallback to the compiler version
+             */
+            targetPlatform?.idePlatformKind?.isKotlinNative == true && compilerVersion != null -> {
+                languageLevel?.coerceAtMostVersion(compilerVersion)
+            }
+
+            else -> {
+                val maximumValue = getLibraryVersion(
+                    module,
+                    rootModel,
+                    this.targetPlatform?.idePlatformKind,
+                    coerceRuntimeLibraryVersionToReleased = compilerVersion == null
+                )
+                languageLevel?.coerceAtMostVersion(maximumValue)
+            }
         }
     }
 }

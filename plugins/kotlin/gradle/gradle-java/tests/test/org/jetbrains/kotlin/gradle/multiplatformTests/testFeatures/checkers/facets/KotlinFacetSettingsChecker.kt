@@ -9,9 +9,7 @@ import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.*
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.konan.isNative
 import kotlin.reflect.KProperty1
 
 internal typealias FacetField = KProperty1<KotlinFacetSettings, *>
@@ -44,7 +42,7 @@ object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChe
                 field.name + " = " + fieldValue.componentPlatforms.joinToStringWithSorting(separator = "/")
 
             is LanguageVersion -> {
-                val valueSanitized = languageVersionSanitized(fieldValue, field, module)
+                val valueSanitized = languageVersionSanitized(fieldValue)
                 "${field.name} = $valueSanitized"
             }
 
@@ -70,14 +68,7 @@ object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChe
         }
     }
 
-    private fun PrinterContext.languageVersionSanitized(
-        fieldValue: LanguageVersion,
-        field: FacetField,
-        module: Module
-    ): String {
-        // Currently, there's an issue for apiLevel or Native modules, see KT-56382, so substitution is disabled
-        if (field == KotlinFacetSettings::apiLevel && module.platform.isNative()) return fieldValue.versionString
-
+    private fun PrinterContext.languageVersionSanitized(fieldValue: LanguageVersion): String {
         val languageVersionOfKgp = LanguageVersion.fromFullVersionString(kotlinGradlePluginVersion.toString())
         return if (fieldValue == languageVersionOfKgp) CURRENT_KGP_LANGUAGE_VERSION_PLACEHOLDER else fieldValue.versionString
     }
