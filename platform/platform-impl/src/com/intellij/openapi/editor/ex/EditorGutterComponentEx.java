@@ -117,4 +117,12 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public int getLineNumberAreaWidth() {
     return 0;
   }
+
+  public @NotNull LineNumberConverter getPrimaryLineNumberConverter() {
+    return LineNumberConverter.DEFAULT;
+  }
+
+  public @Nullable LineNumberConverter getAdditionalLineNumberConverter() {
+    return null;
+  }
 }
