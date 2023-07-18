@@ -342,6 +342,7 @@ final class PatternHighlightingModel {
                                      @NotNull PsiElement context,
                                      @NotNull Set<? extends PatternDescription> currentPatterns,
                                      @NotNull Map<ReduceResultCacheContext, ReduceResult> cache) {
+    currentPatterns = new HashSet<>(currentPatterns);
     ReduceResultCacheContext cacheContext = new ReduceResultCacheContext(selectorType, currentPatterns);
     ReduceResult fromCache = cache.get(cacheContext);
     if (fromCache != null) {
@@ -732,16 +733,16 @@ final class PatternHighlightingModel {
         missingRecordPatterns.addAll(missingRecordPatternsForThisIteration);
       }
       combinedPatterns.addAll(missingRecordPatternsForThisIteration);
-      ReduceResult reduceResult = reduce(selectorType, context, combinedPatterns, cache);
+      ReduceResult reduceResult = reduceInLoop(selectorType, context, combinedPatterns, (set, type) -> false, cache);
       //work only with reduced patterns to speed up
-      Set<? extends PatternDescription> newPatterns = reduceResult.patterns();
+      Set<? extends PatternDescription> newPatterns = new HashSet<>(reduceResult.patterns());
       if (reduceResult.changed()) {
         newPatterns.removeAll(combinedPatterns);
         combinedPatterns.clear();
         combinedPatterns.addAll(newPatterns);
       }
     }
-    ReduceResult reduceResult = reduce(selectorType, context, combinedPatterns, cache);
+    ReduceResult reduceResult = reduceInLoop(selectorType, context, combinedPatterns, (set, type) -> false, cache);
     return coverSelectorType(reduceResult.patterns(), selectorType) ? new ArrayList<>(missingRecordPatterns) : null;
   }
 
