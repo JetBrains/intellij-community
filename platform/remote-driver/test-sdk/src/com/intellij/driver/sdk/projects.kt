@@ -24,3 +24,9 @@ fun Driver.isProjectOpened(): Boolean {
     return@withContext false
   }
 }
+
+fun Driver.isProjectInitializationAndIndexingFinished(project: Project): Boolean {
+  return withContext {
+    service(ProjectInitializationDiagnosticService::class, project).isProjectInitializationAndIndexingFinished()
+  }
+}
