@@ -25,7 +25,7 @@ internal class GHPRListLoader(
 
   private val loader = SimpleGHGQLPagesLoader(requestExecutor, { p ->
     GHGQLRequests.PullRequest.search(repository.serverPath, buildQuery(repository.repositoryPath, searchQuery), p)
-  })
+  }, pageSize = 50)
 
   override fun canLoadMore() = !loading && loader.hasNext && error == null
 
