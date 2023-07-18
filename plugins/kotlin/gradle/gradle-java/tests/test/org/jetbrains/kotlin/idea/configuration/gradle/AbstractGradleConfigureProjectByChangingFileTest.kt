@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.AbstractConfigureProjectByChangingFileTest
+import org.jetbrains.kotlin.idea.configuration.ChangedConfiguratorFiles
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
@@ -56,8 +57,8 @@ abstract class AbstractGradleConfigureProjectByChangingFileTest :
             return
         }
 
-        configurator.configureModule(module, file, true, version, jvmTarget, collector, ArrayList())
-        configurator.configureModule(module, file, false, version, jvmTarget, collector, ArrayList())
+        configurator.configureModule(module, file, true, version, jvmTarget, collector, ChangedConfiguratorFiles())
+        configurator.configureModule(module, file, false, version, jvmTarget, collector, ChangedConfiguratorFiles())
     }
 
     override fun getProjectJDK(): Sdk {
