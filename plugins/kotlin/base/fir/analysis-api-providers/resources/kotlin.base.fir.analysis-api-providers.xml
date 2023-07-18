@@ -22,6 +22,8 @@
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     <listener class="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService$JdkListener"
               topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
+    <listener class="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService$NonWorkspaceModuleRootListener"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
   </projectListeners>
 
   <dependencies>

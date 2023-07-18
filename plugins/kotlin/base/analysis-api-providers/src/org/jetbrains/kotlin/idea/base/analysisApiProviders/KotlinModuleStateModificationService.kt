@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.StandardFileSystems
@@ -117,6 +119,17 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
             // Most modules will depend on an SDK, so its removal constitutes global module state modification. We cannot be more
             // fine-grained here because `KtSdkModules`s aren't supported by `IdeKotlinModuleDependentsProvider`, so invalidation based on
             // a module-level modification event may not work as expected with a `KtSdkModule`.
+            KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+        }
+    }
+
+    class NonWorkspaceModuleRootListener(private val project: Project) : ModuleRootListener {
+        override fun beforeRootsChange(event: ModuleRootEvent) {
+            if (event.isCausedByWorkspaceModelChangesOnly) return
+
+            // The cases described in `isCausedByWorkspaceModelChangesOnly` are rare enough to publish global module state modification
+            // events for simplicity. `NonWorkspaceModuleRootListener` can eventually be removed once the APIs described in
+            // `isCausedByWorkspaceModelChangesOnly` are removed.
             KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
         }
     }
