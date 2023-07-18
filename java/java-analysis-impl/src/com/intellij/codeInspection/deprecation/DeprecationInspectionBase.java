@@ -131,7 +131,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
     return HighlightMessageUtil.getSymbolName(psiElement);
   }
   
-  protected static String getSinceString(@NotNull PsiModifierListOwner element) {
+  private static String getSinceString(@NotNull PsiModifierListOwner element) {
     PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, CommonClassNames.JAVA_LANG_DEPRECATED);
     if (annotation != null) {
       PsiAnnotationMemberValue value = annotation.findAttributeValue("since");
