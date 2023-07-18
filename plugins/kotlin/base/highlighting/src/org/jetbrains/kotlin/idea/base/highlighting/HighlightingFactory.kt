@@ -4,11 +4,12 @@ package org.jetbrains.kotlin.idea.base.highlighting
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.DetailedDescription
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 
 object HighlightingFactory {
-    fun highlightName(element: PsiElement, highlightInfoType: HighlightInfoType, message: String? = null): HighlightInfo.Builder? {
+    fun highlightName(element: PsiElement, highlightInfoType: HighlightInfoType, message: @DetailedDescription String? = null): HighlightInfo.Builder? {
         val project = element.project
         if (!element.textRange.isEmpty) {
             return highlightName(project, element.textRange, highlightInfoType, message)
@@ -20,7 +21,7 @@ object HighlightingFactory {
         project: Project,
         textRange: TextRange,
         highlightInfoType: HighlightInfoType,
-        message: String? = null
+        message: @DetailedDescription String? = null
     ): HighlightInfo.Builder {
         val builder = HighlightInfo.newHighlightInfo(highlightInfoType)
         if (message != null) {
