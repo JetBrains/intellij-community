@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.ui.toolwindow.refreshReviewListOnSelection
 import com.intellij.ide.DataManager
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -13,11 +13,16 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.content.Content
+import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.childScope
 import com.intellij.util.ui.UIUtil
 import git4idea.remote.hosting.knownRepositories
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.GHPRListViewModel
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys.PULL_REQUESTS_LIST_CONTROLLER
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
@@ -30,7 +35,10 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateC
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
+import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
+import javax.swing.ListModel
+import javax.swing.event.ListDataListener
 
 internal class MultiTabGHPRToolWindowRepositoryContentController(
   private val project: Project,
@@ -98,7 +106,11 @@ internal class MultiTabGHPRToolWindowRepositoryContentController(
     val allRepos = repositoryManager.knownRepositories.map(GHGitRepositoryMapping::repository)
     val title = GHUIUtil.getRepositoryDisplayName(allRepos, dataContext.repositoryDataService.repositoryCoordinates)
 
-    val component = createListPanel(contentDisposable)
+    val cs = DisposingMainScope(contentDisposable)
+    val listVm = GHPRListViewModel(project, cs, dataContext)
+
+    val uiScope = cs.childScope(Dispatchers.Main)
+    val component = uiScope.createListPanel(listVm)
     val content = contentManager.factory.createContent(component, title, false).apply {
       isPinned = true
       isCloseable = false
@@ -109,33 +121,35 @@ internal class MultiTabGHPRToolWindowRepositoryContentController(
     return content
   }
 
-  private fun createListPanel(disposable: Disposable): JComponent {
-    val listLoader = dataContext.listLoader
-    val listModel = CollectionListModel(listLoader.loadedData)
-    listLoader.addDataListener(disposable, object : GHListLoader.ListDataListener {
-      override fun onDataAdded(startIdx: Int) {
-        val loadedData = listLoader.loadedData
-        listModel.add(loadedData.subList(startIdx, loadedData.size))
-      }
-
-      override fun onDataUpdated(idx: Int) = listModel.setElementAt(listLoader.loadedData[idx], idx)
-      override fun onDataRemoved(data: Any) {
-        (data as? GHPullRequestShort)?.let { listModel.remove(it) }
-      }
-
-      override fun onAllDataRemoved() = listModel.removeAll()
-    })
-
+  private fun CoroutineScope.createListPanel(listVm: GHPRListViewModel): JComponent {
+    val listModel = scopedDelegatingListModel(listVm.listModel)
     val list = GHPRListComponentFactory(listModel).create(dataContext.avatarIconsProvider)
 
-    return GHPRListPanelFactory(project,
-                                dataContext.repositoryDataService,
-                                dataContext.securityService,
-                                dataContext.listLoader,
-                                dataContext.listUpdatesChecker,
-                                dataContext.securityService.account,
-                                disposable)
-      .create(list, dataContext.avatarIconsProvider)
+    return GHPRListPanelFactory(project, listVm).create(this, list, dataContext.avatarIconsProvider)
+  }
+
+  private fun <T> CoroutineScope.scopedDelegatingListModel(
+    delegate: ListModel<T>
+  ) = object : ListModel<T> by delegate {
+    private val listeners = CopyOnWriteArrayList<ListDataListener>()
+
+    init {
+      awaitCancellationAndInvoke {
+        listeners.forEach {
+          delegate.removeListDataListener(it)
+        }
+      }
+    }
+
+    override fun addListDataListener(l: ListDataListener) {
+      listeners.add(l)
+      delegate.addListDataListener(l)
+    }
+
+    override fun removeListDataListener(l: ListDataListener) {
+      delegate.addListDataListener(l)
+      listeners.remove(l)
+    }
   }
 
   override fun viewPullRequest(id: GHPRIdentifier, requestFocus: Boolean): GHPRCommitBrowserComponentController? {

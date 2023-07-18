@@ -41,7 +41,11 @@ internal class GHPRListLoader(
       return GithubApiSearchQueryBuilder.searchQuery {
         term(GHPRSearchQuery.QualifierName.type.createTerm(GithubIssueSearchType.pr.name))
         term(GHPRSearchQuery.QualifierName.repo.createTerm(repoPath.toString()))
-        searchQuery?.buildApiSearchQuery(this)
+        if (searchQuery != null) {
+          for (term in searchQuery.terms) {
+            this.term(term)
+          }
+        }
       }
     }
   }
