@@ -1,5 +1,7 @@
 package com.intellij.driver.client
 
+import org.intellij.lang.annotations.Language
+
 /**
  * Describes a class, service or utility available in the IDE under test via remote JMX connection
  *
@@ -11,6 +13,7 @@ annotation class Remote(
   /**
    * Fully qualified name of class in the IDE under test.
    */
+  @Language("jvm-class-name")
   val value: String,
 
   /**

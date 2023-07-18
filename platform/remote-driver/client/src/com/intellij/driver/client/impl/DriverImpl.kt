@@ -258,7 +258,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     return Proxy.newProxyInstance(getClassLoader(),
                                   arrayOf(clazz, RefWrapper::class.java)) { proxy: Any?, method: Method, args: Array<Any?>? ->
       when (method.name) {
-        "equals" -> proxy == args?.firstOrNull()
+        "equals" -> proxy === args?.firstOrNull()
         "hashCode" -> ref.identityHashCode
         "toString" -> ref.asString
         "getRef" -> ref
