@@ -876,7 +876,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   public static void loadAllPluginDetails(@NotNull MarketplaceRequests marketplace,
                                           @NotNull PluginNode node,
                                           @NotNull PluginNode resultNode) {
-    resultNode.setSuggestedFeatures(node.getSuggestedFeatures());
+    if (node.getSuggestedFeatures() != null) {
+      resultNode.setSuggestedFeatures(node.getSuggestedFeatures());
+    }
 
     IntellijPluginMetadata metadata = marketplace.loadPluginMetadata(node);
     if (metadata != null) {

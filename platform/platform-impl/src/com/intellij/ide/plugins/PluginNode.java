@@ -589,7 +589,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
     mySuggestedCommercialIde = commercialIdeCode;
   }
 
-  public Collection<String> getSuggestedFeatures() {
+  public @Nullable Collection<String> getSuggestedFeatures() {
     return mySuggestedFeatures;
   }
 
