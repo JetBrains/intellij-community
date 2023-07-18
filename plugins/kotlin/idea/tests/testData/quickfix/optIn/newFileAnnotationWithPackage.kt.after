@@ -1,6 +1,4 @@
 // "Opt in for 'A' in containing file 'newFileAnnotationWithPackage.kt'" "true"
-// IGNORE_FIR
-// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 @file:OptIn(A::class)
 
