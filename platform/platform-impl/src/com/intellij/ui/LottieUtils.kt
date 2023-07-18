@@ -79,8 +79,8 @@ object LottieUtils {
 
   private fun createDownloadableLottieScriptTag(): HtmlChunk {
     return HtmlChunk.tag("script")
-      .attr("src", "https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.14/lottie_light.min.js")
-      .attr("integrity", "sha512-oquI7otdlqWnBjPa+cwKQo10s3Bsle+P3zqFgwrfR+DFNKXdv6zYKcqvy/U923mampnzlw1nimkURrvftrQmSA==")
+      .attr("src", "https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.5.10/lottie.min.js")
+      .attr("integrity", "sha512-WuVUWb/eEtkYLd+Uxb51tmI1PELy432HLMrKr4CI+TpmKMr/PBBpsnjH35A0aLFK4YniNOxJ5a6vc4aMbZFGSQ==")
       .attr("crossorigin", "anonymous")
       .attr("referrerpolicy", "no-referrer").addRaw("")
   }
