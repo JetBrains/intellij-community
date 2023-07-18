@@ -17,7 +17,9 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.RefactoringHelper
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
@@ -36,7 +38,8 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
 
         override fun shouldStartInBackground(): Boolean = System.getProperty("kotlin.optimize.imports.synchronously") != "true"
 
-        override fun run(indicator: ProgressIndicator) {
+        @OptIn(KtAllowAnalysisOnEdt::class)
+        override fun run(indicator: ProgressIndicator) = allowAnalysisOnEdt {
             indicator.isIndeterminate = false
 
             val myTotalCount = operationData.size
