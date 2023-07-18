@@ -47,16 +47,24 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
         when (changeType) {
             ChangeType.Invisible -> {}
             ChangeType.OutOfBlock -> {
-                project.getService(FirIdeModificationTrackerService::class.java)
-                    .increaseModificationCountForModuleAndProject(rootElement.module)
+                outOfBlockInvalidation(rootElement)
             }
 
             is ChangeType.InBlock -> {
                 // trigger in-block a FIR tree invalidation
-                invalidateAfterInBlockModification(changeType.blockOwner)
+                val isOutOfBlock = !invalidateAfterInBlockModification(changeType.blockOwner)
+
+                // In some cases, we can understand that it is not in-block modification only during in-block modification.
+                // E.g., we can find during in-block modification the fact that the original declaration didn't have a body at all.
+                if (isOutOfBlock) {
+                    outOfBlockInvalidation(rootElement)
+                }
             }
         }
+    }
 
+    private fun outOfBlockInvalidation(element: PsiElement) {
+        project.getService(FirIdeModificationTrackerService::class.java).increaseModificationCountForModuleAndProject(element.module)
     }
 
     private fun calculateChangeType(rootElement: PsiElement, child: PsiElement?): ChangeType = when (rootElement.language) {
