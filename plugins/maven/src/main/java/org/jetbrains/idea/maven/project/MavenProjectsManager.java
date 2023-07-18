@@ -52,6 +52,7 @@ import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
+import org.jetbrains.idea.maven.project.auto.reload.MavenProjectManagerWatcher;
 import org.jetbrains.idea.maven.project.importing.FilesList;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.project.importing.MavenProjectManagerListenerToBusBridge;
@@ -86,7 +87,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private final MavenEmbeddersManager myEmbeddersManager;
 
   private MavenProjectsTree myProjectsTree;
-  private MavenProjectsManagerWatcher myWatcher;
+  private MavenProjectManagerWatcher myWatcher;
 
   protected MavenMergingUpdateQueue myImportingQueue;
 
@@ -387,7 +388,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void initWorkers() {
-    myWatcher = new MavenProjectsManagerWatcher(myProject, myProjectsTree);
+    myWatcher = new MavenProjectManagerWatcher(myProject, myProjectsTree);
 
     myImportingQueue =
       new MavenMergingUpdateQueue(getClass().getName() + ": Importing queue", IMPORT_DELAY, !MavenUtil.isMavenUnitTestModeEnabled(), this);

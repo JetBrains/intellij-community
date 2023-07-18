@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.project;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.project.auto.reload;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
@@ -22,14 +22,16 @@ import com.intellij.util.Function;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xml.DomUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.project.auto.reload.MavenGeneralSettingsWatcher;
-import org.jetbrains.idea.maven.project.auto.reload.MavenProjectAware;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +39,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
-public final class MavenProjectsManagerWatcher {
+@ApiStatus.Internal
+public final class MavenProjectManagerWatcher {
 
   private final Project myProject;
   private MavenProjectsTree myProjectsTree;
@@ -45,13 +48,13 @@ public final class MavenProjectsManagerWatcher {
   private final ExecutorService myBackgroundExecutor;
   private final Disposable myDisposable;
 
-  MavenProjectsManagerWatcher(Project project, MavenProjectsTree projectsTree) {
+  public MavenProjectManagerWatcher(Project project, MavenProjectsTree projectsTree) {
     myBackgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MavenProjectsManagerWatcher.backgroundExecutor", 1);
     myProject = project;
     myProjectsTree = projectsTree;
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     myProjectAware = new MavenProjectAware(project, projectsManager, myBackgroundExecutor);
-    myDisposable = Disposer.newDisposable(projectsManager, MavenProjectsManagerWatcher.class.toString());
+    myDisposable = Disposer.newDisposable(projectsManager, MavenProjectManagerWatcher.class.toString());
   }
 
   public synchronized void start() {
