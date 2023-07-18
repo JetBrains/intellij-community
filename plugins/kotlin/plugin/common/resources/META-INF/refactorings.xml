@@ -73,5 +73,6 @@
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameOnSecondaryConstructorHandler"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameClassByCompanionObjectShortReferenceHandler"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameJavaSyntheticPropertyHandler"/>
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameImportAliasByReferenceHandler"/>
   </extensions>
 </idea-plugin>
