@@ -158,7 +158,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
 
     return Proxy.newProxyInstance(getClassLoader(), arrayOf(clazz)) { proxy: Any?, method: Method, args: Array<Any?>? ->
       when (method.name) {
-        "equals" -> proxy == args?.firstOrNull()
+        "equals" -> proxy === args?.firstOrNull()
         "hashCode" -> clazz.hashCode()
         "toString" -> "@Service " + remote.value
         else -> {
@@ -191,7 +191,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
 
     return Proxy.newProxyInstance(getClassLoader(), arrayOf(clazz)) { proxy: Any?, method: Method, args: Array<Any?>? ->
       when (method.name) {
-        "equals" -> proxy == args?.firstOrNull()
+        "equals" -> proxy === args?.firstOrNull()
         "hashCode" -> clazz.hashCode()
         "toString" -> "@Service(APP) " + remote.value
         else -> {
@@ -229,7 +229,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
 
     return Proxy.newProxyInstance(getClassLoader(), arrayOf(clazz)) { proxy: Any?, method: Method, args: Array<Any?>? ->
       when (method.name) {
-        "equals" -> proxy == args?.firstOrNull()
+        "equals" -> proxy === args?.firstOrNull()
         "hashCode" -> clazz.hashCode()
         "toString" -> "Utility " + remote.value
         else -> {

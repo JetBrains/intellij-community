@@ -1,6 +1,5 @@
 package com.jetbrains.performancePlugin.remotedriver.fixtures
 
-import com.intellij.driver.model.StringList
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.JListTextCellReader
 import org.assertj.swing.core.Robot
 import org.assertj.swing.fixture.JListFixture
@@ -11,8 +10,8 @@ class JListTextFixture(robot: Robot, component: JList<*>) : JListFixture(robot, 
     replaceCellReader(JListTextCellReader())
   }
 
-  fun collectItems() = StringList().apply { addAll(contents()) }
-  fun collectSelectedItems() = StringList().apply { addAll(selection()) }
+  fun collectItems(): List<String> = contents().toList()
+  fun collectSelectedItems(): List<String> = selection().toList()
   fun clickItemAtIndex(index: Int) {
     clickItem(index)
   }

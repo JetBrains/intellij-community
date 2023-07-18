@@ -1,7 +1,6 @@
 package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Remote
-import com.intellij.driver.model.StringList
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import org.intellij.lang.annotations.Language
@@ -36,7 +35,7 @@ class JListUiComponent(data: ComponentData) : UiComponent(data) {
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.fixtures.JListTextFixture", plugin = REMOTE_ROBOT_MODULE_ID)
 interface JListFixtureRef {
-  fun collectItems(): StringList
-  fun collectSelectedItems(): StringList
+  fun collectItems(): List<String>
+  fun collectSelectedItems(): List<String>
   fun clickItemAtIndex(index: Int)
 }

@@ -1,6 +1,5 @@
 package com.jetbrains.performancePlugin.remotedriver.fixtures
 
-import com.intellij.driver.model.StringList
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.JComboBoxTextCellReader
 import org.assertj.swing.core.Robot
 import org.assertj.swing.fixture.JComboBoxFixture
@@ -18,7 +17,7 @@ class JComboBoxTextFixture(robot: Robot, component: JComboBox<*>) : JComboBoxFix
   fun select(text: String) { selectItem(text) }
   fun selectedText(): String = selectedItem() ?: ""
 
-  fun listValues(): StringList {
-    return StringList().apply { addAll(contents()) }
+  fun listValues(): List<String> {
+    return contents().toList()
   }
 }
