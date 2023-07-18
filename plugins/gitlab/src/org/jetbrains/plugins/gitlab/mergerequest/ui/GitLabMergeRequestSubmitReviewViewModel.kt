@@ -103,6 +103,7 @@ class GitLabMergeRequestSubmitReviewViewModelImpl(
       executeAndSaveError {
         mergeRequest.submitDraftNotes()
         addNoteIfNotEmpty()
+        mergeRequest.refreshData()
         onDone()
         text.value = ""
       }
