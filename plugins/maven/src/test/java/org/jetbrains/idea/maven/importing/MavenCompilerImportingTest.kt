@@ -8,6 +8,7 @@ import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.module.LanguageLevelUtil
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
@@ -56,6 +57,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
     ideCompilerConfiguration = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     javacCompiler = ideCompilerConfiguration.defaultCompiler
     eclipseCompiler = ideCompilerConfiguration.registeredJavaCompilers.find { it is EclipseCompiler } as EclipseCompiler
+    AcceptedLanguageLevelsSettings.allowLevel(testRootDisposable, LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal + 1])
   }
 
   @Test
