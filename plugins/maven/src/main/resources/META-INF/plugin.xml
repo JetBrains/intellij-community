@@ -308,7 +308,7 @@
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenPluginCollector"/>
 
     <statistics.validation.customValidationRule implementation="org.jetbrains.idea.maven.statistics.MavenPluginCoordinatesWhitelistValidationRule"/>
-    <statistics.validation.customValidationRule implementation="org.jetbrains.idea.maven.statistics.MavenPluginVersionAllowAllValidationRule"/>
+    <statistics.validation.customValidationRule implementation="org.jetbrains.idea.maven.statistics.MavenPluginVersionValidationRule"/>
 
 
     <registryKey key="maven.dedicated.indexer.vmargs" defaultValue="-Xmx1024m"
