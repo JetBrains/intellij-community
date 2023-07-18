@@ -1104,17 +1104,21 @@ public final class ConfigImportHelper {
     }
   }
 
-  /* Merging imported VM option file with the one pre-created by an external tool (like the Toolbox app). */
+  /*
+   * Merging imported VM option file with the one pre-created by an external tool (like the Toolbox app).
+   * When both files set the same property, the value from an external tool is supposed to be more actual.
+   * When both files set `-Xmx`, a higher value is preferred.
+   */
   private static void mergeVmOptions(Path importFile, Path currentFile, Logger log) {
     try {
       var cs = VMOptions.getFileCharset();
       var importLines = Files.readAllLines(importFile, cs);
       var currentLines = Files.readAllLines(currentFile, cs);
       var result = new ArrayList<String>(importLines.size() + currentLines.size());
+      var preferCurrentXmx = false;
 
       nextLine:
       for (var line : importLines) {
-        // preventing duplicated system properties from accumulating
         if (line.startsWith("-D")) {
           var p = line.indexOf('=', 3);
           if (p > 0) {
@@ -1126,12 +1130,15 @@ public final class ConfigImportHelper {
             }
           }
         }
+        else if (line.startsWith("-Xmx") && isLowerValue("-Xmx", line.substring(4), currentLines)) {
+          preferCurrentXmx = true;
+          continue nextLine;
+        }
         result.add(line);
       }
 
       for (var line : currentLines) {
-        // a pre-created value might be lower than the one set by a user
-        if (!(line.startsWith("-Xmx") && isLowerValue("-Xmx", line.substring(4), importLines))) {
+        if (preferCurrentXmx || !line.startsWith("-Xmx")) {
           result.add(line);
         }
       }
