@@ -103,7 +103,7 @@ true
 
   @TestFor(issues = ["IDEA-324914"])
   @Test
-  fun `process components2apply last`() {
+  fun `process files2apply last`() {
     val componentManager = ApplicationManager.getApplication() as ComponentManagerImpl
     val rootConfig = memoryFs.fs.getPath("/IDEA-324914/appConfig")
     val componentStore = object : ChildlessComponentStore() {
@@ -149,7 +149,7 @@ true
       Assert.assertEquals("First", callbackCalls[0])
       Assert.assertEquals("Second", callbackCalls[1])
       callbackCalls.clear()
-      mediator.components2ApplyLast.add("FirstComponent")
+      mediator.files2applyLast.add("first.xml")
       val newSnapshot = SettingsSnapshot(metaInfo, setOf(FileState.Modified("options/first.xml", """
       <application>
   <component name="FirstComponent">
@@ -168,7 +168,7 @@ true
       Assert.assertEquals("Second", callbackCalls[0])
       Assert.assertEquals("First", callbackCalls[1])
     } finally {
-      mediator.components2ApplyLast.remove("FirstComponent")
+      mediator.files2applyLast.remove("first.xml")
       mediator.removeStreamProvider()
     }
   }

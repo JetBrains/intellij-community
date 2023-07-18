@@ -18,6 +18,7 @@ import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.notification.NotificationService
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.io.*
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.InputStream
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -39,7 +40,9 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
 
   private val appConfig: Path get() = rootConfig.resolve(OPTIONS_DIRECTORY)
   private val fileSpecsToLocks = ConcurrentCollectionFactory.createConcurrentMap<String, ReadWriteLock>()
-  internal val components2ApplyLast = mutableListOf(EditorColorsManagerImpl.COMPONENT_NAME)
+
+  @VisibleForTesting
+  internal val files2applyLast = mutableListOf(EditorColorsManagerImpl.STORAGE_NAME)
 
   override val isExclusive: Boolean
     get() = true
@@ -271,7 +274,11 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     }
 
     invokeAndWaitIfNeeded {
-      reloadComponents(changedFileSpecs, deletedFileSpecs)
+      val (normalChanged, lastChanged) = changedFileSpecs.partition { !(files2applyLast.contains(it)) }
+      componentStore.reloadComponents(normalChanged, deletedFileSpecs)
+      if (lastChanged.isNotEmpty()) {
+        componentStore.reloadComponents(lastChanged, emptyList())
+      }
       if (Registry.getInstance().isRestartNeeded) {
         SettingsSyncEvents.getInstance().fireRestartRequired(RestartForNewUI)
       }
@@ -291,62 +298,6 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   }
 
   private fun getOrCreateLock(fileSpec: String) = fileSpecsToLocks.computeIfAbsent(fileSpec) { ReentrantReadWriteLock() }
-
-  private fun reloadComponents(changedFileSpecs: List<String>, deletedFileSpecs: List<String>) {
-    val schemeManagerFactory = SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase
-    val storageManager = componentStore.storageManager as StateStorageManagerImpl
-    val (changed, deleted) = storageManager.getCachedFileStorages(changedFileSpecs, deletedFileSpecs, null)
-
-    val changedComponentNames = LinkedHashSet<String>()
-    updateStateStorage(changedComponentNames, changed, false)
-    updateStateStorage(changedComponentNames, deleted, true)
-
-    val schemeManagersToReload = calcSchemeManagersToReload(changedFileSpecs + deletedFileSpecs, schemeManagerFactory)
-    for (schemeManager in schemeManagersToReload) {
-      if (schemeManager.fileSpec == "colors") {
-        EditorColorsManager.getInstance().reloadKeepingActiveScheme()
-      }
-      else {
-        schemeManager.reload()
-      }
-    }
-
-    val notReloadableComponents = componentStore.getNotReloadableComponents(changedComponentNames)
-    val (normal, last) = changedComponentNames.partition { !components2ApplyLast.contains(it) }
-    for (changeList in arrayOf(normal, last)){
-      componentStore.reinitComponents(changeList.toSet(), (changed + deleted).toSet(), notReloadableComponents)
-    }
-  }
-
-  private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateStorages: Collection<StateStorage>, deleted: Boolean) {
-    for (stateStorage in stateStorages) {
-      try {
-        // todo maybe we don't need "from stream provider" here since we modify the settings in place?
-        (stateStorage as XmlElementStorage).updatedFromStreamProvider(changedComponentNames, deleted)
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
-    }
-  }
-
-  private fun calcSchemeManagersToReload(pathsToCheck: List<String>,
-                                         schemeManagerFactory: SchemeManagerFactoryBase): List<SchemeManagerImpl<*, *>> {
-    val schemeManagersToReload = mutableListOf<SchemeManagerImpl<*, *>>()
-    schemeManagerFactory.process {
-      if (shouldReloadSchemeManager(it, pathsToCheck)) {
-        schemeManagersToReload.add(it)
-      }
-    }
-    return schemeManagersToReload
-  }
-
-  private fun shouldReloadSchemeManager(schemeManager: SchemeManagerImpl<*, *>, pathsToCheck: Collection<String>): Boolean {
-    val fileSpec = schemeManager.fileSpec
-    return pathsToCheck.any { path ->
-      fileSpec == path || path.startsWith("$fileSpec/")
-    }
-  }
 
   companion object {
     val LOG = logger<SettingsSyncIdeMediatorImpl>()
