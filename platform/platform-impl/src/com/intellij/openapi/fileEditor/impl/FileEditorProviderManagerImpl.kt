@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider
@@ -46,7 +47,17 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
     var hasHighPriorityEditors = false
 
     val suppressors = FileEditorProviderSuppressor.EP_NAME.extensionList
-    for (provider in FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList) {
+    val hasDocument by lazy {
+      ApplicationManager.getApplication().runReadAction<Boolean, RuntimeException> {
+        FileDocumentManager.getInstance().getDocument(file) != null
+      }
+    }
+    for (item in FileEditorProvider.EP_FILE_EDITOR_PROVIDER.filterableLazySequence()) {
+      if (item.isDocumentRequired && !hasDocument) {
+        continue
+      }
+
+      val provider = item.instance ?: continue
       if (!DumbService.isDumbAware(provider) && DumbService.isDumb(project)) {
         continue
       }
@@ -77,20 +88,32 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
     val fileType by lazy { file.fileType }
 
     val sharedProviders = coroutineScope {
+      var hasDocument: Boolean? = null
+
       FileEditorProvider.EP_FILE_EDITOR_PROVIDER.filterableLazySequence().map { item ->
         async {
           try {
-            withTimeout(30.seconds) {
-              val providerFileTypeName = item.getCustomAttribute("fileType")
-              // VcsLogFileType is not registered in FileTypeRegistry - we should check also by name
-              if (providerFileTypeName != null && fileType.name != providerFileTypeName) {
-                val fileTypeRegistry = FileTypeRegistry.getInstance()
-                val providerFileType = fileTypeRegistry.findFileTypeByName(providerFileTypeName)
-                if (providerFileType == null || !fileTypeRegistry.isFileOfType(file, providerFileType)) {
-                  return@withTimeout null
-                }
+            val providerFileTypeName = item.getCustomAttribute("fileType")
+            // VcsLogFileType is not registered in FileTypeRegistry - we should check also by name
+            if (providerFileTypeName != null && fileType.name != providerFileTypeName) {
+              val fileTypeRegistry = FileTypeRegistry.getInstance()
+              val providerFileType = fileTypeRegistry.findFileTypeByName(providerFileTypeName)
+              if (providerFileType == null || !fileTypeRegistry.isFileOfType(file, providerFileType)) {
+                return@async null
+              }
+            }
+
+            if (item.isDocumentRequired) {
+              if (hasDocument == null) {
+                hasDocument = readAction { FileDocumentManager.getInstance().getDocument(file) != null }
               }
 
+              if (hasDocument == false) {
+                return@async null
+              }
+            }
+
+            withTimeout(30.seconds) {
               val provider = getProviderIfApplicable(item = item, project = project, file = file, suppressors = suppressors)
                              ?: return@withTimeout null
 
@@ -230,6 +253,9 @@ private object MyComparator : Comparator<FileEditorProvider> {
     return if (value > 0) 1 else if (value < 0) -1 else 0
   }
 }
+
+private val ExtensionPointName.LazyExtension<FileEditorProvider>.isDocumentRequired
+  get() = getCustomAttribute("isDocumentRequired").toBoolean()
 
 private fun checkPolicy(provider: FileEditorProvider) {
   if (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR && !DumbService.isDumbAware(provider)) {
