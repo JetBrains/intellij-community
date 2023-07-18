@@ -791,7 +791,7 @@ public final class ConfigImportHelper {
       @Override
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         Path target = newConfigDir.resolve(oldConfigDir.relativize(file));
-        if (options.merge && file.getFileName().toString().endsWith(".vmoptions") && Files.exists(target)) {
+        if (options.merge && file.getFileName().toString().equals(VMOptions.getFileName()) && Files.exists(target)) {
           mergeVmOptions(file, target, options.log);
         }
         else if (!blockImport(file, oldConfigDir, newConfigDir, oldPluginsDir, options.importSettings)) {
