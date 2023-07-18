@@ -7,6 +7,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -18,12 +19,20 @@ import java.util.function.Function;
 public final class CreateMissingDeconstructionRecordClassBranchesFix extends CreateMissingSwitchBranchesFix {
 
   private final List<String> allNames;
+  private final List<String> missedShorten;
 
   private CreateMissingDeconstructionRecordClassBranchesFix(@NotNull PsiSwitchBlock block,
                                                             @NotNull Set<String> missedNames,
-                                                            @NotNull List<String> allNames) {
+                                                            @NotNull List<String> allNames,
+                                                            @NotNull List<String> missedShorten) {
     super(block, missedNames);
     this.allNames = allNames;
+    this.missedShorten = missedShorten;
+  }
+
+  @Override
+  protected String getText(@NotNull PsiSwitchBlock switchBlock) {
+    return CreateSwitchBranchesUtil.getActionName(missedShorten.stream().sorted().toList());
   }
 
   @Override
@@ -82,18 +91,23 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
       if (element == null) return null;
       allLabels.add(element.getText());
     }
-    List<String> missedLabels = getMissedLabels(switchBlock, missedBranches);
+    List<String> missedLabels = getMissedLabels(switchBlock, missedBranches, false);
     if (missedLabels == null || missedLabels.isEmpty()) {
       return null;
     }
     allLabels.addAll(lastDeconstructionPatternIndex + 1, missedLabels);
     allLabels = allLabels.stream().distinct().toList();
-    return new CreateMissingDeconstructionRecordClassBranchesFix(switchBlock, new HashSet<>(missedLabels), allLabels);
+    List<String> shortenLabels = getMissedLabels(switchBlock, missedBranches, true);
+    if (shortenLabels == null) {
+      return null;
+    }
+    return new CreateMissingDeconstructionRecordClassBranchesFix(switchBlock, new HashSet<>(missedLabels), allLabels, shortenLabels);
   }
 
   @Nullable
   private static List<String> getMissedLabels(@NotNull PsiSwitchBlock block,
-                                              @NotNull Map<PsiType, Set<List<PsiType>>> branchesByType) {
+                                              @NotNull Map<PsiType, Set<List<PsiType>>> branchesByType,
+                                              boolean shorten)  {
     List<String> result = new ArrayList<>();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(block.getProject());
     for (Map.Entry<PsiType, Set<List<PsiType>>> branches : branchesByType.entrySet()) {
@@ -114,7 +128,8 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
         if (branch.size() != variableNames.size()) return null;
         for (int i = 0; i < branch.size(); i++) {
           PsiType psiType = branch.get(i);
-          joiner.add(psiType.getCanonicalText() + " " + variableNames.get(i));
+          String typeText = shorten ? psiType.getPresentableText() : psiType.getCanonicalText();
+          joiner.add(typeText + " " + variableNames.get(i));
         }
         result.add(recordTypeString + joiner);
       }
