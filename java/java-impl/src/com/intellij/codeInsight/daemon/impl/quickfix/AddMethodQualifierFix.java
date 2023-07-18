@@ -47,7 +47,7 @@ public class AddMethodQualifierFix extends PsiBasedModCommandAction<PsiMethodCal
   }
 
   @NotNull
-  private List<PsiVariable> findCandidates(@NotNull PsiMethodCallExpression methodCallElement, @NotNull SearchMode mode) {
+  private static List<PsiVariable> findCandidates(@NotNull PsiMethodCallExpression methodCallElement, @NotNull SearchMode mode) {
     String methodName = methodCallElement.getMethodExpression().getReferenceName();
     if (methodName == null) {
       return Collections.emptyList();
@@ -88,20 +88,20 @@ public class AddMethodQualifierFix extends PsiBasedModCommandAction<PsiMethodCal
   @NotNull
   private static ModCommandAction createAction(PsiVariable candidate, SmartPsiElementPointer<PsiMethodCallExpression> pointer) {
     return ModCommands.psiUpdateStep(
-      candidate, requireNonNullElse(candidate.getName(), ""), (var, updater) -> {
-        PsiMethodCallExpression call = updater.getWritable(pointer.getElement());
-        if (call == null) return;
-        PsiElement replacedExpression = replaceWithQualifier(var, call);
-        updater.moveTo(replacedExpression.getTextOffset() + replacedExpression.getTextLength());
-      }, var -> requireNonNullElse(var.getNameIdentifier(), var).getTextRange())
+        candidate, requireNonNullElse(candidate.getName(), ""), (var, updater) -> {
+          PsiMethodCallExpression call = updater.getWritable(pointer.getElement());
+          if (call == null) return;
+          replaceWithQualifier(var, call);
+          updater.moveTo(call.getTextOffset() + call.getTextLength());
+        }, var -> requireNonNullElse(var.getNameIdentifier(), var).getTextRange())
       .withPresentation(p -> p.withIcon(candidate.getIcon(0)));
   }
 
-  private static PsiElement replaceWithQualifier(@NotNull PsiVariable qualifier, @NotNull PsiMethodCallExpression oldExpression) {
+  private static void replaceWithQualifier(@NotNull PsiVariable qualifier, @NotNull PsiMethodCallExpression oldExpression) {
     String qualifierPresentableText = qualifier.getName();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(qualifier.getProject());
-    PsiExpression expression = elementFactory
+    PsiMethodCallExpression expression = (PsiMethodCallExpression)elementFactory
       .createExpressionFromText(qualifierPresentableText + "." + oldExpression.getMethodExpression().getReferenceName() + "()", null);
-    return oldExpression.replace(expression);
+    oldExpression.getMethodExpression().replace(expression.getMethodExpression());
   }
 }
