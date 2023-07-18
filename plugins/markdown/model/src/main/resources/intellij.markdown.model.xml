@@ -1,0 +1,57 @@
+<idea-plugin package="org.intellij.plugins.markdown.model">
+  <dependencies>
+    <plugin id="com.intellij.modules.xml"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <typedHandler implementation="org.intellij.plugins.markdown.model.HeaderAnchorCompletionPopupTypedHandler"/>
+    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+              implementationClass="org.intellij.plugins.markdown.model.psi.MarkdownSymbolUsageSearcher"/>
+
+    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
+                                 hostLanguage="HTML"
+                                 implementationClass="org.intellij.plugins.markdown.model.psi.headers.html.HtmlHeaderAnchorSelfReferenceProvider"
+                                 targetClass="org.intellij.plugins.markdown.model.psi.headers.MarkdownHeaderSymbol"/>
+
+    <searcher forClass="com.intellij.model.search.PsiSymbolReferenceSearchParameters"
+              implementationClass="org.intellij.plugins.markdown.model.psi.headers.html.MarkdownHtmlAnchorPsiReferenceSearcher"/>
+
+    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
+              implementationClass="org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorRenameUsageSearcher"/>
+
+    <vetoRenameCondition implementation="org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorVetoRenameCondition"/>
+    <rename.symbolRenameTargetFactory implementation="org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorSymbolRenameTargetFactory"/>
+
+    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
+              implementationClass="org.intellij.plugins.markdown.model.psi.headers.HeaderRenameUsageSearcher"/>
+    <psi.declarationProvider implementation="org.intellij.plugins.markdown.model.psi.headers.HeaderSymbolDeclarationProvider"/>
+    <psi.declarationProvider implementation="org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorSymbolDeclarationProvider"/>
+    <psi.symbolReferenceProvider hostElementClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination"
+                                 hostLanguage="Markdown"
+                                 implementationClass="org.intellij.plugins.markdown.model.psi.headers.HeaderAnchorSymbolReferenceProvider"
+                                 targetClass="org.intellij.plugins.markdown.model.psi.headers.MarkdownHeaderSymbol"/>
+    <localInspection language="Markdown"
+                     shortName="MarkdownUnresolvedHeaderReference"
+                     bundle="messages.MarkdownBundle"
+                     key="markdown.unresolved.header.reference.inspection.name"
+                     groupKey="markdown.inspection.group.ruby.name"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.intellij.plugins.markdown.model.psi.headers.UnresolvedHeaderReferenceInspection"/>
+
+    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
+              implementationClass="org.intellij.plugins.markdown.model.psi.labels.LinkLabelRenameUsageSearcher"/>
+    <psi.declarationProvider implementation="org.intellij.plugins.markdown.model.psi.labels.LinkLabelSymbolDeclarationProvider"/>
+    <psi.symbolReferenceProvider hostElementClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel"
+                                 hostLanguage="Markdown"
+                                 implementationClass="org.intellij.plugins.markdown.model.psi.labels.LinkLabelSymbolReferenceProvider"
+                                 targetClass="org.intellij.plugins.markdown.model.psi.labels.LinkLabelSymbol"/>
+    <localInspection language="Markdown"
+                     shortName="MarkdownUnresolvedLinkLabel"
+                     bundle="messages.MarkdownBundle"
+                     key="markdown.unresolved.link.label.inspection.name"
+                     groupKey="markdown.inspection.group.ruby.name"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.intellij.plugins.markdown.model.psi.labels.UnresolvedLinkLabelInspection"/>
+  </extensions>
+</idea-plugin>

@@ -12,5 +12,6 @@
     <orderEntry type="module" module-name="intellij.markdown.frontmatter" />
     <orderEntry type="module" module-name="intellij.markdown.images" />
     <orderEntry type="module" module-name="intellij.markdown.xml" />
+    <orderEntry type="module" module-name="intellij.markdown.model" />
   </component>
 </module>

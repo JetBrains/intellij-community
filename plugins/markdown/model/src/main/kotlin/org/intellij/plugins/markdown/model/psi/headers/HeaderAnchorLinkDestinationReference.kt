@@ -9,12 +9,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.PlatformIcons
 import org.intellij.plugins.markdown.MarkdownIcons
 import org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
-import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
 import org.intellij.plugins.markdown.model.psi.MarkdownPsiSymbolReferenceBase
 import org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorSymbol
 import org.intellij.plugins.markdown.model.psi.headers.html.findInjectedHtmlFile

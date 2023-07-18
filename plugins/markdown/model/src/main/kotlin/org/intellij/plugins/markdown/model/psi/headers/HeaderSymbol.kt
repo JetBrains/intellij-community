@@ -11,12 +11,12 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.util.childrenOfType
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.MarkdownIcons
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderContent
-import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
 import org.intellij.plugins.markdown.model.psi.withLocationIn
 import org.jetbrains.annotations.ApiStatus
 

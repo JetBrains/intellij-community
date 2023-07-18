@@ -44,7 +44,7 @@ internal class HeaderRenameUsageSearcher: RenameUsageSearcher {
     override val range: TextRange
   ): PsiModifiableRenameUsage {
     override fun createPointer(): Pointer<out PsiModifiableRenameUsage> {
-      return Pointer.fileRangePointer(file, range, ::HeaderAnchorModifiableRenameUsage)
+      return Pointer.fileRangePointer(file, range, HeaderRenameUsageSearcher::HeaderAnchorModifiableRenameUsage)
     }
 
     override val declaration: Boolean = false

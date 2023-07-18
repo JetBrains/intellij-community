@@ -3,9 +3,9 @@ package org.intellij.plugins.markdown.editor.images
 
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.XmlElementFactory
-import com.intellij.psi.XmlElementFactoryImpl
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.IncorrectOperationException
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
@@ -17,7 +17,7 @@ object ImageUtils {
   @JvmStatic
   fun createMarkdownImageText(description: String = "", path: String, title: String = ""): String {
     val actualTitle = when {
-      title.isNotEmpty() -> " ${XmlElementFactoryImpl.quoteValue(title)}"
+      title.isNotEmpty() -> " ${quoteValue(title)}"
       else -> title
     }
     return "![$description]($path${actualTitle})"
@@ -53,5 +53,21 @@ object ImageUtils {
     } catch (exception: IncorrectOperationException) {
       return null
     }
+  }
+
+  private fun quoteValue(value: String): String {
+    var value = value
+    val quoteChar: Char
+    if (!value.contains("\"")) {
+      quoteChar = '"'
+    }
+    else if (!value.contains("'")) {
+      quoteChar = '\''
+    }
+    else {
+      quoteChar = '"'
+      value = StringUtil.replace(value, "\"", "&quot;")
+    }
+    return quoteChar.toString() + value + quoteChar
   }
 }

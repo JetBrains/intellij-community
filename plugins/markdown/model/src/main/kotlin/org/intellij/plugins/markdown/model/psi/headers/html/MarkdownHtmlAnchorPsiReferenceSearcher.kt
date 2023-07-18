@@ -34,7 +34,7 @@ internal class MarkdownHtmlAnchorPsiReferenceSearcher: PsiSymbolReferenceSearche
         .caseSensitive(false)
         .inContexts(SearchContext.IN_CODE_HOSTS, SearchContext.IN_CODE, SearchContext.IN_PLAIN_TEXT, SearchContext.IN_STRINGS)
         .inScope(searchScope)
-        .buildQuery(LeafOccurrenceMapper.withPointer(symbolPointer, ::findReferences))
+        .buildQuery(LeafOccurrenceMapper.withPointer(symbolPointer, Companion::findReferences))
     }
 
     private fun findReferences(symbol: Symbol, occurrence: LeafOccurrence): Collection<PsiSymbolReference> {

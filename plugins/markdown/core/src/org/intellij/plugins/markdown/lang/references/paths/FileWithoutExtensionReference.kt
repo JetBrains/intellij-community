@@ -10,8 +10,10 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.util.PsiUtilCore
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownType
+import org.jetbrains.annotations.ApiStatus
 
-internal abstract class FileWithoutExtensionReference(
+@ApiStatus.Internal
+abstract class FileWithoutExtensionReference(
   element: PsiElement,
   private val fileReference: FileReference,
   soft: Boolean
