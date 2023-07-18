@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.utils;
 
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.DefaultMaven;
@@ -45,6 +44,7 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.jetbrains.idea.maven.server.Maven3ServerEmbedder.USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING;
 import static org.jetbrains.idea.maven.server.MavenServerEmbedder.MAVEN_EMBEDDER_VERSION;
@@ -93,7 +93,7 @@ public class Maven3XProjectResolver {
         Collections.singletonList(listener)
       );
 
-      return ContainerUtilRt.map2List(results, result -> createExecutionResult(result.getPomFile(), result, listener.getRootNode()));
+      return results.stream().map(result -> createExecutionResult(result.getPomFile(), result, listener.getRootNode())).collect(Collectors.toList());
     }
     catch (Exception e) {
       throw myEmbedder.wrapToSerializableRuntimeException(e);

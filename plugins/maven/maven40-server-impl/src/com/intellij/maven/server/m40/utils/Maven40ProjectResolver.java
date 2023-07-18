@@ -2,7 +2,6 @@
 package com.intellij.maven.server.m40.utils;
 
 import com.intellij.maven.server.m40.Maven40ServerEmbedderImpl;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.DefaultMaven;
 import org.apache.maven.RepositoryUtils;
@@ -36,6 +35,7 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Maven40ProjectResolver {
   @NotNull private final Maven40ServerEmbedderImpl myEmbedder;
@@ -75,7 +75,7 @@ public class Maven40ProjectResolver {
         inactiveProfiles
       );
 
-      return ContainerUtilRt.map2List(results, result -> createExecutionResult(result));
+      return results.stream().map(result -> createExecutionResult(result)).collect(Collectors.toList());
     }
     catch (Exception e) {
       throw myEmbedder.wrapToSerializableRuntimeException(e);
