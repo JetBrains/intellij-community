@@ -39,6 +39,8 @@ class PyRunAnythingPipProvider : PyRunAnythingPackageProvider() {
   override fun getPackageRepository(dataContext: DataContext): PyPackageRepository? {
     return getPackageManager(dataContext)?.repositoryManager?.repositories?.first { it is PyPIPackageRepository }
   }
+
+  override fun getLogCommandType(): CommandType = CommandType.PIP
 }
 
 val PIP_COMMANDS = listOf("install", "download", "uninstall", "freeze", "list", "show", "wheel", "hash", "check", "config", "cache",

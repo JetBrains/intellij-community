@@ -20,9 +20,10 @@ class PyRunAnythingCollector : CounterUsagesCollector() {
 
 enum class CommandType(val command: String) {
   PYTHON("python"),
-  PIP("pip")
+  PIP("pip"),
+  CONDA("conda")
 }
 
-private val PY_RUN_ANY_GROUP: EventLogGroup = EventLogGroup("python.run.anything", 2)
+private val PY_RUN_ANY_GROUP: EventLogGroup = EventLogGroup("python.run.anything", 3)
 private val EXECUTED: EventId1<CommandType> = PY_RUN_ANY_GROUP.registerEvent("executed",
                                                                              EventFields.Enum<CommandType>("command_type"))
