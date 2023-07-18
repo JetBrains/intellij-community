@@ -1565,7 +1565,9 @@
       <add-to-group group-id="EditorGutterPopupMenu.Appearance" relative-to-action="EditorGutterToggleGlobalIndentLines" anchor="after"/>
     </group>
 
-    <action class="com.intellij.ide.plugins.InstallFromDiskAction" id="plugin.InstallFromDiskAction"/>
+    <action class="com.intellij.ide.plugins.InstallFromDiskAction" id="plugin.InstallFromDiskAction">
+      <add-to-group group-id="ToolbarPopupActions.MainToolbarNewUI"/>
+    </action>
 
     <action class="com.intellij.openapi.editor.actions.ShowFontsUsedByEditorAction" id="ShowFontsUsedByEditor"/>
     <group id="AnalyzeStacktraceToolbar"/>
@@ -1619,7 +1621,9 @@
 
     <group id="ChangeProjectColorActionGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.ChangeProjectColorActionGroup" searchable="false" popup="true"/>
 
-    <group id="ToolbarPopupActions">
+    <group id="ToolbarPopupActions"/>
+
+    <group id="ToolbarPopupActions.MainToolbarNewUI">
       <reference id="MainToolbarQuickActions"/>
       <separator/>
       <reference id="ChangeProjectColorActionGroup"/>

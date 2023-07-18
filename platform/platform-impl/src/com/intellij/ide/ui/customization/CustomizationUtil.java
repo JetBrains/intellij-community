@@ -525,6 +525,10 @@ public final class CustomizationUtil {
     }
 
     customizationGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ToolbarPopupActions"));
+    AnAction additionalActions = ActionManager.getInstance().getAction("ToolbarPopupActions." + groupID);
+    if (additionalActions instanceof ActionGroup) {
+      customizationGroup.add(additionalActions);
+    }
 
     return new PopupHandler() {
       @Override
