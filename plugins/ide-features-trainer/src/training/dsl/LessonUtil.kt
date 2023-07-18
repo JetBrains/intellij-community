@@ -427,11 +427,15 @@ fun LessonContext.highlightDebugActionsToolbar(highlightInside: Boolean = false,
     triggerUI().component { ui: XDebuggerEmbeddedComboBox<XExpression> -> ui.isEditable }
   }
 
-  waitBeforeContinue(500)
+  waitBeforeContinue(defaultRestoreDelay)
 
   task {
     highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", highlightInside, usePulsation)
   }
+}
+
+fun LessonContext.highlightOldDebugActionsToolbar(highlightInside: Boolean = false, usePulsation: Boolean = false) {
+  highlightDebugActionsToolbar(highlightInside, usePulsation)
   task {
     if (!ExperimentalUI.isNewUI() && !UIExperiment.isNewDebuggerUIEnabled()) {
       highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint",

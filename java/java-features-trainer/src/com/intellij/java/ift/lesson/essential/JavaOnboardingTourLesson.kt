@@ -338,6 +338,11 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       JavaLessonsBundle.message("java.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
 
+    lateinit var debuggerGotItTaskId: TaskContext.TaskId
+    task {
+      debuggerGotItTaskId = taskId
+    }
+
     highlightDebugActionsToolbar()
 
     task {
@@ -346,7 +351,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
                 JavaLessonsBundle.message("java.onboarding.balloon.about.debug.panel",
                                           strong(UIBundle.message("tool.window.name.debug")),
                                           strong(LessonsBundle.message("debug.workflow.lesson.name"))))
-      restoreIfModified(sample)
+      restoreByUi(debuggerGotItTaskId)
     }
 
     highlightButtonById("Stop", highlightInside = false, usePulsation = false)
