@@ -62,4 +62,12 @@ def get_value_counts(table, max_cols, max_colwidth):
 
 def __get_describe_df(table):
     # type: (pl.DataFrame) -> pl.DataFrame
-    return table.describe(percentiles=(0.05, 0.25, 0.5, 0.75, 0.95))
+    if 'describe' in table.columns:
+        import random
+        random_suffix = ''.join([chr(random.randint(97, 122)) for _ in range(5)])
+        described_df = table\
+            .rename({'describe': 'describe_original_' + random_suffix})\
+            .describe(percentiles=(0.05, 0.25, 0.5, 0.75, 0.95))
+    else:
+        described_df = table.describe(percentiles=(0.05, 0.25, 0.5, 0.75, 0.95))
+    return described_df
