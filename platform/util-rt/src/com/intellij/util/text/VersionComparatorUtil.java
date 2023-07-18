@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
-import com.intellij.util.Function;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,17 +31,6 @@ public final class VersionComparatorUtil {
     }
   };
 
-  /**
-   * @deprecated this field isn't supposed to be used directly, use {@link #compare(String, String)} instead.   
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static final Function<String, Integer> DEFAULT_TOKEN_PRIORITY_PROVIDER = new Function<String, Integer>() {
-    @Override
-    public Integer fun(String s) {
-      return DEFAULT_TOKEN_PRIORITIZER.getPriority(s);
-    }
-  };
   private static final TokenPrioritizer DEFAULT_TOKEN_PRIORITIZER = new TokenPrioritizer() {
     @Override
     public int getPriority(String token) {
@@ -142,20 +129,6 @@ public final class VersionComparatorUtil {
     return compare(ver1, ver2, DEFAULT_TOKEN_PRIORITIZER);
   }
 
-  /**
-   * @deprecated use {@link #compare(String, String, TokenPrioritizer)} instead.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static int compare(@Nullable @NonNls String ver1, @Nullable @NonNls String ver2, final Function<? super String, Integer> tokenPriorityProvider) {
-    return compare(ver1, ver2, new TokenPrioritizer() {
-      @Override
-      public int getPriority(String token) {
-        return tokenPriorityProvider.fun(token);
-      }
-    });
-  }
-  
   public static int compare(@Nullable @NonNls String ver1, @Nullable @NonNls String ver2, @NotNull TokenPrioritizer tokenPriorityProvider) {
     // todo duplicates com.intellij.openapi.util.text.StringUtil.compareVersionNumbers()
     // todo please refactor next time you make changes here
@@ -194,18 +167,6 @@ public final class VersionComparatorUtil {
     }
 
     return 0;
-  }
-
-  /**
-   * @deprecated this method isn't supposed to be used anymore, inline its body if you really need it.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static int comparePriorities(@NonNls String ver1, @NonNls String ver2, Function<? super String, Integer> tokenPriorityProvider) {
-    int priority1 = tokenPriorityProvider.fun(ver1);
-    int priority2 = tokenPriorityProvider.fun(ver2);
-
-    return Integer.signum(priority1 - priority2);
   }
 
   private static int compareNumbers(String n1, String n2) {
