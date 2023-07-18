@@ -13,10 +13,9 @@ import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import java.util.concurrent.ExecutorService
 
 @ApiStatus.Internal
-class MavenGeneralSettingsWatcher private constructor(
+class MavenGeneralSettingsWatcher(
   private val manager: MavenProjectsManager,
-  backgroundExecutor: ExecutorService,
-  parentDisposable: Disposable
+  private val backgroundExecutor: ExecutorService
 ) {
 
   private val generalSettings get() = manager.generalSettings
@@ -41,24 +40,16 @@ class MavenGeneralSettingsWatcher private constructor(
     // fireSettingsChange() will be called indirectly by pathsChanged listener on GeneralSettings object
   }
 
-  init {
+  fun subscribeOnSettingsChanges(parentDisposable: Disposable) {
     generalSettings.addListener(::fireSettingsChange, parentDisposable)
+  }
+
+  fun subscribeOnSettingsFileChanges(parentDisposable: Disposable) {
     val filesProvider = ReadAsyncSupplier.Builder(::settingsFiles)
       .coalesceBy(this)
       .build(backgroundExecutor)
     subscribeOnVirtualFilesChanges(false, filesProvider, object : FilesChangesListener {
       override fun apply() = fireSettingsXmlChange()
     }, parentDisposable)
-  }
-
-  companion object {
-    @JvmStatic
-    fun registerGeneralSettingsWatcher(
-      manager: MavenProjectsManager,
-      backgroundExecutor: ExecutorService,
-      parentDisposable: Disposable
-    ) {
-      MavenGeneralSettingsWatcher(manager, backgroundExecutor, parentDisposable)
-    }
   }
 }

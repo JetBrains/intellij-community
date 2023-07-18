@@ -8,14 +8,11 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrack
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
-
-import java.util.concurrent.ExecutorService;
 
 @ApiStatus.Internal
 public final class MavenProjectManagerWatcher {
@@ -26,28 +23,30 @@ public final class MavenProjectManagerWatcher {
   private final MavenProjectAware myProjectAware;
   private final MavenRenameModuleWatcher myRenameModuleWatcher;
   private final MavenProjectRootWatcher myProjectRootWatcher;
-  private final ExecutorService myBackgroundExecutor;
+  private final MavenGeneralSettingsWatcher myGeneralSettingsWatcher;
   private final Disposable myDisposable;
 
   public MavenProjectManagerWatcher(Project project, @NotNull MavenProjectsTree projectTree) {
-    myBackgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MavenProjectsManagerWatcher.backgroundExecutor", 1);
     myProject = project;
     myProjectTree = projectTree;
 
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-    myProjectAware = new MavenProjectAware(project, projectsManager, myBackgroundExecutor);
+    var backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MavenProjectsManagerWatcher.backgroundExecutor", 1);
+    var projectManager = MavenProjectsManager.getInstance(myProject);
+    myProjectAware = new MavenProjectAware(project, projectManager, backgroundExecutor);
     myRenameModuleWatcher = new MavenRenameModuleWatcher();
-    myProjectRootWatcher = new MavenProjectRootWatcher(projectsManager, this);
-    myDisposable = Disposer.newDisposable(projectsManager, MavenProjectManagerWatcher.class.toString());
+    myProjectRootWatcher = new MavenProjectRootWatcher(projectManager, this);
+    myGeneralSettingsWatcher = new MavenGeneralSettingsWatcher(projectManager, backgroundExecutor);
+    myDisposable = Disposer.newDisposable(projectManager, MavenProjectManagerWatcher.class.toString());
   }
 
   public synchronized void start() {
-    MessageBusConnection busConnection = myProject.getMessageBus().connect(myDisposable);
+    var busConnection = myProject.getMessageBus().connect(myDisposable);
     busConnection.subscribe(ProjectTopics.MODULES, myRenameModuleWatcher);
     busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, myProjectRootWatcher);
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-    MavenGeneralSettingsWatcher.registerGeneralSettingsWatcher(projectsManager, myBackgroundExecutor, myDisposable);
-    ExternalSystemProjectTracker projectTracker = ExternalSystemProjectTracker.getInstance(myProject);
+    myGeneralSettingsWatcher.subscribeOnSettingsChanges(myDisposable);
+    myGeneralSettingsWatcher.subscribeOnSettingsFileChanges(myDisposable);
+    var projectsManager = MavenProjectsManager.getInstance(myProject);
+    var projectTracker = ExternalSystemProjectTracker.getInstance(myProject);
     projectTracker.register(myProjectAware, projectsManager);
     projectTracker.activate(myProjectAware.getProjectId());
   }
