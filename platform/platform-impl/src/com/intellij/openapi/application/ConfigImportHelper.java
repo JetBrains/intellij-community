@@ -1087,7 +1087,7 @@ public final class ConfigImportHelper {
       nextLine:
       for (var line : importLines) {
         if (line.startsWith("-D")) {
-          var p = line.indexOf('=', 3);
+          var p = line.indexOf('=');
           if (p > 0) {
             var prefix = line.substring(0, p + 1);
             for (var l : currentLines) {
