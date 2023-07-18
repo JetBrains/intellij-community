@@ -88,15 +88,15 @@ private val ourFastTrackToolbarsCount = AtomicInteger()
 
 
 internal class ActionUpdater @JvmOverloads constructor(
-  private val myPresentationFactory: PresentationFactory,
-  private val myDataContext: DataContext,
-  private val myPlace: String,
-  private val myContextMenuAction: Boolean,
-  private val myToolbarAction: Boolean,
+  private val presentationFactory: PresentationFactory,
+  private val dataContext: DataContext,
+  private val place: String,
+  private val contextMenuAction: Boolean,
+  private val toolbarAction: Boolean,
   private val myEDTExecutor: Executor? = null,
   private val myEventTransform: ((AnActionEvent) -> AnActionEvent)? = null) {
 
-  private val project = CommonDataKeys.PROJECT.getData(myDataContext)
+  private val project = CommonDataKeys.PROJECT.getData(dataContext)
   private val myUserDataHolder = UserDataHolderBase()
   private val myUpdatedPresentations = ConcurrentHashMap<AnAction, Presentation>()
   private val myGroupChildren = ConcurrentHashMap<ActionGroup, List<AnAction>>()
@@ -106,15 +106,15 @@ internal class ActionUpdater @JvmOverloads constructor(
         doGetChildren(group, createActionEvent(myUpdatedPresentations[group] ?: initialBgtPresentation(group)))
       } })
   private val myCheapStrategy = UpdateStrategy(
-      { action -> myPresentationFactory.getPresentation(action) },
-      { group  -> doGetChildren(group, null) })
+    { action -> presentationFactory.getPresentation(action) },
+    { group  -> doGetChildren(group, null) })
 
   private var myAllowPartialExpand = true
-  private var myPreCacheSlowDataKeys: Boolean = Utils.isAsyncDataContext(myDataContext) &&
+  private var myPreCacheSlowDataKeys: Boolean = Utils.isAsyncDataContext(dataContext) &&
                                                 !Registry.`is`("actionSystem.update.actions.suppress.dataRules.on.edt")
   private var myForcedUpdateThread: ActionUpdateThread? = null
   private val myTestDelayMillis =
-    if (ActionPlaces.ACTION_SEARCH == myPlace || ActionPlaces.isShortcutPlace(myPlace)) 0
+    if (ActionPlaces.ACTION_SEARCH == place || ActionPlaces.isShortcutPlace(place)) 0
     else Registry.intValue("actionSystem.update.actions.async.test.delay", 0)
   private val myThreadDumpService = ThreadDumpService.getInstance()
   private var myEDTCallsCount = 0
@@ -127,8 +127,8 @@ internal class ActionUpdater @JvmOverloads constructor(
   private var myCurEDTPerformMillis: Long = 0
   private fun updateActionReal(action: AnAction): Presentation? {
     // clone the presentation to avoid partially changing the cached one if the update is interrupted
-    val presentation = myPresentationFactory.getPresentation(action).clone()
-    if (!ActionPlaces.isShortcutPlace(myPlace)) presentation.setEnabledAndVisible(true)
+    val presentation = presentationFactory.getPresentation(action).clone()
+    if (!ActionPlaces.isShortcutPlace(place)) presentation.setEnabledAndVisible(true)
     val success = callAction(action, Op.Update) {
       doUpdate(action, createActionEvent(presentation))
     }
@@ -137,7 +137,7 @@ internal class ActionUpdater @JvmOverloads constructor(
 
   fun applyPresentationChanges() {
     for ((action, copy) in myUpdatedPresentations) {
-      val orig = myPresentationFactory.getPresentation(action)
+      val orig = presentationFactory.getPresentation(action)
       var customComponent: JComponent? = null
       if (action is CustomComponentAction) {
         // 1. toolbar may have already created a custom component, do not erase it
@@ -152,7 +152,7 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   private fun <T> callAction(action: AnAction, operation: Op, call: () -> T): T {
-    val operationName = Utils.operationName(action, operation.name, myPlace)
+    val operationName = Utils.operationName(action, operation.name, place)
     return callAction(action, operationName, action.getActionUpdateThread(), call)
   }
 
@@ -161,7 +161,7 @@ internal class ActionUpdater @JvmOverloads constructor(
                              updateThreadOrig: ActionUpdateThread,
                              call: () -> T): T {
     val updateThread = myForcedUpdateThread ?: updateThreadOrig
-    val canAsync = Utils.isAsyncDataContext(myDataContext)
+    val canAsync = Utils.isAsyncDataContext(dataContext)
     val shallAsync = updateThread == ActionUpdateThread.BGT
     val isEDT = EDT.isCurrentThreadEdt()
     val shallEDT = !(canAsync && shallAsync)
@@ -191,7 +191,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         }
       }
     }
-    if (PopupMenuPreloader.isToSkipComputeOnEDT(myPlace)) {
+    if (PopupMenuPreloader.isToSkipComputeOnEDT(place)) {
       throw ComputeOnEDTSkipped()
     }
     if (myPreCacheSlowDataKeys && updateThread == ActionUpdateThread.OLD_EDT) {
@@ -326,7 +326,7 @@ internal class ActionUpdater @JvmOverloads constructor(
 
   fun expandActionGroupAsync(group: ActionGroup, hideDisabled: Boolean): CancellablePromise<List<AnAction>> {
     return ActionGroupExpander.getInstance().expandActionGroupAsync(
-      myPresentationFactory, myDataContext, myPlace, group, myToolbarAction, hideDisabled) { g, h ->
+      presentationFactory, dataContext, place, group, toolbarAction, hideDisabled) { g, h ->
       doExpandActionGroupAsync(g, h)
     }
   }
@@ -340,7 +340,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
     val parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator()
     val indicator: ProgressIndicator = if (parentIndicator == null) ProgressIndicatorBase() else SensitiveProgressWrapper(parentIndicator)
-    val promise = newPromise<List<AnAction>?>(myPlace)
+    val promise = newPromise<List<AnAction>?>(place)
     promise.onError(Consumer<Throwable> {
       indicator.cancel()
       ApplicationManager.getApplication().invokeLater(
@@ -352,16 +352,16 @@ internal class ActionUpdater @JvmOverloads constructor(
       val edtWaitMillis = TimeUnit.NANOSECONDS.toMillis(myEDTWaitNanos)
       if (myEDTExecutor == null && (myEDTCallsCount > 500 || edtWaitMillis > 3000)) {
         LOG.warn(edtWaitMillis.toString() + " ms total to grab EDT " + myEDTCallsCount + " times to expand " +
-                 Utils.operationName(group, null, myPlace) + ". Use `ActionUpdateThread.BGT`.")
+                 Utils.operationName(group, null, place) + ". Use `ActionUpdateThread.BGT`.")
       }
     }
     // only one toolbar fast-track at a time
-    val useFastTrack = myEDTExecutor != null && !(myToolbarAction && ourFastTrackToolbarsCount.get() > 0)
+    val useFastTrack = myEDTExecutor != null && !(toolbarAction && ourFastTrackToolbarsCount.get() > 0)
     val executor = if (useFastTrack) ourFastTrackExecutor else ourCommonExecutor
-    if (useFastTrack && myToolbarAction) {
+    if (useFastTrack && toolbarAction) {
       ourFastTrackToolbarsCount.incrementAndGet()
     }
-    val targetPromises = if (myToolbarAction) ourToolbarPromises else ourPromises
+    val targetPromises = if (toolbarAction) ourToolbarPromises else ourPromises
     targetPromises.add(promise)
     val computable = Computable<Computable<Void?>> {
       indicator.checkCanceled()
@@ -402,18 +402,18 @@ internal class ActionUpdater @JvmOverloads constructor(
         }
       }
       finally {
-        if (useFastTrack && myToolbarAction) {
+        if (useFastTrack && toolbarAction) {
           ourFastTrackToolbarsCount.decrementAndGet()
         }
         targetPromises.remove(promise)
         if (!promise.isDone()) {
           cancelPromise(promise, "unknown reason")
-          LOG.error(Throwable("'" + myPlace + "' update exited incorrectly (" + !applyRunnableRef.isNull + ")"))
+          LOG.error(Throwable("'" + place + "' update exited incorrectly (" + !applyRunnableRef.isNull + ")"))
         }
       }
     }
     val current = Context.current()
-    executor.execute(object : NamedRunnable(myPlace) {
+    executor.execute(object : NamedRunnable(place) {
       override fun run() {
         current.makeCurrent().use { runnable.run() }
       }
@@ -448,7 +448,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         span.setAttribute(Utils.OT_OP_KEY, operationName)
         for (key in DataKey.allKeys()) {
           try {
-            myDataContext.getData(key)
+            dataContext.getData(key)
           }
           catch (ex: ProcessCanceledException) {
             throw ex
@@ -466,7 +466,7 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   private fun logTimeProblemForPreCached(action: Any, operationName: String, elapsed: Long) {
-    if (elapsed > 300 && ActionPlaces.isShortcutPlace(myPlace)) {
+    if (elapsed > 300 && ActionPlaces.isShortcutPlace(place)) {
       LOG.error(PluginException.createByClass(elapsedReport(elapsed, false, operationName) + OLD_EDT_MSG_SUFFIX, null, action.javaClass))
     }
     else if (elapsed > 3000) {
@@ -582,13 +582,13 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   private fun initialBgtPresentation(action: AnAction): Presentation {
-    return myPresentationFactory.getPresentation(action).clone()
+    return presentationFactory.getPresentation(action).clone()
   }
 
   private fun createActionEvent(presentation: Presentation): AnActionEvent {
     val event = AnActionEvent(
-      null, myDataContext, myPlace, presentation,
-      ActionManager.getInstance(), 0, myContextMenuAction, myToolbarAction).let {
+      null, dataContext, place, presentation,
+      ActionManager.getInstance(), 0, contextMenuAction, toolbarAction).let {
       myEventTransform?.invoke(it) ?: it
     }
     event.updateSession = asUpdateSession()
@@ -685,7 +685,7 @@ internal class ActionUpdater @JvmOverloads constructor(
                              operationName: String,
                              updateThread: ActionUpdateThread,
                              supplier: Supplier<out T>): T {
-      val operationNameFull = Utils.operationName(action, operationName, updater.myPlace)
+      val operationNameFull = Utils.operationName(action, operationName, updater.place)
       return updater.callAction(action, operationNameFull, updateThread) { supplier.get() }
     }
   }

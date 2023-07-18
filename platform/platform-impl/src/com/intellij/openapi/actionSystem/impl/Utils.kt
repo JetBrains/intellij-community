@@ -352,7 +352,10 @@ object Utils {
   }
 
   private fun addLoadingIcon(point: RelativePoint?, place: String): (() -> Unit)? {
-    if (!Registry.`is`("actionSystem.update.actions.async")) return null
+    if (!Registry.`is`("actionSystem.update.actions.async", true)) {
+      return null
+    }
+
     val rootPane = if (point == null) null else UIUtil.getRootPane(point.component)
     val glassPane = if (rootPane == null) null else rootPane.glassPane as JComponent
     if (glassPane == null) return null
@@ -406,25 +409,30 @@ object Utils {
       if (multiChoice && action is Toggleable) {
         presentation.isMultiChoice = true
       }
-      var comp: JComponent
+      var childComponent: JComponent
       var peer: MenuItem?
       if (action is Separator) {
-        comp = createSeparator(action.text, children.isEmpty())
+        childComponent = createSeparator(action.text, children.isEmpty())
         peer = null
       }
       else if (action is ActionGroup && !isSubmenuSuppressed(presentation)) {
-        val menu = ActionMenu(context, place, action, presentationFactory, enableMnemonics, useDarkIcons)
-        comp = menu
+        val menu = ActionMenu(context = context,
+                              place = place,
+                              group = action,
+                              presentationFactory = presentationFactory,
+                              isMnemonicEnabled = enableMnemonics,
+                              useDarkIcons = useDarkIcons)
+        childComponent = menu
         peer = menu.screenMenuPeer
       }
       else {
         val each = ActionMenuItem(action, place, context, enableMnemonics, checked, useDarkIcons)
         each.updateFromPresentation(presentation)
-        comp = each
+        childComponent = each
         peer = each.screenMenuItemPeer
       }
-      component.add(comp)
-      children.add(comp)
+      component.add(childComponent)
+      children.add(childComponent)
       nativePeer?.add(peer)
     }
     if (list.isEmpty()) {
@@ -697,7 +705,6 @@ object Utils {
    * @param isModalContext `null` to clear a mark, to set a new one otherwise.
    * @see Utils.isModalContext
    */
-  @JvmStatic
   fun markAsModalContext(component: JComponent, isModalContext: Boolean?) {
     ClientProperty.put(component, IS_MODAL_CONTEXT, isModalContext)
   }
@@ -713,9 +720,11 @@ object Utils {
   fun initUpdateSession(e: AnActionEvent) {
     var updater = e.updateSession
     if (updater === UpdateSession.EMPTY) {
-      val actionUpdater = ActionUpdater(
-        PresentationFactory(), e.dataContext,
-        e.place, e.isFromContextMenu, e.isFromActionToolbar)
+      val actionUpdater = ActionUpdater(presentationFactory = PresentationFactory(),
+                                        dataContext = e.dataContext,
+                                        place = e.place,
+                                        contextMenuAction = e.isFromContextMenu,
+                                        toolbarAction = e.isFromActionToolbar)
       updater = actionUpdater.asUpdateSession()
       e.updateSession = updater
     }
