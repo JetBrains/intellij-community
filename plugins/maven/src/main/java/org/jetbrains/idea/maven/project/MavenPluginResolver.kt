@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
@@ -64,9 +63,7 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
     }
     finally {
       if (filesToRefresh.size > 0) {
-        blockingContext {
-          LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh)
-        }
+        LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh, true, false, null)
       }
       embeddersManager.release(embedder)
     }
