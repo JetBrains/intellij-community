@@ -195,6 +195,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean isReleased;
 
   private boolean mySuppressPainting;
+  private boolean mySuppressDisposedPainting;
 
   private @Nullable MouseEvent myMousePressedEvent;
   private @Nullable MouseEvent myMouseMovedEvent;
@@ -1950,6 +1951,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     mySuppressPainting = suppress;
   }
 
+  @ApiStatus.Internal
+  public void suppressDisposedPainting(boolean suppress) {
+    mySuppressDisposedPainting = suppress;
+  }
+
   private boolean shouldPaint() {
     return !isReleased && !mySuppressPainting;
   }
@@ -1994,7 +2000,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     });
   }
 
-  static @NotNull Color getDisposedBackground() {
+  @NotNull Color getDisposedBackground() {
+    if (mySuppressDisposedPainting) return getBackgroundColor();
     return new JBColor(new Color(128, 255, 128), new Color(128, 255, 128));
   }
 
