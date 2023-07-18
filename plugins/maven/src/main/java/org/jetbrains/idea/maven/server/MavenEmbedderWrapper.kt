@@ -249,12 +249,12 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     }
   }
 
-  private suspend fun <R> runLongRunningTaskAsync(embedder: MavenServerEmbedder,
-                                                  longRunningTaskId: String,
-                                                  indicator: ProgressIndicator?,
-                                                  syncConsole: MavenSyncConsole?,
-                                                  console: MavenConsole?,
-                                                  task: LongRunningEmbedderTask<R>): R {
+  private suspend inline fun <R> runLongRunningTaskAsync(embedder: MavenServerEmbedder,
+                                                         longRunningTaskId: String,
+                                                         indicator: ProgressIndicator?,
+                                                         syncConsole: MavenSyncConsole?,
+                                                         console: MavenConsole?,
+                                                         task: LongRunningEmbedderTask<R>): R {
 
     return coroutineScope {
       val progressIndication = launch {
