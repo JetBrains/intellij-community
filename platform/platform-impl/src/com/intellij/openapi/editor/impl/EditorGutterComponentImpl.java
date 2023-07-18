@@ -374,7 +374,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       Graphics2D g = (Graphics2D)getComponentGraphics(g_);
 
       if (myEditor.isDisposed()) {
-        g.setColor(EditorImpl.getDisposedBackground());
+        g.setColor(myEditor.getDisposedBackground());
         g.fillRect(clip.x, clip.y, clip.width, clip.height);
         return;
       }
