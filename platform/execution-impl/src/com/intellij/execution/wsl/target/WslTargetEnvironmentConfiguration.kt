@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.target
 
-import com.intellij.execution.target.FullPathOnTarget
-import com.intellij.execution.target.PersistentTargetEnvironmentConfiguration
-import com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
-import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.*
 import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs
 import com.intellij.execution.wsl.WSLDistribution
@@ -19,7 +16,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.pathString
 
-class WslTargetEnvironmentConfiguration() : TargetEnvironmentConfiguration(WslTargetType.TYPE_ID),
+class WslTargetEnvironmentConfiguration() : TargetConfigurationWithId(WslTargetType.TYPE_ID),
                                             PersistentStateComponent<WslTargetEnvironmentConfiguration.MyState>,
                                             PersistentTargetEnvironmentConfiguration,
                                             TargetConfigurationReadableFs,
@@ -44,6 +41,7 @@ class WslTargetEnvironmentConfiguration() : TargetEnvironmentConfiguration(WslTa
     distributionMsId = initialDistribution?.msId
   }
 
+  override val targetId: TargetId get() = TargetId(distribution!!.id)
 
   override fun getTargetPathIfLocalPathIsOnTarget(probablyPathOnTarget: Path): FullPathOnTarget? {
     if (probablyPathOnTarget.root in listWindowsLocalDriveRoots()) return null
