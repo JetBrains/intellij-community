@@ -10,12 +10,13 @@ import java.util.EventListener;
 
 public interface EditorGutterListener extends EventListener {
 
-  default void textAnnotationAdded(@NotNull TextAnnotationGutterProvider provider) {}
+  default void textAnnotationAdded(@NotNull TextAnnotationGutterProvider provider) { }
 
-  default void textAnnotationRemoved(@NotNull TextAnnotationGutterProvider provider) {}
+  default void textAnnotationRemoved(@NotNull TextAnnotationGutterProvider provider) { }
 
   @ApiStatus.Experimental
-  default void hoverStarted(@NotNull EditorGutterHoverEvent event) {}
+  default void hoverStarted(@NotNull EditorGutterHoverEvent event) { }
+
   @ApiStatus.Experimental
-  default void hoverEnded(@NotNull EditorGutterHoverEvent event) {}
+  default void hoverEnded(@NotNull EditorGutterHoverEvent event) { }
 }
