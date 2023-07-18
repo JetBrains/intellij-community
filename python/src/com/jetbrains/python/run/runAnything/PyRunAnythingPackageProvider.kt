@@ -98,13 +98,15 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
     return (allFlags || allPreviousFlags) && getCompOperatorPosition(parameters.last()).first == null
   }
 
+  abstract fun getLogCommandType(): CommandType
+
   override fun run(dataContext: DataContext, commandLine: CommandLine): Boolean {
     val workDirectory = dataContext.getData(CommonDataKeys.VIRTUAL_FILE) ?: return false
     val executor = dataContext.getData(RunAnythingAction.EXECUTOR_KEY) ?: return false
     if (getSdk(dataContext)?.isTargetBased() == true) {
       return false
     }
-    PyRunAnythingCollector.Util.logEvent(CommandType.PIP)
+    PyRunAnythingCollector.Util.logEvent(getLogCommandType())
 
     RunAnythingCommandProvider.runCommand(workDirectory, helpCommand + " " + commandLine.command, executor, dataContext)
     return true
