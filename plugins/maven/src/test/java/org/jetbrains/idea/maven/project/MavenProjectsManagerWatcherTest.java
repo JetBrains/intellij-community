@@ -11,16 +11,17 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingTestCase {
@@ -142,6 +143,65 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
     assertEquals(0, myProjectsTreeTracker.getProjectStatus("project").updateCounter);
     assertEquals(1, myProjectsTreeTracker.getProjectStatus("module1").updateCounter);
     assertEquals(1, myProjectsTreeTracker.getProjectStatus("module2").updateCounter);
+  }
+
+  @Test
+  public void testProfilesAutoReload() {
+    createProjectPom("""
+                         <groupId>test</groupId>
+                         <artifactId>project</artifactId>
+                         <version>1</version>
+                         
+                         <profiles>
+                             <profile>
+                                 <id>junit4</id>
+                                 <dependencies>
+                                     <dependency>
+                                         <groupId>junit</groupId>
+                                         <artifactId>junit</artifactId>
+                                         <version>4.12</version>
+                                         <scope>test</scope>
+                                     </dependency>
+                                 </dependencies>
+                             </profile>
+                             <profile>
+                                 <id>junit5</id>
+                                 <dependencies>
+                                     <dependency>
+                                         <groupId>org.junit.jupiter</groupId>
+                                         <artifactId>junit-jupiter-engine</artifactId>
+                                         <version>5.9.1</version>
+                                         <scope>test</scope>
+                                     </dependency>
+                                 </dependencies>
+                             </profile>
+                         </profiles>
+                       """);
+    scheduleProjectImportAndWait();
+    assertRootProjects("project");
+    assertModules("project");
+    assertFalse(myNotificationAware.isNotificationVisible());
+
+    myProjectsManager.getProjectsTree()
+      .setExplicitProfiles(new MavenExplicitProfiles(List.of("junit4"), List.of("junit5")));
+    assertTrue(myNotificationAware.isNotificationVisible());
+    scheduleProjectImportAndWait();
+    assertFalse(myNotificationAware.isNotificationVisible());
+    assertMavenProjectDependencies("test:project:1", "junit:junit:4.12");
+
+    myProjectsManager.getProjectsTree()
+      .setExplicitProfiles(new MavenExplicitProfiles(List.of("junit5"), List.of("junit4")));
+    assertTrue(myNotificationAware.isNotificationVisible());
+    scheduleProjectImportAndWait();
+    assertFalse(myNotificationAware.isNotificationVisible());
+    assertMavenProjectDependencies("test:project:1", "org.junit.jupiter:junit-jupiter-engine:5.9.1");
+  }
+
+  private void assertMavenProjectDependencies(@NotNull String projectMavenCoordinates, String... expectedDependencies) {
+    var mavenId = new MavenId(projectMavenCoordinates);
+    var mavenProject = myProjectsManager.getProjectsTree().findProject(mavenId);
+    var actualDependencies = ContainerUtil.map(mavenProject.getDependencyTree(), it -> it.getArtifact().getMavenId().getKey());
+    Assert.assertEquals(List.of(expectedDependencies), actualDependencies);
   }
 
   private void scheduleProjectImportAndWait() {

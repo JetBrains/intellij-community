@@ -17,19 +17,17 @@ import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenImportListener
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.concurrent.ExecutorService
 
 @ApiStatus.Internal
 class MavenProjectAware(
   project: Project,
+  override val projectId: ExternalSystemProjectId,
   private val manager: MavenProjectsManager,
   private val backgroundExecutor: ExecutorService
 ) : ExternalSystemProjectAware {
 
   private val isImportCompleted = AtomicBooleanProperty(true)
-
-  override val projectId = ExternalSystemProjectId(MavenUtil.SYSTEM_ID, project.name)
 
   override val settingsFiles: Set<String>
     get() = collectSettingsFiles()

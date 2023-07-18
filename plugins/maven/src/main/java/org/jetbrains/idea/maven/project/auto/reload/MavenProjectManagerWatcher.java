@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.project.auto.reload;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker;
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 @ApiStatus.Internal
 public final class MavenProjectManagerWatcher {
@@ -21,6 +23,7 @@ public final class MavenProjectManagerWatcher {
   private @NotNull MavenProjectsTree myProjectTree;
 
   private final MavenProjectAware myProjectAware;
+  private final MavenProfileWatcher myProfileWatcher;
   private final MavenRenameModuleWatcher myRenameModuleWatcher;
   private final MavenProjectRootWatcher myProjectRootWatcher;
   private final MavenGeneralSettingsWatcher myGeneralSettingsWatcher;
@@ -32,7 +35,10 @@ public final class MavenProjectManagerWatcher {
 
     var backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MavenProjectsManagerWatcher.backgroundExecutor", 1);
     var projectManager = MavenProjectsManager.getInstance(myProject);
-    myProjectAware = new MavenProjectAware(project, projectManager, backgroundExecutor);
+    var projectTracker = ExternalSystemProjectTracker.getInstance(myProject);
+    var projectId = new ExternalSystemProjectId(MavenUtil.SYSTEM_ID, myProject.getName());
+    myProjectAware = new MavenProjectAware(project, projectId, projectManager, backgroundExecutor);
+    myProfileWatcher = new MavenProfileWatcher(projectId, projectTracker, this);
     myRenameModuleWatcher = new MavenRenameModuleWatcher();
     myProjectRootWatcher = new MavenProjectRootWatcher(projectManager, this);
     myGeneralSettingsWatcher = new MavenGeneralSettingsWatcher(projectManager, backgroundExecutor);
@@ -49,6 +55,7 @@ public final class MavenProjectManagerWatcher {
     var projectTracker = ExternalSystemProjectTracker.getInstance(myProject);
     projectTracker.register(myProjectAware, projectsManager);
     projectTracker.activate(myProjectAware.getProjectId());
+    myProfileWatcher.subscribeOnProfileChanges(myDisposable);
   }
 
   @TestOnly
