@@ -279,18 +279,21 @@ fun CodeInsightTestFixture.resolveWebSymbolReference(signature: String): WebSymb
 }
 
 fun CodeInsightTestFixture.multiResolveWebSymbolReference(signature: String): List<WebSymbol> {
-  val offset = file.findOffsetBySignature(signature)
-  return file.referencesAt(offset)
-    .let { refs ->
-      if (refs.size > 1) {
-        val filtered = refs.filter { it.absoluteRange.contains(offset) }
-        if (filtered.size == 1)
-          filtered
-        else throw AssertionError("Multiple PsiSymbolReferences found at $signature: $refs")
+  val signatureOffset = file.findOffsetBySignature(signature)
+  return injectionThenHost(file, signatureOffset) { file, offset ->
+    file.referencesAt(offset)
+      .let { refs ->
+        if (refs.size > 1) {
+          val filtered = refs.filter { it.absoluteRange.contains(signatureOffset) }
+          if (filtered.size == 1)
+            filtered
+          else throw AssertionError("Multiple PsiSymbolReferences found at $signature: $refs")
+        }
+        else refs
       }
-      else refs
-    }
-    .resolveToWebSymbols()
+      .resolveToWebSymbols()
+      .takeIf { it.isNotEmpty() }
+  } ?: emptyList()
 }
 
 private fun Collection<PsiSymbolReference>.resolveToWebSymbols(): List<WebSymbol> =
