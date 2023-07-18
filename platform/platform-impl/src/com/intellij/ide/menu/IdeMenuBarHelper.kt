@@ -3,7 +3,6 @@ package com.intellij.ide.menu
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.rootTask
-import com.intellij.diagnostic.subtask
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -29,7 +28,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.concurrency.await
-import java.awt.Component
 import java.awt.Dialog
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
@@ -185,7 +183,6 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
 
 @Suppress("unused")
 private val firstUpdateFastTrackUpdateTimeout = 30.seconds.inWholeMilliseconds
-private val useAsyncExpand = System.getProperty("idea.app.menu.async.expand", "false").toBoolean()
 
 internal suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
                                            menuBar: JComponent,
@@ -193,21 +190,23 @@ internal suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
                                            presentationFactory: PresentationFactory,
                                            isFirstUpdate: Boolean): List<ActionGroup> {
   // enforce the "always-visible" flag for all main menu items
-  // without forcing everyone to employ custom groups in their plugin.xmls.
+  // without forcing everyone to employ custom groups in their plugin.xml files.
   val adjustedGroup = object : ActionGroupWrapper(mainActionGroup) {
-    override fun getChildren(e: AnActionEvent?) = super.getChildren(e).apply {
-      forEach { it.templatePresentation.putClientProperty(ActionMenu.ALWAYS_VISIBLE, true) }
+    override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
+      return super.getChildren(e).onEach { it.templatePresentation.putClientProperty(ActionMenu.ALWAYS_VISIBLE, true) }
     }
   }
-  val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode()
-  if (!useAsyncExpand && !isUnitTestMode) {
-    return syncExpandMainActionGroup(adjustedGroup, serviceAsync<ActionManager>(), frame, menuBar, presentationFactory)
-  }
+
   try {
     return withContext(CoroutineName("expandMainActionGroup") + Dispatchers.EDT) {
       val targetComponent = serviceAsync<WindowManager>().getFocusedComponent(frame) ?: menuBar
       val dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(targetComponent))
-      Utils.expandActionGroupAsync(adjustedGroup, presentationFactory, dataContext, ActionPlaces.MAIN_MENU, false, isFirstUpdate)
+      Utils.expandActionGroupAsync(group = adjustedGroup,
+                                   presentationFactory = presentationFactory,
+                                   context = dataContext,
+                                   place = ActionPlaces.MAIN_MENU,
+                                   isToolbarAction = false,
+                                   fastTrack = isFirstUpdate)
     }.await().filterIsInstance<ActionGroup>()
   }
   catch (e: ProcessCanceledException) {
@@ -217,19 +216,6 @@ internal suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
 
     // don't repeat - will do on next timer event
     return emptyList()
-  }
-}
-
-private suspend fun syncExpandMainActionGroup(mainActionGroup: ActionGroup,
-                                              actionManager: ActionManager,
-                                              frame: JFrame,
-                                              menuBar: Component,
-                                              presentationFactory: PresentationFactory): List<ActionGroup> {
-  return subtask("expandMainActionGroup", Dispatchers.EDT) {
-    val targetComponent = WindowManager.getInstance().getFocusedComponent(frame) ?: menuBar
-    val dataContext = DataManager.getInstance().getDataContext(targetComponent)
-    Utils.expandActionGroupWithTimeout(mainActionGroup, presentationFactory, dataContext, ActionPlaces.MAIN_MENU, false, -1)
-      .filterIsInstance<ActionGroup>()
   }
 }
 
