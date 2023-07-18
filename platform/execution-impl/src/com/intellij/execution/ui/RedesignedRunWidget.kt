@@ -40,6 +40,7 @@ import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.TextHoledIcon
 import com.intellij.ui.icons.TextIcon
 import com.intellij.ui.icons.toStrokeIcon
+import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
 import java.awt.*
@@ -359,7 +360,13 @@ private class MoreRunToolbarActions : TogglePopupAction(
     val event = e.withDataContext(CustomizedDataContext.create(e.dataContext) { dataId ->
       if (RUN_CONFIGURATION_KEY.`is`(dataId)) selectedConfiguration else null
     })
-    return super.createPopup(actionGroup, event, disposeCallback)
+    return super.createPopup(actionGroup, event, disposeCallback).also {
+      (it.listStep as ActionPopupStep).setSubStepContextAdjuster { context, _ ->
+        CustomizedDataContext.create(context) { dataId ->
+          if (RUN_CONFIGURATION_KEY.`is`(dataId)) selectedConfiguration else null
+        }
+      }
+    }
   }
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
