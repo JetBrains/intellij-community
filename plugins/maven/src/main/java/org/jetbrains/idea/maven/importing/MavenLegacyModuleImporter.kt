@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
-import com.google.common.collect.ImmutableMap
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
@@ -71,9 +70,7 @@ class MavenLegacyModuleImporter(private val myModule: Module,
 
     fun init(ideModelsProvider: IdeModifiableModelsProvider) {
       myModifiableModelsProvider = ideModelsProvider
-      myRootModelAdapter = MavenRootModelAdapter(
-        MavenRootModelAdapterLegacyImpl(myMavenProject, myModule,
-                                        myModifiableModelsProvider))
+      myRootModelAdapter = MavenRootModelAdapter(MavenRootModelAdapterLegacyImpl(myMavenProject, myModule, myModifiableModelsProvider))
     }
 
     private fun doConfigurationStep(step: Runnable) {
@@ -207,9 +204,9 @@ class MavenLegacyModuleImporter(private val myModule: Module,
   private fun configDependencies() {
     val dependencyTypesFromSettings: MutableSet<String> = HashSet()
     if (!ReadAction.compute<Boolean, RuntimeException> {
-        if (myModule.getProject().isDisposed()) return@compute false
-        dependencyTypesFromSettings.addAll(
-          MavenProjectsManager.getInstance(myModule.getProject()).importingSettings.getDependencyTypesAsSet())
+        val project = myModule.getProject()
+        if (project.isDisposed()) return@compute false
+        dependencyTypesFromSettings.addAll(MavenProjectsManager.getInstance(project).importingSettings.getDependencyTypesAsSet())
         true
       }) {
       return
@@ -266,31 +263,33 @@ class MavenLegacyModuleImporter(private val myModule: Module,
           )
         }
         val libraryOrderEntry = myRootModelAdapter!!.addLibraryDependency(artifact, scope, myModifiableModelsProvider, myMavenProject)
-        myModifiableModelsProvider.trySubstitute(
-          myModule, libraryOrderEntry, ProjectId(artifact.groupId, artifact.artifactId, artifact.version))
+        val projectId = ProjectId(artifact.groupId, artifact.artifactId, artifact.version)
+        myModifiableModelsProvider.trySubstitute(myModule, libraryOrderEntry, projectId)
       }
     }
     configSurefirePlugin()
   }
 
-  fun configDependencies(dependencies: List<MavenImportDependency<*>>) {
+  private fun configDependencies(dependencies: List<MavenImportDependency<*>>) {
     for (dependency in dependencies) {
-      if (dependency is SystemDependency) {
-        myRootModelAdapter!!.addSystemDependency(dependency.artifact, dependency.getScope())
-      }
-      else if (dependency is LibraryDependency) {
-        myRootModelAdapter!!.addLibraryDependency(dependency.artifact, dependency.getScope(),
-                                                  myModifiableModelsProvider, myMavenProject)
-      }
-      else if (dependency is ModuleDependency) {
-        myRootModelAdapter!!.addModuleDependency(dependency.artifact, dependency.getScope(), dependency.isTestJar)
-      }
-      else if (dependency is BaseDependency) {
-        val artifact = dependency.artifact
-        val libraryOrderEntry = myRootModelAdapter!!.addLibraryDependency(artifact, dependency.getScope(), myModifiableModelsProvider,
-                                                                          myMavenProject)
-        myModifiableModelsProvider.trySubstitute(
-          myModule, libraryOrderEntry, ProjectId(artifact.groupId, artifact.artifactId, artifact.version))
+      when (dependency) {
+        is SystemDependency -> {
+          myRootModelAdapter!!.addSystemDependency(dependency.artifact, dependency.getScope())
+        }
+        is LibraryDependency -> {
+          myRootModelAdapter!!.addLibraryDependency(
+            dependency.artifact, dependency.getScope(), myModifiableModelsProvider, myMavenProject)
+        }
+        is ModuleDependency -> {
+          myRootModelAdapter!!.addModuleDependency(dependency.artifact, dependency.getScope(), dependency.isTestJar)
+        }
+        is BaseDependency -> {
+          val artifact = dependency.artifact
+          val libraryOrderEntry = myRootModelAdapter!!.addLibraryDependency(
+            artifact, dependency.getScope(), myModifiableModelsProvider, myMavenProject)
+          myModifiableModelsProvider.trySubstitute(
+            myModule, libraryOrderEntry, ProjectId(artifact.groupId, artifact.artifactId, artifact.version))
+        }
       }
     }
   }
@@ -358,12 +357,6 @@ class MavenLegacyModuleImporter(private val myModule: Module,
     const val SUREFIRE_PLUGIN_LIBRARY_NAME = "maven-surefire-plugin urls"
     @JvmField
     val IMPORTED_CLASSIFIERS = setOf("client")
-    private val MAVEN_IDEA_PLUGIN_LEVELS: Map<String, LanguageLevel> = ImmutableMap.of(
-      "JDK_1_3", LanguageLevel.JDK_1_3,
-      "JDK_1_4", LanguageLevel.JDK_1_4,
-      "JDK_1_5", LanguageLevel.JDK_1_5,
-      "JDK_1_6", LanguageLevel.JDK_1_6,
-      "JDK_1_7", LanguageLevel.JDK_1_7)
 
     @JvmStatic
     fun createCopyForLocalRepo(artifact: MavenArtifact, project: MavenProject): MavenArtifact {
@@ -392,7 +385,7 @@ class MavenLegacyModuleImporter(private val myModule: Module,
     }
 
     @JvmStatic
-    fun selectScope(mavenScope: String): DependencyScope {
+    fun selectScope(mavenScope: String?): DependencyScope {
       if (MavenConstants.SCOPE_RUNTIME == mavenScope) return DependencyScope.RUNTIME
       if (MavenConstants.SCOPE_TEST == mavenScope) return DependencyScope.TEST
       return if (MavenConstants.SCOPE_PROVIDED == mavenScope) DependencyScope.PROVIDED else DependencyScope.COMPILE
