@@ -53,6 +53,7 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.runWithSpanThrows;
 import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
 
 public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
@@ -189,7 +190,11 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
   private void storeDetail(@NotNull VcsLogIndexer.CompressedDetails detail, @NotNull VcsLogWriter mutator) {
     try {
-      mutator.putCommit(myStorage.getCommitIndex(detail.getId(), detail.getRoot()), detail);
+      runWithSpanThrows(TelemetryManager.getInstance().getTracer(VcsScope), "store detail",
+                        span -> {
+                          span.setAttribute("vcsLogWriter", mutator.getClass().getName());
+                          mutator.putCommit(myStorage.getCommitIndex(detail.getId(), detail.getRoot()), detail);
+      });
     }
     catch (IOException | UncheckedIOException e) {
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
