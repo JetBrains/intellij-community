@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewFlowViewModel
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -26,7 +27,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitRevi
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.getSubmittableReview
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
-import com.intellij.collaboration.util.SingleCoroutineLauncher
 
 internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewModel<GitLabReviewerDTO> {
   val isBusy: Flow<Boolean>
@@ -236,11 +236,8 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   }
 
   override fun removeReviewer(reviewer: GitLabUserDTO) = runAction {
-    val newReviewers = mutableListOf<GitLabUserDTO>().apply {
-      addAll(reviewers.value)
-      remove(reviewer)
-    }
-
+    val newReviewers = reviewers.first().toMutableList()
+    newReviewers.removeIf { it.id == reviewer.id }
     mergeRequest.setReviewers(newReviewers) // TODO: implement via CollectionDelta
   }
 
