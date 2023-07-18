@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.concurrency.await
@@ -168,6 +169,7 @@ internal class ChangesViewCommitWorkflowHandler(
     if (isToggleMode()) {
       resetCommitChecksResult()
       ui.commitProgressUi.clearCommitCheckFailures()
+      LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
     }
   }
 
