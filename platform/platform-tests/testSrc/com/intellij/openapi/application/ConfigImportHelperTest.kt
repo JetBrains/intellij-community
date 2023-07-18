@@ -541,7 +541,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val oldVmOptionsFile = oldConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx4g", "-Dsome.prop=old.val"))
     val newConfigDir = createConfigDir(version = "2023.2")
     val newVmOptionsFile = newConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx2048m", "-Dsome.prop=new.val"))
-    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true; merge = true }
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true; mergeVmOptions = true }
 
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
     assertThat(newVmOptionsFile.readLines()).containsExactly("-Xmx4g", "-Dsome.prop=new.val")

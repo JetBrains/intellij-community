@@ -186,7 +186,7 @@ public final class ConfigImportHelper {
 
         var configImportOptions = new ConfigImportOptions(log);
         configImportOptions.importSettings = settings;
-        configImportOptions.merge = customMigrationOption instanceof CustomConfigMigrationOption.MergeConfigs;
+        configImportOptions.mergeVmOptions = customMigrationOption instanceof CustomConfigMigrationOption.MergeConfigs;
         if (!guessedOldConfigDirs.fromSameProduct) {
           importScenarioStatistics = IMPORTED_FROM_OTHER_PRODUCT;
         }
@@ -753,7 +753,7 @@ public final class ConfigImportHelper {
     MarketplacePluginDownloadService downloadService;
     Path bundledPluginPath = null;
     @Nullable Map<PluginId, Set<String>> brokenPluginVersions = null;
-    boolean merge = false;
+    boolean mergeVmOptions = false;
 
     ConfigImportOptions(Logger log) {
       this.log = log;
@@ -784,7 +784,7 @@ public final class ConfigImportHelper {
       @Override
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         Path target = newConfigDir.resolve(oldConfigDir.relativize(file));
-        if (options.merge && file.getFileName().toString().equals(VMOptions.getFileName()) && Files.exists(target)) {
+        if (options.mergeVmOptions && file.getFileName().toString().equals(VMOptions.getFileName()) && Files.exists(target)) {
           mergeVmOptions(file, target, options.log);
         }
         else if (!blockImport(file, oldConfigDir, newConfigDir, oldPluginsDir, options.importSettings)) {
