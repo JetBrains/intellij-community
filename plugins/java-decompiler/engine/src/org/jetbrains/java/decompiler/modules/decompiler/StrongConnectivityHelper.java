@@ -1,9 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.java.decompiler.main.CancellationManager;
-import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -56,8 +54,6 @@ public class StrongConnectivityHelper {
   }
 
   private void visit(@NotNull Statement statement) {
-    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
-    cancellationManager.checkCanceled();
     component.push(statement);
     indices.put(statement, nextIndex);
     lowIndices.put(statement, nextIndex);
@@ -96,7 +92,7 @@ public class StrongConnectivityHelper {
     for (Statement statement : component) {
       statements.remove(statement);
     }
-    return statements.isEmpty();
+    return statements.size() == 0;
   }
 
   public @NotNull List<Statement> getExitReps() {
