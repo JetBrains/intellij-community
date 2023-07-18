@@ -40,7 +40,7 @@ interface StartupActivity {
   /**
    * See **obsolescence notice** on [StartupActivity].
    */
-  @Deprecated("Use ProjectPostStartupActivity")
+  @Deprecated("Use ProjectActivity")
   interface Background : StartupActivity, com.intellij.openapi.project.DumbAware
 }
 
