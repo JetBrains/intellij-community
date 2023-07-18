@@ -28,6 +28,9 @@ class JUnitVersion(val asString: String) : Comparable<JUnitVersion> {
   }
 
   companion object {
+    val V_3_X = JUnitVersion("3")
+    val V_4_X = JUnitVersion("4")
+    val V_5_X = JUnitVersion("5")
     val V_5_8_0 = JUnitVersion("5.8.0")
     val V_5_10_0 = JUnitVersion("5.10.0")
   }
