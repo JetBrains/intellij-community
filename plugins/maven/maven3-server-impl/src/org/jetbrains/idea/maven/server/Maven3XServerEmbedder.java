@@ -519,9 +519,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         myImporterSpy,
         task.getIndicator(),
         workspaceMap,
-        myEmbedderSettings,
         myConsoleWrapper,
-        myLocalRepository
+        myLocalRepository,
+        canResolveDependenciesInParallel()
       );
       try {
         customizeComponents(workspaceMap);
@@ -531,6 +531,24 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         resetComponents();
       }
     }
+  }
+
+  /**
+   * The ThreadLocal approach was introduced in maven 3.8.2 and reverted in 3.8.4 as it caused too many side effects.
+   * More details in Maven 3.8.4 release notes
+   *
+   * @return true if dependencies can be resolved in parallel for better performance
+   */
+  private boolean canResolveDependenciesInParallel() {
+    if (myEmbedderSettings.forceResolveDependenciesSequentially()) {
+      return false;
+    }
+    String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
+    if ("3.8.2".equals(mavenVersion) || "3.8.3".equals(mavenVersion)) {
+      return false;
+    }
+
+    return true;
   }
 
   @Override
@@ -824,7 +842,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
                                                        MavenToken token) {
     MavenServerUtil.checkToken(token);
 
-    boolean runInParallel = false;//canResolveDependenciesInParallel();
+    String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
+    boolean runInParallel = canResolveDependenciesInParallel() && VersionComparatorUtil.compare(mavenVersion, "3.6.0") >= 0;
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, pluginResolutionRequests.size(), myConsoleWrapper)) {
       MavenExecutionRequest request = createRequest(null, null, null);
       request.setTransferListener(new Maven3TransferListenerAdapter(task.getIndicator()));

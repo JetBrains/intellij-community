@@ -55,26 +55,26 @@ public class Maven3XProjectResolver {
   @NotNull private final Maven3ImporterSpy myImporterSpy;
   @NotNull private final MavenServerConsoleIndicatorImpl myCurrentIndicator;
   @Nullable private final MavenWorkspaceMap myWorkspaceMap;
-  @NotNull private final MavenEmbedderSettings myEmbedderSettings;
   @NotNull private final Maven3ServerConsoleLogger myConsoleWrapper;
   @NotNull private final ArtifactRepository myLocalRepository;
+  private final boolean myResolveInParallel;
 
   public Maven3XProjectResolver(@NotNull Maven3XServerEmbedder embedder,
                                 boolean updateSnapshots,
                                 @NotNull Maven3ImporterSpy importerSpy,
                                 @NotNull MavenServerConsoleIndicatorImpl currentIndicator,
                                 @Nullable MavenWorkspaceMap workspaceMap,
-                                @NotNull MavenEmbedderSettings embedderSettings,
                                 @NotNull Maven3ServerConsoleLogger consoleWrapper,
-                                @NotNull ArtifactRepository localRepository) {
+                                @NotNull ArtifactRepository localRepository,
+                                boolean resolveInParallel) {
     myEmbedder = embedder;
     myUpdateSnapshots = updateSnapshots;
     myImporterSpy = importerSpy;
     myCurrentIndicator = currentIndicator;
     myWorkspaceMap = workspaceMap;
-    myEmbedderSettings = embedderSettings;
     myConsoleWrapper = consoleWrapper;
     myLocalRepository = localRepository;
+    myResolveInParallel = resolveInParallel;
   }
 
   @NotNull
@@ -163,7 +163,7 @@ public class Maven3XProjectResolver {
         }
 
         task.updateTotalRequests(buildingResultsToResolveDependencies.size());
-        boolean runInParallel = canResolveDependenciesInParallel();
+        boolean runInParallel = myResolveInParallel;
         Collection<Maven3ExecutionResult> execResults =
           ParallelRunner.execute(
             runInParallel,
@@ -207,28 +207,6 @@ public class Maven3XProjectResolver {
     catch (Exception e) {
       return handleException(project, e);
     }
-  }
-
-  /**
-   * The ThreadLocal approach was introduced in maven 3.8.2 and reverted in 3.8.4 as it caused too many side effects.
-   * More details in Maven 3.8.4 release notes
-   *
-   * @return true if dependencies can be resolved in parallel for better performance
-   */
-  private boolean canResolveDependenciesInParallel() {
-    if (myEmbedderSettings.forceResolveDependenciesSequentially()) {
-      return false;
-    }
-    String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
-    if ("3.8.2".equals(mavenVersion) || "3.8.3".equals(mavenVersion)) {
-      return false;
-    }
-/*    // don't resolve dependencies in parallel if an old maven version is used; those versions have issues with concurrency
-    if (VersionComparatorUtil.compare(mavenVersion, "3.6.0") < 0) {
-      return false;
-    }*/
-
-    return true;
   }
 
   @NotNull

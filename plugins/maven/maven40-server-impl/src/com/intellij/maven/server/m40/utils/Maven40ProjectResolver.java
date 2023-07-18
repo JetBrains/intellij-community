@@ -44,19 +44,22 @@ public class Maven40ProjectResolver {
   @NotNull private final MavenServerConsoleIndicatorImpl myCurrentIndicator;
   @Nullable private final MavenWorkspaceMap myWorkspaceMap;
   @NotNull private final File myLocalRepositoryFile;
+  private final boolean myResolveInParallel;
 
   public Maven40ProjectResolver(@NotNull Maven40ServerEmbedderImpl embedder,
                                 boolean updateSnapshots,
                                 @NotNull Maven40ImporterSpy importerSpy,
                                 @NotNull MavenServerConsoleIndicatorImpl currentIndicator,
                                 @Nullable MavenWorkspaceMap workspaceMap,
-                                @NotNull File localRepositoryFile) {
+                                @NotNull File localRepositoryFile,
+                                boolean resolveInParallel) {
     myEmbedder = embedder;
     myUpdateSnapshots = updateSnapshots;
     myImporterSpy = importerSpy;
     myCurrentIndicator = currentIndicator;
     myWorkspaceMap = workspaceMap;
     myLocalRepositoryFile = localRepositoryFile;
+    myResolveInParallel = resolveInParallel;
   }
 
   @NotNull
@@ -134,7 +137,7 @@ public class Maven40ProjectResolver {
         }
 
         task.updateTotalRequests(buildingResultsToResolveDependencies.size());
-        boolean runInParallel = canResolveDependenciesInParallel();
+        boolean runInParallel = myResolveInParallel;
         Collection<Maven40ExecutionResult> execResults =
           ParallelRunner.execute(
             runInParallel,
@@ -154,10 +157,6 @@ public class Maven40ProjectResolver {
     });
 
     return executionResults;
-  }
-
-  private boolean canResolveDependenciesInParallel() {
-    return true;
   }
 
   @NotNull

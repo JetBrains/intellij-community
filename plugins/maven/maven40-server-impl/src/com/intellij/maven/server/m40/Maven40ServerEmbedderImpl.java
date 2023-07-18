@@ -264,7 +264,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         myImporterSpy,
         task.getIndicator(),
         workspaceMap,
-        getLocalRepositoryFile()
+        getLocalRepositoryFile(),
+        canResolveDependenciesInParallel()
       );
       try {
         customizeComponents(workspaceMap);
@@ -274,6 +275,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         resetComponents();
       }
     }
+  }
+
+  private boolean canResolveDependenciesInParallel() {
+    return true;
   }
 
   private File getLocalRepositoryFile() {
@@ -636,7 +641,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                        MavenToken token) {
     MavenServerUtil.checkToken(token);
 
-    boolean runInParallel = false;//canResolveDependenciesInParallel();
+    boolean runInParallel = canResolveDependenciesInParallel();
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, pluginResolutionRequests.size(), myConsoleWrapper)) {
       MavenExecutionRequest request = createRequest(null, null, null);
       request.setTransferListener(new Maven40TransferListenerAdapter(task.getIndicator()));
