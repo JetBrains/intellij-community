@@ -10,7 +10,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
@@ -19,7 +18,6 @@ import org.jetbrains.idea.maven.project.MavenImportListener
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.io.File
 import java.util.concurrent.ExecutorService
 
 @ApiStatus.Internal
@@ -34,7 +32,7 @@ class MavenProjectAware(
   override val projectId = ExternalSystemProjectId(MavenUtil.SYSTEM_ID, project.name)
 
   override val settingsFiles: Set<String>
-    get() = collectSettingsFiles().map { FileUtil.toCanonicalPath(it) }.toSet()
+    get() = collectSettingsFiles()
 
   override fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable) {
     isImportCompleted.afterReset(parentDisposable) { listener.onProjectReloadStart() }
@@ -83,30 +81,30 @@ class MavenProjectAware(
   }
 
   private fun hasPomFile(rootDirectory: String): Boolean {
-    return MavenConstants.POM_NAMES.asSequence()
-      .map { join(rootDirectory, it) }
-      .any { manager.projectsTree.isPotentialProject(it) }
-  }
-
-
-  private fun collectSettingsFiles() = sequence {
-    yieldAll( manager.projectsTree.managedFilesPaths)
-    yieldAll( manager.projectsTree.projectsFiles.map { it.path })
-    for (mavenProject in manager.projectsTree.projects) {
-      ProgressManager.checkCanceled()
-
-      val rootDirectory = mavenProject.directory
-      yieldAll(mavenProject.modulePaths)
-      yield(join(rootDirectory, MavenConstants.JVM_CONFIG_RELATIVE_PATH))
-      yield(join(rootDirectory, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH))
-      yield(join(rootDirectory, MavenConstants.MAVEN_WRAPPER_RELATIVE_PATH))
-      if (hasPomFile(rootDirectory)) {
-        yield(join(rootDirectory, MavenConstants.PROFILES_XML))
-      }
+    val projectTree = manager.projectsTree
+    return MavenConstants.POM_NAMES.any {
+      projectTree.isPotentialProject("$rootDirectory/$it")
     }
   }
 
-  private fun join(parentPath: String, relativePath: String) = File(parentPath, relativePath).path
+  private fun collectSettingsFiles(): Set<String> {
+    val result = LinkedHashSet<String>()
+    result.addAll(manager.projectsTree.managedFilesPaths)
+    result.addAll(manager.projectsTree.projectsFiles.map { it.path })
+    for (mavenProject in manager.projectsTree.projects) {
+      ProgressManager.checkCanceled()
+
+      result.addAll(mavenProject.modulePaths)
+      val rootDirectory = mavenProject.directory
+      result.add(rootDirectory + "/" + MavenConstants.JVM_CONFIG_RELATIVE_PATH)
+      result.add(rootDirectory + "/" + MavenConstants.MAVEN_CONFIG_RELATIVE_PATH)
+      result.add(rootDirectory + "/" + MavenConstants.MAVEN_WRAPPER_RELATIVE_PATH)
+      if (hasPomFile(rootDirectory)) {
+        result.add(rootDirectory + "/" + MavenConstants.PROFILES_XML)
+      }
+    }
+    return result
+  }
 
   init {
     project.messageBus.connect(manager)
