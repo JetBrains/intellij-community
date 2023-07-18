@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
@@ -33,7 +33,6 @@ open class AddFileAnnotationFix(
     private val argumentClassFqName: FqName? = null,
     private val existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
 ) : KotlinQuickFixAction<KtFile>(file) {
-
     override fun getText(): String {
         val annotationName = annotationFqName.shortName().asString()
         val innerText = argumentClassFqName?.shortName()?.asString()?.let { "$it::class" } ?: ""
@@ -45,7 +44,7 @@ open class AddFileAnnotationFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val fileToAnnotate = element ?: return
-        val innerText = argumentClassFqName?.render()?.let { "$it::class"}
+        val innerText = argumentClassFqName?.render()?.let { "$it::class" }
         val annotationText = when (innerText) {
             null -> annotationFqName.render()
             else -> "${annotationFqName.render()}($innerText)"
@@ -57,7 +56,7 @@ open class AddFileAnnotationFix(
             val newAnnotationList = psiFactory.createFileAnnotationListWithAnnotation(annotationText)
             val createdAnnotationList = replaceFileAnnotationList(fileToAnnotate, newAnnotationList)
             fileToAnnotate.addAfter(psiFactory.createWhiteSpace("\n"), createdAnnotationList)
-            ShortenReferences.DEFAULT.process(createdAnnotationList)
+            ShortenReferencesFacility.getInstance().shorten(createdAnnotationList)
         } else {
             val annotationList = fileToAnnotate.fileAnnotationList ?: return
             if (existingAnnotationEntry == null) {
@@ -65,7 +64,7 @@ open class AddFileAnnotationFix(
                 val newAnnotation = psiFactory.createFileAnnotation(annotationText)
                 annotationList.add(psiFactory.createWhiteSpace("\n"))
                 annotationList.add(newAnnotation)
-                ShortenReferences.DEFAULT.process(annotationList)
+                ShortenReferencesFacility.getInstance().shorten(annotationList)
             } else if (innerText != null) {
                 // There is an existing annotation and the non-null argument that should be added to it
                 addArgumentToExistingAnnotation(existingAnnotationEntry, innerText)
@@ -92,6 +91,6 @@ open class AddFileAnnotationFix(
             else -> // add the new argument to the existing list
                 existingArgumentList.addArgument(newArgumentList.arguments[0])
         }
-        ShortenReferences.DEFAULT.process(entry)
+        ShortenReferencesFacility.getInstance().shorten(entry)
     }
 }
