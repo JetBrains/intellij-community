@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.allModules
 import org.jetbrains.kotlin.idea.base.projectStructure.getWholeModuleGroup
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.configuration.ChangedConfiguratorFiles
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.configuration.addStdlibToJavaModuleInfo
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
@@ -51,10 +50,10 @@ class KotlinGradleModuleConfigurator : KotlinWithGradleConfigurator() {
         ideKotlinVersion: IdeKotlinVersion,
         jvmTarget: String?,
         collector: NotificationMessageCollector,
-        changedFiles: ChangedConfiguratorFiles,
+        filesToOpen: MutableCollection<PsiFile>,
         addVersion: Boolean
     ) {
-        super.configureModule(module, file, isTopLevelProjectFile, ideKotlinVersion, jvmTarget, collector, changedFiles, addVersion)
+        super.configureModule(module, file, isTopLevelProjectFile, ideKotlinVersion, jvmTarget, collector, filesToOpen, addVersion)
 
         val moduleGroup = module.getWholeModuleGroup()
         for (sourceModule in moduleGroup.allModules()) {

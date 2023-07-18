@@ -15,7 +15,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.configuration.ChangedConfiguratorFiles
 import org.jetbrains.kotlin.idea.configuration.getJvmTargetNumber
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.tools.projectWizard.Versions
@@ -28,6 +27,10 @@ val FOOJAY_RESOLVER_NAME = "org.gradle.toolchains.foojay-resolver"
 
 val FOOJAY_RESOLVER_CONVENTION_NAME = "org.gradle.toolchains.foojay-resolver-convention"
     @ApiStatus.Internal get
+
+typealias ChangedFiles = HashSet<PsiFile>
+
+typealias ChangedSettingsFile = PsiFile?
 
 interface GradleBuildScriptManipulator<out Psi : PsiFile> {
     fun isApplicable(file: PsiFile): Boolean
@@ -44,9 +47,8 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
         stdlibArtifactName: String,
         addVersion: Boolean,
         version: IdeKotlinVersion,
-        jvmTarget: String?,
-        changedFiles: ChangedConfiguratorFiles
-    )
+        jvmTarget: String?
+    ): ChangedFiles
 
     fun configureProjectBuildScript(kotlinPluginName: String, version: IdeKotlinVersion): Boolean
 
@@ -116,16 +118,13 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
     fun PsiElement.configureToolchainOrKotlinOptions(
         jvmTarget: String?,
         kotlinVersion: IdeKotlinVersion,
-        gradleVersion: GradleVersionInfo,
-        changedFiles: ChangedConfiguratorFiles
-    ) {
+        gradleVersion: GradleVersionInfo
+    ): ChangedSettingsFile {
+        var changedSettingsFile: ChangedSettingsFile = null
         if (hasJavaToolchain() || jvmTarget == null) {
             // Java toolchain does the same as the Kotlin toolchain,
             // jvmTarget equals null for old Kotlin versions, see KotlinProjectConfigurationUtils.kt#getDefaultJvmTarget()
-            return
-        }
-        containingFile?.let {
-            changedFiles.storeOriginalFileContent(it)
+            return changedSettingsFile
         }
         val useToolchain =
             gradleVersion >= GradleVersionProvider.getVersion(Versions.GRADLE_PLUGINS.MIN_GRADLE_FOOJAY_VERSION.text)
@@ -142,11 +141,12 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
             } else {
                 addKotlinExtendedDslToolchain(targetVersion)
             }
-            addFoojayPlugin(changedFiles)
+            changedSettingsFile = addFoojayPlugin()
         } else {
             changeKotlinTaskParameter("jvmTarget", targetVersion, forTests = false)
             changeKotlinTaskParameter("jvmTarget", targetVersion, forTests = true)
         }
+        return changedSettingsFile
     }
 
     private fun jvmTargetIsAtLeast(jvmTarget: String, minimum: Int): Boolean {
@@ -183,7 +183,7 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
 
     fun addResolutionStrategy(pluginId: String)
 
-    fun addFoojayPlugin(changedFiles: ChangedConfiguratorFiles)
+    fun addFoojayPlugin(): ChangedSettingsFile
 }
 
 fun GradleBuildScriptManipulator<*>.usesNewMultiplatform(): Boolean {

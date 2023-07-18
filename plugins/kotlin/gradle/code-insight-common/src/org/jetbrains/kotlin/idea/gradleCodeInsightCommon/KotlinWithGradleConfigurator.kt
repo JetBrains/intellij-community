@@ -3,11 +3,6 @@ package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
-import com.intellij.diff.DiffContentFactory
-import com.intellij.diff.DiffDialogHints
-import com.intellij.diff.DiffManager
-import com.intellij.diff.chains.SimpleDiffRequestChain
-import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.extensions.Extensions
@@ -110,14 +105,14 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         if (!dialog.isOK) return
 
         KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project)
-        val result = configureSilently(
+        val collector = configureSilently(
             project,
             dialog.modulesToConfigure,
             dialog.versionsAndModules,
             IdeKotlinVersion.get(dialog.kotlinVersion),
             dialog.modulesAndJvmTargets
         )
-        result.collector.showNotification()
+        collector.showNotification()
     }
 
     private fun getAllConfigurableKotlinVersions(): List<IdeKotlinVersion> {
@@ -139,6 +134,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(this, ProjectSystemId("GRADLE", "Gradle"))
         return notificationVisibleProperty.get()
     }
+
 
     override fun calculateAutoConfigSettings(module: Module): AutoConfigurationSettings? {
         val project = module.project
@@ -178,27 +174,6 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         return AutoConfigurationSettings(baseModule, maxKotlinVersion)
     }
 
-    // TODO: Show this when clicking the dialog option rather immediately after
-    private fun Project.showDiffPanel(changedFiles: ChangedConfiguratorFiles) {
-        val diffRequests = changedFiles.getChangedFilesWithContent().mapNotNull { (f, originalContent) ->
-            val virtualFile = f.virtualFile ?: return@mapNotNull null
-            val originalDiffContent = DiffContentFactory.getInstance().create(this, originalContent, f.fileType)
-            val newDiffContent = DiffContentFactory.getInstance().create(this, virtualFile)
-
-            SimpleDiffRequest(
-                KotlinIdeaGradleBundle.message("command.name.configure.kotlin"),
-                originalDiffContent,
-                newDiffContent,
-                KotlinIdeaGradleBundle.message("configure.kotlin.original.content"),
-                KotlinIdeaGradleBundle.message("configure.kotlin.new.content")
-            )
-        }
-
-        val requestChain = SimpleDiffRequestChain(diffRequests)
-
-        DiffManager.getInstance().showDiff(this, requestChain, DiffDialogHints.DEFAULT)
-    }
-
     override fun runAutoConfig(settings: AutoConfigurationSettings) {
         val module = settings.module
         val project = module.project
@@ -206,7 +181,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val jvmTargets = getModulesTargetingUnsupportedJvmAndTargetsForAllModules(listOf(module), settings.kotlinVersion).second
 
         // TODO: Add logic to display the dialog, undo action, etc.
-        val result = configureSilently(
+        val collector = configureSilently(
             module.project,
             listOf(module),
             moduleVersions,
@@ -214,17 +189,11 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             jvmTargets,
             "command.name.configure.kotlin.automatically"
         )
-        result.collector.showNotification()
-
-        project.showDiffPanel(result.changedFiles)
+        collector.showNotification()
 
         ExternalSystemProjectTracker.getInstance(project).scheduleProjectRefresh()
     }
 
-    private class ConfigurationResult(
-        val collector: NotificationMessageCollector,
-        val changedFiles: ChangedConfiguratorFiles
-    )
 
     private fun configureSilently(
         project: Project,
@@ -233,15 +202,15 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         version: IdeKotlinVersion,
         modulesAndJvmTargets: Map<ModuleName, TargetJvm>,
         commandName: String = "command.name.configure.kotlin"
-    ): ConfigurationResult {
+    ): NotificationMessageCollector {
         return project.executeCommand(KotlinIdeaGradleBundle.message(commandName)) {
             val collector = NotificationMessageCollector.create(project)
             val changedFiles = configureWithVersion(project, modules, version, collector, kotlinVersionsAndModules, modulesAndJvmTargets)
 
-            for (file in changedFiles.getChangedFiles()) {
+            for (file in changedFiles) {
                 OpenFileAction.openFile(file.virtualFile, project)
             }
-            ConfigurationResult(collector, changedFiles)
+            collector
         }
     }
 
@@ -252,8 +221,8 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         collector: NotificationMessageCollector,
         kotlinVersionsAndModules: Map<String, Map<String, Module>>,
         modulesAndJvmTargets: Map<ModuleName, TargetJvm> = emptyMap()
-    ): ChangedConfiguratorFiles {
-        val changedFiles = ChangedConfiguratorFiles()
+    ): HashSet<PsiFile> {
+        val filesToOpen = HashSet<PsiFile>()
         val topLevelBuildScript = project.getTopLevelBuildScriptPsiFile()
         var addVersionToModuleBuildScript = true
         val modulesWithTheSameKotlin = kotlinVersionsAndModules[kotlinVersion.artifactVersion]
@@ -272,7 +241,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             }
             if (addVersionToSettings) {
                 rootModule.getBuildScriptSettingsPsiFile()?.let {
-                    if (it.canBeConfigured() && configureSettingsFile(it, kotlinVersion, changedFiles)) { // This happens only for JVM, not for Android
+                    if (it.canBeConfigured() && configureSettingsFile(it, kotlinVersion, filesToOpen)) { // This happens only for JVM, not for Android
                         addVersionToModuleBuildScript = false
                     }
                 }
@@ -302,7 +271,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                         kotlinVersion,
                         jvmTarget,
                         collector,
-                        changedFiles,
+                        filesToOpen,
                         addVersionToModuleBuildScript
                     )
 
@@ -314,7 +283,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                             kotlinVersion,
                             jvmTarget,
                             collector,
-                            changedFiles,
+                            filesToOpen,
                             addVersionToModuleBuildScript
                         )
                         // If Kotlin version wasn't added to settings.gradle, then it has just been added to root script
@@ -332,7 +301,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
         for (module in modulesToRemoveKotlinVersion) {
             module.getBuildScriptPsiFile()?.let {
-                removeKotlinVersionFromBuildScript(it, changedFiles)
+                removeKotlinVersionFromBuildScript(it, filesToOpen)
             }
         }
 
@@ -347,7 +316,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                 } else {
                     getTargetBytecodeVersionFromModule(module, kotlinVersion)
                 }
-                configureModule(module, file, false, kotlinVersion, jvmTarget, collector, changedFiles, addVersionToModuleBuildScript)
+                configureModule(module, file, false, kotlinVersion, jvmTarget, collector, filesToOpen, addVersionToModuleBuildScript)
             } else {
                 showErrorMessage(
                     project,
@@ -356,22 +325,28 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                 return filesToOpen
             }
         }
-        for (file in changedFiles.getChangedFiles()) {
+        for (file in filesToOpen) {
             file.virtualFile?.let {
                 collector.addMessage(KotlinIdeaGradleBundle.message("text.was.modified", it.path))
             }
         }
-        return changedFiles
+        return filesToOpen
     }
 
     private fun removeKotlinVersionFromBuildScript(
         file: PsiFile,
-        changedFiles: ChangedConfiguratorFiles
+        filesToOpen: MutableCollection<PsiFile>
     ) {
-        file.project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", file.name), null) {
-            changedFiles.storeOriginalFileContent(file)
-            GradleBuildScriptSupport.getManipulator(file).findAndRemoveKotlinVersionFromBuildScript()
+        val isModified = file.project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", file.name), null) {
+            val isModified = GradleBuildScriptSupport.getManipulator(file).findAndRemoveKotlinVersionFromBuildScript()
+
             CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(file)
+            isModified
+        }
+
+        val virtualFile = file.virtualFile
+        if (virtualFile != null && isModified) {
+            filesToOpen.add(file)
         }
     }
 
@@ -382,28 +357,26 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         ideKotlinVersion: IdeKotlinVersion,
         jvmTarget: String?,
         collector: NotificationMessageCollector,
-        changedFiles: ChangedConfiguratorFiles,
+        filesToOpen: MutableCollection<PsiFile>,
         addVersion: Boolean = true
     ) {
-        configureBuildScripts(file, isTopLevelProjectFile, ideKotlinVersion, jvmTarget, changedFiles, addVersion)
+        configureBuildScripts(file, isTopLevelProjectFile, ideKotlinVersion, jvmTarget, filesToOpen, addVersion)
     }
 
     private fun configureBuildScripts(
         file: PsiFile,
         addVersion: Boolean,
         version: IdeKotlinVersion,
-        jvmTarget: String?,
-        changedFiles: ChangedConfiguratorFiles
-    ) {
+        jvmTarget: String?
+    ): ChangedFiles {
         val sdk = ModuleUtil.findModuleForPsiElement(file)?.let { ModuleRootManager.getInstance(it).sdk }
-        GradleBuildScriptSupport.getManipulator(file).configureBuildScripts(
+        return GradleBuildScriptSupport.getManipulator(file).configureBuildScripts(
             kotlinPluginName,
             getKotlinPluginExpression(file.isKtDsl()),
             getStdlibArtifactName(sdk, version),
             addVersion,
             version,
-            jvmTarget,
-            changedFiles
+            jvmTarget
         )
     }
 
@@ -419,14 +392,14 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         isTopLevelProjectFile: Boolean,
         version: IdeKotlinVersion,
         jvmTarget: String?,
-        addVersion: Boolean = true,
-        changedBuildFiles: ChangedConfiguratorFiles
-    ) {
-        if (!isTopLevelProjectFile) { // isTopLevelProjectFile = true is needed only for Android
-            changedBuildFiles.storeOriginalFileContent(file)
-            GradleBuildScriptSupport.getManipulator(file).configureProjectBuildScript(kotlinPluginName, version)
-            configureBuildScripts(file, addVersion, version, jvmTarget, changedBuildFiles)
-        }
+        addVersion: Boolean = true
+    ): ChangedFiles {
+        return if (!isTopLevelProjectFile) { // isTopLevelProjectFile = true is needed only for Android
+            val wasModified = GradleBuildScriptSupport.getManipulator(file).configureProjectBuildScript(kotlinPluginName, version)
+            val changedFiles = configureBuildScripts(file, addVersion, version, jvmTarget)
+            if (wasModified) changedFiles.add(file)
+            changedFiles
+        } else HashSet()
     }
 
     private fun configureBuildScripts(
@@ -434,31 +407,38 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         isTopLevelProjectFile: Boolean,
         version: IdeKotlinVersion,
         jvmTarget: String?,
-        changedFiles: ChangedConfiguratorFiles,
+        filesToOpen: MutableCollection<PsiFile>,
         addVersion: Boolean = true
     ) {
         file.project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", file.name), null) {
-            addElementsToFiles(file, isTopLevelProjectFile, version, jvmTarget, addVersion, changedFiles)
+            val changedFiles = addElementsToFiles(file, isTopLevelProjectFile, version, jvmTarget, addVersion)
 
-            for (changedFile in changedFiles.getChangedFiles()) {
+            for (changedFile in changedFiles) {
                 CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(changedFile)
             }
+            filesToOpen.addAll(changedFiles)
         }
     }
 
     protected open fun configureSettingsFile(
         file: PsiFile,
         version: IdeKotlinVersion,
-        changedFiles: ChangedConfiguratorFiles
+        filesToOpen: MutableCollection<PsiFile>
     ): Boolean {
-        return file.project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", file.name), null) {
-            changedFiles.storeOriginalFileContent(file)
+        val isModified = file.project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", file.name), null) {
             val isModified = GradleBuildScriptSupport.getManipulator(file)
                 .configureSettingsFile(getKotlinPluginExpression(file.isKtDsl()), version)
 
             CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(file)
             isModified
         }
+
+        val virtualFile = file.virtualFile
+        if (virtualFile != null && isModified) {
+            filesToOpen.add(file)
+            return true
+        }
+        return false
     }
 
     override fun updateLanguageVersion(
