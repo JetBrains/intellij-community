@@ -280,18 +280,15 @@ class VcsLogChangesBrowser internal constructor(project: Project,
                           selectedData: VcsTreeModelData): Any? {
     if (VcsDataKeys.VCS.`is`(dataId)) {
       val rootsVcs = JBIterable.from(roots)
-        .map { root: VirtualFile? -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
+        .map { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
         .filterNotNull()
         .unique()
         .single()
       if (rootsVcs != null) return rootsVcs.keyInstanceMethod
 
       val selectionVcs = selectedData.iterateUserObjects(Change::class.java)
-        .map { change: Change? ->
-          ChangesUtil.getFilePath(
-            change!!)
-        }
-        .map { root: FilePath? -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
+        .map { change -> ChangesUtil.getFilePath(change) }
+        .map { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
         .filterNotNull()
         .unique()
         .single()
