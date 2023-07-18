@@ -28,6 +28,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.project.auto.reload.MavenGeneralSettingsWatcher;
 import org.jetbrains.idea.maven.project.auto.reload.MavenProjectAware;
 
 import java.util.ArrayList;
@@ -35,8 +36,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
-
-import static org.jetbrains.idea.maven.project.MavenGeneralSettingsWatcher.registerGeneralSettingsWatcher;
 
 public final class MavenProjectsManagerWatcher {
 
@@ -60,7 +59,7 @@ public final class MavenProjectsManagerWatcher {
     busConnection.subscribe(ProjectTopics.MODULES, new MavenRenameModulesWatcher());
     busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-    registerGeneralSettingsWatcher(projectsManager, myBackgroundExecutor, myDisposable);
+    MavenGeneralSettingsWatcher.registerGeneralSettingsWatcher(projectsManager, myBackgroundExecutor, myDisposable);
     ExternalSystemProjectTracker projectTracker = ExternalSystemProjectTracker.getInstance(myProject);
     projectTracker.register(myProjectAware, projectsManager);
     projectTracker.activate(myProjectAware.getProjectId());

@@ -786,7 +786,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
    * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
    * if project is closed)
    */
-  Promise<Void> scheduleUpdateAll(MavenImportSpec spec) {
+  @ApiStatus.Internal
+  public Promise<Void> scheduleUpdateAll(MavenImportSpec spec) {
     if (MavenUtil.isLinearImportEnabled()) {
       return MavenImportingManager.getInstance(myProject).scheduleImportAll(spec).getFinishPromise().then(it -> null);
     }
