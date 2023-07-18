@@ -11,7 +11,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
@@ -70,7 +69,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 
 @State(name = "MavenProjectsManager")
 public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
@@ -826,7 +824,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void scheduleUpdateAllProjects(MavenImportSpec spec) {
-    doScheduleUpdateProjects(List.of(), spec);
+    scheduleUpdateProjects(List.of(), spec);
   }
 
   @ApiStatus.Internal
@@ -881,11 +879,11 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public void forceUpdateProjects() {
-    doScheduleUpdateProjects(List.of(), MavenImportSpec.EXPLICIT_IMPORT);
+    scheduleUpdateProjects(List.of(), MavenImportSpec.EXPLICIT_IMPORT);
   }
 
   public AsyncPromise<Void> forceUpdateProjects(@NotNull Collection<MavenProject> projects) {
-    return (AsyncPromise<Void>)doScheduleUpdateProjects(projects, MavenImportSpec.EXPLICIT_IMPORT);
+    return (AsyncPromise<Void>)scheduleUpdateProjects(projects, MavenImportSpec.EXPLICIT_IMPORT);
   }
 
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
@@ -904,18 +902,21 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       return;
     }
     MavenLog.LOG.warn("forceUpdateAllProjectsOrFindAllAvailablePomFiles: Linear Import is disabled");
-    doScheduleUpdateProjects(List.of(), spec);
+    scheduleUpdateProjects(List.of(), spec);
   }
 
-  private Promise<Void> doScheduleUpdateProjects(@NotNull final Collection<MavenProject> projects,
-                                                 final MavenImportSpec spec) {
+  @ApiStatus.Internal
+  public Promise<Void> scheduleUpdateProjects(
+    @NotNull final Collection<MavenProject> projects,
+    final MavenImportSpec spec
+  ) {
     if (MavenUtil.isLinearImportEnabled()) {
-      MavenLog.LOG.warn("doScheduleUpdateProjects: Linear Import is enabled");
+      MavenLog.LOG.warn("scheduleUpdateProjects: Linear Import is enabled");
       return MavenImportingManager.getInstance(myProject)
         .openProjectAndImport(new FilesList(ContainerUtil.map(projects, MavenProject::getFile)), getImportingSettings(),
                               getGeneralSettings(), spec).getFinishPromise().then(it -> null);
     }
-    MavenLog.LOG.warn("doScheduleUpdateProjects: Linear Import is disabled");
+    MavenLog.LOG.warn("scheduleUpdateProjects: Linear Import is disabled");
     MavenDistributionsCache.getInstance(myProject).cleanCaches();
     MavenWslCache.getInstance().clearCache();
     final AsyncPromise<Void> promise = new AsyncPromise<>();
@@ -998,7 +999,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
-  private void runWhenFullyOpen(final Runnable runnable) {
+  @ApiStatus.Internal
+  public void runWhenFullyOpen(final Runnable runnable) {
     if (!isInitialized()) return; // may be called from scheduleImport after project started closing and before it is closed.
 
     final Ref<Runnable> wrapper = new Ref<>();
@@ -1122,29 +1124,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }
 
     default void projectImportCompleted() {
-    }
-  }
-
-  public static class ExternalWatcherContributor implements ExternalSystemProjectsWatcherImpl.Contributor {
-
-    @Override
-    public void markDirtyAllExternalProjects(@NotNull Project project) {
-      runWhenFullyOpen(project, (manager) -> manager.doScheduleUpdateProjects(List.of(), new MavenImportSpec(true, false, false)));
-    }
-
-    @Override
-    public void markDirty(@NotNull Module module) {
-      runWhenFullyOpen(module.getProject(), (manager) -> {
-        MavenProject mavenProject = manager.findProject(module);
-        if (mavenProject != null) {
-          manager.doScheduleUpdateProjects(Collections.singletonList(mavenProject), new MavenImportSpec(true, false, false));
-        }
-      });
-    }
-
-    private static void runWhenFullyOpen(@NotNull Project project, @NotNull Consumer<MavenProjectsManager> consumer) {
-      MavenProjectsManager manager = getInstance(project);
-      manager.runWhenFullyOpen(() -> consumer.accept(manager));
     }
   }
 }
