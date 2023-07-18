@@ -722,7 +722,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private Font getFontForLineNumbers() {
     Font editorFont = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
     float editorFontSize = editorFont.getSize2D();
-    float delta = (float) AdvancedSettings.getInt("editor.gutter.linenumber.font.size.delta");
+    float delta = (float)AdvancedSettings.getInt("editor.gutter.linenumber.font.size.delta");
     return editorFont.deriveFont(Math.max(1f, editorFontSize + delta));
   }
 
@@ -855,9 +855,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   void processRangeHighlighters(int startOffset, int endOffset, @NotNull RangeHighlighterProcessor processor) {
     // we limit highlighters to process to between line starting at startOffset and line ending at endOffset
     MarkupIterator<RangeHighlighterEx> docHighlighters =
-      new FilteringMarkupIterator<>(myEditor.getFilteredDocumentMarkupModel().overlappingIterator(startOffset, endOffset), h->h.isRenderedInGutter());
+      new FilteringMarkupIterator<>(myEditor.getFilteredDocumentMarkupModel().overlappingIterator(startOffset, endOffset),
+                                    h -> h.isRenderedInGutter());
     MarkupIterator<RangeHighlighterEx> editorHighlighters =
-      new FilteringMarkupIterator<>(myEditor.getMarkupModel().overlappingIterator(startOffset, endOffset), h->h.isRenderedInGutter());
+      new FilteringMarkupIterator<>(myEditor.getMarkupModel().overlappingIterator(startOffset, endOffset), h -> h.isRenderedInGutter());
 
     try {
       RangeHighlighterEx lastDocHighlighter = null;
@@ -1987,7 +1988,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     int x = convertX(point.x);
 
     int hoveredLine;
-    if (x >= getExtraLineMarkerFreePaintersAreaOffset() && x <= getExtraLineMarkerFreePaintersAreaOffset() + getExtraLeftFreePaintersAreaWidth()) {
+    if (x >= getExtraLineMarkerFreePaintersAreaOffset() &&
+        x <= getExtraLineMarkerFreePaintersAreaOffset() + getExtraLeftFreePaintersAreaWidth()) {
       hoveredLine = getEditor().xyToLogicalPosition(point).line;
     }
     else {
@@ -2064,10 +2066,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     UIUtil.setCursor(this, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
   }
 
-  private void updateHover(@Nullable GutterIconRenderer hoverGutterRenderer)
-  {
-    if (hoverGutterRenderer == myCurrentHoveringGutterRenderer)
+  private void updateHover(@Nullable GutterIconRenderer hoverGutterRenderer) {
+    if (hoverGutterRenderer == myCurrentHoveringGutterRenderer) {
       return;
+    }
     if (myCurrentHoveringGutterRenderer != null) {
       myEditorGutterListeners.getMulticaster().hoverEnded(new EditorGutterHoverEvent(this, myCurrentHoveringGutterRenderer));
       myCurrentHoveringGutterRenderer = null;
@@ -2617,7 +2619,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   public void mouseExited(MouseEvent e) {
     TooltipController.getInstance().cancelTooltip(GUTTER_TOOLTIP_GROUP, e, false);
     updateFreePainters(e);
-	updateHover(null);
+    updateHover(null);
   }
 
   private int convertPointToLineNumber(final Point p) {
