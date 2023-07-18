@@ -17,10 +17,12 @@ import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.impl.referencesAt
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -501,6 +503,16 @@ fun CodeInsightTestFixture.renameWebSymbol(newName: String) {
 fun CodeInsightTestFixture.testWebSymbolRename(fileAfter: String, newName: String) {
   renameWebSymbol(newName)
   checkResultByFile(fileAfter)
+}
+
+fun CodeInsightTestFixture.performCopyPaste(sourceFile: String, destinationFile: String) {
+  configureFromTempProjectFile(sourceFile)
+  performEditorAction(IdeActions.ACTION_EDITOR_COPY)
+  configureFromTempProjectFile(destinationFile)
+  performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
+  WriteAction.runAndWait<Throwable> {
+    FileDocumentManager.getInstance().saveAllDocuments()
+  }
 }
 
 fun doCompletionItemsTest(fixture: CodeInsightTestFixture,
