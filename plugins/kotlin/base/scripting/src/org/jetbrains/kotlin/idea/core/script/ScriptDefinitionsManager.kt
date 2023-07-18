@@ -93,20 +93,21 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
     override fun findDefinition(script: SourceCode): ScriptDefinition? {
         val locationId = script.locationId ?: return null
 
-        if (isScratchFile(script) || isEmbeddedScript(script)) {
-            // Scratch and embedded script should always have the default script definition
-            return getDefaultDefinition()
-        }
-
-        if (nonScriptId(locationId)) return null
-
         configurations?.tryGetScriptDefinitionFast(locationId)?.let { fastPath -> return fastPath }
 
         if (!isReady()) return null
 
         scriptDefinitionsCacheLock.withLock { scriptDefinitionsCache.get(locationId) }?.let { cached -> return cached }
 
-        val definition = super.findDefinition(script) ?: return null
+        val definition =
+            if (isScratchFile(script)) {
+                // Scratch should always have the default script definition
+                getDefaultDefinition()
+            } else {
+                super.findDefinition(script) // Some embedded scripts (e.g., Kotlin Notebooks) have their own definition
+                    ?: if (isEmbeddedScript(script)) getDefaultDefinition() else null
+                    ?: return null
+            }
 
         scriptDefinitionsCacheLock.withLock {
             scriptDefinitionsCache.put(locationId, definition)
