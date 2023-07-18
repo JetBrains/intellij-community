@@ -12,10 +12,7 @@ import com.intellij.execution.dashboard.tree.RunDashboardStatusFilter;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.services.ServiceEventListener;
-import com.intellij.execution.services.ServiceViewDescriptor;
-import com.intellij.execution.services.ServiceViewManager;
-import com.intellij.execution.services.ServiceViewUIUtils;
+import com.intellij.execution.services.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentManagerImpl;
@@ -847,6 +844,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   private class ServiceContentManagerListener implements ContentManagerListener {
+    private volatile Content myPreviousSelection = null;
+
     @Override
     public void selectionChanged(@NotNull ContentManagerEvent event) {
       boolean onAdd = event.getOperation() == ContentManagerEvent.ContentOperation.add;
@@ -862,9 +861,27 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         RunConfigurationNode node = createNode(content);
         if (node != null) {
           RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
-          ServiceViewManager.getInstance(myProject).select(node, RunDashboardServiceViewContributor.class,
-                                                           settings.isActivateToolWindowBeforeRun(), settings.isFocusToolWindowBeforeRun());
+          ((ServiceViewManagerImpl)ServiceViewManager.getInstance(myProject))
+            .trackingSelect(node, RunDashboardServiceViewContributor.class,
+                    settings.isActivateToolWindowBeforeRun(), settings.isFocusToolWindowBeforeRun())
+            .onSuccess(selected -> {
+              if (selected != Boolean.TRUE) {
+                Content previousSelection = myPreviousSelection;
+                if (previousSelection != null) {
+                  setSelectedContent(previousSelection);
+                }
+              }
+            })
+            .onError(t -> {
+              Content previousSelection = myPreviousSelection;
+              if (previousSelection != null) {
+                setSelectedContent(previousSelection);
+              }
+            });
         }
+      }
+      else {
+        myPreviousSelection = content;
       }
     }
 
@@ -882,7 +899,11 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
     @Override
     public void contentRemoved(@NotNull ContentManagerEvent event) {
-      removeServiceContent(event.getContent());
+      Content content = event.getContent();
+      if (myPreviousSelection == content) {
+        myPreviousSelection = null;
+      }
+      removeServiceContent(content);
     }
 
     private RunConfigurationNode createNode(Content content) {

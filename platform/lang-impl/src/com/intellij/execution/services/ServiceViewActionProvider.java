@@ -105,6 +105,9 @@ class ServiceViewActionProvider {
 
   List<AnAction> getAdditionalGearActions() {
     List<AnAction> result = new ArrayList<>();
+    AnAction selectActiveServiceActions = ActionManager.getInstance().getAction("ServiceView.SelectActiveService");
+    ContainerUtil.addIfNotNull(result, selectActiveServiceActions);
+    result.add(Separator.getInstance());
     AnAction configureServicesActions = ActionManager.getInstance().getAction("ServiceView.ConfigureServices");
     ContainerUtil.addIfNotNull(result, configureServicesActions);
     AnAction showServicesActions = ActionManager.getInstance().getAction("ServiceView.ShowServices");
