@@ -11,7 +11,6 @@ import com.intellij.openapi.externalSystem.statistics.runImportActivitySync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter.ExtensionImporter
 import org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter.ExtensionImporter.CountAndTime
@@ -69,11 +68,10 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
     fun importExtensions(project: Project?,
                          modifiableModelsProvider: IdeModifiableModelsProvider?,
                          extensionImporters: List<ExtensionImporter>,
-                         postTasks: List<MavenProjectsProcessorTask?>?,
+                         postTasks: List<MavenProjectsProcessorTask>,
                          activity: StructuredIdeActivity?) {
-      var extensionImporters = extensionImporters
-      extensionImporters = ContainerUtil.filter(extensionImporters) { it: ExtensionImporter -> !it.isModuleDisposed }
-      if (extensionImporters.isEmpty()) return
+      val importers = extensionImporters.filter({ it: ExtensionImporter -> !it.isModuleDisposed })
+      if (importers.isEmpty()) return
       val beforeBridgesCreation = System.nanoTime()
       val provider: IdeModifiableModelsProvider
       provider = // commit does nothing for this provider, so it should be reused
@@ -82,15 +80,15 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
       var bridgesCreationNano = System.nanoTime() - beforeBridgesCreation
       try {
         val beforeInitInit = System.nanoTime()
-        extensionImporters.forEach(
+        importers.forEach(
           Consumer { importer: ExtensionImporter -> importer.init(provider) })
         bridgesCreationNano += System.nanoTime() - beforeInitInit
-        val counters: Map<Class<out MavenImporter?>, CountAndTime> = HashMap()
-        extensionImporters.forEach(
+        val counters: MutableMap<Class<out MavenImporter?>, CountAndTime> = HashMap()
+        importers.forEach(
           Consumer { importer: ExtensionImporter -> importer.preConfig(counters) })
-        extensionImporters.forEach(
+        importers.forEach(
           Consumer { importer: ExtensionImporter -> importer.config(postTasks, counters) })
-        extensionImporters.forEach(
+        importers.forEach(
           Consumer { importer: ExtensionImporter -> importer.postConfig(counters) })
         for ((key, value) in counters) {
           MavenImportCollector.IMPORTER_RUN.log(project,
