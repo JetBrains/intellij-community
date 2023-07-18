@@ -2,10 +2,12 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.JavadocOrderRootType
 import com.intellij.openapi.roots.OrderRootType
@@ -73,17 +75,26 @@ class MavenLegacyModuleImporter(private val myModule: Module,
       myRootModelAdapter = MavenRootModelAdapter(MavenRootModelAdapterLegacyImpl(myMavenProject, myModule, myModifiableModelsProvider))
     }
 
-    private fun doConfigurationStep(step: Runnable) {
-      if (Registry.`is`("maven.import.to.workspace.model.fast.facet.creation")) {
-        step.run()
+    private fun doConfigurationStep(isWorkspaceImport: Boolean, step: Runnable) {
+      if (isWorkspaceImport) {
+        runBlockingMaybeCancellable {
+          writeAction {
+            step.run()
+          }
+        }
       }
       else {
-        MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), step)
+        if (Registry.`is`("maven.import.to.workspace.model.fast.facet.creation")) {
+          step.run()
+        }
+        else {
+          MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), step)
+        }
       }
     }
 
-    fun preConfig(counters: MutableMap<Class<out MavenImporter>, CountAndTime>) {
-      doConfigurationStep { doPreConfig(counters) }
+    fun preConfig(isWorkspaceImport: Boolean, counters: MutableMap<Class<out MavenImporter>, CountAndTime>) {
+      doConfigurationStep(isWorkspaceImport) { doPreConfig(counters) }
     }
 
     private fun doPreConfig(counters: MutableMap<Class<out MavenImporter>, CountAndTime>) {
@@ -103,8 +114,8 @@ class MavenLegacyModuleImporter(private val myModule: Module,
       }
     }
 
-    fun config(postTasks: List<MavenProjectsProcessorTask>, counters: MutableMap<Class<out MavenImporter>, CountAndTime>) {
-      doConfigurationStep { doConfig(postTasks, counters) }
+    fun config(isWorkspaceImport: Boolean, postTasks: List<MavenProjectsProcessorTask>, counters: MutableMap<Class<out MavenImporter>, CountAndTime>) {
+      doConfigurationStep(isWorkspaceImport) { doConfig(postTasks, counters) }
     }
 
     private fun doConfig(postTasks: List<MavenProjectsProcessorTask>, counters: MutableMap<Class<out MavenImporter>, CountAndTime>) {
@@ -132,8 +143,8 @@ class MavenLegacyModuleImporter(private val myModule: Module,
       }
     }
 
-    fun postConfig(counters: MutableMap<Class<out MavenImporter>, CountAndTime>) {
-      doConfigurationStep { doPostConfig(counters) }
+    fun postConfig(isWorkspaceImport: Boolean, counters: MutableMap<Class<out MavenImporter>, CountAndTime>) {
+      doConfigurationStep(isWorkspaceImport) { doPostConfig(counters) }
     }
 
     private fun doPostConfig(counters: MutableMap<Class<out MavenImporter>, CountAndTime>) {

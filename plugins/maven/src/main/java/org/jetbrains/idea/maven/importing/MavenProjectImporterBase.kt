@@ -69,7 +69,8 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
                          modifiableModelsProvider: IdeModifiableModelsProvider?,
                          extensionImporters: List<ExtensionImporter>,
                          postTasks: List<MavenProjectsProcessorTask>,
-                         activity: StructuredIdeActivity?) {
+                         activity: StructuredIdeActivity?,
+                         isWorkspaceImport: Boolean) {
       val importers = extensionImporters.filter({ it: ExtensionImporter -> !it.isModuleDisposed })
       if (importers.isEmpty()) return
       val beforeBridgesCreation = System.nanoTime()
@@ -85,11 +86,11 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
         bridgesCreationNano += System.nanoTime() - beforeInitInit
         val counters: MutableMap<Class<out MavenImporter?>, CountAndTime> = HashMap()
         importers.forEach(
-          Consumer { importer: ExtensionImporter -> importer.preConfig(counters) })
+          Consumer { importer: ExtensionImporter -> importer.preConfig(isWorkspaceImport, counters) })
         importers.forEach(
-          Consumer { importer: ExtensionImporter -> importer.config(postTasks, counters) })
+          Consumer { importer: ExtensionImporter -> importer.config(isWorkspaceImport, postTasks, counters) })
         importers.forEach(
-          Consumer { importer: ExtensionImporter -> importer.postConfig(counters) })
+          Consumer { importer: ExtensionImporter -> importer.postConfig(isWorkspaceImport, counters) })
         for ((key, value) in counters) {
           MavenImportCollector.IMPORTER_RUN.log(project,
                                                 MavenImportCollector.ACTIVITY_ID.with(activity!!),

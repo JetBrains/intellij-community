@@ -530,7 +530,7 @@ internal class WorkspaceProjectImporter(
                                                                        /* isWorkspaceImport = */true)
       }
     }
-    MavenProjectImporterBase.importExtensions(myProject, myModifiableModelsProvider, legacyFacetImporters, postTasks, activity)
+    MavenProjectImporterBase.importExtensions(myProject, myModifiableModelsProvider, legacyFacetImporters, postTasks, activity, true)
   }
 
   override fun createdModules(): List<Module> {
