@@ -26,10 +26,10 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
   @NotNull private final List<Element> myPieces;
 
   UnifiedEditorHighlighter(@NotNull Document document,
-                                  @NotNull EditorHighlighter highlighter1,
-                                  @NotNull EditorHighlighter highlighter2,
-                                  @NotNull List<HighlightRange> ranges,
-                                  int textLength) {
+                           @NotNull EditorHighlighter highlighter1,
+                           @NotNull EditorHighlighter highlighter2,
+                           @NotNull List<HighlightRange> ranges,
+                           int textLength) {
     myDocument = document;
     myPieces = new ArrayList<>();
     init(highlighter1.createIterator(0), highlighter2.createIterator(0), ranges, textLength);
@@ -51,7 +51,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
       if (base.isEmpty()) continue;
 
       if (base.getStartOffset() > offset) {
-        addElement(new Element(offset, base.getStartOffset(), null, TextAttributes.ERASE_MARKER));
+        addElement(createEmptyElement(offset, base.getStartOffset()));
         offset = base.getStartOffset();
       }
 
@@ -94,7 +94,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
     }
 
     if (offset < textLength) {
-      addElement(new Element(offset, textLength, null, TextAttributes.ERASE_MARKER));
+      addElement(createEmptyElement(offset, textLength));
     }
   }
 
@@ -121,7 +121,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
   @NotNull
   @Override
   public HighlighterIterator createIterator(int startOffset) {
-    int index = Collections.binarySearch(myPieces, new Element(startOffset, 0, null, TextAttributes.ERASE_MARKER), Comparator.comparingInt(Element::getStart));
+    int index = Collections.binarySearch(myPieces, createEmptyElement(startOffset, 0), Comparator.comparingInt(Element::getStart));
     // index: (-insertion point - 1), where insertionPoint is the index of the first element greater than the key
     // and we need index of the first element that is less or equal (floorElement)
     if (index < 0) index = Math.max(-index - 2, 0);
@@ -130,6 +130,11 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
 
   @Override
   public void setEditor(@NotNull HighlighterClient editor) {
+  }
+
+  @NotNull
+  private static Element createEmptyElement(int startOffset, int endOffset) {
+    return new Element(startOffset, endOffset, null, TextAttributes.ERASE_MARKER);
   }
 
   private static final class ProxyIterator implements HighlighterIterator {
