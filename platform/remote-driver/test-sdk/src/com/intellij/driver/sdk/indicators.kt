@@ -3,8 +3,8 @@ package com.intellij.driver.sdk
 import com.intellij.driver.client.Driver
 
 fun Driver.getProgressIndicators(project: Project): List<StatusBar.TaskInfoPair> {
-  val ideFrame = service(WindowManager::class).getIdeFrame(project) ?: return emptyList()
-  val statusBar = ideFrame.statusBar
+  val ideFrame = service(WindowManager::class).getIdeFrame(project)
+  val statusBar = ideFrame?.statusBar ?: return emptyList()
   return statusBar.backgroundProcesses
 }
 

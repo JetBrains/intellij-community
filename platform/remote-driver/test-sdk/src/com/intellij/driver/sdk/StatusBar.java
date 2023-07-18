@@ -8,6 +8,8 @@ import java.util.List;
 public interface StatusBar {
   List<TaskInfoPair> getBackgroundProcesses();
 
+  boolean isProcessWindowOpen();
+
   @Remote("com.intellij.openapi.util.Pair")
   interface TaskInfoPair {
     TaskInfo getFirst();
