@@ -1612,7 +1612,7 @@
     <group id="TopStripeActionGroup" class="com.intellij.toolWindow.StripeActionGroup"/>
     <action id="TopStripeEnableAction" class="com.intellij.toolWindow.EnableStripeGroup"/>
 
-    <group id="MainToolbarQuickActions" class="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarQuickActionsGroup" searchable="false" popup="true">
+    <group id="MainToolbarQuickActions" searchable="false" popup="true">
       <separator key="MainToolbarQuickActions.run.separator"/>
       <group id="MainToolbarQuickActions.Run" class="com.intellij.ide.ui.customization.ToolbarQuickActionsGroup" searchable="false" popup="false"/>
       <separator key="MainToolbarQuickActions.General.separator"/>
