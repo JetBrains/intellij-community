@@ -510,6 +510,11 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     private class MyGutterMouseListener extends MouseAdapter {
       @Override
       public void mouseMoved(MouseEvent e) {
+        if (!myAllowExcludeChangesFromCommit) {
+          destroyHoverHighlighter();
+          return;
+        }
+
         EditorGutterComponentEx gutter = myEditor.getGutterComponentEx();
         int xOffset = DiffUtil.isMirrored(myEditor) ? gutter.getWidth() - e.getX() : e.getX();
         if (xOffset < gutter.getIconAreaOffset() || xOffset > gutter.getIconAreaOffset() + gutter.getIconsAreaWidth()) {
