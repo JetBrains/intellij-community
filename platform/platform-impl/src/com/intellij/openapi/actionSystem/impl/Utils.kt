@@ -26,9 +26,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.ui.AnimatedIcon
@@ -43,8 +46,6 @@ import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.ContainerUtil.concat
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.isUnderDarcula
 import com.intellij.util.ui.UIUtil
@@ -286,10 +287,10 @@ object Utils {
     val window: Window? = if (contextComponent == null) null else SwingUtilities.getWindowAncestor(contextComponent)
     return ProhibitAWTEvents.startFiltered("expandActionGroup") { event ->
       if (event is FocusEvent && event.getID() == FocusEvent.FOCUS_LOST && event.cause == FocusEvent.Cause.ACTIVATION &&
-            window != null && window === SwingUtilities.getWindowAncestor(event.component) ||
+          window != null && window === SwingUtilities.getWindowAncestor(event.component) ||
           event is KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
           event is MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED &&
-            UIUtil.getDeepestComponentAt(event.component, event.x, event.y) !== menuItem)
+          UIUtil.getDeepestComponentAt(event.component, event.x, event.y) !== menuItem)
         cancelPromise(promise, event)
       null
     }
@@ -332,12 +333,27 @@ object Utils {
       Context.current().with(span).with(OT_ENABLE_SPANS, true).makeCurrent().use {
         val removeIcon = addLoadingIcon(progressPoint, place)
         val list = computeWithRetries(expire, removeIcon) {
-          expandActionGroupImpl(group, presentationFactory, context, place, true, removeIcon, component)
+          expandActionGroupImpl(group = group,
+                                presentationFactory = presentationFactory,
+                                context = context,
+                                place = place,
+                                isContextMenu = true,
+                                onProcessed = removeIcon,
+                                menuItem = component)
         }
         result = list
         val checked = group is CheckedActionGroup
         val multiChoice = isMultiChoiceGroup(group)
-        fillMenuInner(component, list, checked, multiChoice, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons)
+        fillMenuInner(component = component,
+                      list = list,
+                      checked = checked,
+                      multiChoice = multiChoice,
+                      enableMnemonics = enableMnemonics,
+                      presentationFactory = presentationFactory,
+                      context = context,
+                      place = place,
+                      isWindowMenu = isWindowMenu,
+                      useDarkIcons = useDarkIcons)
       }
     }
     finally {
@@ -347,7 +363,7 @@ object Utils {
         LOG.warn("$elapsed ms to fillMenu@$place")
       }
       val submenu = component is ActionMenu && component.getParent() != null
-      recordActionGroupExpanded(group, context, place, submenu, elapsed, result)
+      recordActionGroupExpanded(action = group, context = context, place = place, submenu = submenu, durationMs = elapsed, result = result)
     }
   }
 
@@ -357,12 +373,12 @@ object Utils {
     }
 
     val rootPane = if (point == null) null else UIUtil.getRootPane(point.component)
-    val glassPane = if (rootPane == null) null else rootPane.glassPane as JComponent
-    if (glassPane == null) return null
+    val glassPane = (if (rootPane == null) null else rootPane.glassPane as JComponent?) ?: return null
     val comp = point!!.originalComponent
-    if (comp is ActionMenu && comp.getParent() is IdeMenuBar ||
-        ActionPlaces.EDITOR_GUTTER_POPUP == place && comp is EditorGutterComponentEx && comp.getGutterRenderer(
-        point.originalPoint) != null) {
+    if ((comp is ActionMenu && comp.getParent() is IdeMenuBar) ||
+        (ActionPlaces.EDITOR_GUTTER_POPUP == place &&
+         comp is EditorGutterComponentEx &&
+         comp.getGutterRenderer(point.originalPoint) != null)) {
       return null
     }
     val isMenuItem = comp is ActionMenu
@@ -380,8 +396,9 @@ object Utils {
     }
     icon.location = location
     EdtScheduledExecutorService.getInstance().schedule(Runnable {
-      if (!icon.isVisible) return@Runnable
-      glassPane.add(icon)
+      if (icon.isVisible) {
+        glassPane.add(icon)
+      }
     }, Registry.intValue("actionSystem.popup.progress.icon.delay", 500).toLong(), TimeUnit.MILLISECONDS)
     return {
       if (icon.parent != null) glassPane.remove(icon)
@@ -472,20 +489,20 @@ object Utils {
   private fun filterInvisible(list: List<AnAction>,
                               presentationFactory: PresentationFactory,
                               place: String): List<AnAction> {
-    val filtered: MutableList<AnAction> = ArrayList(list.size)
+    val filtered = ArrayList<AnAction>(list.size)
     for (action in list) {
       val presentation = presentationFactory.getPresentation(action)
       if (!presentation.isVisible) {
         reportInvisibleMenuItem(action, place)
         continue
       }
-      if (action !is Separator && StringUtil.isEmpty(presentation.text)) {
+      if (action !is Separator && presentation.text.isNullOrEmpty()) {
         reportEmptyTextMenuItem(action, place)
         continue
       }
       if (action is Separator) {
         val lastIdx = filtered.size - 1
-        if (lastIdx < 0 && StringUtil.isEmpty(action.text)) {
+        if (lastIdx < 0 && action.text.isNullOrEmpty()) {
           continue
         }
         if (lastIdx >= 0 && filtered[lastIdx] is Separator) {
@@ -496,21 +513,21 @@ object Utils {
       filtered.add(action)
     }
     val lastIdx = filtered.size - 1
-    if (lastIdx >= 0 && filtered[lastIdx].let { it is Separator && StringUtil.isEmpty(it.text) }) {
+    if (lastIdx >= 0 && filtered[lastIdx].let { it is Separator && it.text.isNullOrEmpty() }) {
       filtered.removeAt(lastIdx)
     }
     return filtered
   }
 
   private fun reportInvisibleMenuItem(action: AnAction, place: String) {
-    val operationName = operationName(action, null, place)
+    val operationName = operationName(action = action, op = null, place = place)
     LOG.error("Invisible menu item for $operationName")
   }
 
   private fun reportEmptyTextMenuItem(action: AnAction, place: String) {
     val operationName = operationName(action, null, place)
     var message = "Empty menu item text for $operationName"
-    if (StringUtil.isEmpty(action.getTemplatePresentation().text)) {
+    if (action.getTemplatePresentation().text.isNullOrEmpty()) {
       message += ". The default action text must be specified in plugin.xml or its class constructor"
     }
     LOG.error(PluginException.createByClass(message, null, action.javaClass))
@@ -520,33 +537,39 @@ object Utils {
   fun operationName(action: Any, op: String?, place: String?): String {
     var c: Class<*> = action.javaClass
     val sb = StringBuilder(200)
-    if (StringUtil.isNotEmpty(op)) sb.append("#").append(op)
-    if (StringUtil.isNotEmpty(place)) sb.append("@").append(place)
+    if (!op.isNullOrEmpty()) {
+      sb.append("#").append(op)
+    }
+    if (!place.isNullOrEmpty()) {
+      sb.append("@").append(place)
+    }
     sb.append(" (")
     var x = action
     while (x is ActionWithDelegate<*>) {
-      sb.append(StringUtil.getShortName(c.getName())).append("/")
+      sb.append(StringUtilRt.getShortName(c.getName())).append('/')
       x = x.getDelegate()
       c = x.javaClass
     }
     sb.append(c.getName()).append(")")
-    sb.insert(0, StringUtil.getShortName(c.getName()))
+    sb.insert(0, StringUtilRt.getShortName(c.getName()))
     return sb.toString()
   }
 
   private fun dumpDataContextClass(context: DataContext): String {
-    var c: Class<*> = context.javaClass
+    var c = context.javaClass
     val sb = StringBuilder(200)
     var i = 0
     var x: Any = context
     while (x is CustomizedDataContext) {
-      sb.append(StringUtil.getShortName(c.getName())).append("(")
+      sb.append(StringUtilRt.getShortName(c.getName())).append('(')
       x = x.getParent()
       i++
       c = x.javaClass
     }
     sb.append(c.getName())
-    StringUtil.repeatSymbol(sb, ')', i)
+    repeat(i) {
+      sb.append(')')
+    }
     return sb.toString()
   }
 
@@ -572,12 +595,16 @@ object Utils {
                       dataContext: DataContext,
                       place: String,
                       presentationFactory: PresentationFactory) {
-    val items = ContainerUtil.filterIsInstance(popupMenu.components, ActionMenuItem::class.java)
-    updateComponentActions(popupMenu, items.map { it.anAction }, dataContext, place, presentationFactory) {
+    val items = popupMenu.components.filterIsInstance<ActionMenuItem>()
+    updateComponentActions(component = popupMenu,
+                           actions = items.map { it.anAction },
+                           dataContext = dataContext,
+                           place = place,
+                           presentationFactory = presentationFactory, onUpdate = {
       for (item in items) {
         item.updateFromPresentation(presentationFactory.getPresentation(item.anAction))
       }
-    }
+    })
   }
 
   @JvmStatic
@@ -604,7 +631,13 @@ object Utils {
         }
     }
     else {
-      expandActionGroupImpl(actionGroup, presentationFactory, dataContext, place, ActionPlaces.isPopupPlace(place), null, null)
+      expandActionGroupImpl(group = actionGroup,
+                            presentationFactory = presentationFactory,
+                            context = dataContext,
+                            place = place,
+                            isContextMenu = ActionPlaces.isPopupPlace(place),
+                            onProcessed = null,
+                            menuItem = null)
       onUpdate.run()
     }
   }
@@ -616,23 +649,23 @@ object Utils {
 
   private fun createSeparator(text: @NlsContexts.Separator String?, first: Boolean): JPopupMenu.Separator {
     return object : JPopupMenu.Separator() {
-      private val myMenu: GroupHeaderSeparator?
+      private val menu: GroupHeaderSeparator?
 
       init {
-        if (StringUtil.isNotEmpty(text)) {
+        if (!text.isNullOrEmpty()) {
           val labelInsets = if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Popup.separatorLabelInsets() else JBUI.CurrentTheme.ActionsList.cellPadding()
-          myMenu = GroupHeaderSeparator(labelInsets)
-          myMenu.caption = text
-          myMenu.setHideLine(first)
+          menu = GroupHeaderSeparator(labelInsets)
+          menu.caption = text
+          menu.setHideLine(first)
         }
         else {
-          myMenu = null
+          menu = null
         }
       }
 
       override fun doLayout() {
         super.doLayout()
-        myMenu?.bounds = bounds
+        menu?.bounds = bounds
       }
 
       override fun paintComponent(g: Graphics) {
@@ -640,17 +673,15 @@ object Utils {
           g.color = parent.getBackground()
           g.fillRect(0, 0, width, height)
         }
-        if (myMenu != null) {
-          myMenu.paint(g)
+        if (menu != null) {
+          menu.paint(g)
         }
         else {
           super.paintComponent(g)
         }
       }
 
-      override fun getPreferredSize(): Dimension =
-        if (myMenu != null) myMenu.preferredSize
-        else super.getPreferredSize()
+      override fun getPreferredSize(): Dimension = if (menu == null) super.getPreferredSize() else menu.preferredSize
     }
   }
 
@@ -664,8 +695,7 @@ object Utils {
     }
   }
 
-  private fun hasIcons(components: List<Component>): Boolean =
-    components.find { hasNotEmptyIcon(it) } != null
+  private fun hasIcons(components: List<Component>): Boolean = components.find { hasNotEmptyIcon(it) } != null
 
   private fun hasNotEmptyIcon(comp: Component): Boolean {
     val icon: Icon? = when (comp) {
@@ -756,31 +786,38 @@ object Utils {
     // EventQueue would add significant overhead (x10), but key events must be processed ASAP.
     val queue: BlockingQueue<Runnable>? = if (async) LinkedBlockingQueue() else null
     val actionUpdater = ActionUpdater(
-      factory, dataContext,
-      place, false, false, if (async) Executor { e: Runnable -> queue!!.offer(e) } else null) { event: AnActionEvent ->
-      val transformed = actionProcessor.createEvent(
-        inputEvent, event.dataContext, event.place, event.presentation, event.actionManager)
-      eventTracker?.invoke(transformed)
-      transformed
-    }
+      presentationFactory = factory,
+      dataContext = dataContext,
+      place = place,
+      contextMenuAction = false,
+      toolbarAction = false,
+      edtExecutor = if (async) Executor { e -> queue!!.offer(e) } else null,
+      eventTransform = { event ->
+        val transformed = actionProcessor.createEvent(inputEvent, event.dataContext, event.place, event.presentation, event.actionManager)
+        eventTracker?.invoke(transformed)
+        transformed
+      },
+    )
     val result: T?
     if (async) {
       queue!!
       cancelAllUpdates("'$place' invoked")
       val promise = newPromise<T>(place)
       val parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator()
-      ourBeforePerformedExecutor.execute(Runnable {
+      ourBeforePerformedExecutor.execute {
         try {
-          val ref = Ref.create<T>()
+          var ref: T? = null
           val computable = ThrowableComputable<Void?, RuntimeException> {
             val adjusted = ArrayList(actions)
             actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise) {
               rearrangeByPromoters(adjusted, dataContext)
             }
-            if (promise.isDone()) return@ThrowableComputable null
+            if (promise.isDone()) {
+              return@ThrowableComputable null
+            }
             val session = actionUpdater.asUpdateSession()
             actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise) {
-              ref.set(function(session, adjusted))
+              ref = function(session, adjusted)
             }
             queue.offer { actionUpdater.applyPresentationChanges() }
             null
@@ -791,12 +828,12 @@ object Utils {
           ProgressManager.getInstance().executeProcessUnderProgress(
             { ProgressManager.getInstance().computePrioritized(computable) },
             indicator)
-          queue.offer { promise.setResult(ref.get()) }
+          queue.offer { promise.setResult(ref) }
         }
         catch (e: Throwable) {
           promise.setError(e)
         }
-      })
+      }
       try {
         ourInUpdateSessionForInputEventEDTLoop = true
         result = runLoopAndWaitForFuture(promise, null, false) {
@@ -824,9 +861,9 @@ object Utils {
   }
 
   fun rearrangeByPromoters(actions: MutableList<AnAction>, dataContext: DataContext) {
-    val frozenContext = freezeDataContext(dataContext, null)
+    val frozenContext = freezeDataContext(dataContext = dataContext, missedKeys = null)
     val readOnlyActions = Collections.unmodifiableList(actions)
-    val promoters = concat(ActionPromoter.EP_NAME.extensionList, actions.filterIsInstance<ActionPromoter>())
+    val promoters = ActionPromoter.EP_NAME.extensionList.asSequence() + actions.asSequence().filterIsInstance<ActionPromoter>()
     for (promoter in promoters) {
       try {
         SlowOperations.startSection(SlowOperations.FORCE_ASSERT).use {
@@ -913,8 +950,7 @@ object Utils {
   private fun canRetryOnThisException(ex: Throwable): Boolean {
     val reason = if (ex is ProcessCanceledWithReasonException) ex.reason else null
     val reasonStr = if (reason is String) reason else ""
-    return reasonStr.contains("write-action") ||
-           reasonStr.contains("fast-track") && StringUtil.containsIgnoreCase(reasonStr, "toolbar")
+    return reasonStr.contains("write-action") || reasonStr.contains("fast-track") && reasonStr.contains("toolbar", ignoreCase = true)
   }
 
   private class FastTrackAwareEdtExecutor(val maxTime: Int) : Executor {
@@ -956,7 +992,5 @@ object Utils {
 }
 
 internal class ProcessCanceledWithReasonException(val reason: Any) : ProcessCanceledException() {
-  override fun fillInStackTrace(): Throwable {
-    return this
-  }
+  override fun fillInStackTrace(): Throwable = this
 }

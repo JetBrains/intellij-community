@@ -93,8 +93,8 @@ internal class ActionUpdater @JvmOverloads constructor(
   private val place: String,
   private val contextMenuAction: Boolean,
   private val toolbarAction: Boolean,
-  private val myEDTExecutor: Executor? = null,
-  private val myEventTransform: ((AnActionEvent) -> AnActionEvent)? = null) {
+  private val edtExecutor: Executor? = null,
+  private val eventTransform: ((AnActionEvent) -> AnActionEvent)? = null) {
 
   private val project = CommonDataKeys.PROJECT.getData(dataContext)
   private val myUserDataHolder = UserDataHolderBase()
@@ -350,13 +350,13 @@ internal class ActionUpdater @JvmOverloads constructor(
     myEDTWaitNanos = 0
     promise.onProcessed {
       val edtWaitMillis = TimeUnit.NANOSECONDS.toMillis(myEDTWaitNanos)
-      if (myEDTExecutor == null && (myEDTCallsCount > 500 || edtWaitMillis > 3000)) {
+      if (edtExecutor == null && (myEDTCallsCount > 500 || edtWaitMillis > 3000)) {
         LOG.warn(edtWaitMillis.toString() + " ms total to grab EDT " + myEDTCallsCount + " times to expand " +
                  Utils.operationName(group, null, place) + ". Use `ActionUpdateThread.BGT`.")
       }
     }
     // only one toolbar fast-track at a time
-    val useFastTrack = myEDTExecutor != null && !(toolbarAction && ourFastTrackToolbarsCount.get() > 0)
+    val useFastTrack = edtExecutor != null && !(toolbarAction && ourFastTrackToolbarsCount.get() > 0)
     val executor = if (useFastTrack) ourFastTrackExecutor else ourCommonExecutor
     if (useFastTrack && toolbarAction) {
       ourFastTrackToolbarsCount.incrementAndGet()
@@ -589,14 +589,14 @@ internal class ActionUpdater @JvmOverloads constructor(
     val event = AnActionEvent(
       null, dataContext, place, presentation,
       ActionManager.getInstance(), 0, contextMenuAction, toolbarAction).let {
-      myEventTransform?.invoke(it) ?: it
+      eventTransform?.invoke(it) ?: it
     }
     event.updateSession = asUpdateSession()
     return event
   }
 
   private fun <T> computeOnEdt(supplier: Supplier<out T>): T {
-    return ActionUpdateEdtExecutor.computeOnEdt(supplier, myEDTExecutor)
+    return ActionUpdateEdtExecutor.computeOnEdt(supplier, edtExecutor)
   }
 
   fun asUpdateSession(): UpdateSession {
