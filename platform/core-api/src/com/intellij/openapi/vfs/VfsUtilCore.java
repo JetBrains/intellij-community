@@ -376,10 +376,19 @@ public class VfsUtilCore {
     }
   }
 
+  /**
+   * @return a text loaded from the {@code file}. {@code file} encoding is taken into account. Line separators stays intact.
+   * @see com.intellij.openapi.fileEditor.impl.LoadTextUtil#loadText(VirtualFile)
+   */
   public static @NotNull String loadText(@NotNull VirtualFile file) throws IOException {
     return loadText(file, (int)file.getLength());
   }
 
+  /**
+   * @return first {@code length} characters of a text loaded from the {@code file}. {@code file} encoding is taken into account.
+   * Line separators stays intact.
+   * @see com.intellij.openapi.fileEditor.impl.LoadTextUtil#loadText(VirtualFile, int)
+   */
   public static @NotNull String loadText(@NotNull VirtualFile file, int length) throws IOException {
     try (InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset())) {
       return new String(FileUtilRt.loadText(reader, length));
