@@ -960,8 +960,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     List<ArtifactRepository> result = map2ArtifactRepositories(repositories);
     if (getComponent(LegacySupport.class).getRepositorySession() == null) {
       myRepositorySystem.injectMirror(result, myMavenSettings.getMirrors());
-      //myRepositorySystem.injectProxy(result, myMavenSettings.getProxies());
-      //myRepositorySystem.injectAuthentication(result, myMavenSettings.getServers());
     }
     return result;
   }
