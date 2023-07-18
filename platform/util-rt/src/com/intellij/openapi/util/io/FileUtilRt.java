@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
@@ -772,7 +771,11 @@ public class FileUtilRt {
     deleteRecursively(path, null);
   }
 
-  static void deleteRecursively(@NotNull Path path, @SuppressWarnings("BoundedWildcard") @Nullable final Consumer<Path> callback) throws IOException {
+  interface DeleteRecursivelyCallback {
+    void beforeDeleting(Path path);
+  }
+  
+  static void deleteRecursively(@NotNull Path path, @SuppressWarnings("BoundedWildcard") @Nullable final DeleteRecursivelyCallback callback) throws IOException {
     if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
       return;
     }
@@ -793,7 +796,7 @@ public class FileUtilRt {
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-          if (callback != null) callback.consume(file);
+          if (callback != null) callback.beforeDeleting(file);
           doDelete(file);
           return FileVisitResult.CONTINUE;
         }
@@ -801,7 +804,7 @@ public class FileUtilRt {
         @Override
         public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
           try {
-            if (callback != null) callback.consume(dir);
+            if (callback != null) callback.beforeDeleting(dir);
             doDelete(dir);
             return FileVisitResult.CONTINUE;
           }

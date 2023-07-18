@@ -7,19 +7,23 @@ import org.jetbrains.annotations.ApiStatus;
  * deprecated Use {@link java.util.function.Consumer} instead
  */
 @ApiStatus.Obsolete
-public interface Consumer<T> {
+@FunctionalInterface
+public interface Consumer<T> extends java.util.function.Consumer<T> {
   /**
    * @deprecated use {@link com.intellij.util.EmptyConsumer#getInstance()} instead
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  Consumer<Object> EMPTY_CONSUMER = new Consumer<Object>() {
-    public void consume(Object t) { }
-  };
+  Consumer<Object> EMPTY_CONSUMER = t -> {};
 
   /**
    * @param t consequently takes value of each element of the set this processor is passed to for processing.
    * t is supposed to be a not-null value. If you need to pass {@code null}s to the consumer use {@link NullableConsumer} instead
    */
   void consume(T t);
+
+  @Override
+  default void accept(T t) {
+    consume(t);
+  }
 }
