@@ -131,7 +131,7 @@ class UnusedSymbolInspection : KotlinSingleElementInspection<KtNamedDeclaration>
         if (hasNonTrivialUsages(declaration, isCheapEnough, symbol)) return null
         if (declaration is KtClassOrObject && classOrObjectHasTextUsages(declaration)) return null
 
-        return declaration.nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword() ?: return null
+        return declaration.nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword()
     }
 
     context(KtAnalysisSession)
