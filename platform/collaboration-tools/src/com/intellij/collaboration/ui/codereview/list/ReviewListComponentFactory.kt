@@ -2,12 +2,20 @@
 package com.intellij.collaboration.ui.codereview.list
 
 import com.intellij.collaboration.ui.util.JListHoveredRowMaterialiser
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBList
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
-import javax.swing.ListModel
-import javax.swing.ListSelectionModel
+import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
+import javax.swing.*
+import javax.swing.event.ChangeEvent
+import javax.swing.event.ListDataEvent
+import javax.swing.event.ListDataListener
 
 class ReviewListComponentFactory<T>(private val listModel: ListModel<T>) {
   fun create(itemPresenter: (T) -> ReviewListItemPresentation): JBList<T> {
@@ -27,4 +35,42 @@ class ReviewListComponentFactory<T>(private val listModel: ListModel<T>) {
       JListHoveredRowMaterialiser.install(it, ReviewListCellRenderer(itemPresenter))
     }
   }
+}
+
+
+object ReviewListUtil {
+  fun wrapWithLazyVerticalScroll(cs: CoroutineScope, list: JList<*>, requestor: () -> Unit): JScrollPane =
+    ScrollPaneFactory.createScrollPane(list, true).apply {
+      isOpaque = false
+      viewport.isOpaque = false
+      horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+      verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+
+      val model = verticalScrollBar.model
+      val listener = object : BoundedRangeModelThresholdListener(model, 0.7f) {
+        override fun onThresholdReached() {
+          requestor()
+        }
+      }
+      model.addChangeListener(listener)
+
+      list.model.addListDataListener(object : ListDataListener {
+        override fun intervalAdded(e: ListDataEvent) {
+          cs.launch(Dispatchers.Main) {
+            // yield to let list resize itself
+            yield()
+            checkScroll()
+          }
+        }
+
+        private fun checkScroll() {
+          if (list.isShowing) {
+            listener.stateChanged(ChangeEvent(list))
+          }
+        }
+
+        override fun intervalRemoved(e: ListDataEvent) = Unit
+        override fun contentsChanged(e: ListDataEvent) = Unit
+      })
+    }
 }

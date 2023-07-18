@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.codereview.list.ReviewListUtil.wrapWithLazyVerticalScroll
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.invokeLater
@@ -32,7 +33,7 @@ internal class GitLabMergeRequestsPanelFactory {
     val listModel = collectMergeRequests(scope, listVm)
     val list = GitLabMergeRequestsListComponentFactory.create(listModel, listVm.avatarIconsProvider)
 
-    val listLoaderPanel = createListLoaderPanel(listVm, list)
+    val listLoaderPanel = wrapWithLazyVerticalScroll(scope, list, listVm::requestMore)
     val listWrapper = Wrapper()
     val progressStripe = CollaborationToolsUIUtil.wrapWithProgressStripe(scope, listVm.loading, listWrapper).also { panel ->
       DataManager.registerDataProvider(panel) { dataId ->
@@ -78,36 +79,6 @@ internal class GitLabMergeRequestsPanelFactory {
     }
 
     return listModel
-  }
-
-  private fun createListLoaderPanel(listVm: GitLabMergeRequestsListViewModel, list: JList<*>): JScrollPane {
-    return ScrollPaneFactory.createScrollPane(list, true).apply {
-      isOpaque = false
-      viewport.isOpaque = false
-      horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-      verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
-
-      val model = verticalScrollBar.model
-      val listener = object : BoundedRangeModelThresholdListener(model, 0.7f) {
-        override fun onThresholdReached() {
-          listVm.requestMore()
-        }
-      }
-      model.addChangeListener(listener)
-
-      list.model.addListDataListener(object : ListDataListener {
-        override fun intervalAdded(e: ListDataEvent) {
-          invokeLater {
-            if (list.isShowing) {
-              listener.stateChanged(ChangeEvent(list))
-            }
-          }
-        }
-
-        override fun intervalRemoved(e: ListDataEvent) = Unit
-        override fun contentsChanged(e: ListDataEvent) = Unit
-      })
-    }
   }
 
   private fun createSearchPanel(scope: CoroutineScope, listVm: GitLabMergeRequestsListViewModel): JComponent {
