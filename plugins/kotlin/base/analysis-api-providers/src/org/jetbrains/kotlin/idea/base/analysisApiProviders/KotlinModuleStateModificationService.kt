@@ -32,6 +32,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.providers.KotlinGlobalModificationService
 import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
+import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleStateModificationKind
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.idea.base.projectStructure.getBinaryAndSourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
@@ -42,19 +43,25 @@ import org.jetbrains.kotlin.idea.util.toKtModulesForModificationEvents
 open class KotlinModuleStateModificationService(val project: Project) : Disposable {
     protected open fun mayBuiltinsHaveChanged(events: List<VFileEvent>): Boolean { return false }
 
-    private fun invalidateSourceModule(module: Module, isRemoval: Boolean = false) {
+    private fun invalidateSourceModule(
+        module: Module,
+        modificationKind: KotlinModuleStateModificationKind = KotlinModuleStateModificationKind.UPDATE,
+    ) {
         module.toKtModulesForModificationEvents().forEach { ktModule ->
-            project.publishModuleStateModification(ktModule, isRemoval)
+            project.publishModuleStateModification(ktModule, modificationKind)
         }
     }
 
-    private fun invalidateLibraryModule(library: Library, isRemoval: Boolean = false) {
-        invalidateByModuleInfos(library.getBinaryAndSourceModuleInfos(project), isRemoval)
+    private fun invalidateLibraryModule(
+        library: Library,
+        modificationKind: KotlinModuleStateModificationKind = KotlinModuleStateModificationKind.UPDATE,
+    ) {
+        invalidateByModuleInfos(library.getBinaryAndSourceModuleInfos(project), modificationKind)
     }
 
-    private fun invalidateByModuleInfos(moduleInfos: Iterable<IdeaModuleInfo>, isRemoval: Boolean) {
+    private fun invalidateByModuleInfos(moduleInfos: Iterable<IdeaModuleInfo>, modificationKind: KotlinModuleStateModificationKind) {
         moduleInfos.forEach { moduleInfo ->
-            project.publishModuleStateModification(moduleInfo.toKtModule(), isRemoval)
+            project.publishModuleStateModification(moduleInfo.toKtModule(), modificationKind)
         }
     }
 
@@ -73,7 +80,11 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
         override fun isRelevantEvent(event: VFileEvent, file: VirtualFile): Boolean = event is VFileMoveEvent || event is VFileDeleteEvent
 
         override fun processEvent(event: VFileEvent, module: KtModule) {
-            project.publishModuleStateModification(module, isRemoval = event is VFileDeleteEvent)
+            val modificationKind = when (event) {
+                is VFileDeleteEvent -> KotlinModuleStateModificationKind.REMOVAL
+                else -> KotlinModuleStateModificationKind.UPDATE
+            }
+            project.publishModuleStateModification(module, modificationKind)
         }
     }
 
@@ -163,7 +174,7 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
                 is EntityChange.Removed -> {
                     change.oldEntity
                       .findLibraryBridge(event.storageBefore)
-                      ?.let { invalidateLibraryModule(it, isRemoval = true) }
+                      ?.let { invalidateLibraryModule(it, KotlinModuleStateModificationKind.REMOVAL) }
                 }
 
                 is EntityChange.Replaced -> {
@@ -186,7 +197,7 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
                     is EntityChange.Added -> {}
                     is EntityChange.Removed -> {
                         change.oldEntity.findModule(event.storageBefore)?.let { module ->
-                            invalidateSourceModule(module, isRemoval = true)
+                            invalidateSourceModule(module, KotlinModuleStateModificationKind.REMOVAL)
                             add(module)
                         }
                     }
@@ -221,6 +232,6 @@ private fun <C : WorkspaceEntity, E> EntityChange.Replaced<C>.getReplacedEntity(
     return new
 }
 
-private fun Project.publishModuleStateModification(module: KtModule, isRemoval: Boolean) {
-    analysisMessageBus.syncPublisher(KotlinTopics.MODULE_STATE_MODIFICATION).onModification(module, isRemoval)
+private fun Project.publishModuleStateModification(module: KtModule, modificationKind: KotlinModuleStateModificationKind) {
+    analysisMessageBus.syncPublisher(KotlinTopics.MODULE_STATE_MODIFICATION).onModification(module, modificationKind)
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
+import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleStateModificationKind
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
@@ -28,13 +29,13 @@ abstract class ModuleModificationEventTracker(
     private val module: KtModule,
     eventKind: String,
 ) : ModificationEventTracker(module.project, eventKind) {
-    fun handleEvent(eventModule: KtModule, isRemoval: Boolean) {
+    fun handleEvent(eventModule: KtModule, modificationKind: KotlinModuleStateModificationKind) {
         if (eventModule == module) {
-            receivedEvents.add(ReceivedEvent(isRemoval))
+            receivedEvents.add(ReceivedEvent(modificationKind == KotlinModuleStateModificationKind.REMOVAL))
         }
     }
 
     fun handleEvent(eventModule: KtModule) {
-        handleEvent(eventModule, isRemoval = false)
+        handleEvent(eventModule, KotlinModuleStateModificationKind.UPDATE)
     }
 }
