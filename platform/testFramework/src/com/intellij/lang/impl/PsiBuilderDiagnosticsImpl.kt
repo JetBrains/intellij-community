@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl
 
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 import java.util.regex.Pattern
@@ -96,13 +97,13 @@ $rollbackSources
    * @return formatted average of [amount]/[count]
    */
   private fun avg(amount: Int, count: Int) =
-    if (count == 0) "" else String.format("%.03f", amount.toFloat() / count)
+    if (count == 0) "" else String.format(Locale.US, "%.03f", amount.toFloat() / count)
 
   /**
    * @return formatted percentage of one [part] in relation to [whole].
    */
   private fun percent(part: Int, whole: Int) =
-    if (whole == 0) "" else String.format("%.02f%%", part.toFloat() * 100 / whole)
+    if (whole == 0) "" else String.format(Locale.US, "%.02f%%", part.toFloat() * 100 / whole)
 
   override fun registerPass(charLength: Int, tokensLength: Int) {
     passes += charLength to tokensLength
