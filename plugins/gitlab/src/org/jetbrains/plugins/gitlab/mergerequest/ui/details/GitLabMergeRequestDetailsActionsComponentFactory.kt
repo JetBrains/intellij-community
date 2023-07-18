@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.codereview.action.AutoDisablingActionGroup
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActionsComponentFactory.CodeReviewActions
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
@@ -160,7 +161,7 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
   }
 
   private fun createMergeActionGroup(reviewActions: CodeReviewActions): ActionGroup {
-    return DefaultActionGroup(CollaborationToolsBundle.message("review.details.action.merge.group"), true).apply {
+    return AutoDisablingActionGroup(CollaborationToolsBundle.message("review.details.action.merge.group"), true).apply {
       add(reviewActions.mergeReviewAction.toAnAction())
       add(reviewActions.mergeSquashReviewAction.toAnAction())
     }
