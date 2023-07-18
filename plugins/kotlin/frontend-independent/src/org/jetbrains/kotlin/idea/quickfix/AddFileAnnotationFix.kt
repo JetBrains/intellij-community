@@ -94,3 +94,31 @@ open class AddFileAnnotationFix(
         ShortenReferencesFacility.getInstance().shorten(entry)
     }
 }
+
+
+/**
+ * A specialized version of [AddFileAnnotationFix] that adds @OptIn(...) annotations to the containing file.
+ *
+ * This class reuses the parent's [invoke] method, but overrides the [getText] method to provide
+ * more descriptive opt-in related messages.
+ *
+ * @param file the file there the annotation should be added
+ * @param optInFqName name of OptIn annotation
+ * @param argumentClassFqName the fully qualified name of the annotation to opt-in
+ * @param existingAnnotationEntry the already existing annotation entry (if any)
+ */
+class UseOptInFileAnnotationFix(
+    file: KtFile,
+    optInFqName: FqName,
+    private val argumentClassFqName: FqName,
+    existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>?
+) : AddFileAnnotationFix(file, optInFqName, argumentClassFqName, existingAnnotationEntry) {
+    private val fileName = file.name
+
+    override fun getText(): String {
+        val argumentText = argumentClassFqName.shortName().asString()
+        return KotlinBundle.message("fix.opt_in.text.use.containing.file", argumentText, fileName)
+    }
+
+    override fun getFamilyName(): String = KotlinBundle.message("fix.opt_in.annotation.family")
+}
