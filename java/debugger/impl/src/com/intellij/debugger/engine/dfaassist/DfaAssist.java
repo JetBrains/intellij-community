@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist;
 
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -60,7 +61,9 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
       else {
         DebuggerSession session = myManager.getContext().getDebuggerSession();
         if (session != null) {
-          session.refresh(false);
+          DebuggerInvocationUtil.invokeLater(myProject, () -> {
+            session.refresh(false);
+          });
         }
       }
     }

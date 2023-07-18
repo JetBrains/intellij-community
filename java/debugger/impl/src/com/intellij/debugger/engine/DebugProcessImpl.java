@@ -2117,7 +2117,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     mySession = session;
     myWaitFor.down();
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(isInInitialState());
 
     myConnection = environment.getRemoteConnection();

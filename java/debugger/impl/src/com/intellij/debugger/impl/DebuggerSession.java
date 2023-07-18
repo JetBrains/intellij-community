@@ -432,7 +432,9 @@ public final class DebuggerSession implements AbstractDebuggerSession {
       String connectionName = DebuggerUtilsImpl.getConnectionDisplayName(remoteConnection);
       description.append("; ").append(JavaDebuggerBundle.message("status.waiting.attach.address", connectionName));
     }
-    getContextManager().setState(SESSION_EMPTY_CONTEXT, State.WAITING_ATTACH, Event.START_WAIT_ATTACH, description.toString());
+    DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+      getContextManager().setState(SESSION_EMPTY_CONTEXT, State.WAITING_ATTACH, Event.START_WAIT_ATTACH, description.toString());
+    });
   }
 
   private class MyDebugProcessListener extends DebugProcessAdapterImpl {

@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.DebugEnvironment;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.NameMapper;
+import com.intellij.debugger.*;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
@@ -38,6 +35,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -178,7 +176,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   @Override
   @Nullable
   public DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     DebugProcessEvents debugProcess = new DebugProcessEvents(myProject);
     DebuggerSession session = DebuggerSession.create(debugProcess, environment);
     ExecutionResult executionResult = session.getProcess().getExecutionResult();
@@ -186,9 +183,13 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       return null;
     }
     session.getContextManager().addListener(mySessionListener);
-    getContextManager()
-      .setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()),
-                session.getState(), DebuggerSession.Event.CONTEXT, null);
+
+    // the whole method may still be called from EDT, we need to update the state immediately in this case
+    UIUtil.invokeLaterIfNeeded(() -> {
+      getContextManager()
+        .setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()),
+                  session.getState(), DebuggerSession.Event.CONTEXT, null);
+    });
 
     final ProcessHandler processHandler = executionResult.getProcessHandler();
 

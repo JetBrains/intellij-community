@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
@@ -300,17 +299,9 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
                 .asyncAgent(true)
                 .create(javaCommandLineState.javaParameters)
 
-        lateinit var debuggerSession: DebuggerSession
-
-        UIUtil.invokeAndWaitIfNeeded(Runnable {
-            try {
-                val env = javaCommandLineState.environment
-                env.putUserData(DefaultDebugEnvironment.DEBUGGER_TRACE_MODE, traceMode)
-                debuggerSession = attachVirtualMachine(javaCommandLineState, env, debugParameters, false)
-            } catch (e: ExecutionException) {
-                fail(e.message)
-            }
-        })
+        val env = javaCommandLineState.environment
+        env.putUserData(DefaultDebugEnvironment.DEBUGGER_TRACE_MODE, traceMode)
+        val debuggerSession = attachVirtualMachine(javaCommandLineState, env, debugParameters, false)
 
         val processHandler = debuggerSession.process.processHandler
         debuggerSession.process.addProcessListener(object : ProcessAdapter() {
