@@ -285,6 +285,11 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
                                               pinned: List<RunnerAndConfigurationSettings>,
                                               shouldBeShown: (Boolean) -> Boolean = { true }
 ): SelectRunConfigurationWithInlineActions {
+
+/*  val e = event.withDataContext(CustomizedDataContext.create(event.dataContext) { dataId ->
+    if (RUN_CONFIGURATION_KEY.`is`(dataId)) conf else null
+  })*/
+
   val activeExecutor = getActiveExecutor(project, conf)
   val showRerunAndStopButtons = !conf.configuration.isAllowRunningInParallel && activeExecutor != null
   val inlineActions = ArrayList<AnAction>()
