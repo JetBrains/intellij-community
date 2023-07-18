@@ -657,7 +657,7 @@ public final class SwitchUtils {
     }
     unreachableElements.remove(reachableLabel);
     boolean canUnwrap = (statement instanceof PsiSwitchStatement && BreakConverter.from(statement) != null) ||
-                        (!(statement instanceof PsiSwitchStatement) &&
+                        (statement instanceof PsiSwitchExpression &&
                          labelStatement instanceof PsiSwitchLabeledRuleStatement ruleStatement &&
                          ruleStatement.getBody() instanceof PsiExpressionStatement);
     if (canUnwrap) {
