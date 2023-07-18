@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.highlighting.highlighters
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.openapi.project.Project
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
@@ -39,18 +40,35 @@ internal class VariableReferenceHighlighter(
             is KtKotlinPropertySymbol -> highlightProperty(symbol, expression)
             is KtLocalVariableSymbol -> {
                 val result = mutableListOf<HighlightInfo.Builder>()
-                if (!symbol.isVal) {
-                    HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)?.let { result.add(it) }
-                }
+                result.addIfNotNull(symbol.getHighlightingForMutableVar(expression))
                 HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE)?.let { result.add(it) }
                 result
             }
-            is KtSyntheticJavaPropertySymbol -> listOfNotNull(HighlightingFactory.highlightName (expression, KotlinHighlightInfoTypeSemanticNames.SYNTHETIC_EXTENSION_PROPERTY))
+            is KtSyntheticJavaPropertySymbol -> buildList {
+                addIfNotNull(HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.SYNTHETIC_EXTENSION_PROPERTY))
+                addIfNotNull(symbol.getHighlightingForMutableVar(expression))
+            }
             is KtValueParameterSymbol -> listOfNotNull(highlightValueParameter (symbol, expression))
             is KtEnumEntrySymbol -> listOfNotNull(HighlightingFactory.highlightName (expression, KotlinHighlightInfoTypeSemanticNames.ENUM_ENTRY))
+            is KtJavaFieldSymbol -> buildList {
+                if (symbol.isStatic) {
+                    addIfNotNull(HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY))
+                } else {
+                    addIfNotNull(HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.INSTANCE_PROPERTY))
+                }
+                addIfNotNull(symbol.getHighlightingForMutableVar(expression))
+            }
             else -> emptyList()
         }
+    }
 
+    context(KtAnalysisSession)
+    private fun KtVariableSymbol.getHighlightingForMutableVar(expression: KtSimpleNameExpression): HighlightInfo.Builder? {
+        return if (isVal) {
+            null
+        } else {
+            HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)
+        }
     }
 
     context(KtAnalysisSession)

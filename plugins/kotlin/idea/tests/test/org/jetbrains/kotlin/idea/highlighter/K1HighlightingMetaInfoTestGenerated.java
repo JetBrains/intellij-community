@@ -180,9 +180,19 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/InvokeCall.kt");
         }
 
+        @TestMetadata("javaFields.kt")
+        public void testJavaFields() throws Exception {
+            runTest("testData/highlighterMetaInfo/javaFields.kt");
+        }
+
         @TestMetadata("JavaRecord.kt")
         public void testJavaRecord() throws Exception {
             runTest("testData/highlighterMetaInfo/JavaRecord.kt");
+        }
+
+        @TestMetadata("javaStaticFields.kt")
+        public void testJavaStaticFields() throws Exception {
+            runTest("testData/highlighterMetaInfo/javaStaticFields.kt");
         }
 
         @TestMetadata("JavaTypes.kt")
