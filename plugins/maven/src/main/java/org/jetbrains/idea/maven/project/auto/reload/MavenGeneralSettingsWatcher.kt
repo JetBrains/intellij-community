@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener.Companion.subscribeOnVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toCanonicalPath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -21,12 +21,17 @@ class MavenGeneralSettingsWatcher(
   private val generalSettings get() = manager.generalSettings
   private val embeddersManager get() = manager.embeddersManager
 
-  private val settingsFiles: Set<String>
-    get() = collectSettingsFiles().map { FileUtil.toCanonicalPath(it) }.toSet()
-
-  private fun collectSettingsFiles() = sequence {
-    generalSettings.effectiveUserSettingsIoFile?.path?.let { yield(it) }
-    generalSettings.effectiveGlobalSettingsIoFile?.path?.let { yield(it) }
+  private fun collectSettingsFiles(): Set<String> {
+    val result = LinkedHashSet<String>()
+    val userSettingsFile = generalSettings.effectiveUserSettingsIoFile
+    if (userSettingsFile != null) {
+      result.add(userSettingsFile.toPath().toCanonicalPath())
+    }
+    val globalSettingsFile = generalSettings.effectiveGlobalSettingsIoFile
+    if (globalSettingsFile != null) {
+      result.add(globalSettingsFile.toPath().toCanonicalPath())
+    }
+    return result
   }
 
   private fun fireSettingsChange() {
@@ -45,7 +50,7 @@ class MavenGeneralSettingsWatcher(
   }
 
   fun subscribeOnSettingsFileChanges(parentDisposable: Disposable) {
-    val filesProvider = ReadAsyncSupplier.Builder(::settingsFiles)
+    val filesProvider = ReadAsyncSupplier.Builder(::collectSettingsFiles)
       .coalesceBy(this)
       .build(backgroundExecutor)
     subscribeOnVirtualFilesChanges(false, filesProvider, object : FilesChangesListener {
