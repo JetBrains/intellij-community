@@ -28,6 +28,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.project.auto.reload.MavenProjectAware;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ public final class MavenProjectsManagerWatcher {
 
   private final Project myProject;
   private MavenProjectsTree myProjectsTree;
-  private final MavenProjectsAware myProjectsAware;
+  private final MavenProjectAware myProjectAware;
   private final ExecutorService myBackgroundExecutor;
   private final Disposable myDisposable;
 
@@ -50,7 +51,7 @@ public final class MavenProjectsManagerWatcher {
     myProject = project;
     myProjectsTree = projectsTree;
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-    myProjectsAware = new MavenProjectsAware(project, projectsManager, myBackgroundExecutor);
+    myProjectAware = new MavenProjectAware(project, projectsManager, myBackgroundExecutor);
     myDisposable = Disposer.newDisposable(projectsManager, MavenProjectsManagerWatcher.class.toString());
   }
 
@@ -61,8 +62,8 @@ public final class MavenProjectsManagerWatcher {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     registerGeneralSettingsWatcher(projectsManager, myBackgroundExecutor, myDisposable);
     ExternalSystemProjectTracker projectTracker = ExternalSystemProjectTracker.getInstance(myProject);
-    projectTracker.register(myProjectsAware, projectsManager);
-    projectTracker.activate(myProjectsAware.getProjectId());
+    projectTracker.register(myProjectAware, projectsManager);
+    projectTracker.activate(myProjectAware.getProjectId());
   }
 
   @TestOnly

@@ -827,9 +827,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     doScheduleUpdateProjects(List.of(), spec);
   }
 
-  Promise<Void> scheduleUpdate(@NotNull List<VirtualFile> filesToUpdate,
-                               @NotNull List<VirtualFile> filesToDelete,
-                               MavenImportSpec spec) {
+  @ApiStatus.Internal
+  public Promise<Void> scheduleUpdate(
+    @NotNull List<VirtualFile> filesToUpdate,
+    @NotNull List<VirtualFile> filesToDelete,
+    MavenImportSpec spec
+  ) {
 
     if (MavenUtil.isLinearImportEnabled()) {
       return MavenImportingManager.getInstance(myProject).scheduleUpdate(filesToUpdate, filesToDelete, spec).getFinishPromise()
