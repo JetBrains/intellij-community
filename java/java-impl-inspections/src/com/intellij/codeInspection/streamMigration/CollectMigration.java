@@ -922,6 +922,10 @@ class CollectMigration extends BaseStreamApiMigration {
       if (!(candidate.myCandidate instanceof PsiCallExpression callExpression)) return null;
       PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(candidate.myCandidate.getType());
       if (!InheritanceUtil.isInheritor(targetClass, JAVA_UTIL_COLLECTION)) return null;
+      if ("java.util.concurrent.PriorityBlockingQueue".equals(targetClass.getQualifiedName()) ||
+          "java.util.PriorityQueue".equals(targetClass.getQualifiedName())) {
+        return null;
+      }
       if (!ConstructionUtils.isPrepopulatedCollectionInitializer(callExpression)) return null;
       if (JAVA_UTIL_HASH_SET.equals(targetClass.getQualifiedName()) && intermediateSteps.equals(".distinct()")) {
         intermediateSteps = "";
