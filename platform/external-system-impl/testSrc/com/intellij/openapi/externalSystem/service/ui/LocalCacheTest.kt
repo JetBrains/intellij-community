@@ -41,7 +41,7 @@ class LocalCacheTest {
   @Test
   fun `test basic local cache concurrency`() {
     val attemptNum = 1_000
-    val threadNum = 10
+    val threadNum = maxOf(Runtime.getRuntime().availableProcessors(), 10)
     repeat(attemptNum) {
       val cache = BasicLocalCache<Int>()
       val latch = CountDownLatch(1)
@@ -62,20 +62,20 @@ class LocalCacheTest {
   @Test
   fun `test async local cache concurrency`() {
     val attemptNum = 1_000
-    val threadNum = 1_000
+    val coroutineNum = 1_000
     repeat(attemptNum) {
       runBlocking {
         val cache = AsyncLocalCache<Int>()
         val counter = AtomicInteger(0)
         withContext(Dispatchers.Default) {
-          repeat(threadNum) {
+          repeat(coroutineNum) {
             launch {
               val stamp = counter.incrementAndGet()
               cache.getOrCreateValue(stamp.toLong()) { stamp }
             }
           }
         }
-        Assertions.assertEquals(threadNum, cache.getValue())
+        Assertions.assertEquals(coroutineNum, cache.getValue())
       }
     }
   }
@@ -84,13 +84,13 @@ class LocalCacheTest {
   fun `test async local cache concurrent init`() {
     val initValue = "text"
     val attemptNum = 1_000
-    val threadNum = 1_000
+    val coroutineNum = 1_000
     repeat(attemptNum) {
       runBlocking {
         val cache = AsyncLocalCache<String>()
         val counter = AtomicInteger(0)
         withContext(Dispatchers.Default) {
-          repeat(threadNum) {
+          repeat(coroutineNum) {
             launch {
               Assertions.assertEquals(initValue, cache.getOrCreateValue(0) {
                 counter.incrementAndGet()
