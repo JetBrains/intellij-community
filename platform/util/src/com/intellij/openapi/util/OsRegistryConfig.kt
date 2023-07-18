@@ -9,7 +9,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.File
 import kotlin.Pair
 
-// todo stateflow
 @Internal
 interface OsRegistryConfig {
   companion object {
