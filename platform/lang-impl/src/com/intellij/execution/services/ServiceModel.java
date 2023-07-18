@@ -94,6 +94,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
   CancellablePromise<Boolean> initRoots() {
     return getInvoker().compute(() -> {
       if (!myRootsInitialized) {
+        myRoots.clear();
         myRoots.addAll(doGetRoots());
         myRootsInitialized = true;
         return true;

@@ -13,6 +13,7 @@ import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -39,6 +40,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.UIBundle;
@@ -110,16 +112,6 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       Collection<ServiceViewContributor<?>> toolWindowContributors = myGroups.get(toolWindowId);
       updateToolWindow(toolWindowId, ContainerUtil.intersects(activeContributors, toolWindowContributors), false);
     }
-  }
-
-  private void initRoots() {
-    myModel.getInvoker().invokeLater(() -> {
-      myModel.initRoots().onSuccess(result -> {
-        if (result) {
-          registerToolWindows(myGroups.keySet());
-        }
-      });
-    });
   }
 
   private Set<? extends ServiceViewContributor<?>> getActiveContributors() {
@@ -735,7 +727,20 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     for (ServiceViewContributor<?> contributor : CONTRIBUTOR_EP_NAME.getExtensionList()) {
       addToGroup(contributor);
     }
-    initRoots();
+
+    registerToolWindows(myGroups.keySet());
+
+    Disposable disposable = Disposer.newDisposable();
+    Disposer.register(myProject, disposable);
+    myProject.getMessageBus().connect(disposable).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
+      @Override
+      public void toolWindowShown(@NotNull ToolWindow toolWindow) {
+        if (myGroups.containsKey(toolWindow.getId())) {
+          Disposer.dispose(disposable);
+          myModel.getInvoker().invokeLater(() -> myModel.initRoots());
+        }
+      }
+    });
   }
 
   private static void clearViewStateIfNeeded(@NotNull State state) {
