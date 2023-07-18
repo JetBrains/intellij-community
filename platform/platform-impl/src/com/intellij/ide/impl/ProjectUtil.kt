@@ -15,6 +15,7 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
@@ -526,7 +527,7 @@ object ProjectUtil {
         continue
       }
 
-      LOG.debug("$location: open file ", file)
+      LOG.debug { "$location: open file $file" }
       if (projectToClose == null) {
         val processor = CommandLineProjectOpenProcessor.getInstanceIfExists()
         if (processor != null) {

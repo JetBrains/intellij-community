@@ -29,7 +29,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.ui.*
-import com.intellij.ui.mac.MacOSApplicationProvider
+import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.svg.createSvgCacheManager
 import com.intellij.ui.svg.svgCache
@@ -352,9 +352,11 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
     // this must happen after locking system dirs
     val log = logDeferred.await()
 
-    subtask("system libs setup") {
-      if (SystemInfoRt.isWindows && System.getProperty("winp.folder.preferred") == null) {
-        System.setProperty("winp.folder.preferred", PathManager.getTempPath())
+    if (SystemInfoRt.isWindows) {
+      subtask("system libs setup") {
+        if (System.getProperty("winp.folder.preferred") == null) {
+          System.setProperty("winp.folder.preferred", PathManager.getTempPath())
+        }
       }
     }
 
@@ -364,14 +366,16 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
 
     val appInfo = appInfoDeferred.await()
     launch(CoroutineName("essential IDE info logging")) {
-      logEssentialInfoAboutIde(log, appInfo, args)
+      logEssentialInfoAboutIde(log = log, appInfo = appInfo, args = args)
     }
 
-    if (!AppMode.isHeadless() && !AppMode.isRemoteDevHost() && SystemInfoRt.isMac) {
+    if (SystemInfoRt.isMac && !AppMode.isHeadless() && !AppMode.isRemoteDevHost()) {
       // JNA and Swing are used - invoke only after both are loaded
       initUiDeferred.join()
       launch(CoroutineName("mac app init")) {
-        MacOSApplicationProvider.initApplication(log)
+        runCatching {
+          initMacApplication()
+        }.getOrLogException(log)
       }
     }
   }
