@@ -166,8 +166,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
 
   @ApiStatus.Internal
   public boolean needAlignChanges() {
-    return Boolean.TRUE.equals(myRequest.getUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF))
-           || getTextSettings().isEnableAligningChangesMode();
+    Boolean forcedValue = myRequest.getUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF);
+    if (forcedValue != null) return Boolean.TRUE.equals(forcedValue);
+
+    return getTextSettings().isEnableAligningChangesMode();
   }
 
   @NotNull

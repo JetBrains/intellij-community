@@ -1243,6 +1243,10 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
       super(new BorderLayout());
     }
 
+    public @NotNull DiffRequestProcessor getProcessor() {
+      return DiffRequestProcessor.this;
+    }
+
     @Override
     public Dimension getPreferredSize() {
       Dimension windowSize = DiffUtil.getDefaultDiffPanelSize();
