@@ -40,7 +40,9 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         val declaration = positionContext.position.getCurrentDeclarationAtCaret() ?: return
         val referenceScope = referenceScope(declaration) ?: return
 
-        referenceScope.forEachDescendantOfType<KtNameReferenceExpression> { refExpr ->
+        referenceScope.forEachDescendantOfType<KtNameReferenceExpression>(
+            canGoInside = { it !is KtPackageDirective && it !is KtImportDirective }
+        ) { refExpr ->
             ProgressManager.checkCanceled()
             processReference(referenceScope, declaration, refExpr)
         }
