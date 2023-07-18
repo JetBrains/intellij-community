@@ -535,14 +535,18 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   @Suppress("SpellCheckingInspection")
   @Test fun `merging VM options`() {
     val oldConfigDir = createConfigDir(version = "2023.1")
-    oldConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx4g", "-Dsome.prop=old.val"))
-
+    val oldVmOptionsFile = oldConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx4g", "-Dsome.prop=old.val"))
     val newConfigDir = createConfigDir(version = "2023.2")
     val newVmOptionsFile = newConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx2048m", "-Dsome.prop=new.val"))
-
     val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true; merge = true }
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
 
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
     assertThat(newVmOptionsFile.readLines()).containsExactly("-Xmx4g", "-Dsome.prop=new.val")
+
+    oldVmOptionsFile.writeLines(listOf("-Xmx1g"))
+    newVmOptionsFile.writeLines(listOf("-Xmx2048m", "-Dunique.prop=some.val"))
+
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
+    assertThat(newVmOptionsFile.readLines()).containsExactly("-Xmx2048m", "-Dunique.prop=some.val")
   }
 }
