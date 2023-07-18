@@ -343,6 +343,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.canGetConstantPool();
   }
 
+  public boolean canGetSourceDebugExtension() { return myVirtualMachine.canGetSourceDebugExtension(); }
+
   public boolean canGetSyntheticAttribute() {
     return myVirtualMachine.canGetSyntheticAttribute();
   }
