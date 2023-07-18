@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.idea.base.highlighting.HighlightingFactory
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
-import org.jetbrains.kotlin.idea.base.highlighting.isNameHighlightingEnabled
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -29,7 +28,6 @@ internal class VariableReferenceHighlighter(
 
     context(KtAnalysisSession)
     private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression): List<HighlightInfo.Builder> {
-        if (!expression.project.isNameHighlightingEnabled) return emptyList()
         if (expression.isAssignmentReference()) return emptyList()
         if (expression.isByNameArgumentReference()) return emptyList()
         if (expression.parent is KtInstanceExpressionWithLabel) return emptyList()

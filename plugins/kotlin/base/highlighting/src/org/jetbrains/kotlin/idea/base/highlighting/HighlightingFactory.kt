@@ -16,16 +16,13 @@ object HighlightingFactory {
     return null
   }
 
-  fun highlightName(project: Project, textRange: TextRange, highlightInfoType: HighlightInfoType, message: String? = null): HighlightInfo.Builder? {
-      if (project.isNameHighlightingEnabled) {
-          val builder = HighlightInfo.newHighlightInfo(highlightInfoType)
-          if (message != null) {
-              builder.descriptionAndTooltip(message)
-          }
-          val annotation = builder
-              .range(textRange)
-          return annotation
+  fun highlightName(project: Project, textRange: TextRange, highlightInfoType: HighlightInfoType, message: String? = null): HighlightInfo.Builder {
+      val builder = HighlightInfo.newHighlightInfo(highlightInfoType)
+      if (message != null) {
+          builder.descriptionAndTooltip(message)
       }
-    return null
+      val annotation = builder
+          .range(textRange)
+      return annotation
   }
 }

@@ -18,7 +18,7 @@ abstract class AbstractHighlightingVisitor(protected val holder: HighlightInfoHo
     }
 
     protected fun highlightName(project: Project, textRange: TextRange, highlightInfoType: HighlightInfoType, message: String? = null) {
-        holder.add(HighlightingFactory.highlightName(project, textRange, highlightInfoType, message)?.create())
+        holder.add(HighlightingFactory.highlightName(project, textRange, highlightInfoType, message).create())
     }
 
     protected fun highlightNamedDeclaration(declaration: KtNamedDeclaration, attributesKey: HighlightInfoType) {
