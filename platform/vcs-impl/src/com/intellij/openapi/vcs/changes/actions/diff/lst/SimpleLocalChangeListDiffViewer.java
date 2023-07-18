@@ -523,6 +523,11 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
       @Override
       public void mouseMoved(MouseEvent e) {
+        if (!myAllowExcludeChangesFromCommit) {
+          destroyHoverHighlighter();
+          return;
+        }
+
         EditorEx editor = getEditor(mySide);
         EditorGutterComponentEx gutter = editor.getGutterComponentEx();
         int xOffset = DiffUtil.isMirrored(editor) ? gutter.getWidth() - e.getX() : e.getX();
