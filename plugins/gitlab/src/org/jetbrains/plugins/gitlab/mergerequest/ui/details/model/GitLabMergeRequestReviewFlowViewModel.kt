@@ -223,11 +223,8 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   }
 
   override fun removeReviewer(reviewer: GitLabUserDTO) = runAction {
-    val newReviewers = mutableListOf<GitLabUserDTO>().apply {
-      addAll(reviewers.value)
-      remove(reviewer)
-    }
-
+    val newReviewers = reviewers.first().toMutableList()
+    newReviewers.removeIf { it.id == reviewer.id }
     mergeRequest.setReviewers(newReviewers) // TODO: implement via CollectionDelta
   }
 
