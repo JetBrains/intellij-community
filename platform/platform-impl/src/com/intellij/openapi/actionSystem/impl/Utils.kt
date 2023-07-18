@@ -304,7 +304,7 @@ object Utils {
       return null
     }
     val mainMenuOrToolbarFirstTime = checkMainMenuOrToolbarFirstTime && (ActionPlaces.MAIN_MENU == place || ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR == place)
-    val maxTime = if (mainMenuOrToolbarFirstTime) 5000 else Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 20)
+    val maxTime = if (mainMenuOrToolbarFirstTime) 5000 else Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 50)
     return if (maxTime < 1) null else FastTrackAwareEdtExecutor(maxTime)
   }
 
