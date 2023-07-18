@@ -236,7 +236,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             if (kotlinVersionsAndModules.filter { it.key != kotlinVersion.artifactVersion }.isNotEmpty()) {
                 addVersionToSettings = false
             } else {
-                // If we have any version in the root nodule, don't need to add the version to the settings file
+                // If we have any version in the root module, don't need to add the version to the settings file
                 addVersionToSettings = !kotlinVersionsAndModules.values.flatMap { it.keys }.contains(rootModule.name)
             }
             if (addVersionToSettings) {
@@ -249,10 +249,10 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             if (topLevelBuildScript != null) {
                 // rootModule is just <PROJECT_NAME>, but we need <PROJECT_NAME>.main:
                 val rootModuleName = rootModule.name
-                val firstSourceRootNodule = modulesWithTheSameKotlin?.get(rootModuleName)
-                firstSourceRootNodule?.let {
+                val firstSourceRootModule = modulesWithTheSameKotlin?.get(rootModuleName)
+                firstSourceRootModule?.let {
                     // We don't cut a Kotlin version from a top build script
-                    modulesToRemoveKotlinVersion.remove(firstSourceRootNodule)
+                    modulesToRemoveKotlinVersion.remove(firstSourceRootModule)
                     addVersionToModuleBuildScript = false
                 }
 
@@ -294,6 +294,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                         project,
                         KotlinIdeaGradleBundle.message("error.text.cannot.find.build.gradle.file.for.module", rootModule.name)
                     )
+                    return filesToOpen
                 }
             }
         }
@@ -321,6 +322,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                     project,
                     KotlinIdeaGradleBundle.message("error.text.cannot.find.build.gradle.file.for.module", module.name)
                 )
+                return filesToOpen
             }
         }
         for (file in filesToOpen) {

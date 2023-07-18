@@ -81,11 +81,8 @@ class KotlinBuildScriptManipulator(
     override fun findAndRemoveKotlinVersionFromBuildScript(): Boolean {
         val pluginsBlock = scriptFile.findScriptInitializer("plugins")?.getBlock()
         return pluginsBlock?.let {
-            if (!it.findAndRemoveVersionExpressionInPluginsGroup("kotlin(\"jvm\")")) {
-                it.findAndRemoveVersionExpressionInPluginsGroup("id(\"org.jetbrains.kotlin.jvm\")")
-            } else {
-                true
-            }
+            it.findAndRemoveVersionExpressionInPluginsGroup("kotlin(\"jvm\")") ||
+                    it.findAndRemoveVersionExpressionInPluginsGroup("id(\"org.jetbrains.kotlin.jvm\")")
         } ?: false
     }
 
