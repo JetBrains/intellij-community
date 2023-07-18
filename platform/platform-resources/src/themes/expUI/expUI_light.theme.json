@@ -557,6 +557,7 @@
       "codeBorderColor": "Grey6",
       "linkForeground": "Blue7",
       "imageBorderColor": "Grey4",
+      "animationBackground": "Grey13",
       "Button": {
         "foreground": "Grey14",
         "startBackground": "Grey4",

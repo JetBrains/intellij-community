@@ -120,7 +120,8 @@
       "codeBackground": "Grey14",
       "codeBorderColor": "Grey8",
       "linkForeground": "Blue2",
-      "imageBorderColor": "Grey11",
+      "imageBorderColor": "Grey12",
+      "animationBackground": "Grey13",
       "Button": {
         "foreground": "Grey3",
         "startBackground": "Grey11",

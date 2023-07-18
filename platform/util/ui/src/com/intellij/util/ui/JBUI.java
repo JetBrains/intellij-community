@@ -1777,6 +1777,10 @@ public final class JBUI {
         return JBColor.namedColor("GotItTooltip.imageBorderColor", background(useContrastColors));
       }
 
+      public static @NotNull Color animationBackground(boolean useContrastColors) {
+        return JBColor.namedColor("GotItTooltip.animationBackground", background(useContrastColors));
+      }
+
       public static @NotNull Color buttonBackgroundContrast() {
         return JBColor.namedColor("Tooltip.Learning.spanBackground", 0x0D5CBD, 0x0250B0);
       }
