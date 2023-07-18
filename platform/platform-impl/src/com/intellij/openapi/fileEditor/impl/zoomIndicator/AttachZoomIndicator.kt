@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl.zoomIndicator
 
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
@@ -50,8 +51,9 @@ private class AttachZoomIndicator : EditorFactoryListener {
     val editor = event.editor
     val project = event.editor.project ?: return
     if (editor.isDisposed || project.isDisposed) return
-    if (service(project).editor == editor) {
-      service(project).cancelCurrentPopup()
+    val manager = project.serviceIfCreated<ZoomIndicatorManager>()
+    if (manager?.editor == editor) {
+      manager.cancelCurrentPopup()
     }
   }
 
