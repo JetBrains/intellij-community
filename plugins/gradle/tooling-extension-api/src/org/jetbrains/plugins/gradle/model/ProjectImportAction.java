@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.util.Consumer;
 import com.intellij.util.ReflectionUtilRt;
 import org.gradle.api.Action;
 import org.gradle.tooling.BuildAction;
@@ -36,6 +35,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 
 /**
  * @author Vladislav.Soroka
@@ -532,7 +532,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       super.applyPathsConverter(pathsConverter);
       BuildEnvironment buildEnvironment = getBuildEnvironment();
       if (buildEnvironment != null) {
-        pathsConverter.consume(buildEnvironment);
+        pathsConverter.accept(buildEnvironment);
       }
       myBuildsKeyPrefixesMapping = new HashMap<>();
       convertPaths(pathsConverter, getMainBuild());
@@ -543,7 +543,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
     private void convertPaths(@NotNull Consumer<Object> fileMapper, @NotNull Build build) {
       String originalKey = getBuildKeyPrefix(build.getBuildIdentifier());
-      fileMapper.consume(build);
+      fileMapper.accept(build);
       String currentKey = getBuildKeyPrefix(build.getBuildIdentifier());
       if (!originalKey.equals(currentKey)) {
         myBuildsKeyPrefixesMapping.put(currentKey, originalKey);
