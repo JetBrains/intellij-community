@@ -57,7 +57,7 @@ public interface EditorGutter {
    *
    * @see #setLineNumberConverter(LineNumberConverter, LineNumberConverter)
    */
-  default void setLineNumberConverter(@NotNull LineNumberConverter converter) {
+  default void setLineNumberConverter(@Nullable LineNumberConverter converter) {
     setLineNumberConverter(converter, null);
   }
 
@@ -65,7 +65,8 @@ public interface EditorGutter {
    * Changes how line numbers are displayed in the gutter.
    *
    * @param primaryConverter    converter for primary line number shown in gutter
+   *                            Pass {@code null} to show line numbers according to {@link EditorSettings#getLineNumerationType()}.
    * @param additionalConverter if not {@code null}, defines an additional column of numbers to be displayed in the gutter
    */
-  void setLineNumberConverter(@NotNull LineNumberConverter primaryConverter, @Nullable LineNumberConverter additionalConverter);
+  void setLineNumberConverter(@Nullable LineNumberConverter primaryConverter, @Nullable LineNumberConverter additionalConverter);
 }

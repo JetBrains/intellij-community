@@ -62,8 +62,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ex.lineNumber.HybridLineNumberConverter;
-import com.intellij.openapi.ui.ex.lineNumber.RelativeLineNumberConverter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -114,6 +112,8 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.openapi.ui.ex.lineNumber.LineNumberConvertersKt.getStandardLineNumberConverter;
 
 /**
  * Gutter content (left to right):
@@ -1718,21 +1718,17 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return myEditor.getSettings().isLineNumbersShown();
   }
 
-  @NotNull LineNumberConverter getPrimaryLineNumberConverter() {
+  @Override
+  public @NotNull LineNumberConverter getPrimaryLineNumberConverter() {
     if (myLineNumberConverter != null) return myLineNumberConverter;
 
-    EditorSettings.LineNumerationType numeration = myEditor.getSettings().getLineNumerationType();
-    switch (numeration) {
-      case RELATIVE -> {
-        return RelativeLineNumberConverter.INSTANCE;
-      }
-      case HYBRID -> {
-        return HybridLineNumberConverter.INSTANCE;
-      }
-      default -> {
-        return LineNumberConverter.DEFAULT;
-      }
-    }
+    EditorSettings.LineNumerationType type = myEditor.getSettings().getLineNumerationType();
+    return getStandardLineNumberConverter(type);
+  }
+
+  @Override
+  public @Nullable LineNumberConverter getAdditionalLineNumberConverter() {
+    return myAdditionalLineNumberConverter;
   }
 
   @Override
@@ -2421,9 +2417,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
-  public void setLineNumberConverter(@NotNull LineNumberConverter primaryConverter, @Nullable LineNumberConverter additionalConverter) {
+  public void setLineNumberConverter(@Nullable LineNumberConverter primaryConverter, @Nullable LineNumberConverter additionalConverter) {
     myLineNumberConverter = primaryConverter;
     myAdditionalLineNumberConverter = additionalConverter;
+    myEditorGutterListeners.getMulticaster().lineNumberConvertersChanged();
     repaint();
   }
 

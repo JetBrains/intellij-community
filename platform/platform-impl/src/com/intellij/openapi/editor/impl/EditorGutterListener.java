@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 public interface EditorGutterListener extends EventListener {
-
   default void textAnnotationAdded(@NotNull TextAnnotationGutterProvider provider) { }
 
   default void textAnnotationRemoved(@NotNull TextAnnotationGutterProvider provider) { }
@@ -19,4 +18,6 @@ public interface EditorGutterListener extends EventListener {
 
   @ApiStatus.Experimental
   default void hoverEnded(@NotNull EditorGutterHoverEvent event) { }
+
+  default void lineNumberConvertersChanged() { }
 }
