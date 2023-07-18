@@ -16784,6 +16784,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/lastPropertyInPrimaryConstructorWithComments.kt");
         }
 
+        @TestMetadata("nestedPrivateObject.kt")
+        public void testNestedPrivateObject() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/nestedPrivateObject.kt");
+        }
+
         @TestMetadata("privateProperty.kt")
         public void testPrivateProperty() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/privateProperty.kt");
