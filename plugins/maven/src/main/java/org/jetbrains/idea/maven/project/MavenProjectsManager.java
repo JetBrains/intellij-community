@@ -748,7 +748,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }
     newTree.addListenersFrom(myProjectsTree);
     myProjectsTree = newTree;
-    myWatcher.setProjectsTree(newTree);
+    myWatcher.setProjectTree(newTree);
   }
 
   @ApiStatus.Internal

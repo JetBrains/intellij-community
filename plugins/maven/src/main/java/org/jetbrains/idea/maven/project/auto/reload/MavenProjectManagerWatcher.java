@@ -6,47 +6,45 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 @ApiStatus.Internal
 public final class MavenProjectManagerWatcher {
 
   private final Project myProject;
-  private MavenProjectsTree myProjectsTree;
+  private @NotNull MavenProjectsTree myProjectTree;
+
   private final MavenProjectAware myProjectAware;
   private final MavenRenameModuleWatcher myRenameModuleWatcher;
+  private final MavenProjectRootWatcher myProjectRootWatcher;
   private final ExecutorService myBackgroundExecutor;
   private final Disposable myDisposable;
 
-  public MavenProjectManagerWatcher(Project project, MavenProjectsTree projectsTree) {
+  public MavenProjectManagerWatcher(Project project, @NotNull MavenProjectsTree projectTree) {
     myBackgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MavenProjectsManagerWatcher.backgroundExecutor", 1);
     myProject = project;
-    myProjectsTree = projectsTree;
+    myProjectTree = projectTree;
+
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     myProjectAware = new MavenProjectAware(project, projectsManager, myBackgroundExecutor);
     myRenameModuleWatcher = new MavenRenameModuleWatcher();
+    myProjectRootWatcher = new MavenProjectRootWatcher(projectsManager, this);
     myDisposable = Disposer.newDisposable(projectsManager, MavenProjectManagerWatcher.class.toString());
   }
 
   public synchronized void start() {
     MessageBusConnection busConnection = myProject.getMessageBus().connect(myDisposable);
     busConnection.subscribe(ProjectTopics.MODULES, myRenameModuleWatcher);
-    busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
+    busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, myProjectRootWatcher);
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     MavenGeneralSettingsWatcher.registerGeneralSettingsWatcher(projectsManager, myBackgroundExecutor, myDisposable);
     ExternalSystemProjectTracker projectTracker = ExternalSystemProjectTracker.getInstance(myProject);
@@ -63,32 +61,11 @@ public final class MavenProjectManagerWatcher {
     Disposer.dispose(myDisposable);
   }
 
-  public void setProjectsTree(MavenProjectsTree tree) {
-    myProjectsTree = tree;
+  public @NotNull MavenProjectsTree getProjectTree() {
+    return myProjectTree;
   }
 
-  private class MyRootChangesListener implements ModuleRootListener {
-    @Override
-    public void rootsChanged(@NotNull ModuleRootEvent event) {
-      // todo is this logic necessary?
-      List<VirtualFile> existingFiles = myProjectsTree.getProjectsFiles();
-      List<VirtualFile> newFiles = new ArrayList<>();
-      List<VirtualFile> deletedFiles = new ArrayList<>();
-
-      for (VirtualFile f : myProjectsTree.getExistingManagedFiles()) {
-        if (!existingFiles.contains(f)) {
-          newFiles.add(f);
-        }
-      }
-
-      for (VirtualFile f : existingFiles) {
-        if (!f.isValid()) deletedFiles.add(f);
-      }
-
-      if (!deletedFiles.isEmpty() || !newFiles.isEmpty()) {
-        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-        projectsManager.scheduleUpdate(newFiles, deletedFiles, new MavenImportSpec(false, false, true));
-      }
-    }
+  public void setProjectTree(@NotNull MavenProjectsTree projectTree) {
+    myProjectTree = projectTree;
   }
 }
