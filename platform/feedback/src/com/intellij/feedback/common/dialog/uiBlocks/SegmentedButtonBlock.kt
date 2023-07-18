@@ -36,7 +36,7 @@ class SegmentedButtonBlock(@NlsContexts.Label private val myMainLabel: String?,
         }.bottomGap(BottomGap.SMALL)
       }
       row {
-        segmentedButton(myItems) { it }
+        segmentedButton(myItems) { text = it }
           .apply {
             maxButtonsCount(myItems.size)
           }.customize(UnscaledGaps(top = IntelliJSpacingConfiguration().verticalComponentGap))

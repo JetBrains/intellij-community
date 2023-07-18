@@ -35,7 +35,7 @@ internal class ValidationPanel(parentDisposable: Disposable) {
       }
 
       row("Segmented Button:") {
-        val segmentedButton = segmentedButton((1..4).toList()) { "Item $it" }
+        val segmentedButton = segmentedButton((1..4).toList()) { text = "Item $it" }
           .validation {
             enabledIf(cbValidationEnabled.selected)
             addApplyRule("Cannot be empty") { it.selectedItem == null }

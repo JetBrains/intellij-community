@@ -54,7 +54,7 @@ abstract class DiffToolChooser(private val project: Project?) : DumbAwareAction(
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent =
     panel {
       row {
-        segmentedButton(getTools(), DiffTool::getName).apply {
+        segmentedButton(getTools()) { text = it.getName() }.apply {
           selectedItem = getActiveTool()
           whenItemSelected { if (project != null) onSelected(project, it) }
         }.customize(UnscaledGaps.EMPTY)

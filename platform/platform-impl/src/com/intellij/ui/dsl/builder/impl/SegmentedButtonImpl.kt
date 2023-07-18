@@ -9,8 +9,8 @@ import com.intellij.openapi.observable.util.whenItemSelected
 import com.intellij.openapi.observable.util.whenItemSelectedFromUi
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.components.NO_TOOLTIP_RENDERER
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.bind
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelected
@@ -25,20 +25,25 @@ import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
+import javax.swing.Icon
 
 @ApiStatus.Internal
-internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig,
-                                      parent: RowImpl,
-                                      private val renderer: (T) -> @Nls String,
-                                      tooltipRenderer: (T) -> @Nls String? = NO_TOOLTIP_RENDERER
-) : PlaceholderBaseImpl<SegmentedButton<T>>(parent), SegmentedButton<T> {
+internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig, parent: RowImpl,
+                                      private val renderer: SegmentedButton.ItemPresentation.(T) -> Unit) : PlaceholderBaseImpl<SegmentedButton<T>>(
+  parent), SegmentedButton<T> {
 
-  private var items: Collection<T> = emptyList()
+  override var items: Collection<T> = emptyList()
+    set(value) {
+      field = value
+      rebuildPresentations()
+      rebuildUI()
+    }
+
   private var property: ObservableProperty<T>? = null
   private var maxButtonsCount = SegmentedButton.DEFAULT_MAX_BUTTONS_COUNT
 
   private val comboBox = ComboBox<T>()
-  private val segmentedButtonComponent = SegmentedButtonComponent(items, renderer, tooltipRenderer)
+  private val segmentedButtonComponent = SegmentedButtonComponent(this)
 
   private val cellValidation = CompoundCellValidation(
     CellValidationImpl(dialogPanelConfig, this, comboBox),
@@ -58,7 +63,6 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig,
         else -> null
       }
     }
-
     set(value) {
       when (component) {
         comboBox -> comboBox.selectedItem = value
@@ -66,10 +70,12 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig,
       }
     }
 
+  internal val presentations: MutableMap<T, SegmentedButton.ItemPresentation> = mutableMapOf()
+
   init {
-    comboBox.renderer = listCellRenderer { text = renderer(it) }
+    comboBox.renderer = listCellRenderer { text = presentations[it]!!.text }
     segmentedButtonComponent.isOpaque = false
-    rebuild()
+    rebuildUI()
   }
 
   override fun align(align: Align): SegmentedButton<T> {
@@ -108,17 +114,19 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  override fun items(items: Collection<T>): SegmentedButton<T> {
-    this.items = items
-    rebuild()
-    return this
+  override fun update(vararg items: T) {
+    presentations.keys.removeAll(items.toSet())
+    rebuildPresentations()
+
+    // Can be improved later if needed
+    rebuildUI()
   }
 
   override fun bind(property: ObservableMutableProperty<T>): SegmentedButton<T> {
     this.property = property
     comboBox.bind(property)
     segmentedButtonComponent.bind(property)
-    rebuild()
+    rebuildUI()
     return this
   }
 
@@ -136,7 +144,7 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig,
 
   override fun maxButtonsCount(value: Int): SegmentedButton<T> {
     maxButtonsCount = value
-    rebuild()
+    rebuildUI()
     return this
   }
 
@@ -150,7 +158,24 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig,
     segmentedButtonComponent.spacing = spacing
   }
 
-  private fun rebuild() {
+  private fun rebuildPresentations() {
+    val newPresentations = items.map { it to (presentations[it] ?: createPresentation(it)) }.toList()
+    presentations.clear()
+    presentations.putAll(newPresentations)
+  }
+
+  private fun createPresentation(item: T): ItemPresentationImpl {
+    val result = ItemPresentationImpl()
+    result.renderer(item)
+
+    if (result.text.isNullOrEmpty()) {
+      throw UiDslException("Empty text in segmented button presentation is not allowed")
+    }
+
+    return result
+  }
+
+  private fun rebuildUI() {
     if (ScreenReader.isActive() || items.size > maxButtonsCount) {
       fillComboBox()
       component = comboBox
@@ -173,9 +198,13 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig,
 
   private fun fillSegmentedButtonComponent() {
     val oldSelectedItem = selectedItem
-    segmentedButtonComponent.items = items
+    segmentedButtonComponent.rebuild()
     if (oldSelectedItem != null && items.contains(oldSelectedItem)) {
       segmentedButtonComponent.selectedItem = oldSelectedItem
     }
   }
 }
+
+private data class ItemPresentationImpl(override var text: @Nls String? = null,
+                                        override var toolTip: @Nls String? = null,
+                                        override var icon: Icon? = null) : SegmentedButton.ItemPresentation

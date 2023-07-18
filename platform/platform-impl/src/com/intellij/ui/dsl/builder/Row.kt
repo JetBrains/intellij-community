@@ -229,23 +229,21 @@ interface Row {
                     @NonNls actionPlace: String = ActionPlaces.UNKNOWN,
                     icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton>
 
-  @Deprecated("Use overloaded method", level = DeprecationLevel.HIDDEN)
+  @Deprecated("Use overloaded method. API is different and text value must be assigned in new version of renderer",
+              level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> @Nls String): Cell<SegmentedButtonToolbar>
 
-  /**
-   * @see [SegmentedButton]
-   */
+  @Deprecated("Use another segmentedButton method instead", level = DeprecationLevel.HIDDEN)
   @ApiStatus.Experimental
   fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String): SegmentedButton<T>
 
   /**
-   * todo Signature will be changed: more useful data like icons will be added here
-   *
-   * @see [SegmentedButton]
+   * [renderer] converts values to visual presentation. Use [SegmentedButton.update] if text, hint, or other properties in model are changed
+   * and should be re-rendered
    */
   @ApiStatus.Experimental
-  fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String, tooltipRenderer: (T) -> @Nls String?): SegmentedButton<T>
+  fun <T> segmentedButton(items: Collection<T>, renderer: SegmentedButton.ItemPresentation.(T) -> Unit): SegmentedButton<T>
 
   /**
    * Creates JBTabbedPane which shows only tabs without tab content. To add a new tab call something like

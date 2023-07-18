@@ -193,7 +193,7 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
 
     override fun addFieldsBefore(layout: Panel) {
       layout.row(DevKitBundle.message("module.builder.type")) {
-        segmentedButton(listOf(PluginType.PLUGIN, PluginType.THEME)) { it.messagePointer.get() }
+        segmentedButton(listOf(PluginType.PLUGIN, PluginType.THEME)) { text = it.messagePointer.get() }
           .bind(typeProperty)
       }.bottomGap(BottomGap.SMALL)
 

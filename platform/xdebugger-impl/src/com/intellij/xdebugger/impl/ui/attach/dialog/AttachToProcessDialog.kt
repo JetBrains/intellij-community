@@ -121,7 +121,7 @@ open class AttachToProcessDialog(
 
     val externalProcessViews = XAttachToProcessViewProvider.getProcessViews(project, state, columnsLayout, attachDebuggerProviders)
     allViews = listOf(localAttachView, remoteAttachView) + externalProcessViews
-    viewsPanel = panel { row { segmentedButton(allViews) { it.getName() }.bind(currentAttachView) } }
+    viewsPanel = panel { row { segmentedButton(allViews) { text = it.getName() }.bind(currentAttachView) } }
 
     northToolbar = createNorthToolbar()
     viewPanel.add(filterTextField, "wrap, grow")
@@ -448,7 +448,7 @@ open class AttachToProcessDialog(
       return panel {
         row {
           label(XDebuggerBundle.message("xdebugger.attach.view.message")).gap(RightGap.SMALL)
-          segmentedButton(AttachViewType.values().toList()) { it.displayText }.bind(state.selectedViewType)
+          segmentedButton(AttachViewType.values().toList()) { text = it.displayText }.bind(state.selectedViewType)
         }
       }
     }

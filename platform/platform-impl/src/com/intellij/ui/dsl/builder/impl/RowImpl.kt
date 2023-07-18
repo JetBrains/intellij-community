@@ -245,15 +245,15 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String): SegmentedButton<T> {
-    val result = SegmentedButtonImpl(dialogPanelConfig, this, renderer)
-    result.items(items)
-    cells.add(result)
-    return result
+    return segmentedButton(items) {
+      text = renderer.invoke(it)
+    }
   }
 
-  override fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String, tooltipRenderer: (T) -> @Nls String?): SegmentedButton<T> {
-    val result = SegmentedButtonImpl(dialogPanelConfig, this, renderer, tooltipRenderer)
-    result.items(items)
+  override fun <T> segmentedButton(items: Collection<T>,
+                                   renderer: SegmentedButton.ItemPresentation.(T) -> Unit): SegmentedButton<T> {
+    val result = SegmentedButtonImpl(dialogPanelConfig, this, renderer)
+    result.items = items
     cells.add(result)
     return result
   }
