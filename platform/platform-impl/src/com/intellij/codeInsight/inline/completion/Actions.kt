@@ -49,11 +49,12 @@ class EscapeInlineCompletionHandler(val originalHandler: EditorActionHandler) : 
 class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
   class CallInlineCompletionHandler : EditorWriteActionHandler() {
     override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-      if (caret == null) return
+      val curCaret = caret ?: editor.caretModel.currentCaret
+
       val listener = editor.getUserData(InlineCompletionHandler.KEY) ?: return
       val file = dataContext?.getData(CommonDataKeys.PSI_FILE) ?: return
 
-      listener.invoke(editor, file, caret)
+      listener.invoke(editor, file, curCaret)
     }
   }
 }

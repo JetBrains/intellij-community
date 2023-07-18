@@ -17,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 class InlineCompletionEditorListener(scope: CoroutineScope) : EditorFactoryListener {
-  private val caretListener = InlineCompletionCaretListener()
   private val focusListener = InlineCompletionFocusListener()
 
   private val handler = InlineCompletionHandler(scope)
@@ -34,7 +33,6 @@ class InlineCompletionEditorListener(scope: CoroutineScope) : EditorFactoryListe
     val docListener = InlineCompletionDocumentListener(editor)
 
     editor.document.addDocumentListener(docListener, disposable)
-    editor.addEditorMouseListener(caretListener, disposable)
     editor.addFocusListener(focusListener, disposable)
   }
 

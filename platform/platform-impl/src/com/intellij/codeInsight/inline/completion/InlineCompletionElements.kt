@@ -74,6 +74,7 @@ sealed interface InlineCompletionEvent {
    * ```
    */
   @ApiStatus.Experimental
+  @Deprecated("platform caret listener is disabled")
   class Caret(val event: EditorMouseEvent) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
       val editor = event.editor

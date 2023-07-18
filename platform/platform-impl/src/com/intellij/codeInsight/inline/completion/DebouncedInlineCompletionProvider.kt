@@ -36,7 +36,7 @@ abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
 
     if (force(request)) {
       jobCall?.cancel()
-      getProposalsDebounced(request)
+      return getProposalsDebounced(request)
     }
 
     return debounce(request)

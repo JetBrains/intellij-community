@@ -35,36 +35,6 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl) : Documen
 }
 
 @ApiStatus.Experimental
-class InlineCompletionCaretListener : EditorMouseListener {
-  override fun mouseClicked(event: EditorMouseEvent) {
-    super.mouseClicked(event)
-
-    // Check that edit is selected and opened
-    if (!event.editor.isSelected()) {
-      return
-    }
-    event.editor.resetInlineCompletionContext()
-    event.editor.getUserData(InlineCompletionHandler.KEY)?.invoke(event)
-  }
-
-  private fun Editor.isSelected(): Boolean {
-    val project = this.project ?: return false
-    if (project.isDisposed()) {
-      return false
-    }
-    val editorManager = FileEditorManager.getInstance(project) ?: return false
-
-    if (editorManager is FileEditorManagerImpl) {
-      val current = editorManager.getSelectedTextEditor(true)
-      return current != null && current == this
-    }
-
-    val current = editorManager.getSelectedEditor()
-    return current is TextEditor && this == current.getEditor()
-  }
-}
-
-@ApiStatus.Experimental
 class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter() {
   private val usedKeys = listOf(
     KeyEvent.VK_ALT,

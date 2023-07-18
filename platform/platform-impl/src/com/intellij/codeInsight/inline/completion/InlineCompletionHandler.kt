@@ -45,6 +45,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     if (isMuted.get()) {
       return
     }
+    // TODO: move to launch
     val request = event.toRequest() ?: return
     val provider = getProvider(event) ?: return
 
