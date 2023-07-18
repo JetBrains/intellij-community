@@ -388,6 +388,7 @@ object IconLoader {
    */
   @JvmStatic
   fun getDarkIcon(icon: Icon, dark: Boolean): Icon {
+    // Cannot `inline` this call, because we need an object to propagate the needed replacer recursively to the parts of compound icon
     return object : IconReplacer {
       override fun replaceIcon(icon: Icon): Icon {
         if (icon is DarkIconProvider) return icon.getDarkIcon(dark)
