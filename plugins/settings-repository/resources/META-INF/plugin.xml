@@ -1,10 +1,13 @@
 <idea-plugin>
-  <name>Settings Repository</name>
+  <name>Settings Repository (Deprecated)</name>
   <id>org.jetbrains.settingsRepository</id>
   <category>IDE Settings</category>
   <description><![CDATA[
+  <p><strong>This plugin has been deprecated as IntelliJ-based IDEs now bundle Settings Sync plugin that covers the same functionality.</strong></p>
+  <p>The plugin will no longer be maintained (except for security patches). Community pull-requests, however, are welcome via <a href="https://github.com/JetBrains/intellij-community">https://github.com/JetBrains/intellij-community</a>.</p>
+  <br/>
   <p>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers.</p>
-  <p>Synchronization is performed automatically after successful completion of "Update Project" or "Push" actions. Also you can do sync using VCS -> Sync Settings.</p>
+  <p>Synchronization is performed automatically after successful completion of "Update Project" or "Push" actions. Also, you can do sync using VCS -> Sync Settings.</p>
   <p>See the <a href="https://www.jetbrains.com/help/idea/sharing-your-ide-settings.html#settings-repository">Share settings through a settings repository</a> for more info.</p>]]></description>
   <vendor>JetBrains</vendor>
 
