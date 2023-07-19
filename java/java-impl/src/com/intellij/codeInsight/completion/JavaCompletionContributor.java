@@ -314,21 +314,21 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       return new OrFilter(classFilter, constantVariablesFilter);
     }
 
+    ClassFilter enumInheritorsFilter = new ClassFilter(PsiField.class) {
+      @Override
+      public boolean isAcceptable(Object element, PsiElement context) {
+        return element instanceof PsiEnumConstant enumConstant && TypeConversionUtil.areTypesConvertible(enumConstant.getType(), selectorType);
+      }
+    };
+
     if (TypeUtils.isJavaLangObject(selectorType)) {
-      return new OrFilter(new ClassFilter(PsiClass.class), constantVariablesFilter);
+      return new OrFilter(new ClassFilter(PsiClass.class), constantVariablesFilter, enumInheritorsFilter);
     }
 
     ClassFilter inheritorsFilter = new ClassFilter(PsiClass.class) {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
         return element instanceof PsiClass psiClass && TypeConversionUtil.areTypesConvertible(TypeUtils.getType(psiClass), selectorType);
-      }
-    };
-
-    ClassFilter enumInheritorsFilter = new ClassFilter(PsiField.class) {
-      @Override
-      public boolean isAcceptable(Object element, PsiElement context) {
-        return element instanceof PsiEnumConstant enumConstant && TypeConversionUtil.areTypesConvertible(enumConstant.getType(), selectorType);
       }
     };
 
