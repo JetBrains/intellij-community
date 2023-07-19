@@ -589,6 +589,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void updateAllProjects() {
     myProjectsManager.updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
+    myProjectsManager.waitForPluginResolution();
   }
 
   protected void waitForReadingCompletion() {
