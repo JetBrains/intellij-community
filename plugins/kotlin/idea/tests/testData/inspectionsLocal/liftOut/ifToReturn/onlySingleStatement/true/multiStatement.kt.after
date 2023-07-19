@@ -1,10 +1,9 @@
-// ONLY_SINGLE_STATEMENT: true
 // HIGHLIGHT: INFORMATION
 fun test(b: Boolean): Int {
     return if (b) {
+        println(1)
         1
     } else {
-        println(2)
         2
     }
 }

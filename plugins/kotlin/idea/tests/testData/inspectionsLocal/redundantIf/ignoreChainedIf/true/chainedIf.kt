@@ -1,4 +1,3 @@
-// IGNORE_CHAINED_IF: true
 // HIGHLIGHT: INFORMATION
 fun test(a: A): Boolean {
     if (a.condition1()) return true

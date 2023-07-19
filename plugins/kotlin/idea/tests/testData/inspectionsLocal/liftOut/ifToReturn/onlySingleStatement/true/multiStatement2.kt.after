@@ -1,8 +1,6 @@
-// ONLY_SINGLE_STATEMENT: true
 // HIGHLIGHT: INFORMATION
-fun test(b: Boolean) {
-    var x: Int
-    x = if (b) {
+fun test(b: Boolean): Int {
+    return if (b) {
         1
     } else {
         println(2)

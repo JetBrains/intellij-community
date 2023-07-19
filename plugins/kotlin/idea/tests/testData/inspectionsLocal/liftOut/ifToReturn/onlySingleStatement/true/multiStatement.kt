@@ -1,12 +1,10 @@
-// ONLY_SINGLE_STATEMENT: true
 // HIGHLIGHT: INFORMATION
-fun test(b: Boolean) {
-    var x: Int
+fun test(b: Boolean): Int {
     <caret>if (b) {
         println(1)
-        x = 1
+        return 1
     } else {
-        x = 2
+        return 2
     }
 }
 

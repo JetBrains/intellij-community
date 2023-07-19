@@ -1,9 +1,7 @@
-// ONLY_SINGLE_STATEMENT: false
-// HIGHLIGHT: GENERIC_ERROR_OR_WARNING
+// HIGHLIGHT: INFORMATION
 fun test(b: Boolean) {
     var x: Int
     <caret>if (b) {
-        println(1)
         x = 1
     } else {
         println(2)

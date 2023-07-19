@@ -1,4 +1,3 @@
-// IGNORE_CHAINED_IF: false
 // HIGHLIGHT: GENERIC_ERROR_OR_WARNING
 fun test(a: A): Boolean {
     if (a.condition1()) return true

@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -16,14 +15,11 @@ import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
-import org.jetbrains.kotlin.idea.codeinsight.utils.getBooleanTestOption
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils.getFoldableAssignmentsFromBranches
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils.getFoldableReturnsFromBranches
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 /**
@@ -82,8 +78,6 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
         object : KtVisitorVoid() {
             override fun visitExpression(expression: KtExpression) {
-                initOptionsInUnitTestMode(expression.containingKtFile)
-
                 // Note that we'd better run the following line first instead of running
                 // `if (analyze(expression) { expression.isUsedAsExpression() }) return`
                 // because `getState(expression)` will filter many expressions after checking only PSI.
@@ -133,14 +127,6 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
             }
 
         }
-
-    private fun initOptionsInUnitTestMode(testDataFile: KtFile) {
-        if (isUnitTestMode()) {
-            testDataFile.getBooleanTestOption("ONLY_SINGLE_STATEMENT")?.let {
-                reportOnlyIfSingleStatement = it
-            }
-        }
-    }
 
     private class LiftReturnOutFix(private val keyword: String) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("lift.return.out.fix.text.0", keyword)

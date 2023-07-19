@@ -9,20 +9,16 @@ import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
-import org.jetbrains.kotlin.idea.codeinsight.utils.getBooleanTestOption
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.BranchedFoldingUtils
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -42,8 +38,6 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
         object : KtVisitorVoid() {
             override fun visitExpression(expression: KtExpression) {
-                initOptionsInUnitTestMode(expression.containingKtFile)
-
                 val states = getState(expression, skipLongExpressions, reportOnlyIfSingleStatement) ?: return
                 if (expression.isUsedAsExpression(expression.analyze(BodyResolveMode.PARTIAL_WITH_CFA))) return
                 states.forEach { state ->
@@ -81,14 +75,6 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
             }
 
         }
-
-    private fun initOptionsInUnitTestMode(testDataFile: KtFile) {
-        if (isUnitTestMode()) {
-            testDataFile.getBooleanTestOption("ONLY_SINGLE_STATEMENT")?.let {
-                reportOnlyIfSingleStatement = it
-            }
-        }
-    }
 
     private class LiftReturnOutFix(private val keyword: String) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("lift.return.out.fix.text.0", keyword)

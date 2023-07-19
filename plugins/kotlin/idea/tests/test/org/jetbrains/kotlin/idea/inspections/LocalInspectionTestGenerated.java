@@ -6474,282 +6474,330 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class LiftOut extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/liftOut/ifToAssignment")
-        public static class IfToAssignment extends AbstractLocalInspectionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        public abstract static class IfToAssignment extends AbstractLocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/liftOut/ifToAssignment/onlySingleStatement")
+            public abstract static class OnlySingleStatement extends AbstractLocalInspectionTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/inspectionsLocal/liftOut/ifToAssignment/onlySingleStatement/false")
+                public static class False extends AbstractLocalInspectionTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("multiStatement3.kt")
+                    public void testMultiStatement3() throws Exception {
+                        runTest("testData/inspectionsLocal/liftOut/ifToAssignment/onlySingleStatement/false/multiStatement3.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/inspectionsLocal/liftOut/ifToAssignment/onlySingleStatement/true")
+                public static class True extends AbstractLocalInspectionTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("multiStatement.kt")
+                    public void testMultiStatement() throws Exception {
+                        runTest("testData/inspectionsLocal/liftOut/ifToAssignment/onlySingleStatement/true/multiStatement.kt");
+                    }
+
+                    @TestMetadata("multiStatement2.kt")
+                    public void testMultiStatement2() throws Exception {
+                        runTest("testData/inspectionsLocal/liftOut/ifToAssignment/onlySingleStatement/true/multiStatement2.kt");
+                    }
+                }
             }
 
-            @TestMetadata("afterRightBrace.kt")
-            public void testAfterRightBrace() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/liftOut/ifToAssignment")
+            public static class Uncategorized extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("afterRightBrace2.kt")
-            public void testAfterRightBrace2() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace2.kt");
-            }
+                @TestMetadata("afterRightBrace.kt")
+                public void testAfterRightBrace() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace.kt");
+                }
 
-            @TestMetadata("afterRightBrace3.kt")
-            public void testAfterRightBrace3() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace3.kt");
-            }
+                @TestMetadata("afterRightBrace2.kt")
+                public void testAfterRightBrace2() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace2.kt");
+                }
 
-            @TestMetadata("afterRightParenthesis.kt")
-            public void testAfterRightParenthesis() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/afterRightParenthesis.kt");
-            }
+                @TestMetadata("afterRightBrace3.kt")
+                public void testAfterRightBrace3() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace3.kt");
+                }
 
-            @TestMetadata("cascadeIf.kt")
-            public void testCascadeIf() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/cascadeIf.kt");
-            }
+                @TestMetadata("afterRightParenthesis.kt")
+                public void testAfterRightParenthesis() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/afterRightParenthesis.kt");
+                }
 
-            @TestMetadata("elseIfOnly.kt")
-            public void testElseIfOnly() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/elseIfOnly.kt");
-            }
+                @TestMetadata("cascadeIf.kt")
+                public void testCascadeIf() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/cascadeIf.kt");
+                }
 
-            @TestMetadata("hasNull.kt")
-            public void testHasNull() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/hasNull.kt");
-            }
+                @TestMetadata("elseIfOnly.kt")
+                public void testElseIfOnly() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/elseIfOnly.kt");
+                }
 
-            @TestMetadata("hasNull2.kt")
-            public void testHasNull2() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/hasNull2.kt");
-            }
+                @TestMetadata("hasNull.kt")
+                public void testHasNull() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/hasNull.kt");
+                }
 
-            @TestMetadata("hasNull3.kt")
-            public void testHasNull3() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/hasNull3.kt");
-            }
+                @TestMetadata("hasNull2.kt")
+                public void testHasNull2() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/hasNull2.kt");
+                }
 
-            @TestMetadata("hasNull4.kt")
-            public void testHasNull4() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/hasNull4.kt");
-            }
+                @TestMetadata("hasNull3.kt")
+                public void testHasNull3() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/hasNull3.kt");
+                }
 
-            @TestMetadata("hasNull5.kt")
-            public void testHasNull5() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/hasNull5.kt");
-            }
+                @TestMetadata("hasNull4.kt")
+                public void testHasNull4() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/hasNull4.kt");
+                }
 
-            @TestMetadata("hasNull6.kt")
-            public void testHasNull6() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/hasNull6.kt");
-            }
+                @TestMetadata("hasNull5.kt")
+                public void testHasNull5() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/hasNull5.kt");
+                }
 
-            @TestMetadata("ifElseIf.kt")
-            public void testIfElseIf() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/ifElseIf.kt");
-            }
+                @TestMetadata("hasNull6.kt")
+                public void testHasNull6() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/hasNull6.kt");
+                }
 
-            @TestMetadata("ifElseIfElse.kt")
-            public void testIfElseIfElse() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/ifElseIfElse.kt");
-            }
+                @TestMetadata("ifElseIf.kt")
+                public void testIfElseIf() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/ifElseIf.kt");
+                }
 
-            @TestMetadata("ifElseifElseInconsistent.kt")
-            public void testIfElseifElseInconsistent() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/ifElseifElseInconsistent.kt");
-            }
+                @TestMetadata("ifElseIfElse.kt")
+                public void testIfElseIfElse() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/ifElseIfElse.kt");
+                }
 
-            @TestMetadata("innerIfTransformed.kt")
-            public void testInnerIfTransformed() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/innerIfTransformed.kt");
-            }
+                @TestMetadata("ifElseifElseInconsistent.kt")
+                public void testIfElseifElseInconsistent() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/ifElseifElseInconsistent.kt");
+                }
 
-            @TestMetadata("lambda.kt")
-            public void testLambda() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/lambda.kt");
-            }
+                @TestMetadata("innerIfTransformed.kt")
+                public void testInnerIfTransformed() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/innerIfTransformed.kt");
+                }
 
-            @TestMetadata("lambda2.kt")
-            public void testLambda2() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/lambda2.kt");
-            }
+                @TestMetadata("lambda.kt")
+                public void testLambda() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/lambda.kt");
+                }
 
-            @TestMetadata("multiStatement.kt")
-            public void testMultiStatement() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/multiStatement.kt");
-            }
+                @TestMetadata("lambda2.kt")
+                public void testLambda2() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/lambda2.kt");
+                }
 
-            @TestMetadata("multiStatement2.kt")
-            public void testMultiStatement2() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/multiStatement2.kt");
-            }
+                @TestMetadata("multipleAssignments.kt")
+                public void testMultipleAssignments() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/multipleAssignments.kt");
+                }
 
-            @TestMetadata("multiStatement3.kt")
-            public void testMultiStatement3() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/multiStatement3.kt");
-            }
+                @TestMetadata("nullableMutableList.kt")
+                public void testNullableMutableList() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/nullableMutableList.kt");
+                }
 
-            @TestMetadata("multipleAssignments.kt")
-            public void testMultipleAssignments() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/multipleAssignments.kt");
-            }
+                @TestMetadata("operatorFunWithTypeParam.kt")
+                public void testOperatorFunWithTypeParam() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/operatorFunWithTypeParam.kt");
+                }
 
-            @TestMetadata("nullableMutableList.kt")
-            public void testNullableMutableList() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/nullableMutableList.kt");
-            }
+                @TestMetadata("plusAssignOperator.kt")
+                public void testPlusAssignOperator() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/plusAssignOperator.kt");
+                }
 
-            @TestMetadata("operatorFunWithTypeParam.kt")
-            public void testOperatorFunWithTypeParam() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/operatorFunWithTypeParam.kt");
-            }
+                @TestMetadata("simpleIf.kt")
+                public void testSimpleIf() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/simpleIf.kt");
+                }
 
-            @TestMetadata("plusAssignOperator.kt")
-            public void testPlusAssignOperator() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/plusAssignOperator.kt");
-            }
+                @TestMetadata("simpleIfWithAugmentedAssignment.kt")
+                public void testSimpleIfWithAugmentedAssignment() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithAugmentedAssignment.kt");
+                }
 
-            @TestMetadata("simpleIf.kt")
-            public void testSimpleIf() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/simpleIf.kt");
-            }
+                @TestMetadata("simpleIfWithBlocks.kt")
+                public void testSimpleIfWithBlocks() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithBlocks.kt");
+                }
 
-            @TestMetadata("simpleIfWithAugmentedAssignment.kt")
-            public void testSimpleIfWithAugmentedAssignment() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithAugmentedAssignment.kt");
-            }
+                @TestMetadata("simpleIfWithShadowedVar.kt")
+                public void testSimpleIfWithShadowedVar() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithShadowedVar.kt");
+                }
 
-            @TestMetadata("simpleIfWithBlocks.kt")
-            public void testSimpleIfWithBlocks() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithBlocks.kt");
-            }
+                @TestMetadata("simpleIfWithUnmatchedAssignmentOps.kt")
+                public void testSimpleIfWithUnmatchedAssignmentOps() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithUnmatchedAssignmentOps.kt");
+                }
 
-            @TestMetadata("simpleIfWithShadowedVar.kt")
-            public void testSimpleIfWithShadowedVar() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithShadowedVar.kt");
-            }
+                @TestMetadata("simpleIfWithUnmatchedAssignments.kt")
+                public void testSimpleIfWithUnmatchedAssignments() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithUnmatchedAssignments.kt");
+                }
 
-            @TestMetadata("simpleIfWithUnmatchedAssignmentOps.kt")
-            public void testSimpleIfWithUnmatchedAssignmentOps() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithUnmatchedAssignmentOps.kt");
-            }
+                @TestMetadata("simpleIfWithoutElse.kt")
+                public void testSimpleIfWithoutElse() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithoutElse.kt");
+                }
 
-            @TestMetadata("simpleIfWithUnmatchedAssignments.kt")
-            public void testSimpleIfWithUnmatchedAssignments() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithUnmatchedAssignments.kt");
-            }
+                @TestMetadata("simpleIfWithoutTerminatingAssignment.kt")
+                public void testSimpleIfWithoutTerminatingAssignment() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithoutTerminatingAssignment.kt");
+                }
 
-            @TestMetadata("simpleIfWithoutElse.kt")
-            public void testSimpleIfWithoutElse() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithoutElse.kt");
-            }
+                @TestMetadata("subTypes.kt")
+                public void testSubTypes() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/subTypes.kt");
+                }
 
-            @TestMetadata("simpleIfWithoutTerminatingAssignment.kt")
-            public void testSimpleIfWithoutTerminatingAssignment() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithoutTerminatingAssignment.kt");
-            }
+                @TestMetadata("typeMismatch.kt")
+                public void testTypeMismatch() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatch.kt");
+                }
 
-            @TestMetadata("subTypes.kt")
-            public void testSubTypes() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/subTypes.kt");
-            }
+                @TestMetadata("typeMismatch2.kt")
+                public void testTypeMismatch2() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatch2.kt");
+                }
 
-            @TestMetadata("typeMismatch.kt")
-            public void testTypeMismatch() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatch.kt");
-            }
+                @TestMetadata("typeMismatch3.kt")
+                public void testTypeMismatch3() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatch3.kt");
+                }
 
-            @TestMetadata("typeMismatch2.kt")
-            public void testTypeMismatch2() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatch2.kt");
-            }
+                @TestMetadata("typeMismatchMutableList.kt")
+                public void testTypeMismatchMutableList() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatchMutableList.kt");
+                }
 
-            @TestMetadata("typeMismatch3.kt")
-            public void testTypeMismatch3() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatch3.kt");
-            }
+                @TestMetadata("typeMismatchMutableList2.kt")
+                public void testTypeMismatchMutableList2() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatchMutableList2.kt");
+                }
 
-            @TestMetadata("typeMismatchMutableList.kt")
-            public void testTypeMismatchMutableList() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatchMutableList.kt");
-            }
-
-            @TestMetadata("typeMismatchMutableList2.kt")
-            public void testTypeMismatchMutableList2() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatchMutableList2.kt");
-            }
-
-            @TestMetadata("usedAsExpression.kt")
-            public void testUsedAsExpression() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/usedAsExpression.kt");
+                @TestMetadata("usedAsExpression.kt")
+                public void testUsedAsExpression() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToAssignment/usedAsExpression.kt");
+                }
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/liftOut/ifToReturn")
-        public static class IfToReturn extends AbstractLocalInspectionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        public abstract static class IfToReturn extends AbstractLocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/liftOut/ifToReturn/onlySingleStatement")
+            public abstract static class OnlySingleStatement extends AbstractLocalInspectionTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/inspectionsLocal/liftOut/ifToReturn/onlySingleStatement/false")
+                public static class False extends AbstractLocalInspectionTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("multiStatement3.kt")
+                    public void testMultiStatement3() throws Exception {
+                        runTest("testData/inspectionsLocal/liftOut/ifToReturn/onlySingleStatement/false/multiStatement3.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/inspectionsLocal/liftOut/ifToReturn/onlySingleStatement/true")
+                public static class True extends AbstractLocalInspectionTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("multiStatement.kt")
+                    public void testMultiStatement() throws Exception {
+                        runTest("testData/inspectionsLocal/liftOut/ifToReturn/onlySingleStatement/true/multiStatement.kt");
+                    }
+
+                    @TestMetadata("multiStatement2.kt")
+                    public void testMultiStatement2() throws Exception {
+                        runTest("testData/inspectionsLocal/liftOut/ifToReturn/onlySingleStatement/true/multiStatement2.kt");
+                    }
+                }
             }
 
-            @TestMetadata("cascadeIf.kt")
-            public void testCascadeIf() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToReturn/cascadeIf.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/liftOut/ifToReturn")
+            public static class Uncategorized extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("ifElseIf.kt")
-            public void testIfElseIf() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToReturn/ifElseIf.kt");
-            }
+                @TestMetadata("cascadeIf.kt")
+                public void testCascadeIf() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToReturn/cascadeIf.kt");
+                }
 
-            @TestMetadata("ifElseIfElse.kt")
-            public void testIfElseIfElse() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToReturn/ifElseIfElse.kt");
-            }
+                @TestMetadata("ifElseIf.kt")
+                public void testIfElseIf() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToReturn/ifElseIf.kt");
+                }
 
-            @TestMetadata("ifElseIfElseInconsistent.kt")
-            public void testIfElseIfElseInconsistent() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToReturn/ifElseIfElseInconsistent.kt");
-            }
+                @TestMetadata("ifElseIfElse.kt")
+                public void testIfElseIfElse() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToReturn/ifElseIfElse.kt");
+                }
 
-            @TestMetadata("ifVeryLong.kt")
-            public void testIfVeryLong() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToReturn/ifVeryLong.kt");
-            }
+                @TestMetadata("ifElseIfElseInconsistent.kt")
+                public void testIfElseIfElseInconsistent() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToReturn/ifElseIfElseInconsistent.kt");
+                }
 
-            @TestMetadata("innerIfTransformed.kt")
-            public void testInnerIfTransformed() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToReturn/innerIfTransformed.kt");
-            }
+                @TestMetadata("ifVeryLong.kt")
+                public void testIfVeryLong() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToReturn/ifVeryLong.kt");
+                }
 
-            @TestMetadata("multiStatement.kt")
-            public void testMultiStatement() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToReturn/multiStatement.kt");
-            }
+                @TestMetadata("innerIfTransformed.kt")
+                public void testInnerIfTransformed() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToReturn/innerIfTransformed.kt");
+                }
 
-            @TestMetadata("multiStatement2.kt")
-            public void testMultiStatement2() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToReturn/multiStatement2.kt");
-            }
+                @TestMetadata("onReturn.kt")
+                public void testOnReturn() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToReturn/onReturn.kt");
+                }
 
-            @TestMetadata("multiStatement3.kt")
-            public void testMultiStatement3() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToReturn/multiStatement3.kt");
-            }
+                @TestMetadata("onReturn2.kt")
+                public void testOnReturn2() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToReturn/onReturn2.kt");
+                }
 
-            @TestMetadata("onReturn.kt")
-            public void testOnReturn() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToReturn/onReturn.kt");
-            }
+                @TestMetadata("simpleIf.kt")
+                public void testSimpleIf() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToReturn/simpleIf.kt");
+                }
 
-            @TestMetadata("onReturn2.kt")
-            public void testOnReturn2() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToReturn/onReturn2.kt");
-            }
-
-            @TestMetadata("simpleIf.kt")
-            public void testSimpleIf() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToReturn/simpleIf.kt");
-            }
-
-            @TestMetadata("simpleIfWithBlocks.kt")
-            public void testSimpleIfWithBlocks() throws Exception {
-                runTest("testData/inspectionsLocal/liftOut/ifToReturn/simpleIfWithBlocks.kt");
+                @TestMetadata("simpleIfWithBlocks.kt")
+                public void testSimpleIfWithBlocks() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/ifToReturn/simpleIfWithBlocks.kt");
+                }
             }
         }
 

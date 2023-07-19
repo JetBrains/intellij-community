@@ -14,6 +14,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jdom.Document
+import org.jdom.Element
 import org.jdom.input.SAXBuilder
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.jsonUtils.getString
@@ -44,15 +45,10 @@ abstract class AbstractMultiFileLocalInspectionTest : AbstractLocalInspectionTes
         val inspection = Class.forName(config.getString("inspectionClass")).newInstance() as AbstractKotlinInspection
         val problemExpectedString = config["problem"]?.asString // null means "some problem", "none" means no problem
         val localFixTextString = config["fix"]?.asString // null means "some single fix" or "none" if no problem expected
-
-        val inspectionSettings = File(testFile.parentFile, "settings.xml")
-            .takeIf { it.exists() }
-            ?.let { (SAXBuilder().build(it) as Document).rootElement }
-
+        val inspectionSettings = loadInspectionSettings(testFile)
 
         doTest(path) test@{
             myFixture.configureFromTempProjectFile(mainFilePath)
-
             runInspectionWithFixesAndCheck(inspection, problemExpectedString, null, localFixTextString, inspectionSettings)
         }
     }

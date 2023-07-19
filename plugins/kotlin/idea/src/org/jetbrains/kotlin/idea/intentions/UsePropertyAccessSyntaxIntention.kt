@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.compiled.ClsMethodImpl
@@ -29,20 +28,17 @@ import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
-import org.jetbrains.kotlin.idea.codeinsight.utils.getBooleanTestOption
 import org.jetbrains.kotlin.idea.core.NotPropertiesService
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.renderer.render
@@ -110,18 +106,8 @@ class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtExpression>
             }
     }
 
-    override fun inspectionTarget(element: KtExpression): PsiElement? {
-        initOptionsInUnitTestMode(element.containingKtFile)
-        return element.callOrReferenceOrNull(KtCallExpression::getCalleeExpression, KtCallableReferenceExpression::getCallableReference)
-    }
-
-    private fun initOptionsInUnitTestMode(testDataFile: KtFile) {
-        if (isUnitTestMode()) {
-            testDataFile.getBooleanTestOption("REPORT_NON_TRIVIAL_ACCESSORS")?.let {
-                reportNonTrivialAccessors = it
-            }
-        }
-    }
+    override fun inspectionTarget(element: KtExpression): PsiElement? =
+        element.callOrReferenceOrNull(KtCallExpression::getCalleeExpression, KtCallableReferenceExpression::getCallableReference)
 
     override fun inspectionProblemText(element: KtExpression): String? =
         element.callOrReferenceOrNull(

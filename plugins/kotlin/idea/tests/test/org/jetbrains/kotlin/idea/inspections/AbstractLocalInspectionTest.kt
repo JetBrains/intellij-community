@@ -19,7 +19,9 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.io.write
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
+import org.jdom.Document
 import org.jdom.Element
+import org.jdom.input.SAXBuilder
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
 import org.jetbrains.kotlin.idea.test.*
@@ -270,10 +272,12 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             fileText, "// $fixTextDirectiveName: "
         )
 
+        val inspectionSettings = loadInspectionSettings(mainFile)
         val canonicalPathToExpectedFile = mainFilePath + afterFileNameSuffix
         val canonicalPathToExpectedPath = testDataDirectory.toPath() / canonicalPathToExpectedFile
-        if (!runInspectionWithFixesAndCheck(inspection, expectedProblemString, expectedHighlightString, localFixTextString)) {
-            assertFalse("$canonicalPathToExpectedFile should not exists as no action could be applied", Files.exists(canonicalPathToExpectedPath))
+
+        if (!runInspectionWithFixesAndCheck(inspection, expectedProblemString, expectedHighlightString, localFixTextString, inspectionSettings)) {
+            assertFalse("$canonicalPathToExpectedFile should not exist as no action could be applied", Files.exists(canonicalPathToExpectedPath))
             return
         }
 
@@ -295,6 +299,11 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             error("File $path was not found and thus was generated")
         }
     }
+
+    protected fun loadInspectionSettings(testFile: File): Element? =
+        File(testFile.parentFile, "settings.xml")
+            .takeIf { it.exists() }
+            ?.let { (SAXBuilder().build(it) as Document).rootElement }
 
     companion object {
         private val EXTENSIONS = arrayOf(".kt", ".kts", ".java", ".groovy")
