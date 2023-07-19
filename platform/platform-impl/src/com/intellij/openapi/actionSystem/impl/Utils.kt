@@ -82,11 +82,16 @@ object Utils {
     getTemplatePresentation().setText(CommonBundle.messagePointer("empty.menu.filler"))
   }
 
-  val OT_OP_KEY: AttributeKey<String> = AttributeKey.stringKey("op")
+  internal val OT_OP_KEY: AttributeKey<String> = AttributeKey.stringKey("op")
+
   private val OT_ENABLE_SPANS: ContextKey<Boolean> = ContextKey.named("OT_ENABLE_SPANS")
   internal fun getTracer(checkNoop: Boolean): Tracer {
-    return if (checkNoop && Context.current().get<Boolean>(OT_ENABLE_SPANS) != true) OpenTelemetry.noop().getTracer("")
-    else TelemetryManager.getInstance().getTracer(ActionSystem)
+    return if (checkNoop && Context.current().get(OT_ENABLE_SPANS) != true) {
+      OpenTelemetry.noop().getTracer("")
+    }
+    else {
+      TelemetryManager.getInstance().getTracer(ActionSystem)
+    }
   }
 
   @JvmStatic
@@ -750,6 +755,7 @@ object Utils {
   fun initUpdateSession(e: AnActionEvent) {
     var updater = e.updateSession
     if (updater === UpdateSession.EMPTY) {
+      @Suppress("removal", "DEPRECATION")
       val actionUpdater = ActionUpdater(presentationFactory = PresentationFactory(),
                                         dataContext = e.dataContext,
                                         place = e.place,
