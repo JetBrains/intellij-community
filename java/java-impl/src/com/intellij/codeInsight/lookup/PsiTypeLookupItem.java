@@ -23,7 +23,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public final class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
+/**
+ * LookupItem to represent a type. The object is either {@link PsiType}, or {@link PsiClass}.
+ */
+public final class PsiTypeLookupItem extends LookupItem<Object> implements TypedLookupItem {
   private static final InsertHandler<PsiTypeLookupItem> DEFAULT_IMPORT_FIXER = new InsertHandler<>() {
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull PsiTypeLookupItem item) {
@@ -164,12 +167,12 @@ public final class PsiTypeLookupItem extends LookupItem implements TypedLookupIt
              resolveHelper.resolveReferencedClass(parameter.getName(), context) != CompletionUtil.getOriginalOrSelf(parameter))) {
           return "";
         }
-        if (builder.length() > 0) {
+        if (!builder.isEmpty()) {
           builder.append(", ");
         }
         builder.append(substitute.getCanonicalText());
       }
-      if (builder.length() > 0) {
+      if (!builder.isEmpty()) {
         return "<" + builder + ">";
       }
     }
@@ -222,7 +225,7 @@ public final class PsiTypeLookupItem extends LookupItem implements TypedLookupIt
           PsiClass resolved = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().resolveReferencedClass(name, context);
           String[] allStrings;
           if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass)) {
-            // inner class name should be shown qualified if its not accessible by single name
+            // inner class name should be shown qualified if it's not accessible by single name
             allStrings = ArrayUtilRt.toStringArray(JavaCompletionUtil.getAllLookupStrings(psiClass));
           } else {
             allStrings = new String[]{name};
