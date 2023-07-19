@@ -1,20 +1,39 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-stdlib">
+  <library name="kotlinc.kotlin-stdlib" type="repository">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.20-dev-7058">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.20-dev-7058/kotlin-stdlib-jdk8-1.9.20-dev-7058.jar">
+          <sha256sum>3ec68c994d2dd18315eacf386f8e98966616bac706956a5d4544e66fa9d2761f</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.9.20-dev-7058/kotlin-stdlib-1.9.20-dev-7058.jar">
+          <sha256sum>651ef6ba48a6c67ea2d55a68c37c56cfc3101efde9744715cf8a09580b8b899d</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.9.20-dev-7058/kotlin-stdlib-common-1.9.20-dev-7058.jar">
+          <sha256sum>a45df6119e453e6f76c4906392ed371e8a8443d29342c6128275a8d76502a2c5</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.9.20-dev-7058/kotlin-stdlib-jdk7-1.9.20-dev-7058.jar">
+          <sha256sum>c8aaaac90965befe4deedb0cff85120ce209071e8c7842af8485561daf05479f</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains:annotations" />
+      </exclude>
+    </properties>
     <ANNOTATIONS>
       <root url="file://$PROJECT_DIR$/lib/annotations/kotlin" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.255/kotlin-stdlib-jdk8-1.9.255.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.9.255/kotlin-stdlib-1.9.255.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib-common/1.9.255/kotlin-stdlib-common-1.9.255.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.9.255/kotlin-stdlib-jdk7-1.9.255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.20-dev-7058/kotlin-stdlib-jdk8-1.9.20-dev-7058.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.9.20-dev-7058/kotlin-stdlib-1.9.20-dev-7058.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.9.20-dev-7058/kotlin-stdlib-common-1.9.20-dev-7058.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.9.20-dev-7058/kotlin-stdlib-jdk7-1.9.20-dev-7058.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.255/kotlin-stdlib-jdk8-1.9.255-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.9.255/kotlin-stdlib-1.9.255-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib-common/1.9.255/kotlin-stdlib-common-1.9.255-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.9.255/kotlin-stdlib-jdk7-1.9.255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.20-dev-7058/kotlin-stdlib-jdk8-1.9.20-dev-7058-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.9.20-dev-7058/kotlin-stdlib-1.9.20-dev-7058-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.9.20-dev-7058/kotlin-stdlib-common-1.9.20-dev-7058-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.9.20-dev-7058/kotlin-stdlib-jdk7-1.9.20-dev-7058-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
