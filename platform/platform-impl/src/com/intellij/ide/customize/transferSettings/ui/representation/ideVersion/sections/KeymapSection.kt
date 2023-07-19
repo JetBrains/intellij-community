@@ -63,7 +63,7 @@ class KeymapSection(private val ideVersion: IdeVersion) : IdeRepresentationSecti
     val customShortcuts = (keymap as? PatchedKeymap)?.overrides
 
     if (!customShortcuts.isNullOrEmpty()) {
-      withMoreLabel("more..") {
+      withMoreLabel("more...") {
         BorderLayoutPanel().apply {
           border = JBUI.Borders.empty()
           addToTop(JPanel().apply {
