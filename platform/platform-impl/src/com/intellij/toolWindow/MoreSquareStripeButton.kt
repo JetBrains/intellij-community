@@ -88,6 +88,8 @@ private fun scaleIcon(): Icon {
 
 @ApiStatus.Internal
 class ShowMoreToolWindowsAction(private val toolWindowToolbar: ToolWindowToolbar) : DumbAwareAction() {
+  val isOnTheLeft: Boolean = toolWindowToolbar is ToolWindowLeftToolbar
+
   private val minPopupWidth: Int
     get() = JBUI.scale(300)
 
@@ -105,10 +107,7 @@ class ShowMoreToolWindowsAction(private val toolWindowToolbar: ToolWindowToolbar
 
   fun showPopup(popup: JBPopup) {
     val moreSquareStripeButton = toolWindowToolbar.moreButton
-    val x = if (toolWindowToolbar is ToolWindowLeftToolbar) {
-      toolWindowToolbar.width
-    }
-    else -minPopupWidth
+    val x = if (isOnTheLeft) toolWindowToolbar.width else -minPopupWidth
     popup.show(RelativePoint(toolWindowToolbar, Point(x, moreSquareStripeButton.y)))
   }
 
