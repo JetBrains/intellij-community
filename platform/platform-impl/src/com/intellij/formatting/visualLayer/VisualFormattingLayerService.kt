@@ -18,16 +18,6 @@ private val EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS = Key.create<Code
 
 
 abstract class VisualFormattingLayerService {
-  fun enabledForEditor(editor: Editor): Boolean = editor.visualFormattingLayerEnabled
-
-  fun enableForEditor(editor: Editor, codeStyleSettings: CodeStyleSettings) {
-    editor.visualFormattingLayerCodeStyleSettings = codeStyleSettings
-  }
-
-  fun disableForEditor(editor: Editor) {
-    editor.visualFormattingLayerCodeStyleSettings = null
-  }
-
   abstract fun collectVisualFormattingLayerElements(editor: Editor): List<VisualFormattingLayerElement>
 
   abstract fun applyVisualFormattingLayerElementsToEditor(editor: Editor, elements: List<VisualFormattingLayerElement>)
@@ -47,6 +37,16 @@ abstract class VisualFormattingLayerService {
     var Editor.visualFormattingLayerCodeStyleSettings: CodeStyleSettings?
       get() = getUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS)
       private set(value) = putUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS, value)
+
+    fun enabledForEditor(editor: Editor): Boolean = editor.visualFormattingLayerEnabled
+
+    fun enableForEditor(editor: Editor, codeStyleSettings: CodeStyleSettings) {
+      editor.visualFormattingLayerCodeStyleSettings = codeStyleSettings
+    }
+
+    fun disableForEditor(editor: Editor) {
+      editor.visualFormattingLayerCodeStyleSettings = null
+    }
   }
 
 }
