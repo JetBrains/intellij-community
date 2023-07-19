@@ -37,6 +37,7 @@ import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -650,6 +651,15 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                               Color textColor,
                                                               Color fillColor,
                                                               @Nullable HyperlinkListener listener) {
+    return createHtmlTextBalloonBuilder(new Html(htmlContent), icon, textColor, fillColor, listener);
+  }
+
+  @Override
+  public @NotNull BalloonBuilder createHtmlTextBalloonBuilder(@NotNull Html html,
+                                                              @Nullable Icon icon,
+                                                              Color textColor,
+                                                              Color fillColor,
+                                                              @Nullable HyperlinkListener listener) {
     if (textColor == null) {
       textColor = MessageType.INFO.getTitleForeground();
     }
@@ -657,7 +667,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       fillColor = MessageType.INFO.getPopupBackground();
     }
 
-    JEditorPane text = IdeTooltipManager.initPane(htmlContent, new HintHint().setTextFg(textColor).setAwtTooltip(true), null);
+    JEditorPane text = IdeTooltipManager.initPane(html, new HintHint().setTextFg(textColor).setAwtTooltip(true), null, true);
 
     if (listener != null) {
       text.addHyperlinkListener(listener);

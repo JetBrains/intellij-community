@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.Html;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -404,6 +405,8 @@ public abstract class JBPopupFactory {
   }
 
   public abstract @NotNull BalloonBuilder createHtmlTextBalloonBuilder(@NotNull @NlsContexts.PopupContent String htmlContent, @Nullable Icon icon, Color textColor, Color fillColor, @Nullable HyperlinkListener listener);
+
+  public abstract @NotNull BalloonBuilder createHtmlTextBalloonBuilder(@NotNull @NlsContexts.PopupContent Html html, @Nullable Icon icon, Color textColor, Color fillColor, @Nullable HyperlinkListener listener);
 
   public abstract @NotNull BalloonBuilder createHtmlTextBalloonBuilder(@NotNull @NlsContexts.PopupContent String htmlContent, MessageType messageType, @Nullable HyperlinkListener listener);
 
