@@ -77,13 +77,12 @@ class DocsRenderingReaderModeProvider : ReaderModeProvider {
 
 class VisualFormattingLayerReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
-    val service = VisualFormattingLayerService.getInstance()
     val settings = ReaderModeSettings.getInstance(project).getVisualFormattingCodeStyleSettings(project)
     if (readerMode && settings != null) {
-      service.enableForEditor(editor, settings)
+      VisualFormattingLayerService.enableForEditor(editor, settings)
     }
     else {
-      service.disableForEditor(editor)
+      VisualFormattingLayerService.disableForEditor(editor)
     }
   }
 }
