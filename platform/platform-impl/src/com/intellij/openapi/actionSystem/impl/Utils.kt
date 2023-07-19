@@ -39,6 +39,7 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.mac.screenmenu.MenuItem
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ExceptionUtilRt
@@ -349,16 +350,36 @@ object Utils {
         result = list
         val checked = group is CheckedActionGroup
         val multiChoice = isMultiChoiceGroup(group)
-        fillMenuInner(component = component,
-                      list = list,
-                      checked = checked,
-                      multiChoice = multiChoice,
-                      enableMnemonics = enableMnemonics,
-                      presentationFactory = presentationFactory,
-                      context = context,
-                      place = place,
-                      isWindowMenu = isWindowMenu,
-                      useDarkIcons = useDarkIcons)
+        val nativePeer = if (component is ActionMenu) component.screenMenuPeer else null
+        if (nativePeer == null) {
+          fillMenuInner(component = component,
+                        list = list,
+                        checked = checked,
+                        multiChoice = multiChoice,
+                        enableMnemonics = enableMnemonics,
+                        presentationFactory = presentationFactory,
+                        context = context,
+                        place = place,
+                        isWindowMenu = isWindowMenu,
+                        useDarkIcons = useDarkIcons)
+        }
+        else {
+          nativePeer.beginFill()
+          try {
+            fillMenuInnerMacNative(nativePeer = nativePeer,
+                                   list = list,
+                                   checked = checked,
+                                   multiChoice = multiChoice,
+                                   enableMnemonics = enableMnemonics,
+                                   presentationFactory = presentationFactory,
+                                   context = context,
+                                   place = place,
+                                   useDarkIcons = useDarkIcons)
+          }
+          finally {
+            nativePeer.endFill()
+          }
+        }
       }
     }
     finally {
@@ -422,8 +443,6 @@ object Utils {
                             isWindowMenu: Boolean,
                             useDarkIcons: Boolean) {
     component.removeAll()
-    val nativePeer = if (component is ActionMenu) component.screenMenuPeer else null
-    nativePeer?.beginFill()
     val filtered = filterInvisible(list, presentationFactory, place)
     val children = ArrayList<Component>()
     for (action in filtered) {
@@ -432,10 +451,8 @@ object Utils {
         presentation.isMultiChoice = true
       }
       var childComponent: JComponent
-      var peer: MenuItem?
       if (action is Separator) {
         childComponent = createSeparator(action.text, children.isEmpty())
-        peer = null
       }
       else if (action is ActionGroup && !isSubmenuSuppressed(presentation)) {
         val menu = ActionMenu(context = context,
@@ -445,17 +462,14 @@ object Utils {
                               isMnemonicEnabled = enableMnemonics,
                               useDarkIcons = useDarkIcons)
         childComponent = menu
-        peer = menu.screenMenuPeer
       }
       else {
         val each = ActionMenuItem(action, place, context, enableMnemonics, checked, useDarkIcons)
         each.updateFromPresentation(presentation)
         childComponent = each
-        peer = each.screenMenuItemPeer
       }
       component.add(childComponent)
       children.add(childComponent)
-      nativePeer?.add(peer)
     }
     if (list.isEmpty()) {
       val presentation = presentationFactory.getPresentation(EMPTY_MENU_FILLER)
@@ -488,6 +502,44 @@ object Utils {
           }
         }
       }
+    }
+  }
+
+  private fun fillMenuInnerMacNative(nativePeer: Menu,
+                                     list: List<AnAction>,
+                                     checked: Boolean,
+                                     multiChoice: Boolean,
+                                     enableMnemonics: Boolean,
+                                     presentationFactory: PresentationFactory,
+                                     context: DataContext,
+                                     place: String,
+                                     useDarkIcons: Boolean) {
+    val filtered = filterInvisible(list = list, presentationFactory = presentationFactory, place = place)
+    for (action in filtered) {
+      val presentation = presentationFactory.getPresentation(action)
+      if (multiChoice && action is Toggleable) {
+        presentation.isMultiChoice = true
+      }
+      var peer: MenuItem?
+      if (action is Separator) {
+        peer = null
+      }
+      else if (action is ActionGroup && !isSubmenuSuppressed(presentation)) {
+        val menu = ActionMenu(context = context,
+                              place = place,
+                              group = action,
+                              presentationFactory = presentationFactory,
+                              isMnemonicEnabled = enableMnemonics,
+                              useDarkIcons = useDarkIcons)
+        peer = menu.screenMenuPeer
+      }
+      else {
+        val menuItem = ActionMenuItem(action, place, context, enableMnemonics, checked, useDarkIcons)
+        menuItem.updateFromPresentation(presentation)
+        peer = menuItem.screenMenuItemPeer
+      }
+      // null peer means `null`
+      nativePeer.add(peer)
     }
   }
 
