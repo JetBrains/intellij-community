@@ -1,11 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
-import com.intellij.lang.annotation.AnnotationSession;
+import com.intellij.lang.annotation.AnnotationSessionImpl;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,12 +53,11 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
       if (annotationResult == null) {
         return ProblemDescriptor.EMPTY_ARRAY;
       }
-      return ReadAction.compute(() -> {
-        AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(file), true);
+      return ReadAction.compute(() -> AnnotationSessionImpl.withSession(file, true, annotationHolder -> {
         annotationHolder.applyExternalAnnotatorWithContext(file, annotator, annotationResult);
         annotationHolder.assertAllAnnotationsCreated();
         return ProblemDescriptorUtil.convertToProblemDescriptors(annotationHolder, file);
-      });
+      }));
     }
     return ProblemDescriptor.EMPTY_ARRAY;
   }

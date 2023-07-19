@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.lang.annotation.AnnotationSession;
+import com.intellij.lang.annotation.AnnotationSessionImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.project.Project;
@@ -22,9 +23,9 @@ public class HighlightInfoHolder {
   private int myErrorCount;
   private final List<HighlightInfo> myInfos;
 
-  public HighlightInfoHolder(@NotNull PsiFile contextFile, HighlightInfoFilter @NotNull ... filters) {
+  public HighlightInfoHolder(@NotNull PsiFile contextFile, @NotNull HighlightInfoFilter @NotNull ... filters) {
     myContextFile = contextFile;
-    myAnnotationSession = new AnnotationSession(contextFile);
+    myAnnotationSession = new AnnotationSessionImpl(contextFile);
     myFilters = filters;
     myInfos = new ArrayList<>(Math.max(10, contextFile.getTextLength() / 800)); // extrapolated from the most error-packed AbstractTreeUI
   }

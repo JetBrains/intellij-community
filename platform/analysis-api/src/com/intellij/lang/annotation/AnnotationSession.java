@@ -7,23 +7,25 @@ package com.intellij.lang.annotation;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
-public class AnnotationSession extends UserDataHolderBase {
-  private static final Key<TextRange> VR = Key.create("VR");
+public /*abstract*/ class AnnotationSession implements UserDataHolder {
   private final PsiFile myFile;
 
-  @ApiStatus.Internal
-  public AnnotationSession(@NotNull PsiFile file) {
+  /**
+   * FOR MAINTAINING BINARY COMPATIBILITY ONLY.
+   * @deprecated Do not instantiate this class directly, use {@link AnnotationHolder#getCurrentAnnotationSession()} instead
+   */
+  @Deprecated
+  public AnnotationSession(PsiFile file) {
     myFile = file;
   }
 
-  public @NotNull PsiFile getFile() {
+  @NotNull
+  public /*abstract*/ PsiFile getFile() {
     return myFile;
   }
 
@@ -31,12 +33,17 @@ public class AnnotationSession extends UserDataHolderBase {
    * @return text range (inside the {@link #getFile()}) for which annotators should be calculated sooner than for the remaining range in the file.
    * Usually this priority range corresponds to the range visible on screen.
    */
-  public @NotNull TextRange getPriorityRange() {
-    return Objects.requireNonNullElseGet(getUserData(VR), ()->getFile().getTextRange());
+  @NotNull
+  public /*abstract*/ TextRange getPriorityRange() {
+    return getFile().getTextRange();
   }
 
-  @ApiStatus.Internal
-  public void setVR(@NotNull TextRange range) {
-    putUserData(VR, range);
+  @Override
+  public <T> @Nullable T getUserData(@NotNull Key<T> key) {
+    return null;
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
   }
 }
