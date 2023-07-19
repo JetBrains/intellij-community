@@ -601,6 +601,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     checkClearsEventuallyAfterGCPressure(set);
   }
 
+  @SuppressWarnings("OverwrittenKey")
   @Test
   public void testWeakSet() {
     Set<Object> set = ContainerUtil.createWeakSet();
