@@ -203,25 +203,29 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void initializeComponent() {
-    if (!isNormalProject()) {
-      return;
-    }
-
     //noinspection deprecation
     ProjectUtilKt.executeOnPooledThread(myProject, () -> {
-      boolean wasMavenized = !myState.originalFiles.isEmpty();
-      if (!wasMavenized) {
-        return;
-      }
-      doInit(false);
-      if (!MavenUtil.isLinearImportEnabled()) {
-        scheduleUpdateAll(new MavenImportSpec(false, false, false));
-      }
+      tryInit();
     });
   }
 
   @TestOnly
   public void initForTests() {
+    init();
+  }
+
+  private void tryInit() {
+    if (!isNormalProject()) {
+      return;
+    }
+    boolean wasMavenized = !myState.originalFiles.isEmpty();
+    if (!wasMavenized) {
+      return;
+    }
+    init();
+  }
+
+  private void init() {
     doInit(false);
     if (!MavenUtil.isLinearImportEnabled()) {
       scheduleUpdateAll(new MavenImportSpec(false, false, false));
@@ -251,6 +255,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   protected void onProjectStartup() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!isInitialized()) {
+        tryInit();
+      }
       if (isInitialized()) {
         MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(null);
         fireActivated();
