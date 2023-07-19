@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.highlighting
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -36,13 +37,7 @@ object KotlinCallHighlighterExtensionForTest : KotlinCallHighlighterExtension {
 abstract class AbstractK2HighlightingMetaInfoWithExtensionTest : AbstractK2HighlightingMetaInfoTest() {
     override fun setUp() {
         super.setUp()
-        project.extensionArea.registerExtensionPoint(
-            KotlinCallHighlighterExtension.EP_NAME.name,
-            KotlinCallHighlighterExtension::class.java.name,
-            ExtensionPoint.Kind.INTERFACE,
-            true
-        )
-        project.extensionArea.getExtensionPoint(KotlinCallHighlighterExtension.EP_NAME)
+        ApplicationManager.getApplication().extensionArea.getExtensionPoint(KotlinCallHighlighterExtension.EP_NAME)
             .registerExtension(KotlinCallHighlighterExtensionForTest, testRootDisposable)
     }
 }

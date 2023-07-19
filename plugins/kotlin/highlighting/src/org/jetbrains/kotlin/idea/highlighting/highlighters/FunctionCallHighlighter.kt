@@ -61,7 +61,7 @@ internal class FunctionCallHighlighter(
 
     context(KtAnalysisSession)
     private fun getHighlightInfoTypeForCallFromExtension(callee: KtExpression, call: KtCall): HighlightInfoType? =
-        KotlinCallHighlighterExtension.EP_NAME.getExtensions(project).firstNotNullOfOrNull { it.highlightCall(callee, call) }
+        KotlinCallHighlighterExtension.EP_NAME.extensionList.firstNotNullOfOrNull { it.highlightCall(callee, call) }
 
     context(KtAnalysisSession)
     private fun getDefaultHighlightInfoTypeForCall(call: KtCall): HighlightInfoType? {
