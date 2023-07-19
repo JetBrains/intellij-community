@@ -74,7 +74,6 @@ class JsPlatformKindResolution : IdePlatformKindResolution {
             metadataFactories.DefaultDescriptorFactory,
             metadataFactories.DefaultPackageFragmentsFactory,
             metadataFactories.flexibleTypeDeserializer,
-            metadataFactories.platformDependentTypeTransformer
         )
     }
 }
