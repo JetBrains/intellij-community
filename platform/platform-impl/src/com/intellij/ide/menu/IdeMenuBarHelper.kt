@@ -4,7 +4,6 @@ package com.intellij.ide.menu
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.rootTask
 import com.intellij.ide.DataManager
-import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.*
@@ -21,7 +20,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeMenuBarState
 import com.intellij.openapi.wm.impl.IdeRootPane
 import kotlinx.coroutines.*
@@ -162,23 +160,6 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
   }
 
   abstract suspend fun updateMenuActions(mainActionGroup: ActionGroup?, forceRebuild: Boolean, isFirstUpdate: Boolean): List<ActionGroup>
-
-  protected fun createActionMenuList(newVisibleActions: List<ActionGroup>, consumer: (ActionMenu) -> Unit) {
-    if (newVisibleActions.isEmpty()) {
-      return
-    }
-
-    val enableMnemonics = !UISettings.getInstance().disableMnemonics
-    val isCustomDecorationActive = IdeFrameDecorator.isCustomDecorationActive()
-    for (action in newVisibleActions) {
-      val actionMenu = ActionMenu(null, ActionPlaces.MAIN_MENU, action, presentationFactory, enableMnemonics, menuBar.isDarkMenu, true)
-      if (isCustomDecorationActive) {
-        actionMenu.isOpaque = false
-        actionMenu.isFocusable = false
-      }
-      consumer(actionMenu)
-    }
-  }
 }
 
 @Suppress("unused")

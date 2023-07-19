@@ -49,13 +49,14 @@ import javax.swing.event.ChangeListener
 import javax.swing.event.MenuEvent
 import javax.swing.event.MenuListener
 
+@Suppress("RedundantConstructorKeyword")
 class ActionMenu constructor(private val context: DataContext?,
-                                           private val place: String,
-                                           group: ActionGroup,
-                                           private val presentationFactory: PresentationFactory,
-                                           private var isMnemonicEnabled: Boolean,
-                                           private val useDarkIcons: Boolean,
-                                           val isHeaderMenuItem: Boolean = false) : JBMenu() {
+                             private val place: String,
+                             group: ActionGroup,
+                             private val presentationFactory: PresentationFactory,
+                             private var isMnemonicEnabled: Boolean,
+                             private val useDarkIcons: Boolean,
+                             val isHeaderMenuItem: Boolean = false) : JBMenu() {
   private val group = createActionRef(group)
   private val presentation = presentationFactory.getPresentation(group)
 

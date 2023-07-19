@@ -525,13 +525,12 @@ object Utils {
         peer = null
       }
       else if (action is ActionGroup && !isSubmenuSuppressed(presentation)) {
-        val menu = ActionMenu(context = context,
-                              place = place,
-                              group = action,
-                              presentationFactory = presentationFactory,
-                              isMnemonicEnabled = enableMnemonics,
-                              useDarkIcons = useDarkIcons)
-        peer = menu.screenMenuPeer
+        peer = MacNativeActionMenu(context = context,
+                                   place = place,
+                                   group = action,
+                                   presentationFactory = presentationFactory,
+                                   isMnemonicEnabled = enableMnemonics,
+                                   useDarkIcons = useDarkIcons).screenMenuPeer
       }
       else {
         val menuItem = ActionMenuItem(action, place, context, enableMnemonics, checked, useDarkIcons)

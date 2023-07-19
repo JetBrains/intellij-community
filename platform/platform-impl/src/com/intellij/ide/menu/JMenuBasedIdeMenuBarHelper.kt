@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.swing.MenuSelectionManager
@@ -49,8 +50,24 @@ internal open class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: M
     withContext(Dispatchers.EDT) {
       visibleActions = newVisibleActions
       menuBarComponent.removeAll()
-      createActionMenuList(newVisibleActions) {
-        menuBarComponent.add(it)
+
+      if (!newVisibleActions.isEmpty()) {
+        val enableMnemonics = !UISettings.getInstance().disableMnemonics
+        val isCustomDecorationActive = IdeFrameDecorator.isCustomDecorationActive()
+        for (action in newVisibleActions) {
+          val actionMenu = ActionMenu(context = null,
+                                      place = ActionPlaces.MAIN_MENU,
+                                      group = action,
+                                      presentationFactory = presentationFactory,
+                                      isMnemonicEnabled = enableMnemonics,
+                                      useDarkIcons = menuBar.isDarkMenu,
+                                      isHeaderMenuItem = true)
+          if (isCustomDecorationActive) {
+            actionMenu.isOpaque = false
+            actionMenu.isFocusable = false
+          }
+          menuBarComponent.add(actionMenu)
+        }
       }
       presentationFactory.resetNeedRebuild()
       flavor.updateAppMenu()
