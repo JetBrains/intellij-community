@@ -35,6 +35,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogIndexApplicationStatisticsCollector"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector"/>
 
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter$Factory"/>
@@ -82,6 +83,7 @@
     <fileIconProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogIconProvider"/>
     <fileEditorProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider" fileType="VcsLog"/>
     <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.DefaultVcsLogFileTabTitleProvider"/>
+    <oTelExportersProvider implementation="com.intellij.vcs.log.VcsLogTelemetryExporter"/>
   </extensions>
 
   <projectListeners>
