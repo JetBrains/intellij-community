@@ -351,7 +351,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   // PY-34493
-  public void testSuperMethodAnnotationsNotCopiedFromThirdPartyLibrary() {
+  public void testSuperMethodAnnotationsCopiedFromThirdPartyLibrary() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
       runWithAdditionalClassEntryInSdkRoots(getTestName(true) + "/lib", () -> {
         myFixture.copyDirectoryToProject(getTestName(true) + "/src", "");

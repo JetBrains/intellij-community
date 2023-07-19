@@ -235,7 +235,7 @@ public class PyOverrideTest extends PyTestCase {
   }
 
   // PY-34493
-  public void testAnnotationsNotCopiedFromThirdPartyLibraries() {
+  public void testAnnotationsAreCopiedFromThirdPartyLibraries() {
     runWithAdditionalClassEntryInSdkRoots(getTestName(false) + "/lib", () -> {
       myFixture.copyDirectoryToProject(getTestName(false) + "/src", "");
       myFixture.configureByFile("main.py");
