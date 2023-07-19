@@ -29,16 +29,13 @@ class MavenProjectChangesTest : UsefulTestCase() {
     builder.setHasSourceChanges(true)
     TestCase.assertTrue(builder.hasChanges())
     TestCase.assertTrue(builder.hasSourceChanges())
-    TestCase.assertTrue(builder.sources)
 
     builder.setAllChanges(false)
     TestCase.assertFalse(builder.hasChanges())
     TestCase.assertFalse(builder.hasSourceChanges())
-    TestCase.assertFalse(builder.sources)
 
     builder.setAllChanges(true)
     TestCase.assertTrue(builder.hasChanges())
     TestCase.assertTrue(builder.hasSourceChanges())
-    TestCase.assertTrue(builder.sources)
   }
 }
