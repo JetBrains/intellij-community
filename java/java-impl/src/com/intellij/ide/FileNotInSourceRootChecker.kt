@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveFileFix
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.Disposable
@@ -61,6 +62,7 @@ class FileNotInSourceRootService(val project: Project) : Disposable {
 
   private fun highlightEditorInBackground(virtualFile: VirtualFile, editor: Editor) {
     if (project.isDisposed) return
+    if (!JavaFileType.INSTANCE.equals(virtualFile.fileType)) return
     val fileIndex = ProjectFileIndex.getInstance(project)
     if (fileIndex.isInSource(virtualFile) || fileIndex.isExcluded(virtualFile) || fileIndex.isUnderIgnored(virtualFile)) return
     if (fileIndex.getOrderEntriesForFile(virtualFile).isNotEmpty()) return
