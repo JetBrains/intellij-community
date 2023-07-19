@@ -1329,7 +1329,8 @@ public final class HighlightUtil {
         }
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
       }
-
+      final HighlightInfo.Builder info1 = checkStringTemplateEscapes(expression, text, level, file, description);
+      if (info1 != null) return info1;
       int rawLength = rawText.length();
       StringBuilder chars = new StringBuilder(rawLength);
       int[] offsets = new int[rawLength + 1];
@@ -1341,8 +1342,7 @@ public final class HighlightUtil {
         }
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(expression, calculateErrorRange(rawText, offsets[chars.length()]))
-          .descriptionAndTooltip(message)
-          ;
+          .descriptionAndTooltip(message);
       }
       int length = chars.length();
       if (length > 3) {
@@ -1363,15 +1363,8 @@ public final class HighlightUtil {
         }
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
       }
-      if (file != null && containsUnescaped(text, "\\s")) {
-        HighlightInfo.Builder info = checkFeature(expression, HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file);
-        if (info != null) {
-          if (description != null) {
-            description.set(getUnsupportedFeatureMessage(HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file));
-          }
-          return info;
-        }
-      }
+      final HighlightInfo.Builder info = checkTextBlockEscapes(expression, text, level, file, description);
+      if (info != null) return info;
     }
     else if (type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.TEXT_BLOCK_LITERAL) {
       if (type == JavaTokenType.STRING_LITERAL) {
@@ -1398,6 +1391,8 @@ public final class HighlightUtil {
           }
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
         }
+        final HighlightInfo.Builder info1 = checkStringTemplateEscapes(expression, text, level, file, description);
+        if (info1 != null) return info1;
         int length = rawText.length();
         StringBuilder chars = new StringBuilder(length);
         int[] offsets = new int[length + 1];
@@ -1411,15 +1406,8 @@ public final class HighlightUtil {
             .range(expression, calculateErrorRange(rawText, offsets[chars.length()]))
             .descriptionAndTooltip(message);
         }
-        if (file != null && containsUnescaped(text, "\\s")) {
-          HighlightInfo.Builder info = checkFeature(expression, HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file);
-          if (info != null) {
-            if (description != null) {
-              description.set(getUnsupportedFeatureMessage(HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file));
-            }
-            return info;
-          }
-        }
+        final HighlightInfo.Builder info2 = checkTextBlockEscapes(expression, text, level, file, description);
+        if (info2 != null) return info2;
       }
       else {
         if (!text.endsWith("\"\"\"")) {
@@ -1444,6 +1432,8 @@ public final class HighlightUtil {
             }
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
           }
+          final HighlightInfo.Builder info = checkStringTemplateEscapes(expression, text, level, file, description);
+          if (info != null) return info;
           final int rawLength = rawText.length();
           StringBuilder chars = new StringBuilder(rawLength);
           int[] offsets = new int[rawLength + 1];
@@ -1497,6 +1487,34 @@ public final class HighlightUtil {
     }
 
     return null;
+  }
+
+  private static HighlightInfo.@Nullable Builder checkStringTemplateEscapes(@NotNull PsiLiteralExpression expression,
+                                                                            @NotNull String text,
+                                                                            @NotNull LanguageLevel level,
+                                                                            @Nullable PsiFile file,
+                                                                            @Nullable Ref<? super String> description) {
+    if (file == null || !containsUnescaped(text, "\\{")) return null;
+    HighlightInfo.Builder info = checkFeature(expression, HighlightingFeature.STRING_TEMPLATES, level, file);
+    if (info == null) return null;
+    if (description != null) {
+      description.set(getUnsupportedFeatureMessage(HighlightingFeature.STRING_TEMPLATES, level, file));
+    }
+    return info;
+  }
+
+  private static HighlightInfo.@Nullable Builder checkTextBlockEscapes(@NotNull PsiLiteralExpression expression,
+                                                                       @NotNull String text,
+                                                                       @NotNull LanguageLevel level,
+                                                                       @Nullable PsiFile file,
+                                                                       @Nullable Ref<? super String> description) {
+    if (file == null || !containsUnescaped(text, "\\s")) return null;
+    HighlightInfo.Builder info = checkFeature(expression, HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file);
+    if (info == null) return null;
+    if (description != null) {
+      description.set(getUnsupportedFeatureMessage(HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file));
+    }
+    return info;
   }
 
   @NotNull
