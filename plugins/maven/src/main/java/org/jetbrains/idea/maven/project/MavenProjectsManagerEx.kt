@@ -479,9 +479,15 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                      sources: Boolean,
                                      docs: Boolean): MavenArtifactDownloader.DownloadResult {
     if (ApplicationManager.getApplication().isDispatchThread) {
-      return doDownloadArtifacts(projects, artifacts, sources, docs)
+      return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.downloading")) {
+        downloadArtifacts(projects, artifacts, sources, docs)
+      }
     }
-    return runBlockingMaybeCancellable { downloadArtifacts(projects, artifacts, sources, docs) }
+    else {
+      return runBlockingMaybeCancellable {
+        downloadArtifacts(projects, artifacts, sources, docs)
+      }
+    }
   }
 
   override suspend fun downloadArtifacts(projects: Collection<MavenProject>,

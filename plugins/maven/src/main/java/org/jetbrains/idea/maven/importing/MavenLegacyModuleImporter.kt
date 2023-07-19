@@ -2,12 +2,10 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.JavadocOrderRootType
 import com.intellij.openapi.roots.OrderRootType
@@ -77,11 +75,7 @@ class MavenLegacyModuleImporter(private val myModule: Module,
 
     private fun doConfigurationStep(isWorkspaceImport: Boolean, step: Runnable) {
       if (isWorkspaceImport) {
-        runBlockingMaybeCancellable {
-          writeAction {
-            step.run()
-          }
-        }
+        step.run()
       }
       else {
         if (Registry.`is`("maven.import.to.workspace.model.fast.facet.creation")) {
