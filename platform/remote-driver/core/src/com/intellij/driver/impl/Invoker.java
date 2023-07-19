@@ -34,6 +34,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.intellij.driver.model.transport.RemoteCall.isPassByValue;
+import static java.util.Objects.requireNonNull;
 
 public class Invoker implements InvokerMBean {
   private static final Logger LOG = Logger.getInstance(Invoker.class);
@@ -167,10 +168,15 @@ public class Invoker implements InvokerMBean {
       Session session = sessions.get(call.getSessionId());
       Ref ref = session.putReference(result);
 
+      // also make variable available out ouf `driver.withContext { }` block as weak reference
+      adhocReferenceMap.put(ref.id(), new WeakReference<>(result));
+
       if (result instanceof Collection<?>) {
         List<Ref> items = new ArrayList<>(((Collection<?>)result).size());
         for (Object item : ((Collection<?>)result)) {
-          items.add(session.putReference(item));
+          Ref child = session.putReference(item);
+          adhocReferenceMap.put(child.id(), new WeakReference<>(item));
+          items.add(child);
         }
         return new RemoteCallResult(new RefList(ref.id(), result.getClass().getName(), items));
       }
@@ -180,7 +186,9 @@ public class Invoker implements InvokerMBean {
         List<Ref> items = new ArrayList<>(length);
         for (int i = 0; i < length; i++) {
           Object item = Array.get(result, i);
-          items.add(session.putReference(item));
+          Ref child = session.putReference(item);
+          adhocReferenceMap.put(child.id(), new WeakReference<>(item));
+          items.add(child);
         }
 
         return new RemoteCallResult(new RefList(ref.id(), result.getClass().getName(), items));
@@ -382,7 +390,7 @@ public class Invoker implements InvokerMBean {
       List<PluginContentDescriptor.ModuleItem> modules = ((IdeaPluginDescriptorImpl)plugin).content.modules;
       for (PluginContentDescriptor.ModuleItem module : modules) {
         if (Objects.equals(moduleId, module.name)) {
-          return module.requireDescriptor().getPluginClassLoader();
+          return requireNonNull(module.requireDescriptor().getPluginClassLoader());
         }
       }
 
@@ -463,6 +471,8 @@ public class Invoker implements InvokerMBean {
     }
 
     WeakReference<Object> reference = adhocReferenceMap.get(id);
+    if (reference == null) throw new IllegalStateException("No such variable " + id);
+
     return dereference(reference, id);
   }
 

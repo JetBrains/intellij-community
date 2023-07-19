@@ -3,7 +3,9 @@ package com.intellij.driver.sdk
 import com.intellij.driver.client.Driver
 
 fun Driver.singleProject(): Project {
-  return service(ProjectManager::class).openProjects.single()
+  return withContext {
+    service(ProjectManager::class).openProjects.single()
+  }
 }
 
 fun Driver.getIdeFrame(project: Project): IdeFrame? {
@@ -11,14 +13,14 @@ fun Driver.getIdeFrame(project: Project): IdeFrame? {
 }
 
 fun Driver.isProjectOpened(): Boolean {
-  val projectManager = service(ProjectManager::class)
-  val openProjects = projectManager.openProjects
+  return withContext {
+    val openProjects = service(ProjectManager::class).openProjects
 
-  if (openProjects.size == 1
-      && openProjects[0].isInitialized) {
-    val ideFrame = getIdeFrame(openProjects.single())
-    return ideFrame?.component?.isVisible() == true
+    if (openProjects.size == 1
+        && openProjects[0].isInitialized) {
+      val ideFrame = getIdeFrame(openProjects.single())
+      return@withContext ideFrame?.component?.isVisible() == true
+    }
+    return@withContext false
   }
-
-  return false
 }

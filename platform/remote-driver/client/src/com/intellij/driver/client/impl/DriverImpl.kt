@@ -302,6 +302,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
       }
       else {
         invoker.cleanup(runAsSession.id) // todo handle network errors quietly
+        sessionHolder.remove()
       }
     }
   }
