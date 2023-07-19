@@ -81,7 +81,7 @@
                      level="WARNING" key="inspection.deprecated.maven.dependency.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.maven.inspections.MavenCoroutinesDeprecationInspection"
-                     groupPath="Kotlin,Migration"
+                     groupPathKey="group.path.kotlin.migration"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.maven"
                      enabledByDefault="false"
                      language="XML"
