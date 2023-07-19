@@ -33,7 +33,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPanel<ToolW
   internal abstract val bottomStripe: StripeV2
   internal abstract val topStripe: StripeV2
 
-  abstract val moreButton: MoreSquareStripeButton
+  internal abstract val moreButton: MoreSquareStripeButton
 
   protected fun init() {
     layout = BorderLayout()

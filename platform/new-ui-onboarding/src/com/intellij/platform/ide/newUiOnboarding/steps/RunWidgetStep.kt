@@ -3,15 +3,9 @@ package com.intellij.platform.ide.newUiOnboarding.steps
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.ui.RedesignedRunConfigurationSelector
-import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Toggleable
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
@@ -30,22 +24,12 @@ class RunWidgetStep : NewUiOnboardingStep {
       button.action is RedesignedRunConfigurationSelector
     } ?: return null
 
-    val runPopup = NewUiOnboardingUtil.showNonClosablePopup(actionButton, disposable) {
-      val action = actionButton.action as RedesignedRunConfigurationSelector
-      val context = DataManager.getInstance().getDataContext(actionButton)
-      val event = AnActionEvent.createFromInputEvent(null, ActionPlaces.NEW_UI_ONBOARDING, actionButton.presentation, context)
-      var popup: JBPopup? = null
-      if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-        // wrap popup creation into SlowOperations.ACTION_PERFORM, otherwise there are a lot of exceptions
-        ActionUtil.performDumbAwareWithCallbacks(action, event) {
-          popup = action.createPopup(event)
-          if (popup != null) {
-            Toggleable.setSelected(actionButton.presentation, true)
-          }
-        }
-      }
-      popup
-    } ?: return null
+    val action = actionButton.action as RedesignedRunConfigurationSelector
+    val runPopup = NewUiOnboardingUtil.showNonClosablePopup(
+      disposable,
+      createPopup = { NewUiOnboardingUtil.createPopupFromActionButton(actionButton) { event -> action.createPopup(event) } },
+      showPopup = { popup -> popup.showUnderneathOf(actionButton) }
+    ) ?: return null
 
     yield()  // wait for run configurations popup to be shown (it is a coroutine's invokeLater alternative)
 
