@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
@@ -62,15 +61,12 @@ public class TextComponentEmptyText extends StatusText {
   }
 
   @Override
-  @SuppressWarnings({"deprecation", "unchecked"})
+  @SuppressWarnings({"unchecked"})
   protected boolean isStatusVisible() {
     if (myDynamicStatus) {
       Object function = myOwner.getClientProperty(STATUS_VISIBLE_FUNCTION);
       if (function instanceof Predicate) {
         return ((Predicate<JTextComponent>)function).test(myOwner);
-      }
-      if (function instanceof BooleanFunction) {
-        return ((BooleanFunction<JTextComponent>)function).fun(myOwner);
       }
     }
 
