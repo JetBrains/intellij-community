@@ -47,6 +47,7 @@ import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.isUnderDarcula
 import com.intellij.util.ui.UIUtil
@@ -71,13 +72,17 @@ import java.util.function.Consumer
 import javax.swing.*
 import kotlin.math.max
 
+internal val EMPTY_MENU_ACTION_ICON: Icon = EmptyIcon.create(16, 1)
+
 private val IS_MODAL_CONTEXT = Key.create<Boolean>("Component.isModalContext")
+private val OT_ENABLE_SPANS: ContextKey<Boolean> = ContextKey.named("OT_ENABLE_SPANS")
+// for tests and debug
+private val DO_FULL_EXPAND = java.lang.Boolean.getBoolean("actionSystem.use.full.group.expand")
 
 private val LOG = logger<Utils>()
 
 @ApiStatus.Internal
 object Utils {
-
   @JvmField
   val EMPTY_MENU_FILLER: AnAction = EmptyAction().apply {
     getTemplatePresentation().setText(CommonBundle.messagePointer("empty.menu.filler"))
@@ -85,7 +90,6 @@ object Utils {
 
   internal val OT_OP_KEY: AttributeKey<String> = AttributeKey.stringKey("op")
 
-  private val OT_ENABLE_SPANS: ContextKey<Boolean> = ContextKey.named("OT_ENABLE_SPANS")
   internal fun getTracer(checkNoop: Boolean): Tracer {
     return if (checkNoop && Context.current().get(OT_ENABLE_SPANS) != true) {
       OpenTelemetry.noop().getTracer("")
@@ -148,7 +152,12 @@ object Utils {
                              presentationFactory: PresentationFactory,
                              context: DataContext,
                              place: String): CancellablePromise<List<AnAction>> {
-    return expandActionGroupAsync(group, presentationFactory, context, place, false, true)
+    return expandActionGroupAsync(group = group,
+                                  presentationFactory = presentationFactory,
+                                  context = context,
+                                  place = place,
+                                  isToolbarAction = false,
+                                  fastTrack = true)
   }
 
   @JvmStatic
@@ -162,13 +171,17 @@ object Utils {
     if (!async) {
       throw AssertionError("Async data context required in '" + place + "': " + dumpDataContextClass(context))
     }
-    val edtExecutor = if (fastTrack) newFastTrackAwareExecutor(group, place, context, true) else null
+    val edtExecutor = if (fastTrack) {
+      newFastTrackAwareExecutor(group = group, place = place, context = context, checkMainMenuOrToolbarFirstTime = true)
+    }
+    else {
+      null
+    }
     val updater = ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction, edtExecutor, null)
     val promise = updater.expandActionGroupAsync(group, group is CompactActionGroup)
     edtExecutor?.waitForFastTrack(promise)
     return promise
   }
-
 
   @JvmStatic
   fun expandActionGroupWithTimeout(group: ActionGroup,
@@ -180,8 +193,6 @@ object Utils {
     return ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction)
       .expandActionGroupWithTimeout(group, group is CompactActionGroup, timeoutMs)
   }
-
-  private val DO_FULL_EXPAND = java.lang.Boolean.getBoolean("actionSystem.use.full.group.expand") // for tests and debug
 
   @JvmStatic
   fun expandActionGroup(group: ActionGroup,
@@ -395,7 +406,7 @@ object Utils {
                                    useDarkIcons = useDarkIcons)
           }
           finally {
-            nativePeer.endFill(false)
+            nativePeer.endFill(/* onAppKit = */ true)
           }
         }
       }
@@ -498,7 +509,7 @@ object Utils {
     }
     if (SystemInfo.isMacSystemMenu && isWindowMenu) {
       if (isAligned) {
-        val icon = if (hasIcons(children)) ActionMenuItem.EMPTY_ICON else null
+        val icon = if (hasIcons(children)) EMPTY_MENU_ACTION_ICON else null
         children.forEach { child -> replaceIconIn(child, icon) }
       }
       else if (isAlignedInGroup) {
@@ -511,7 +522,7 @@ object Utils {
             if (isLastElement && !isSeparator) {
               currentGroup.add(child)
             }
-            val icon = if (hasIcons(currentGroup)) ActionMenuItem.EMPTY_ICON else null
+            val icon = if (hasIcons(currentGroup)) EMPTY_MENU_ACTION_ICON else null
             currentGroup.forEach { menuItem -> replaceIconIn(menuItem, icon) }
             currentGroup.clear()
           }
@@ -553,9 +564,13 @@ object Utils {
                                          useDarkIcons = useDarkIcons)
       }
       else {
-        val menuItem = ActionMenuItem(action, place, context, enableMnemonics, checked, useDarkIcons)
-        menuItem.updateFromPresentation(presentation)
-        peer = menuItem.screenMenuItemPeer
+        peer = MacNativeActionMenuItem(action = action,
+                                       place = place,
+                                       context = context,
+                                       isMnemonicEnabled = enableMnemonics,
+                                       insideCheckedGroup = checked,
+                                       useDarkIcons = useDarkIcons,
+                                       presentation = presentation).menuItemPeer
       }
       // null peer means `null`
       nativePeer.add(peer)
@@ -762,7 +777,7 @@ object Utils {
   }
 
   private fun replaceIconIn(menuItem: Component, icon: Icon?) {
-    val from = if (icon == null) ActionMenuItem.EMPTY_ICON else null
+    val from = if (icon == null) EMPTY_MENU_ACTION_ICON else null
     if (menuItem is ActionMenuItem && menuItem.icon === from) {
       menuItem.setIcon(icon)
     }
@@ -779,7 +794,7 @@ object Utils {
       is ActionMenu -> comp.icon
       else -> null
     }
-    return icon != null && icon !== ActionMenuItem.EMPTY_ICON
+    return icon != null && icon !== EMPTY_MENU_ACTION_ICON
   }
 
   /**

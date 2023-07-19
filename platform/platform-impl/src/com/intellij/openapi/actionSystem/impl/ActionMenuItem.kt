@@ -40,7 +40,7 @@ import javax.swing.Icon
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
-private fun isEnterKeyStroke(keyStroke: KeyStroke): Boolean {
+internal fun isEnterKeyStroke(keyStroke: KeyStroke): Boolean {
   return keyStroke.keyCode == KeyEvent.VK_ENTER && keyStroke.modifiers == 0
 }
 
@@ -50,12 +50,7 @@ class ActionMenuItem internal constructor(action: AnAction,
                                           enableMnemonics: Boolean,
                                           insideCheckedGroup: Boolean,
                                           useDarkIcons: Boolean) : JBCheckBoxMenuItem() {
-  companion object {
-    @JvmField
-    internal val EMPTY_ICON: Icon = EmptyIcon.create(16, 1)
-  }
-
-  private val actionRef = createActionRef(action)
+                                            private val actionRef = createActionRef(action)
   private val insideCheckedGroup: Boolean
   private val enableMnemonics: Boolean
   val isToggleable: Boolean
@@ -238,7 +233,7 @@ class ActionMenuItem internal constructor(action: AnAction,
     if (!isAligned || !isAlignedInGroup) {
       return icon
     }
-    return if (icon == null && SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU == place) EMPTY_ICON else icon
+    return if (icon == null && SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU == place) EMPTY_MENU_ACTION_ICON else icon
   }
 
   override fun setIcon(icon: Icon?) {

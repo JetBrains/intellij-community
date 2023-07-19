@@ -549,7 +549,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     return new MyMouseInputHandler();
   }
 
-  private class MyMouseInputHandler extends MouseInputHandler{
+  private final class MyMouseInputHandler extends MouseInputHandler {
     @Override
     public void mouseReleased(MouseEvent e){
       MenuSelectionManager manager=MenuSelectionManager.defaultManager();

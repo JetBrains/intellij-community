@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ide.DataManager;
@@ -20,7 +20,7 @@ import org.jetbrains.concurrency.CancellablePromise;
 import javax.swing.Timer;
 import java.util.*;
 
-class TBPanelActionGroup extends TBPanel {
+final class TBPanelActionGroup extends TBPanel {
   private static final boolean DISABLE_ASYNC_UPDATE = Boolean.getBoolean("touchbar.actions.disable.async.update");
   private static final boolean USE_CACHED_PRESENTATIONS = Boolean.getBoolean("touchbar.actions.use.cached.presentations");
   private static final int DELAY_FOR_CACHED_PRESENTATIONS_MS = Integer.getInteger("touchbar.actions.delay.for.cached.presentations", 750);
@@ -431,8 +431,7 @@ class TBPanelActionGroup extends TBPanel {
     DataContext dataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(Helpers.getCurrentFocusComponent()));
     if (!DISABLE_ASYNC_UPDATE && Utils.isAsyncDataContext(dataContext)) {
       if (myLastUpdate != null) myLastUpdate.cancel();
-      myLastUpdate = Utils.expandActionGroupAsync(
-          myActionGroup, myFactory, dataContext, ActionPlaces.TOUCHBAR_GENERAL);
+      myLastUpdate = Utils.expandActionGroupAsync(myActionGroup, myFactory, dataContext, ActionPlaces.TOUCHBAR_GENERAL);
       myLastUpdate.onSuccess(actions -> _applyPresentationChanges(actions)).onProcessed(__ -> myLastUpdate = null);
     }
     else {
@@ -488,7 +487,7 @@ class TBPanelActionGroup extends TBPanel {
 
   // check that all autoClose actions are presented in actionGroup
   private static void validateAutoCloseActions(@NotNull ActionGroup actionGroup, @NotNull Collection<AnAction> autoCloseActions) {
-    List<AnAction> actionsFromGroup = new ArrayList<>();
+    Collection<AnAction> actionsFromGroup = new HashSet<>();
     Helpers.collectLeafActions(actionGroup, actionsFromGroup);
     if (!actionsFromGroup.containsAll(autoCloseActions)) {
       autoCloseActions.removeIf(a -> !actionsFromGroup.contains(a));
