@@ -554,14 +554,14 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     val sql = "select rowid, position, hash from commit_hashes where rowid in $inClause"
 
     connection.prepareStatement(sql, paramBinder).use { statement ->
-        val rs = statement.executeQuery()
-        while (rs.next()) {
-          val commitId = rs.getInt(0)
-          val root = sortedRoots.get(rs.getInt(1))
-          val hash = rs.getString(2)!!.let(HashImpl::build)
-          result.put(commitId, CommitId(hash, root))
-        }
+      val rs = statement.executeQuery()
+      while (rs.next()) {
+        val commitId = rs.getInt(0)
+        val root = sortedRoots.get(rs.getInt(1))
+        val hash = rs.getString(2)!!.let(HashImpl::build)
+        result.put(commitId, CommitId(hash, root))
       }
+    }
 
     return result
   }
@@ -810,4 +810,4 @@ private fun readIntArray(statement: SqlitePreparedStatement<IntBinder>): IntArra
 
 private fun Iterable<Int>.toInClause() = "(" + joinToString(separator = ",") { "'$it'" } + ")"
 
-internal val VcsLogStorageBackend.isSqliteBackend : Boolean get() = this is SqliteVcsLogStorageBackend
+internal val VcsLogStorageBackend.isSqliteBackend: Boolean get() = this is SqliteVcsLogStorageBackend

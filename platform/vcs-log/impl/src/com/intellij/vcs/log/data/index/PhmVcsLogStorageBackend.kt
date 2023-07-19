@@ -121,7 +121,8 @@ internal class PhmVcsLogStorageBackend(
       trigrams = VcsLogMessagesTrigramIndex(storageId, storageLockContext, errorHandler, this)
 
       reportEmpty()
-    } catch (t: Throwable) {
+    }
+    catch (t: Throwable) {
       Disposer.dispose(this)
       throw t
     }
@@ -169,7 +170,8 @@ internal class PhmVcsLogStorageBackend(
     try {
       messages.markCorrupted()
       messages.force()
-    } catch (t: Throwable) {
+    }
+    catch (t: Throwable) {
       LOG.warn(t)
     }
   }

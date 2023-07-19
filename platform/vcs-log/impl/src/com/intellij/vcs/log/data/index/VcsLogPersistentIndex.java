@@ -144,7 +144,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         if (oldFull == null) return full;
         return oldFull || full;
       });
-    } else {
+    }
+    else {
       doScheduleIndex(full);
     }
   }
@@ -194,7 +195,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
                         span -> {
                           span.setAttribute("vcsLogWriter", mutator.getClass().getName());
                           mutator.putCommit(myStorage.getCommitIndex(detail.getId(), detail.getRoot()), detail);
-      });
+                        });
     }
     catch (IOException | UncheckedIOException e) {
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
