@@ -33,8 +33,12 @@ class MoreToolWindowsStep : NewUiOnboardingStep {
     val builder = GotItComponentBuilder(NewUiOnboardingBundle.message("more.tool.windows.step.text"))
       .withHeader(NewUiOnboardingBundle.message("more.tool.windows.step.header"))
 
-    val popupPoint = Point(morePopup.content.width + JBUI.scale(4), JBUI.scale(23))
+    val isOnTheLeft = moreAction.isOnTheLeft
+    val xLocation = if (isOnTheLeft) morePopup.content.width else 0
+    val xOffset = JBUI.scale(4) * (if (isOnTheLeft) 1 else -1)
+    val popupPoint = Point(xLocation + xOffset, JBUI.scale(23))
     val point = NewUiOnboardingUtil.convertPointToFrame(project, morePopup.content, popupPoint) ?: return null
-    return NewUiOnboardingStepData(builder, point, Balloon.Position.atRight)
+    val position = if (isOnTheLeft) Balloon.Position.atRight else Balloon.Position.atLeft
+    return NewUiOnboardingStepData(builder, point, position)
   }
 }
