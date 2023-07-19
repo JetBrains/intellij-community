@@ -33,8 +33,6 @@ import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlight
 
 final class PatternHighlightingModel {
   private static final Logger LOG = Logger.getInstance(PatternHighlightingModel.class);
-
-  private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
   private static final int MAX_ITERATION_COVERAGE = 1_000;
   private static final int MAX_GENERATED_PATTERN_NUMBER = 10;
 
@@ -154,7 +152,7 @@ final class PatternHighlightingModel {
         PsiPattern[] elementsToDelete = Arrays.copyOfRange(patternComponents, recordComponents.length, patternComponents.length);
         int diff = patternComponents.length - recordComponents.length;
         String text = QuickFixBundle.message("remove.redundant.nested.patterns.fix.text", diff);
-        IntentionAction fix = QUICK_FIX_FACTORY.createDeleteFix(elementsToDelete, text);
+        IntentionAction fix = QuickFixFactory.getInstance().createDeleteFix(elementsToDelete, text);
         builder.registerFix(fix, null, text, null, null);
       }
     }

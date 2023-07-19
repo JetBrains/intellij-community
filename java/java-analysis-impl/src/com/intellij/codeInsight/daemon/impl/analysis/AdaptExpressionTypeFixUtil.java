@@ -36,7 +36,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * Utilities to register fixes for mismatching type
  */
 final class AdaptExpressionTypeFixUtil {
-  private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
   private AdaptExpressionTypeFixUtil() { }
 
@@ -231,7 +230,7 @@ final class AdaptExpressionTypeFixUtil {
     if (!mentionsTypeArgument) {
       IntentionAction action3 = new WrapWithAdapterMethodCallFix(expectedType, expression, role);
       info.registerFix(action3, null, null, null, null);
-      IntentionAction action2 = QUICK_FIX_FACTORY.createWrapWithOptionalFix(expectedType, expression);
+      IntentionAction action2 = QuickFixFactory.getInstance().createWrapWithOptionalFix(expectedType, expression);
       info.registerFix(action2, null, null, null, null);
       var action1 = new WrapExpressionFix(expectedType, expression, role);
       info.registerFix(action1, null, null, null, null);
@@ -245,7 +244,7 @@ final class AdaptExpressionTypeFixUtil {
       PsiType erasedValueType = TypeConversionUtil.erasure(actualType);
       if (erasedValueType != null &&
           TypeConversionUtil.isAssignable(((PsiArrayType)expectedType).getComponentType(), erasedValueType)) {
-        IntentionAction action = QUICK_FIX_FACTORY.createSurroundWithArrayFix(null, expression);
+        IntentionAction action = QuickFixFactory.getInstance().createSurroundWithArrayFix(null, expression);
         info.registerFix(action, null, null, null, null);
       }
     }
