@@ -146,7 +146,7 @@ class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImpor
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+") // targetHierarchy used
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+") // applyHierarchyTemplate used
     fun testSimilarTargetsBamboo() {
         doTest {
             onlyCheckers(KotlinFacetSettingsChecker, OrderEntriesChecker)
