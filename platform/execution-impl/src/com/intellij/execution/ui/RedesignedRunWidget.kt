@@ -21,6 +21,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.IconLoader
@@ -43,6 +44,7 @@ import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.InputEvent
 import java.util.function.Supplier
@@ -271,7 +273,9 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
 }
 
 internal const val MINIMAL_POPUP_WIDTH = 270
-private abstract class TogglePopupAction : ToggleAction {
+
+@ApiStatus.Internal
+abstract class TogglePopupAction : ToggleAction {
 
   constructor()
 
@@ -285,13 +289,18 @@ private abstract class TogglePopupAction : ToggleAction {
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (!state) return
-    val presentation = e.presentation
     val component = e.inputEvent?.component as? JComponent ?: return
-    val actionGroup = getActionGroup(e) ?: return
+    val popup = createPopup(e)
+    popup?.showUnderneathOf(component)
+  }
+
+  fun createPopup(e: AnActionEvent): JBPopup? {
+    val presentation = e.presentation
+    val actionGroup = getActionGroup(e) ?: return null
     val disposeCallback = { Toggleable.setSelected(presentation, false) }
     val popup = createPopup(actionGroup, e, disposeCallback)
     popup.setMinimumSize(JBDimension(MINIMAL_POPUP_WIDTH, 0))
-    popup.showUnderneathOf(component)
+    return popup
   }
 
   open fun createPopup(actionGroup: ActionGroup,
@@ -402,7 +411,8 @@ internal fun addAdditionalActionsToRunConfigurationOptions(project: Project,
   }
 }
 
-private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware {
+@ApiStatus.Internal
+class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     if (e.inputEvent != null && e.inputEvent!!.modifiersEx and InputEvent.SHIFT_DOWN_MASK != 0) {
       ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS).actionPerformed(e)
