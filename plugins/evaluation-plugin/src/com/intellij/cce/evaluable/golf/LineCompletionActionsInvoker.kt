@@ -131,4 +131,4 @@ class LineCompletionActionsInvoker(project: Project,
   private fun resetRandom(): Random = Random(BENCHMARK_RANDOM_SEED)
 }
 
-private const val BENCHMARK_RANDOM_SEED = 0
+private const val BENCHMARK_RANDOM_SEED = 42
