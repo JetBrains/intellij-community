@@ -117,18 +117,17 @@ object Utils {
   private fun newPreCachedDataContext(component: Component?): DataContext = PreCachedDataContext(component)
 
   @JvmStatic
-  fun wrapDataContext(dataContext: DataContext): DataContext =
-    if (!Registry.`is`("actionSystem.update.actions.async")) dataContext
-    else wrapToAsyncDataContext(dataContext)
+  fun wrapDataContext(dataContext: DataContext): DataContext {
+    return if (Registry.`is`("actionSystem.update.actions.async", true)) wrapToAsyncDataContext(dataContext) else dataContext
+  }
 
   @JvmStatic
-  fun freezeDataContext(dataContext: DataContext, missedKeys: Consumer<in String?>?): DataContext =
-    if (dataContext is PreCachedDataContext) dataContext.frozenCopy(missedKeys)
-    else dataContext
+  fun freezeDataContext(dataContext: DataContext, missedKeys: Consumer<in String?>?): DataContext {
+    return if (dataContext is PreCachedDataContext) dataContext.frozenCopy(missedKeys) else dataContext
+  }
 
   @JvmStatic
-  fun isAsyncDataContext(dataContext: DataContext): Boolean =
-    dataContext === DataContext.EMPTY_CONTEXT || dataContext is AsyncDataContext
+  fun isAsyncDataContext(dataContext: DataContext): Boolean = dataContext === DataContext.EMPTY_CONTEXT || dataContext is AsyncDataContext
 
   @JvmStatic
   fun getRawDataIfCached(dataContext: DataContext, dataId: String): Any? = when (dataContext) {
