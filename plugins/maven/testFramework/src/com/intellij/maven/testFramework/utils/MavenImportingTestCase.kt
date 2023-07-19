@@ -9,7 +9,7 @@ import org.jetbrains.idea.maven.project.MavenFolderResolver
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.utils.MavenTestCoroutineScopeProvider
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 
 fun resolveFoldersAndImport(project: Project, mavenProjects: Collection<MavenProject>) {
   runWithModalProgressBlocking(project, "") {
@@ -27,7 +27,7 @@ fun importMavenProjects(mavenProjectsManager: MavenProjectsManager, projectFiles
       toImport[project] = MavenProjectChanges.ALL
     }
   }
-  val cs = MavenTestCoroutineScopeProvider.getCoroutineScope(mavenProjectsManager.project)
+  val cs = MavenCoroutineScopeProvider.getCoroutineScope(mavenProjectsManager.project)
   cs.launch { mavenProjectsManager.importMavenProjects(toImport) }
 }
 
