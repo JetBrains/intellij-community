@@ -10,6 +10,8 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testIntegration.TestFramework;
 
+import java.util.*;
+
 public class JUnitDetectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
@@ -191,5 +193,31 @@ public class JUnitDetectionTest extends LightJavaCodeInsightFixtureTestCase {
     PsiClass aClass = ((PsiClassOwner)file).getClasses()[0];
     assertTrue(JUnitUtil.isTestClass(aClass));
     assertTrue(JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(aClass.getMethods()[0])));
+  }
+
+  public void testMixJUnit3AndTestNG() {
+    myFixture.addClass("package junit.framework; public class TestCase {}");
+
+    myFixture.addClass("package org.testng.annotations;\n" +
+                       "public @interface Test {}");
+    myFixture.addClass("package org.testng.annotations;\n" +
+                       "public @interface BeforeMethod {}");
+    myFixture.addClass("package org.testng.annotations;\n" +
+                       "public @interface AfterMethod {}");
+
+    PsiFile file = myFixture.configureByText(
+      "MyTest.java",
+      """
+        public class MyTest extends junit.framework.TestCase {\t
+        @org.testng.annotations.Test public void fooBar(){}
+        }""");
+    PsiClass aClass = ((PsiClassOwner)file).getClasses()[0];
+    List<TestFramework> frameworks = new ArrayList<>(TestFrameworks.detectApplicableFrameworks(aClass));
+    Collections.sort(frameworks, Comparator.comparing(TestFramework::getName));
+    assertEquals(2, frameworks.size());
+    assertEquals("JUnit3", frameworks.get(0).getName());
+    assertEquals("TestNG", frameworks.get(1).getName());
+    assertTrue(JUnitUtil.isTestClass(aClass));
+    assertFalse(JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(aClass.getMethods()[0])));
   }
 }
