@@ -9,12 +9,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.CheckboxState
-import org.jetbrains.jewel.SvgPatcher
+import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.styling.CheckboxColors
 import org.jetbrains.jewel.styling.CheckboxIcons
 import org.jetbrains.jewel.styling.CheckboxMetrics
 import org.jetbrains.jewel.styling.CheckboxStyle
-import org.jetbrains.jewel.styling.ResourcePathPainterProvider
+import org.jetbrains.jewel.styling.ResourcePainterProvider
 import org.jetbrains.jewel.styling.StatefulPainterProvider
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
@@ -30,18 +30,18 @@ data class IntUiCheckboxStyle(
 
         @Composable
         fun light(
-            svgPatcher: SvgPatcher,
+            svgLoader: SvgLoader,
             colors: IntUiCheckboxColors = IntUiCheckboxColors.light(),
             metrics: IntUiCheckboxMetrics = IntUiCheckboxMetrics(),
-            icons: IntUiCheckboxIcons = intUiCheckboxIcons(svgPatcher),
+            icons: IntUiCheckboxIcons = intUiCheckboxIcons(svgLoader),
         ) = IntUiCheckboxStyle(colors, metrics, icons)
 
         @Composable
         fun dark(
-            svgPatcher: SvgPatcher,
+            svgLoader: SvgLoader,
             colors: IntUiCheckboxColors = IntUiCheckboxColors.dark(),
             metrics: IntUiCheckboxMetrics = IntUiCheckboxMetrics(),
-            icons: IntUiCheckboxIcons = intUiCheckboxIcons(svgPatcher),
+            icons: IntUiCheckboxIcons = intUiCheckboxIcons(svgLoader),
         ) = IntUiCheckboxStyle(colors, metrics, icons)
     }
 }
@@ -126,12 +126,12 @@ data class IntUiCheckboxIcons(
 
         @Composable
         fun checkbox(
-            svgPatcher: SvgPatcher,
+            svgLoader: SvgLoader,
             basePath: String = "icons/intui/checkBox.svg",
-        ) =
-            ResourcePathPainterProvider(
+        ): StatefulPainterProvider<CheckboxState> =
+            ResourcePainterProvider(
                 basePath,
-                svgPatcher,
+                svgLoader,
                 prefixTokensProvider = { state: CheckboxState ->
                     if (state.toggleableState == ToggleableState.Indeterminate) "Indeterminate" else ""
                 }
@@ -141,6 +141,6 @@ data class IntUiCheckboxIcons(
 
 @Composable
 fun intUiCheckboxIcons(
-    svgPatcher: SvgPatcher,
-    checkbox: StatefulPainterProvider<CheckboxState> = IntUiCheckboxIcons.checkbox(svgPatcher),
+    svgLoader: SvgLoader,
+    checkbox: StatefulPainterProvider<CheckboxState> = IntUiCheckboxIcons.checkbox(svgLoader),
 ) = IntUiCheckboxIcons(checkbox)

@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.DropdownState
 import org.jetbrains.jewel.IntelliJTheme
-import org.jetbrains.jewel.SvgPatcher
+import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.styling.DropdownColors
 import org.jetbrains.jewel.styling.DropdownIcons
 import org.jetbrains.jewel.styling.DropdownMetrics
@@ -36,20 +36,20 @@ data class IntUiDropdownStyle(
 
         @Composable
         fun light(
-            svgPatcher: SvgPatcher,
+            svgLoader: SvgLoader,
             colors: IntUiDropdownColors = IntUiDropdownColors.light(),
             metrics: IntUiDropdownMetrics = IntUiDropdownMetrics(),
-            icons: IntUiDropdownIcons = intUiDropdownIcons(svgPatcher),
+            icons: IntUiDropdownIcons = intUiDropdownIcons(svgLoader),
             textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
             menuStyle: MenuStyle = IntUiMenuStyle.light(),
         ) = IntUiDropdownStyle(colors, metrics, icons, textStyle, menuStyle)
 
         @Composable
         fun dark(
-            svgPatcher: SvgPatcher,
+            svgLoader: SvgLoader,
             colors: IntUiDropdownColors = IntUiDropdownColors.dark(),
             metrics: IntUiDropdownMetrics = IntUiDropdownMetrics(),
-            icons: IntUiDropdownIcons = intUiDropdownIcons(svgPatcher),
+            icons: IntUiDropdownIcons = intUiDropdownIcons(svgLoader),
             textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
             menuStyle: MenuStyle = IntUiMenuStyle.dark(),
         ) = IntUiDropdownStyle(colors, metrics, icons, textStyle, menuStyle)
@@ -233,19 +233,16 @@ data class IntUiDropdownIcons(
 
         @Composable
         fun chevronDown(
-            svgPatcher: SvgPatcher,
-            normal: String = "icons/intui/chevronDown.svg",
-            disabled: String = normal,
-            focused: String = normal,
-            pressed: String = normal,
-            hovered: String = normal,
-        ) = ResourcePainterProvider.create<DropdownState>(normal, disabled, focused, pressed, hovered, svgPatcher)
+            svgLoader: SvgLoader,
+            basePath: String = "icons/intui/chevronDown.svg",
+        ): StatefulPainterProvider<DropdownState> =
+            ResourcePainterProvider(basePath, svgLoader)
     }
 }
 
 @Composable
 fun intUiDropdownIcons(
-    svgPatcher: SvgPatcher,
-    chevronDown: StatefulPainterProvider<DropdownState> = IntUiDropdownIcons.chevronDown(svgPatcher),
+    svgLoader: SvgLoader,
+    chevronDown: StatefulPainterProvider<DropdownState> = IntUiDropdownIcons.chevronDown(svgLoader),
 ) =
     IntUiDropdownIcons(chevronDown)

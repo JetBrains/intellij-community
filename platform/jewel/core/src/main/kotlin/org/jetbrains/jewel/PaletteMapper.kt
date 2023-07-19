@@ -1,7 +1,9 @@
 package org.jetbrains.jewel
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
+@Immutable
 class PaletteMapper(val colorOverrides: Map<Color, Color>) {
 
     fun mapColor(originalColor: Color): Color =

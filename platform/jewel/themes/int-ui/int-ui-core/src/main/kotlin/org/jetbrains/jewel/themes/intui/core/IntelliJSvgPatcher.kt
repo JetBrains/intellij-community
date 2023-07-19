@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.themes.intui.core
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import org.jetbrains.jewel.PaletteMapper
 import org.jetbrains.jewel.SvgPatcher
@@ -18,6 +19,7 @@ import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 import kotlin.math.roundToInt
 
+@Immutable
 class IntelliJSvgPatcher(private val mapper: PaletteMapper) : SvgPatcher {
 
     private val documentBuilderFactory = DocumentBuilderFactory.newDefaultInstance()
@@ -137,4 +139,17 @@ class IntelliJSvgPatcher(private val mapper: PaletteMapper) : SvgPatcher {
             error("Unable to render XML document to string: ${e.message}")
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as IntelliJSvgPatcher
+
+        return mapper == other.mapper
+    }
+
+    override fun hashCode(): Int = mapper.hashCode()
+
+    override fun toString(): String = "IntelliJSvgPatcher(mapper=$mapper)"
 }

@@ -50,8 +50,8 @@ interface LinkMetrics {
 @Immutable
 interface LinkIcons {
 
-    val dropdownChevron: ResourcePainterProvider<LinkState>
-    val externalLink: ResourcePainterProvider<LinkState>
+    val dropdownChevron: StatefulPainterProvider<LinkState>
+    val externalLink: StatefulPainterProvider<LinkState>
 }
 
 @Immutable

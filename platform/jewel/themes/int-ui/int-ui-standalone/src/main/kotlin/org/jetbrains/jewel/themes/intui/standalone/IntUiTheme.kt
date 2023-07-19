@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.jewel.ExperimentalJewelApi
 import org.jetbrains.jewel.IntelliJTheme
 import org.jetbrains.jewel.LocalResourceLoader
-import org.jetbrains.jewel.SvgPatcher
+import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.ThemeColors
 import org.jetbrains.jewel.ThemeMetrics
 import org.jetbrains.jewel.styling.ButtonStyle
@@ -34,6 +34,7 @@ import org.jetbrains.jewel.styling.TextFieldStyle
 import org.jetbrains.jewel.themes.intui.core.BaseIntUiTheme
 import org.jetbrains.jewel.themes.intui.core.ComponentStyling
 import org.jetbrains.jewel.themes.intui.core.IntUiThemeDefinition
+import org.jetbrains.jewel.themes.intui.core.IntelliJSvgLoader
 import org.jetbrains.jewel.themes.intui.core.IntelliJSvgPatcher
 import org.jetbrains.jewel.themes.intui.core.IntelliJThemeColorPalette
 import org.jetbrains.jewel.themes.intui.core.IntelliJThemeIcons
@@ -186,10 +187,12 @@ object IntUiTheme : BaseIntUiTheme {
 @OptIn(ExperimentalJewelApi::class)
 @Composable
 fun IntUiTheme(theme: IntUiThemeDefinition, swingCompatMode: Boolean = false, content: @Composable () -> Unit) {
-    val svgPatcher by remember(theme) {
-        mutableStateOf(IntelliJSvgPatcher(PaletteMapperFactory.create(theme.isDark, theme.icons, theme.palette)))
+    val svgLoader by remember(theme.isDark, theme.icons, theme.palette) {
+        val paletteMapper = PaletteMapperFactory.create(theme.isDark, theme.icons, theme.palette)
+        val svgPatcher = IntelliJSvgPatcher(paletteMapper)
+        mutableStateOf(IntelliJSvgLoader(svgPatcher))
     }
-    val componentStyling = defaultComponentStyling(theme.isDark, svgPatcher)
+    val componentStyling = defaultComponentStyling(theme.isDark, svgLoader)
     IntUiTheme(theme, componentStyling, swingCompatMode, content)
 }
 
@@ -209,23 +212,23 @@ fun IntUiTheme(
 }
 
 @Composable
-fun defaultComponentStyling(isDark: Boolean, svgPatcher: SvgPatcher) =
-    if (isDark) darkComponentStyling(svgPatcher) else lightComponentStyling(svgPatcher)
+fun defaultComponentStyling(isDark: Boolean, svgLoader: SvgLoader) =
+    if (isDark) darkComponentStyling(svgLoader) else lightComponentStyling(svgLoader)
 
 @Composable
 fun darkComponentStyling(
-    svgPatcher: SvgPatcher,
+    svgLoader: SvgLoader,
     defaultButtonStyle: ButtonStyle = IntUiButtonStyle.Default.dark(),
     outlinedButtonStyle: ButtonStyle = IntUiButtonStyle.Outlined.dark(),
-    checkboxStyle: CheckboxStyle = IntUiCheckboxStyle.dark(svgPatcher),
+    checkboxStyle: CheckboxStyle = IntUiCheckboxStyle.dark(svgLoader),
     chipStyle: ChipStyle = IntUiChipStyle.dark(),
-    dropdownStyle: DropdownStyle = IntUiDropdownStyle.dark(svgPatcher),
+    dropdownStyle: DropdownStyle = IntUiDropdownStyle.dark(svgLoader),
     groupHeaderStyle: GroupHeaderStyle = IntUiGroupHeaderStyle.dark(),
     labelledTextFieldStyle: LabelledTextFieldStyle = IntUiLabelledTextFieldStyle.dark(),
-    linkStyle: LinkStyle = IntUiLinkStyle.dark(svgPatcher),
+    linkStyle: LinkStyle = IntUiLinkStyle.dark(svgLoader),
     menuStyle: MenuStyle = IntUiMenuStyle.dark(),
     horizontalProgressBarStyle: HorizontalProgressBarStyle = IntUiHorizontalProgressBarStyle.dark(),
-    radioButtonStyle: RadioButtonStyle = IntUiRadioButtonStyle.dark(svgPatcher),
+    radioButtonStyle: RadioButtonStyle = IntUiRadioButtonStyle.dark(svgLoader),
     scrollbarStyle: ScrollbarStyle = IntUiScrollbarStyle.dark(),
     textAreaStyle: IntUiTextAreaStyle = IntUiTextAreaStyle.dark(),
     textFieldStyle: TextFieldStyle = IntUiTextFieldStyle.dark(),
@@ -251,18 +254,18 @@ fun darkComponentStyling(
 
 @Composable
 fun lightComponentStyling(
-    svgPatcher: SvgPatcher,
+    svgLoader: SvgLoader,
     defaultButtonStyle: ButtonStyle = IntUiButtonStyle.Default.light(),
     outlinedButtonStyle: ButtonStyle = IntUiButtonStyle.Outlined.light(),
-    checkboxStyle: CheckboxStyle = IntUiCheckboxStyle.light(svgPatcher),
+    checkboxStyle: CheckboxStyle = IntUiCheckboxStyle.light(svgLoader),
     chipStyle: ChipStyle = IntUiChipStyle.light(),
-    dropdownStyle: DropdownStyle = IntUiDropdownStyle.light(svgPatcher),
+    dropdownStyle: DropdownStyle = IntUiDropdownStyle.light(svgLoader),
     groupHeaderStyle: GroupHeaderStyle = IntUiGroupHeaderStyle.light(),
     labelledTextFieldStyle: LabelledTextFieldStyle = IntUiLabelledTextFieldStyle.light(),
-    linkStyle: LinkStyle = IntUiLinkStyle.light(svgPatcher),
+    linkStyle: LinkStyle = IntUiLinkStyle.light(svgLoader),
     menuStyle: MenuStyle = IntUiMenuStyle.light(),
     horizontalProgressBarStyle: HorizontalProgressBarStyle = IntUiHorizontalProgressBarStyle.light(),
-    radioButtonStyle: RadioButtonStyle = IntUiRadioButtonStyle.light(svgPatcher),
+    radioButtonStyle: RadioButtonStyle = IntUiRadioButtonStyle.light(svgLoader),
     scrollbarStyle: ScrollbarStyle = IntUiScrollbarStyle.light(),
     textAreaStyle: IntUiTextAreaStyle = IntUiTextAreaStyle.light(),
     textFieldStyle: TextFieldStyle = IntUiTextFieldStyle.light(),
