@@ -21,6 +21,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "unused"})
@@ -84,7 +85,7 @@ public class Menu extends MenuItem {
     nativeRenameAppMenuItems(ArrayUtil.toStringArray(replace));
   }
 
-  public void setOnOpen(Runnable fillMenuProcedure, Component component) {
+  public void setOnOpen(Runnable fillMenuProcedure, @Nullable Component component) {
     this.myOnOpen = fillMenuProcedure;
     this.myComponent = component;
   }
@@ -110,7 +111,7 @@ public class Menu extends MenuItem {
     nativeSetTitle(nativePeer, label, isInHierarchy);
   }
 
-  // Search for subitem by title (regexp) in native NSMenu peer
+  // Search for sub-item by title (regexp) in native NSMenu peer
   // Returns the index of first child with matched title.
   public int findIndexByTitle(String re) {
     if (re == null || re.isEmpty()) return -1;
@@ -119,7 +120,7 @@ public class Menu extends MenuItem {
     return nativeFindIndexByTitle(nativePeer, re);
   }
 
-  // Search for subitem by title (regexp) in native NSMenu peer
+  // Search for sub-item by title (regexp) in native NSMenu peer
   // Returns the first child with matched title.
   // NOTE: Always creates java-wrapper for native NSMenuItem (that must be disposed manually)
   synchronized
@@ -231,53 +232,56 @@ public class Menu extends MenuItem {
   }
 
   public void menuNeedsUpdate() {
-    // Called on AppKit when menu opening
+    // Called on AppKit when the menu opening
     myIsOpened = true;
-    if (myOnOpen != null) {
-      if (USE_STUB) {
-        // NOTE: must add stub item when menu opens (otherwise AppKit considers it as empty, and we can't fill it later)
-        MenuItem stub = new MenuItem();
-        myItems.add(stub);
-        stub.isInHierarchy = true;
+    if (myOnOpen == null) {
+      return;
+    }
 
-        ensureNativePeer();
-        stub.ensureNativePeer();
-        nativeAddItem(nativePeer, stub.nativePeer, false/*already on AppKit thread*/);
+    if (USE_STUB) {
+      // NOTE: must add stub item when the menu opens (otherwise AppKit considers it as empty, and we can't fill it later)
+      MenuItem stub = new MenuItem();
+      myItems.add(stub);
+      stub.isInHierarchy = true;
 
-        ApplicationManager.getApplication().invokeLater(() -> {
-          myOnOpen.run();
-          endFill(true);
-        });
-      }
-      else {
-        invokeWithLWCToolkit(myOnOpen, () -> endFill(false/*already on AppKit thread*/), myComponent, true);
-      }
+      ensureNativePeer();
+      stub.ensureNativePeer();
+      nativeAddItem(nativePeer, stub.nativePeer, false/*already on AppKit thread*/);
+
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myOnOpen.run();
+        endFill(true);
+      });
+    }
+    else {
+      invokeWithLWCToolkit(myOnOpen, () -> endFill(false/*already on AppKit thread*/), myComponent, true);
     }
   }
 
   public void menuWillOpen() {
-    // Called on AppKit when menu opening
+    // Called on AppKit when a menu opening
     if (!myIsOpened) {
-      // When user opens some menu at second time (without focus lost) apple doesn't call menuNeedsUpdate for
+      // When a user opens some menu at second time (without focus lost), apple doesn't call menuNeedsUpdate for
       // this menu (but always calls menuWillOpen) and for all submenus. It causes problems like IDEA-319117.
       // So detect this case and call menuNeedsUpdate() "manually".
-      // NOTE: unfortunately modifying menu here can cause unstable behaviour, see IDEA-315910.
+      // NOTE: unfortunately modifying menu here can cause unstable behavior, see IDEA-315910.
       Logger.getInstance(Menu.class).debug("menuNeedsUpdate wasn't called for '" + myTitle + "', will do it now");
       menuNeedsUpdate();
     }
   }
 
   public void invokeMenuClosing() {
-    // Called on AppKit when menu closed
+    // Called on AppKit when the menu closed
     myIsOpened = false;
 
-    // When user selects item of system menu (under macOS) AppKit sometimes generates such sequence: CloseParentMenu -> PerformItemAction
+    // When a user selects item of a system menu (under macOS),
+    // AppKit sometimes generates such sequence: CloseParentMenu -> PerformItemAction
     // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
     // Defer clearing to avoid this problem.
     disposeChildren(CLOSE_DELAY);
 
     // NOTE: don't clear native hierarchy here (see IDEA-315910)
-    // It will be done when menu opens next time.
+    // It will be done when a menu opens next time.
 
     if (myOnClose != null) invokeWithLWCToolkit(myOnClose, null, myComponent, false);
   }
@@ -297,13 +301,13 @@ public class Menu extends MenuItem {
   private native long nativeAttachMenu(long nsMenu);
 
   // Find methods
-  // Always performs on AppKit thread with waiting for result
+  // Always performs on AppKit thread with waiting for a result
   private native long nativeFindItemByTitle(long menuPtr, String re); // NOTE: returns retained pointer
 
   private native int nativeFindIndexByTitle(long menuPtr, String re);
 
   // Modification methods
-  // If menu was created but wasn't added into any parent menu then all setters can be invoked from any thread.
+  // If a menu was created but wasn't added into any parent menu, then all setters can be invoked from any thread.
   private native void nativeSetTitle(long menuPtr, String title, boolean onAppKit);
 
   private native void nativeAddItem(long menuPtr, long itemPtr/*MenuItem OR Menu*/, boolean onAppKit);
@@ -311,7 +315,7 @@ public class Menu extends MenuItem {
   private native void nativeInsertItem(long menuPtr, long itemPtr/*MenuItem OR Menu*/, int position, boolean onAppKit);
 
   // Refill menu.
-  // If menuPtr == null then refills sharedApplication.mainMenu with new items (except AppMenu, i.e. first item of mainMenu)
+  // If menuPtr == null then refills sharedApplication.mainMenu with new items (except AppMenu, i.e., first item of mainMenu)
   native void nativeRefill(long menuPtr, long[] newItems, boolean onAppKit);
 
   static
@@ -343,11 +347,12 @@ public class Menu extends MenuItem {
       return false;
     }
 
+    @SuppressWarnings("SpellCheckingInspection")
     Path lib = PathManager.findBinFile("libmacscreenmenu64.dylib");
     try {
-      System.load(lib.toString());
+      System.load(Objects.requireNonNull(lib).toString());
       nativeInitClass();
-      // create and dispose native object (just for to test)
+      // create and dispose a native object (just for to test)
       Menu test = new Menu("test");
       test.ensureNativePeer();
       Disposer.dispose(test);
@@ -364,6 +369,7 @@ public class Menu extends MenuItem {
 
   private static void invokeWithLWCToolkit(Runnable r, Runnable after, Component invoker, boolean wait) {
     try {
+      @SuppressWarnings("SpellCheckingInspection")
       Class<?> toolkitClass = Class.forName("sun.lwawt.macosx.LWCToolkit");
       @SuppressWarnings("deprecation")
       Method invokeMethod = wait ?
@@ -383,10 +389,12 @@ public class Menu extends MenuItem {
         if (after != null) after.run();
       }
       else {
+        //noinspection SpellCheckingInspection
         Logger.getInstance(Menu.class).warn("can't find sun.lwawt.macosx.LWCToolkit.invokeAndWait, screen menu won't be filled");
       }
     }
     catch (ClassNotFoundException e) {
+      //noinspection SpellCheckingInspection
       Logger.getInstance(Menu.class).warn("can't find sun.lwawt.macosx.LWCToolkit, screen menu won't be filled");
     }
   }

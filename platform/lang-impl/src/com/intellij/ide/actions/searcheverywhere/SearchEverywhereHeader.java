@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
@@ -16,7 +16,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -38,8 +37,7 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.ContributorFilterCollector;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.getReportableContributorID;
 
-public class SearchEverywhereHeader {
-
+public final class SearchEverywhereHeader {
   private final @NotNull Runnable myScopeChangedCallback;
   private final Function<? super String, String> myShortcutSupplier;
 
@@ -263,7 +261,7 @@ public class SearchEverywhereHeader {
   }
 
   public boolean canResetScope() {
-    return Boolean.TRUE.equals(ObjectUtils.doIfNotNull(mySelectedTab.everywhereAction, action -> !action.isEverywhere()));
+    return Boolean.TRUE.equals(mySelectedTab.everywhereAction == null ? null : !mySelectedTab.everywhereAction.isEverywhere());
   }
 
   public void resetScope() {
