@@ -251,5 +251,6 @@
 
     <module name="kotlin.compiler-reference-index"/>
     <module name="kotlin.compiler-plugins.assignment.common-k2"/>
+    <module name="kotlin.compiler-plugins.scripting"/>
   </content>
 </idea-plugin>
