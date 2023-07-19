@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.GentleFlusherBase;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
@@ -100,8 +101,10 @@ public final class PersistentFSConnection {
 
   private final @Nullable Closeable flushingTask;
 
-  /** How many errors were detected that are likely caused by VFS corruptions -- i.e. broken internal invariants */
+  /** How many errors were detected (during the use) that are likely caused by VFS corruptions -- i.e. broken internal invariants */
   private final AtomicInteger corruptionsDetected = new AtomicInteger();
+
+  private final @NotNull VFSRecoveryInfo recoveryInfo;
 
   PersistentFSConnection(@NotNull PersistentFSPaths paths,
                          @NotNull PersistentFSRecordsStorage records,
@@ -111,6 +114,7 @@ public final class PersistentFSConnection {
                          @Nullable ContentHashEnumerator contentHashesEnumerator,
                          @NotNull SimpleStringPersistentEnumerator enumeratedAttributes,
                          @NotNull NotNullLazyValue<IntList> freeRecords,
+                         @NotNull VFSRecoveryInfo info,
                          @NotNull List<ConnectionInterceptor> interceptors) throws IOException {
     if (!(names instanceof Forceable) || !(names instanceof Closeable)) {
       //RC: there is no simple way to specify type like DataEnumerator & Forceable & Closeable in java,
@@ -127,6 +131,7 @@ public final class PersistentFSConnection {
     myPersistentFSPaths = paths;
     this.freeRecords = freeRecords;
     myEnumeratedAttributes = enumeratedAttributes;
+    recoveryInfo = info;
 
     if (FSRecords.BACKGROUND_VFS_FLUSH) {
       //MAYBE RC: move the flushing up, to FSRecordsImpl?
@@ -393,6 +398,10 @@ public final class PersistentFSConnection {
     catch (IOException ex) {// No luck:
       LOG.info("Can't create VFS corruption marker", ex);
     }
+  }
+
+  public @NotNull VFSRecoveryInfo recoveryInfo(){
+    return recoveryInfo;
   }
 
 

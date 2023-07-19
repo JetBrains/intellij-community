@@ -1,33 +1,40 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/** Carries rebuildCause so different causes frequencies be monitored */
-public class VFSNeedsRebuildException extends IOException {
-  private final @NotNull RebuildCause rebuildCause;
+/** Carries errorCategory so different categories frequencies could be monitored */
+@ApiStatus.Internal
+public class VFSLoadException extends IOException {
+  private final @NotNull ErrorCategory errorCategory;
 
-  public VFSNeedsRebuildException(@NotNull RebuildCause rebuildCause,
-                                  @NotNull String message) {
+  public VFSLoadException(@NotNull ErrorCategory errorCategory,
+                          @NotNull String message) {
     super(message);
-    this.rebuildCause = rebuildCause;
+    this.errorCategory = errorCategory;
   }
 
-  public VFSNeedsRebuildException(@NotNull RebuildCause rebuildCause,
-                                  @NotNull String message,
-                                  @NotNull Throwable cause) {
+  public VFSLoadException(@NotNull ErrorCategory errorCategory,
+                          @NotNull String message,
+                          @NotNull Throwable cause) {
     super(message, cause);
-    this.rebuildCause = rebuildCause;
+    this.errorCategory = errorCategory;
   }
 
-  public RebuildCause rebuildCause() {
-    return rebuildCause;
+  public ErrorCategory category() {
+    return errorCategory;
   }
 
-  public enum RebuildCause {
-    /** No rebuild, VFS initialized and loaded just fine */
+  @Override
+  public String toString() {
+    return "[" + errorCategory + "]: " + getMessage();
+  }
+
+  public enum ErrorCategory {
+    /** Nothing: VFS initialized and loaded just fine */
     NONE,
 
     /** No VFS yet -> empty one was built from scratch */

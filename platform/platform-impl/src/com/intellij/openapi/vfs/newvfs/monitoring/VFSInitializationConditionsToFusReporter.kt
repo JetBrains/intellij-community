@@ -4,8 +4,8 @@ package com.intellij.openapi.vfs.newvfs.monitoring
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
-import com.intellij.openapi.vfs.newvfs.persistent.VFSNeedsRebuildException
-import com.intellij.openapi.vfs.newvfs.persistent.VFSNeedsRebuildException.RebuildCause.*
+import com.intellij.openapi.vfs.newvfs.persistent.VFSLoadException
+import com.intellij.openapi.vfs.newvfs.persistent.VFSLoadException.ErrorCategory.*
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
 /**
@@ -30,8 +30,8 @@ class VFSInitializationConditionsToFusReporter : ProjectActivity {
     }
     else {
       initializationFailures
-        .filterIsInstance<VFSNeedsRebuildException>()
-        .map { it.rebuildCause() }
+        .filterIsInstance<VFSLoadException>()
+        .map { it.category() }
         .firstOrNull()?:UNRECOGNIZED
     }
 

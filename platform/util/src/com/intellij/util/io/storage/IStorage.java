@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -15,10 +14,8 @@ public interface IStorage extends Disposable, Forceable {
 
   void setVersion(int expectedVersion) throws IOException;
 
-  @TestOnly
   int getLiveRecordsCount() throws IOException;
 
-  @TestOnly
   RecordIdIterator createRecordIdIterator() throws IOException;
 
   IStorageDataOutput writeStream(int record);

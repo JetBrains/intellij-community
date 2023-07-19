@@ -61,8 +61,8 @@ public final class FSRecords {
    * is special in a few ways -- e.g. it has CHILDREN storage format different from regular
    * directories (see {@link PersistentFSTreeAccessor#findOrCreateRootRecord(String)}
    */
-  static final int ROOT_FILE_ID = NULL_FILE_ID + 1;
-  static final int MIN_REGULAR_FILE_ID = ROOT_FILE_ID + 1;
+  public static final int ROOT_FILE_ID = NULL_FILE_ID + 1;
+  public static final int MIN_REGULAR_FILE_ID = ROOT_FILE_ID + 1;
 
 
   /** singleton instance */

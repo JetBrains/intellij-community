@@ -80,7 +80,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 public final class FSRecordsImpl {
   private static final Logger LOG = Logger.getInstance(FSRecordsImpl.class);
 
-  private static final boolean USE_CONTENT_HASHES = getBooleanProperty("idea.share.contents", true);
+  static final boolean USE_CONTENT_HASHES = getBooleanProperty("idea.share.contents", true);
   static final boolean INLINE_ATTRIBUTES = getBooleanProperty("idea.inline.vfs.attributes", true);
 
   /**
@@ -359,7 +359,7 @@ public final class FSRecordsImpl {
   }
 
   boolean wasCreatedANew() {
-    return initializationResult.storagesCreatedAnew;
+    return initializationResult.vfsCreatedAnew;
   }
 
   long totalInitializationDuration(@NotNull TimeUnit unit) {

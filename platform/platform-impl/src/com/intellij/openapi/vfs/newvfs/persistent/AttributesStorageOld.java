@@ -201,6 +201,16 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
     return modCount.get();
   }
 
+  @Override
+  public boolean isEmpty() throws IOException {
+    lock.readLock().lock();
+    try{
+      return attributesBlobStorage.getLiveRecordsCount() == 0;
+    }finally {
+      lock.readLock().unlock();
+    }
+  }
+
 
   @Override
   public void checkAttributesStorageSanity(final @NotNull PersistentFSConnection connection,

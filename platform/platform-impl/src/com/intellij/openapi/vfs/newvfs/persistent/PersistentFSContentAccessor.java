@@ -237,7 +237,7 @@ public final class PersistentFSContentAccessor {
     return DigestUtil.sha1();
   }
 
-  private static byte @NotNull [] calculateHash(byte[] bytes, int offset, int length) {
+  public static byte @NotNull [] calculateHash(byte[] bytes, int offset, int length) {
     // Probably we don't need to hash the length and "\0000".
     MessageDigest digest = getContentHashDigest();
     digest.update(String.valueOf(length).getBytes(StandardCharsets.UTF_8));

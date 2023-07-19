@@ -221,6 +221,11 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
     return modCount.get();
   }
 
+  @Override
+  public boolean isEmpty() {
+    return storage.liveRecordsCount() == 0;
+  }
+
   /**
    * BEWARE: recordId reported to callback is not always the same recordId as was inserted: during insert/update recordId of
    * 'directory' record is returned, but attributes could be actually stored in additional 'dedicated' records (if they are
@@ -274,7 +279,8 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
   public interface Processor<E extends Exception> {
-    void processAttribute(final int recordId, final int fileId,
+    void processAttribute(final int recordId,
+                          final int fileId,
                           final int attributeId,
                           final byte[] attributeValue,
                           final boolean inlinedAttribute) throws E;

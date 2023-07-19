@@ -80,6 +80,7 @@ class LocalHistoryImpl : LocalHistory(), Disposable {
 
     // initialize persistent fs
     PersistentFS.getInstance()
+    //TODO RC: check is contentStorage OK, otherwise drop all the entries
     ShutDownTracker.getInstance().registerShutdownTask(Runnable { doDispose() })
     initHistory()
     app.getMessageBus().simpleConnect().subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {

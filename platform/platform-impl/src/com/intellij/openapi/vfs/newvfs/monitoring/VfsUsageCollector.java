@@ -6,7 +6,8 @@ import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.openapi.vfs.newvfs.persistent.VFSNeedsRebuildException.RebuildCause;
+import com.intellij.openapi.vfs.newvfs.persistent.VFSLoadException;
+import com.intellij.openapi.vfs.newvfs.persistent.VFSLoadException.ErrorCategory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,7 +77,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   /* ================== EVENT_VFS_INITIALIZATION: ====================================================== */
 
   /** What causes VFS rebuild (if any) */
-  private static final EnumEventField<RebuildCause> FIELD_REBUILD_CAUSE = Enum("rebuild_cause", RebuildCause.class);
+  private static final EnumEventField<VFSLoadException.ErrorCategory> FIELD_REBUILD_CAUSE = Enum("rebuild_cause", ErrorCategory.class);
   /**
    * How many attempts to init VFS were made.
    * In regular caqse, it is only 1 attempt, but could be >1 if VFS was rebuilt.
@@ -252,7 +253,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   public static void logVfsInitialization(int vfsImplementationVersion,
                                           long vfsCreationTimestamp,
                                           int initializationAttempts,
-                                          @NotNull RebuildCause rebuildCause,
+                                          @NotNull VFSLoadException.ErrorCategory rebuildCause,
                                           long totalInitializationDurationMs) {
     EVENT_VFS_INITIALIZATION.log(
       FIELD_REBUILD_CAUSE.with(rebuildCause),

@@ -80,6 +80,8 @@ public interface AbstractAttributesStorage extends Forceable, Closeable {
 
   int getLocalModificationCount();
 
+  boolean isEmpty() throws IOException;
+
   void checkAttributesStorageSanity(final @NotNull PersistentFSConnection connection,
                                     final int fileId,
                                     final @NotNull IntList usedAttributeRecordIds,

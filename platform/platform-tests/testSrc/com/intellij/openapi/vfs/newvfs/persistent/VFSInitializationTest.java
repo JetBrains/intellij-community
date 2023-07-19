@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TemporaryDirectory;
@@ -16,19 +17,19 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind.*;
-import static com.intellij.openapi.vfs.newvfs.persistent.VFSNeedsRebuildException.RebuildCause.IMPL_VERSION_MISMATCH;
-import static com.intellij.openapi.vfs.newvfs.persistent.VFSNeedsRebuildException.RebuildCause.NOT_CLOSED_PROPERLY;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSLoadException.ErrorCategory.IMPL_VERSION_MISMATCH;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSLoadException.ErrorCategory.NOT_CLOSED_PROPERLY;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
 
 /**
- * Test VFS version management and VFS rebuild on implementation version change
+ * Test VFS version management, rebuild on implementation version change, and other initialization aspects
  */
-public class VFSRebuildingTest {
+public class VFSInitializationTest {
 
+  public static final FileAttribute TEST_FILE_ATTRIBUTE = new FileAttribute("VFSInitializationTest.TEST_ATTRIBUTE");
   @Rule
   public final TemporaryDirectory temporaryDirectory = new TemporaryDirectory();
 
@@ -41,7 +42,7 @@ public class VFSRebuildingTest {
       cachesDir,
       version,
       true,
-      Collections.emptyList()
+      Collections.emptyList(), PersistentFSConnector.RECOVERERS
     );
     final PersistentFSRecordsStorage records = connection.getRecords();
     assertEquals(
@@ -59,7 +60,7 @@ public class VFSRebuildingTest {
       cachesDir,
       version,
       true,
-      Collections.emptyList()
+      Collections.emptyList(), PersistentFSConnector.RECOVERERS
     );
 
     assertEquals(
@@ -78,7 +79,7 @@ public class VFSRebuildingTest {
       cachesDir,
       version,
       true,
-      Collections.emptyList()
+      Collections.emptyList(), PersistentFSConnector.RECOVERERS
     );
     final PersistentFSRecordsStorage records = connection.getRecords();
     assertEquals(
@@ -98,7 +99,7 @@ public class VFSRebuildingTest {
       cachesDir,
       version,
       true,
-      Collections.emptyList()
+      Collections.emptyList(), PersistentFSConnector.RECOVERERS
     );
 
     assertEquals(
@@ -116,7 +117,7 @@ public class VFSRebuildingTest {
       cachesDir,
       version,
       true,
-      Collections.emptyList()
+      Collections.emptyList(), PersistentFSConnector.RECOVERERS
     );
     assertEquals(
       "connection.records.version == tryInit(version)",
@@ -132,15 +133,15 @@ public class VFSRebuildingTest {
         cachesDir,
         differentVersion,
         true,
-        Collections.emptyList()
+        Collections.emptyList(), PersistentFSConnector.RECOVERERS
       );
       fail(
         "VFS opening must fail, since the supplied 'current' version is different from that was used to initialize on-disk structures before");
     }
-    catch (VFSNeedsRebuildException e) {
+    catch (VFSLoadException e) {
       assertEquals(
         "rebuildCause must be IMPL_VERSION_MISMATCH",
-        e.rebuildCause(),
+        e.category(),
         IMPL_VERSION_MISMATCH
       );
     }
@@ -187,7 +188,92 @@ public class VFSRebuildingTest {
     );
   }
 
-  //==== more top-level tests
+  //================ corruptions: ============================================================
+
+  /**
+   * This is a test without a recovery (recoverers=[])
+   *
+   * @see VFSCorruptionRecoveryTest for various recovery scenarios
+   */
+  @Test
+  public void VFS_init_WithoutRecoverers_Fails_If_AnyStorageFileRemoved() throws Exception {
+    //We want to verify that initialization quick-checks are able to detect corruptions.
+    // The verification is very rough: just remove one of the data files and see if VFS
+    // init fails. Missed data file is nowhere a typical corruption, but it helps at
+    // least verify the main quick-check logic.
+    // Ideally, we should introduce random corruptions to data files, and see if VFS init
+    // is able to detect _that_ -- but this is a much larger task, especially since we know
+    // quick-checks are really not 100% sensitive -- they could miss some corruptions.
+    // So full-scale sampling of quick-checks sensitivity to various kinds of corruptions
+    // -- is a dedicated task, while here we do something that fits in a unit-test:
+
+
+    //skip IN_MEMORY impl, since it is not really persistent
+    //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_VFS_ENABLED (fails otherwise)
+    List<RecordsStorageKind> allStorageKinds = PageCacheUtils.LOCK_FREE_VFS_ENABLED ?
+                                               List.of(REGULAR, OVER_LOCK_FREE_FILE_CACHE, OVER_MMAPPED_FILE) :
+                                               List.of(REGULAR, OVER_MMAPPED_FILE);
+
+    List<String> filesNotLeadingToVFSRebuild = new ArrayList<>();
+    for (RecordsStorageKind storageKind : allStorageKinds) {
+      int vfsFilesCount = 1;
+      for (int i = 0; i < vfsFilesCount; i++) {
+        Path cachesDir = temporaryDirectory.createDir();
+        PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(storageKind);
+
+        FSRecordsImpl fsRecords = FSRecordsImpl.connect(cachesDir);
+
+        //add something to VFS so it is not empty
+        int testFileId = fsRecords.createRecord();
+        fsRecords.setName(testFileId, "test", PersistentFSRecordsStorage.NULL_ID);
+        try (var stream = fsRecords.writeContent(testFileId, false)) {
+          stream.writeUTF("test");
+        }
+        try (var stream = fsRecords.writeAttribute(testFileId, TEST_FILE_ATTRIBUTE)) {
+          stream.writeInt(42);
+        }
+
+        fsRecords.dispose();
+
+        Path[] vfsFiles = Files.list(cachesDir)
+          .filter(path -> Files.isRegularFile(path))
+          //ResizableMappedFile _is_ able to recover .len file, so don't waste time deleting it
+          .filter(path -> !path.getFileName().toString().endsWith(".len"))
+          .sorted()
+          .toArray(Path[]::new);
+        vfsFilesCount = vfsFiles.length;
+        Path fileToDelete = vfsFiles[i];
+
+        FileUtil.delete(fileToDelete);
+
+        //reopen:
+        PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(storageKind);
+        try {
+          PersistentFSConnector.tryInit(
+            cachesDir,
+            fsRecords.getVersion(),
+            FSRecordsImpl.USE_CONTENT_HASHES,
+            Collections.emptyList(),
+            Collections.emptyList()
+          );
+          filesNotLeadingToVFSRebuild.add(fileToDelete.getFileName().toString());
+        }
+        catch (IOException ex) {
+          if (ex instanceof VFSLoadException vfsLoadEx) {
+            System.out.println(fileToDelete.getFileName().toString() + " removed -> " + vfsLoadEx.category());
+          }
+        }
+      }
+
+      assertTrue(
+        "VFS[" + storageKind + "] is not rebuilt if one of " + filesNotLeadingToVFSRebuild + " is deleted",
+        filesNotLeadingToVFSRebuild.isEmpty()
+      );
+    }
+  }
+
+
+  //================ more top-level tests ============================================================
 
   @Test
   public void VFS_isRebuilt_OnlyIf_ImplementationVersionChanged() throws Exception {
@@ -233,72 +319,6 @@ public class VFSRebuildingTest {
     }
   }
 
-
-  @Test
-  public void VFS_isRebuilt_If_AnyStorageFileRemoved() throws Exception {
-    //skip IN_MEMORY impl, since it is not really persistent
-    //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_VFS_ENABLED (will fail)
-    final List<RecordsStorageKind> allKinds = PageCacheUtils.LOCK_FREE_VFS_ENABLED ?
-                                              List.of(REGULAR, OVER_LOCK_FREE_FILE_CACHE, OVER_MMAPPED_FILE) :
-                                              List.of(REGULAR, OVER_MMAPPED_FILE);
-
-    List<String> filesNotLeadingToVFSRebuild = new ArrayList<>();
-    for (RecordsStorageKind storageKind : allKinds) {
-      int vfsFilesCount = 1;
-      for (int i = 0; i < vfsFilesCount; i++) {
-        final Path cachesDir = temporaryDirectory.createDir();
-        PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(storageKind);
-
-        final FSRecordsImpl records = FSRecordsImpl.connect(cachesDir);
-        final long firstVfsCreationTimestamp = records.getCreationTimestamp();
-
-        //add something to VFS so it is not empty
-        final int id = records.createRecord();
-        records.setName(id, "test", PersistentFSRecordsStorage.NULL_ID);
-        try (var stream = records.writeContent(id, false)) {
-          stream.writeUTF("test");
-        }
-
-        records.dispose();
-        Thread.sleep(500);//ensure system clock is moving
-
-        final Path[] vfsFiles = Files.list(cachesDir)
-          .filter(path -> Files.isRegularFile(path))
-          //ResizableMappedFile is able to recover .len file
-          .filter(path -> !path.getFileName().toString().endsWith(".len"))
-          .sorted()
-          .toArray(Path[]::new);
-        vfsFilesCount = vfsFiles.length;
-        final Path fileToDelete = vfsFiles[i];
-
-        FileUtil.delete(fileToDelete);
-
-        //reopen:
-        PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(storageKind);
-        final FSRecordsImpl reopenedRecords = FSRecordsImpl.connect(cachesDir);
-        final long reopenedVfsCreationTimestamp = reopenedRecords.getCreationTimestamp();
-        if (reopenedVfsCreationTimestamp == firstVfsCreationTimestamp) {
-          filesNotLeadingToVFSRebuild.add(fileToDelete.getFileName().toString());
-        }
-        else {
-          Optional<Throwable> rebuildCauseException = reopenedRecords.initializationFailures().stream()
-            .filter(ex -> ex instanceof VFSNeedsRebuildException)
-            .findFirst();
-          System.out.println(fileToDelete.getFileName().toString() + " removed -> " +
-                             rebuildCauseException.map(ex -> ((VFSNeedsRebuildException)ex).rebuildCause()));
-        }
-      }
-
-      //FIXME RC: currently 'attributes_enums.dat' is not checked during VFS init
-      filesNotLeadingToVFSRebuild.remove("attributes_enums.dat");
-      assertTrue(
-        "VFS[" + storageKind + "] is not rebuilt if one of " + filesNotLeadingToVFSRebuild + " is deleted",
-        filesNotLeadingToVFSRebuild.isEmpty()
-      );
-    }
-  }
-
-
   @Test
   public void VFS_MustNOT_FailOnReopen_if_ExplicitlyDisconnected() throws IOException {
     final Path cachesDir = temporaryDirectory.createDir();
@@ -308,7 +328,7 @@ public class VFSRebuildingTest {
       cachesDir,
       version,
       true,
-      Collections.emptyList()
+      Collections.emptyList(), PersistentFSConnector.RECOVERERS
     );
     try {
       final PersistentFSRecordsStorage records = connection.getRecords();
@@ -323,7 +343,7 @@ public class VFSRebuildingTest {
       cachesDir,
       version,
       true,
-      Collections.emptyList()
+      Collections.emptyList(), PersistentFSConnector.RECOVERERS
     );
     try {
       assertEquals("connectionStatus must be SAFELY_CLOSED since connection was disconnect()-ed",
@@ -344,7 +364,7 @@ public class VFSRebuildingTest {
       cachesDir,
       version,
       true,
-      Collections.emptyList()
+      Collections.emptyList(), PersistentFSConnector.RECOVERERS
     );
     connection.doForce();
     try {
@@ -359,16 +379,16 @@ public class VFSRebuildingTest {
           cachesDir,
           version,
           true,
-          Collections.emptyList()
+          Collections.emptyList(), PersistentFSConnector.RECOVERERS
         );
         fail("VFS init must fail with NOT_CLOSED_SAFELY");
       }
-      catch (VFSNeedsRebuildException requestToRebuild) {
+      catch (VFSLoadException requestToRebuild) {
         //OK, this is what we expect:
         assertEquals(
           "rebuildCause must be NOT_CLOSED_PROPERLY",
           NOT_CLOSED_PROPERLY,
-          requestToRebuild.rebuildCause()
+          requestToRebuild.category()
         );
       }
     }
@@ -401,7 +421,7 @@ public class VFSRebuildingTest {
       .assertTiming();
   }
 
-  //==== infrastructure:
+  //================ infrastructure: ================================================================
 
   @After
   public void tearDown() throws Exception {

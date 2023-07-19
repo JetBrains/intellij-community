@@ -29,6 +29,8 @@ public class RefCountingContentStorageImpl extends AbstractStorage implements Re
   private final Map<Integer, Future<?>> myPendingWriteRequests = new ConcurrentHashMap<>();
   private int myPendingWriteRequestsSize;
   private final ExecutorService myWriteRequestExecutor;
+
+  /**Basically, it means "never delete records" */
   private final boolean myUseContentHashes;
 
   private static final int MAX_PENDING_WRITE_SIZE = 20 * 1024 * 1024;
@@ -46,9 +48,9 @@ public class RefCountingContentStorageImpl extends AbstractStorage implements Re
   }
 
   public RefCountingContentStorageImpl(@NotNull Path path,
-                                   @Nullable CapacityAllocationPolicy capacityAllocationPolicy,
-                                   @NotNull ExecutorService writeRequestExecutor,
-                                   boolean useContentHashes) throws IOException {
+                                       @Nullable CapacityAllocationPolicy capacityAllocationPolicy,
+                                       @NotNull ExecutorService writeRequestExecutor,
+                                       boolean useContentHashes) throws IOException {
     super(path, capacityAllocationPolicy);
 
     myWriteRequestExecutor = writeRequestExecutor;
@@ -131,7 +133,7 @@ public class RefCountingContentStorageImpl extends AbstractStorage implements Re
       try {
         future.get();
       }
-      catch (InterruptedException ie){
+      catch (InterruptedException ie) {
         //RC: need to throw something recognizable as Interrupted, but InterruptedException is checked,
         //    and not a part of IStorage API, hence we can't just rethrow it. InterruptedIOException
         //    seems like a good candidate for a wrapper: it carries very similar meaning (i.e. it is
@@ -160,7 +162,8 @@ public class RefCountingContentStorageImpl extends AbstractStorage implements Re
       myPendingWriteRequestsSize += bytes.getLength();
       if (myPendingWriteRequestsSize > MAX_PENDING_WRITE_SIZE) {
         zipAndWrite(bytes, record, fixedSize);
-      } else {
+      }
+      else {
         myPendingWriteRequests.put(record, myWriteRequestExecutor.submit(() -> {
           zipAndWrite(bytes, record, fixedSize);
           return null;
@@ -187,7 +190,8 @@ public class RefCountingContentStorageImpl extends AbstractStorage implements Re
   }
 
   @Override
-  protected RefCountingRecordsTable createRecordsTable(@NotNull StorageLockContext storageLockContext, @NotNull Path recordsFile) throws IOException {
+  protected RefCountingRecordsTable createRecordsTable(@NotNull StorageLockContext storageLockContext, @NotNull Path recordsFile)
+    throws IOException {
     return new RefCountingRecordsTable(recordsFile, storageLockContext);
   }
 
@@ -255,10 +259,11 @@ public class RefCountingContentStorageImpl extends AbstractStorage implements Re
   }
 
   private void flushPendingWrites() {
-    for(Map.Entry<Integer, Future<?>> entry:myPendingWriteRequests.entrySet()) {
+    for (Map.Entry<Integer, Future<?>> entry : myPendingWriteRequests.entrySet()) {
       try {
         entry.getValue().get();
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         throw new RuntimeException(e);
       }
     }
