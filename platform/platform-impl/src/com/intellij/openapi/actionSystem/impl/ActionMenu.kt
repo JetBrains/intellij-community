@@ -49,7 +49,7 @@ import javax.swing.event.ChangeListener
 import javax.swing.event.MenuEvent
 import javax.swing.event.MenuListener
 
-class ActionMenu @JvmOverloads constructor(private val context: DataContext?,
+class ActionMenu constructor(private val context: DataContext?,
                                            private val place: String,
                                            group: ActionGroup,
                                            private val presentationFactory: PresentationFactory,
@@ -58,8 +58,7 @@ class ActionMenu @JvmOverloads constructor(private val context: DataContext?,
                                            val isHeaderMenuItem: Boolean = false) : JBMenu() {
   private val group = createActionRef(group)
   private val presentation = presentationFactory.getPresentation(group)
-  // A PATCH!!! Do not remove this code, otherwise you will lose all keyboard navigation in JMenuBar.
-  private var stubItem: StubItem? = null
+
   private var disposable: Disposable? = null
   var screenMenuPeer: Menu? = null
   private val subElementSelector = if (SubElementSelector.isForceDisabled) null else SubElementSelector(this)
@@ -145,13 +144,15 @@ class ActionMenu @JvmOverloads constructor(private val context: DataContext?,
     @JvmStatic
     val isAligned: Boolean
       get() = SystemInfoRt.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("Aligned")
+
     @JvmStatic
     val isAlignedInGroup: Boolean
       get() = SystemInfoRt.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("Aligned in group")
 
     @JvmStatic
     fun showDescriptionInStatusBar(isIncluded: Boolean, component: Component?, description: @NlsContexts.StatusBarText String?) {
-      val frame = (if (component is IdeFrame) component else SwingUtilities.getAncestorOfClass(IdeFrame::class.java, component)) as? IdeFrame
+      val frame = (if (component is IdeFrame) component
+      else SwingUtilities.getAncestorOfClass(IdeFrame::class.java, component)) as? IdeFrame
       frame?.getStatusBar()?.setInfo(if (isIncluded) description else null)
     }
   }
@@ -184,7 +185,7 @@ class ActionMenu @JvmOverloads constructor(private val context: DataContext?,
   }
 
   private fun init() {
-    stubItem = if (SystemInfo.isMacSystemMenu && isMainMenuPlace) null else StubItem()
+    subElementSelector?.stubItem = if (SystemInfo.isMacSystemMenu && isMainMenuPlace) null else StubItem()
     addStubItem()
     setBorderPainted(false)
     val menuListener = MenuListenerImpl()
@@ -207,7 +208,7 @@ class ActionMenu @JvmOverloads constructor(private val context: DataContext?,
   }
 
   private fun addStubItem() {
-    stubItem?.let {
+    subElementSelector?.stubItem?.let {
       add(it)
     }
   }
@@ -227,7 +228,7 @@ class ActionMenu @JvmOverloads constructor(private val context: DataContext?,
     }
 
     if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU == place) {
-      // JDK can't paint correctly our HiDPI icons at the system menu bar
+      // JDK can't correctly paint our HiDPI icons at the system menu bar
       icon = getMenuBarIcon(icon, useDarkIcons)
     }
     else if (shouldConvertIconToDarkVariant()) {
@@ -414,196 +415,201 @@ class ActionMenu @JvmOverloads constructor(private val context: DataContext?,
                    /* useDarkIcons = */ isDarkMenu,
                    /* progressPoint = */ RelativePoint.getNorthEastOf(this)) { !isSelected }
   }
+}
 
-  private class UsabilityHelper(component: Component) : IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
-    private var component: Component?
-    private var startMousePoint: Point?
-    private var upperTargetPoint: Point? = null
-    private var lowerTargetPoint: Point? = null
-    private var callbackAlarm: SingleAlarm? = null
-    private var eventToRedispatch: MouseEvent? = null
+private class UsabilityHelper(component: Component) : IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
+  private var component: Component?
+  private var startMousePoint: Point?
+  private var upperTargetPoint: Point? = null
+  private var lowerTargetPoint: Point? = null
+  private var callbackAlarm: SingleAlarm? = null
+  private var eventToRedispatch: MouseEvent? = null
 
-    init {
-      callbackAlarm = SingleAlarm({
-                                    Disposer.dispose(callbackAlarm!!)
-                                    callbackAlarm = null
-                                    if (eventToRedispatch != null) {
-                                      getInstance().dispatchEvent(eventToRedispatch!!)
-                                    }
-                                  }, 50, this, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any())
-      this.component = component
-      val info = MouseInfo.getPointerInfo()
-      startMousePoint = info?.location
-      if (startMousePoint != null) {
-        Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.COMPONENT_EVENT_MASK)
-        getInstance().addDispatcher(this, this)
-      }
-    }
-
-    override fun eventDispatched(event: AWTEvent) {
-      if (event !is ComponentEvent) {
-        return
-      }
-
-      val component = event.component
-      val popup = ComponentUtil.getParentOfType(JPopupMenu::class.java, component)
-      if (popup != null && popup.invoker === this.component && popup.isShowing()) {
-        val bounds = popup.bounds
-        if (bounds.isEmpty) {
-          return
-        }
-
-        bounds.location = popup.locationOnScreen
-        if (startMousePoint!!.x < bounds.x) {
-          upperTargetPoint = Point(bounds.x, bounds.y)
-          lowerTargetPoint = Point(bounds.x, bounds.y + bounds.height)
-        }
-        if (startMousePoint!!.x > bounds.x + bounds.width) {
-          upperTargetPoint = Point(bounds.x + bounds.width, bounds.y)
-          lowerTargetPoint = Point(bounds.x + bounds.width, bounds.y + bounds.height)
-        }
-      }
-    }
-
-    override fun dispatch(e: AWTEvent): Boolean {
-      val callbackAlarm = callbackAlarm
-      if (e !is MouseEvent || upperTargetPoint == null || lowerTargetPoint == null || callbackAlarm == null) {
-        return false
-      }
-
-      if (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_RELEASED || e.getID() == MouseEvent.MOUSE_CLICKED) {
-        return false
-      }
-
-      val point = e.locationOnScreen
-      val bounds = component!!.bounds
-      bounds.location = component!!.locationOnScreen
-      val isMouseMovingTowardsSubmenu = bounds.contains(point) ||
-                                        Polygon(intArrayOf(startMousePoint!!.x, upperTargetPoint!!.x, lowerTargetPoint!!.x),
-                                                intArrayOf(startMousePoint!!.y, upperTargetPoint!!.y, lowerTargetPoint!!.y), 3)
-                                          .contains(point)
-      eventToRedispatch = e
-      if (!isMouseMovingTowardsSubmenu) {
-        callbackAlarm.request()
-      }
-      else {
-        callbackAlarm.cancel()
-      }
-      return true
-    }
-
-    override fun dispose() {
-      component = null
-      eventToRedispatch = null
-      lowerTargetPoint = null
-      upperTargetPoint = null
-      startMousePoint = null
-      Toolkit.getDefaultToolkit().removeAWTEventListener(this)
+  init {
+    callbackAlarm = SingleAlarm({
+                                  Disposer.dispose(callbackAlarm!!)
+                                  callbackAlarm = null
+                                  if (eventToRedispatch != null) {
+                                    getInstance().dispatchEvent(eventToRedispatch!!)
+                                  }
+                                }, 50, this, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any())
+    this.component = component
+    val info = MouseInfo.getPointerInfo()
+    startMousePoint = info?.location
+    if (startMousePoint != null) {
+      Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.COMPONENT_EVENT_MASK)
+      getInstance().addDispatcher(this, this)
     }
   }
 
-  private class SubElementSelector(private val owner: ActionMenu) {
-    companion object {
-      val isForceDisabled: Boolean = SystemInfo.isMacSystemMenu ||
-                                     !Registry.`is`("ide.popup.menu.navigation.keyboard.selectFirstEnabledSubItem", false)
+  override fun eventDispatched(event: AWTEvent) {
+    if (event !is ComponentEvent) {
+      return
     }
 
-    @RequiresEdt
-    fun ignoreNextSelectionRequest(timeoutMs: Int) {
-      shouldIgnoreNextSelectionRequest = true
-      shouldIgnoreNextSelectionRequestTimeoutMs = timeoutMs
-      shouldIgnoreNextSelectionRequestSinceTimestamp = if (timeoutMs >= 0) {
-        System.currentTimeMillis()
+    val component = event.component
+    val popup = ComponentUtil.getParentOfType(JPopupMenu::class.java, component)
+    if (popup != null && popup.invoker === this.component && popup.isShowing()) {
+      val bounds = popup.bounds
+      if (bounds.isEmpty) {
+        return
+      }
+
+      bounds.location = popup.locationOnScreen
+      if (startMousePoint!!.x < bounds.x) {
+        upperTargetPoint = Point(bounds.x, bounds.y)
+        lowerTargetPoint = Point(bounds.x, bounds.y + bounds.height)
+      }
+      if (startMousePoint!!.x > bounds.x + bounds.width) {
+        upperTargetPoint = Point(bounds.x + bounds.width, bounds.y)
+        lowerTargetPoint = Point(bounds.x + bounds.width, bounds.y + bounds.height)
+      }
+    }
+  }
+
+  override fun dispatch(e: AWTEvent): Boolean {
+    val callbackAlarm = callbackAlarm
+    if (e !is MouseEvent || upperTargetPoint == null || lowerTargetPoint == null || callbackAlarm == null) {
+      return false
+    }
+
+    if (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_RELEASED || e.getID() == MouseEvent.MOUSE_CLICKED) {
+      return false
+    }
+
+    val point = e.locationOnScreen
+    val bounds = component!!.bounds
+    bounds.location = component!!.locationOnScreen
+    val isMouseMovingTowardsSubmenu = bounds.contains(point) ||
+                                      Polygon(intArrayOf(startMousePoint!!.x, upperTargetPoint!!.x, lowerTargetPoint!!.x),
+                                              intArrayOf(startMousePoint!!.y, upperTargetPoint!!.y, lowerTargetPoint!!.y), 3)
+                                        .contains(point)
+    eventToRedispatch = e
+    if (!isMouseMovingTowardsSubmenu) {
+      callbackAlarm.request()
+    }
+    else {
+      callbackAlarm.cancel()
+    }
+    return true
+  }
+
+  override fun dispose() {
+    component = null
+    eventToRedispatch = null
+    lowerTargetPoint = null
+    upperTargetPoint = null
+    startMousePoint = null
+    Toolkit.getDefaultToolkit().removeAWTEventListener(this)
+  }
+}
+
+private class SubElementSelector(private val owner: ActionMenu) {
+  companion object {
+    val isForceDisabled: Boolean = SystemInfo.isMacSystemMenu ||
+                                   !Registry.`is`("ide.popup.menu.navigation.keyboard.selectFirstEnabledSubItem", false)
+  }
+
+  // A PATCH!!! Do not remove this code, otherwise you will lose all keyboard navigation in JMenuBar.
+  @Suppress("GrazieInspection")
+  @JvmField
+  var stubItem: StubItem? = null
+
+  @RequiresEdt
+  fun ignoreNextSelectionRequest(timeoutMs: Int) {
+    shouldIgnoreNextSelectionRequest = true
+    shouldIgnoreNextSelectionRequestTimeoutMs = timeoutMs
+    shouldIgnoreNextSelectionRequestSinceTimestamp = if (timeoutMs >= 0) {
+      System.currentTimeMillis()
+    }
+    else {
+      -1
+    }
+  }
+
+  @RequiresEdt
+  fun ignoreNextSelectionRequest() {
+    ignoreNextSelectionRequest(-1)
+  }
+
+  @RequiresEdt
+  fun cancelIgnoringOfNextSelectionRequest() {
+    shouldIgnoreNextSelectionRequest = false
+    shouldIgnoreNextSelectionRequestSinceTimestamp = -1
+    shouldIgnoreNextSelectionRequestTimeoutMs = -1
+  }
+
+  @RequiresEdt
+  fun selectSubElementIfNecessary() {
+    val shouldIgnoreThisSelectionRequest = if (shouldIgnoreNextSelectionRequest) {
+      if (shouldIgnoreNextSelectionRequestTimeoutMs >= 0) {
+        System.currentTimeMillis() - shouldIgnoreNextSelectionRequestSinceTimestamp <= shouldIgnoreNextSelectionRequestTimeoutMs
       }
       else {
-        -1
+        true
       }
     }
-
-    @RequiresEdt
-    fun ignoreNextSelectionRequest() {
-      ignoreNextSelectionRequest(-1)
+    else {
+      false
     }
 
-    @RequiresEdt
-    fun cancelIgnoringOfNextSelectionRequest() {
-      shouldIgnoreNextSelectionRequest = false
-      shouldIgnoreNextSelectionRequestSinceTimestamp = -1
-      shouldIgnoreNextSelectionRequestTimeoutMs = -1
+    cancelIgnoringOfNextSelectionRequest()
+    if (shouldIgnoreThisSelectionRequest) {
+      return
     }
 
-    @RequiresEdt
-    fun selectSubElementIfNecessary() {
-      val shouldIgnoreThisSelectionRequest = if (shouldIgnoreNextSelectionRequest) {
-        if (shouldIgnoreNextSelectionRequestTimeoutMs >= 0) {
-          System.currentTimeMillis() - shouldIgnoreNextSelectionRequestSinceTimestamp <= shouldIgnoreNextSelectionRequestTimeoutMs
-        }
-        else {
-          true
-        }
-      }
-      else {
-        false
-      }
+    val thisRequestId = ++currentRequestId
+    SwingUtilities.invokeLater { selectFirstEnabledElement(thisRequestId) }
+  }
 
-      cancelIgnoringOfNextSelectionRequest()
-      if (shouldIgnoreThisSelectionRequest) {
+  @RequiresEdt
+  fun cancelNextSelection() {
+    ++currentRequestId
+  }
+
+  private var shouldIgnoreNextSelectionRequest = false
+  private var shouldIgnoreNextSelectionRequestSinceTimestamp = -1L
+  private var shouldIgnoreNextSelectionRequestTimeoutMs = -1
+  private var currentRequestId = -1
+
+  init {
+    if (isForceDisabled) {
+      throw IllegalStateException("Attempt to create an instance of ActionMenu.SubElementSelector class when it is force disabled")
+    }
+  }
+
+  @RequiresEdt
+  private fun selectFirstEnabledElement(requestId: Int) {
+    if (requestId != currentRequestId) {
+      // the request was canceled or a newer request was created
+      return
+    }
+
+    if (!owner.isSelected) {
+      return
+    }
+
+    val menuSelectionManager = MenuSelectionManager.defaultManager()
+    val currentSelectedPath = menuSelectionManager.getSelectedPath()
+    if (currentSelectedPath.size < 2) {
+      return
+    }
+
+    val lastElementInCurrentPath = currentSelectedPath[currentSelectedPath.size - 1]
+    val newSelectionPath = when {
+      lastElementInCurrentPath === stubItem -> currentSelectedPath.clone()
+      lastElementInCurrentPath === owner.getPopupMenu() -> currentSelectedPath.copyOf(currentSelectedPath.size + 1)
+      currentSelectedPath[currentSelectedPath.size - 2] === owner.getPopupMenu() &&
+      !owner.getMenuComponents().contains(lastElementInCurrentPath!!.component) -> currentSelectedPath.clone()
+      else -> return
+    }
+
+    val menuComponents = owner.getMenuComponents()
+    for (component in menuComponents) {
+      if (component != stubItem && component.isEnabled && component is JMenuItem) {
+        newSelectionPath[newSelectionPath.size - 1] = component
+        menuSelectionManager.setSelectedPath(newSelectionPath)
         return
-      }
-
-      val thisRequestId = ++currentRequestId
-      SwingUtilities.invokeLater { selectFirstEnabledElement(thisRequestId) }
-    }
-
-    @RequiresEdt
-    fun cancelNextSelection() {
-      ++currentRequestId
-    }
-
-    private var shouldIgnoreNextSelectionRequest = false
-    private var shouldIgnoreNextSelectionRequestSinceTimestamp = -1L
-    private var shouldIgnoreNextSelectionRequestTimeoutMs = -1
-    private var currentRequestId = -1
-
-    init {
-      if (isForceDisabled) {
-        throw IllegalStateException("Attempt to create an instance of ActionMenu.SubElementSelector class when it is force disabled")
-      }
-    }
-
-    @RequiresEdt
-    private fun selectFirstEnabledElement(requestId: Int) {
-      if (requestId != currentRequestId) {
-        // the request was canceled or a newer request was created
-        return
-      }
-
-      if (!owner.isSelected) {
-        return
-      }
-
-      val menuSelectionManager = MenuSelectionManager.defaultManager()
-      val currentSelectedPath = menuSelectionManager.getSelectedPath()
-      if (currentSelectedPath.size < 2) {
-        return
-      }
-
-      val lastElementInCurrentPath = currentSelectedPath[currentSelectedPath.size - 1]
-      val newSelectionPath = when {
-        lastElementInCurrentPath === owner.stubItem -> currentSelectedPath.clone()
-        lastElementInCurrentPath === owner.getPopupMenu() -> currentSelectedPath.copyOf(currentSelectedPath.size + 1)
-        currentSelectedPath[currentSelectedPath.size - 2] === owner.getPopupMenu() &&
-        !owner.getMenuComponents().contains(lastElementInCurrentPath!!.component) -> currentSelectedPath.clone()
-        else -> return
-      }
-
-      val menuComponents = owner.getMenuComponents()
-      for (component in menuComponents) {
-        if (component != owner.stubItem && component.isEnabled && component is JMenuItem) {
-          newSelectionPath[newSelectionPath.size - 1] = component
-          menuSelectionManager.setSelectedPath(newSelectionPath)
-          return
-        }
       }
     }
   }
