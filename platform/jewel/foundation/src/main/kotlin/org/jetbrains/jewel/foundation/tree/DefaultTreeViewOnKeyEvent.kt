@@ -8,7 +8,7 @@ open class DefaultTreeViewOnKeyEvent(
     override val keybindings: TreeViewKeybindings,
     private val treeState: TreeState,
     private val animate: Boolean = false,
-    private val scrollOffset: Int = 0
+    private val scrollOffset: Int = 0,
 ) : TreeViewOnKeyEvent {
 
     override suspend fun onSelectFirstItem() {

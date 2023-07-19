@@ -31,7 +31,7 @@ val SelectableLazyListState.visibleItemsRange
  */
 class SelectableLazyListState(
     val lazyListState: LazyListState,
-    val selectionMode: SelectionMode = SelectionMode.None
+    val selectionMode: SelectionMode = SelectionMode.None,
 ) : ScrollableState by lazyListState {
 
     private val isMultiSelectionAllowed = selectionMode == SelectionMode.Multiple
@@ -323,7 +323,7 @@ internal sealed class SelectableKey {
     internal class Focusable(
         internal val focusRequester: FocusRequester,
         override val key: Any,
-        override val selectable: Boolean
+        override val selectable: Boolean,
     ) : SelectableKey()
 
     /**
@@ -334,7 +334,7 @@ internal sealed class SelectableKey {
      */
     internal class NotFocusable(
         override val key: Any,
-        override val selectable: Boolean
+        override val selectable: Boolean,
     ) : SelectableKey()
 
     override fun equals(other: Any?): Boolean {
@@ -374,7 +374,7 @@ enum class SelectionMode {
     /**
      * Multiple items can be selected.
      */
-    Multiple
+    Multiple,
 }
 
 /**
@@ -389,5 +389,5 @@ enum class SelectionMode {
 fun rememberSelectableLazyListState(
     firstVisibleItemIndex: Int = 0,
     firstVisibleItemScrollOffset: Int = 0,
-    selectionMode: SelectionMode = SelectionMode.Multiple
+    selectionMode: SelectionMode = SelectionMode.Multiple,
 ) = remember { SelectableLazyListState(LazyListState(firstVisibleItemIndex, firstVisibleItemScrollOffset), selectionMode) }

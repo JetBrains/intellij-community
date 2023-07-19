@@ -19,7 +19,7 @@ sealed class Stroke {
         val width: Dp,
         val color: Color,
         val alignment: Alignment,
-        val expand: Dp
+        val expand: Dp,
     ) : Stroke()
 
     @Immutable
@@ -27,7 +27,7 @@ sealed class Stroke {
         val width: Dp,
         val brush: androidx.compose.ui.graphics.Brush,
         val alignment: Alignment,
-        val expand: Dp
+        val expand: Dp,
     ) : Stroke()
 
     enum class Alignment {

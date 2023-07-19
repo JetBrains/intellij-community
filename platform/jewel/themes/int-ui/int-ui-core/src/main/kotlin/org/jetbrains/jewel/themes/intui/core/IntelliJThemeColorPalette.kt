@@ -37,7 +37,28 @@ interface IntelliJThemeColorPalette {
     fun teal(): List<Color>
 
     fun teal(index: Int): Color
+
+    fun lookup(colorKey: String): Color? {
+        val result = colorKeyRegex.matchEntire(colorKey.trim()) ?: return null
+        val colorGroup = result.groupValues[1].lowercase()
+        val colorIndex = result.groupValues[2].toIntOrNull() ?: return null
+
+        return when (colorGroup) {
+            "grey" -> grey(colorIndex)
+            "blue" -> blue(colorIndex)
+            "green" -> green(colorIndex)
+            "red" -> red(colorIndex)
+            "yellow" -> yellow(colorIndex)
+            "orange" -> orange(colorIndex)
+            "purple" -> purple(colorIndex)
+            "teal" -> teal(colorIndex)
+            else -> null
+        }
+    }
 }
+
+private val colorKeyRegex: Regex
+    get() = "([a-z]+)(\\d+)".toRegex(RegexOption.IGNORE_CASE)
 
 val LocalIntUiPalette = staticCompositionLocalOf {
     IntUiLightTheme.colors

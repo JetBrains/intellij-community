@@ -11,7 +11,7 @@ import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 internal data class MacOsSystemProfilerFontListingOutput(
-    @SerialName("SPFontsDataType") val fontData: List<FontData>
+    @SerialName("SPFontsDataType") val fontData: List<FontData>,
 ) {
 
     @Serializable
@@ -25,7 +25,7 @@ internal data class MacOsSystemProfilerFontListingOutput(
         @SerialName("typefaces") val typefaces: List<Typeface>,
         @Serializable(with = AppleYesNoBooleanSerializer::class)
         @SerialName("valid")
-        val valid: Boolean
+        val valid: Boolean,
     ) {
 
         @Serializable
@@ -48,7 +48,7 @@ internal data class MacOsSystemProfilerFontListingOutput(
 //            @SerialName("unique") val unique: String,
             @Serializable(with = AppleYesNoBooleanSerializer::class)
             @SerialName("valid")
-            val valid: Boolean
+            val valid: Boolean,
 //            @SerialName("vendor") val vendor: String? = null,
 //            @SerialName("version") val version: String? = null
         )
@@ -67,7 +67,7 @@ internal data class MacOsSystemProfilerFontListingOutput(
         OPENTYPE,
 
         @SerialName("bitmap")
-        BITMAP
+        BITMAP,
     }
 
     object AppleYesNoBooleanSerializer : KSerializer<Boolean> {

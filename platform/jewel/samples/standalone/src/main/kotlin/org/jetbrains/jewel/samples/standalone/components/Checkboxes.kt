@@ -12,6 +12,7 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.GroupHeader
 import org.jetbrains.jewel.LocalResourceLoader
+import org.jetbrains.jewel.Outline
 import org.jetbrains.jewel.TriStateCheckboxRow
 
 @Composable
@@ -36,7 +37,14 @@ fun Checkboxes() {
                 ToggleableState.Off -> ToggleableState.Indeterminate
                 ToggleableState.Indeterminate -> ToggleableState.On
             }
-        }, isError = true)
+        }, outline = Outline.Error)
+        TriStateCheckboxRow("Warning", checked, resourceLoader, {
+            checked = when (checked) {
+                ToggleableState.On -> ToggleableState.Off
+                ToggleableState.Off -> ToggleableState.Indeterminate
+                ToggleableState.Indeterminate -> ToggleableState.On
+            }
+        }, outline = Outline.Warning)
         TriStateCheckboxRow("Disabled", checked, resourceLoader, {}, enabled = false)
     }
 }

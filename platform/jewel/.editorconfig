@@ -19,6 +19,7 @@ indent_size = 2
 [{*.kt,*.kts}]
 ktlint_function_signature_body_expression_wrapping = multiline
 ktlint_ignore_back_ticked_identifier = true
+ij_kotlin_allow_trailing_comma = true
 
 [gradlew.bat]
 end_of_line = crlf

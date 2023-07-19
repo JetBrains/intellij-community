@@ -23,7 +23,7 @@ fun rememberTreeState(selectionMode: SelectionMode = SelectionMode.Multiple) = r
 }
 
 class TreeState(
-    internal val delegate: SelectableLazyListState
+    internal val delegate: SelectableLazyListState,
 ) {
 
     val lazyListState get() = delegate.lazyListState

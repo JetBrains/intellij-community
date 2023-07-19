@@ -44,7 +44,7 @@ internal fun InputField(
     interactionSource: MutableInteractionSource,
     style: InputFieldStyle,
     textStyle: TextStyle,
-    decorationBox: @Composable (innerTextField: @Composable () -> Unit, state: InputFieldState) -> Unit
+    decorationBox: @Composable (innerTextField: @Composable () -> Unit, state: InputFieldState) -> Unit,
 ) {
     var inputState by remember(interactionSource) {
         mutableStateOf(InputFieldState.of(enabled = enabled, error = isError))
@@ -140,7 +140,7 @@ value class InputFieldState(val state: ULong) : StateWithOutline {
         error: Boolean = isError,
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
-        warning: Boolean = isWarning
+        warning: Boolean = isWarning,
     ) = of(
         enabled = enabled,
         focused = focused,
@@ -162,7 +162,7 @@ value class InputFieldState(val state: ULong) : StateWithOutline {
             error: Boolean = false,
             pressed: Boolean = false,
             hovered: Boolean = false,
-            warning: Boolean = false
+            warning: Boolean = false,
         ) = InputFieldState(
             state = (if (enabled) CommonStateBitMask.Enabled else 0UL) or
                 (if (focused) CommonStateBitMask.Focused else 0UL) or

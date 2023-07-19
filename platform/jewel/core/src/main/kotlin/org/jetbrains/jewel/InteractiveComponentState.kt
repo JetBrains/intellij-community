@@ -23,7 +23,7 @@ interface InteractiveComponentState {
         disabled: T,
         focused: T,
         pressed: T,
-        hovered: T
+        hovered: T,
     ): T =
         when {
             !isEnabled -> disabled

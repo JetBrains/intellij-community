@@ -38,7 +38,7 @@ interface SelectableLazyListScope {
         contentType: Any? = null,
         focusable: Boolean = true,
         selectable: Boolean = true,
-        content: @Composable SelectableLazyItemScope.() -> Unit
+        content: @Composable SelectableLazyItemScope.() -> Unit,
     )
 
     /**
@@ -57,7 +57,7 @@ interface SelectableLazyListScope {
         contentType: (index: Int) -> Any? = { null },
         focusable: (index: Int) -> Boolean = { true },
         selectable: (index: Int) -> Boolean = { true },
-        itemContent: @Composable SelectableLazyItemScope.(index: Int) -> Unit
+        itemContent: @Composable SelectableLazyItemScope.(index: Int) -> Unit,
     )
 
     /**
@@ -74,14 +74,14 @@ interface SelectableLazyListScope {
         contentType: Any? = null,
         focusable: Boolean = false,
         selectable: Boolean = false,
-        content: @Composable SelectableLazyItemScope.() -> Unit
+        content: @Composable SelectableLazyItemScope.() -> Unit,
     )
 }
 
 internal class SelectableLazyListScopeContainer(
     private val delegate: LazyListScope,
     private val state: SelectableLazyListState,
-    private val pointerEventScopedActions: PointerEventScopedActions
+    private val pointerEventScopedActions: PointerEventScopedActions,
 ) : SelectableLazyListScope {
 
     @Composable
@@ -121,7 +121,7 @@ internal class SelectableLazyListScopeContainer(
         contentType: Any?,
         focusable: Boolean,
         selectable: Boolean,
-        content: @Composable SelectableLazyItemScope.() -> Unit
+        content: @Composable SelectableLazyItemScope.() -> Unit,
     ) {
         val focusRequester = FocusRequester()
         val selectableKey = if (focusable) {
@@ -141,7 +141,7 @@ internal class SelectableLazyListScopeContainer(
         key: Any,
         selectable: Boolean,
         focusable: Boolean,
-        content: @Composable (SelectableLazyItemScope.() -> Unit)
+        content: @Composable (SelectableLazyItemScope.() -> Unit),
     ) {
         // should be like that, but it seems does not work,
         // it do not recompose when state.lastFocusedIndex == state.keys.indexOf(selectableKey) changes
@@ -166,7 +166,7 @@ internal class SelectableLazyListScopeContainer(
         contentType: (index: Int) -> Any?,
         focusable: (index: Int) -> Boolean,
         selectable: (index: Int) -> Boolean,
-        itemContent: @Composable SelectableLazyItemScope.(index: Int) -> Unit
+        itemContent: @Composable SelectableLazyItemScope.(index: Int) -> Unit,
     ) {
         val totalItems = state.keys.size
         val selectableKeys: List<SelectableKey> = List(count) {
@@ -206,7 +206,7 @@ internal class SelectableLazyListScopeContainer(
         contentType: Any?,
         focusable: Boolean,
         selectable: Boolean,
-        content: @Composable SelectableLazyItemScope.() -> Unit
+        content: @Composable SelectableLazyItemScope.() -> Unit,
     ) {
         val focusRequester = FocusRequester()
         val selectableKey = if (focusable) {
@@ -228,5 +228,5 @@ fun LazyItemScope.SelectableLazyItemScope(isFocused: Boolean = false, isSelected
 internal class SelectableLazyItemScopeDelegate(
     private val delegate: LazyItemScope,
     override val isFocused: Boolean,
-    override val isSelected: Boolean
+    override val isSelected: Boolean,
 ) : SelectableLazyItemScope, LazyItemScope by delegate

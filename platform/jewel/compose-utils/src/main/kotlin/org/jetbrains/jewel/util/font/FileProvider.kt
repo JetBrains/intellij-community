@@ -12,7 +12,7 @@ data class FileProvider(
     val extension: String,
     val path: String,
     val origin: Origin,
-    val provider: () -> File
+    val provider: () -> File,
 ) {
 
     enum class Origin {
@@ -20,6 +20,6 @@ data class FileProvider(
         FILESYSTEM,
         CLASSPATH,
         RESOURCES,
-        OTHER
+        OTHER,
     }
 }

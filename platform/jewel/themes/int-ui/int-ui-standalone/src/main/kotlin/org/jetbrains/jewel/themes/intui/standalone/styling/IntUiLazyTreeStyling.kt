@@ -19,7 +19,7 @@ import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 data class IntUiLazyTreeStyle(
     override val colors: IntUiLazyTreeColors,
     override val metrics: IntUiLazyTreeMetrics,
-    override val icons: IntUiLazyTreeIcons
+    override val icons: IntUiLazyTreeIcons,
 ) : LazyTreeStyle {
 
     companion object {
@@ -28,14 +28,14 @@ data class IntUiLazyTreeStyle(
         fun light(
             colors: IntUiLazyTreeColors = IntUiLazyTreeColors.light(),
             metrics: IntUiLazyTreeMetrics = IntUiLazyTreeMetrics(),
-            icons: IntUiLazyTreeIcons = IntUiLazyTreeIcons()
+            icons: IntUiLazyTreeIcons = IntUiLazyTreeIcons(),
         ) = IntUiLazyTreeStyle(colors, metrics, icons)
 
         @Composable
         fun dark(
             colors: IntUiLazyTreeColors = IntUiLazyTreeColors.dark(),
             metrics: IntUiLazyTreeMetrics = IntUiLazyTreeMetrics(),
-            icons: IntUiLazyTreeIcons = IntUiLazyTreeIcons()
+            icons: IntUiLazyTreeIcons = IntUiLazyTreeIcons(),
         ) = IntUiLazyTreeStyle(colors, metrics, icons)
     }
 }
@@ -48,7 +48,7 @@ data class IntUiLazyTreeColors(
     override val chevronTint: Color,
     override val chevronTintSelected: Color,
     override val chevronTintFocused: Color,
-    override val chevronTintSelectedFocused: Color
+    override val chevronTintSelectedFocused: Color,
 ) : LazyTreeColors {
 
     companion object {
@@ -61,7 +61,7 @@ data class IntUiLazyTreeColors(
             chevronTint: Color = IntUiLightTheme.colors.grey(7),
             chevronTintSelected: Color = chevronTint,
             chevronTintFocused: Color = chevronTint,
-            chevronTintSelectedFocused: Color = chevronTint
+            chevronTintSelectedFocused: Color = chevronTint,
         ) = IntUiLazyTreeColors(
             nodeBackgroundFocused,
             nodeBackgroundSelected,
@@ -80,7 +80,7 @@ data class IntUiLazyTreeColors(
             chevronTint: Color = IntUiDarkTheme.colors.grey(10),
             chevronTintSelected: Color = chevronTint,
             chevronTintFocused: Color = chevronTint,
-            chevronTintSelectedFocused: Color = chevronTint
+            chevronTintSelectedFocused: Color = chevronTint,
         ) = IntUiLazyTreeColors(
             nodeBackgroundFocused,
             nodeBackgroundSelected,
@@ -100,10 +100,10 @@ data class IntUiLazyTreeMetrics(
     override val elementPadding: PaddingValues = PaddingValues(horizontal = 12.dp),
     override val elementContentPadding: PaddingValues = PaddingValues(4.dp),
     override val elementMinHeight: Dp = 24.dp,
-    override val chevronContentGap: Dp = 2.dp
+    override val chevronContentGap: Dp = 2.dp,
 ) : LazyTreeMetrics
 
 @Immutable
 data class IntUiLazyTreeIcons(
-    override val nodeChevron: String = "icons/intui/chevronRight.svg"
+    override val nodeChevron: String = "icons/intui/chevronRight.svg",
 ) : LazyTreeIcons

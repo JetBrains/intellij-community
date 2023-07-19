@@ -30,7 +30,7 @@ interface PointerEventScopedActions {
         pointerEvent: PointerEvent,
         keyBindings: SelectableColumnKeybindings,
         scope: CoroutineScope,
-        key: Any
+        key: Any,
     )
 }
 
@@ -40,7 +40,7 @@ class DefaultSelectableLazyColumnPointerEventAction(private val state: Selectabl
         pointerEvent: PointerEvent,
         keyBindings: SelectableColumnKeybindings,
         scope: CoroutineScope,
-        key: Any
+        key: Any,
     ) {
         with(keyBindings) {
             when {
@@ -79,14 +79,14 @@ class DefaultTreeViewPointerEventAction<T>(
     private val treeState: TreeState,
     private val platformDoubleClickDelay: Long,
     private val onElementClick: (Tree.Element<T>) -> Unit,
-    private val onElementDoubleClick: (Tree.Element<T>) -> Unit
+    private val onElementDoubleClick: (Tree.Element<T>) -> Unit,
 ) : PointerEventScopedActions {
 
     override fun handlePointerEventPress(
         pointerEvent: PointerEvent,
         keyBindings: SelectableColumnKeybindings,
         scope: CoroutineScope,
-        key: Any
+        key: Any,
     ) {
         with(keyBindings) {
             when {
@@ -136,7 +136,7 @@ class DefaultTreeViewPointerEventAction<T>(
         scope: CoroutineScope,
         doubleClickTimeDelayMillis: Long,
         onElementClick: (Tree.Element<T>) -> Unit,
-        onElementDoubleClick: (Tree.Element<T>) -> Unit
+        onElementDoubleClick: (Tree.Element<T>) -> Unit,
     ) {
         if (elementClickedTmpHolder?.id == item.id) {
             // is a double click

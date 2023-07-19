@@ -9,8 +9,6 @@ import androidx.compose.ui.res.ResourceLoader
 @Immutable
 interface StatefulPainterProvider<T> {
 
-    // TODO apply color overrides to the painter
-
     /**
      * Obtain a painter for the provided [state].
      *

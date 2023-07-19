@@ -23,7 +23,7 @@ fun VerticalScrollbar(
     modifier: Modifier = Modifier,
     reverseLayout: Boolean = false,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: ScrollbarStyle = IntelliJTheme.scrollbarStyle
+    style: ScrollbarStyle = IntelliJTheme.scrollbarStyle,
 ) {
     val shape by remember { mutableStateOf(RoundedCornerShape(style.metrics.thumbCornerSize)) }
     val hoverDurationMillis by remember { mutableStateOf(style.hoverDuration.toInt(DurationUnit.MILLISECONDS)) }
@@ -54,7 +54,7 @@ fun HorizontalScrollbar(
     modifier: Modifier = Modifier,
     reverseLayout: Boolean = false,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: ScrollbarStyle = IntelliJTheme.scrollbarStyle
+    style: ScrollbarStyle = IntelliJTheme.scrollbarStyle,
 ) {
     val shape by remember { mutableStateOf(RoundedCornerShape(style.metrics.thumbCornerSize)) }
     val hoverDurationMillis by remember { mutableStateOf(style.hoverDuration.toInt(DurationUnit.MILLISECONDS)) }

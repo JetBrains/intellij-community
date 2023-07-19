@@ -30,11 +30,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextStyle
 import org.jetbrains.jewel.CommonStateBitMask.Enabled
-import org.jetbrains.jewel.CommonStateBitMask.Error
 import org.jetbrains.jewel.CommonStateBitMask.Focused
 import org.jetbrains.jewel.CommonStateBitMask.Hovered
+import org.jetbrains.jewel.CommonStateBitMask.Indeterminate
 import org.jetbrains.jewel.CommonStateBitMask.Pressed
-import org.jetbrains.jewel.CommonStateBitMask.Warning
+import org.jetbrains.jewel.CommonStateBitMask.Selected
+import org.jetbrains.jewel.ToggleableComponentState.Companion.readToggleableState
+import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.styling.CheckboxColors
 import org.jetbrains.jewel.styling.CheckboxIcons
 import org.jetbrains.jewel.styling.CheckboxMetrics
@@ -47,11 +49,11 @@ fun Checkbox(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    isError: Boolean = false,
+    outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     colors: CheckboxColors = LocalCheckboxStyle.current.colors,
     metrics: CheckboxMetrics = LocalCheckboxStyle.current.metrics,
-    icons: CheckboxIcons = LocalCheckboxStyle.current.icons
+    icons: CheckboxIcons = LocalCheckboxStyle.current.icons,
 ) = CheckboxImpl(
     state = ToggleableState(checked),
     onClick = {
@@ -59,7 +61,7 @@ fun Checkbox(
     },
     modifier = modifier,
     enabled = enabled,
-    isError = isError,
+    outline = outline,
     interactionSource = interactionSource,
     colors = colors,
     metrics = metrics,
@@ -76,17 +78,17 @@ fun TriStateCheckbox(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    isError: Boolean = false,
+    outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     colors: CheckboxColors = LocalCheckboxStyle.current.colors,
     metrics: CheckboxMetrics = LocalCheckboxStyle.current.metrics,
-    icons: CheckboxIcons = LocalCheckboxStyle.current.icons
+    icons: CheckboxIcons = LocalCheckboxStyle.current.icons,
 ) = CheckboxImpl(
     state = state,
     onClick = onClick,
     modifier = modifier,
     enabled = enabled,
-    isError = isError,
+    outline = outline,
     interactionSource = interactionSource,
     colors = colors,
     metrics = metrics,
@@ -104,18 +106,18 @@ fun TriStateCheckboxRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    isError: Boolean = false,
+    outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     colors: CheckboxColors = LocalCheckboxStyle.current.colors,
     metrics: CheckboxMetrics = LocalCheckboxStyle.current.metrics,
     icons: CheckboxIcons = LocalCheckboxStyle.current.icons,
-    textStyle: TextStyle = LocalTextStyle.current
+    textStyle: TextStyle = LocalTextStyle.current,
 ) = CheckboxImpl(
     state = state,
     onClick = onClick,
     modifier = modifier,
     enabled = enabled,
-    isError = isError,
+    outline = outline,
     interactionSource = interactionSource,
     colors = colors,
     metrics = metrics,
@@ -134,12 +136,12 @@ fun CheckboxRow(
     onCheckedChange: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    isError: Boolean = false,
+    outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     colors: CheckboxColors = LocalCheckboxStyle.current.colors,
     metrics: CheckboxMetrics = LocalCheckboxStyle.current.metrics,
     icons: CheckboxIcons = LocalCheckboxStyle.current.icons,
-    textStyle: TextStyle = LocalTextStyle.current
+    textStyle: TextStyle = LocalTextStyle.current,
 ) = CheckboxImpl(
     state = ToggleableState(checked),
     onClick = {
@@ -147,7 +149,7 @@ fun CheckboxRow(
     },
     modifier = modifier,
     enabled = enabled,
-    isError = isError,
+    outline = outline,
     interactionSource = interactionSource,
     colors = colors,
     metrics = metrics,
@@ -165,13 +167,13 @@ fun CheckboxRow(
     onCheckedChange: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    isError: Boolean = false,
+    outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     colors: CheckboxColors = LocalCheckboxStyle.current.colors,
     metrics: CheckboxMetrics = LocalCheckboxStyle.current.metrics,
     icons: CheckboxIcons = LocalCheckboxStyle.current.icons,
     textStyle: TextStyle = LocalTextStyle.current,
-    content: @Composable RowScope.() -> Unit
+    content: @Composable RowScope.() -> Unit,
 ) = CheckboxImpl(
     state = ToggleableState(checked),
     onClick = {
@@ -179,7 +181,7 @@ fun CheckboxRow(
     },
     modifier = modifier,
     enabled = enabled,
-    isError = isError,
+    outline = outline,
     interactionSource = interactionSource,
     colors = colors,
     metrics = metrics,
@@ -196,19 +198,19 @@ fun TriStateCheckboxRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    isError: Boolean = false,
+    outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     colors: CheckboxColors = LocalCheckboxStyle.current.colors,
     metrics: CheckboxMetrics = LocalCheckboxStyle.current.metrics,
     icons: CheckboxIcons = LocalCheckboxStyle.current.icons,
     textStyle: TextStyle = LocalTextStyle.current,
-    content: @Composable RowScope.() -> Unit
+    content: @Composable RowScope.() -> Unit,
 ) = CheckboxImpl(
     state = state,
     onClick = onClick,
     modifier = modifier,
     enabled = enabled,
-    isError = isError,
+    outline = outline,
     interactionSource = interactionSource,
     colors = colors,
     metrics = metrics,
@@ -229,16 +231,16 @@ private fun CheckboxImpl(
     resourceLoader: ResourceLoader,
     modifier: Modifier,
     enabled: Boolean,
-    isError: Boolean,
+    outline: Outline,
     interactionSource: MutableInteractionSource,
     textStyle: TextStyle,
-    content: (@Composable RowScope.() -> Unit)?
+    content: (@Composable RowScope.() -> Unit)?,
 ) {
     var checkboxState by remember(interactionSource) {
         mutableStateOf(CheckboxState.of(state, enabled = enabled))
     }
-    remember(state, isError, enabled) {
-        checkboxState = checkboxState.copy(toggleableState = state, error = isError, enabled = enabled)
+    remember(state, enabled) {
+        checkboxState = checkboxState.copy(toggleableState = state, enabled = enabled)
     }
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
@@ -265,19 +267,26 @@ private fun CheckboxImpl(
         indication = null
     )
 
-    val checkBoxModifier = Modifier.size(metrics.checkboxSize)
-        .outline(checkboxState, outlineShape = RoundedCornerShape(metrics.checkboxCornerSize))
-    val checkboxPainter by icons.getPainter(checkboxState, resourceLoader)
+    val checkBoxImageModifier = Modifier.size(metrics.checkboxSize)
+        .outline(
+            state = checkboxState,
+            outline = outline,
+            alignment = Stroke.Alignment.Center,
+            outlineShape = RoundedCornerShape(metrics.checkboxCornerSize),
+            outlineWidth = metrics.outlineWidth
+        )
+
+    val checkboxPainter by icons.checkbox.getPainter(checkboxState, resourceLoader)
 
     if (content == null) {
-        CheckBoxImage(wrapperModifier, checkboxPainter, checkBoxModifier)
+        CheckBoxImage(wrapperModifier, checkboxPainter, checkBoxImageModifier)
     } else {
         Row(
             wrapperModifier,
             horizontalArrangement = Arrangement.spacedBy(metrics.iconContentGap),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            CheckBoxImage(Modifier, checkboxPainter, checkBoxModifier)
+            CheckBoxImage(Modifier, checkboxPainter, checkBoxImageModifier)
 
             CompositionLocalProvider(
                 LocalTextStyle provides textStyle,
@@ -291,17 +300,17 @@ private fun CheckboxImpl(
 
 @Composable
 private fun CheckBoxImage(outerModifier: Modifier, checkboxPainter: Painter, checkBoxModifier: Modifier) {
-    Box(outerModifier) {
+    Box(outerModifier, contentAlignment = Alignment.Center) {
         Image(checkboxPainter, contentDescription = null, modifier = checkBoxModifier)
     }
 }
 
 @Immutable
 @JvmInline
-value class CheckboxState(private val state: ULong) : StateWithOutline {
+value class CheckboxState(private val state: ULong) : ToggleableComponentState {
 
     @Stable
-    val toggleableState: ToggleableState
+    override val toggleableState: ToggleableState
         get() = state.readToggleableState()
 
     @Stable
@@ -309,16 +318,12 @@ value class CheckboxState(private val state: ULong) : StateWithOutline {
         get() = state and Enabled != 0UL
 
     @Stable
+    override val isSelected: Boolean
+        get() = toggleableState != ToggleableState.Off
+
+    @Stable
     override val isFocused: Boolean
         get() = state and Focused != 0UL
-
-    @Stable
-    override val isError: Boolean
-        get() = state and Error != 0UL
-
-    @Stable
-    override val isWarning: Boolean
-        get() = state and Warning != 0UL
 
     @Stable
     override val isHovered: Boolean
@@ -332,65 +337,35 @@ value class CheckboxState(private val state: ULong) : StateWithOutline {
         toggleableState: ToggleableState = this.toggleableState,
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
-        error: Boolean = isError,
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
-        warning: Boolean = isWarning
     ) = of(
         toggleableState = toggleableState,
         enabled = enabled,
         focused = focused,
-        error = error,
         pressed = pressed,
-        hovered = hovered,
-        warning = warning
+        hovered = hovered
     )
 
     override fun toString() =
         "${javaClass.simpleName}(toggleableState=$toggleableState, isEnabled=$isEnabled, isFocused=$isFocused, " +
-            "isError=$isError, isWarning=$isWarning, isHovered=$isHovered, isPressed=$isPressed)"
+            "isHovered=$isHovered, isPressed=$isPressed, isSelected=$isSelected)"
 
     companion object {
-
-        private const val TOGGLE_STATE_BIT_OFFSET = CommonStateBitMask.FIRST_AVAILABLE_OFFSET
-        private const val TOGGLE_STATE_MASK = 0b11UL
-        private const val TOGGLE_STATE_OFF = 0b00UL
-        private const val TOGGLE_STATE_ON = 0b01UL
-        private const val TOGGLE_STATE_INDETERMINATE = 0b11UL
 
         fun of(
             toggleableState: ToggleableState,
             enabled: Boolean = true,
             focused: Boolean = false,
-            error: Boolean = false,
             pressed: Boolean = false,
             hovered: Boolean = false,
-            warning: Boolean = false
         ) = CheckboxState(
             state = (if (enabled) Enabled else 0UL) or
                 (if (focused) Focused else 0UL) or
-                (if (error) Error else 0UL) or
                 (if (hovered) Hovered else 0UL) or
                 (if (pressed) Pressed else 0UL) or
-                (if (warning) Warning else 0UL) or
-                (toggleableState.toBitMask() shl TOGGLE_STATE_BIT_OFFSET)
+                (if (toggleableState != ToggleableState.Off) Selected else 0UL) or
+                (if (toggleableState == ToggleableState.Indeterminate) Indeterminate else 0UL)
         )
-
-        private fun ToggleableState.toBitMask() = when (this) {
-            ToggleableState.On -> TOGGLE_STATE_ON
-            ToggleableState.Off -> TOGGLE_STATE_OFF
-            ToggleableState.Indeterminate -> TOGGLE_STATE_INDETERMINATE
-        }
-
-        private fun ULong.readToggleableState(): ToggleableState {
-            val bits = (this shr TOGGLE_STATE_BIT_OFFSET) and TOGGLE_STATE_MASK
-
-            return when (bits) {
-                TOGGLE_STATE_ON -> ToggleableState.On
-                TOGGLE_STATE_OFF -> ToggleableState.Off
-                TOGGLE_STATE_INDETERMINATE -> ToggleableState.Indeterminate
-                else -> error("Invalid toggleable state: $bits (0x${bits.toString(2)})")
-            }
-        }
     }
 }

@@ -75,7 +75,7 @@ interface SelectableColumnOnKeyEvent {
 
 open class DefaultSelectableOnKeyEvent(
     override val keybindings: SelectableColumnKeybindings,
-    private val selectableState: SelectableLazyListState
+    private val selectableState: SelectableLazyListState,
 ) : SelectableColumnOnKeyEvent {
 
     override suspend fun onSelectFirstItem() {

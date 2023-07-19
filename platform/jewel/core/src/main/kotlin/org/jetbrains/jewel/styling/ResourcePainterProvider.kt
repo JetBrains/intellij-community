@@ -2,25 +2,34 @@ package org.jetbrains.jewel.styling
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.ResourceLoader
-import androidx.compose.ui.res.painterResource
 import org.jetbrains.jewel.InteractiveComponentState
+import org.jetbrains.jewel.SvgPatcher
 
 @Immutable
-abstract class ResourcePainterProvider<T : InteractiveComponentState> : StatefulPainterProvider<T> {
-
-    abstract val normal: String
-    abstract val disabled: String
-    abstract val focused: String
-    abstract val pressed: String
-    abstract val hovered: String
+abstract class ResourcePainterProvider<T : InteractiveComponentState> internal constructor(
+    svgPatcher: SvgPatcher,
+) : BaseResourcePainterProvider<T>(svgPatcher) {
 
     @Composable
-    override fun getPainter(state: T, resourceLoader: ResourceLoader): State<Painter> {
-        val iconPath = state.chooseValue(normal, disabled, focused, pressed, hovered)
-        return rememberUpdatedState(painterResource(iconPath, resourceLoader))
+    override fun selectVariant(state: T): String =
+        state.chooseValue(normal, disabled, focused, pressed, hovered)
+
+    companion object {
+
+        @Composable
+        fun <T : InteractiveComponentState> create(
+            normal: String,
+            disabled: String,
+            focused: String,
+            pressed: String,
+            hovered: String,
+            svgPatcher: SvgPatcher,
+        ) = object : ResourcePainterProvider<T>(svgPatcher) {
+            override val normal = normal
+            override val disabled = disabled
+            override val focused = focused
+            override val pressed = pressed
+            override val hovered = hovered
+        }
     }
 }

@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.samples.standalone.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
@@ -19,7 +18,7 @@ import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.TextArea
 
 @Composable
-fun ColumnScope.TextAreas() {
+fun TextAreas() {
     GroupHeader("TextAreas")
     Row(
         Modifier.height(144.dp).padding(horizontal = 16.dp),

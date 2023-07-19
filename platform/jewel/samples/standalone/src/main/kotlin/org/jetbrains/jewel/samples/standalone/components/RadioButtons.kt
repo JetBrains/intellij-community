@@ -39,17 +39,18 @@ fun RadioButtons() {
         )
 
         RadioButtonRow(
-            text = "Disabled",
+            text = "Warning",
             selected = index == 2,
             onClick = { index = 2 },
-            enabled = false,
+            outline = Outline.Warning,
             resourceLoader = resourceLoader
         )
 
         RadioButtonRow(
-            text = "Another",
+            text = "Disabled",
             selected = index == 3,
             onClick = { index = 3 },
+            enabled = false,
             resourceLoader = resourceLoader
         )
     }

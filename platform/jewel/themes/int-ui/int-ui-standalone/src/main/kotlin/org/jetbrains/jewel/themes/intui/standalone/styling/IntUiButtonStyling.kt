@@ -21,7 +21,7 @@ import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
 @Stable
 data class IntUiButtonStyle(
     override val colors: IntUiButtonColors,
-    override val metrics: IntUiButtonMetrics
+    override val metrics: IntUiButtonMetrics,
 ) : ButtonStyle {
 
     object Default {
@@ -29,13 +29,13 @@ data class IntUiButtonStyle(
         @Composable
         fun light(
             colors: IntUiButtonColors = IntUiButtonColors.Default.light(),
-            metrics: IntUiButtonMetrics = IntUiButtonMetrics.Default.create()
+            metrics: IntUiButtonMetrics = IntUiButtonMetrics.Default.create(),
         ): ButtonStyle = IntUiButtonStyle(colors, metrics)
 
         @Composable
         fun dark(
             colors: IntUiButtonColors = IntUiButtonColors.Default.dark(),
-            metrics: IntUiButtonMetrics = IntUiButtonMetrics.Default.create()
+            metrics: IntUiButtonMetrics = IntUiButtonMetrics.Default.create(),
         ): ButtonStyle = IntUiButtonStyle(colors, metrics)
     }
 
@@ -44,13 +44,13 @@ data class IntUiButtonStyle(
         @Composable
         fun light(
             colors: IntUiButtonColors = IntUiButtonColors.Outlined.light(),
-            metrics: IntUiButtonMetrics = IntUiButtonMetrics.Outlined.create()
+            metrics: IntUiButtonMetrics = IntUiButtonMetrics.Outlined.create(),
         ): ButtonStyle = IntUiButtonStyle(colors, metrics)
 
         @Composable
         fun dark(
             colors: IntUiButtonColors = IntUiButtonColors.Outlined.dark(),
-            metrics: IntUiButtonMetrics = IntUiButtonMetrics.Outlined.create()
+            metrics: IntUiButtonMetrics = IntUiButtonMetrics.Outlined.create(),
         ): ButtonStyle = IntUiButtonStyle(colors, metrics)
     }
 }
@@ -71,7 +71,7 @@ data class IntUiButtonColors(
     override val borderDisabled: Color,
     override val borderFocused: Color,
     override val borderPressed: Color,
-    override val borderHovered: Color
+    override val borderHovered: Color,
 ) : ButtonColors {
 
     object Default {
@@ -92,7 +92,7 @@ data class IntUiButtonColors(
             borderDisabled: Color = Color.Unspecified,
             borderFocused: Color = Color.Unspecified,
             borderPressed: Color = Color.Unspecified,
-            borderHovered: Color = Color.Unspecified
+            borderHovered: Color = Color.Unspecified,
         ) = IntUiButtonColors(
             background,
             backgroundDisabled,
@@ -127,7 +127,7 @@ data class IntUiButtonColors(
             borderDisabled: Color = Color.Unspecified,
             borderFocused: Color = Color.Unspecified,
             borderPressed: Color = Color.Unspecified,
-            borderHovered: Color = Color.Unspecified
+            borderHovered: Color = Color.Unspecified,
         ) = IntUiButtonColors(
             background,
             backgroundDisabled,
@@ -165,7 +165,7 @@ data class IntUiButtonColors(
             borderDisabled: Color = Color.Unspecified,
             borderFocused: Color = IntUiTheme.palette.blue(4),
             borderPressed: Color = IntUiTheme.palette.grey(7),
-            borderHovered: Color = IntUiTheme.palette.grey(8)
+            borderHovered: Color = IntUiTheme.palette.grey(8),
         ) = IntUiButtonColors(
             background,
             backgroundDisabled,
@@ -200,7 +200,7 @@ data class IntUiButtonColors(
             borderDisabled: Color = Color.Unspecified,
             borderFocused: Color = IntUiTheme.palette.blue(6),
             borderPressed: Color = IntUiTheme.palette.grey(7),
-            borderHovered: Color = IntUiTheme.palette.grey(7)
+            borderHovered: Color = IntUiTheme.palette.grey(7),
         ) = IntUiButtonColors(
             background,
             backgroundDisabled,
@@ -226,7 +226,7 @@ data class IntUiButtonMetrics(
     override val cornerSize: CornerSize,
     override val padding: PaddingValues,
     override val minSize: DpSize,
-    override val borderWidth: Dp
+    override val borderWidth: Dp,
 ) : ButtonMetrics {
 
     object Default {
@@ -235,7 +235,7 @@ data class IntUiButtonMetrics(
             cornerSize: CornerSize = CornerSize(4.dp),
             padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
             minSize: DpSize = DpSize(72.dp, 28.dp),
-            borderWidth: Dp = 0.dp
+            borderWidth: Dp = 0.dp,
         ) = IntUiButtonMetrics(cornerSize, padding, minSize, borderWidth)
     }
 
@@ -245,7 +245,7 @@ data class IntUiButtonMetrics(
             cornerSize: CornerSize = CornerSize(4.dp),
             padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
             minSize: DpSize = DpSize(72.dp, 28.dp),
-            borderWidth: Dp = 1.dp
+            borderWidth: Dp = 1.dp,
         ) = IntUiButtonMetrics(cornerSize, padding, minSize, borderWidth)
     }
 }

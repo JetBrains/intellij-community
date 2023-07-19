@@ -25,7 +25,7 @@ import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 data class IntUiMenuStyle(
     override val colors: IntUiMenuColors,
     override val metrics: IntUiMenuMetrics,
-    override val icons: IntUiMenuIcons
+    override val icons: IntUiMenuIcons,
 ) : MenuStyle {
 
     companion object {
@@ -34,14 +34,14 @@ data class IntUiMenuStyle(
         fun light(
             colors: IntUiMenuColors = IntUiMenuColors.light(),
             metrics: IntUiMenuMetrics = IntUiMenuMetrics(),
-            icons: IntUiMenuIcons = IntUiMenuIcons()
+            icons: IntUiMenuIcons = IntUiMenuIcons(),
         ) = IntUiMenuStyle(colors, metrics, icons)
 
         @Composable
         fun dark(
             colors: IntUiMenuColors = IntUiMenuColors.dark(),
             metrics: IntUiMenuMetrics = IntUiMenuMetrics(),
-            icons: IntUiMenuIcons = IntUiMenuIcons()
+            icons: IntUiMenuIcons = IntUiMenuIcons(),
         ) = IntUiMenuStyle(colors, metrics, icons)
     }
 }
@@ -51,7 +51,7 @@ data class IntUiMenuColors(
     override val background: Brush,
     override val border: Color,
     override val shadow: Color,
-    override val itemColors: IntUiMenuItemColors
+    override val itemColors: IntUiMenuItemColors,
 ) : MenuColors {
 
     companion object {
@@ -61,7 +61,7 @@ data class IntUiMenuColors(
             background: Brush = SolidColor(IntUiLightTheme.colors.grey(14)),
             border: Color = IntUiLightTheme.colors.grey(9),
             shadow: Color = Color(0x78919191), // Not a palette color
-            itemColors: IntUiMenuItemColors = IntUiMenuItemColors.light()
+            itemColors: IntUiMenuItemColors = IntUiMenuItemColors.light(),
         ) = IntUiMenuColors(background, border, shadow, itemColors)
 
         @Composable
@@ -69,7 +69,7 @@ data class IntUiMenuColors(
             background: Brush = SolidColor(IntUiDarkTheme.colors.grey(2)),
             border: Color = IntUiDarkTheme.colors.grey(3),
             shadow: Color = Color(0x66000000), // Not a palette color
-            itemColors: IntUiMenuItemColors = IntUiMenuItemColors.dark()
+            itemColors: IntUiMenuItemColors = IntUiMenuItemColors.dark(),
         ) = IntUiMenuColors(background, border, shadow, itemColors)
     }
 }
@@ -91,7 +91,7 @@ data class IntUiMenuItemColors(
     override val iconTintFocused: Color,
     override val iconTintPressed: Color,
     override val iconTintHovered: Color,
-    override val separator: Color
+    override val separator: Color,
 ) : MenuItemColors {
 
     companion object {
@@ -113,7 +113,7 @@ data class IntUiMenuItemColors(
             iconTintFocused: Color = iconTint,
             iconTintPressed: Color = iconTint,
             iconTintHovered: Color = iconTint,
-            separator: Color = IntUiLightTheme.colors.grey(12)
+            separator: Color = IntUiLightTheme.colors.grey(12),
         ) = IntUiMenuItemColors(
             background,
             backgroundDisabled,
@@ -150,7 +150,7 @@ data class IntUiMenuItemColors(
             iconTintFocused: Color = iconTint,
             iconTintPressed: Color = iconTint,
             iconTintHovered: Color = iconTint,
-            separator: Color = IntUiDarkTheme.colors.grey(3)
+            separator: Color = IntUiDarkTheme.colors.grey(3),
         ) = IntUiMenuItemColors(
             background,
             backgroundDisabled,
@@ -182,7 +182,7 @@ data class IntUiMenuMetrics(
     override val shadowSize: Dp = 12.dp,
     override val borderWidth: Dp = 1.dp,
     override val itemMetrics: MenuItemMetrics = IntUiMenuItemMetrics(),
-    override val submenuMetrics: SubmenuMetrics = IntUiSubmenuMetrics()
+    override val submenuMetrics: SubmenuMetrics = IntUiSubmenuMetrics(),
 ) : MenuMetrics
 
 @Stable
@@ -190,16 +190,16 @@ data class IntUiMenuItemMetrics(
     override val cornerSize: CornerSize = CornerSize(8.dp),
     override val padding: PaddingValues = PaddingValues(horizontal = 12.dp),
     override val contentPadding: PaddingValues = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-    override val separatorPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+    override val separatorPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
 ) : MenuItemMetrics
 
 @Stable
 data class IntUiSubmenuMetrics(
     override val offset: DpOffset = DpOffset(2.dp, (-8).dp),
-    override val itemPadding: PaddingValues = PaddingValues(start = 8.dp, top = 4.dp, bottom = 4.dp)
+    override val itemPadding: PaddingValues = PaddingValues(start = 8.dp, top = 4.dp, bottom = 4.dp),
 ) : SubmenuMetrics
 
 @Immutable
 data class IntUiMenuIcons(
-    override val submenuChevron: String = "icons/intui/chevronRight.svg"
+    override val submenuChevron: String = "icons/intui/chevronRight.svg",
 ) : MenuIcons

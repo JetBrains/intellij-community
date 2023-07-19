@@ -9,5 +9,5 @@ import org.jetbrains.jewel.ThemeMetrics
 @Immutable
 data class IntUiThemeMetrics(
     override val outlineWidth: Dp = 2.dp,
-    override val outlineCornerSize: CornerSize = CornerSize(3.dp)
+    override val outlineCornerSize: CornerSize = CornerSize(3.dp),
 ) : ThemeMetrics

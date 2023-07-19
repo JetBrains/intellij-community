@@ -8,5 +8,5 @@ package org.jetbrains.jewel
     AnnotationTarget.EXPRESSION
 )
 annotation class SwingLafKey(
-    val key: String
+    val key: String,
 )

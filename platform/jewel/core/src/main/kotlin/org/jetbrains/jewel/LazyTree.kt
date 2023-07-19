@@ -28,7 +28,7 @@ fun <T> LazyTree(
     onElementDoubleClick: (Tree.Element<T>) -> Unit = { },
     keyActions: KeyBindingScopedActions = DefaultTreeViewKeyActions(treeState),
     style: LazyTreeStyle = IntelliJTheme.treeStyle,
-    nodeContent: @Composable SelectableLazyItemScope.(Tree.Element<T>) -> Unit
+    nodeContent: @Composable SelectableLazyItemScope.(Tree.Element<T>) -> Unit,
 ) {
     val colors = style.colors
     val metrics = style.metrics

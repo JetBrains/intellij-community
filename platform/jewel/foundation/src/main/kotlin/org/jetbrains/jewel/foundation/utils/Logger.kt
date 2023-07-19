@@ -6,7 +6,7 @@ internal enum class LogLevel(val color: String) {
     Info("\u001b[38;5;77m"),
     Warn("\u001b[33;1m"),
     Error("\u001b[31;1m"),
-    Off("")
+    Off(""),
 }
 
 internal interface Logger {

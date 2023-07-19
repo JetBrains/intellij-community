@@ -44,7 +44,7 @@ fun TextField(
     keyboardActions: KeyboardActions = KeyboardActions(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: TextFieldStyle = IntelliJTheme.textFieldStyle,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     var textFieldValueState by remember { mutableStateOf(TextFieldValue(text = value)) }
     val textFieldValue = textFieldValueState.copy(text = value)
@@ -95,7 +95,7 @@ fun TextField(
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: TextFieldStyle = IntelliJTheme.textFieldStyle,
     textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) = InputField(
     value = value,
     onValueChange = onValueChange,
@@ -113,7 +113,7 @@ fun TextField(
     style = style,
     textStyle = textStyle,
     interactionSource = interactionSource
-) { innerTextField, state ->
+) { innerTextField, _ ->
     val minSize = style.metrics.minSize
 
     TextFieldDecorationBox(
@@ -132,7 +132,7 @@ private fun TextFieldDecorationBox(
     innerTextField: @Composable () -> Unit,
     placeholderTextColor: Color,
     placeholder: @Composable (() -> Unit)? = null,
-    trailingIcon: @Composable (() -> Unit)? = null
+    trailingIcon: @Composable (() -> Unit)? = null,
 ) {
     Layout(
         modifier = modifier,
@@ -207,7 +207,7 @@ private fun calculateWidth(
     trailingPlaceable: Placeable?,
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
-    constraints: Constraints
+    constraints: Constraints,
 ): Int {
     val middleSection = maxOf(
         textFieldPlaceable.width,
@@ -221,7 +221,7 @@ private fun calculateHeight(
     trailingPlaceable: Placeable?,
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
-    constraints: Constraints
+    constraints: Constraints,
 ): Int {
     return maxOf(
         textFieldPlaceable.height,
@@ -237,7 +237,7 @@ private fun Placeable.PlacementScope.place(
     trailingPlaceable: Placeable?,
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
-    density: Density
+    density: Density,
 ) = with(density) {
     // placed center vertically and to the end edge horizontally
     trailingPlaceable?.placeRelative(

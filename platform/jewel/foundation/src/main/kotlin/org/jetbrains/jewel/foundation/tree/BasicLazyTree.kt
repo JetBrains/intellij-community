@@ -86,7 +86,7 @@ fun <T> BasicLazyTree(
         )
     },
     chevronContent: @Composable (nodeState: TreeElementState) -> Unit,
-    nodeContent: @Composable SelectableLazyItemScope.(Tree.Element<T>) -> Unit
+    nodeContent: @Composable SelectableLazyItemScope.(Tree.Element<T>) -> Unit,
 ) {
     LaunchedEffect(tree) {
         treeState.attachTree(tree)
@@ -161,7 +161,7 @@ private fun Modifier.elementBackground(
     selectedFocused: Color,
     focused: Color,
     selected: Color,
-    backgroundShape: RoundedCornerShape
+    backgroundShape: RoundedCornerShape,
 ) =
     background(
         color = when {
@@ -192,7 +192,7 @@ value class TreeElementState(val state: ULong) {
     fun copy(
         focused: Boolean = isFocused,
         selected: Boolean = isSelected,
-        expanded: Boolean = isExpanded
+        expanded: Boolean = isExpanded,
     ) = of(focused, selected, expanded)
 
     override fun toString() =
@@ -208,7 +208,7 @@ value class TreeElementState(val state: ULong) {
         fun of(
             focused: Boolean,
             selected: Boolean,
-            expanded: Boolean
+            expanded: Boolean,
         ) = TreeElementState(
             (if (focused) Focused else 0UL) or
                 (if (selected) Pressed else 0UL) or

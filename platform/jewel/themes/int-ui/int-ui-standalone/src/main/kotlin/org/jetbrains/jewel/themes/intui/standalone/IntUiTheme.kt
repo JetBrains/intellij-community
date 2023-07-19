@@ -3,6 +3,9 @@ package org.jetbrains.jewel.themes.intui.standalone
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -11,6 +14,7 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.jewel.ExperimentalJewelApi
 import org.jetbrains.jewel.IntelliJTheme
 import org.jetbrains.jewel.LocalResourceLoader
+import org.jetbrains.jewel.SvgPatcher
 import org.jetbrains.jewel.ThemeColors
 import org.jetbrains.jewel.ThemeMetrics
 import org.jetbrains.jewel.styling.ButtonStyle
@@ -30,8 +34,10 @@ import org.jetbrains.jewel.styling.TextFieldStyle
 import org.jetbrains.jewel.themes.intui.core.BaseIntUiTheme
 import org.jetbrains.jewel.themes.intui.core.ComponentStyling
 import org.jetbrains.jewel.themes.intui.core.IntUiThemeDefinition
+import org.jetbrains.jewel.themes.intui.core.IntelliJSvgPatcher
 import org.jetbrains.jewel.themes.intui.core.IntelliJThemeColorPalette
 import org.jetbrains.jewel.themes.intui.core.IntelliJThemeIcons
+import org.jetbrains.jewel.themes.intui.core.PaletteMapperFactory
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiButtonStyle
@@ -64,7 +70,7 @@ object IntUiTheme : BaseIntUiTheme {
         metrics: ThemeMetrics = IntUiThemeMetrics(),
         palette: IntelliJThemeColorPalette = IntUiLightTheme.colors,
         icons: IntelliJThemeIcons = IntUiLightTheme.icons,
-        defaultTextStyle: TextStyle = intUiDefaultTextStyle
+        defaultTextStyle: TextStyle = intUiDefaultTextStyle,
     ) = IntUiThemeDefinition(isDark = false, colors, palette, icons, metrics, defaultTextStyle)
 
     @Composable
@@ -73,7 +79,7 @@ object IntUiTheme : BaseIntUiTheme {
         metrics: ThemeMetrics = IntUiThemeMetrics(),
         palette: IntelliJThemeColorPalette = IntUiDarkTheme.colors,
         icons: IntelliJThemeIcons = IntUiDarkTheme.icons,
-        defaultTextStyle: TextStyle = intUiDefaultTextStyle
+        defaultTextStyle: TextStyle = intUiDefaultTextStyle,
     ) = IntUiThemeDefinition(isDark = true, colors, palette, icons, metrics, defaultTextStyle)
 
     val colors: ThemeColors
@@ -180,7 +186,10 @@ object IntUiTheme : BaseIntUiTheme {
 @OptIn(ExperimentalJewelApi::class)
 @Composable
 fun IntUiTheme(theme: IntUiThemeDefinition, swingCompatMode: Boolean = false, content: @Composable () -> Unit) {
-    val componentStyling = defaultComponentStyling(theme.isDark)
+    val svgPatcher by remember(theme) {
+        mutableStateOf(IntelliJSvgPatcher(PaletteMapperFactory.create(theme.isDark, theme.icons, theme.palette)))
+    }
+    val componentStyling = defaultComponentStyling(theme.isDark, svgPatcher)
     IntUiTheme(theme, componentStyling, swingCompatMode, content)
 }
 
@@ -190,7 +199,7 @@ fun IntUiTheme(
     theme: IntUiThemeDefinition,
     componentStyling: ComponentStyling,
     swingCompatMode: Boolean = false,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     BaseIntUiTheme(theme, componentStyling, swingCompatMode) {
         CompositionLocalProvider(LocalResourceLoader provides IntUiDefaultResourceLoader) {
@@ -200,26 +209,27 @@ fun IntUiTheme(
 }
 
 @Composable
-fun defaultComponentStyling(isDark: Boolean) =
-    if (isDark) darkComponentStyling() else lightComponentStyling()
+fun defaultComponentStyling(isDark: Boolean, svgPatcher: SvgPatcher) =
+    if (isDark) darkComponentStyling(svgPatcher) else lightComponentStyling(svgPatcher)
 
 @Composable
 fun darkComponentStyling(
+    svgPatcher: SvgPatcher,
     defaultButtonStyle: ButtonStyle = IntUiButtonStyle.Default.dark(),
     outlinedButtonStyle: ButtonStyle = IntUiButtonStyle.Outlined.dark(),
-    checkboxStyle: CheckboxStyle = IntUiCheckboxStyle.dark(),
+    checkboxStyle: CheckboxStyle = IntUiCheckboxStyle.dark(svgPatcher),
     chipStyle: ChipStyle = IntUiChipStyle.dark(),
-    dropdownStyle: DropdownStyle = IntUiDropdownStyle.dark(),
+    dropdownStyle: DropdownStyle = IntUiDropdownStyle.dark(svgPatcher),
     groupHeaderStyle: GroupHeaderStyle = IntUiGroupHeaderStyle.dark(),
     labelledTextFieldStyle: LabelledTextFieldStyle = IntUiLabelledTextFieldStyle.dark(),
-    linkStyle: LinkStyle = IntUiLinkStyle.dark(),
+    linkStyle: LinkStyle = IntUiLinkStyle.dark(svgPatcher),
     menuStyle: MenuStyle = IntUiMenuStyle.dark(),
     horizontalProgressBarStyle: HorizontalProgressBarStyle = IntUiHorizontalProgressBarStyle.dark(),
-    radioButtonStyle: RadioButtonStyle = IntUiRadioButtonStyle.dark(),
+    radioButtonStyle: RadioButtonStyle = IntUiRadioButtonStyle.dark(svgPatcher),
     scrollbarStyle: ScrollbarStyle = IntUiScrollbarStyle.dark(),
     textAreaStyle: IntUiTextAreaStyle = IntUiTextAreaStyle.dark(),
     textFieldStyle: TextFieldStyle = IntUiTextFieldStyle.dark(),
-    lazyTreeStyle: LazyTreeStyle = IntUiLazyTreeStyle.dark()
+    lazyTreeStyle: LazyTreeStyle = IntUiLazyTreeStyle.dark(),
 ) =
     ComponentStyling(
         defaultButtonStyle = defaultButtonStyle,
@@ -241,21 +251,22 @@ fun darkComponentStyling(
 
 @Composable
 fun lightComponentStyling(
+    svgPatcher: SvgPatcher,
     defaultButtonStyle: ButtonStyle = IntUiButtonStyle.Default.light(),
     outlinedButtonStyle: ButtonStyle = IntUiButtonStyle.Outlined.light(),
-    checkboxStyle: CheckboxStyle = IntUiCheckboxStyle.light(),
+    checkboxStyle: CheckboxStyle = IntUiCheckboxStyle.light(svgPatcher),
     chipStyle: ChipStyle = IntUiChipStyle.light(),
-    dropdownStyle: DropdownStyle = IntUiDropdownStyle.light(),
+    dropdownStyle: DropdownStyle = IntUiDropdownStyle.light(svgPatcher),
     groupHeaderStyle: GroupHeaderStyle = IntUiGroupHeaderStyle.light(),
     labelledTextFieldStyle: LabelledTextFieldStyle = IntUiLabelledTextFieldStyle.light(),
-    linkStyle: LinkStyle = IntUiLinkStyle.light(),
+    linkStyle: LinkStyle = IntUiLinkStyle.light(svgPatcher),
     menuStyle: MenuStyle = IntUiMenuStyle.light(),
     horizontalProgressBarStyle: HorizontalProgressBarStyle = IntUiHorizontalProgressBarStyle.light(),
-    radioButtonStyle: RadioButtonStyle = IntUiRadioButtonStyle.light(),
+    radioButtonStyle: RadioButtonStyle = IntUiRadioButtonStyle.light(svgPatcher),
     scrollbarStyle: ScrollbarStyle = IntUiScrollbarStyle.light(),
     textAreaStyle: IntUiTextAreaStyle = IntUiTextAreaStyle.light(),
     textFieldStyle: TextFieldStyle = IntUiTextFieldStyle.light(),
-    lazyTreeStyle: LazyTreeStyle = IntUiLazyTreeStyle.light()
+    lazyTreeStyle: LazyTreeStyle = IntUiLazyTreeStyle.light(),
 ) =
     ComponentStyling(
         defaultButtonStyle = defaultButtonStyle,

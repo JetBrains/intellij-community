@@ -42,7 +42,7 @@ fun DefaultButton(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ButtonStyle = IntelliJTheme.defaultButtonStyle,
-    content: @Composable RowScope.() -> Unit
+    content: @Composable RowScope.() -> Unit,
 ) {
     ButtonImpl(
         onClick = onClick,
@@ -61,7 +61,7 @@ fun OutlinedButton(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ButtonStyle = IntelliJTheme.outlinedButtonStyle,
-    content: @Composable RowScope.() -> Unit
+    content: @Composable RowScope.() -> Unit,
 ) {
     ButtonImpl(
         onClick = onClick,
@@ -80,7 +80,7 @@ private fun ButtonImpl(
     enabled: Boolean,
     interactionSource: MutableInteractionSource,
     style: ButtonStyle,
-    content: @Composable RowScope.() -> Unit
+    content: @Composable RowScope.() -> Unit,
 ) {
     var buttonState by remember(interactionSource) {
         mutableStateOf(ButtonState.of(enabled = enabled))
@@ -161,7 +161,7 @@ value class ButtonState(val state: ULong) : InteractiveComponentState {
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
         pressed: Boolean = isPressed,
-        hovered: Boolean = isHovered
+        hovered: Boolean = isHovered,
     ) = of(
         enabled = enabled,
         focused = focused,
@@ -180,7 +180,7 @@ value class ButtonState(val state: ULong) : InteractiveComponentState {
             error: Boolean = false,
             pressed: Boolean = false,
             hovered: Boolean = false,
-            warning: Boolean = false
+            warning: Boolean = false,
         ) = ButtonState(
             state = (if (enabled) Enabled else 0UL) or
                 (if (focused) Focused else 0UL) or

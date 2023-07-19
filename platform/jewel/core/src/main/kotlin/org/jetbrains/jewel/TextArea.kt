@@ -48,7 +48,7 @@ fun TextArea(
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: TextAreaStyle = IntelliJTheme.textAreaStyle,
     textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     var textFieldValueState by remember { mutableStateOf(TextFieldValue(text = value)) }
     val textFieldValue = textFieldValueState.copy(text = value)
@@ -102,7 +102,7 @@ fun TextArea(
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: TextAreaStyle = IntelliJTheme.textAreaStyle,
     textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     InputField(
         value = value,
@@ -147,7 +147,7 @@ private fun TextAreaDecorationBox(
     placeholder: @Composable (() -> Unit)?,
     hintTextStyle: TextStyle,
     hintTextColor: Color,
-    hint: @Composable (() -> Unit)?
+    hint: @Composable (() -> Unit)?,
 ) {
     Layout(
         modifier = modifier,
@@ -232,7 +232,7 @@ private fun calculateWidth(
     placeholderPlaceable: Placeable?,
     horizontalPadding: Int,
     hintPlaceable: Placeable?,
-    constraints: Constraints
+    constraints: Constraints,
 ): Int {
     return maxOf(
         textFieldPlaceable.width + horizontalPadding,
@@ -247,7 +247,7 @@ private fun calculateHeight(
     placeholderPlaceable: Placeable?,
     verticalPadding: Int,
     hintPlaceable: Placeable?,
-    constraints: Constraints
+    constraints: Constraints,
 ): Int {
     val middleSection = maxOf(
         textFieldPlaceable.height,
@@ -264,7 +264,7 @@ private fun Placeable.PlacementScope.place(
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
     layoutDirection: LayoutDirection,
-    density: Density
+    density: Density,
 ) = with(density) {
     hintPlaceable?.placeRelative(
         0,

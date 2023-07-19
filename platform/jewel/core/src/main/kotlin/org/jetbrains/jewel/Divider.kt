@@ -19,7 +19,7 @@ fun Divider(
     color: Color = IntelliJTheme.colors.borders.normal,
     thickness: Dp = 1.dp,
     orientation: Orientation = Orientation.Horizontal,
-    startIndent: Dp = 0.dp
+    startIndent: Dp = 0.dp,
 ) {
     val indentMod = if (startIndent.value != 0f) {
         Modifier.padding(start = startIndent)

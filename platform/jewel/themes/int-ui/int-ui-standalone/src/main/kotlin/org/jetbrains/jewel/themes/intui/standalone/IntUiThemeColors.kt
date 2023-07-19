@@ -15,7 +15,7 @@ import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 data class IntUiThemeColors(
     override val borders: BorderColors,
     override val outlines: OutlineColors,
-    @SwingLafKey("*.infoForeground") override val infoContent: Color
+    @SwingLafKey("*.infoForeground") override val infoContent: Color,
 ) : ThemeColors {
 
     companion object {
@@ -24,7 +24,7 @@ data class IntUiThemeColors(
         fun light(
             borders: BorderColors = IntUiBorderColors.light(),
             outlines: OutlineColors = IntUiOutlineColors.light(),
-            @SwingLafKey("*.infoForeground") infoContent: Color = Color.Unspecified
+            @SwingLafKey("*.infoForeground") infoContent: Color = Color.Unspecified,
         ) = IntUiThemeColors(
             borders = borders,
             outlines = outlines,
@@ -35,7 +35,7 @@ data class IntUiThemeColors(
         fun dark(
             borders: BorderColors = IntUiBorderColors.dark(),
             outlines: OutlineColors = IntUiOutlineColors.dark(),
-            @SwingLafKey("*.infoForeground") infoContent: Color = Color.Unspecified
+            @SwingLafKey("*.infoForeground") infoContent: Color = Color.Unspecified,
         ) = IntUiThemeColors(
             borders = borders,
             outlines = outlines,
@@ -48,7 +48,7 @@ data class IntUiThemeColors(
 data class IntUiBorderColors(
     @SwingLafKey("Component.borderColor") override val normal: Color,
     @SwingLafKey("Component.focusedBorderColor") override val focused: Color,
-    @SwingLafKey("*.disabledBorderColor") override val disabled: Color
+    @SwingLafKey("*.disabledBorderColor") override val disabled: Color,
 ) : BorderColors {
 
     companion object {
@@ -57,14 +57,14 @@ data class IntUiBorderColors(
         fun light(
             normal: Color = IntUiLightTheme.colors.grey(9),
             focused: Color = IntUiLightTheme.colors.grey(14),
-            disabled: Color = IntUiLightTheme.colors.grey(11)
+            disabled: Color = IntUiLightTheme.colors.grey(11),
         ) = IntUiBorderColors(normal, focused, disabled)
 
         @Composable
         fun dark(
             normal: Color = IntUiDarkTheme.colors.grey(5),
             focused: Color = IntUiDarkTheme.colors.grey(2),
-            disabled: Color = IntUiDarkTheme.colors.grey(4)
+            disabled: Color = IntUiDarkTheme.colors.grey(4),
         ) = IntUiBorderColors(normal, focused, disabled)
     }
 }
@@ -75,7 +75,7 @@ data class IntUiOutlineColors(
     @SwingLafKey("Component.warningFocusColor") override val focusedWarning: Color,
     @SwingLafKey("Component.errorFocusColor") override val focusedError: Color,
     @SwingLafKey("Component.inactiveWarningFocusColor") override val warning: Color,
-    @SwingLafKey("Component.inactiveErrorFocusColor") override val error: Color
+    @SwingLafKey("Component.inactiveErrorFocusColor") override val error: Color,
 ) : OutlineColors {
 
     companion object {
@@ -86,7 +86,7 @@ data class IntUiOutlineColors(
             focusedWarning: Color = IntUiLightTheme.colors.yellow(4),
             focusedError: Color = IntUiLightTheme.colors.red(4),
             warning: Color = IntUiLightTheme.colors.yellow(7),
-            error: Color = IntUiLightTheme.colors.red(9)
+            error: Color = IntUiLightTheme.colors.red(9),
         ) = IntUiOutlineColors(focused, focusedWarning, focusedError, warning, error)
 
         @Composable
@@ -95,7 +95,7 @@ data class IntUiOutlineColors(
             focusedWarning: Color = IntUiDarkTheme.colors.yellow(4),
             focusedError: Color = IntUiDarkTheme.colors.red(4),
             warning: Color = IntUiDarkTheme.colors.yellow(2),
-            error: Color = IntUiDarkTheme.colors.red(2)
+            error: Color = IntUiDarkTheme.colors.red(2),
         ) = IntUiOutlineColors(focused, focusedWarning, focusedError, warning, error)
     }
 }

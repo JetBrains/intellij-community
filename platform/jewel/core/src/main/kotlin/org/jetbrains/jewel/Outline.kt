@@ -11,9 +11,9 @@ import org.jetbrains.jewel.foundation.utils.thenIf
 
 enum class Outline {
     None,
-    Focus,
     Warning,
-    Error;
+    Error,
+    ;
 
     companion object {
 
@@ -30,7 +30,7 @@ enum class Outline {
 fun Modifier.focusOutline(
     state: InteractiveComponentState,
     outlineShape: Shape = RoundedCornerShape(LocalThemeMetrics.current.outlineCornerSize),
-    outlineWidth: Dp = LocalThemeMetrics.current.outlineWidth
+    outlineWidth: Dp = LocalThemeMetrics.current.outlineWidth,
 ): Modifier {
     val outlineColors = LocalThemeColors.current.outlines
 
@@ -44,7 +44,7 @@ fun Modifier.focusOutline(
 fun Modifier.outline(
     state: StateWithOutline,
     outlineShape: Shape = RoundedCornerShape(LocalThemeMetrics.current.outlineCornerSize),
-    outlineWidth: Dp = LocalThemeMetrics.current.outlineWidth
+    outlineWidth: Dp = LocalThemeMetrics.current.outlineWidth,
 ): Modifier {
     val outlineColors = LocalThemeColors.current.outlines
 
@@ -55,6 +55,28 @@ fun Modifier.outline(
             state.isFocused -> outlineColors.focused
             else -> error("State $state says it has an outline, but doesn't really")
         }
-        border(Stroke.Alignment.Outside, outlineWidth, outlineColor, outlineShape)
+        border(Stroke.Alignment.Inside, outlineWidth, outlineColor, outlineShape)
+    }
+}
+
+@Composable
+fun Modifier.outline(
+    state: InteractiveComponentState,
+    outline: Outline,
+    alignment: Stroke.Alignment = Stroke.Alignment.Outside,
+    outlineShape: Shape = RoundedCornerShape(LocalThemeMetrics.current.outlineCornerSize),
+    outlineWidth: Dp = LocalThemeMetrics.current.outlineWidth,
+): Modifier {
+    val outlineColors = LocalThemeColors.current.outlines
+
+    return thenIf(outline != Outline.None) {
+        val outlineColor = when {
+            state.isFocused && outline == Outline.Error -> outlineColors.focusedError
+            outline == Outline.Error -> outlineColors.error
+            state.isFocused && outline == Outline.Warning -> outlineColors.focusedWarning
+            outline == Outline.Warning -> outlineColors.warning
+            else -> error("State $state says it has an outline, but doesn't really")
+        }
+        border(alignment, outlineWidth, outlineColor, outlineShape)
     }
 }

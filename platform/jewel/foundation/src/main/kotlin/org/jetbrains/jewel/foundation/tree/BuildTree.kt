@@ -15,7 +15,7 @@ class TreeBuilder<T> : TreeGeneratorScope<T> {
         data class Node<T>(
             val data: T,
             override val id: Any,
-            val childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit
+            val childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit,
         ) : Element<T>()
     }
 
@@ -28,7 +28,7 @@ class TreeBuilder<T> : TreeGeneratorScope<T> {
     override fun addNode(
         data: T,
         id: Any,
-        childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit
+        childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit,
     ) {
         heads.add(Element.Node(data, id, childrenGenerator))
     }
@@ -72,7 +72,7 @@ class TreeBuilder<T> : TreeGeneratorScope<T> {
 
 private fun <T> generateElements(
     parent: Tree.Element.Node<T>,
-    parentElementBuilder: TreeBuilder.Element.Node<T>
+    parentElementBuilder: TreeBuilder.Element.Node<T>,
 ): List<Tree.Element<T>> {
     val childrenGeneratorScope = ChildrenGeneratorScope(parent)
     parentElementBuilder.childrenGenerator(childrenGeneratorScope)
@@ -119,7 +119,7 @@ interface TreeGeneratorScope<T> {
     fun addNode(
         data: T,
         id: Any = data.hashCode(),
-        childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit = { }
+        childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit = { },
     )
 
     fun addLeaf(data: T, id: Any = data.hashCode())
@@ -142,7 +142,7 @@ class ChildrenGeneratorScope<T>(private val parentElement: Tree.Element.Node<T>)
     override fun addNode(
         data: T,
         id: Any,
-        childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit
+        childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit,
     ) {
         elements.add(TreeBuilder.Element.Node(data, id, childrenGenerator))
     }

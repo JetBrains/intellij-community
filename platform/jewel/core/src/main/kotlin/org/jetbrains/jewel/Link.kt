@@ -65,7 +65,7 @@ fun Link(
     lineHeight: TextUnit = TextUnit.Unspecified,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     indication: Indication? = null,
-    style: LinkStyle = LocalLinkStyle.current
+    style: LinkStyle = LocalLinkStyle.current,
 ) = LinkImpl(
     text = text,
     onClick = onClick,
@@ -103,7 +103,7 @@ fun ExternalLink(
     lineHeight: TextUnit = TextUnit.Unspecified,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     indication: Indication? = null,
-    style: LinkStyle = LocalLinkStyle.current
+    style: LinkStyle = LocalLinkStyle.current,
 ) = LinkImpl(
     text = text,
     onClick = onClick,
@@ -143,7 +143,7 @@ fun DropdownLink(
     style: LinkStyle = LocalLinkStyle.current,
     menuModifier: Modifier = Modifier,
     menuStyle: MenuStyle = LocalMenuStyle.current,
-    menuContent: MenuScope.() -> Unit
+    menuContent: MenuScope.() -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var hovered by remember { mutableStateOf(false) }
@@ -214,7 +214,7 @@ private fun LinkImpl(
     lineHeight: TextUnit,
     interactionSource: MutableInteractionSource,
     indication: Indication?,
-    icon: StatefulPainterProvider<LinkState>?
+    icon: StatefulPainterProvider<LinkState>?,
 ) {
     var linkState by remember(interactionSource) {
         mutableStateOf(LinkState.of(enabled = enabled))
@@ -337,7 +337,7 @@ value class LinkState(val state: ULong) : InteractiveComponentState {
         focused: Boolean = isFocused,
         visited: Boolean = isVisited,
         pressed: Boolean = isPressed,
-        hovered: Boolean = isHovered
+        hovered: Boolean = isHovered,
     ) = of(
         enabled = enabled,
         focused = focused,
@@ -353,7 +353,7 @@ value class LinkState(val state: ULong) : InteractiveComponentState {
         focused: T,
         pressed: T,
         hovered: T,
-        visited: T
+        visited: T,
     ): T =
         when {
             !isEnabled -> disabled
@@ -375,7 +375,7 @@ value class LinkState(val state: ULong) : InteractiveComponentState {
             focused: Boolean = false,
             visited: Boolean = false,
             hovered: Boolean = false,
-            pressed: Boolean = false
+            pressed: Boolean = false,
         ) = LinkState(
             (if (visited) Visited else 0UL) or
                 (if (enabled) Enabled else 0UL) or

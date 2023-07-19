@@ -56,7 +56,7 @@ fun Dropdown(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: DropdownStyle = IntelliJTheme.dropdownStyle,
     menuContent: MenuScope.() -> Unit,
-    content: @Composable RowScope.() -> Unit
+    content: @Composable RowScope.() -> Unit,
 ) {
     Box {
         var expanded by remember { mutableStateOf(false) }
@@ -160,7 +160,7 @@ internal fun DropdownMenu(
     horizontalAlignment: Alignment.Horizontal,
     modifier: Modifier = Modifier,
     style: MenuStyle,
-    content: MenuScope.() -> Unit
+    content: MenuScope.() -> Unit,
 ) {
     val density = LocalDensity.current
 
@@ -233,7 +233,7 @@ value class DropdownState(val state: ULong) : StateWithOutline {
         focused: Boolean = isFocused,
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
-        outline: Outline = Outline.of(isWarning, isError)
+        outline: Outline = Outline.of(isWarning, isError),
     ) = of(
         enabled = enabled,
         focused = focused,
@@ -248,7 +248,7 @@ value class DropdownState(val state: ULong) : StateWithOutline {
         error: Boolean = isError,
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
-        warning: Boolean = isWarning
+        warning: Boolean = isWarning,
     ) = of(
         enabled = enabled,
         focused = focused,
@@ -273,7 +273,7 @@ value class DropdownState(val state: ULong) : StateWithOutline {
             focused: Boolean = false,
             pressed: Boolean = false,
             hovered: Boolean = false,
-            outline: Outline = Outline.None
+            outline: Outline = Outline.None,
         ) = of(
             enabled = enabled,
             focused = focused,
@@ -289,7 +289,7 @@ value class DropdownState(val state: ULong) : StateWithOutline {
             error: Boolean = false,
             pressed: Boolean = false,
             hovered: Boolean = false,
-            warning: Boolean = false
+            warning: Boolean = false,
         ) = DropdownState(
             if (enabled) {
                 Enabled

@@ -35,7 +35,7 @@ object FontsLoader {
 
     private suspend fun <T, R> Iterable<T>.parallelMap(
         context: CoroutineContext = EmptyCoroutineContext,
-        transform: suspend (T) -> R
+        transform: suspend (T) -> R,
     ) =
         if (context != EmptyCoroutineContext) {
             withContext(context) { map { async { transform(it) } }.awaitAll() }
@@ -45,7 +45,7 @@ object FontsLoader {
 
     private fun collectIntoSystemFontFamilies(
         fontFamilyNames: Iterable<String>,
-        fontFiles: Map<AwtFont, File>
+        fontFiles: Map<AwtFont, File>,
     ): Map<String, SystemFontFamily> {
         val sortedFontFamilyNames = fontFamilyNames.sortedByDescending { it.length }
         val fontFamilies = mutableMapOf<String, SystemFontFamily>()

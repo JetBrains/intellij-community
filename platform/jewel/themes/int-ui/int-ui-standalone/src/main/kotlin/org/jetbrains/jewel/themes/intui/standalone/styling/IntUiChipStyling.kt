@@ -20,7 +20,7 @@ import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 @Stable
 data class IntUiChipStyle(
     override val colors: IntUiChipColors,
-    override val metrics: IntUiChipMetrics
+    override val metrics: IntUiChipMetrics,
 ) : ChipStyle {
 
     companion object {
@@ -28,13 +28,13 @@ data class IntUiChipStyle(
         @Composable
         fun light(
             colors: IntUiChipColors = IntUiChipColors.light(),
-            metrics: IntUiChipMetrics = IntUiChipMetrics()
+            metrics: IntUiChipMetrics = IntUiChipMetrics(),
         ) = IntUiChipStyle(colors, metrics)
 
         @Composable
         fun dark(
             colors: IntUiChipColors = IntUiChipColors.dark(),
-            metrics: IntUiChipMetrics = IntUiChipMetrics()
+            metrics: IntUiChipMetrics = IntUiChipMetrics(),
         ) = IntUiChipStyle(colors, metrics)
     }
 }
@@ -55,7 +55,7 @@ data class IntUiChipColors(
     override val borderDisabled: Color,
     override val borderFocused: Color,
     override val borderPressed: Color,
-    override val borderHovered: Color
+    override val borderHovered: Color,
 ) : ChipColors {
 
     companion object {
@@ -76,7 +76,7 @@ data class IntUiChipColors(
             borderDisabled: Color = IntUiLightTheme.colors.grey(6),
             borderFocused: Color = Color.Unspecified,
             borderPressed: Color = IntUiLightTheme.colors.grey(7),
-            borderHovered: Color = IntUiLightTheme.colors.grey(8)
+            borderHovered: Color = IntUiLightTheme.colors.grey(8),
         ) = IntUiChipColors(
             background,
             backgroundDisabled,
@@ -111,7 +111,7 @@ data class IntUiChipColors(
             borderDisabled: Color = IntUiDarkTheme.colors.grey(6),
             borderFocused: Color = Color.Unspecified,
             borderPressed: Color = IntUiDarkTheme.colors.grey(7),
-            borderHovered: Color = borderPressed
+            borderHovered: Color = borderPressed,
         ) = IntUiChipColors(
             background,
             backgroundDisabled,
@@ -137,5 +137,5 @@ data class IntUiChipMetrics(
     override val minSize: DpSize = DpSize(80.dp, 40.dp),
     override val cornerSize: CornerSize = CornerSize(100),
     override val padding: PaddingValues = PaddingValues(4.dp),
-    override val borderWidth: Dp = 1.dp
+    override val borderWidth: Dp = 1.dp,
 ) : ChipMetrics

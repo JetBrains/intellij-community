@@ -3,12 +3,9 @@ package org.jetbrains.jewel.styling
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -76,24 +73,9 @@ interface CheckboxMetrics {
 }
 
 @Immutable
-interface CheckboxIcons : StatefulPainterProvider<CheckboxState> {
+interface CheckboxIcons {
 
-    val unchecked: StatefulPainterProvider<CheckboxState>
-    val checked: StatefulPainterProvider<CheckboxState>
-    val indeterminate: StatefulPainterProvider<CheckboxState>
-
-    @Composable
-    override fun getPainter(
-        state: CheckboxState,
-        resourceLoader: ResourceLoader
-    ): State<Painter> {
-        val iconProvider = when (state.toggleableState) {
-            ToggleableState.On -> checked
-            ToggleableState.Off -> unchecked
-            ToggleableState.Indeterminate -> indeterminate
-        }
-        return iconProvider.getPainter(state, resourceLoader)
-    }
+    val checkbox: StatefulPainterProvider<CheckboxState>
 }
 
 val LocalCheckboxStyle = staticCompositionLocalOf<CheckboxStyle> {

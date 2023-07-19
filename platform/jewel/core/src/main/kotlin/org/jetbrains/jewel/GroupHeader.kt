@@ -12,7 +12,7 @@ import org.jetbrains.jewel.styling.LocalGroupHeaderStyle
 fun GroupHeader(
     text: String,
     modifier: Modifier = Modifier,
-    style: GroupHeaderStyle = LocalGroupHeaderStyle.current
+    style: GroupHeaderStyle = LocalGroupHeaderStyle.current,
 ) {
     CompositionLocalProvider(
         LocalContentColor provides style.colors.content

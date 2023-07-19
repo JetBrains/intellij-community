@@ -20,7 +20,6 @@ interface StateWithOutline : InteractiveComponentState {
         get() = when {
             isError -> Outline.Error
             isWarning -> Outline.Warning
-            isFocused -> Outline.Focus
             else -> Outline.None
         }
 
@@ -32,7 +31,7 @@ interface StateWithOutline : InteractiveComponentState {
         pressed: T,
         hovered: T,
         warning: T,
-        error: T
+        error: T,
     ): T =
         when {
             !isEnabled -> disabled

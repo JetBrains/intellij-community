@@ -29,11 +29,9 @@ import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import org.jetbrains.jewel.CommonStateBitMask.Enabled
-import org.jetbrains.jewel.CommonStateBitMask.Error
 import org.jetbrains.jewel.CommonStateBitMask.Focused
 import org.jetbrains.jewel.CommonStateBitMask.Hovered
 import org.jetbrains.jewel.CommonStateBitMask.Pressed
-import org.jetbrains.jewel.CommonStateBitMask.Warning
 import org.jetbrains.jewel.styling.RadioButtonStyle
 
 @Composable
@@ -46,7 +44,7 @@ fun RadioButton(
     outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: RadioButtonStyle = IntelliJTheme.radioButtonStyle,
-    textStyle: TextStyle = IntelliJTheme.defaultTextStyle
+    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
 ) = RadioButtonImpl(
     selected = selected,
     onClick = onClick,
@@ -71,7 +69,7 @@ fun RadioButtonRow(
     outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: RadioButtonStyle = IntelliJTheme.radioButtonStyle,
-    textStyle: TextStyle = IntelliJTheme.defaultTextStyle
+    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
 ) = RadioButtonImpl(
     selected = selected,
     onClick = onClick,
@@ -97,7 +95,7 @@ fun RadioButtonRow(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: RadioButtonStyle = IntelliJTheme.radioButtonStyle,
     textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
-    content: @Composable RowScope.() -> Unit
+    content: @Composable RowScope.() -> Unit,
 ) = RadioButtonImpl(
     selected = selected,
     onClick = onClick,
@@ -123,13 +121,13 @@ private fun RadioButtonImpl(
     interactionSource: MutableInteractionSource,
     style: RadioButtonStyle,
     textStyle: TextStyle,
-    content: (@Composable RowScope.() -> Unit)?
+    content: (@Composable RowScope.() -> Unit)?,
 ) {
     var radioButtonState by remember(interactionSource) {
         mutableStateOf(RadioButtonState.of(selected = selected, enabled = enabled))
     }
-    remember(selected, outline, enabled) {
-        radioButtonState = radioButtonState.copy(selected = selected, outline = outline, enabled = enabled)
+    remember(selected, enabled) {
+        radioButtonState = radioButtonState.copy(selected = selected, enabled = enabled)
     }
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
@@ -159,8 +157,8 @@ private fun RadioButtonImpl(
     val colors = style.colors
     val metrics = style.metrics
     val radioButtonModifier = Modifier.size(metrics.radioButtonSize)
-        .outline(radioButtonState, outlineShape = CircleShape)
-    val radioButtonPainter by style.icons.getPainter(radioButtonState, resourceLoader)
+        .outline(radioButtonState, outline, outlineShape = CircleShape)
+    val radioButtonPainter by style.icons.radioButton.getPainter(radioButtonState, resourceLoader)
 
     if (content == null) {
         RadioButtonImage(wrapperModifier, radioButtonPainter, radioButtonModifier)
@@ -192,10 +190,10 @@ private fun RadioButtonImage(outerModifier: Modifier, radioButtonPainter: Painte
 
 @Immutable
 @JvmInline
-value class RadioButtonState(val state: ULong) : StateWithOutline {
+value class RadioButtonState(val state: ULong) : SelectableComponentState {
 
     @Stable
-    val isSelected: Boolean
+    override val isSelected: Boolean
         get() = state and Selected != 0UL
 
     @Stable
@@ -205,14 +203,6 @@ value class RadioButtonState(val state: ULong) : StateWithOutline {
     @Stable
     override val isFocused: Boolean
         get() = state and Focused != 0UL
-
-    @Stable
-    override val isError: Boolean
-        get() = state and Error != 0UL
-
-    @Stable
-    override val isWarning: Boolean
-        get() = state and Warning != 0UL
 
     @Stable
     override val isHovered: Boolean
@@ -228,37 +218,17 @@ value class RadioButtonState(val state: ULong) : StateWithOutline {
         focused: Boolean = isFocused,
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
-        outline: Outline = Outline.of(isWarning, isError)
     ) = of(
         selected = selected,
         enabled = enabled,
         focused = focused,
         pressed = pressed,
-        hovered = hovered,
-        outline = outline
-    )
-
-    fun copy(
-        selected: Boolean = isSelected,
-        enabled: Boolean = isEnabled,
-        focused: Boolean = isFocused,
-        error: Boolean = isError,
-        pressed: Boolean = isPressed,
-        hovered: Boolean = isHovered,
-        warning: Boolean = isWarning
-    ) = of(
-        selected = selected,
-        enabled = enabled,
-        focused = focused,
-        error = error,
-        pressed = pressed,
-        hovered = hovered,
-        warning = warning
+        hovered = hovered
     )
 
     override fun toString() =
         "${javaClass.simpleName}(isSelected=$isSelected, isEnabled=$isEnabled, isFocused=$isFocused, " +
-            "isError=$isError, isWarning=$isWarning, isHovered=$isHovered, isPressed=$isPressed)"
+            "isHovered=$isHovered, isPressed=$isPressed)"
 
     companion object {
 
@@ -272,31 +242,10 @@ value class RadioButtonState(val state: ULong) : StateWithOutline {
             focused: Boolean = false,
             pressed: Boolean = false,
             hovered: Boolean = false,
-            outline: Outline = Outline.None
-        ) = of(
-            selected = selected,
-            enabled = enabled,
-            focused = focused,
-            error = outline == Outline.Error,
-            pressed = pressed,
-            hovered = hovered,
-            warning = outline == Outline.Warning
-        )
-
-        fun of(
-            selected: Boolean,
-            enabled: Boolean = true,
-            focused: Boolean = false,
-            error: Boolean = false,
-            pressed: Boolean = false,
-            hovered: Boolean = false,
-            warning: Boolean = false
         ) = RadioButtonState(
             (if (selected) Selected else 0UL) or
                 (if (enabled) Enabled else 0UL) or
                 (if (focused) Focused else 0UL) or
-                (if (error) Error else 0UL) or
-                (if (warning) Warning else 0UL) or
                 (if (pressed) Pressed else 0UL) or
                 (if (hovered) Hovered else 0UL)
         )

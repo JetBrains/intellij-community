@@ -41,7 +41,7 @@ fun LabelledTextField(
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: LabelledTextFieldStyle = IntelliJTheme.labelledTextFieldStyle,
     textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     var textFieldValueState by remember { mutableStateOf(TextFieldValue(text = value)) }
     val textFieldValue = textFieldValueState.copy(text = value)
@@ -96,7 +96,7 @@ fun LabelledTextField(
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: LabelledTextFieldStyle = IntelliJTheme.labelledTextFieldStyle,
     textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     LabelledTextFieldLayout(
         modifier = modifier,
@@ -146,7 +146,7 @@ private fun LabelledTextFieldLayout(
     label: @Composable () -> Unit,
     textField: @Composable () -> Unit,
     hint: (@Composable () -> Unit)?,
-    style: LabelledTextFieldStyle
+    style: LabelledTextFieldStyle,
 ) {
     val labelSpacing = style.metrics.labelSpacing
     val hintSpacing = style.metrics.hintSpacing

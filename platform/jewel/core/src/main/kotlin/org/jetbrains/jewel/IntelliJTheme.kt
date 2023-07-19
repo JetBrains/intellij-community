@@ -154,7 +154,7 @@ interface IntelliJTheme {
 fun IntelliJTheme(
     theme: IntelliJThemeDefinition,
     swingCompatMode: Boolean,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(LocalSwingCompatMode provides swingCompatMode) {
         IntelliJTheme(theme, content)

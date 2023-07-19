@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.samples.standalone.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,7 +15,7 @@ import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.TextField
 
 @Composable
-fun ColumnScope.TextFields() {
+fun TextFields() {
     GroupHeader("TextFields")
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -38,7 +37,7 @@ fun ColumnScope.TextFields() {
     }
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.CenterVertically
     ) {
         var text1 by remember { mutableStateOf("Labelled TextField") }
         LabelledTextField({

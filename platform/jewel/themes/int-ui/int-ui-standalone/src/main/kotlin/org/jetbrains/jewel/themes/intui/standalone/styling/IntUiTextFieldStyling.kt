@@ -23,7 +23,7 @@ import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
 data class IntUiTextFieldStyle(
     override val colors: IntUiTextFieldColors,
     override val metrics: IntUiTextFieldMetrics,
-    override val textStyle: TextStyle
+    override val textStyle: TextStyle,
 ) : TextFieldStyle {
 
     companion object {
@@ -32,14 +32,14 @@ data class IntUiTextFieldStyle(
         fun light(
             colors: IntUiTextFieldColors = IntUiTextFieldColors.light(),
             metrics: IntUiTextFieldMetrics = IntUiTextFieldMetrics(),
-            textStyle: TextStyle = IntUiTheme.defaultTextStyle
+            textStyle: TextStyle = IntUiTheme.defaultTextStyle,
         ) = IntUiTextFieldStyle(colors, metrics, textStyle)
 
         @Composable
         fun dark(
             colors: IntUiTextFieldColors = IntUiTextFieldColors.dark(),
             metrics: IntUiTextFieldMetrics = IntUiTextFieldMetrics(),
-            textStyle: TextStyle = IntUiTheme.defaultTextStyle
+            textStyle: TextStyle = IntUiTheme.defaultTextStyle,
         ) = IntUiTextFieldStyle(colors, metrics, textStyle)
     }
 }
@@ -74,7 +74,7 @@ data class IntUiTextFieldColors(
     override val cursorHovered: Brush,
     override val cursorWarning: Brush,
     override val cursorError: Brush,
-    override val placeholder: Color
+    override val placeholder: Color,
 ) : TextFieldColors {
 
     companion object {
@@ -109,7 +109,7 @@ data class IntUiTextFieldColors(
             cursorHovered: Brush = cursor,
             cursorWarning: Brush = cursor,
             cursorError: Brush = cursor,
-            placeholder: Color = IntUiLightTheme.colors.grey(8)
+            placeholder: Color = IntUiLightTheme.colors.grey(8),
         ) = IntUiTextFieldColors(
             background,
             backgroundDisabled,
@@ -172,7 +172,7 @@ data class IntUiTextFieldColors(
             cursorHovered: Brush = cursor,
             cursorWarning: Brush = cursor,
             cursorError: Brush = cursor,
-            placeholder: Color = IntUiDarkTheme.colors.grey(7)
+            placeholder: Color = IntUiDarkTheme.colors.grey(7),
         ) = IntUiTextFieldColors(
             background,
             backgroundDisabled,
@@ -212,5 +212,5 @@ data class IntUiTextFieldMetrics(
     override val cornerSize: CornerSize = CornerSize(4.dp),
     override val contentPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 9.dp),
     override val minSize: DpSize = DpSize(144.dp, 28.dp),
-    override val borderWidth: Dp = 1.dp
+    override val borderWidth: Dp = 1.dp,
 ) : InputFieldMetrics

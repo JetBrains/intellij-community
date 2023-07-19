@@ -33,7 +33,7 @@ fun Chip(
     enabled: Boolean = true,
     style: ChipStyle = IntelliJTheme.chipStyle,
     onChipClick: () -> Unit = {},
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     var chipState by remember(interactionSource) {
         mutableStateOf(ChipState.of(enabled = enabled))
@@ -114,7 +114,7 @@ value class ChipState(val state: ULong) : StateWithOutline {
         error: Boolean = isError,
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
-        warning: Boolean = isWarning
+        warning: Boolean = isWarning,
     ): ChipState = of(
         enabled = enabled,
         focused = focused,
@@ -136,7 +136,7 @@ value class ChipState(val state: ULong) : StateWithOutline {
             error: Boolean = false,
             pressed: Boolean = false,
             hovered: Boolean = false,
-            warning: Boolean = false
+            warning: Boolean = false,
         ) = ChipState(
             state = (if (enabled) CommonStateBitMask.Enabled else 0UL) or
                 (if (focused) CommonStateBitMask.Focused else 0UL) or

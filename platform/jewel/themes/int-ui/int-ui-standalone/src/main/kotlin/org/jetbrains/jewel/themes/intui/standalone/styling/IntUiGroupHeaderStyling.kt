@@ -14,7 +14,7 @@ import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 @Immutable
 data class IntUiGroupHeaderStyle(
     override val colors: IntUiGroupHeaderColors,
-    override val metrics: IntUiGroupHeaderMetrics
+    override val metrics: IntUiGroupHeaderMetrics,
 ) : GroupHeaderStyle {
 
     companion object {
@@ -22,13 +22,13 @@ data class IntUiGroupHeaderStyle(
         @Composable
         fun light(
             colors: IntUiGroupHeaderColors = IntUiGroupHeaderColors.light(),
-            metrics: IntUiGroupHeaderMetrics = IntUiGroupHeaderMetrics()
+            metrics: IntUiGroupHeaderMetrics = IntUiGroupHeaderMetrics(),
         ) = IntUiGroupHeaderStyle(colors, metrics)
 
         @Composable
         fun dark(
             colors: IntUiGroupHeaderColors = IntUiGroupHeaderColors.dark(),
-            metrics: IntUiGroupHeaderMetrics = IntUiGroupHeaderMetrics()
+            metrics: IntUiGroupHeaderMetrics = IntUiGroupHeaderMetrics(),
         ) = IntUiGroupHeaderStyle(colors, metrics)
     }
 }
@@ -36,7 +36,7 @@ data class IntUiGroupHeaderStyle(
 @Immutable
 data class IntUiGroupHeaderColors(
     override val content: Color,
-    override val divider: Color
+    override val divider: Color,
 ) : GroupHeaderColors {
 
     companion object {
@@ -44,13 +44,13 @@ data class IntUiGroupHeaderColors(
         @Composable
         fun light(
             content: Color = IntUiLightTheme.colors.grey(1),
-            divider: Color = IntUiLightTheme.colors.grey(12)
+            divider: Color = IntUiLightTheme.colors.grey(12),
         ) = IntUiGroupHeaderColors(content, divider)
 
         @Composable
         fun dark(
             content: Color = IntUiDarkTheme.colors.grey(12),
-            divider: Color = IntUiDarkTheme.colors.grey(3)
+            divider: Color = IntUiDarkTheme.colors.grey(3),
         ) = IntUiGroupHeaderColors(content, divider)
     }
 }
@@ -58,5 +58,5 @@ data class IntUiGroupHeaderColors(
 @Immutable
 data class IntUiGroupHeaderMetrics(
     override val dividerThickness: Dp = 1.dp,
-    override val indent: Dp = 8.dp
+    override val indent: Dp = 8.dp,
 ) : GroupHeaderMetrics

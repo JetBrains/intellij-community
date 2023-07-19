@@ -70,7 +70,7 @@ private fun Modifier.drawBorderWithAlignment(
     width: Dp,
     brush: Brush,
     shape: Shape,
-    expand: Dp
+    expand: Dp,
 ): Modifier = composed(
     factory = {
         val borderCacheRef = remember { Ref<BorderCache>() }
@@ -129,13 +129,13 @@ private class BorderCache(
     private var imageBitmap: ImageBitmap? = null,
     private var canvas: Canvas? = null,
     private var canvasDrawScope: CanvasDrawScope? = null,
-    private var borderPath: Path? = null
+    private var borderPath: Path? = null,
 ) {
 
     inline fun ContentDrawScope.drawBorderCache(
         borderSize: IntSize,
         config: ImageBitmapConfig,
-        block: DrawScope.() -> Unit
+        block: DrawScope.() -> Unit,
     ): ImageBitmap {
         var targetImageBitmap = imageBitmap
         var targetCanvas = canvas
@@ -193,7 +193,7 @@ private fun ContentDrawScope.drawRectBorder(
     outline: Outline.Rectangle,
     brush: Brush,
     strokeWidthPx: Float,
-    expandWidthPx: Float
+    expandWidthPx: Float,
 ) {
     val rect = when (alignment) {
         Stroke.Alignment.Inside -> {
@@ -217,7 +217,7 @@ private fun ContentDrawScope.drawRoundedBorder(
     outline: Outline.Rounded,
     brush: Brush,
     strokeWidthPx: Float,
-    expandWidthPx: Float
+    expandWidthPx: Float,
 ) {
     val rrect = when (alignment) {
         Stroke.Alignment.Inside -> outline.roundRect.inflate(expandWidthPx - strokeWidthPx / 2f)
@@ -249,7 +249,7 @@ private fun CacheDrawScope.drawGenericBorder(
     outline: Outline.Generic,
     brush: Brush,
     strokeWidth: Float,
-    expandWidthPx: Float
+    expandWidthPx: Float,
 ): DrawResult = onDrawWithContent {
     drawContent()
 

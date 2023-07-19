@@ -26,7 +26,7 @@ data class IntUiLabelledTextFieldStyle(
     override val colors: IntUiLabelledTextFieldColors,
     override val metrics: IntUiLabelledTextFieldMetrics,
     override val textStyle: TextStyle,
-    override val textStyles: IntUiLabelledTextFieldTextStyles
+    override val textStyles: IntUiLabelledTextFieldTextStyles,
 ) : LabelledTextFieldStyle {
 
     companion object {
@@ -36,7 +36,7 @@ data class IntUiLabelledTextFieldStyle(
             colors: IntUiLabelledTextFieldColors = IntUiLabelledTextFieldColors.light(),
             metrics: IntUiLabelledTextFieldMetrics = IntUiLabelledTextFieldMetrics(),
             textStyle: TextStyle = IntUiTheme.defaultTextStyle,
-            textStyles: IntUiLabelledTextFieldTextStyles = intUiLabelledTextFieldTextStyles()
+            textStyles: IntUiLabelledTextFieldTextStyles = intUiLabelledTextFieldTextStyles(),
         ) = IntUiLabelledTextFieldStyle(colors, metrics, textStyle, textStyles)
 
         @Composable
@@ -44,7 +44,7 @@ data class IntUiLabelledTextFieldStyle(
             colors: IntUiLabelledTextFieldColors = IntUiLabelledTextFieldColors.dark(),
             metrics: IntUiLabelledTextFieldMetrics = IntUiLabelledTextFieldMetrics(),
             textStyle: TextStyle = IntUiTheme.defaultTextStyle,
-            textStyles: IntUiLabelledTextFieldTextStyles = intUiLabelledTextFieldTextStyles()
+            textStyles: IntUiLabelledTextFieldTextStyles = intUiLabelledTextFieldTextStyles(),
         ) = IntUiLabelledTextFieldStyle(colors, metrics, textStyle, textStyles)
     }
 }
@@ -81,7 +81,7 @@ data class IntUiLabelledTextFieldColors(
     override val cursorError: Brush,
     override val placeholder: Color,
     override val label: Color,
-    override val hint: Color
+    override val hint: Color,
 ) : LabelledTextFieldColors {
 
     companion object {
@@ -118,7 +118,7 @@ data class IntUiLabelledTextFieldColors(
             cursorError: Brush = cursor,
             placeholder: Color = IntUiLightTheme.colors.grey(8),
             label: Color = IntUiLightTheme.colors.grey(1),
-            hint: Color = IntUiLightTheme.colors.grey(6)
+            hint: Color = IntUiLightTheme.colors.grey(6),
         ) = IntUiLabelledTextFieldColors(
             background,
             backgroundDisabled,
@@ -185,7 +185,7 @@ data class IntUiLabelledTextFieldColors(
             cursorError: Brush = cursor,
             placeholder: Color = IntUiDarkTheme.colors.grey(7),
             label: Color = IntUiDarkTheme.colors.grey(12),
-            hint: Color = IntUiDarkTheme.colors.grey(7)
+            hint: Color = IntUiDarkTheme.colors.grey(7),
         ) = IntUiLabelledTextFieldColors(
             background,
             backgroundDisabled,
@@ -229,13 +229,13 @@ data class IntUiLabelledTextFieldMetrics(
     override val minSize: DpSize = DpSize(144.dp, 28.dp),
     override val borderWidth: Dp = 1.dp,
     override val labelSpacing: Dp = 6.dp,
-    override val hintSpacing: Dp = 6.dp
+    override val hintSpacing: Dp = 6.dp,
 ) : LabelledTextFieldMetrics
 
 @Immutable
 data class IntUiLabelledTextFieldTextStyles(
     override val label: TextStyle,
-    override val hint: TextStyle
+    override val hint: TextStyle,
 ) : LabelledTextFieldTextStyles
 
 @Composable
@@ -244,5 +244,5 @@ fun intUiLabelledTextFieldTextStyles(
     hint: TextStyle = IntUiTheme.defaultTextStyle.copy(
         fontSize = 12.sp,
         lineHeight = 16.sp
-    )
+    ),
 ) = IntUiLabelledTextFieldTextStyles(label, hint)

@@ -18,7 +18,7 @@ import kotlin.time.Duration.Companion.milliseconds
 data class IntUiScrollbarStyle(
     override val colors: IntUiScrollbarColors,
     override val metrics: IntUiScrollbarMetrics,
-    override val hoverDuration: Duration
+    override val hoverDuration: Duration,
 ) : ScrollbarStyle {
 
     companion object {
@@ -27,14 +27,14 @@ data class IntUiScrollbarStyle(
         fun light(
             colors: IntUiScrollbarColors = IntUiScrollbarColors.light(),
             metrics: IntUiScrollbarMetrics = IntUiScrollbarMetrics(),
-            hoverDuration: Duration = 300.milliseconds
+            hoverDuration: Duration = 300.milliseconds,
         ) = IntUiScrollbarStyle(colors, metrics, hoverDuration)
 
         @Composable
         fun dark(
             colors: IntUiScrollbarColors = IntUiScrollbarColors.dark(),
             metrics: IntUiScrollbarMetrics = IntUiScrollbarMetrics(),
-            hoverDuration: Duration = 300.milliseconds
+            hoverDuration: Duration = 300.milliseconds,
         ) = IntUiScrollbarStyle(colors, metrics, hoverDuration)
     }
 }
@@ -42,7 +42,7 @@ data class IntUiScrollbarStyle(
 @Immutable
 data class IntUiScrollbarColors(
     override val thumbBackground: Color,
-    override val thumbBackgroundHovered: Color
+    override val thumbBackgroundHovered: Color,
 ) : ScrollbarColors {
 
     companion object {
@@ -50,13 +50,13 @@ data class IntUiScrollbarColors(
         @Composable
         fun light(
             thumbBackground: Color = Color(0xFFD9D9D9),
-            thumbBackgroundHovered: Color = Color(0xFF7B7C7D)
+            thumbBackgroundHovered: Color = Color(0xFF7B7C7D),
         ) = IntUiScrollbarColors(thumbBackground, thumbBackgroundHovered)
 
         @Composable
         fun dark(
             thumbBackground: Color = Color(0xFF48494B),
-            thumbBackgroundHovered: Color = Color(0xFF595A5C)
+            thumbBackgroundHovered: Color = Color(0xFF595A5C),
         ) = IntUiScrollbarColors(thumbBackground, thumbBackgroundHovered)
     }
 }
@@ -66,5 +66,5 @@ data class IntUiScrollbarMetrics(
     override val thumbCornerSize: CornerSize = CornerSize(100),
     override val thumbThickness: Dp = 8.dp,
     override val minThumbLength: Dp = 16.dp,
-    override val trackPadding: PaddingValues = PaddingValues(4.dp)
+    override val trackPadding: PaddingValues = PaddingValues(4.dp),
 ) : ScrollbarMetrics

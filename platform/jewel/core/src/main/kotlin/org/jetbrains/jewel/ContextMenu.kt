@@ -45,7 +45,7 @@ internal fun ContextMenu(
     focusable: Boolean = true,
     modifier: Modifier = Modifier,
     style: MenuStyle = IntelliJTheme.menuStyle,
-    content: MenuScope.() -> Unit
+    content: MenuScope.() -> Unit,
 ) {
     var focusManager: FocusManager? by mutableStateOf(null)
     var inputModeManager: InputModeManager? by mutableStateOf(null)
@@ -110,5 +110,5 @@ object ContextMenuDivider : ContextMenuItem("---", {})
 
 class ContextSubmenu(
     label: String,
-    val submenu: () -> List<ContextMenuItem>
+    val submenu: () -> List<ContextMenuItem>,
 ) : ContextMenuItem(label, {})

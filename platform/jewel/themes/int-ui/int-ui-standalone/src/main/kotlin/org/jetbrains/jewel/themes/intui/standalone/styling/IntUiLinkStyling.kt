@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.LinkState
+import org.jetbrains.jewel.SvgPatcher
 import org.jetbrains.jewel.styling.LinkColors
 import org.jetbrains.jewel.styling.LinkIcons
 import org.jetbrains.jewel.styling.LinkMetrics
@@ -25,25 +26,27 @@ data class IntUiLinkStyle(
     override val colors: IntUiLinkColors,
     override val metrics: IntUiLinkMetrics,
     override val icons: IntUiLinkIcons,
-    override val textStyles: IntUiLinkTextStyles
+    override val textStyles: IntUiLinkTextStyles,
 ) : LinkStyle {
 
     companion object {
 
         @Composable
         fun light(
+            svgPatcher: SvgPatcher,
             colors: IntUiLinkColors = IntUiLinkColors.light(),
             metrics: IntUiLinkMetrics = IntUiLinkMetrics(),
-            icons: IntUiLinkIcons = IntUiLinkIcons(),
-            textStyles: IntUiLinkTextStyles = intUiLinkTextStyles()
+            icons: IntUiLinkIcons = intUiLinkIcons(svgPatcher),
+            textStyles: IntUiLinkTextStyles = intUiLinkTextStyles(),
         ) = IntUiLinkStyle(colors, metrics, icons, textStyles)
 
         @Composable
         fun dark(
+            svgPatcher: SvgPatcher,
             colors: IntUiLinkColors = IntUiLinkColors.dark(),
             metrics: IntUiLinkMetrics = IntUiLinkMetrics(),
-            icons: IntUiLinkIcons = IntUiLinkIcons(),
-            textStyles: IntUiLinkTextStyles = intUiLinkTextStyles()
+            icons: IntUiLinkIcons = intUiLinkIcons(svgPatcher),
+            textStyles: IntUiLinkTextStyles = intUiLinkTextStyles(),
         ) = IntUiLinkStyle(colors, metrics, icons, textStyles)
     }
 }
@@ -57,7 +60,7 @@ data class IntUiLinkColors(
     override val contentHovered: Color,
     override val contentVisited: Color,
     override val iconTint: Color,
-    override val iconTintDisabled: Color
+    override val iconTintDisabled: Color,
 ) : LinkColors {
 
     companion object {
@@ -71,7 +74,7 @@ data class IntUiLinkColors(
             contentHovered: Color = content,
             contentVisited: Color = content,
             iconTint: Color = Color.Unspecified,
-            iconTintDisabled: Color = IntUiLightTheme.colors.grey(9)
+            iconTintDisabled: Color = IntUiLightTheme.colors.grey(9),
         ) = IntUiLinkColors(
             content,
             contentDisabled,
@@ -92,7 +95,7 @@ data class IntUiLinkColors(
             contentHovered: Color = content,
             contentVisited: Color = content,
             iconTint: Color = Color.Unspecified,
-            iconTintDisabled: Color = IntUiDarkTheme.colors.grey(6)
+            iconTintDisabled: Color = IntUiDarkTheme.colors.grey(6),
         ) = IntUiLinkColors(
             content,
             contentDisabled,
@@ -110,33 +113,45 @@ data class IntUiLinkColors(
 data class IntUiLinkMetrics(
     override val focusHaloCornerSize: CornerSize = CornerSize(2.dp),
     override val textIconGap: Dp = 0.dp,
-    override val iconSize: DpSize = DpSize(16.dp, 16.dp)
+    override val iconSize: DpSize = DpSize(16.dp, 16.dp),
 ) : LinkMetrics
 
 @Immutable
 data class IntUiLinkIcons(
-    override val dropdownChevron: ResourcePainterProvider<LinkState> = DropdownChevron(),
-    override val externalLink: ResourcePainterProvider<LinkState> = ExternalLink()
+    override val dropdownChevron: ResourcePainterProvider<LinkState>,
+    override val externalLink: ResourcePainterProvider<LinkState>,
 ) : LinkIcons {
 
-    @Immutable
-    data class DropdownChevron(
-        override val normal: String = "icons/intui/chevronDown.svg",
-        override val disabled: String = normal,
-        override val focused: String = normal,
-        override val pressed: String = normal,
-        override val hovered: String = normal
-    ) : ResourcePainterProvider<LinkState>()
+    companion object {
 
-    @Immutable
-    data class ExternalLink(
-        override val normal: String = "icons/intui/externalLink.svg",
-        override val disabled: String = normal,
-        override val focused: String = normal,
-        override val pressed: String = normal,
-        override val hovered: String = normal
-    ) : ResourcePainterProvider<LinkState>()
+        @Composable
+        fun dropdownChevron(
+            svgPatcher: SvgPatcher,
+            normal: String = "icons/intui/chevronDown.svg",
+            disabled: String = normal,
+            focused: String = normal,
+            pressed: String = normal,
+            hovered: String = normal,
+        ) = ResourcePainterProvider.create<LinkState>(normal, disabled, focused, pressed, hovered, svgPatcher)
+
+        @Composable
+        fun externalLink(
+            svgPatcher: SvgPatcher,
+            normal: String = "icons/intui/externalLink.svg",
+            disabled: String = normal,
+            focused: String = normal,
+            pressed: String = normal,
+            hovered: String = normal,
+        ) = ResourcePainterProvider.create<LinkState>(normal, disabled, focused, pressed, hovered, svgPatcher)
+    }
 }
+
+@Composable
+fun intUiLinkIcons(
+    svgPatcher: SvgPatcher,
+    dropdownChevron: ResourcePainterProvider<LinkState> = IntUiLinkIcons.dropdownChevron(svgPatcher),
+    externalLink: ResourcePainterProvider<LinkState> = IntUiLinkIcons.externalLink(svgPatcher),
+) = IntUiLinkIcons(dropdownChevron, externalLink)
 
 @Immutable
 data class IntUiLinkTextStyles(
@@ -145,7 +160,7 @@ data class IntUiLinkTextStyles(
     override val focused: TextStyle,
     override val pressed: TextStyle,
     override val hovered: TextStyle,
-    override val visited: TextStyle
+    override val visited: TextStyle,
 ) : LinkTextStyles
 
 @Composable
@@ -155,5 +170,5 @@ fun intUiLinkTextStyles(
     focused: TextStyle = normal,
     pressed: TextStyle = normal,
     hovered: TextStyle = normal,
-    visited: TextStyle = normal
+    visited: TextStyle = normal,
 ): IntUiLinkTextStyles = IntUiLinkTextStyles(normal, disabled, focused, pressed, hovered, visited)

@@ -51,7 +51,7 @@ fun SelectableLazyColumn(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     keyActions: KeyBindingScopedActions = DefaultSelectableLazyColumnKeyActions(state),
     pointerHandlingScopedActions: PointerEventScopedActions = DefaultSelectableLazyColumnPointerEventAction(state),
-    content: SelectableLazyListScope.() -> Unit
+    content: SelectableLazyListScope.() -> Unit,
 ) {
     DisposableEffect(keyActions) {
         state.attachKeybindings(keyActions)
@@ -84,7 +84,7 @@ internal fun BaseSelectableLazyColumn(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     keyActions: KeyEvent.(Int) -> Boolean = { false },
     pointerHandlingScopedActions: PointerEventScopedActions,
-    content: SelectableLazyListScope.() -> Unit
+    content: SelectableLazyListScope.() -> Unit,
 ) {
     val uuid = remember { UUID.randomUUID().toString() }
     state.checkUUID(uuid)

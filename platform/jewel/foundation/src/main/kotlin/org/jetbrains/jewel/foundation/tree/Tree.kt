@@ -34,7 +34,7 @@ class Tree<T> internal constructor(internal val roots: List<Element<T>>) : Itera
             override val parent: Element<T>?,
             override var previous: Element<T>?,
             override var next: Element<T>?,
-            override val id: Any
+            override val id: Any,
         ) : Element<T>
 
         class Node<T>(
@@ -45,7 +45,7 @@ class Tree<T> internal constructor(internal val roots: List<Element<T>>) : Itera
             private val childrenGenerator: (parent: Node<T>) -> List<Element<T>>,
             override var next: Element<T>?,
             override var previous: Element<T>?,
-            override val id: Any
+            override val id: Any,
         ) : Element<T> {
 
             var children: List<Element<T>>? = null

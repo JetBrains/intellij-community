@@ -50,6 +50,7 @@ fun ChipsRow(modifier: Modifier = Modifier) {
     }
 }
 
+@Suppress("OPT_IN_USAGE")
 @Composable
 fun TreeSample(modifier: Modifier = Modifier) {
     val tree = remember {

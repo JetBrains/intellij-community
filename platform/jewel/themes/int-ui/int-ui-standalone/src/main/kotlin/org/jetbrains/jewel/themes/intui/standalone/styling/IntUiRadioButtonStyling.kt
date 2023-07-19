@@ -7,12 +7,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.RadioButtonState
-import org.jetbrains.jewel.styling.OutlineResourcePainterProvider
+import org.jetbrains.jewel.SvgPatcher
 import org.jetbrains.jewel.styling.RadioButtonButtonColors
 import org.jetbrains.jewel.styling.RadioButtonColors
 import org.jetbrains.jewel.styling.RadioButtonIcons
 import org.jetbrains.jewel.styling.RadioButtonMetrics
 import org.jetbrains.jewel.styling.RadioButtonStyle
+import org.jetbrains.jewel.styling.ResourcePathPainterProvider
+import org.jetbrains.jewel.styling.StatefulPainterProvider
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 
@@ -20,23 +22,25 @@ import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 data class IntUiRadioButtonStyle(
     override val colors: IntUiRadioButtonColors,
     override val metrics: IntUiRadioButtonMetrics,
-    override val icons: IntUiRadioButtonIcons
+    override val icons: IntUiRadioButtonIcons,
 ) : RadioButtonStyle {
 
     companion object {
 
         @Composable
         fun light(
+            svgPatcher: SvgPatcher,
             colors: IntUiRadioButtonColors = IntUiRadioButtonColors.light(),
             metrics: IntUiRadioButtonMetrics = IntUiRadioButtonMetrics(),
-            icons: IntUiRadioButtonIcons = IntUiRadioButtonIcons()
+            icons: IntUiRadioButtonIcons = intUiRadioButtonIcons(svgPatcher),
         ) = IntUiRadioButtonStyle(colors, metrics, icons)
 
         @Composable
         fun dark(
+            svgPatcher: SvgPatcher,
             colors: IntUiRadioButtonColors = IntUiRadioButtonColors.dark(),
             metrics: IntUiRadioButtonMetrics = IntUiRadioButtonMetrics(),
-            icons: IntUiRadioButtonIcons = IntUiRadioButtonIcons()
+            icons: IntUiRadioButtonIcons = intUiRadioButtonIcons(svgPatcher),
         ) = IntUiRadioButtonStyle(colors, metrics, icons)
     }
 }
@@ -49,7 +53,7 @@ data class IntUiRadioButtonColors(
     override val contentSelected: Color,
     override val contentSelectedHovered: Color,
     override val contentSelectedDisabled: Color,
-    override val buttonColors: IntUiRadioButtonButtonColors
+    override val buttonColors: IntUiRadioButtonButtonColors,
 ) : RadioButtonColors {
 
     companion object {
@@ -62,7 +66,7 @@ data class IntUiRadioButtonColors(
             contentSelected: Color = content,
             contentSelectedHovered: Color = content,
             contentSelectedDisabled: Color = content,
-            buttonColors: IntUiRadioButtonButtonColors = IntUiRadioButtonButtonColors.light()
+            buttonColors: IntUiRadioButtonButtonColors = IntUiRadioButtonButtonColors.light(),
         ) = IntUiRadioButtonColors(
             content,
             contentHovered,
@@ -81,7 +85,7 @@ data class IntUiRadioButtonColors(
             contentSelected: Color = content,
             contentSelectedHovered: Color = content,
             contentSelectedDisabled: Color = content,
-            buttonColors: IntUiRadioButtonButtonColors = IntUiRadioButtonButtonColors.dark()
+            buttonColors: IntUiRadioButtonButtonColors = IntUiRadioButtonButtonColors.dark(),
         ) = IntUiRadioButtonColors(
             content,
             contentHovered,
@@ -110,7 +114,7 @@ data class IntUiRadioButtonButtonColors(
     override val borderSelectedDisabled: Color,
     override val markSelected: Color,
     override val markSelectedHovered: Color,
-    override val markSelectedDisabled: Color
+    override val markSelectedDisabled: Color,
 ) : RadioButtonButtonColors {
 
     companion object {
@@ -131,7 +135,7 @@ data class IntUiRadioButtonButtonColors(
             borderSelectedDisabled: Color = borderDisabled,
             markSelected: Color = IntUiLightTheme.colors.grey(14),
             markSelectedHovered: Color = markSelected,
-            markSelectedDisabled: Color = IntUiLightTheme.colors.grey(9)
+            markSelectedDisabled: Color = IntUiLightTheme.colors.grey(9),
         ) = IntUiRadioButtonButtonColors(
             fill,
             fillHovered,
@@ -166,7 +170,7 @@ data class IntUiRadioButtonButtonColors(
             borderSelectedDisabled: Color = borderDisabled,
             markSelected: Color = IntUiDarkTheme.colors.grey(14),
             markSelectedHovered: Color = markSelected,
-            markSelectedDisabled: Color = IntUiDarkTheme.colors.grey(7)
+            markSelectedDisabled: Color = IntUiDarkTheme.colors.grey(7),
         ) = IntUiRadioButtonButtonColors(
             fill,
             fillHovered,
@@ -190,34 +194,26 @@ data class IntUiRadioButtonButtonColors(
 @Immutable
 data class IntUiRadioButtonMetrics(
     override val radioButtonSize: DpSize = DpSize(16.dp, 16.dp),
-    override val iconContentGap: Dp = 8.dp
+    override val iconContentGap: Dp = 8.dp,
 ) : RadioButtonMetrics
 
 @Immutable
 data class IntUiRadioButtonIcons(
-    override val unselected: OutlineResourcePainterProvider<RadioButtonState> = Unselected(),
-    override val selected: OutlineResourcePainterProvider<RadioButtonState> = Selected()
+    override val radioButton: StatefulPainterProvider<RadioButtonState>,
 ) : RadioButtonIcons {
 
-    @Immutable
-    data class Unselected(
-        override val normal: String = "icons/intui/radio.svg",
-        override val disabled: String = "icons/intui/radioDisabled.svg",
-        override val focused: String = "icons/intui/radioFocused.svg",
-        override val pressed: String = normal,
-        override val hovered: String = normal,
-        override val warning: String = normal,
-        override val error: String = normal
-    ) : OutlineResourcePainterProvider<RadioButtonState>()
+    companion object {
 
-    @Immutable
-    data class Selected(
-        override val normal: String = "icons/intui/radioSelected.svg",
-        override val disabled: String = "icons/intui/radioSelectedDisabled.svg",
-        override val focused: String = "icons/intui/radioSelectedFocused.svg",
-        override val pressed: String = normal,
-        override val hovered: String = normal,
-        override val warning: String = normal,
-        override val error: String = normal
-    ) : OutlineResourcePainterProvider<RadioButtonState>()
+        @Composable
+        fun radioButton(
+            svgPatcher: SvgPatcher,
+            basePath: String = "icons/intui/radio.svg",
+        ) = ResourcePathPainterProvider<RadioButtonState>(basePath, svgPatcher)
+    }
 }
+
+@Composable
+fun intUiRadioButtonIcons(
+    svgPatcher: SvgPatcher,
+    radioButton: StatefulPainterProvider<RadioButtonState> = IntUiRadioButtonIcons.radioButton(svgPatcher),
+) = IntUiRadioButtonIcons(radioButton)

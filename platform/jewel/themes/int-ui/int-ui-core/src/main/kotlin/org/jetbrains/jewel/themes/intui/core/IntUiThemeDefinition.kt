@@ -11,5 +11,5 @@ data class IntUiThemeDefinition(
     val palette: IntelliJThemeColorPalette,
     val icons: IntelliJThemeIcons,
     override val metrics: ThemeMetrics,
-    override val defaultTextStyle: TextStyle
+    override val defaultTextStyle: TextStyle,
 ) : IntelliJThemeDefinition

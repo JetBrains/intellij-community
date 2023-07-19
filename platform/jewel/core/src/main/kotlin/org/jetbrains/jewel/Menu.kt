@@ -61,7 +61,7 @@ import org.jetbrains.jewel.styling.MenuStyle
 internal fun MenuContent(
     modifier: Modifier = Modifier,
     style: MenuStyle = IntelliJTheme.menuStyle,
-    content: MenuScope.() -> Unit
+    content: MenuScope.() -> Unit,
 ) {
     val items by remember(content) {
         derivedStateOf {
@@ -133,13 +133,13 @@ interface MenuScope {
         selected: Boolean,
         onClick: () -> Unit,
         enabled: Boolean = true,
-        content: @Composable () -> Unit
+        content: @Composable () -> Unit,
     )
 
     fun submenu(
         enabled: Boolean = true,
         submenu: MenuScope.() -> Unit,
-        content: @Composable () -> Unit
+        content: @Composable () -> Unit,
     )
 
     fun passiveItem(content: @Composable () -> Unit)
@@ -155,7 +155,7 @@ fun MenuScope.items(
     count: Int,
     isSelected: (Int) -> Boolean,
     onItemClick: (Int) -> Unit,
-    content: @Composable (Int) -> Unit
+    content: @Composable (Int) -> Unit,
 ) = repeat(count) {
     selectableItem(isSelected(it), onClick = { onItemClick(it) }) { content(it) }
 }
@@ -164,7 +164,7 @@ fun <T> MenuScope.items(
     items: List<T>,
     isSelected: (T) -> Boolean,
     onItemClick: (T) -> Unit,
-    content: @Composable (T) -> Unit
+    content: @Composable (T) -> Unit,
 ) = repeat(items.count()) {
     selectableItem(isSelected(items[it]), onClick = { onItemClick(items[it]) }) { content(items[it]) }
 }
@@ -176,7 +176,7 @@ private fun (MenuScope.() -> Unit).asList() = buildList {
                 selected: Boolean,
                 onClick: () -> Unit,
                 enabled: Boolean,
-                content: @Composable () -> Unit
+                content: @Composable () -> Unit,
             ) {
                 add(MenuSelectableItem(selected, enabled, onClick, content))
             }
@@ -201,23 +201,23 @@ private data class MenuSelectableItem(
     val isSelected: Boolean,
     val isEnabled: Boolean = true,
     val onClick: () -> Unit = {},
-    override val content: @Composable () -> Unit
+    override val content: @Composable () -> Unit,
 ) : MenuItem
 
 private data class MenuPassiveItem(
-    override val content: @Composable () -> Unit
+    override val content: @Composable () -> Unit,
 ) : MenuItem
 
 private data class SubmenuItem(
     val isEnabled: Boolean = true,
     val submenu: MenuScope.() -> Unit,
-    override val content: @Composable () -> Unit
+    override val content: @Composable () -> Unit,
 ) : MenuItem
 
 @Composable
 fun MenuSeparator(
     modifier: Modifier = Modifier,
-    style: MenuStyle = IntelliJTheme.menuStyle
+    style: MenuStyle = IntelliJTheme.menuStyle,
 ) {
     Divider(
         modifier = modifier.padding(style.metrics.itemMetrics.separatorPadding),
@@ -234,7 +234,7 @@ fun MenuSelectableItem(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = IntelliJTheme.menuStyle,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     var itemState by remember(interactionSource) {
         mutableStateOf(MenuItemState.of(selected = selected, enabled = enabled))
@@ -318,7 +318,7 @@ fun MenuSubmenuItem(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = IntelliJTheme.menuStyle,
     submenu: MenuScope.() -> Unit,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     var itemState by remember(interactionSource) {
         mutableStateOf(MenuItemState.of(selected = false, enabled = enabled))
@@ -419,7 +419,7 @@ internal fun Submenu(
     onDismissRequest: (InputMode) -> Boolean,
     modifier: Modifier = Modifier,
     style: MenuStyle = IntelliJTheme.menuStyle,
-    content: MenuScope.() -> Unit
+    content: MenuScope.() -> Unit,
 ) {
     val density = LocalDensity.current
 
@@ -488,7 +488,7 @@ value class MenuItemState(val state: ULong) : InteractiveComponentState {
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
         hovered: Boolean = isHovered,
-        pressed: Boolean = isPressed
+        pressed: Boolean = isPressed,
     ): MenuItemState =
         of(selected, enabled, focused, hovered, pressed)
 
@@ -509,7 +509,7 @@ value class MenuItemState(val state: ULong) : InteractiveComponentState {
             enabled: Boolean,
             focused: Boolean = false,
             hovered: Boolean = false,
-            pressed: Boolean = false
+            pressed: Boolean = false,
         ): MenuItemState {
             var state = 0UL
             if (selected) state = state or Selected
@@ -524,7 +524,7 @@ value class MenuItemState(val state: ULong) : InteractiveComponentState {
 
 class MenuManager(
     val onDismissRequest: (InputMode) -> Boolean,
-    private val parentMenuManager: MenuManager? = null
+    private val parentMenuManager: MenuManager? = null,
 ) {
 
     private var isHovered: Boolean = false

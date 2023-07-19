@@ -52,7 +52,7 @@ fun Icon(
     imageVector: ImageVector,
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
-    tint: Color = Color.Unspecified
+    tint: Color = Color.Unspecified,
 ) {
     Icon(
         painter = rememberVectorPainter(imageVector),
@@ -80,7 +80,7 @@ fun Icon(
     bitmap: ImageBitmap,
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
-    tint: Color = Color.Unspecified
+    tint: Color = Color.Unspecified,
 ) {
     val painter = remember(bitmap) { BitmapPainter(bitmap) }
     Icon(
@@ -97,7 +97,7 @@ fun Icon(
     resourceLoader: ResourceLoader = LocalResourceLoader.current,
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
-    tint: Color = Color.Unspecified
+    tint: Color = Color.Unspecified,
 ) {
     Icon(
         painter = painterResource(resource, resourceLoader),
@@ -125,7 +125,7 @@ fun Icon(
     painter: Painter,
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
-    tint: Color = Color.Unspecified
+    tint: Color = Color.Unspecified,
 ) {
     val colorFilter = if (tint == Color.Unspecified) null else ColorFilter.tint(tint)
     val semantics = if (contentDescription != null) {
@@ -151,7 +151,7 @@ fun Icon(
 @Composable
 fun painterResource(
     resourcePath: String,
-    loader: ResourceLoader
+    loader: ResourceLoader,
 ): Painter = when (resourcePath.substringAfterLast(".")) {
     "svg" -> rememberSvgResource(resourcePath, loader)
     "xml" -> rememberVectorXmlResource(resourcePath, loader)
@@ -161,7 +161,7 @@ fun painterResource(
 @Composable
 private fun rememberSvgResource(
     resourcePath: String,
-    loader: ResourceLoader = ResourceLoader.Default
+    loader: ResourceLoader = ResourceLoader.Default,
 ): Painter {
     val density = LocalDensity.current
     return remember(resourcePath, density, loader) {
@@ -174,7 +174,7 @@ private fun rememberSvgResource(
 @Composable
 private fun rememberVectorXmlResource(
     resourcePath: String,
-    loader: ResourceLoader = ResourceLoader.Default
+    loader: ResourceLoader = ResourceLoader.Default,
 ): Painter {
     val density = LocalDensity.current
     val image = remember(resourcePath, density, loader) {
@@ -188,7 +188,7 @@ private fun rememberVectorXmlResource(
 @Composable
 private fun rememberBitmapResource(
     resourcePath: String,
-    loader: ResourceLoader = ResourceLoader.Default
+    loader: ResourceLoader = ResourceLoader.Default,
 ): Painter {
     val image = remember(resourcePath) {
         useResource(resourcePath, loader, ::loadImageBitmap)
@@ -199,7 +199,7 @@ private fun rememberBitmapResource(
 private inline fun <T> useResource(
     resourcePath: String,
     loader: ResourceLoader,
-    block: (InputStream) -> T
+    block: (InputStream) -> T,
 ): T = loader.load(resourcePath).use(block)
 
 val LocalResourceLoader = staticCompositionLocalOf<ResourceLoader> {

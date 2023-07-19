@@ -12,5 +12,5 @@ enum class Orientation {
     /**
      * Horizontal orientation representing X axis.
      */
-    Horizontal
+    Horizontal,
 }

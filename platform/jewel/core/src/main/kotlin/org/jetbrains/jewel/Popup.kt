@@ -24,7 +24,7 @@ internal fun handlePopupMenuOnKeyEvent(
     keyEvent: KeyEvent,
     focusManager: FocusManager,
     inputModeManager: InputModeManager,
-    menuManager: MenuManager
+    menuManager: MenuManager,
 ): Boolean {
     if (keyEvent.type != KeyEventType.KeyDown) return false
     return when (keyEvent.key) {
@@ -65,14 +65,14 @@ internal data class AnchorVerticalMenuPositionProvider(
     val contentOffset: DpOffset,
     val contentMargin: PaddingValues,
     val alignment: Alignment.Horizontal,
-    val density: Density
+    val density: Density,
 ) : PopupPositionProvider {
 
     override fun calculatePosition(
         anchorBounds: IntRect,
         windowSize: IntSize,
         layoutDirection: LayoutDirection,
-        popupContentSize: IntSize
+        popupContentSize: IntSize,
     ): IntOffset {
         val topMargin = with(density) { contentMargin.calculateTopPadding().roundToPx() }
         val bottomMargin = with(density) { contentMargin.calculateBottomPadding().roundToPx() }
@@ -118,14 +118,14 @@ internal data class AnchorHorizontalMenuPositionProvider(
     val contentOffset: DpOffset,
     val contentMargin: PaddingValues,
     val alignment: Alignment.Vertical,
-    val density: Density
+    val density: Density,
 ) : PopupPositionProvider {
 
     override fun calculatePosition(
         anchorBounds: IntRect,
         windowSize: IntSize,
         layoutDirection: LayoutDirection,
-        popupContentSize: IntSize
+        popupContentSize: IntSize,
     ): IntOffset {
         val topMargin = with(density) { contentMargin.calculateTopPadding().roundToPx() }
         val bottomMargin = with(density) { contentMargin.calculateBottomPadding().roundToPx() }

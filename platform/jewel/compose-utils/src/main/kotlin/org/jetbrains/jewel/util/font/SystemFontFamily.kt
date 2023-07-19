@@ -6,5 +6,5 @@ import androidx.compose.ui.text.platform.FileFont
 data class SystemFontFamily(
     val name: String,
     val fontFamily: FontFamily,
-    val fonts: List<FileFont>
+    val fonts: List<FileFont>,
 )

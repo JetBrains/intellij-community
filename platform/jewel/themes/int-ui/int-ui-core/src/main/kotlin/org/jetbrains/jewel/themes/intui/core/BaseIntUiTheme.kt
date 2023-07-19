@@ -62,7 +62,7 @@ fun BaseIntUiTheme(
     theme: IntUiThemeDefinition,
     componentStyling: ComponentStyling,
     swingCompatMode: Boolean = false,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(
         LocalIntUiPalette provides theme.palette,
@@ -103,5 +103,5 @@ data class ComponentStyling(
     val scrollbarStyle: ScrollbarStyle,
     val textAreaStyle: TextAreaStyle,
     val textFieldStyle: TextFieldStyle,
-    val lazyTreeStyle: LazyTreeStyle
+    val lazyTreeStyle: LazyTreeStyle,
 )

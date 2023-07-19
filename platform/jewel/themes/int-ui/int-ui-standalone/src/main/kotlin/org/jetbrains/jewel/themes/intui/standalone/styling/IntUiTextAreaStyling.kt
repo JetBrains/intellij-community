@@ -25,7 +25,7 @@ data class IntUiTextAreaStyle(
     override val colors: IntUiTextAreaColors,
     override val metrics: IntUiTextAreaMetrics,
     override val textStyle: TextStyle,
-    override val hintTextStyle: TextStyle
+    override val hintTextStyle: TextStyle,
 ) : TextAreaStyle {
 
     companion object {
@@ -35,7 +35,7 @@ data class IntUiTextAreaStyle(
             colors: IntUiTextAreaColors = IntUiTextAreaColors.light(),
             metrics: IntUiTextAreaMetrics = IntUiTextAreaMetrics(),
             textStyle: TextStyle = IntUiTheme.defaultTextStyle,
-            hintTextStyle: TextStyle = IntUiTheme.defaultTextStyle.copy(fontSize = 12.sp, lineHeight = 16.sp)
+            hintTextStyle: TextStyle = IntUiTheme.defaultTextStyle.copy(fontSize = 12.sp, lineHeight = 16.sp),
         ) = IntUiTextAreaStyle(colors, metrics, textStyle, hintTextStyle)
 
         @Composable
@@ -43,7 +43,7 @@ data class IntUiTextAreaStyle(
             colors: IntUiTextAreaColors = IntUiTextAreaColors.dark(),
             metrics: IntUiTextAreaMetrics = IntUiTextAreaMetrics(),
             textStyle: TextStyle = IntUiTheme.defaultTextStyle,
-            hintTextStyle: TextStyle = IntUiTheme.defaultTextStyle.copy(fontSize = 12.sp, lineHeight = 16.sp)
+            hintTextStyle: TextStyle = IntUiTheme.defaultTextStyle.copy(fontSize = 12.sp, lineHeight = 16.sp),
         ) = IntUiTextAreaStyle(colors, metrics, textStyle, hintTextStyle)
     }
 }
@@ -80,7 +80,7 @@ data class IntUiTextAreaColors(
     override val cursorError: Brush,
     override val placeholder: Color,
     override val hintContent: Color,
-    override val hintContentDisabled: Color
+    override val hintContentDisabled: Color,
 ) : TextAreaColors {
 
     companion object {
@@ -117,7 +117,7 @@ data class IntUiTextAreaColors(
             cursorError: Brush = cursor,
             placeholder: Color = IntUiLightTheme.colors.grey(8),
             hintContent: Color = IntUiLightTheme.colors.grey(7),
-            hintContentDisabled: Color = hintContent
+            hintContentDisabled: Color = hintContent,
         ) = IntUiTextAreaColors(
             background,
             backgroundDisabled,
@@ -184,7 +184,7 @@ data class IntUiTextAreaColors(
             cursorError: Brush = cursor,
             placeholder: Color = IntUiDarkTheme.colors.grey(7),
             hintContent: Color = IntUiDarkTheme.colors.grey(8),
-            hintContentDisabled: Color = hintContent
+            hintContentDisabled: Color = hintContent,
         ) = IntUiTextAreaColors(
             background,
             backgroundDisabled,
@@ -226,5 +226,5 @@ data class IntUiTextAreaMetrics(
     override val cornerSize: CornerSize = CornerSize(4.dp),
     override val contentPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 9.dp),
     override val minSize: DpSize = DpSize(144.dp, 28.dp),
-    override val borderWidth: Dp = 1.dp
+    override val borderWidth: Dp = 1.dp,
 ) : InputFieldMetrics
