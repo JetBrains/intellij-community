@@ -31,7 +31,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.*;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.reference.SoftReference;
@@ -44,8 +47,11 @@ import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.*;
-import kotlin.Unit;
+import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.OwnerOptional;
+import com.intellij.util.ui.UIUtil;
+import com.jetbrains.JBR;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -912,7 +918,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         setGlassPane(new IdeGlassPaneImpl(this));
         myGlassPaneIsSet = true;
         putClientProperty("DIALOG_ROOT_PANE", true);
-        setBorder(JBUI.CurrentTheme.Window.getBorder(X11UiUtil.useUndecoratedBorder(MyDialog.this)));
+        setBorder(UIManager.getBorder("Window.border"));
       }
 
       @Override
