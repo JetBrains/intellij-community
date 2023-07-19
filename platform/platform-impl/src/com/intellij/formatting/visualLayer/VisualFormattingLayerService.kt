@@ -38,15 +38,26 @@ abstract class VisualFormattingLayerService {
       get() = getUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS)
       private set(value) = putUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS, value)
 
-    fun enabledForEditor(editor: Editor): Boolean = editor.visualFormattingLayerEnabled
+    @JvmStatic
+    fun isEnabledForEditor(editor: Editor): Boolean = editor.visualFormattingLayerEnabled
 
+    @JvmStatic
     fun enableForEditor(editor: Editor, codeStyleSettings: CodeStyleSettings) {
       editor.visualFormattingLayerCodeStyleSettings = codeStyleSettings
     }
 
+    @JvmStatic
     fun disableForEditor(editor: Editor) {
       editor.visualFormattingLayerCodeStyleSettings = null
     }
+
+    @Suppress("UNCHECKED_CAST")
+    @JvmStatic
+    fun getVisualFormattingInlineInlays(editor: Editor, startOffset: Int, endOffset: Int): List<Inlay<out InlayPresentation>> =
+      editor.inlayModel
+        .getInlineElementsInRange(startOffset, endOffset)
+        .filter { InlayPresentation::class.isInstance(it.renderer) && !(it.renderer as InlayPresentation).vertical }
+        as List<Inlay<out InlayPresentation>>
   }
 
 }
