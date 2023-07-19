@@ -10,7 +10,7 @@ object ThemesMappings {
     "hc-black" -> KnownLafs.HighContrast
     "Monokai" -> KnownLafs.Darcula //KnownLafs.MonokaiSpectrum
     "Solarized Dark" -> KnownLafs.Darcula //KnownLafs.SolarizedDark
-    "Solarized Light" -> KnownLafs.Darcula //KnownLafs.SolarizedLight
+    "Solarized Light" -> KnownLafs.Light //KnownLafs.SolarizedLight
     else -> otherThemeConverter(theme)
   }
 
