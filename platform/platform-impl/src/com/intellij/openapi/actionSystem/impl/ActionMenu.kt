@@ -27,7 +27,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBMenu
 import com.intellij.ui.icons.getMenuBarIcon
 import com.intellij.ui.mac.foundation.NSDefaults
-import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.plaf.beg.BegMenuItemUI
 import com.intellij.ui.plaf.beg.IdeaMenuUI
 import com.intellij.util.Alarm
@@ -61,7 +60,6 @@ class ActionMenu constructor(private val context: DataContext?,
   private val presentation = presentationFactory.getPresentation(group)
 
   private var disposable: Disposable? = null
-  var screenMenuPeer: Menu? = null
   private val subElementSelector = if (SubElementSelector.isForceDisabled) null else SubElementSelector(this)
   val anAction: AnAction
     get() = group.getAction()
@@ -77,28 +75,13 @@ class ActionMenu constructor(private val context: DataContext?,
   }
 
   init {
-    if (Menu.isJbScreenMenuEnabled() && ActionPlaces.MAIN_MENU == place) {
-      val screenMenuPeer = Menu(presentation.getText(isMnemonicEnabled))
-      this.screenMenuPeer = screenMenuPeer
-      screenMenuPeer.setOnOpen(Runnable {
-        // NOTE: setSelected(true) calls fillMenu internally
-        setSelected(true)
-      }, this)
-      screenMenuPeer.setOnClose(Runnable { setSelected(false) }, this)
-      screenMenuPeer.listenPresentationChanges(presentation)
-    }
-    else {
-      screenMenuPeer = null
-      updateUI()
-    }
+    updateUI()
 
     init()
 
-    if (screenMenuPeer == null) {
-      // also triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
-      BegMenuItemUI.registerMultiChoiceSupport(getPopupMenu()) { popupMenu ->
-        Utils.updateMenuItems(popupMenu, getDataContext(), this.place, this.presentationFactory)
-      }
+    // also triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
+    BegMenuItemUI.registerMultiChoiceSupport(getPopupMenu()) { popupMenu ->
+      Utils.updateMenuItems(popupMenu, getDataContext(), this.place, this.presentationFactory)
     }
   }
 
@@ -176,7 +159,7 @@ class ActionMenu constructor(private val context: DataContext?,
   override fun updateUI() {
     // null myPlace means that Swing calls updateUI before our constructor
     @Suppress("SENSELESS_COMPARISON")
-    if (screenMenuPeer != null || place == null) {
+    if (place == null) {
       return
     }
 
@@ -198,7 +181,7 @@ class ActionMenu constructor(private val context: DataContext?,
   val isMainMenuPlace: Boolean
     get() = place == ActionPlaces.MAIN_MENU
 
-  fun updateFromPresentation(enableMnemonics: Boolean) {
+  internal fun updateFromPresentation(enableMnemonics: Boolean) {
     isMnemonicEnabled = enableMnemonics
     isVisible = presentation.isVisible
     setEnabled(presentation.isEnabled)
@@ -244,7 +227,6 @@ class ActionMenu constructor(private val context: DataContext?,
       setIcon(icon)
       val presentationDisabledIcon = presentation.disabledIcon
       setDisabledIcon(presentationDisabledIcon ?: getDisabledIcon(icon))
-      screenMenuPeer?.setIcon(icon)
     }
   }
 
@@ -406,15 +388,16 @@ class ActionMenu constructor(private val context: DataContext?,
   fun fillMenu() {
     val context = getDataContext()
     val isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar()
-    Utils.fillMenu(/* group = */ group.getAction(),
-                   /* component = */ this,
-                   /* enableMnemonics = */ isMnemonicEnabled,
-                   /* presentationFactory = */ presentationFactory,
-                   /* context = */ context,
-                   /* place = */ place,
-                   /* isWindowMenu = */ true,
-                   /* useDarkIcons = */ isDarkMenu,
-                   /* progressPoint = */ RelativePoint.getNorthEastOf(this)) { !isSelected }
+    Utils.fillMenu(group = group.getAction(),
+                   component = this,
+                   nativePeer = null,
+                   enableMnemonics = isMnemonicEnabled,
+                   presentationFactory = presentationFactory,
+                   context = context,
+                   place = place,
+                   isWindowMenu = true,
+                   useDarkIcons = isDarkMenu,
+                   progressPoint = RelativePoint.getNorthEastOf(this)) { !isSelected }
   }
 }
 

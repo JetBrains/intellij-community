@@ -7,6 +7,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ProhibitAWTEvents
+import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionGroupExpanded
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAligned
@@ -41,7 +42,6 @@ import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.mac.screenmenu.MenuItem
-import com.intellij.util.ExceptionUtil
 import com.intellij.util.ExceptionUtilRt
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
@@ -220,7 +220,7 @@ object Utils {
                                     place: String,
                                     isContextMenu: Boolean,
                                     onProcessed: (() -> Unit)?,
-                                    menuItem: JComponent?): List<AnAction> {
+                                    menuItem: Component?): List<AnAction> {
     val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode()
     val wrapped = wrapDataContext(context)
     val async = isAsyncDataContext(wrapped) && !isUnitTestMode
@@ -314,17 +314,36 @@ object Utils {
     return if (maxTime < 1) null else FastTrackAwareEdtExecutor(maxTime)
   }
 
-  @JvmStatic
-  fun fillMenu(group: ActionGroup,
-               component: JComponent,
-               enableMnemonics: Boolean,
-               presentationFactory: PresentationFactory,
-               context: DataContext,
-               place: String,
-               isWindowMenu: Boolean,
-               useDarkIcons: Boolean,
-               progressPoint: RelativePoint?,
-               expire: (() -> Boolean)?) {
+  fun fillPopUpMenu(group: ActionGroup,
+                    component: JComponent,
+                    presentationFactory: PresentationFactory,
+                    context: DataContext,
+                    place: String,
+                    progressPoint: RelativePoint?) {
+    fillMenu(group = group,
+             component = component,
+             enableMnemonics = !UISettings.getInstance().disableMnemonics,
+             presentationFactory = presentationFactory,
+             context = context,
+             place = place,
+             isWindowMenu = false,
+             useDarkIcons = false,
+             nativePeer = null,
+             progressPoint = progressPoint,
+             expire = null)
+  }
+
+  internal fun fillMenu(group: ActionGroup,
+                        component: Component,
+                        nativePeer: Menu?,
+                        enableMnemonics: Boolean,
+                        presentationFactory: PresentationFactory,
+                        context: DataContext,
+                        place: String,
+                        isWindowMenu: Boolean,
+                        useDarkIcons: Boolean,
+                        progressPoint: RelativePoint? = null,
+                        expire: (() -> Boolean)?) {
     if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
       throw ProcessCanceledException()
     }
@@ -332,11 +351,11 @@ object Utils {
       throw ProcessCanceledException()
     }
     var result: List<AnAction>? = null
-    val span = getTracer(false).spanBuilder("fillMenu").setAttribute("place", place).startSpan()
+    val span = getTracer(checkNoop = false).spanBuilder("fillMenu").setAttribute("place", place).startSpan()
     val start = System.nanoTime()
     try {
       Context.current().with(span).with(OT_ENABLE_SPANS, true).makeCurrent().use {
-        val removeIcon = addLoadingIcon(progressPoint, place)
+        val removeIcon = if (isWindowMenu) null else addLoadingIcon(progressPoint, place)
         val list = computeWithRetries(expire, removeIcon) {
           expandActionGroupImpl(group = group,
                                 presentationFactory = presentationFactory,
@@ -349,9 +368,8 @@ object Utils {
         result = list
         val checked = group is CheckedActionGroup
         val multiChoice = isMultiChoiceGroup(group)
-        val nativePeer = if (component is ActionMenu) component.screenMenuPeer else null
         if (nativePeer == null) {
-          fillMenuInner(component = component,
+          fillMenuInner(component = component as JComponent,
                         list = list,
                         checked = checked,
                         multiChoice = multiChoice,
@@ -373,10 +391,11 @@ object Utils {
                                    presentationFactory = presentationFactory,
                                    context = context,
                                    place = place,
+                                   frame = component as JFrame,
                                    useDarkIcons = useDarkIcons)
           }
           finally {
-            nativePeer.endFill()
+            nativePeer.endFill(false)
           }
         }
       }
@@ -505,6 +524,7 @@ object Utils {
   }
 
   private fun fillMenuInnerMacNative(nativePeer: Menu,
+                                     frame: JFrame,
                                      list: List<AnAction>,
                                      checked: Boolean,
                                      multiChoice: Boolean,
@@ -524,12 +544,13 @@ object Utils {
         peer = null
       }
       else if (action is ActionGroup && !isSubmenuSuppressed(presentation)) {
-        peer = MacNativeActionMenu(context = context,
-                                   place = place,
-                                   group = action,
-                                   presentationFactory = presentationFactory,
-                                   isMnemonicEnabled = enableMnemonics,
-                                   useDarkIcons = useDarkIcons).screenMenuPeer
+        peer = createMacNativeActionMenu(context = context,
+                                         place = place,
+                                         group = action,
+                                         presentationFactory = presentationFactory,
+                                         isMnemonicEnabled = enableMnemonics,
+                                         frame = frame,
+                                         useDarkIcons = useDarkIcons)
       }
       else {
         val menuItem = ActionMenuItem(action, place, context, enableMnemonics, checked, useDarkIcons)
@@ -990,8 +1011,8 @@ object Utils {
         }
         throw ex
       }
-      catch (ex: Throwable) {
-        ExceptionUtil.rethrow(ex)
+      catch (e: Throwable) {
+        throw e
       }
       finally {
         onProcessed?.invoke()

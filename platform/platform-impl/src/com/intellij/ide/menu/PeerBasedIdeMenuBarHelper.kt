@@ -4,7 +4,7 @@ package com.intellij.ide.menu
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.MacNativeActionMenu
+import com.intellij.openapi.actionSystem.createMacNativeActionMenu
 import com.intellij.openapi.application.EDT
 import com.intellij.ui.mac.screenmenu.MenuBar
 import kotlinx.coroutines.Dispatchers
@@ -35,13 +35,14 @@ internal open class PeerBasedIdeMenuBarHelper(private val screenMenuPeer: MenuBa
         if (!newVisibleActions.isEmpty()) {
           val enableMnemonics = !UISettings.getInstance().disableMnemonics
           for (action in newVisibleActions) {
-            val actionMenu = MacNativeActionMenu(context = null,
-                                                 place = ActionPlaces.MAIN_MENU,
-                                                 group = action,
-                                                 presentationFactory = presentationFactory,
-                                                 isMnemonicEnabled = enableMnemonics,
-                                                 useDarkIcons = menuBar.isDarkMenu)
-            screenMenuPeer.add(actionMenu.screenMenuPeer)
+            screenMenuPeer.add(createMacNativeActionMenu(context = null,
+                                                         place = ActionPlaces.MAIN_MENU,
+                                                         group = action,
+                                                         presentationFactory = presentationFactory,
+                                                         isMnemonicEnabled = enableMnemonics,
+                                                         frame = menuBar.frame,
+                                                         useDarkIcons = menuBar.isDarkMenu)
+            )
           }
         }
       }
