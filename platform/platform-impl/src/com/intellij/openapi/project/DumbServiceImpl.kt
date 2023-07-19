@@ -509,6 +509,9 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
                !java.lang.Boolean.parseBoolean(System.getProperty(IDEA_FORCE_DUMB_QUEUE_TASKS, "false"))
       }
 
+    /**
+     * Flag to force dumb tasks to work on background thread in tests or synchronous headless mode.
+     */
     const val IDEA_FORCE_DUMB_QUEUE_TASKS: String = "idea.force.dumb.queue.tasks"
 
     private val isSynchronousHeadlessApplication: Boolean
