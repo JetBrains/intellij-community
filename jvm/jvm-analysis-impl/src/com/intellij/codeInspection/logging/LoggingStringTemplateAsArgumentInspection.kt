@@ -109,11 +109,10 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
 
       //strange behavior for last parameter as exception. let's ignore this case
       val injected = parts.filter { it !is ULiteralExpression }
-      val javaLangThrowable = CommonClassNames.JAVA_LANG_THROWABLE
       if ((injected.size == 1 &&
-           InheritanceUtil.isInheritor(injected[0].getExpressionType(), javaLangThrowable)) ||
-          ((valueArguments.size - 1 - indexStringExpression) == 1 &&
-          InheritanceUtil.isInheritor(valueArguments[valueArguments.size - 1].getExpressionType(), javaLangThrowable))
+           InheritanceUtil.isInheritor(injected.first().getExpressionType(), CommonClassNames.JAVA_LANG_THROWABLE)) ||
+          ((valueArguments.lastIndex - indexStringExpression) == 1 &&
+          InheritanceUtil.isInheritor(valueArguments.last().getExpressionType(), CommonClassNames.JAVA_LANG_THROWABLE))
         ) {
         return true
       }
