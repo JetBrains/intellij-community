@@ -159,11 +159,11 @@ internal class PortableCompilationCacheUploader(
     val actual = remoteCommitHistory().commitsForRemote(remoteGitUrl).toSet()
     val missing = expected - actual
     val unexpected = actual - expected
-    if (missing.any() || unexpected.any()) {
-      context.messages.warning("""
+    check(missing.none() && unexpected.none()) {
+      """
         Missing: $missing
         Unexpected: $unexpected
-      """.trimIndent())
+      """.trimIndent()
     }
   }
 
