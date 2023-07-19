@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.RefactoringHelper
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
@@ -31,11 +32,11 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
         project: Project,
         private val unusedImports: MutableSet<SmartPsiElementPointer<KtImportDirective>>,
         private val operationData: Set<KtFile>
-    ) : Task.Backgroundable(project, COLLECT_UNUSED_IMPORTS_TITLE, true) {
+    ) : Task.Backgroundable(project, KotlinBundle.message("optimize.imports.collect.unused.imports"), true) {
 
         override fun isConditionalModal(): Boolean = true
 
-        override fun shouldStartInBackground(): Boolean = !isOptimizeImportsSynchronously
+        override fun shouldStartInBackground(): Boolean = System.getProperty("kotlin.optimize.imports.synchronously") != "true"
 
         @OptIn(KtAllowAnalysisOnEdt::class)
         override fun run(indicator: ProgressIndicator) = allowAnalysisOnEdt {
@@ -44,7 +45,7 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
             val myTotalCount = operationData.size
             for ((counter, file) in operationData.withIndex()) {
                 ReadAction.nonBlocking {
-                    val virtualFile = file.virtualFile?.takeIf { file.isValid } ?: return@nonBlocking
+                    val virtualFile = file.virtualFile ?: return@nonBlocking
 
                     indicator.fraction = counter.toDouble() / myTotalCount
                     indicator.text2 = virtualFile.presentableUrl
@@ -63,8 +64,7 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
     internal class OptimizeImportsTask(
         project: Project,
         private val pointers: Set<SmartPsiElementPointer<KtImportDirective>>
-    ) : Task.Modal(project, REMOVING_REDUNDANT_IMPORTS_TITLE, false) {
-
+    ) : Task.Modal(project, KotlinBundle.message("optimize.imports.task.removing.redundant.imports"), false) {
         override fun run(indicator: ProgressIndicator) {
             indicator.isIndeterminate = false
 
@@ -72,7 +72,7 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
             for ((counter, pointer) in pointers.withIndex()) {
                 indicator.fraction = counter.toDouble() / myTotal
 
-                runReadAction { pointer.element?.takeIf { it.isValid }?.containingKtFile?.virtualFile }?.let { virtualFile ->
+                runReadAction { PsiUtilCore.getVirtualFile(pointer.element) }?.let { virtualFile ->
                     val presentableUrl = virtualFile.presentableUrl
                     indicator.text2 = presentableUrl
                     ApplicationManager.getApplication().invokeAndWait {
@@ -91,14 +91,6 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
         companion object {
             private val LOG = Logger.getInstance("#" + OptimizeImportsTask::class.java.name)
         }
-    }
-
-    companion object {
-        private val isOptimizeImportsSynchronously: Boolean by lazy {
-            System.getProperty("kotlin.optimize.imports.synchronously") == "true"
-        }
-        private val COLLECT_UNUSED_IMPORTS_TITLE get() = KotlinBundle.message("optimize.imports.collect.unused.imports")
-        private val REMOVING_REDUNDANT_IMPORTS_TITLE get() = KotlinBundle.message("optimize.imports.task.removing.redundant.imports")
     }
 
     override fun prepareOperation(usages: Array<UsageInfo>): Set<KtFile> = usages.mapNotNullTo(LinkedHashSet()) {

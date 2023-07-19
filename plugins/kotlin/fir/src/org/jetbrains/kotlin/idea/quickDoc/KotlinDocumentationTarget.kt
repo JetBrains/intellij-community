@@ -14,6 +14,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -83,13 +84,13 @@ internal class KotlinDocumentationTarget(val element: PsiElement, private val or
 
 private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiElement?, quickNavigation: Boolean): String? {
     when {
-      element is KtFunctionLiteral -> {
+      element is PsiWhiteSpace -> {
           val itElement = findElementWithText(originalElement, StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier)
           val itReference = itElement?.getParentOfType<KtNameReferenceExpression>(false)
           if (itReference != null) {
               return buildString {
                   renderKotlinDeclaration(
-                      element,
+                      itReference.mainReference.resolve() as KtFunctionLiteral,
                       quickNavigation,
                       symbolFinder = { (it as? KtFunctionLikeSymbol)?.valueParameters?.firstOrNull() })
               }

@@ -23,8 +23,6 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
-import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
-import org.jetbrains.kotlin.load.java.propertyNameBySetMethodName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.isOneSegmentFQN
@@ -82,20 +80,10 @@ class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
     private fun SyntheticPropertyAccessorReference.renameTo(newElementName: String): KtElement? {
         if (!Name.isValidIdentifier(newElementName)) return expression
 
-        val newNameAsName = Name.identifier(newElementName)
-        val newName = if (getter) {
-          propertyNameByGetMethodName(newNameAsName)
-        } else {
-            //TODO: it's not correct
-            //TODO: setIsY -> setIsIsY bug
-          propertyNameBySetMethodName(
-            newNameAsName,
-            withIsPrefix = expression.getReferencedNameAsName().asString().startsWith("is")
-          )
-        }
+        val newName = getAdjustedNewName(newElementName)
         // get/set becomes ordinary method
         if (newName == null) {
-            return renameToOrdinaryMethod(newElementName, getter)
+            return renameToOrdinaryMethod(newElementName)
         }
 
         return renameByPropertyName(newName.identifier)

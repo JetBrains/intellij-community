@@ -22,7 +22,7 @@ class NotUnderContentRootModuleInfo(
     @Deprecated("Backing 'KtFile' expected")
     constructor(project: Project) : this(project, null)
 
-    private val filePointer: SmartPsiElementPointer<KtFile>? = file?.let { SmartPointerManager.createPointer(it) }
+    private val filePointer: SmartPsiElementPointer<KtFile>? = file?.let { SmartPointerManager.createPointer(it.originalFile as KtFile) }
 
     val file: KtFile?
         get() = filePointer?.element

@@ -148,6 +148,11 @@ public class ProjectWideOutOfBlockKotlinModificationTrackerTestGenerated extends
         runTest("testData/outOfBlockProjectWide/topLevelExpressionBodyFunWithType.kt");
     }
 
+    @TestMetadata("topLevelExpressionBodyFunWithTypeWithoutBody.kt")
+    public void testTopLevelExpressionBodyFunWithTypeWithoutBody() throws Exception {
+        runTest("testData/outOfBlockProjectWide/topLevelExpressionBodyFunWithTypeWithoutBody.kt");
+    }
+
     @TestMetadata("topLevelExpressionBodyFunWithoutType.kt")
     public void testTopLevelExpressionBodyFunWithoutType() throws Exception {
         runTest("testData/outOfBlockProjectWide/topLevelExpressionBodyFunWithoutType.kt");

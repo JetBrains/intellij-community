@@ -6,7 +6,6 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.TargetElementUtil.ELEMENT_NAME_ACCEPTED
 import com.intellij.codeInsight.TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
 import com.intellij.lang.refactoring.InlineActionHandler
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
@@ -50,7 +49,7 @@ abstract class AbstractInlineTest : KotlinLightCodeInsightFixtureTestCase() {
             if (handler != null) {
                 try {
                     inlinePropertyKeepValue?.let { settings.INLINE_PROPERTY_KEEP = it }
-                    runWriteAction { handler.inlineElement(project, editor, targetElement) }
+                    handler.inlineElement(project, editor, targetElement)
                     for ((extraPsiFile, extraFile) in allFiles) {
                         KotlinTestUtils.assertEqualsToFile(File("${extraFile.path}.after"), extraPsiFile.text)
                     }

@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.highlighting.isNameHighlightingEnabled
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -30,8 +29,6 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
         // (the only kind of intersection types that is currently supported by the compiler).
         // The type is highlighted as a whole in `visitIntersectionType`.
         if (parent?.parent?.parent?.safeAs<KtIntersectionType>() != null) return
-
-        if (!expression.project.isNameHighlightingEnabled) return
 
         val referenceTarget = computeReferencedDescriptor(expression) ?: return
         val textRange = computeHighlightingRangeForUsage(expression, referenceTarget)

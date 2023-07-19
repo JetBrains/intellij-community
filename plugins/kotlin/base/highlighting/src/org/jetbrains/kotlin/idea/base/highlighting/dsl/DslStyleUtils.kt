@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.ide.highlighter.custom.CustomHighlighterColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.util.NlsContexts.DetailedDescription
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.ui.LayeredIcon
 import com.intellij.util.ui.ColorsIcon
@@ -43,7 +44,8 @@ object DslStyleUtils {
 
     private fun externalKeyName(index: Int) = "KOTLIN_DSL_STYLE$index"
 
-    fun styleOptionDisplayName(index: Int) = KotlinBaseHighlightingBundle.message("highlighter.name.style", index)
+    fun styleOptionDisplayName(index: Int): @DetailedDescription String =
+        KotlinBaseHighlightingBundle.message("highlighter.name.style", index)
 
     fun styleIdByFQName(name: FqName): Int {
         return (name.asString().hashCode() % STYLE_COUNT).absoluteValue + 1

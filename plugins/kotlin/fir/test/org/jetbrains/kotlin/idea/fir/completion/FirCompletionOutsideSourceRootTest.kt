@@ -27,6 +27,12 @@ class FirCompletionOutsideSourceRootTest : KotlinLightCodeInsightFixtureTestCase
         myFixture.completeBasic()
     }
 
+    fun testInLambda() {
+        val tempFile = createTempFile("kt", null, "fun f(): () -> Unit {  return {\"\".<caret> }}", Charset.defaultCharset())
+        myFixture.configureFromExistingVirtualFile(tempFile)
+        myFixture.completeBasic()
+    }
+
     override fun isFirPlugin(): Boolean {
         return true
     }
