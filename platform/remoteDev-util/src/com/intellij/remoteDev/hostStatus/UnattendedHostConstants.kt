@@ -20,6 +20,7 @@ data class UnattendedHostPerProjectStatus(
   val backgroundTasksRunning: Boolean,
 
   val users: List<String>,
+  val connectedUsers: List<String>
 )
 
 @ApiStatus.Experimental
