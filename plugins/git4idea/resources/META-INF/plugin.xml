@@ -473,14 +473,9 @@
     </group>
 
     <group id="GitMainToolbarQuickActions" searchable="false" popup="false">
-      <add-to-group group-id="MainToolbarQuickActions" relative-to-action="addQuickAction.Profile" anchor="after"/>
+      <add-to-group group-id="MainToolbarQuickActions" relative-to-action="MainToolbarQuickActions.Run" anchor="after"/>
       <separator key="MainToolbarQuickActions.vcs.separator"/>
-      <action id="addQuickAction.Git.Update" class="git4idea.ui.toolbar.UpdateQuickAction" icon="AllIcons.Actions.CheckOut"/>
-      <action id="addQuickAction.Git.Commit" class="git4idea.ui.toolbar.CommitQuickAction" icon="AllIcons.Actions.Commit"/>
-      <action id="addQuickAction.Git.Push" class="git4idea.ui.toolbar.PushQuickAction" icon="AllIcons.Vcs.Push"/>
-      <action id="addQuickAction.Git.Diff" class="git4idea.ui.toolbar.DiffQuickAction" icon="AllIcons.Actions.Diff"/>
-      <action id="addQuickAction.Git.History" class="git4idea.ui.toolbar.HistoryQuickAction" icon="AllIcons.Vcs.History"/>
-      <action id="addQuickAction.Git.Rollback" class="git4idea.ui.toolbar.RollbackQuickAction" icon="AllIcons.Diff.Revert"/>
+      <group id="MainToolbarQuickActions.VCS" class="com.intellij.ide.ui.customization.ToolbarQuickActionsGroup" searchable="false" popup="false"/>
     </group>
 
     <group id="Git.Hosting.Open.In.Browser.Group" popup="false">
@@ -778,6 +773,13 @@
 
     <vcs.commitMessageProvider implementation="git4idea.commit.GitTemplateCommitMessageProvider" order="first"/>
     <jbProtocolRevisionResolver implementation="git4idea.GitNavigateRevisionResolver"/>
+
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.UpdateQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.CommitQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.PushQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.DiffQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.HistoryQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.RollbackQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
   </extensions>
 
   <extensionPoints>

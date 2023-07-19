@@ -3,15 +3,19 @@ package com.intellij.ide.ui.customization
 
 interface ToolbarQuickActionInsertStrategy {
 
-  fun addToSchema(actionIds: List<String>, schema: CustomActionsSchema): Boolean
+  fun addActions(actionIds: List<String>, schema: CustomActionsSchema): Boolean
+
+  fun checkExists(actionId: String, schema: CustomActionsSchema): Boolean
 
   fun orElse(other: ToolbarQuickActionInsertStrategy): ToolbarQuickActionInsertStrategy = join(this, other)
 }
 
 private fun join(first: ToolbarQuickActionInsertStrategy, second: ToolbarQuickActionInsertStrategy): ToolbarQuickActionInsertStrategy =
   object: ToolbarQuickActionInsertStrategy {
-    override fun addToSchema(actionIds: List<String>, schema: CustomActionsSchema): Boolean {
-      if (first.addToSchema(actionIds, schema)) return true
-      else return second.addToSchema(actionIds, schema)
+    override fun addActions(actionIds: List<String>, schema: CustomActionsSchema): Boolean {
+      if (first.addActions(actionIds, schema)) return true
+      else return second.addActions(actionIds, schema)
     }
+
+    override fun checkExists(actionId: String, schema: CustomActionsSchema) = first.checkExists(actionId, schema) || second.checkExists(actionId, schema)
   }

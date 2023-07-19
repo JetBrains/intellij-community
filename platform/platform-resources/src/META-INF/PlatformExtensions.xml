@@ -1544,6 +1544,16 @@
     <registryKey key="transferSettings.enabled"
                  defaultValue="false"
                  description="Enable Transfer Setting from VSCode sticky ballon"/>
+
+    <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.OpenFileQuickAction" listGroupID="MainToolbarQuickActions.General" />
+    <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.SaveAllQuickAction" listGroupID="MainToolbarQuickActions.General" />
+    <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.SynchronizeQuickAction" listGroupID="MainToolbarQuickActions.General" />
+    <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.BackForwardQuickAction" listGroupID="MainToolbarQuickActions.General" />
+    <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.UndoRedoQuickAction" listGroupID="MainToolbarQuickActions.General" />
+
+    <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.BuildQuickAction" listGroupID="MainToolbarQuickActions.Run" />
+    <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.CoverageQuickAction" listGroupID="MainToolbarQuickActions.Run" />
+    <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.ProfilerQuickAction" listGroupID="MainToolbarQuickActions.Run" />
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

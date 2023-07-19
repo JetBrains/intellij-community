@@ -10,7 +10,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 
 class BeforeAction(private val rootID: String, private val destActionID: String): ToolbarQuickActionInsertStrategy {
-  override fun addToSchema(actionIds: List<String>, schema: CustomActionsSchema): Boolean {
+  override fun addActions(actionIds: List<String>, schema: CustomActionsSchema): Boolean {
     val group = getGroup(rootID, schema) ?: return false
     val (path, index) = calcPath(group, destActionID, false) ?: return false
     actionIds.map { id -> ActionUrl(path, id, ActionUrl.ADDED, index) }
@@ -19,19 +19,23 @@ class BeforeAction(private val rootID: String, private val destActionID: String)
 
     return true
   }
+
+  override fun checkExists(actionId: String, schema: CustomActionsSchema) = groupContainsAction(rootID, actionId, schema)
 }
 
 class AfterAction(private val rootID: String, private val destActionID: String): ToolbarQuickActionInsertStrategy {
-  override fun addToSchema(actionIds: List<String>, schema: CustomActionsSchema): Boolean {
+  override fun addActions(actionIds: List<String>, schema: CustomActionsSchema): Boolean {
     val group = getGroup(rootID, schema) ?: return false
     val (path, index) = calcPath(group, destActionID, false) ?: return false
     actionIds.map { id -> ActionUrl(path, id, ActionUrl.ADDED, index + 1) }.forEach { schema.addAction(it) }
     return true
   }
+
+  override fun checkExists(actionId: String, schema: CustomActionsSchema) = groupContainsAction(rootID, actionId, schema)
 }
 
 class GroupStart(private val rootID: String, private val groupID: String = rootID) : ToolbarQuickActionInsertStrategy {
-  override fun addToSchema(actionIds: List<String>, schema: CustomActionsSchema): Boolean {
+  override fun addActions(actionIds: List<String>, schema: CustomActionsSchema): Boolean {
     val group = getGroup(rootID, schema) ?: return false
     val path = ActionManager.getInstance().getAction(groupID)
       ?.let { StringUtil.nullize(ActionsTreeUtil.getName(it)) }
@@ -42,10 +46,12 @@ class GroupStart(private val rootID: String, private val groupID: String = rootI
       .forEach { schema.addAction(it) }
     return true
   }
+
+  override fun checkExists(actionId: String, schema: CustomActionsSchema) = groupContainsAction(rootID, actionId, schema)
 }
 
 class GroupEnd(private val rootID: String, private val groupID: String = rootID) : ToolbarQuickActionInsertStrategy {
-  override fun addToSchema(actionIds: List<String>, schema: CustomActionsSchema): Boolean {
+  override fun addActions(actionIds: List<String>, schema: CustomActionsSchema): Boolean {
     val group = getGroup(rootID, schema) ?: return false
     val path = ActionManager.getInstance().getAction(groupID)
                  ?.let { StringUtil.nullize(ActionsTreeUtil.getName(it)) }
@@ -57,6 +63,8 @@ class GroupEnd(private val rootID: String, private val groupID: String = rootID)
       .forEach { schema.addAction(it) }
     return true
   }
+
+  override fun checkExists(actionId: String, schema: CustomActionsSchema) = groupContainsAction(rootID, actionId, schema)
 }
 
 fun groupContainsAction(groupID: String, actionID: String, schema: CustomActionsSchema): Boolean {
