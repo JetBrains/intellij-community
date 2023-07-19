@@ -1,6 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.newUiOnboarding
 
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -49,10 +55,14 @@ object NewUiOnboardingUtil {
   }
 
   fun showToolbarWidgetPopup(widget: ToolbarComboWidget, disposable: CheckedDisposable): JBPopup? {
-    return showNonClosablePopup(widget, disposable) { widget.createPopup(e = null) }
+    return showNonClosablePopup(disposable,
+                                createPopup = { widget.createPopup(e = null) },
+                                showPopup = { popup -> popup.showUnderneathOf(widget) })
   }
 
-  fun showNonClosablePopup(target: Component, disposable: CheckedDisposable, createPopup: () -> JBPopup?): JBPopup? {
+  fun showNonClosablePopup(disposable: CheckedDisposable,
+                           createPopup: () -> JBPopup?,
+                           showPopup: (JBPopup) -> Unit): JBPopup? {
     val popup = createPopup() ?: return null
     Disposer.register(disposable) { popup.closeOk(null) }
 
@@ -72,12 +82,29 @@ object NewUiOnboardingUtil {
       override fun onClosed(event: LightweightWindowEvent) {
         Alarm().addRequest(Runnable {
           if (!disposable.isDisposed) {
-            showNonClosablePopup(target, disposable, createPopup)
+            showNonClosablePopup(disposable, createPopup, showPopup)
           }
         }, 500)
       }
     })
-    popup.showUnderneathOf(target)
+    showPopup(popup)
+    return popup
+  }
+
+  fun createPopupFromActionButton(button: ActionButton, doCreatePopup: (AnActionEvent) -> JBPopup?): JBPopup? {
+    val action = button.action
+    val context = DataManager.getInstance().getDataContext(button)
+    val event = AnActionEvent.createFromInputEvent(null, ActionPlaces.NEW_UI_ONBOARDING, button.presentation, context)
+    var popup: JBPopup? = null
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      // wrap popup creation into SlowOperations.ACTION_PERFORM, otherwise there can be a lot of exceptions
+      ActionUtil.performDumbAwareWithCallbacks(action, event) {
+        popup = doCreatePopup(event)
+        if (popup != null) {
+          Toggleable.setSelected(button.presentation, true)
+        }
+      }
+    }
     return popup
   }
 

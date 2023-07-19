@@ -19,7 +19,6 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Graphics
@@ -27,8 +26,7 @@ import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.util.function.Supplier
 
-@ApiStatus.Internal
-abstract class AbstractSquareStripeButton(
+internal abstract class AbstractSquareStripeButton(
   action: AnAction, presentation: Presentation,
   minimumSize: Supplier<Dimension>? = null
 ) :
