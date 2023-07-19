@@ -5518,6 +5518,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertFunctionToProperty/extraArgumentsConflict.kt");
         }
 
+        @TestMetadata("funInterface.kt")
+        public void testFunInterface() throws Exception {
+            runTest("testData/intentions/convertFunctionToProperty/funInterface.kt");
+        }
+
+        @TestMetadata("funInterface2.kt")
+        public void testFunInterface2() throws Exception {
+            runTest("testData/intentions/convertFunctionToProperty/funInterface2.kt");
+        }
+
         @TestMetadata("funWithParameters.kt")
         public void testFunWithParameters() throws Exception {
             runTest("testData/intentions/convertFunctionToProperty/funWithParameters.kt");
@@ -9900,6 +9910,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             @TestMetadata("final.kt")
             public void testFinal() throws Exception {
                 runTest("testData/intentions/declarations/convertMemberToExtension/final.kt");
+            }
+
+            @TestMetadata("funInterface.kt")
+            public void testFunInterface() throws Exception {
+                runTest("testData/intentions/declarations/convertMemberToExtension/funInterface.kt");
+            }
+
+            @TestMetadata("funInterface2.kt")
+            public void testFunInterface2() throws Exception {
+                runTest("testData/intentions/declarations/convertMemberToExtension/funInterface2.kt");
             }
 
             @TestMetadata("funcitonNoName.kt")
