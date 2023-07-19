@@ -361,7 +361,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
               }
             }
           }
-          addPluginResolutionJob(pluginResolutionJob)
+          pluginResolutionJobs.add(pluginResolutionJob)
           cs.launch {
             downloadArtifacts(projectsToImport.map { it.key },
                               listOf(),
@@ -388,21 +388,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
   }
 
-  private var pluginResolutionJobs: MutableSet<Job> = ConcurrentHashMap.newKeySet()
-
-  private fun addPluginResolutionJob(pluginResolutionJob: Job) {
-    pluginResolutionJobs.add(pluginResolutionJob)
-    pluginResolutionJob.invokeOnCompletion {
-      pluginResolutionJobs.remove(pluginResolutionJob)
-    }
-  }
+  private val pluginResolutionJobs = JobSet()
 
   @TestOnly
   override fun waitForPluginResolution() {
-    runBlocking {
-      for (pluginResolutionJob in pluginResolutionJobs)
-        pluginResolutionJob.join()
-    }
+    pluginResolutionJobs.waitFor()
   }
 
   private suspend fun readMavenProjectsActivity(read: () -> MavenProjectsTreeUpdateResult): MavenProjectsTreeUpdateResult {
@@ -570,6 +560,24 @@ class MavenProjectsManagerProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     blockingContext {
       MavenProjectsManager.getInstance(project).onProjectStartup()
+    }
+  }
+}
+
+class JobSet {
+  private val jobs: MutableSet<Job> = ConcurrentHashMap.newKeySet()
+
+  fun add(job: Job) {
+    jobs.add(job)
+    job.invokeOnCompletion {
+      jobs.remove(job)
+    }
+  }
+
+  fun waitFor() {
+    runBlocking {
+      for (job in jobs)
+        job.join()
     }
   }
 }
