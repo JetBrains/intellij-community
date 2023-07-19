@@ -784,6 +784,8 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
                               </build>
                               """);
 
+    resolvePlugins();
+
     assertProblems(getRootProjects().get(0));
   }
 

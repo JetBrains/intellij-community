@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.junit.Test;
 
@@ -282,6 +283,8 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
                         </plugins>
                       </build>
                       """);
+
+      resolvePlugins();
 
       File f = new File(getRepositoryPath(), "/org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar");
 

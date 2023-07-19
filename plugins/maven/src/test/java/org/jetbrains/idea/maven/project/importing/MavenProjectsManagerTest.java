@@ -1455,6 +1455,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertTrue(hasProjectsToBeImported()); // otherwise all imports will be skip
     ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh();
     resolveDependenciesAndImport();
+    resolvePlugins();
     assertFalse(hasProjectsToBeImported()); // otherwise project settings was modified while importing
   }
 

@@ -22,10 +22,14 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
@@ -36,10 +40,9 @@ import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
-import org.jetbrains.idea.maven.utils.MavenLog
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
-import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.performInBackground
+import org.jetbrains.idea.maven.utils.*
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 
 @ApiStatus.Experimental
@@ -345,20 +348,26 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
             .flatMap { it.value }
             .associateBy({ it.mavenProject }, { MavenProjectChanges.ALL })
 
-          // TODO: plugins and artifacts can be resolved in parallel with import
-          val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
-          val pluginResolver = MavenPluginResolver(projectsTree)
-          withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
-            runMavenImportActivity(project, MavenProjectsProcessorPluginsResolvingTask::class.java) {
-              for (mavenProjects in resolutionResult.mavenProjectMap) {
-                pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, indicator, true)
+          // plugins and artifacts can be resolved in parallel with import
+          val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+          val pluginResolutionJob = cs.launch {
+            val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
+            val pluginResolver = MavenPluginResolver(projectsTree)
+            withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
+              runMavenImportActivity(project, MavenProjectsProcessorPluginsResolvingTask::class.java) {
+                for (mavenProjects in resolutionResult.mavenProjectMap) {
+                  pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, indicator, true)
+                }
               }
             }
           }
-          downloadArtifacts(projectsToImport.map { it.key },
-                            listOf(),
-                            importingSettings.isDownloadSourcesAutomatically,
-                            importingSettings.isDownloadDocsAutomatically)
+          addPluginResolutionJob(pluginResolutionJob)
+          cs.launch {
+            downloadArtifacts(projectsToImport.map { it.key },
+                              listOf(),
+                              importingSettings.isDownloadSourcesAutomatically,
+                              importingSettings.isDownloadDocsAutomatically)
+          }
 
           importMavenProjects(projectsToImport, modelsProvider)
         }
@@ -376,6 +385,23 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     finally {
       logDebug("Finish update ${project.name}, ${spec.isForceReading}, ${spec.isForceResolve}, ${spec.isExplicitImport}")
       MavenSyncConsole.finishTransaction(myProject)
+    }
+  }
+
+  private var pluginResolutionJobs: MutableSet<Job> = ConcurrentHashMap.newKeySet()
+
+  private fun addPluginResolutionJob(pluginResolutionJob: Job) {
+    pluginResolutionJobs.add(pluginResolutionJob)
+    pluginResolutionJob.invokeOnCompletion {
+      pluginResolutionJobs.remove(pluginResolutionJob)
+    }
+  }
+
+  @TestOnly
+  override fun waitForPluginResolution() {
+    runBlocking {
+      for (pluginResolutionJob in pluginResolutionJobs)
+        pluginResolutionJob.join()
     }
   }
 

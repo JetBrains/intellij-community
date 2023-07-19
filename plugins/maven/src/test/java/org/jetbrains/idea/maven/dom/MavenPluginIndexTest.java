@@ -36,6 +36,8 @@ public class MavenPluginIndexTest extends MavenDomWithIndicesTestCase {
                         <version>1</version>
                         """);
 
+        resolvePlugins();
+
         checkDownloadedPlugins();
       });
     });

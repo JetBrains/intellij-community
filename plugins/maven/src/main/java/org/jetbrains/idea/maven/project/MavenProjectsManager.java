@@ -126,6 +126,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @TestOnly
+  public abstract void waitForPluginResolution();
+
+  @TestOnly
   public void setProgressListener(BuildProgressListener testViewManager) {
     myProgressListener = testViewManager;
   }

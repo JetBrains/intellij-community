@@ -524,6 +524,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     });*/
     //MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager);
 
+    resolvePlugins();
+
     Promise<?> promise = myProjectsManager.waitForImportCompletion();
     ApplicationManager.getApplication().invokeAndWait(() -> PlatformTestUtil.waitForPromise(promise));
 
@@ -655,7 +657,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       return;
     }
 
-    myProjectsManager.waitForReadingCompletion();
+    myProjectsManager.waitForPluginResolution();
   }
 
   protected void downloadArtifacts() {

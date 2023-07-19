@@ -135,6 +135,8 @@ class MavenSurefirePluginTest extends MavenDomWithIndicesTestCase {
   </build>
 """)
 
+    resolvePlugins()
+
     createProjectPom("""
   <groupId>simpleMaven</groupId>
   <artifactId>simpleMaven</artifactId>
