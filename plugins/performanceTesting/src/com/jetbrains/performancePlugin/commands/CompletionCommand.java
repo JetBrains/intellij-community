@@ -81,6 +81,10 @@ public class CompletionCommand extends PerformanceCommand {
     return NAME;
   }
 
+  public Editor getEditor(Project project) {
+    return FileEditorManager.getInstance(project).getSelectedTextEditor();
+  }
+
   @Override
   protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
@@ -93,7 +97,7 @@ public class CompletionCommand extends PerformanceCommand {
       .subscribe(CompletionPhaseListener.TOPIC, new CompletionPhaseListener() {
         @Override
         public void completionPhaseChanged(boolean isCompletionRunning) {
-          Editor editor = FileEditorManager.getInstance(context.getProject()).getSelectedTextEditor();
+          Editor editor = getEditor(context.getProject());
           LookupEx lookup = LookupManager.getActiveLookup(editor);
           if (lookup != null && !lookupListenerInited.get()) {
             lookup.addLookupListener(new LookupListener() {
@@ -131,7 +135,7 @@ public class CompletionCommand extends PerformanceCommand {
 
     ApplicationManager.getApplication().invokeLater(Context.current().wrap(() -> {
       Project project = context.getProject();
-      Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+      Editor editor = getEditor(context.getProject());
       span.set(startSpan(SPAN_NAME));
       scope.set(span.get().makeCurrent());
       completionTimeStarted.set(System.currentTimeMillis());
