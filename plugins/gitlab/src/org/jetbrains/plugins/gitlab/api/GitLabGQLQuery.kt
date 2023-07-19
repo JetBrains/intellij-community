@@ -6,13 +6,16 @@ enum class GitLabGQLQuery(val filePath: String) {
   GET_MERGE_REQUEST("graphql/query/getMergeRequest.graphql"),
   GET_MERGE_REQUEST_DISCUSSIONS("graphql/query/getMergeRequestDiscussions.graphql"),
   GET_PROJECT_LABELS("graphql/query/getProjectLabels.graphql"),
+  GET_OWNED_PROJECTS("graphql/query/getOwnedProjects.graphql"),
 
   TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE("graphql/query/toggleMergeRequestDiscussionResolve.graphql"),
 
   CREATE_NOTE("graphql/query/createNote.graphql"),
   CREATE_DIFF_NOTE("graphql/query/createDiffNote.graphql"),
   CREATE_REPLY_NOTE("graphql/query/createReplyNote.graphql"),
+  CREATE_SNIPPET("graphql/query/createSnippet.graphql"),
   UPDATE_NOTE("graphql/query/updateNote.graphql"),
+  UPDATE_SNIPPET_BLOB("graphql/query/updateSnippetBlob.graphql"),
   DESTROY_NOTE("graphql/query/destroyNote.graphql"),
 
   MERGE_REQUEST_ACCEPT("graphql/query/mergeRequestAccept.graphql"),

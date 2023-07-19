@@ -10,6 +10,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
+import kotlin.collections.LinkedHashMap
+import kotlin.collections.LinkedHashSet
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -223,6 +226,17 @@ fun <ID : Any, T, R> Flow<Iterable<T>>.mapCaching(sourceIdentifier: (T) -> ID,
   associateBy(sourceIdentifier, mapper, destroy, update).map { it.values.toList() }
 
 fun <T> Flow<Collection<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }
+
+/**
+ * Maps a flow using some suspended mapper function, but memoizes results.
+ */
+fun <T, R> Flow<T>.mapMemoized(mapper: suspend (T) -> R): Flow<R> {
+  val cache = Collections.synchronizedMap<T, R>(mutableMapOf())
+  return this.transform { input ->
+    val result = cache.getOrPut(input) { mapper(input) }
+    emit(result)
+  }
+}
 
 /**
  * Treats 'this' flow as representing a single list of results. Meaning each emitted value is accumulated

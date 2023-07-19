@@ -1,0 +1,7 @@
+fragment snippet on Snippet {
+  id
+  createdAt
+  author {
+    ...user
+  }
+}

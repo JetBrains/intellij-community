@@ -5,4 +5,8 @@ fragment project on Project {
   fullPath
   httpUrlToRepo
   sshUrlToRepo
+
+  userPermissions {
+    createSnippet
+  }
 }
