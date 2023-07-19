@@ -208,14 +208,6 @@ internal class PhmVcsLogStorageBackend(
     }
   }
 
-  override fun getCommitterForCommits(commitIds: Iterable<Int>): Map<Int, VcsUser> {
-    return commitIds.mapNotNull { commitId ->
-      committers.get(commitId)?.let { committer ->
-        users.getUserById(committer)?.let { user -> commitId to user }
-      }
-    }.toMap()
-  }
-
   override fun getTimestamp(commitId: Int): LongArray? = timestamps.get(commitId)
 
   override fun getParents(commitId: Int): IntArray? = parents.get(commitId)
