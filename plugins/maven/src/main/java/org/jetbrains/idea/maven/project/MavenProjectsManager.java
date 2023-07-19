@@ -125,7 +125,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     CacheForCompilerErrorMessages.connectToJdkListener(project, this);
   }
 
-  @TestOnly
+  @ApiStatus.Internal
   public abstract void waitForPluginResolution();
 
   @TestOnly
@@ -959,6 +959,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   @ApiStatus.Internal
   public Promise<?> waitForImportCompletion() {
     if (MavenUtil.isLinearImportEnabled()) return MavenImportingManager.getInstance(myProject).getImportFinishPromise();
+
+    waitForPluginResolution();
 
     AsyncPromise<?> promise = new AsyncPromise<>();
     promise.setResult(null);
