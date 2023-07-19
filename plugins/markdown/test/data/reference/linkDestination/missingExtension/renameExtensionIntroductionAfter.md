@@ -1,1 +1,1 @@
-[link](renamed.md)
+[link](renamed)

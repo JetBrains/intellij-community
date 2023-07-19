@@ -137,15 +137,21 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     if (myReferences.isEmpty()) return null;
 
     ContainerUtil.sort(myReferences, (o1, o2) -> {
-      if(o1.isSoft() && !o2.isSoft()) return -1;
-      if(!o1.isSoft() && o2.isSoft()) return 1;
+      final int byPriority = Double.compare(getPriority(o2), getPriority(o1));
+      if (byPriority != 0) return byPriority;
 
-      if (o1 instanceof FileReference) return -1;
-      if (o2 instanceof FileReference) return 1;
-      return 0;
+      final int bySoftness = Boolean.compare(o2.isSoft(), o1.isSoft());
+      if (bySoftness != 0) return bySoftness;
+
+      return Boolean.compare(o2 instanceof FileReference, o1 instanceof FileReference);  // by ref type
     });
 
     return myReferences.get(0);
+  }
+
+  private static double getPriority(@NotNull PsiReference o1) {
+    if (o1 instanceof PriorityReference) return ((PriorityReference)o1).getPriority();
+    return PsiReferenceRegistrar.DEFAULT_PRIORITY;
   }
 
   @NotNull
