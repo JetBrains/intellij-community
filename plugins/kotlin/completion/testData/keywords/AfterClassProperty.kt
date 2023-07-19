@@ -49,4 +49,5 @@ class MouseMovedEventArgs
 // EXIST:  typealias
 // EXIST:  expect
 // EXIST:  actual
+// EXIST: data object
 // NOTHING_ELSE

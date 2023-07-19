@@ -1,4 +1,5 @@
 // "Specify super type 'Foo' explicitly" "true"
+// ERROR: Abstract member cannot be accessed directly
 package three
 
 import two.Derived

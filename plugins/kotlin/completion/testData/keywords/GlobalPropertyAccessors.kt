@@ -57,4 +57,6 @@ var a : Int
 // EXIST:  expect
 // EXIST:  actual
 // EXIST:  lateinit var
+// EXIST: data object
+// EXIST: { "lookupString":"data object GlobalPropertyAccessors", "itemText":"data object GlobalPropertyAccessors"}
 // NOTHING_ELSE

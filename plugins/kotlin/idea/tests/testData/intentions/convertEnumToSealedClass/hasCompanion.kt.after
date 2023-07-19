@@ -17,6 +17,6 @@ sealed class Foo {
         }
     }
 
-    object A : Foo()
-    object B : Foo()
+    data object A : Foo()
+    data object B : Foo()
 }
