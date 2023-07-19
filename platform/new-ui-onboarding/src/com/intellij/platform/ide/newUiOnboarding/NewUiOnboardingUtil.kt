@@ -49,7 +49,11 @@ object NewUiOnboardingUtil {
   }
 
   fun showToolbarWidgetPopup(widget: ToolbarComboWidget, disposable: CheckedDisposable): JBPopup? {
-    val popup = widget.createPopup(e = null) ?: return null
+    return showNonClosablePopup(widget, disposable) { widget.createPopup(e = null) }
+  }
+
+  fun showNonClosablePopup(target: Component, disposable: CheckedDisposable, createPopup: () -> JBPopup?): JBPopup? {
+    val popup = createPopup() ?: return null
     Disposer.register(disposable) { popup.closeOk(null) }
 
     if (popup is WizardPopup) {
@@ -68,12 +72,12 @@ object NewUiOnboardingUtil {
       override fun onClosed(event: LightweightWindowEvent) {
         Alarm().addRequest(Runnable {
           if (!disposable.isDisposed) {
-            showToolbarWidgetPopup(widget, disposable)
+            showNonClosablePopup(target, disposable, createPopup)
           }
         }, 500)
       }
     })
-    popup.showUnderneathOf(widget)
+    popup.showUnderneathOf(target)
     return popup
   }
 
