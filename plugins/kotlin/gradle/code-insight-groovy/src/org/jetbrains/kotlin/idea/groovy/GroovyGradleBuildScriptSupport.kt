@@ -97,11 +97,11 @@ class GroovyBuildScriptManipulator(
         stdlibArtifactName: String,
         addVersion: Boolean,
         version: IdeKotlinVersion,
-        jvmTarget: String?
-    ): ChangedFiles {
-        val originalText = scriptFile.text
+        jvmTarget: String?,
+        changedFiles: ChangedConfiguratorFiles
+    ) {
+        changedFiles.storeOriginalFileContent(scriptFile)
 
-        val changedFiles = HashSet<PsiFile>()
         val useNewSyntax = useNewSyntax(kotlinPluginName, gradleVersion)
         if (useNewSyntax) {
             scriptFile
@@ -116,14 +116,11 @@ class GroovyBuildScriptManipulator(
                 val gradleFacade = KotlinGradleFacade.getInstance()
                 if (repository != null && gradleFacade != null) {
                     scriptFile.module?.getBuildScriptSettingsPsiFile()?.let {
-                        val originalSettingsText = it.text
+                        changedFiles.storeOriginalFileContent(it)
                         with(GradleBuildScriptSupport.getManipulator(it)) {
                             addPluginRepository(repository)
                             addMavenCentralPluginRepository()
                             addPluginRepository(DEFAULT_GRADLE_PLUGIN_REPOSITORY)
-                        }
-                        if (originalSettingsText != it.text) {
-                            changedFiles.add(it)
                         }
                     }
                 }
@@ -159,13 +156,8 @@ class GroovyBuildScriptManipulator(
             )
         }
 
-        scriptFile.configureToolchainOrKotlinOptions(jvmTarget, version, gradleVersion)
-            ?.let { settingsFile -> changedFiles.add(settingsFile) }
+        scriptFile.configureToolchainOrKotlinOptions(jvmTarget, version, gradleVersion, changedFiles)
 
-        if (originalText != scriptFile.text) {
-            changedFiles.add(scriptFile)
-        }
-        return changedFiles
     }
 
     override fun configureProjectBuildScript(kotlinPluginName: String, version: IdeKotlinVersion): Boolean {
@@ -315,23 +307,20 @@ class GroovyBuildScriptManipulator(
         return null
     }
 
-    override fun addFoojayPlugin(): ChangedSettingsFile {
+    override fun addFoojayPlugin(changedFiles: ChangedConfiguratorFiles) {
         val settingsFile = scriptFile.module?.let {
             it.getTopLevelBuildScriptSettingsPsiFile() as? GroovyFile
-        } ?: return null
+        } ?: return
 
         if (!settingsFile.canBeConfigured()) {
-            return null
+            return
         }
 
-        val originalText = settingsFile.text
-
         val pluginBlock = settingsFile.getSettingsPluginsBlock()
-        if (pluginBlock.text.contains(FOOJAY_RESOLVER_NAME)) return null
+        if (pluginBlock.text.contains(FOOJAY_RESOLVER_NAME)) return
+        changedFiles.storeOriginalFileContent(settingsFile)
         val foojayVersion = Versions.GRADLE_PLUGINS.FOOJAY_VERSION
         pluginBlock.addLastStatementInBlockIfNeeded("id '$FOOJAY_RESOLVER_CONVENTION_NAME' version '$foojayVersion'")
-
-        return if (originalText != settingsFile.text) settingsFile else null
     }
 
     private fun addPluginRepositoryExpression(expression: String) {
