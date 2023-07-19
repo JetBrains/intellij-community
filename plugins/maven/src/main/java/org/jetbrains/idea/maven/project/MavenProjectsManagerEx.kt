@@ -356,7 +356,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
             withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
               runMavenImportActivity(project, MavenProjectsProcessorPluginsResolvingTask::class.java) {
                 for (mavenProjects in resolutionResult.mavenProjectMap) {
-                  pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, indicator, true)
+                  try {
+                    pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, indicator, true)
+                  } catch (e: Exception) {
+                    MavenLog.LOG.warn("Plugin resolutin error", e)
+                  }
                 }
               }
             }
