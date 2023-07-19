@@ -1,18 +1,11 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-jps-common" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-common-for-ide:1.9.20-dev-7058">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/1.9.20-dev-7058/kotlin-jps-common-for-ide-1.9.20-dev-7058.jar">
-          <sha256sum>704a1119fb9d230dd1df129adeb81ddf549e48fbd33ff1c417636a218050b2de</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+  <library name="kotlinc.kotlin-jps-common">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/1.9.20-dev-7058/kotlin-jps-common-for-ide-1.9.20-dev-7058.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-jps-common-for-ide/1.9.255/kotlin-jps-common-for-ide-1.9.255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/1.9.20-dev-7058/kotlin-jps-common-for-ide-1.9.20-dev-7058-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-jps-common-for-ide/1.9.255/kotlin-jps-common-for-ide-1.9.255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
