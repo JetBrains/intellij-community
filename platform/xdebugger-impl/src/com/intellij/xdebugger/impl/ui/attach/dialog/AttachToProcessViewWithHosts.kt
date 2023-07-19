@@ -39,7 +39,11 @@ abstract class AttachToProcessViewWithHosts(
   abstract fun isAddingConnectionEnabled(): Boolean
   abstract fun saveSelectedHost(host: AttachHostItem?)
   abstract fun getSavedHost(allHosts: Set<AttachHostItem>): AttachHostItem?
-  protected open fun getHostFromSet(allHosts: Set<AttachHostItem>) = allHosts.firstOrNull()
+  protected open fun getDefaultHostFromSet(allHosts: Set<AttachHostItem>) = allHosts.firstOrNull()
+  protected open fun handleSingleHost(allHosts: Set<AttachHostItem>, selectedHost: AttachHostItem, addedHost: AttachHostItem) = addedHost
+  protected open fun handleMultipleHosts(allHosts: Set<AttachHostItem>, selectedHost: AttachHostItem) =
+    if (allHosts.contains(selectedHost)) selectedHost
+    else allHosts.firstOrNull()
   abstract fun getHostActions(hosts: Set<AttachHostItem>, selectHost: (host: AttachHostItem) -> Unit): List<AnAction>
   abstract suspend fun getHosts(): List<AttachHostItem>
 
@@ -47,7 +51,7 @@ abstract class AttachToProcessViewWithHosts(
     updateProcesses()
   }
 
-  override suspend fun doUpdateProcesses() {
+  protected suspend fun updateHosts(): List<AttachHostItem> {
     val hosts = getHosts()
 
     withUiContextAnyModality {
@@ -71,9 +75,14 @@ abstract class AttachToProcessViewWithHosts(
         }
         loadComponent(component)
       }
-
-      return
     }
+
+    return hosts
+  }
+
+  override suspend fun doUpdateProcesses() {
+    val hosts = updateHosts()
+    if (hosts.isEmpty()) return
 
     withContext(Dispatchers.IO) {
       val hostItem = hostsComboBoxAction.getSelectedItem()
@@ -134,17 +143,17 @@ abstract class AttachToProcessViewWithHosts(
       val newHostsAsSet = newHosts.toSet()
       val addedHosts = newHostsAsSet.filter { !hosts.contains(it) }
       val removedHosts = hosts.filter { !newHostsAsSet.contains(it) }
+      val selected = selectedHost
 
       val newSelectedHost =
-        if (selectedHost == null) {
-          getSavedHost(newHostsAsSet) ?: getHostFromSet(newHostsAsSet)
+        if (selected == null) {
+          getSavedHost(newHostsAsSet) ?: getDefaultHostFromSet(newHostsAsSet)
         }
         else if (addedHosts.size == 1 && removedHosts.size <= 1) { //new connection was added (or modified)
-          addedHosts.single()
+          handleSingleHost(newHostsAsSet, selected, addedHosts.single())
         }
         else {
-          if (newHostsAsSet.contains(selectedHost)) selectedHost
-          else getHostFromSet(newHostsAsSet)
+          handleMultipleHosts(newHostsAsSet, selected)
         }
 
       hosts = newHostsAsSet
