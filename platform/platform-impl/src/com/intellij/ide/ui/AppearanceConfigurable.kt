@@ -46,7 +46,10 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
+import com.intellij.ui.layout.or
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
@@ -166,9 +169,10 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             .bindSelected(syncThemeProperty)
             .visible(lafManager.autodetectSupported)
 
-          theme.enabledIf(syncCheckBox.selected.not())
+          val autodetectSupportedPredicate = ComponentPredicate.fromValue(lafManager.autodetectSupported)
+          theme.enabledIf(autodetectSupportedPredicate.not().or(syncCheckBox.selected.not()))
           cell(lafManager.settingsToolbar)
-            .visibleIf(syncCheckBox.selected)
+            .visibleIf(syncCheckBox.selected.and(autodetectSupportedPredicate))
 
           link(message("link.get.more.themes")) {
             val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as ActionLink))
