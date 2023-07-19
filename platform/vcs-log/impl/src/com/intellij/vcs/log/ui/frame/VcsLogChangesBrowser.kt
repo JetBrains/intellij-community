@@ -405,7 +405,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
       val singleCommitDetail = details.singleOrNull()
       if (singleCommitDetail == null) {
-        return CommitModel(roots, VcsLogUtil.collectChanges(details) { it.changes }, emptyMap(), null)
+        return CommitModel(roots, VcsLogUtil.collectChanges(details), emptyMap(), null)
       }
 
       val changesToParents = if (singleCommitDetail.parents.size > 1) {

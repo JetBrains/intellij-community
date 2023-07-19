@@ -220,12 +220,11 @@ public final class VcsLogUtil {
     return branches.filter(vcsRef -> vcsRef.getName().equals(branchName)).findFirst().orElse(null);
   }
 
-  public static @NotNull List<Change> collectChanges(@NotNull List<? extends VcsFullCommitDetails> detailsList,
-                                                     @NotNull Function<? super VcsFullCommitDetails, ? extends Collection<Change>> getChanges) {
+  public static @NotNull List<Change> collectChanges(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
     List<Change> changes = new ArrayList<>();
     List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
     for (VcsFullCommitDetails details : detailsListReversed) {
-      changes.addAll(getChanges.fun(details));
+      changes.addAll(details.getChanges());
     }
 
     return CommittedChangesTreeBrowser.zipChanges(changes);
