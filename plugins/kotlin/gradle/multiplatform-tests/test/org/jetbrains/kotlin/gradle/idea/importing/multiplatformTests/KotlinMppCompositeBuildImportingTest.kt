@@ -20,7 +20,7 @@ class KotlinMppCompositeBuildImportingTest : AbstractKotlinMppGradleImportingTes
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.8.20-dev-3309+")
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
     fun testJvmAndNative() {
         doTest {
             onlyCheckers(OrderEntriesChecker)
@@ -53,7 +53,7 @@ class KotlinMppCompositeBuildImportingTest : AbstractKotlinMppGradleImportingTes
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.9.0-dev-1777+")
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
     fun testLibraryWithRootProjectName() {
         doTest {
             onlyCheckers(OrderEntriesChecker, HighlightingChecker)

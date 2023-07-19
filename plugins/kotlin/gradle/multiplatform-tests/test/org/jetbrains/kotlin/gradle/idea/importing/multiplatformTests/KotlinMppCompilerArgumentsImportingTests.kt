@@ -4,9 +4,7 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.AllFilesAreUnderContentRootChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.facets.KotlinFacetSettingsChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
@@ -29,31 +27,31 @@ class KotlinMppCompilerArgumentsImportingTests : AbstractKotlinMppGradleImportin
         hideResourceRoots = true
     }
 
-    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
     @Test
     fun testCompilerOptionsInCompilationTask() {
         doTest()
     }
 
-    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
     @Test
     fun testCompilerOptionsInTargetCompilations() {
         doTest()
     }
 
-    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
     @Test
     fun testFreeCompilerArgsInKotlinOptions() {
         doTest()
     }
 
-    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
     @Test
     fun testKotlinOptions() {
         doTest()
     }
 
-    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
     @Test
     fun testLanguageSettings() {
         doTest()
@@ -90,13 +88,13 @@ class KotlinMppCompilerArgumentsImportingTests : AbstractKotlinMppGradleImportin
         doTest()
     }
 
-    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
     @Test
     fun testMixedCompilerOptionsKotlinDsl() {
         doTest()
     }
 
-    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
     @Test
     fun testMixedCompilerOptionsWithTasks() {
         doTest()
