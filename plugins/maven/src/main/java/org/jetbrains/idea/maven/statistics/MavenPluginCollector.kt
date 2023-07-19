@@ -37,7 +37,7 @@ class MavenPluginCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("maven.plugins", 3)
+    private val GROUP = EventLogGroup("maven.plugins", 4)
 
     val groupArtifactId = EventFields.StringValidatedByCustomRule<MavenPluginCoordinatesWhitelistValidationRule>("group_artifact_id")
     val version = EventFields.StringValidatedByCustomRule<MavenPluginVersionValidationRule>("version")
