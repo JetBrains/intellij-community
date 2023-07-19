@@ -232,13 +232,15 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       commandLineOptions.addAll(StringUtilRt.splitHonorQuotes(mavenEmbedderCliOptions, ' '));
     }
 
-    if (serverSettings.getGlobalSettingsPath() != null) {
+    String globalSettingsPath = serverSettings.getGlobalSettingsPath();
+    if (globalSettingsPath != null && new File(globalSettingsPath).isFile()) {
       commandLineOptions.add("-gs");
-      commandLineOptions.add(serverSettings.getGlobalSettingsPath());
+      commandLineOptions.add(globalSettingsPath);
     }
-    if (serverSettings.getUserSettingsPath() != null) {
+    String userSettingsPath = serverSettings.getUserSettingsPath();
+    if (userSettingsPath != null && new File(userSettingsPath).isFile()) {
       commandLineOptions.add("-s");
-      commandLineOptions.add(serverSettings.getUserSettingsPath());
+      commandLineOptions.add(userSettingsPath);
     }
 
     if (serverSettings.isOffline()) {
