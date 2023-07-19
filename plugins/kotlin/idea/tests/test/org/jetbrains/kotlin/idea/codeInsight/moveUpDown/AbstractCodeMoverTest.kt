@@ -23,7 +23,9 @@ import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
+import kotlin.io.path.Path
 
 abstract class AbstractMoveStatementTest : AbstractCodeMoverTest() {
     protected fun doTestClassBodyDeclaration(unused: String) {
@@ -43,15 +45,17 @@ abstract class AbstractMoveStatementTest : AbstractCodeMoverTest() {
     }
 
     private fun doTest(defaultMoverClass: Class<out StatementUpDownMover>, trailingComma: Boolean = false) {
-        doTest(trailingComma) { isApplicableExpected, direction ->
-            val movers = Extensions.getExtensions(StatementUpDownMover.STATEMENT_UP_DOWN_MOVER_EP)
-            val info = StatementUpDownMover.MoveInfo()
-            val actualMover = movers.firstOrNull {
-                it.checkAvailable(editor, file, info, direction == "down")
-            } ?: error("No mover found")
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_FIR) {
+            doTest(trailingComma) { isApplicableExpected, direction ->
+                val movers = Extensions.getExtensions(StatementUpDownMover.STATEMENT_UP_DOWN_MOVER_EP)
+                val info = StatementUpDownMover.MoveInfo()
+                val actualMover = movers.firstOrNull {
+                    it.checkAvailable(editor, file, info, direction == "down")
+                } ?: error("No mover found")
 
-            assertEquals("Unmatched movers", defaultMoverClass.name, actualMover::class.java.name)
-            assertEquals("Invalid applicability", isApplicableExpected, info.toMove2 != null)
+                assertEquals("Unmatched movers", defaultMoverClass.name, actualMover::class.java.name)
+                assertEquals("Invalid applicability", isApplicableExpected, info.toMove2 != null)
+            }
         }
     }
 }

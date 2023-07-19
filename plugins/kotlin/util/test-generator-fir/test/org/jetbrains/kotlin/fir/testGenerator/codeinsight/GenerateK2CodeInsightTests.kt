@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractFirMoveLeftRightTest
 import org.jetbrains.kotlin.idea.k2.structureView.AbstractKotlinGoToSuperDeclarationsHandlerTest
 import org.jetbrains.kotlin.idea.k2.surroundWith.AbstractKotlinFirSurroundWithTest
+import org.jetbrains.kotlin.idea.k2.unwrap.AbstractKotlinFirMoveStatementTest
 import org.jetbrains.kotlin.idea.k2.unwrap.AbstractKotlinFirUnwrapRemoveTest
 import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
 
 internal fun MutableTWorkspace.generateK2CodeInsightTests() {
     generateK2InspectionTests()
@@ -49,6 +51,14 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
             model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/removeFinally", testMethodName = "doTestFinallyRemover")
             model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapLambda", testMethodName = "doTestLambdaUnwrapper")
             model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter", testMethodName = "doTestFunctionParameterUnwrapper")
+        }
+        testClass<AbstractKotlinFirMoveStatementTest> {
+            model("../../../idea/tests/testData/codeInsight/moveUpDown/classBodyDeclarations", pattern = KT_OR_KTS, testMethodName = "doTestClassBodyDeclaration")
+            model("../../../idea/tests/testData/codeInsight/moveUpDown/closingBraces", testMethodName = "doTestExpression")
+            model("../../../idea/tests/testData/codeInsight/moveUpDown/expressions", pattern = KT_OR_KTS, testMethodName = "doTestExpression")
+            model("../../../idea/tests/testData/codeInsight/moveUpDown/line", testMethodName = "doTestLine")
+            model("../../../idea/tests/testData/codeInsight/moveUpDown/parametersAndArguments", testMethodName = "doTestExpression")
+            model("../../../idea/tests/testData/codeInsight/moveUpDown/trailingComma", testMethodName = "doTestExpressionWithTrailingComma")
         }
 
         testClass<AbstractFirMoveLeftRightTest> {
