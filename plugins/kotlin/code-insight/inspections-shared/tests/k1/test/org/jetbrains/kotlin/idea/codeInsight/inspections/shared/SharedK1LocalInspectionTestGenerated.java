@@ -107,6 +107,16 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/array.kt");
         }
 
+        @TestMetadata("generic.kt")
+        public void testGeneric() throws Exception {
+            runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/generic.kt");
+        }
+
+        @TestMetadata("genericQualified.kt")
+        public void testGenericQualified() throws Exception {
+            runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/genericQualified.kt");
+        }
+
         @TestMetadata("list.kt")
         public void testList() throws Exception {
             runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/list.kt");
@@ -115,6 +125,11 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("notClassLiteralArgument.kt")
         public void testNotClassLiteralArgument() throws Exception {
             runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/notClassLiteralArgument.kt");
+        }
+
+        @TestMetadata("qualifiedName.kt")
+        public void testQualifiedName() throws Exception {
+            runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/qualifiedName.kt");
         }
 
         @TestMetadata("withExistingTypeArgument.kt")
