@@ -85,12 +85,12 @@ public abstract class StubProcessingHelperBase {
     return ContainerUtil.map(StubTreeBuilder.getStubbedRoots(psiFile.getViewProvider()), t -> ((PsiFileImpl)t.second).getStubbedSpine());
   }
 
-  private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, PsiElement psiElement) {
+  private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, @Nullable PsiElement psiElement) {
     if (requiredClass.isInstance(psiElement)) return true;
 
     String extraMessage = "psiElement is not instance of requiredClass.\n" +
                           "psiElement=" + psiElement +
-                          ", psiElement.class=" + psiElement.getClass() +
+                          (psiElement != null ? ", psiElement.class=" + psiElement.getClass() : "") +
                           ", requiredClass=" + requiredClass +
                           ".\nref: 50cf572587cf";
 
