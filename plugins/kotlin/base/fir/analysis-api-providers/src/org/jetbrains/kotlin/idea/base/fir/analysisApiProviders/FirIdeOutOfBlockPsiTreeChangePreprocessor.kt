@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
+import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.getNonLocalReanalyzableContainingDeclaration
@@ -20,10 +21,11 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
         if (!PsiModificationTrackerImpl.canAffectPsi(event) ||
             event.isGenericChange ||
-            event.code == PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_ADDITION
+            event.code == PsiEventType.BEFORE_CHILD_ADDITION
         ) {
             return
         }
+
         if (event.isGlobalChange()) {
             project.getService(FirIdeModificationTrackerService::class.java).increaseModificationCountForAllModules()
             return
@@ -31,9 +33,9 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
 
         val rootElement = event.parent
         val child = when (event.code) {
-          PsiTreeChangeEventImpl.PsiEventType.CHILD_REMOVED -> rootElement
-          PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_REPLACEMENT -> event.oldChild
-          else -> event.child
+            PsiEventType.CHILD_REMOVED -> rootElement
+            PsiEventType.BEFORE_CHILD_REPLACEMENT -> event.oldChild
+            else -> event.child
         }
 
         if (rootElement == null || !rootElement.isPhysical) {
@@ -43,19 +45,16 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
             return
         }
 
-        val changeType = calculateChangeType(rootElement, child)
+        val changeType = calculateChangeType(event.code, rootElement, child)
         when (changeType) {
             ChangeType.Invisible -> {}
-            ChangeType.OutOfBlock -> {
-                outOfBlockInvalidation(rootElement)
-            }
-
+            ChangeType.OutOfBlock -> outOfBlockInvalidation(rootElement)
             is ChangeType.InBlock -> {
                 // trigger in-block a FIR tree invalidation
                 val isOutOfBlock = !invalidateAfterInBlockModification(changeType.blockOwner)
 
                 // In some cases, we can understand that it is not in-block modification only during in-block modification.
-                // E.g., we can find during in-block modification the fact that the original declaration didn't have a body at all.
+                // Probably it is not reachable, but this statement requires some additional investigation
                 if (isOutOfBlock) {
                     outOfBlockInvalidation(rootElement)
                 }
@@ -67,8 +66,12 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
         project.getService(FirIdeModificationTrackerService::class.java).increaseModificationCountForModuleAndProject(element.module)
     }
 
-    private fun calculateChangeType(rootElement: PsiElement, child: PsiElement?): ChangeType = when (rootElement.language) {
-        KotlinLanguage.INSTANCE -> kotlinChangeType(child ?: rootElement)
+    private fun calculateChangeType(
+        code: PsiEventType,
+        rootElement: PsiElement,
+        child: PsiElement?,
+    ): ChangeType = when (rootElement.language) {
+        KotlinLanguage.INSTANCE -> kotlinChangeType(code, child ?: rootElement)
 
         // TODO improve for Java KTIJ-21684
         JavaLanguage.INSTANCE -> ChangeType.OutOfBlock
@@ -77,13 +80,17 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
         else -> ChangeType.OutOfBlock
     }
 
-    private fun kotlinChangeType(psi: PsiElement): ChangeType = when {
+    private fun kotlinChangeType(code: PsiEventType, psi: PsiElement): ChangeType = when {
         // If PSI is not valid, well something bad happened, OOBM won't hurt
         !psi.isValid -> ChangeType.OutOfBlock
         psi is PsiWhiteSpace || psi is PsiComment -> ChangeType.Invisible
         else -> {
             val inBlockModificationOwner = psi.getNonLocalReanalyzableContainingDeclaration()
-            inBlockModificationOwner?.let(ChangeType::InBlock) ?: ChangeType.OutOfBlock
+            if (inBlockModificationOwner != null && (psi.parent != inBlockModificationOwner || code != PsiEventType.CHILD_ADDED)) {
+                ChangeType.InBlock(inBlockModificationOwner)
+            } else {
+                ChangeType.OutOfBlock
+            }
         }
     }
 
@@ -91,9 +98,8 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
     // tracker in PsiModificationTrackerImpl but don't have correspondent PomModelEvent. Increase kotlinOutOfCodeBlockTracker
     // manually if needed.
     private fun PsiTreeChangeEventImpl.isGlobalChange() = when (code) {
-        PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED ->
-            propertyName === PsiTreeChangeEvent.PROP_UNLOADED_PSI || propertyName === PsiTreeChangeEvent.PROP_ROOTS
-        PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED -> oldParent is PsiDirectory || newParent is PsiDirectory
+        PsiEventType.PROPERTY_CHANGED -> propertyName === PsiTreeChangeEvent.PROP_UNLOADED_PSI || propertyName === PsiTreeChangeEvent.PROP_ROOTS
+        PsiEventType.CHILD_MOVED -> oldParent is PsiDirectory || newParent is PsiDirectory
         else -> parent is PsiDirectory
     }
 }
