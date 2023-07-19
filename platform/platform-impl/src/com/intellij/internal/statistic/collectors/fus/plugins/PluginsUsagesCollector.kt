@@ -6,18 +6,17 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.service.fus.collectors.AllowedDuringStartupCollector
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.internal.statistic.utils.getPluginInfoById
 
-private val GROUP = EventLogGroup("plugins", 9)
-private val DISABLED_PLUGIN = GROUP.registerEvent("disabled.plugin", EventFields.PluginInfo)
-private val ENABLED_NOT_BUNDLED_PLUGIN = GROUP.registerEvent("enabled.not.bundled.plugin", EventFields.PluginInfo)
-private val UNSAFE_PLUGIN = GROUP.registerEvent("unsafe.plugin",
-                                                EventFields.String("unsafe_id", emptyList()), EventFields.Boolean("enabled"))
+internal class PluginsUsagesCollector : ApplicationUsagesCollector() {
+  private val GROUP = EventLogGroup("plugins", 9)
+  private val DISABLED_PLUGIN = GROUP.registerEvent("disabled.plugin", EventFields.PluginInfo)
+  private val ENABLED_NOT_BUNDLED_PLUGIN = GROUP.registerEvent("enabled.not.bundled.plugin", EventFields.PluginInfo)
+  private val UNSAFE_PLUGIN = GROUP.registerEvent("unsafe.plugin",
+                                                  EventFields.String("unsafe_id", emptyList()), EventFields.Boolean("enabled"))
 
-private class PluginsUsagesCollector : ApplicationUsagesCollector(), AllowedDuringStartupCollector {
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics() = HashSet<MetricEvent>().apply {

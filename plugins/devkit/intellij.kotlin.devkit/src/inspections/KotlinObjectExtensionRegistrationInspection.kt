@@ -66,6 +66,7 @@ class KotlinObjectRegisteredAsExtensionInspection : LocalInspectionTool() {
 
 private fun Extension.isAllowed(): Boolean {
   return allowedObjectRules.any { it.test(this) }
+         || this.extensionPoint?.effectiveQualifiedName == "com.intellij.statistics.counterUsagesCollector"
 }
 
 private val allowedObjectRules = listOf(

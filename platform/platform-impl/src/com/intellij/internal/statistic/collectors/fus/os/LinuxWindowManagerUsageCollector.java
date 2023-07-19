@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
-import com.intellij.internal.statistic.service.fus.collectors.AllowedDuringStartupCollector;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,7 +17,7 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector implements AllowedDuringStartupCollector {
+public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector {
   private static class Lazy {
     private static final Map<String, String> GNOME_WINDOW_MANAGERS = new LinkedHashMap<>();
     private static final Map<String, String> WINDOW_MANAGERS = new LinkedHashMap<>();

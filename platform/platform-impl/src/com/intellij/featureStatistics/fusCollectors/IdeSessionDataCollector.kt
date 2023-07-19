@@ -6,12 +6,11 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.AllowedDuringStartupCollector
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 
-internal class IdeSessionDataCollector : ApplicationUsagesCollector(), AllowedDuringStartupCollector {
+internal class IdeSessionDataCollector : ApplicationUsagesCollector() {
   private val GROUP = EventLogGroup("event.log.session", 1)
   private val DEBUG = GROUP.registerEvent("debug.mode", Boolean("debug_agent"))
   private val REPORT = GROUP.registerEvent("reporting", Boolean("suppress_report"), Boolean("only_local"))

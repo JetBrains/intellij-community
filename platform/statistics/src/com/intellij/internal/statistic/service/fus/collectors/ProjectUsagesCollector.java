@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
 import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.NonUrgentExecutor;
@@ -52,15 +51,6 @@ import java.util.Set;
  */
 @ApiStatus.Internal
 public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
-
-  @ApiStatus.Internal
-  public static final ExtensionPointName<ProjectUsagesCollector> EP_NAME =
-    ExtensionPointName.create("com.intellij.statistics.projectUsagesCollector");
-
-  public static @NotNull Set<ProjectUsagesCollector> getExtensions(@NotNull UsagesCollectorConsumer invoker) {
-    return getExtensions(invoker, EP_NAME);
-  }
-
   /**
    * Implement this method to calculate metrics.
    * <br/><br/>

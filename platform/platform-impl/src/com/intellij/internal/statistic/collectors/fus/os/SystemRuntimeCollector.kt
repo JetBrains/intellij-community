@@ -13,7 +13,6 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.String
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.events.EventId3
-import com.intellij.internal.statistic.service.fus.collectors.AllowedDuringStartupCollector
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.PathManager
@@ -30,7 +29,7 @@ import java.util.*
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartupCollector {
+class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val COLLECTORS = listOf("Serial", "Parallel", "CMS", "G1", "Z", "Shenandoah", "Epsilon", "Other")
   private val ARCHITECTURES = listOf("x86", "x86_64", "arm64", "other", "unknown")
   private val VENDORS = listOf("JetBrains", "Apple", "Oracle", "Sun", "IBM", "Azul", "Other")

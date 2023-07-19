@@ -242,9 +242,13 @@
     <extensionPoint name="editorNavigation" interface="com.intellij.openapi.editor.EditorNavigationDelegate" dynamic="true"/>
 
     <extensionPoint name="statistics.applicationUsagesCollector"
-                    interface="com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector" dynamic="true"/>
+                    beanClass="com.intellij.internal.statistic.service.fus.collectors.UsageCollectorBean" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector"/>
+    </extensionPoint>
     <extensionPoint name="statistics.projectUsagesCollector"
-                    interface="com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector" dynamic="true"/>
+                    beanClass="com.intellij.internal.statistic.service.fus.collectors.UsageCollectorBean" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector"/>
+    </extensionPoint>
     <extensionPoint name="statistics.counterUsagesCollector"
                     beanClass="com.intellij.internal.statistic.service.fus.collectors.CounterUsageCollectorEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector"/>

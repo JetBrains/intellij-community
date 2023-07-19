@@ -2,10 +2,8 @@
 package com.intellij.internal.statistic.eventLog.events.scheme
 
 import com.intellij.internal.statistic.eventLog.events.*
-import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.UsageCollectors
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginDescriptor
 import java.util.regex.Pattern
@@ -93,7 +91,7 @@ object EventsSchemeBuilder {
   fun buildEventsScheme(recorder: String?, pluginId: String? = null, brokenPluginIds: Set<String> = emptySet()): List<GroupDescriptor> {
     val result = mutableListOf<GroupDescriptor>()
     val counterCollectors = ArrayList<FeatureUsageCollectorInfo>()
-    FUCounterUsageLogger.EP_NAME.processWithPluginDescriptor { counterUsageCollectorEP, descriptor: PluginDescriptor ->
+    UsageCollectors.COUNTER_EP_NAME.processWithPluginDescriptor { counterUsageCollectorEP, descriptor: PluginDescriptor ->
       if (counterUsageCollectorEP.implementationClass != null) {
         val collectorPlugin = descriptor.pluginId.idString
         if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
@@ -106,16 +104,16 @@ object EventsSchemeBuilder {
     result.addAll(collectGroupsFromExtensions("counter", counterCollectors, recorder))
 
     val stateCollectors = ArrayList<FeatureUsageCollectorInfo>()
-    ApplicationUsagesCollector.EP_NAME.processWithPluginDescriptor { collector, descriptor ->
+    UsageCollectors.APPLICATION_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
-        stateCollectors.add(FeatureUsageCollectorInfo(collector, collectorPlugin))
+        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, collectorPlugin))
       }
     }
-    ProjectUsagesCollector.EP_NAME.processWithPluginDescriptor { collector, descriptor ->
+    UsageCollectors.PROJECT_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
-        stateCollectors.add(FeatureUsageCollectorInfo(collector, collectorPlugin))
+        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, collectorPlugin))
       }
     }
     result.addAll(collectGroupsFromExtensions("state", stateCollectors, recorder))
@@ -158,7 +156,8 @@ object EventsSchemeBuilder {
   }
 
   private fun buildFields(events: List<BaseEventId>, eventName: String, groupId: String): Set<FieldDescriptor> {
-    return events.flatMap { it.getFields() }
+    return events.asSequence()
+      .flatMap { it.getFields() }
       .flatMap { field -> fieldSchema(field, field.name, eventName, groupId) }
       .groupBy { it.path }
       .map { (name, values) ->
