@@ -26,7 +26,7 @@ project.commonTest
 project.iosArm64Main
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = 1.9
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:iosMain
     targetPlatform = Native (ios_arm64)
@@ -34,7 +34,7 @@ project.iosArm64Main
 project.iosArm64Test
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = 1.9
     mppVersion = M3
     dependsOnModuleNames = project:commonTest, project:iosTest
     targetPlatform = Native (ios_arm64)
@@ -42,7 +42,7 @@ project.iosArm64Test
 project.iosMain
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = 1.9
     mppVersion = M3
     dependsOnModuleNames = project:commonMain
     targetPlatform = Native (ios_arm64)/Native (ios_x64)
@@ -50,7 +50,7 @@ project.iosMain
 project.iosTest
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = 1.9
     mppVersion = M3
     dependsOnModuleNames = project:commonTest
     additionalVisibleModuleNames = project:commonMain, project:iosMain
@@ -59,7 +59,7 @@ project.iosTest
 project.iosX64Main
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = 1.9
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:iosMain
     targetPlatform = Native (ios_x64)
@@ -67,7 +67,7 @@ project.iosX64Main
 project.iosX64Test
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = 1.9
     mppVersion = M3
     dependsOnModuleNames = project:commonTest, project:iosTest
     targetPlatform = Native (ios_x64)

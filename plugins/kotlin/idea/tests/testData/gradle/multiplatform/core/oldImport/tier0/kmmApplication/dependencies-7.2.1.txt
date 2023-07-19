@@ -3,12 +3,10 @@ project
 
 project.androidTest
     commonMain (friend, TEST)
-    commonTest (refines, TEST)
     main (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-test:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
 
 project.commonMain
