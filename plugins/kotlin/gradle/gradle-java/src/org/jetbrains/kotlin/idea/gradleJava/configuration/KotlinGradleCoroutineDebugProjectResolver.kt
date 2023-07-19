@@ -28,7 +28,7 @@ class KotlinGradleCoroutineDebugProjectResolver : AbstractProjectResolverExtensi
             gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
                 taskGraph.allTasks.each { Task task ->
                     if (task instanceof Test || task instanceof JavaExec) {
-                        task.doFirst { Task forkedTask ->
+                        task.configure { JavaForkOptions forkedTask ->
                             def kotlinxCoroutinesCoreJar = forkedTask.classpath.find { it.name.startsWith("kotlinx-coroutines-core") }
                             if (kotlinxCoroutinesCoreJar) {
                                 def results = (kotlinxCoroutinesCoreJar.getName() =~ /kotlinx-coroutines-core(\-jvm)?-(\d[\w\.\-]+)\.jar${'$'}/).findAll()
