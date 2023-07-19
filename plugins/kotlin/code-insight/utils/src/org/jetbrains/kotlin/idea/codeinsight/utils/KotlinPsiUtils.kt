@@ -389,3 +389,5 @@ private fun KtExpression.ifBranchesOrThis(): List<KtExpression?> {
     if (this !is KtIfExpression) return listOf(this)
     return listOf(then) + `else`?.ifBranchesOrThis().orEmpty()
 }
+
+fun KtClass.isFunInterface(): Boolean = isInterface() && getFunKeyword() != null

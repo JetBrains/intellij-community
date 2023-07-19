@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.isFunInterface
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -42,7 +43,8 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
 ), LowPriorityAction {
     private fun isApplicable(element: KtCallableDeclaration): Boolean {
         val classBody = element.parent as? KtClassBody ?: return false
-        if (classBody.parent !is KtClass) return false
+        val parentClass = classBody.parent as? KtClass ?: return false
+        if (parentClass.isFunInterface() && !element.hasBody()) return false
         if (element.receiverTypeReference != null) return false
         if (element.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
         when (element) {
