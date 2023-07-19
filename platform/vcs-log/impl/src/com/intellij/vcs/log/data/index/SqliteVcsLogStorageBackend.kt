@@ -219,7 +219,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     return result
   }
 
-  override fun getCommitterOrAuthorForCommit(commitId: Int): VcsUser? {
+  override fun getCommitterForCommit(commitId: Int): VcsUser? {
     val batch = IntBinder(paramCount = 1)
     connection.prepareStatement("select isCommitter from log where commitId = ?", batch).use { statement ->
       batch.bind(commitId)

@@ -81,7 +81,7 @@ public final class IndexDataGetter {
 
   public @Nullable VcsUser getCommitter(int commit) {
     return executeAndCatch(() -> {
-      return myIndexStorageBackend.getCommitterOrAuthorForCommit(commit);
+      return myIndexStorageBackend.getCommitterForCommit(commit);
     });
   }
 

@@ -198,7 +198,7 @@ internal class PhmVcsLogStorageBackend(
 
   override fun getMessage(commitId: Int): String? = messages.get(commitId)
 
-  override fun getCommitterOrAuthorForCommit(commitId: Int): VcsUser? {
+  override fun getCommitterForCommit(commitId: Int): VcsUser? {
     val committer = committers.get(commitId)
     if (committer != null) {
       return users.getUserById(committer)
