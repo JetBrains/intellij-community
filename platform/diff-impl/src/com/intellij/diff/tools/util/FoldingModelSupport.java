@@ -50,7 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.function.IntUnaryOperator;
+import java.util.function.IntPredicate;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
@@ -487,14 +487,14 @@ public class FoldingModelSupport {
   }
 
   @NotNull
-  public IntUnaryOperator getLineConvertor(final int index) {
-    return value -> {
-      FoldedBlock foldedBlock = getBlockForLine(index, value);
+  public IntPredicate hideLineNumberPredicate(final int index) {
+    return lineNumber -> {
+      FoldedBlock foldedBlock = getBlockForLine(index, lineNumber);
       if (foldedBlock != null) {
         FoldRegion region = foldedBlock.getRegion(index);
-        if (region != null && !region.isExpanded()) return -1;
+        if (region != null && !region.isExpanded()) return true;
       }
-      return value;
+      return false;
     };
   }
 

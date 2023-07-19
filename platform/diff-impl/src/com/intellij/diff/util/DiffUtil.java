@@ -52,7 +52,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -113,6 +112,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
+import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
 public final class DiffUtil {
@@ -315,22 +315,25 @@ public final class DiffUtil {
 
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull FoldingModelSupport foldingSupport) {
     assert foldingSupport.getCount() == 1;
-    IntUnaryOperator foldingLineConvertor = foldingSupport.getLineConvertor(0);
-    editor.getGutter().setLineNumberConverter(new LineNumberConverterAdapter(foldingLineConvertor));
+    IntPredicate foldingLinePredicate = foldingSupport.hideLineNumberPredicate(0);
+    editor.getGutter().setLineNumberConverter(new DiffLineNumberConverter(foldingLinePredicate, null));
   }
 
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content) {
     IntUnaryOperator contentLineConvertor = getContentLineConvertor(content);
-    editor.getGutter().setLineNumberConverter(contentLineConvertor == null ? LineNumberConverter.DEFAULT
-                                                                           : new LineNumberConverterAdapter(contentLineConvertor));
+    if (contentLineConvertor == null) {
+      editor.getGutter().setLineNumberConverter(null);
+    }
+    else {
+      editor.getGutter().setLineNumberConverter(new DiffLineNumberConverter(null, contentLineConvertor));
+    }
   }
 
   public static void installLineConvertor(@NotNull EditorEx editor, @Nullable DocumentContent content,
                                           @NotNull FoldingModelSupport foldingSupport, int editorIndex) {
     IntUnaryOperator contentLineConvertor = content != null ? getContentLineConvertor(content) : null;
-    IntUnaryOperator foldingLineConvertor = foldingSupport.getLineConvertor(editorIndex);
-    IntUnaryOperator merged = mergeLineConverters(contentLineConvertor, foldingLineConvertor);
-    editor.getGutter().setLineNumberConverter(merged == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(merged));
+    IntPredicate foldingLinePredicate = foldingSupport.hideLineNumberPredicate(editorIndex);
+    editor.getGutter().setLineNumberConverter(new DiffLineNumberConverter(foldingLinePredicate, contentLineConvertor));
   }
 
   @Nullable
