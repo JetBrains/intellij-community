@@ -16,6 +16,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -43,6 +44,11 @@ public class IntentionActionWithTextCaching
   private final Icon myIcon;
   @Nullable
   private final String myToolId;
+
+  public IntentionActionWithTextCaching(@NotNull IntentionAction action) {
+    this(action, action.getText(), action instanceof Iconable iconable ? iconable.getIcon(0) : null, null, (actWithText, act) -> {
+    });
+  }
 
   IntentionActionWithTextCaching(@NotNull IntentionAction action,
                                  @NlsContexts.PopupTitle String displayName,
@@ -119,7 +125,7 @@ public class IntentionActionWithTextCaching
     return Comparing.compare(getText(), other.getText());
   }
 
-  Icon getIcon() {
+  public Icon getIcon() {
     return myIcon;
   }
 

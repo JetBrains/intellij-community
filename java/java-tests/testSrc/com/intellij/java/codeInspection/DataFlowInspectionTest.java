@@ -584,7 +584,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testPureNoArgMethodAsVariable() { doTest(); }
   public void testRedundantAssignment() {
     doTest();
-    UiInterceptors.register(new ChooserInterceptor(List.of("Delete assignment completely", "Extract side effect"), "Extract side effect"));
+    UiInterceptors.register(new ChooserInterceptor(List.of("Extract side effect", "Delete assignment completely"), "Extract side effect"));
     IntentionAction action = myFixture.findSingleIntention("Remove redundant assignment");
     myFixture.launchAction(action);
     myFixture.checkResultByFile(getTestName(false) + "_after.java");

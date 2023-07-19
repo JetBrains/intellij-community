@@ -12,8 +12,8 @@ public class ExpandStaticImportActionTest extends LightIntentionActionTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     if (getTestName(false).contains("Multiple")) {
-      UiInterceptors.register(new ChooserInterceptor(List.of("Replace all and delete the import",
-                                                             "Replace this occurrence and keep the import"),
+      UiInterceptors.register(new ChooserInterceptor(List.of("Replace this occurrence and keep the import",
+                                                             "Replace all and delete the import"),
                                                      "Replace all and delete the import"));
     }
   }

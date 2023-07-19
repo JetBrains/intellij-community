@@ -41,7 +41,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Predicate;
 
-public final class CachedIntentions {
+public final class CachedIntentions implements IntentionContainer {
   private static final Logger LOG = Logger.getInstance(CachedIntentions.class);
 
   private final Set<IntentionActionWithTextCaching> myIntentions = new CopyOnWriteArraySet<>();
@@ -71,6 +71,7 @@ public final class CachedIntentions {
     myTitle = title;
   }
 
+  @Override
   public @Nullable @NlsContexts.PopupTitle String getTitle() {
     return myTitle;
   }
@@ -79,10 +80,12 @@ public final class CachedIntentions {
     return myIntentions;
   }
 
+  @Override
   public @NotNull Set<IntentionActionWithTextCaching> getErrorFixes() {
     return myErrorFixes;
   }
 
+  @Override
   public @NotNull Set<IntentionActionWithTextCaching> getInspectionFixes() {
     return myInspectionFixes;
   }
@@ -91,6 +94,7 @@ public final class CachedIntentions {
     return myGutters;
   }
 
+  @Override
   @ApiStatus.Experimental
   public @NotNull Set<AnAction> getTopLevelActions() {
     return myTopLevelActions;
@@ -287,8 +291,7 @@ public final class CachedIntentions {
       Pair<PsiFile, Editor> availableIn = ShowIntentionActionsHandler
         .chooseBetweenHostAndInjected(myFile, editor, containingFile, (f, e) -> ShowIntentionActionsHandler.availableFor(f, e, option));
       if (availableIn == null) continue;
-      IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option, option.getText(), null, null, (__1, __2) -> {
-      });
+      IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option);
       boolean isErrorFix = myErrorFixes.contains(textCaching);
       if (isErrorFix) {
         cachedAction.addErrorFix(option);
@@ -320,6 +323,7 @@ public final class CachedIntentions {
     myNotifications.remove(action);
   }
 
+  @Override
   public @NotNull List<IntentionActionWithTextCaching> getAllActions() {
     List<IntentionActionWithTextCaching> result = new ArrayList<>(myErrorFixes);
     result.addAll(myInspectionFixes);
@@ -337,6 +341,7 @@ public final class CachedIntentions {
     return intentionsOrder.getSortedIntentions(this, result);
   }
 
+  @Override
   public @NotNull IntentionGroup getGroup(@NotNull IntentionActionWithTextCaching action) {
     if (myErrorFixes.contains(action)) {
       return IntentionGroup.ERROR;
@@ -361,6 +366,7 @@ public final class CachedIntentions {
   }
 
   /** Determine the icon that is shown in the action menu. */
+  @Override
   public @Nullable Icon getIcon(@NotNull IntentionActionWithTextCaching value) {
     if (value.getIcon() != null) {
       return value.getIcon();

@@ -15,7 +15,7 @@ public class AccessStaticViaInstanceTest extends LightQuickFixParameterizedTestC
   protected void setUp() throws Exception {
     super.setUp();
     if (getTestName(false).endsWith("SideEffect.java")) {
-      UiInterceptors.register(new ChooserInterceptor(List.of("Delete possible side effects", "Extract possible side effects"), 
+      UiInterceptors.register(new ChooserInterceptor(List.of("Extract possible side effects", "Delete possible side effects"), 
                                                      "Extract possible side effects"));
     }
   }

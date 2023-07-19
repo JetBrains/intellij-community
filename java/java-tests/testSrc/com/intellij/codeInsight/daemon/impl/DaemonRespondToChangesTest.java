@@ -14,13 +14,14 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.impl.CachedIntentions;
+import com.intellij.codeInsight.intention.impl.IntentionContainer;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionBase;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -2145,7 +2146,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertEmpty(visibleHints);
     }
     else {
-      CachedIntentions after = lastHintAfterDeletion.getCachedIntentions();
+      IntentionContainer after = lastHintAfterDeletion.getCachedIntentions();
       assertFalse(after.toString(), ContainerUtil.exists(after.getErrorFixes(), e -> e.getText().equals("Initialize variable 'var'")));
     }
   }

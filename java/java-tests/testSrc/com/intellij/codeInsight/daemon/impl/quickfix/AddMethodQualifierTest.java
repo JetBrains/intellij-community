@@ -22,7 +22,7 @@ public class AddMethodQualifierTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testNonStaticMethod() {
-    doTest("fieldElement", "localElement1", "paramElement", "staticElement");
+    doTest("localElement1", "paramElement", "fieldElement", "staticElement");
   }
 
   public void testStaticMethod() {
@@ -30,11 +30,11 @@ public class AddMethodQualifierTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testNestedMethod() {
-    doTest("fieldElement", "localElement1", "nestedField", "nestedParamElement", "paramElement", "staticElement");
+    doTest("localElement1", "nestedParamElement", "nestedField", "paramElement", "fieldElement", "staticElement");
   }
 
   public void testConstructor() {
-    doTest("fieldElement", "localElement1", "staticElement");
+    doTest("localElement1", "fieldElement", "staticElement");
   }
 
   public void testStaticInitializer() {
@@ -62,7 +62,7 @@ public class AddMethodQualifierTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private void doTest(final String... candidatesNames) {
-    UiInterceptors.register(new ChooserInterceptor(List.of(candidatesNames), "localElement1"));
+    UiInterceptors.register(new ChooserInterceptor(List.of(candidatesNames), candidatesNames[0]));
     doTestFix();
   }
 

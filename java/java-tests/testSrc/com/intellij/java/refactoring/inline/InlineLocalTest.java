@@ -66,6 +66,8 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testIDEADEV13151() {
+    UiInterceptors.register(new ChooserInterceptor(List.of("This reference only", "All 2 references and remove the variable"),
+                                                   "All 2 references and remove the variable"));
     doTest();
   }
 
@@ -110,10 +112,14 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testUsedInInnerClass3() {       // IDEADEV-28786
+    UiInterceptors.register(new ChooserInterceptor(List.of("This reference only", "All 2 references and remove the variable"),
+                                                   "All 2 references and remove the variable"));
     doTest();
   }
 
   public void testUsedInInnerClass4() {       // IDEADEV-28786
+    UiInterceptors.register(new ChooserInterceptor(List.of("This reference only", "All 2 references and remove the variable"),
+                                                   "All 2 references and remove the variable"));
     doTest();
   }
 
@@ -146,6 +152,8 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testAssignmentToArrayElement() {
+    UiInterceptors.register(new ChooserInterceptor(List.of("This reference only", "All 2 references and remove the variable"),
+                                                   "All 2 references and remove the variable"));
     doTest("Cannot perform refactoring.\n" +
            "Variable 'arr' is accessed for writing");
   }
@@ -188,6 +196,8 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testLocalVarInsideLambdaBody() {
+    UiInterceptors.register(new ChooserInterceptor(List.of("This reference only", "All 2 references and remove the variable"),
+                                                   "All 2 references and remove the variable"));
     doTest(LanguageLevel.JDK_1_8);
   }
 
@@ -281,7 +291,7 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
 
   public void testLocalVarInsideLambdaBodyWriteUsage() {
     UiInterceptors.register(new ChooserInterceptor(
-      List.of("All 2 references and remove the variable", "This reference only"),
+      List.of("This reference only", "All 2 references and remove the variable"),
       "All 2 references and remove the variable"));
     doTest("Cannot perform refactoring.\n" +
            "Variable 'hello' is accessed for writing");

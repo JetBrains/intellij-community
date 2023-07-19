@@ -105,7 +105,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   private IntentionHintComponent(@NotNull Project project,
                                  @NotNull PsiFile file,
                                  @NotNull Editor editor,
-                                 @NotNull CachedIntentions cachedIntentions) {
+                                 @NotNull IntentionContainer cachedIntentions) {
     myEditor = editor;
     myPopup = new IntentionPopup(project, file, editor, cachedIntentions);
     Disposer.register(this, myPopup);
@@ -123,7 +123,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                                                                   @NotNull PsiFile file,
                                                                   @NotNull Editor editor,
                                                                   boolean showExpanded,
-                                                                  @NotNull CachedIntentions cachedIntentions) {
+                                                                  @NotNull IntentionContainer cachedIntentions) {
     IntentionHintComponent component = new IntentionHintComponent(project, file, editor, cachedIntentions);
 
     if (editor.getSettings().isShowIntentionBulb()) {
@@ -186,7 +186,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   @TestOnly
-  public CachedIntentions getCachedIntentions() {
+  public IntentionContainer getCachedIntentions() {
     return myPopup.myCachedIntentions;
   }
 
@@ -347,7 +347,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private static final int NORMAL_BORDER_SIZE = 6;
     private static final int SMALL_BORDER_SIZE = 4;
 
-    static @NotNull Icon getIcon(CachedIntentions cachedIntentions) {
+    static @NotNull Icon getIcon(IntentionContainer cachedIntentions) {
       boolean showRefactoring = !ExperimentalUI.isNewUI() && ContainerUtil.exists(
         cachedIntentions.getInspectionFixes(),
         descriptor -> IntentionActionDelegate.unwrap(descriptor.getAction()) instanceof BaseRefactoringIntentionAction
@@ -574,7 +574,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private final @NotNull Project myProject;
     private final @NotNull Editor myEditor;
     private final @NotNull PsiFile myFile;
-    private final @NotNull CachedIntentions myCachedIntentions;
+    private final @NotNull IntentionContainer myCachedIntentions;
     private final IntentionPreviewPopupUpdateProcessor myPreviewPopupUpdateProcessor;
     private PopupMenuListener myOuterComboboxPopupListener;
     private IntentionHintComponent myHint;
@@ -585,7 +585,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private IntentionPopup(@NotNull Project project,
                            @NotNull PsiFile file,
                            @NotNull Editor editor,
-                           @NotNull CachedIntentions cachedIntentions) {
+                           @NotNull IntentionContainer cachedIntentions) {
       myProject = project;
       myEditor = editor;
       myFile = file;

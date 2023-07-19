@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 public class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>, SpeedSearchFilter<IntentionActionWithTextCaching> {
   private static final Logger LOG = Logger.getInstance(IntentionListStep.class);
 
-  private final @NotNull CachedIntentions myCachedIntentions;
+  private final @NotNull IntentionContainer myCachedIntentions;
   private final @Nullable IntentionHintComponent.IntentionPopup myPopup;
   private final Dimension myMaxIconSize;
 
@@ -49,7 +49,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
                            @Nullable Editor editor,
                            @NotNull PsiFile file,
                            @NotNull Project project,
-                           @NotNull CachedIntentions intentions) {
+                           @NotNull IntentionContainer intentions) {
     myPopup = popup;
     myProject = project;
     myFile = file;

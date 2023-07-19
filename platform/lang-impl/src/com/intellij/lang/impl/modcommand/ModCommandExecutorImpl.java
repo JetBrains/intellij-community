@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl.modcommand;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.CachedIntentions;
+import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
+import com.intellij.codeInsight.intention.impl.IntentionContainer;
+import com.intellij.codeInsight.intention.impl.IntentionGroup;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -58,6 +58,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.util.Collection;
@@ -471,17 +472,33 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (file == null) return false;
     Editor finalEditor = editor == null ? getEditor(context.project(), file) : editor;
     if (editor == null) return false;
-    ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
-    List<HighlightInfo.IntentionActionDescriptor> descriptors = ContainerUtil.map(
+    List<IntentionActionWithTextCaching> actionsWithTextCaching = ContainerUtil.map(
       actions, (actionAndPresentation) -> {
-        ModCommandAction.Presentation presentation = actionAndPresentation.presentation();
         IntentionAction intention = actionAndPresentation.action().asIntention();
-        intention.isAvailable(context.project(), finalEditor, context.file()); // cache text
-        return new HighlightInfo.IntentionActionDescriptor(intention, List.of(), presentation.name(), presentation.icon(), null, null, null);
+        intention.isAvailable(context.project(), finalEditor, context.file()); // cache text and icon
+        return new IntentionActionWithTextCaching(intention);
       });
-    info.intentionsToShow.addAll(descriptors);
-    info.setTitle(chooser.title());
-    CachedIntentions intentions = CachedIntentions.create(context.project(), context.file(), editor, info);
+    IntentionContainer intentions = new IntentionContainer() {
+      @Override
+      public @NotNull String getTitle() {
+        return chooser.title();
+      }
+
+      @Override
+      public @NotNull List<IntentionActionWithTextCaching> getAllActions() {
+        return actionsWithTextCaching;
+      }
+
+      @Override
+      public @NotNull IntentionGroup getGroup(@NotNull IntentionActionWithTextCaching action) {
+        return IntentionGroup.OTHER;
+      }
+
+      @Override
+      public @Nullable Icon getIcon(@NotNull IntentionActionWithTextCaching action) {
+        return action.getIcon();
+      }
+    };
     IntentionHintComponent.showIntentionHint(context.project(), context.file(), editor, true, intentions);
     return true;
   }

@@ -22,7 +22,7 @@ public class ReplaceWithConstantValueFixTest extends LightQuickFixParameterizedT
   protected void setUp() throws Exception {
     super.setUp();
     if (getTestName(false).contains("SideEffect")) {
-      UiInterceptors.register(new ChooserInterceptor(List.of("Delete possible side effects", "Extract possible side effects"), 
+      UiInterceptors.register(new ChooserInterceptor(List.of("Extract possible side effects", "Delete possible side effects"), 
                                                      "Extract possible side effects"));
     }
   }
