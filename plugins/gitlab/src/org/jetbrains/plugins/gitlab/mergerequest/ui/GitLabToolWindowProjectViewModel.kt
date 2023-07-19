@@ -43,7 +43,10 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.LoadAllGitLabMergeR
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 
 internal class GitLabToolWindowProjectViewModel
-private constructor(parentCs: CoroutineScope, private val project: Project, private val connection: GitLabProjectConnection)
+private constructor(parentCs: CoroutineScope,
+                    private val project: Project,
+                    accountManager: GitLabAccountManager,
+                    private val connection: GitLabProjectConnection)
   : ReviewToolwindowProjectViewModel<GitLabReviewTab, GitLabReviewTabViewModel> {
 
   private val cs = parentCs.childScope()
@@ -68,7 +71,7 @@ private constructor(parentCs: CoroutineScope, private val project: Project, priv
   val avatarIconProvider: IconsProvider<GitLabUserDTO> = CachingIconsProvider(AsyncImageIconsProvider(cs, connection.imageLoader))
 
   val accountVm: GitLabAccountViewModel =
-    GitLabAccountViewModelImpl(project, cs, connection.account, service<GitLabAccountManager>())
+    GitLabAccountViewModelImpl(project, cs, connection.account, accountManager)
 
   override val listVm: GitLabMergeRequestsListViewModel = run {
     val filterVm = GitLabMergeRequestsFiltersViewModelImpl(
@@ -195,7 +198,9 @@ private constructor(parentCs: CoroutineScope, private val project: Project, priv
   }
 
   companion object {
-    internal fun CoroutineScope.GitLabToolWindowProjectViewModel(project: Project, connection: GitLabProjectConnection) =
-      GitLabToolWindowProjectViewModel(this, project, connection)
+    internal fun CoroutineScope.GitLabToolWindowProjectViewModel(project: Project,
+                                                                 accountManager: GitLabAccountManager,
+                                                                 connection: GitLabProjectConnection) =
+      GitLabToolWindowProjectViewModel(this, project, accountManager, connection)
   }
 }
