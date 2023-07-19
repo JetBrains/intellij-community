@@ -43,7 +43,7 @@
         "foreground": "Grey1",
         "background": "Grey13",
         "hoverBackground": "Grey12",
-        "transparentHoverBackground": "#0000001A",
+        "transparentHoverBackground": "#0000000D",
         "pressedBackground": "Grey11"
       }
     },
@@ -72,7 +72,7 @@
 
     "Notification": {
       "background": "Grey14",
-      "borderColor": "Grey11",
+      "borderColor": "Grey10",
       "foreground": "Grey1",
       "linkForeground": "Blue2",
       "Button": {
