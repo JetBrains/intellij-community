@@ -17,12 +17,9 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.Wrapper
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.action.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewPopup
@@ -126,13 +123,20 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     reviewActions: CodeReviewActions,
     moreActionsGroup: DefaultActionGroup
   ): JComponent {
-    val submitButton = JButton(GitLabMergeRequestSubmitReviewAction(this, reviewFlowVm)).apply {
+    val cs = this
+    val submitButton = JButton(GitLabMergeRequestSubmitReviewAction(cs, reviewFlowVm)).apply {
       toolTipText = GitLabBundle.message("merge.request.review.submit.action.tooltip")
     }
-    val cs = this
     reviewFlowVm.submitReviewInputHandler = {
-      withContext(cs.coroutineContext) {
+      val result = cs.async {
         GitLabMergeRequestSubmitReviewPopup.show(it, submitButton, true)
+      }
+      try {
+        result.await()
+      }
+      catch (ce: CancellationException) {
+        result.cancel()
+        throw ce
       }
     }
 

@@ -104,11 +104,13 @@ internal class GitLabMergeRequestDiffViewModelImpl(
   override fun submitReview() {
     cs.launchNow {
       check(submittableReview.first() != null)
+      val handler = submitReviewInputHandler
+      check(handler != null)
       val ctx = currentCoroutineContext()
       val vm = GitLabMergeRequestSubmitReviewViewModelImpl(this, mergeRequest, currentUser) {
         ctx.cancel()
       }
-      submitReviewInputHandler?.invoke(vm)
+      handler.invoke(vm)
     }
   }
 }

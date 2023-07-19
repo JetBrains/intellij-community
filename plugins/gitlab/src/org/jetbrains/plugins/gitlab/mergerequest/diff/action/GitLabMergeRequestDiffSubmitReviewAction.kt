@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.util.ui.JButtonAction
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewPopup
 import javax.swing.JComponent
@@ -34,7 +36,9 @@ internal class GitLabMergeRequestDiffSubmitReviewAction
     val component = e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY) as JComponent
     // looks fishy but spares us the need to pass component to VM
     vm.submitReviewInputHandler = {
-      GitLabMergeRequestSubmitReviewPopup.show(it, component)
+      withContext(Dispatchers.Main) {
+        GitLabMergeRequestSubmitReviewPopup.show(it, component)
+      }
     }
     vm.submitReview()
   }
