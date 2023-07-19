@@ -28,11 +28,6 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
-    override fun bindToElement(ktReference: KtReference, element: PsiElement): PsiElement = when (ktReference) {
-        is KtSimpleNameReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.DELAYED_SHORTENING)
-        else -> throw IncorrectOperationException()
-    }
-
     override fun bindToElement(
         simpleNameReference: KtSimpleNameReference,
         element: PsiElement,

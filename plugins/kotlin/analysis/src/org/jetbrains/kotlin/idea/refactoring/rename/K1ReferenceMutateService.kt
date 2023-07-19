@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
@@ -30,6 +31,11 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
 class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
+    override fun bindToElement(ktReference: KtReference, element: PsiElement): PsiElement = when (ktReference) {
+        is KtSimpleNameReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.DELAYED_SHORTENING)
+        else -> throw IncorrectOperationException()
+    }
+
     override fun bindToFqName(
       simpleNameReference: KtSimpleNameReference,
       fqName: FqName,
