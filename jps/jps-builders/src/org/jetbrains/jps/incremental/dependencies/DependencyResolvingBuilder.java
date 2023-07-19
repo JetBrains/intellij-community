@@ -84,7 +84,13 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   public static final String RESOLUTION_SHA256_CHECKSUM_IGNORE_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.sha256.checksum.ignored";
   public static final String RESOLUTION_BIND_REPOSITORY_IGNORE_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.bind.repository.ignored";
   public static final String RESOLUTION_RETRY_DOWNLOAD_CORRUPTED_ZIP_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.download.corrupted.zip";
-  public static final String RESOLUTION_RETRY_DOWNLOAD_CORRUPTED_ZIP_LEGACY_PROPERTY = "org.jetbrains.idea.maven.aether.strictValidation"; // TODO remove, preserved for backward compatibility.
+
+  /**
+   * @deprecated Replace with {@link DependencyResolvingBuilder#RESOLUTION_RETRY_DOWNLOAD_CORRUPTED_ZIP_PROPERTY}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated(forRemoval = true)
+  public static final String RESOLUTION_RETRY_DOWNLOAD_CORRUPTED_ZIP_LEGACY_PROPERTY = "org.jetbrains.idea.maven.aether.strictValidation";
   public static final String RESOLUTION_REPORT_CORRUPTED_ZIP_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.report.corrupted.zip";
   public static final String RESOLUTION_REPORT_INVALID_SHA256_CHECKSUM_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.report.invalid.sha256.checksum";
   public static final String RESOLUTION_CORRUPTED_ARTIFACTS_REPORTS_DIRECTORY_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.corrupted.artifacts.directory";
