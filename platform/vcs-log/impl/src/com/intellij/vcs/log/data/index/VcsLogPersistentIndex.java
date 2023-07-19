@@ -425,7 +425,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
-      mySpan = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder("git-log-indexing").startSpan();
+      mySpan = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder("vcs-log-indexing").startSpan();
       myScope = mySpan.makeCurrent();
       myStartTime = getCurrentTimeMillis();
 
