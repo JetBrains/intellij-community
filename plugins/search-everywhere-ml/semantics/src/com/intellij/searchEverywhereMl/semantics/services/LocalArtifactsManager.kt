@@ -5,6 +5,9 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.util.download.DownloadableFileService
@@ -24,7 +27,11 @@ class LocalArtifactsManager {
 
   fun downloadArtifactsIfNecessary() {
     if (!checkArtifactsPresent()) {
-      downloadArtifacts()
+      ProgressManager.getInstance().run(object : Task.Backgroundable(null, ARTIFACTS_DOWNLOAD_TASK_NAME) {
+        override fun run(indicator: ProgressIndicator) {
+          downloadArtifacts()
+        }
+      })
     }
   }
 
@@ -36,10 +43,7 @@ class LocalArtifactsManager {
     Files.createDirectories(root.toPath())
     try {
       DownloadableFileService.getInstance().run {
-        createDownloader(
-          listOf(createFileDescription(MAVEN_ROOT, ARCHIVE_NAME)),
-          SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.models.download.name")
-        )
+        createDownloader(listOf(createFileDescription(MAVEN_ROOT, ARCHIVE_NAME)), ARTIFACTS_DOWNLOAD_TASK_NAME)
       }.download(root)
 
       modelArtifactsRoot.deleteRecursively()
@@ -58,13 +62,15 @@ class LocalArtifactsManager {
   companion object {
     const val SEMANTIC_SEARCH_RESOURCES_DIR = "semantic-search"
 
+    private val ARTIFACTS_DOWNLOAD_TASK_NAME = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.artifacts.download.name")
+
     private val MODEL_VERSION = Registry.stringValue("search.everywhere.ml.semantic.model.version")
     private val MAVEN_ROOT = "https://packages.jetbrains.team/maven/p/ml-search-everywhere/local-models/org/jetbrains/intellij/" +
                              "searcheverywhereMl/semantics/semantic-text-search/$MODEL_VERSION/semantic-text-search-$MODEL_VERSION.jar"
 
     private const val MODEL_ARTIFACTS_DIR = "models"
     private const val ARCHIVE_NAME = "semantic-text-search.jar"
-    private const val NOTIFICATION_GROUP_ID = "Semantic search notifications"
+    private const val NOTIFICATION_GROUP_ID = "Semantic search"
 
     fun getInstance() = service<LocalArtifactsManager>()
 
