@@ -216,10 +216,8 @@ internal class LoadedGitLabMergeRequest(
         throw HttpStatusErrorException("Unable to approve Merge Request", statusCode, mergeRequest.toString())
       }
 
-      mergeRequestDetailsState.update {
-        it.copy(approvedBy = mergeRequest.approvedBy,
-                userPermissions = it.userPermissions.copy(canApprove = false))
-      }
+      val updatedMergeRequest = api.graphQL.loadMergeRequest(glProject, mergeRequestDetailsState.value).body()!!
+      mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
     discussionsContainer.checkUpdates()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.APPROVE)
@@ -234,10 +232,8 @@ internal class LoadedGitLabMergeRequest(
         throw HttpStatusErrorException("Unable to unapprove Merge Request", statusCode, mergeRequest.toString())
       }
 
-      mergeRequestDetailsState.update {
-        it.copy(approvedBy = mergeRequest.approvedBy,
-                userPermissions = it.userPermissions.copy(canApprove = true))
-      }
+      val updatedMergeRequest = api.graphQL.loadMergeRequest(glProject, mergeRequestDetailsState.value).body()!!
+      mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
     discussionsContainer.checkUpdates()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UNAPPROVE)
