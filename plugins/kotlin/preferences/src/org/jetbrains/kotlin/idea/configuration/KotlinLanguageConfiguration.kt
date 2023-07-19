@@ -8,10 +8,12 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinPluginUpdater
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinLanguageConfigurationForm
+import org.jetbrains.kotlin.idea.configuration.ui.KotlinPluginKindSwitcherController
 import org.jetbrains.kotlin.idea.preferences.KotlinPreferencesBundle
 import javax.swing.JComponent
 
@@ -58,17 +60,27 @@ class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScrol
     @Nls
     private var installingStatus: String? = null
 
+    private val kotlinPluginKindSwitcherController: KotlinPluginKindSwitcherController? = KotlinPluginKindSwitcherController.createIfPluginSwitchIsPossible()
+
     override fun getId(): String = ID
 
     override fun getDisplayName(): String = KotlinPreferencesBundle.message("configuration.name.kotlin")
 
+
     override fun isModified() =
-        form.experimentalFeaturesPanel.isModified()
+        form.experimentalFeaturesPanel.isModified() ||
+                kotlinPluginKindSwitcherController?.isModified() == true
+
+    override fun reset() {
+        super.reset()
+        kotlinPluginKindSwitcherController?.reset()
+    }
 
     override fun apply() {
         // Selected channel is now saved automatically
 
         form.experimentalFeaturesPanel.applySelectedChanges()
+        kotlinPluginKindSwitcherController?.applyChanges()
     }
 
     private fun setInstalledVersion(@NlsSafe installedVersion: String?, @Nls installingStatus: String?) {
@@ -135,7 +147,19 @@ class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScrol
 
         checkForUpdates()
 
-        return form.mainPanel
+        return panel {
+            kotlinPluginKindSwitcherController?.let { kotlinPluginKindSwitcherController ->
+                row {
+                    cell(kotlinPluginKindSwitcherController.createComponent())
+                }
+            }
+
+            group(KotlinPreferencesBundle.message("plugin.updates.title")) {
+                row {
+                    cell(form.mainPanel)
+                }
+            }
+        }
     }
 
     private fun checkForUpdates() {

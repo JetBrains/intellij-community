@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.highlighting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension
-import org.jetbrains.kotlin.idea.base.highlighting.isNameHighlightingEnabled
 import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractHighlightingVisitor
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
@@ -16,7 +15,6 @@ internal class AnnotationEntryHighlightingVisitor(
     holder: HighlightInfoHolder
 ) : AbstractHighlightingVisitor(holder) {
     override fun visitAnnotationEntry(annotationEntry: KtAnnotationEntry) {
-        if (!annotationEntry.project.isNameHighlightingEnabled) return
         val range = annotationEntry.getTextRangeToHiglight() ?: return
         highlightName(annotationEntry.project, range, KotlinHighlightInfoTypeSemanticNames.ANNOTATION)
     }

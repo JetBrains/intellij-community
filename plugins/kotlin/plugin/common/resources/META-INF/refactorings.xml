@@ -7,6 +7,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <refactoring.helper implementation="org.jetbrains.kotlin.idea.refactoring.helper.KotlinOptimizeImportsRefactoringHelper" order="last"/>
+
     <vetoRenameCondition implementation="org.jetbrains.kotlin.idea.refactoring.KotlinVetoRenameCondition"/>
 
     <renameInputValidator implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinDeclarationRenameInputValidator"/>
@@ -59,7 +61,6 @@
     <refactoring.moveClassHandler
             order="first"
             implementation="org.jetbrains.kotlin.idea.refactoring.move.java.MoveKotlinAliasClassHandler"/>
-
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
@@ -72,5 +73,6 @@
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameOnSecondaryConstructorHandler"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameClassByCompanionObjectShortReferenceHandler"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameJavaSyntheticPropertyHandler"/>
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameImportAliasByReferenceHandler"/>
   </extensions>
 </idea-plugin>

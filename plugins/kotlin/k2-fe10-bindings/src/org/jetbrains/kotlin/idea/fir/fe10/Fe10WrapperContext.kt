@@ -3,10 +3,12 @@
 package org.jetbrains.kotlin.idea.fir.fe10
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeTokenFactory
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
@@ -113,15 +115,18 @@ class Fe10WrapperContextImpl(
     private val project: Project,
     private val ktElement: KtElement
 ) : Fe10WrapperContext {
-    private val token: KtLifetimeToken = KtLifetimeTokenForKtSymbolBasedWrappers(project, ktElement)
-
     private val module: KtModule = ProjectStructureProvider.getModule(project, ktElement, null)
 
+    @OptIn(KtAllowAnalysisOnEdt::class)
     override fun <R> withAnalysisSession(f: KtAnalysisSession.() -> R): R {
-        return analyze(ktElement, token.factory, f)
+        return allowAnalysisOnEdt {
+            analyze(ktElement, f)
+        }
     }
 
-    override val moduleDescriptor: ModuleDescriptor = KtSymbolBasedModuleDescriptorImpl(this, module, token)
+    override val moduleDescriptor: ModuleDescriptor = withAnalysisSession {
+        KtSymbolBasedModuleDescriptorImpl(this@Fe10WrapperContextImpl, module, token)
+    }
 
     override val builtIns: KotlinBuiltIns
         get() = incorrectImplementation { DefaultBuiltIns.Instance }
@@ -147,11 +152,9 @@ class Fe10WrapperContextImpl(
 
 }
 
-// I hope we'll find a way to use project and element later
 @Suppress("unused")
-private class KtLifetimeTokenForKtSymbolBasedWrappers(
+internal class KtLifetimeTokenForKtSymbolBasedWrappers(
     private val project: Project,
-    private val element: KtElement
 ) : KtLifetimeToken() {
 
     /**
@@ -172,7 +175,8 @@ private class KtLifetimeTokenForKtSymbolBasedWrappers(
     override val factory = KtLifetimeTokenForKtSymbolBasedWrappersFactory(this)
 }
 
-private class KtLifetimeTokenForKtSymbolBasedWrappersFactory(
+
+internal class KtLifetimeTokenForKtSymbolBasedWrappersFactory(
     private val token: KtLifetimeTokenForKtSymbolBasedWrappers
 ) : KtLifetimeTokenFactory() {
     override val identifier = KtLifetimeTokenForKtSymbolBasedWrappers::class

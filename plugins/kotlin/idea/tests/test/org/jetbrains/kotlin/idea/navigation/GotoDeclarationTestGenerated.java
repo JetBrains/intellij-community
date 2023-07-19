@@ -23,6 +23,11 @@ public class GotoDeclarationTestGenerated extends AbstractGotoDeclarationTest {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("dataClassToString.test")
+    public void testDataClassToString() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/dataClassToString.test");
+    }
+
     @TestMetadata("importAlias.test")
     public void testImportAlias() throws Exception {
         runTest("testData/navigation/gotoDeclaration/importAlias.test");

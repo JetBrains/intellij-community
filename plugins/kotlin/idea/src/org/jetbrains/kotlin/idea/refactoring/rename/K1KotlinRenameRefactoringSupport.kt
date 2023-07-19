@@ -17,12 +17,10 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.references.fe10.Fe10SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -36,10 +34,6 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         fallbackHandler: (UsageInfo) -> Unit
     ) {
         ForeignUsagesRenameProcessor.processAll(element, newName, usages, fallbackHandler)
-    }
-
-    override fun mapSetter(ktReference: PsiReference): PsiReference? {
-        return (ktReference as? SyntheticPropertyAccessorReference)?.takeIf { !it.getter }?.let { Fe10SyntheticPropertyAccessorReference(it.expression, getter = true) }
     }
 
     override fun prepareForeignUsagesRenaming(

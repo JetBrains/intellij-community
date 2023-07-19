@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.k2.structureView.AbstractKotlinGoToSuperDeclarationsHandlerTest
 import org.jetbrains.kotlin.idea.k2.surroundWith.AbstractKotlinFirSurroundWithTest
+import org.jetbrains.kotlin.idea.k2.unwrap.AbstractKotlinFirUnwrapRemoveTest
 import org.jetbrains.kotlin.testGenerator.model.*
 
 internal fun MutableTWorkspace.generateK2CodeInsightTests() {
@@ -33,6 +34,20 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
             model("../../../idea/tests/testData/codeInsight/surroundWith/functionLiteral", testMethodName = "doTestWithFunctionLiteralSurrounder")
             model("../../../idea/tests/testData/codeInsight/surroundWith/withIfExpression", testMethodName = "doTestWithSurroundWithIfExpression")
             model("../../../idea/tests/testData/codeInsight/surroundWith/withIfElseExpression", testMethodName = "doTestWithSurroundWithIfElseExpression")
+        }
+        testClass<AbstractKotlinFirUnwrapRemoveTest> {
+            model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/removeExpression", testMethodName = "doTestExpressionRemover")
+            model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapThen", testMethodName = "doTestThenUnwrapper")
+            model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapElse", testMethodName = "doTestElseUnwrapper")
+            model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/removeElse", testMethodName = "doTestElseRemover")
+            model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapLoop", testMethodName = "doTestLoopUnwrapper")
+            model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapTry", testMethodName = "doTestTryUnwrapper")
+            model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapCatch", testMethodName = "doTestCatchUnwrapper")
+            model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/removeCatch", testMethodName = "doTestCatchRemover")
+            model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapFinally", testMethodName = "doTestFinallyUnwrapper")
+            model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/removeFinally", testMethodName = "doTestFinallyRemover")
+            model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapLambda", testMethodName = "doTestLambdaUnwrapper")
+            model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter", testMethodName = "doTestFunctionParameterUnwrapper")
         }
     }
 }
