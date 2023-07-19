@@ -41,6 +41,8 @@ import com.intellij.spellchecker.grazie.dictionary.ExtendedWordListWithFrequency
 import com.intellij.spellchecker.grazie.dictionary.WordListAdapter
 import kotlinx.coroutines.*
 
+private const val MAX_WORD_LENGTH = 32
+
 @Service(Service.Level.PROJECT)
 internal class GrazieSpellCheckerEngine(
   project: Project,
@@ -140,6 +142,9 @@ internal class GrazieSpellCheckerEngine(
 
   override fun isCorrect(word: String): Boolean {
     val speller = speller ?: return true
+    if (word.length > MAX_WORD_LENGTH) {
+      return true
+    }
     if (speller.isAlien(word)) {
       return true
     }
@@ -148,6 +153,9 @@ internal class GrazieSpellCheckerEngine(
 
   override fun getSuggestions(word: String, maxSuggestions: Int, maxMetrics: Int): List<String> {
     if (!deferredSpeller.isCompleted) {
+      return emptyList()
+    }
+    if (word.length > MAX_WORD_LENGTH) {
       return emptyList()
     }
     return suggestionCache.get(SuggestionRequest(word, maxSuggestions))
