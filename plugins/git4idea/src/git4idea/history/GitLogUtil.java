@@ -21,6 +21,7 @@ import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
+import git4idea.telemetry.GitTelemetrySpan.Log;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -182,7 +183,7 @@ public final class GitLogUtil {
       handler.addParameters("--decorate=full");
       handler.endOptions();
 
-      runWithSpanThrows(TelemetryManager.getInstance().getTracer(VcsScope), "loading commit metadata", span -> {
+      runWithSpanThrows(TelemetryManager.getInstance().getTracer(VcsScope), Log.LoadingCommitMetadata.getName(), span -> {
         span.setAttribute("rootName", root.getName());
 
         GitLogOutputSplitter<GitLogRecord> handlerListener = new GitLogOutputSplitter<>(handler, parser, recordConsumer);

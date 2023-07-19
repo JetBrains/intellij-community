@@ -20,6 +20,7 @@ import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
 import git4idea.status.GitStagingAreaHolder;
+import git4idea.telemetry.GitTelemetrySpan;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -248,7 +249,8 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
 
   @NotNull
   private GitRepoInfo readRepoInfo() {
-    return computeWithSpan(TelemetryManager.getInstance().getTracer(VcsScopeKt.VcsScope), "reading Git repo info", span -> {
+    return computeWithSpan(TelemetryManager.getInstance().getTracer(VcsScopeKt.VcsScope),
+                           GitTelemetrySpan.Repository.ReadGitRepositoryInfo.getName(), span -> {
       span.setAttribute("repository", getShortRepositoryName(this));
 
       File configFile = myRepositoryFiles.getConfigFile();
