@@ -49,16 +49,16 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     return true
   }
 
-  override fun applyToIde(snapshot: SettingsSnapshot) {
+  override fun applyToIde(snapshot: SettingsSnapshot, settings: SettingsSyncState?) {
     // 1. update SettingsSyncSettings first to apply changes in categories
     val settingsSyncFileState = snapshot.fileStates.find { it.file == "$OPTIONS_DIRECTORY/${SettingsSyncSettings.FILE_SPEC}" }
-    if (settingsSyncFileState != null) {
-      writeStatesToAppConfig(listOf(settingsSyncFileState))
+    if (settings != null) {
+      LOG.info("applying sync settings from SettingsSyncState")
+      SettingsSyncSettings.getInstance().applyFromState(settings)
     }
-
-    if (SystemProperties.getBooleanProperty("settings.sync.test.fail.on.settings.apply", false)) {
-      if (Random.nextBoolean()) {
-        throw IllegalStateException("Applying settings failed")
+    else {
+      if (settingsSyncFileState != null) {
+        writeStatesToAppConfig(listOf(settingsSyncFileState))
       }
     }
 

@@ -24,7 +24,8 @@ sealed class SyncSettingsEvent {
   sealed class ExclusiveEvent : SyncSettingsEvent()
 
   class IdeChange(snapshot: SettingsSnapshot) : EventWithSnapshot(snapshot)
-  class CloudChange(snapshot: SettingsSnapshot, val serverVersionId: String?) : EventWithSnapshot(snapshot)
+  class CloudChange(snapshot: SettingsSnapshot, val serverVersionId: String?, val syncSettings: SettingsSyncState? = null)
+    : EventWithSnapshot(snapshot)
   object MustPushRequest : StandardEvent()
   object LogCurrentSettings : StandardEvent()
 

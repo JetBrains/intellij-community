@@ -2,7 +2,7 @@ package com.intellij.settingsSync.config
 
 import org.jetbrains.annotations.Nls
 
-internal interface SettingsSyncSubcategoryGroup {
+internal interface SyncSubcategoryGroup {
   fun getDescriptors() : List<SettingsSyncSubcategoryDescriptor>
 
   /**
