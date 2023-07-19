@@ -160,6 +160,16 @@ internal class PhmVcsLogStorageBackend(
         messages.put(commitId, details.fullMessage)
       }
 
+      private fun force() {
+        parents.force()
+        committers.force()
+        timestamps.force()
+        trigrams.flush()
+        users.flush()
+        paths.flush()
+        messages.force()
+      }
+
       override fun flush() = force()
       override fun close(performCommit: Boolean) = force()
       override fun interrupt() = force()
@@ -188,28 +198,6 @@ internal class PhmVcsLogStorageBackend(
     return missing
   }
 
-  fun force() {
-    parents.force()
-    committers.force()
-    timestamps.force()
-    trigrams.flush()
-    users.flush()
-    paths.flush()
-    messages.force()
-  }
-
-  override fun getMessage(commitId: Int): String? = messages.get(commitId)
-
-  override fun getCommitterForCommit(commitId: Int): VcsUser? {
-    val committer = committers.get(commitId)
-    if (committer != null) {
-      return users.getUserById(committer)
-    }
-    else {
-      return if (messages.containsMapping(commitId)) getAuthorForCommit(commitId) else null
-    }
-  }
-
   override fun getTimestamp(commitId: Int): LongArray? = timestamps.get(commitId)
 
   override fun getParents(commitId: Int): IntArray? = parents.get(commitId)
@@ -222,12 +210,12 @@ internal class PhmVcsLogStorageBackend(
     }.toMap()
   }
 
+  override fun getMessage(commitId: Int): String? = messages.get(commitId)
+
   @Throws(IOException::class)
   override fun processMessages(processor: (Int, String) -> Boolean) {
     messages.processKeysWithExistingMapping(Processor { commit -> processor(commit, messages.get(commit) ?: return@Processor true) })
   }
-
-  override fun getRename(parent: Int, child: Int): IntArray? = renames.get(intArrayOf(parent, child))
 
   override fun getCommitsForSubstring(string: String,
                                       candidates: IntSet?,
@@ -251,6 +239,26 @@ internal class PhmVcsLogStorageBackend(
       }
     }
   }
+
+  override fun getAuthorForCommit(commitId: Int): VcsUser? {
+    return users.getAuthorForCommit(commitId)
+  }
+
+  override fun getCommitterForCommit(commitId: Int): VcsUser? {
+    val committer = committers.get(commitId)
+    if (committer != null) {
+      return users.getUserById(committer)
+    }
+    else {
+      return if (messages.containsMapping(commitId)) getAuthorForCommit(commitId) else null
+    }
+  }
+
+  override fun getCommitsForUsers(users: Set<VcsUser>): IntSet {
+    return this.users.getCommitsForUsers(users)
+  }
+
+  override fun getRename(parent: Int, child: Int): IntArray? = renames.get(intArrayOf(parent, child))
 
   @Throws(IOException::class)
   override fun findRename(parent: Int, child: Int, root: VirtualFile, path: FilePath, isChildPath: Boolean): EdgeData<FilePath?>? {
@@ -280,8 +288,8 @@ internal class PhmVcsLogStorageBackend(
     paths.iterateCommitIdsAndValues(pathId, consumer)
   }
 
-  override fun getPathsEncoder(): PathsEncoder =
-    PathsEncoder { root, relativePath, _ ->
+  override fun getPathsEncoder(): PathsEncoder {
+    return PathsEncoder { root, relativePath, _ ->
       try {
         paths.getPathId(LightFilePath(root, relativePath))
       }
@@ -290,13 +298,6 @@ internal class PhmVcsLogStorageBackend(
         return@PathsEncoder 0
       }
     }
-
-  override fun getAuthorForCommit(commitId: Int): VcsUser? {
-    return users.getAuthorForCommit(commitId)
-  }
-
-  override fun getCommitsForUsers(users: Set<VcsUser>): IntSet {
-    return this.users.getCommitsForUsers(users)
   }
 
   private inline fun catchAndWarn(runnable: () -> Unit) {
