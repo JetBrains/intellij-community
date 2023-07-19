@@ -33,7 +33,7 @@
                  description="Highlight semantic items in Search Everywhere"
                  key="search.everywhere.ml.semantic.highlight.items"/>
 
-    <registryKey defaultValue="0.0.1"
+    <registryKey defaultValue="0.0.2"
                  description="Semantic text search model version"
                  key="search.everywhere.ml.semantic.model.version"/>
 
