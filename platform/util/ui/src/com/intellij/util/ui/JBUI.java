@@ -4,7 +4,6 @@ package com.intellij.util.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.border.NamedBorderKt;
@@ -1631,9 +1630,9 @@ public final class JBUI {
     }
 
     public interface Window {
-      static Border getBorder(boolean undecoratedWindow) {
+      static Border getBorder(boolean useUndecoratedBorderIfNoBorder) {
         Border result = UIManager.getBorder("Window.border");
-        if (result == null && undecoratedWindow && SystemInfoRt.isXWindow && Registry.is("ide.linux.use.undecorated.border")) {
+        if (result == null && useUndecoratedBorderIfNoBorder) {
           result = UIManager.getBorder("Window.undecorated.border");
         }
         return result;
