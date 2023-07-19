@@ -10,6 +10,7 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.io.copyDir
@@ -27,7 +28,7 @@ typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
  */
 class PluginLayout private constructor(val mainModule: String,
                                        mainJarNameWithoutExtension: String,
-                                       internal val auto: Boolean = false) : BaseLayout() {
+                                       @Internal @JvmField val auto: Boolean = false) : BaseLayout() {
   constructor(mainModule: String, auto: Boolean = false) : this(
     mainModule = mainModule,
     mainJarNameWithoutExtension = convertModuleNameToFileName(mainModule),
