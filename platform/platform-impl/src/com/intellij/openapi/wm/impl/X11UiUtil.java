@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
@@ -224,8 +225,30 @@ public final class X11UiUtil {
 
   private static final @Nullable Xlib X11 = Xlib.getInstance();
 
-  // full-screen support
+  /**
+   * Returns true if the window doesn't have decoration and shadow, and therefore should be separated from other environment by a border.
+   * There is no universal solution for all Window Managers, so we suppose that all undecorated windows don't have shadow
+   */
+  public static boolean useUndecoratedBorder(@NotNull Window window) {
+    if (!SystemInfoRt.isXWindow || !Registry.is("ide.linux.use.undecorated.border")) {
+      return false;
+    }
 
+    boolean undecorated;
+    if (window instanceof Dialog dialog) {
+      undecorated = dialog.isUndecorated();
+    }
+    else if (window instanceof Frame frame) {
+      undecorated = frame.isUndecorated();
+    }
+    else {
+      undecorated = false;
+    }
+
+    return undecorated;
+  }
+
+  // full-screen support
   public static boolean isFullScreenSupported() {
     if (X11 == null) return false;
 
