@@ -42,8 +42,6 @@ internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage
   @Throws(IOException::class)
   fun processMessages(processor: (Int, String) -> Boolean)
 
-  fun getRename(parent: Int, child: Int): IntArray?
-
   fun createWriter(): VcsLogWriter
 
   fun getCommitsForSubstring(string: String,

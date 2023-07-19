@@ -258,11 +258,9 @@ internal class PhmVcsLogStorageBackend(
     return this.users.getCommitsForUsers(users)
   }
 
-  override fun getRename(parent: Int, child: Int): IntArray? = renames.get(intArrayOf(parent, child))
-
   @Throws(IOException::class)
   override fun findRename(parent: Int, child: Int, root: VirtualFile, path: FilePath, isChildPath: Boolean): EdgeData<FilePath?>? {
-    val renames = getRename(parent, child)
+    val renames = renames.get(intArrayOf(parent, child))
     if (renames == null || renames.isEmpty()) {
       return null
     }

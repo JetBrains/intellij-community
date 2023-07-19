@@ -306,13 +306,6 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     }
   }
 
-  override fun getRename(parent: Int, child: Int): IntArray {
-    return connectionManager.selectRename.use { statement, binder ->
-      binder.bind(parent, child)
-      readIntArray(statement)
-    }
-  }
-
   override fun getCommitsForSubstring(string: String,
                                       candidates: IntSet?,
                                       noTrigramSources: MutableList<String>,
@@ -461,7 +454,10 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   }
 
   override fun findRename(parent: Int, child: Int, root: VirtualFile, path: FilePath, isChildPath: Boolean): EdgeData<FilePath?>? {
-    val renames = getRename(parent, child)
+    val renames = connectionManager.selectRename.use { statement, binder ->
+      binder.bind(parent, child)
+      readIntArray(statement)
+    }
     if (renames.isEmpty()) {
       return null
     }
