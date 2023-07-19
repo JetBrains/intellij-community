@@ -75,7 +75,6 @@ class WasmPlatformKindResolution : IdePlatformKindResolution {
             metadataFactories.DefaultDescriptorFactory,
             metadataFactories.DefaultPackageFragmentsFactory,
             metadataFactories.flexibleTypeDeserializer,
-            metadataFactories.platformDependentTypeTransformer
         )
     }
 }
