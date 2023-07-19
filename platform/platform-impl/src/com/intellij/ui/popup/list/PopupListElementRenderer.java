@@ -296,9 +296,12 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
       int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
       Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
+      int extra = hasNextIcon || hasInlineButtons ? leftRightInset - myButtonsSeparator.getPreferredSize().width : leftRightInset;
+      //noinspection UseDPIAwareBorders
+      myShortcutLabel.setBorder(new EmptyBorder(0, 0, 0, extra));
       //noinspection UseDPIAwareBorders
       selectablePanel.setBorder(
-        new EmptyBorder(0, innerInsets.left + leftRightInset, 0, hasNextIcon || hasInlineButtons ? leftRightInset : leftRightInset + myButtonsSeparator.getPreferredSize().width));
+        new EmptyBorder(0, innerInsets.left + leftRightInset, 0, leftRightInset));
     }
 
     if (step instanceof BaseListPopupStep) {
