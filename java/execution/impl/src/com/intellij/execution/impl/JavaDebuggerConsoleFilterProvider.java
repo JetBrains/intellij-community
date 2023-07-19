@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
@@ -66,6 +66,7 @@ public class JavaDebuggerConsoleFilterProvider implements ConsoleFilterProvider 
 
     @Override
     public EditorCustomElementRenderer createInlayRenderer(Editor editor) {
+      JavaDebuggerActionsCollector.attachFromConsoleInlayShown.log();
       PresentationFactory factory = new PresentationFactory(editor);
       InlayPresentation presentation = factory.referenceOnHover(
         factory.roundWithBackground(factory.smallText("Attach debugger")),
