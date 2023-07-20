@@ -7,6 +7,9 @@ import com.intellij.psi.xml.XmlAttributeValue
 
 internal class HtmlAnchorSymbolDeclarationProvider: PsiSymbolDeclarationProvider {
   override fun getDeclarations(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolDeclaration> {
+    if (!element.isValid) {
+      return emptyList()
+    }
     if (!isInsideInjectedHtml(element) || element !is XmlAttributeValue) {
       return emptyList()
     }
