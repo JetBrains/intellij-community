@@ -113,6 +113,15 @@ object EarlyAccessRegistryManager {
     saveConfigFile(map, configFile) { map.get(it) }
   }
 
+  /**
+   * Updates value for registry property which may be accessed via this class. 
+   * Use this function instead of the default [RegistryValue.setValue] to ensure that the updated value will be saved to [fileName]. 
+   */
+  fun setBoolean(key: String, value: Boolean) {
+    lazyMap.value[key] = value.toString()
+    ApplicationManager.getApplication().serviceIfCreated<RegistryManager>()?.get(key)?.setValue(value)
+  }
+  
   fun syncAndFlush() {
     // Why do we sync? get (not yet loaded) -> not changed by a user but actually in a registry -> no explicit put
     // Why maybe in a registry but not in our store?
