@@ -55,6 +55,7 @@ object DistributedTestModel : Ext(TestRoot) {
     field("testClassName", string.nullable)
     field("testMethodName", string.nullable)
     field("traceCategories", immutableList(string))
+    field("debugCategories", immutableList(string))
     property("ready", bool.nullable)
     signal("sendException", RdTestSessionException).async
     signal("shutdown", void)

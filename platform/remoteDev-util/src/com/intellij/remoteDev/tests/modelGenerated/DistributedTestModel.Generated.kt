@@ -54,7 +54,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = -4014616248337957052L
+        const val serializationHash = -4063022036171224345L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -211,6 +211,7 @@ class RdTestSession private constructor(
     val testClassName: String?,
     val testMethodName: String?,
     val traceCategories: List<String>,
+    val debugCategories: List<String>,
     private val _ready: RdProperty<Boolean?>,
     private val _sendException: RdSignal<RdTestSessionException>,
     private val _shutdown: RdSignal<Unit>,
@@ -232,6 +233,7 @@ class RdTestSession private constructor(
             val testClassName = buffer.readNullable { buffer.readString() }
             val testMethodName = buffer.readNullable { buffer.readString() }
             val traceCategories = buffer.readList { buffer.readString() }
+            val debugCategories = buffer.readList { buffer.readString() }
             val _ready = RdProperty.read(ctx, buffer, __BoolNullableSerializer)
             val _sendException = RdSignal.read(ctx, buffer, RdTestSessionException)
             val _shutdown = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
@@ -240,7 +242,7 @@ class RdTestSession private constructor(
             val _runNextAction = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, __StringNullableSerializer)
             val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
             val _isResponding = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _closeProject, _closeProjectIfOpened, _runNextAction, _makeScreenshot, _isResponding).withId(_id)
+            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, debugCategories, _ready, _sendException, _shutdown, _closeProject, _closeProjectIfOpened, _runNextAction, _makeScreenshot, _isResponding).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
@@ -249,6 +251,7 @@ class RdTestSession private constructor(
             buffer.writeNullable(value.testClassName) { buffer.writeString(it) }
             buffer.writeNullable(value.testMethodName) { buffer.writeString(it) }
             buffer.writeList(value.traceCategories) { v -> buffer.writeString(v) }
+            buffer.writeList(value.debugCategories) { v -> buffer.writeString(v) }
             RdProperty.write(ctx, buffer, value._ready)
             RdSignal.write(ctx, buffer, value._sendException)
             RdSignal.write(ctx, buffer, value._shutdown)
@@ -298,12 +301,14 @@ class RdTestSession private constructor(
         agentInfo: RdAgentInfo,
         testClassName: String?,
         testMethodName: String?,
-        traceCategories: List<String>
+        traceCategories: List<String>,
+        debugCategories: List<String>
     ) : this(
         agentInfo,
         testClassName,
         testMethodName,
         traceCategories,
+        debugCategories,
         RdProperty<Boolean?>(null, __BoolNullableSerializer),
         RdSignal<RdTestSessionException>(RdTestSessionException),
         RdSignal<Unit>(FrameworkMarshallers.Void),
@@ -324,6 +329,7 @@ class RdTestSession private constructor(
             print("testClassName = "); testClassName.print(printer); println()
             print("testMethodName = "); testMethodName.print(printer); println()
             print("traceCategories = "); traceCategories.print(printer); println()
+            print("debugCategories = "); debugCategories.print(printer); println()
             print("ready = "); _ready.print(printer); println()
             print("sendException = "); _sendException.print(printer); println()
             print("shutdown = "); _shutdown.print(printer); println()
@@ -342,6 +348,7 @@ class RdTestSession private constructor(
             testClassName,
             testMethodName,
             traceCategories,
+            debugCategories,
             _ready.deepClonePolymorphic(),
             _sendException.deepClonePolymorphic(),
             _shutdown.deepClonePolymorphic(),

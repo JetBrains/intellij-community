@@ -238,8 +238,9 @@ open class DistributedTestHost {
 
         // Initialize loggers
         DebugLogManager.getInstance().applyCategories(
-          session.traceCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.TRACE) }
-        )
+            session.traceCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.TRACE)} +
+            session.debugCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.DEBUG) }
+          )
         logger.info("Test session ready!")
         session.ready.value = true
       }
