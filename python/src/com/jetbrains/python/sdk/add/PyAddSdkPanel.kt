@@ -29,6 +29,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanel
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
@@ -68,6 +69,8 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
   open var newProjectPath: String? = null
 
   override fun getOrCreateSdk(): Sdk? = sdk
+
+  open fun getStatisticInfo(): InterpreterStatisticsInfo? = null
 
   override fun onSelected(): Unit = Unit
 
