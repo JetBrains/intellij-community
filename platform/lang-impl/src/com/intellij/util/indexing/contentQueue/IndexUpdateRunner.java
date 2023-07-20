@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.util.Collection;
 import java.util.List;
@@ -472,7 +473,9 @@ public final class IndexUpdateRunner {
       // It is possible to not observe file system change until refresh finish, we handle missed file properly anyway.
       FileBasedIndexImpl.LOG.debug(fileUrl, e);
     }
-    else if (cause instanceof IndexOutOfBoundsException || cause instanceof InvalidVirtualFileAccessException) {
+    else if (cause instanceof IndexOutOfBoundsException ||
+             cause instanceof InvalidVirtualFileAccessException ||
+             cause instanceof IOException) {
       FileBasedIndexImpl.LOG.info(fileUrl, e);
     }
     else {
