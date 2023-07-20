@@ -8,6 +8,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -55,6 +56,10 @@ public class MainPassesRunner {
   }
 
   public @NotNull Map<Document, List<HighlightInfo>> runMainPasses(@NotNull List<? extends VirtualFile> filesToCheck) {
+    return runMainPasses(filesToCheck, null);
+  }
+  @NotNull
+  public Map<Document, List<HighlightInfo>> runMainPasses(@NotNull List<? extends VirtualFile> filesToCheck, @Nullable HighlightSeverity minimumSeverity) {
     Map<Document, List<HighlightInfo>> result = new ConcurrentHashMap<>();
     if (ApplicationManager.getApplication().isDispatchThread()) {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -66,7 +71,7 @@ public class MainPassesRunner {
         @Override
         public void run(@NotNull ProgressIndicator progress) {
           try {
-            runMainPasses(filesToCheck, result, progress);
+            runMainPasses(filesToCheck, result, progress, minimumSeverity);
           }
           catch (ProcessCanceledException e) {
             LOG.info("Code analysis canceled", e);
@@ -83,7 +88,7 @@ public class MainPassesRunner {
       }
     }
     else if (ProgressManager.getInstance().hasProgressIndicator()) {
-      runMainPasses(filesToCheck, result, ProgressManager.getInstance().getProgressIndicator());
+      runMainPasses(filesToCheck, result, ProgressManager.getInstance().getProgressIndicator(), minimumSeverity);
     }
     else {
       throw new RuntimeException("Must run from Event Dispatch Thread or with a progress indicator");
@@ -92,7 +97,10 @@ public class MainPassesRunner {
     return result;
   }
 
-  private void runMainPasses(@NotNull List<? extends VirtualFile> files, @NotNull Map<? super Document, ? super List<HighlightInfo>> result, @NotNull ProgressIndicator progress) {
+  private void runMainPasses(@NotNull List<? extends VirtualFile> files,
+                             @NotNull Map<? super Document, ? super List<HighlightInfo>> result,
+                             @NotNull ProgressIndicator progress,
+                             @Nullable HighlightSeverity minimumSeverity) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     progress.setIndeterminate(false);
     while (true) {
@@ -126,7 +134,7 @@ public class MainPassesRunner {
           VirtualFile file = pair.getFirst();
           progress.setText(ReadAction.compute(() -> ProjectUtil.calcRelativeToProjectPath(file, myProject)));
           DaemonProgressIndicator daemonIndicator = pair.getSecond();
-          runMainPasses(file, result, daemonIndicator);
+          runMainPasses(file, result, daemonIndicator, minimumSeverity);
           int completed = filesCompleted.incrementAndGet();
           progress.setFraction((double)completed / files.size());
           return true;
@@ -147,7 +155,8 @@ public class MainPassesRunner {
 
   private void runMainPasses(@NotNull VirtualFile file,
                              @NotNull Map<? super Document, ? super List<HighlightInfo>> result,
-                             @NotNull DaemonProgressIndicator daemonIndicator) {
+                             @NotNull DaemonProgressIndicator daemonIndicator,
+                             @Nullable HighlightSeverity minimumSeverity) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(file));
     Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
@@ -155,8 +164,9 @@ public class MainPassesRunner {
       return;
     }
     ProperTextRange range = ProperTextRange.create(0, document.getTextLength());
-    HighlightingSessionImpl.createHighlightingSession(psiFile, daemonIndicator, null, range, CanISilentlyChange.Result.UH_UH,
-                                                      0);
+    HighlightingSessionImpl session = HighlightingSessionImpl.createHighlightingSession(psiFile, daemonIndicator, null,
+                                                                                        range, CanISilentlyChange.Result.UH_UH, 0);
+    session.setMinimumSeverity(minimumSeverity);
     ProgressManager.getInstance().runProcess(() -> runMainPasses(daemonIndicator, result, psiFile, document), daemonIndicator);
   }
 

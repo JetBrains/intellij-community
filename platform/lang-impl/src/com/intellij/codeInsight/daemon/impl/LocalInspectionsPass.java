@@ -109,11 +109,13 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       InspectionRunner runner =
         new InspectionRunner(getFile(), myRestrictRange, myPriorityRange, myInspectInjectedPsi, true, progress, myIgnoreSuppressed,
                              myProfileWrapper, mySuppressedElements);
-      List<? extends InspectionRunner.InspectionContext> contexts = runner.inspect(toolWrappers, true,
+      List<? extends InspectionRunner.InspectionContext> contexts = runner.inspect(toolWrappers,
+                                                                                   myHighlightingSession.getMinimumSeverity(),
+                                                                                   true,
                                                                                    applyIncrementallyCallback,
                                                                                    afterInsideProcessedCallback,
                                                                                    afterOutsideProcessedCallback,
-                                                                                   wrapper -> !wrapper.getTool().isSuppressedFor(myFile));
+                                                                                         wrapper -> !wrapper.getTool().isSuppressedFor(myFile));
       ProgressManager.checkCanceled();
       myInfos = createHighlightsFromContexts(contexts);
     }

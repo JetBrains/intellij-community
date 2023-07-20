@@ -39,11 +39,22 @@ public /*abstract*/ class AnnotationSession implements UserDataHolder {
   }
 
   @Override
-  public <T> @Nullable T getUserData(@NotNull Key<T> key) {
+  public /*abstract*/ <T> @Nullable T getUserData(@NotNull Key<T> key) {
     return null;
   }
 
   @Override
-  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+  public /*abstract*/ <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+  }
+
+  /**
+   * Minimum Severity is a hint that suggests what highlighting level is requested from this annotator.
+   * For example, "code smell detector" called on VCS commit might request error/warnings only and ignore INFORMATION.
+   * Knowing that, the corresponding annotator might react by skipping part of (the potentially expensive) work.
+   * For example, spellchecker plugin might want to skip running itself altogether if minimumSeverity = WARNING.
+   * This hint is only a hint, meaning that the annotator might choose to ignore it.
+   */
+  public /*abstract*/ HighlightSeverity getMinimumSeverity() {
+    return null;
   }
 }

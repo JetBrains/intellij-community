@@ -2,20 +2,25 @@
 
 package com.intellij.codeInspection;
 
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class LocalInspectionToolSession extends UserDataHolderBase {
   private final PsiFile myFile;
   private final TextRange myPriorityRange;
   private final TextRange myRestrictRange;
+  private final HighlightSeverity myMinimumSeverity;
 
-  LocalInspectionToolSession(@NotNull PsiFile file, @NotNull TextRange priorityRange, @NotNull TextRange restrictRange) {
+  LocalInspectionToolSession(@NotNull PsiFile file, @NotNull TextRange priorityRange, @NotNull TextRange restrictRange,
+                             @Nullable HighlightSeverity minimumSeverity) {
     myFile = file;
     myPriorityRange = priorityRange;
     myRestrictRange = restrictRange;
+    myMinimumSeverity = minimumSeverity;
   }
 
   public @NotNull PsiFile getFile() {
@@ -35,5 +40,16 @@ public class LocalInspectionToolSession extends UserDataHolderBase {
    */
   public @NotNull TextRange getRestrictRange() {
     return myRestrictRange;
+  }
+
+  /**
+   * Minimum Severity is a hint that suggests what highlighting level is requested from this inspection.
+   * For example, "code smell detector" called on VCS commit might request error/warnings only and ignore INFORMATION.
+   * Knowing that, the corresponding inspection might react by skipping part of (the potentially expensive) work.
+   * For example, spellchecker plugin might want to skip running itself altogether if minimumSeverity = WARNING.
+   * This hint is only a hint, meaning that the inspection might choose to ignore it.
+   */
+  public HighlightSeverity getMinimumSeverity() {
+    return myMinimumSeverity;
   }
 }

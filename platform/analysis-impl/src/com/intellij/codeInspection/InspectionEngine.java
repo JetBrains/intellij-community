@@ -13,6 +13,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -221,9 +222,10 @@ public final class InspectionEngine {
   public static void withSession(@NotNull PsiFile file,
                                  @NotNull TextRange restrictRange,
                                  @NotNull TextRange priorityRange,
+                                 @Nullable HighlightSeverity minimumSeverity,
                                  boolean isOnTheFly,
                                  @NotNull Consumer<? super LocalInspectionToolSession> runnable) {
-    LocalInspectionToolSession session = new LocalInspectionToolSession(file, priorityRange, restrictRange);
+    LocalInspectionToolSession session = new LocalInspectionToolSession(file, priorityRange, restrictRange, minimumSeverity);
     runnable.accept(session);
   }
 
@@ -240,7 +242,7 @@ public final class InspectionEngine {
                                                                                                    // when returned true -> add to the holder, false -> do not add to the holder
                                                                                                    @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> resultDescriptors = new ConcurrentHashMap<>();
-    withSession(file, restrictRange, restrictRange, isOnTheFly, session -> {
+    withSession(file, restrictRange, restrictRange, HighlightSeverity.INFORMATION, isOnTheFly, session -> {
       InspectListener publisher = file.getProject().getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
       List<LocalInspectionToolWrapper> filtered = filterToolsApplicableByLanguage(toolWrappers, elementDialectIds);
       Processor<LocalInspectionToolWrapper> processor = toolWrapper -> {

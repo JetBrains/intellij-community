@@ -90,6 +90,7 @@ final class InspectionRunner {
   }
 
   @NotNull List<? extends InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+                                                     @Nullable HighlightSeverity minimumSeverity,
                                                      boolean addRedundantSuppressions,
                                                      @NotNull BiPredicate<? super ProblemDescriptor, ? super LocalInspectionToolWrapper> applyIncrementallyCallback,
                                                      @NotNull Consumer<? super InspectionContext> afterInsideProcessedCallback,
@@ -112,7 +113,7 @@ final class InspectionRunner {
 
     List<InspectionContext> init = new ArrayList<>(applicableByLanguage.size());
     List<InspectionContext> redundantContexts = new ArrayList<>();
-    InspectionEngine.withSession(myPsiFile, myRestrictRange, TextRangeScalarUtil.create(finalPriorityRange), myIsOnTheFly, session -> {
+    InspectionEngine.withSession(myPsiFile, myRestrictRange, TextRangeScalarUtil.create(finalPriorityRange), minimumSeverity, myIsOnTheFly, session -> {
       long start = System.nanoTime();
       for (LocalInspectionToolWrapper wrapper : applicableByLanguage) {
         if (enabledToolsPredicate == null || enabledToolsPredicate.value(wrapper)) {
@@ -126,7 +127,7 @@ final class InspectionRunner {
       // injected -> host
       Map<PsiFile, PsiElement> foundInjected = createInjectedFileMap();
       InspectionContext TOMB_STONE = createTombStone();
-      visitElements(init, inside, true, finalPriorityRange, TOMB_STONE, afterInsideProcessedCallback, foundInjected, injectedContexts,
+      visitElements(session, init, inside, true, finalPriorityRange, TOMB_STONE, afterInsideProcessedCallback, foundInjected, injectedContexts,
                     toolWrappers, applyIncrementallyCallback, enabledToolsPredicate);
 
       Consumer<InspectionContext> afterOutside = context -> {
@@ -135,7 +136,7 @@ final class InspectionRunner {
               context.tool.getTool().inspectionFinished(session, holder);
               afterOutsideProcessedCallback.accept(context);
       };
-      visitElements(init, outside, false, finalPriorityRange, TOMB_STONE, afterOutside, foundInjected, injectedContexts,
+      visitElements(session, init, outside, false, finalPriorityRange, TOMB_STONE, afterOutside, foundInjected, injectedContexts,
                     toolWrappers, empty(), enabledToolsPredicate);
       reportIdsOfInspectionsReportedAnyProblemToFUS(init);
 
@@ -264,14 +265,15 @@ final class InspectionRunner {
     List<LocalInspectionToolWrapper> wrappers = Collections.singletonList(new LocalInspectionToolWrapper(localTool));
     InspectionRunner runner = new InspectionRunner(myPsiFile, myRestrictRange, myPriorityRange, myInspectInjected, true, myProgress, false,
                                                    myInspectionProfileWrapper, mySuppressedElements);
-    result.addAll(runner.inspect(wrappers, false, empty(), emptyCallback(), emptyCallback(), null));
+    result.addAll(runner.inspect(wrappers, HighlightSeverity.WARNING, false, empty(), emptyCallback(), emptyCallback(), null));
   }
 
   private static @NotNull Consumer<InspectionContext> emptyCallback() { return __ -> { }; }
 
   private static @NotNull BiPredicate<ProblemDescriptor, LocalInspectionToolWrapper> empty() { return (_1, _2) -> true; }
 
-  private void visitElements(@NotNull List<? extends InspectionContext> init,
+  private void visitElements(@NotNull LocalInspectionToolSession session,
+                             @NotNull List<? extends InspectionContext> init,
                              @NotNull List<? extends PsiElement> elements,
                              boolean inVisibleRange,
                              long finalPriorityRange,
@@ -285,7 +287,7 @@ final class InspectionRunner {
     processInOrder(init, elements, inVisibleRange, finalPriorityRange, TOMB_STONE, afterProcessCallback);
 
     if (myInspectInjected && InjectionUtils.shouldInspectInjectedFiles(myPsiFile)) {
-      inspectInjectedPsi(elements, toolWrappers, foundInjected, injectedInsideContexts, applyIncrementallyCallback, enabledToolsPredicate);
+      inspectInjectedPsi(session, elements, toolWrappers, foundInjected, injectedInsideContexts, applyIncrementallyCallback, enabledToolsPredicate);
     }
   }
 
@@ -374,7 +376,8 @@ final class InspectionRunner {
     return null;
   }
 
-  private void inspectInjectedPsi(@NotNull List<? extends PsiElement> elements,
+  private void inspectInjectedPsi(@NotNull LocalInspectionToolSession session,
+                                  @NotNull List<? extends PsiElement> elements,
                                   @NotNull List<? extends LocalInspectionToolWrapper> wrappers,
                                   @NotNull Map<? super PsiFile, PsiElement> injectedToHost,
                                   @NotNull List<? super InspectionContext> outInjectedContexts,
@@ -415,7 +418,9 @@ final class InspectionRunner {
              InspectionRunner injectedRunner =
                new InspectionRunner(injectedPsi, injectedPsi.getTextRange(), injectedPsi.getTextRange(), false, myIsOnTheFly, myProgress,
                                     myIgnoreSuppressed, myInspectionProfileWrapper, mySuppressedElements);
-             List<? extends InspectionContext> injectedContexts = injectedRunner.inspect(wrappers, true, cc, emptyCallback(), emptyCallback(), enabledToolsPredicate);
+             List<? extends InspectionContext> injectedContexts = injectedRunner.inspect(
+               wrappers, session.getMinimumSeverity(), true, cc,
+               emptyCallback(), emptyCallback(), enabledToolsPredicate);
              outInjectedContexts.addAll(injectedContexts);
            }
            return true;

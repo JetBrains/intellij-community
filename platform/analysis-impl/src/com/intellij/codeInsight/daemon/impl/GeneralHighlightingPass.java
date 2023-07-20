@@ -470,11 +470,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   protected @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile file) {
     HighlightInfoFilter[] filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions();
     EditorColorsScheme actualScheme = getColorsScheme() == null ? EditorColorsManager.getInstance().getGlobalScheme() : getColorsScheme();
-    return new HighlightInfoHolder(file, filters) {
+    HighlightInfoHolder infoHolder = new HighlightInfoHolder(file, filters) {
       @Override
       public @NotNull TextAttributesScheme getColorsScheme() {
         return actualScheme;
       }
+
       @Override
       public boolean add(@Nullable HighlightInfo info) {
         boolean added = super.add(info);
@@ -484,6 +485,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         return added;
       }
     };
+    AnnotationSessionImpl annotationSession = (AnnotationSessionImpl)infoHolder.getAnnotationSession();
+    HighlightSeverity minimumSeverity = ((HighlightingSessionImpl)HighlightingSessionImpl.getFromCurrentIndicator(file)).getMinimumSeverity();
+    annotationSession.setMinimumSeverity(minimumSeverity);
+    return infoHolder;
   }
 
   void queueInfoToUpdateIncrementally(@NotNull HighlightInfo info, int group) {

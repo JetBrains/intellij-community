@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.lang.annotation.AnnotationSession;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
@@ -17,8 +18,9 @@ import java.util.function.Function;
 
 @ApiStatus.Internal
 public class AnnotationSessionImpl extends AnnotationSession {
-  private static final Key<TextRange> VR = Key.create("VR");
   private final UserDataHolder myDataHolder = new UserDataHolderBase();
+  private volatile TextRange myPriorityRange;
+  private volatile HighlightSeverity myMinimumSeverity;
 
   @ApiStatus.Internal
   AnnotationSessionImpl(@NotNull PsiFile file) {
@@ -30,12 +32,12 @@ public class AnnotationSessionImpl extends AnnotationSession {
    * Usually this priority range corresponds to the range visible on screen.
    */
   public @NotNull TextRange getPriorityRange() {
-    return Objects.requireNonNullElseGet(getUserData(VR), ()->getFile().getTextRange());
+    return Objects.requireNonNullElseGet(myPriorityRange, ()->getFile().getTextRange());
   }
 
   @ApiStatus.Internal
   public void setVR(@NotNull TextRange range) {
-    putUserData(VR, range);
+    myPriorityRange = range;
   }
 
   @Override
@@ -46,6 +48,15 @@ public class AnnotationSessionImpl extends AnnotationSession {
   @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     myDataHolder.putUserData(key, value);
+  }
+
+  public void setMinimumSeverity(@Nullable HighlightSeverity severity) {
+    myMinimumSeverity = severity;
+  }
+
+  @Override
+  public HighlightSeverity getMinimumSeverity() {
+    return myMinimumSeverity;
   }
 
   public static <T> T computeWithSession(@NotNull PsiFile psiFile, boolean batchMode, @NotNull Function<? super AnnotationHolderImpl, T> runnable) {

@@ -499,7 +499,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
 
   }
-  private static abstract class MyFegnaInspection extends LocalInspectionTool {
+  static abstract class MyFegnaInspection extends LocalInspectionTool {
     @Nls
     @NotNull
     @Override
