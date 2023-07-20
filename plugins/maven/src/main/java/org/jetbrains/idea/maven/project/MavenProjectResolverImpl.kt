@@ -94,7 +94,8 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
     process.setText2("")
     val explicitProfiles = tree.explicitProfiles
     val files: Collection<VirtualFile> = mavenProjects.map { it.file }
-    val results = MavenProjectReader(myProject).resolveProject(
+    val results = MavenProjectResolutionUtil.resolveProject(
+      MavenProjectReader(myProject),
       generalSettings,
       embedder,
       files,

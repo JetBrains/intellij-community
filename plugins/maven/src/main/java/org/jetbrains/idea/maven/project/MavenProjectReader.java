@@ -1,22 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.ProfileApplicationResult;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
@@ -27,12 +22,8 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Function;
 
-import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
-import static com.intellij.util.containers.ContainerUtil.getFirstItem;
-import static java.util.stream.Collectors.toMap;
 import static org.jetbrains.idea.maven.utils.MavenUtil.getBaseDir;
 
 public final class MavenProjectReader {
@@ -470,71 +461,18 @@ public final class MavenProjectReader {
                                                              MavenExplicitProfiles explicitProfiles,
                                                              MavenProjectReaderProjectLocator locator)
     throws MavenProcessCanceledException {
-    return resolveProject(generalSettings, embedder, files, explicitProfiles, locator, null, null, null, null, false);
-  }
-
-  public Collection<MavenProjectReaderResult> resolveProject(MavenGeneralSettings generalSettings,
-                                                             MavenEmbedderWrapper embedder,
-                                                             Collection<VirtualFile> files,
-                                                             MavenExplicitProfiles explicitProfiles,
-                                                             MavenProjectReaderProjectLocator locator,
-                                                             @Nullable ProgressIndicator process,
-                                                             @Nullable MavenSyncConsole syncConsole,
-                                                             @Nullable MavenConsole console,
-                                                             @Nullable MavenWorkspaceMap workspaceMap,
-                                                             boolean updateSnapshots)
-    throws MavenProcessCanceledException {
-    try {
-      Collection<MavenServerExecutionResult> executionResults =
-        embedder.resolveProject(files, explicitProfiles, process, syncConsole, console, workspaceMap, updateSnapshots);
-      Map<String, VirtualFile> filesMap = CollectionFactory.createFilePathMap();
-      filesMap.putAll(files.stream().collect(toMap(VirtualFile::getPath, Function.identity())));
-
-      Collection<MavenProjectReaderResult> readerResults = new ArrayList<>();
-      for (MavenServerExecutionResult result : executionResults) {
-        MavenServerExecutionResult.ProjectData projectData = result.projectData;
-        if (projectData == null) {
-          VirtualFile file = detectPomFile(filesMap, result);
-          if (file != null) {
-            MavenProjectReaderResult temp = readProject(generalSettings, file, explicitProfiles, locator);
-            temp.readingProblems.addAll(result.problems);
-            temp.unresolvedArtifactIds.addAll(result.unresolvedArtifacts);
-            readerResults.add(temp);
-          }
-        }
-        else {
-          readerResults.add(new MavenProjectReaderResult(
-            projectData.mavenModel,
-            projectData.mavenModelMap,
-            new MavenExplicitProfiles(projectData.activatedProfiles, explicitProfiles.getDisabledProfiles()),
-            projectData.nativeMavenProject,
-            result.problems,
-            result.unresolvedArtifacts,
-            result.unresolvedProblems));
-        }
-      }
-
-      return readerResults;
-    }
-    catch (MavenProcessCanceledException e) {
-      throw e;
-    }
-    catch (final Throwable e) {
-      MavenLog.LOG.info(e);
-      MavenLog.printInTests(e); // print exception since we need to know if something wrong with our logic
-
-      return ContainerUtil.mapNotNull(files, file -> {
-        MavenProjectReaderResult result = readProject(generalSettings, file, explicitProfiles, locator);
-        String message = e.getMessage();
-        if (message != null) {
-          result.readingProblems.add(MavenProjectProblem.createStructureProblem(file.getPath(), message));
-        }
-        else {
-          result.readingProblems.add(MavenProjectProblem.createSyntaxProblem(file.getPath(), MavenProjectProblem.ProblemType.SYNTAX));
-        }
-        return result;
-      });
-    }
+    return MavenProjectResolutionUtil.resolveProject(
+      this,
+      generalSettings,
+      embedder,
+      files,
+      explicitProfiles,
+      locator,
+      null,
+      null,
+      null,
+      null,
+      false);
   }
 
   private static void readModelBody(MavenModelBase mavenModelBase, MavenBuildBase mavenBuildBase, Element xmlModel) {
@@ -590,20 +528,6 @@ public final class MavenProjectReader {
         props.setProperty(name, value);
       }
     }
-  }
-
-  @Nullable
-  private static VirtualFile detectPomFile(Map<String, VirtualFile> filesMap, MavenServerExecutionResult result) {
-    if (filesMap.size() == 1) {
-      return getFirstItem(filesMap.values());
-    }
-    if (!result.problems.isEmpty()) {
-      String path = getFirstItem(result.problems).getPath();
-      if (path != null) {
-        return filesMap.get(toSystemIndependentName(path));
-      }
-    }
-    return null;
   }
 
   private static Element readXml(final VirtualFile file,
