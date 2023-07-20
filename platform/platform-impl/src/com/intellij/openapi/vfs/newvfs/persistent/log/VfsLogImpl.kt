@@ -3,7 +3,9 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor
+import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.PayloadSource.Companion.isInline
+import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadStorageIO.Companion.fillData
 import com.intellij.openapi.vfs.newvfs.persistent.log.compaction.VfsLogCompactionController
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.PersistentVar
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.ExtendedVfsSnapshot
@@ -16,7 +18,6 @@ import com.intellij.util.io.isDirectory
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.io.OutputStream
 import java.nio.file.Path
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
@@ -29,6 +30,23 @@ import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * @param readOnly if true, won't modify storages and register [connectionInterceptors] thus VfsLog won't track [PersistentFS] changes
+ *
+ * Warning:
+ *  VfsLog tries it best not to impact performance of the VFS too much, e.g. it does not use any kind of locking while collecting
+ *  information about modification operations. This comes at a cost. It is possible for VFS to have concurrent writes at same location,
+ *  so it is possible that those writes occur in different order than their operation descriptors will end up in the log. This means
+ *  that a VFS state, restored by means of this log, may differ from what it was actually like. However, most of such concurrent writes
+ *  are probably benign.
+ *  It seems there is no good way to ensure ordering here without introducing locks and rewriting the whole VFS to use alternative
+ *  data structures (prove me wrong).
+ *  What is guaranteed:
+ *      * "happens-before" of operations in VFS implies "happens-before" of corresponding descriptors in log
+ *  What is not guaranteed:
+ *      * global operation ordering is not guaranteed, i.e. concurrently happening operations can have different
+ *        order in the log than how they were actually executed (not to mention the probable lack of atomicity);
+ *      * Operation-Payload order consistency is not guaranteed: if there is an operation1 that comes before operation2 in the log, it is
+ *        possible that operation2 contains a payloadRef that points to a location in PayloadStorage that comes before payloadRef of
+ *        operation1. This shouldn't bother you, unless you're changing how VfsLog compaction works.
  */
 @ApiStatus.Experimental
 class VfsLogImpl(
@@ -37,9 +55,15 @@ class VfsLogImpl(
 ) : VfsLogEx {
   var version by PersistentVar.integer(storagePath / "version")
     private set
+  private var properlyClosedMarker by PersistentVar.integer(storagePath / "closeMarker")
+  val wasProperlyClosedLastSession: Boolean
 
   init {
     updateVersionIfNeeded()
+    wasProperlyClosedLastSession = (properlyClosedMarker ?: CLOSED_PROPERLY) == CLOSED_PROPERLY
+    if (!readOnly) {
+      properlyClosedMarker = NOT_CLOSED_PROPERLY
+    }
   }
 
   @ApiStatus.Internal
@@ -90,12 +114,23 @@ class VfsLogImpl(
       assert(!isDisposing)
       isDisposing = true
       compactionController.close()
-      awaitPendingWrites(timeout = 50.milliseconds) // give pending writes a chance to finish
-      // cancellation of writing coroutines will lead to incomplete descriptors being written instead of the actual data
+
       operationLogStorage.closeWriteQueue()
+      // Warning: there is a window for a race condition here: memory for operation's appending can be allocated before write queue was closed,
+      // and its thread might be preempted and sleep for quite long time, before it continues its execution and finally finishes the entry
+      // appending. But in ideal world there are no writes that happen concurrently with disposal, so such events, if they tend to happen,
+      // should be noticeable even with this race (and fixed?).
+      // What this race can break: the modification will be applied to VFS, but won't be written in log (meaning that after restart we won't be
+      // able to find it in log), or we won't save it at flush. We'll probably notice it with the following checks, but in case we won't,
+      // we'll say that VfsLog was correctly disposed (false-positive CLOSED_PROPERLY).
+      // We don't want to pay for synchronization regardless.
+      awaitPendingWrites(timeout = Duration.INFINITE) // we _must_ write down every pending operation, otherwise VfsLog and VFS will be out of sync.
+
+      var lostAnything = false
       if (operationLogStorage.size() != operationLogStorage.emergingSize()) {
-        LOG.warn("VfsLog didn't manage to write all data before disposal. Some data about the last operations will be lost: " +
-                 "size=${operationLogStorage.size()}, emergingSize=${operationLogStorage.emergingSize()}")
+        LOG.error("VfsLog didn't manage to write all data before disposal. Some data about the last operations will be lost: " +
+                  "size=${operationLogStorage.size()}, emergingSize=${operationLogStorage.emergingSize()}")
+        lostAnything = true
       }
       coroutineScope.cancel("dispose")
       flush()
@@ -103,10 +138,14 @@ class VfsLogImpl(
         // If it happens, then there are active writers at disposal (VFS is still working and interceptors enqueue operations)
         LOG.error("after cancellation: " +
                   "persistentSize=${operationLogStorage.persistentSize()}, emergingSize=${operationLogStorage.emergingSize()}")
+        lostAnything = true
       }
       operationLogStorage.dispose()
       payloadStorage.dispose()
       LOG.info("VfsLog dispose completed in ${System.currentTimeMillis() - startTime} ms")
+      if (!readOnly && !lostAnything) {
+        properlyClosedMarker = CLOSED_PROPERLY
+      }
     }
 
     val payloadReader: PayloadReader = reader@{ payloadRef ->
@@ -122,11 +161,16 @@ class VfsLogImpl(
       State.NotAvailable("no storage is responsible for $payloadRef")
     }
 
-    val payloadAppender: PayloadAppender = writer@{ sizeBytes: Long ->
-      if (InlinedPayloadStorage.isSuitableForInlining(sizeBytes)) {
-        return@writer InlinedPayloadStorage.appendPayload(sizeBytes)
+    val payloadWriter: PayloadWriter = { data: ByteArray ->
+      val size = data.size.toLong()
+      if (InlinedPayloadStorage.isSuitableForInlining(size)) {
+        InlinedPayloadStorage.appendPayload(size)
       }
-      return@writer payloadStorage.appendPayload(sizeBytes)
+      else {
+        payloadStorage.appendPayload(size)
+      }.use {
+        it.fillData(data)
+      }
     }
 
     suspend fun flusher() {
@@ -178,33 +222,14 @@ class VfsLogImpl(
     VFileEventApplicationLogListener(getOperationWriteContext())
   }
 
-  override fun getOperationWriteContext(): VfsLogOperationWriteContext =
-    object : VfsLogOperationWriteContext {
+  override fun getOperationWriteContext(): VfsLogOperationTrackingContext =
+    object : VfsLogOperationTrackingContext {
       override val stringEnumerator: DataEnumerator<String> get() = context.stringEnumerator
+      override val payloadWriter: PayloadWriter get() = context.payloadWriter
 
-      override fun enqueueOperationWrite(tag: VfsOperationTag, compute: VfsLogOperationWriteContext.() -> VfsOperation<*>) {
-        val computeOperation = compute // name collision
-        context.operationLogStorage.enqueueOperationWrite(tag, object : CloseableComputable<VfsOperation<*>> {
-          override fun compute(): VfsOperation<*> = computeOperation()
-          override fun close() {}
-        })
-      }
-
-      override fun enqueueOperationWithPayloadWrite(tag: VfsOperationTag,
-                                                    payloadSize: Long,
-                                                    writePayload: OutputStream.() -> Unit,
-                                                    compute: VfsLogOperationWriteContext.(payloadRef: PayloadRef) -> VfsOperation<*>) {
-        val payloadWriter = context.payloadAppender(payloadSize)
-        context.operationLogStorage.enqueueOperationWrite(tag, object : CloseableComputable<VfsOperation<*>> {
-          override fun compute(): VfsOperation<*> {
-            val ref = payloadWriter.fillData(writePayload)
-            return compute(ref)
-          }
-
-          override fun close() {
-            payloadWriter.close()
-          }
-        })
+      override fun <R : Any> trackOperation(tag: VfsOperationTag,
+                                            performOperation: OperationTracker.() -> R): R {
+        return context.operationLogStorage.trackOperation(tag, performOperation)
       }
     }.also {
       if (readOnly) {
@@ -376,13 +401,19 @@ class VfsLogImpl(
 
     private const val MAX_READERS = 16
 
+    private const val NOT_CLOSED_PROPERLY: Int = 0xBADC105
+    private const val CLOSED_PROPERLY: Int = 0xC105ED
+
     fun clearStorage(storagePath: Path) {
       if (storagePath.isDirectory()) {
+        var deletedAnything = false
         storagePath.forEachDirectoryEntry { child ->
           if (child != storagePath / "version") {
             child.delete(true)
+            deletedAnything = true
           }
         }
+        if (deletedAnything) LOG.info("VfsLog storage was cleared")
       }
     }
   }

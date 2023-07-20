@@ -121,5 +121,5 @@ internal inline fun <R : Any> catchResult(crossinline processor: (result: Operat
   }
 }
 
-internal inline infix fun <R : Any> (() -> R).catchResult(crossinline processor: (result: OperationResult<R>) -> Unit) =
+internal inline infix fun <R : Any> (() -> R).catchResult(crossinline processor: (result: OperationResult<R>) -> Unit): R =
   catchResult(processor, this)

@@ -26,15 +26,17 @@ import kotlin.io.path.name
  * @param chunkSize if changed between instantiations, storage must be cleared beforehand (everything in [storagePath])
  */
 class AppendLogStorage(
-  protected val storagePath: Path,
-  protected val openMode: Mode,
-  protected val chunkSize: Int
+  private val storagePath: Path,
+  private val openMode: Mode,
+  private val chunkSize: Int
 ) : RandomAccessReadBuffer, Flushable, Closeable {
-  protected val chunksDir = storagePath / "chunks"
-  protected var persistentSize by PersistentVar.long(storagePath / "size")
-  protected var persistentStartOffset by PersistentVar.long(storagePath / "startOffset")
-  protected val storageIO: ChunkedMemoryMappedIO
-  protected val positionTracker: AdvancingPositionTracker
+  private val chunksDir = storagePath / "chunks"
+  private var persistentSize by PersistentVar.long(storagePath / "size")
+  private var persistentStartOffset by PersistentVar.long(storagePath / "startOffset")
+  private val storageIO: ChunkedMemoryMappedIO
+  private val positionTracker: AdvancingPositionTracker
+  @Volatile
+  private var closedForAppending: Boolean = false
 
   init {
     require(chunkSize > 0 && (chunkSize and (chunkSize - 1)) == 0) { "chunkSize must be a power of 2" }
@@ -64,6 +66,9 @@ class AppendLogStorage(
   }
 
   fun appendEntry(size: Long): AppendContext {
+    check(!closedForAppending) {
+      "AppendLogStorage is already closed for new appends" //  there is a disposal in progress
+    }
     val token = positionTracker.beginAdvance(size)
     return AppendContextImpl(token, size)
   }
@@ -139,6 +144,10 @@ class AppendLogStorage(
       storageIO.flush()
       persistentSize = readyPosition
     }
+  }
+
+  fun forbidNewAppends() {
+    closedForAppending = true
   }
 
   override fun close() {

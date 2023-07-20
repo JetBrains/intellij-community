@@ -2,8 +2,8 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
+import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.AppendContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.Companion.Mode
@@ -33,9 +33,6 @@ class OperationLogStorageImpl(
     capacity = SystemProperties.getIntProperty("idea.vfs.log-vfs-operations.buffer-capacity", 5_000),
     BufferOverflow.SUSPEND
   )
-
-  @Volatile
-  private var isClosed = false
 
   private val telemetry = object {
     val jobsOffloadedToWorkers: AtomicLong = AtomicLong(0)
@@ -84,49 +81,50 @@ class OperationLogStorageImpl(
     }
   }
 
-  override fun enqueueOperationWrite(tag: VfsOperationTag, compute: CloseableComputable<VfsOperation<*>>) {
-    val descriptorSize = bytesForOperationDescriptor(tag)
-    val entry = appendLogStorage.appendEntry(descriptorSize.toLong())
-    val job = { writeJobImpl(compute, tag, entry, descriptorSize) }
-    val submitted = writeQueue.trySend(job)
-    if (submitted.isSuccess) {
-      telemetry.jobsOffloadedToWorkers.incrementAndGet()
-      return
+  private inner class TrackContext(val tag: VfsOperationTag, val appendLogEntry: AppendContext): OperationTracker {
+    override fun completeTracking(composeOperation: () -> VfsOperation<*>) {
+      val job = { writeJobImpl(tag, composeOperation, appendLogEntry) }
+      val submitted = writeQueue.trySend(job)
+      if (submitted.isSuccess) {
+        telemetry.jobsOffloadedToWorkers.incrementAndGet()
+      }
+      else {
+        telemetry.jobsPerformedOnMainThread.incrementAndGet()
+        performWriteJob(job)
+      }
     }
-    telemetry.jobsPerformedOnMainThread.incrementAndGet()
-    performWriteJob(job)
+  }
+
+  override fun <R : Any> trackOperation(tag: VfsOperationTag, performOperation: OperationTracker.() -> R): R {
+    val appendEntry = appendLogStorage.appendEntry(bytesForOperationDescriptor(tag).toLong())
+    return TrackContext(tag, appendEntry).performOperation()
   }
 
   private fun writeJobImpl(
-    compute: CloseableComputable<VfsOperation<*>>,
     tag: VfsOperationTag,
-    entryWriter: AppendContext,
-    descriptorSize: Int
+    composeOperation: () -> VfsOperation<*>,
+    appendEntry: AppendContext
   ) {
-    entryWriter.use {
-      compute.use { _ ->
-        try {
-          if (isClosed) throw ProcessCanceledException(RuntimeException("OperationLogStorage is closed ($tag at ${entryWriter.position})"))
-          val operation = compute()
-          if (tag != operation.tag) {
-            throw IllegalStateException("expected $tag, got ${operation.tag}")
-          }
-          it.fillEntry {
-            write(operation.tag.ordinal)
-            operation.serializer.serializeOperation(operation, stringEnumerator, this)
-            write(operation.tag.ordinal)
-          }
+    appendEntry.use {
+      try {
+        val operation = composeOperation()
+        check(tag == operation.tag) { "expected $tag, got ${operation.tag}" }
+        it.fillEntry {
+          write(operation.tag.ordinal)
+          operation.serializer.serializeOperation(operation, stringEnumerator, this)
+          write(operation.tag.ordinal)
         }
-        catch (e: Throwable) {
-          try { // try to write error bounding tags
-            entryWriter.write(0, byteArrayOf((-tag.ordinal).toByte()))
-            entryWriter.write(descriptorSize.toLong() - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
-          }
-          catch (e2: Throwable) {
-            e.addSuppressed(IOException("failed to set error operation bounds", e2))
-          }
-          throw e
+      }
+      catch (e: Throwable) {
+        try { // try to write error bounding tags
+          val descriptorSize = bytesForOperationDescriptor(tag)
+          appendEntry.write(0, byteArrayOf((-tag.ordinal).toByte()))
+          appendEntry.write(descriptorSize.toLong() - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
         }
+        catch (e2: Throwable) {
+          e.addSuppressed(IOException("failed to set error operation bounds", e2))
+        }
+        throw e
       }
     }
   }
@@ -273,7 +271,7 @@ class OperationLogStorageImpl(
   }
 
   fun closeWriteQueue() {
-    isClosed = true
+    appendLogStorage.forbidNewAppends()
     writeQueue.close()
   }
 

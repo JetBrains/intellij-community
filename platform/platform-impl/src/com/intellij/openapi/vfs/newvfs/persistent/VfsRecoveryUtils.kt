@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.TraverseDirection
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogOperationTrackingContext.Companion.trackPlainOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.AttributesOperation.Companion.fileId
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperation.Companion.fileId
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.PersistentVar
@@ -412,12 +413,12 @@ object VfsRecoveryUtils {
               // append content record id clearing operation for fileId. This is needed so that subsequent recovery, being invoked on at a
               // point after ctx.point(), given that this contentRecordId will be recoverable at that point (with a content that is
               // different from what was expected in the old vfs at ctx.point()), won't set the obsolete content record id to the file
-              newVfsLogOperationWriteContext.enqueueOperationWrite(VfsOperationTag.REC_SET_CONTENT_RECORD_ID) {
-                VfsOperation.RecordsOperation.SetContentRecordId(file.fileId, 0, OperationResult.fromValue(true))
-              }
-              newVfsLogOperationWriteContext.enqueueOperationWrite(VfsOperationTag.REC_SET_FLAGS) {
-                VfsOperation.RecordsOperation.SetFlags(file.fileId, flags, OperationResult.fromValue(true))
-              }
+              newVfsLogOperationWriteContext.trackPlainOperation(VfsOperationTag.REC_SET_CONTENT_RECORD_ID, {
+                VfsOperation.RecordsOperation.SetContentRecordId(file.fileId, 0, it)
+              }) { true }
+              newVfsLogOperationWriteContext.trackPlainOperation(VfsOperationTag.REC_SET_FLAGS, {
+                VfsOperation.RecordsOperation.SetFlags(file.fileId, flags, it)
+              }) { true }
             }
           }
           // recover available attrs except children

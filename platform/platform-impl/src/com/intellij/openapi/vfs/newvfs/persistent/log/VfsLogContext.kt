@@ -2,12 +2,12 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.vfs.newvfs.FileAttribute
+import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.ExtendedVfsSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
 import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.SimpleStringPersistentEnumerator
 import org.jetbrains.annotations.ApiStatus
-import java.io.OutputStream
 
 interface VfsLogBaseContext {
   val stringEnumerator: DataEnumerator<String>
@@ -24,22 +24,26 @@ interface VfsLogBaseContext {
 }
 
 // note: does not need to hold any locks
-interface VfsLogOperationWriteContext : VfsLogBaseContext {
-  fun enqueueOperationWrite(tag: VfsOperationTag, compute: VfsLogOperationWriteContext.() -> VfsOperation<*>)
+@ApiStatus.Internal
+interface VfsLogOperationTrackingContext : VfsLogBaseContext {
+  val payloadWriter: PayloadWriter
 
-  fun enqueueOperationWithPayloadWrite(
+  fun <R: Any> trackOperation(
     tag: VfsOperationTag,
-    payloadSize: Long,
-    writePayload: OutputStream.() -> Unit,
-    compute: VfsLogOperationWriteContext.(payloadRef: PayloadRef) -> VfsOperation<*>
-  )
+    performOperation: OperationTracker.() -> R
+  ): R
 
-  fun enqueueOperationWithPayloadWrite(
-    tag: VfsOperationTag,
-    payloadData: ByteArray,
-    compute: VfsLogOperationWriteContext.(payloadRef: PayloadRef) -> VfsOperation<*>
-  ): Unit =
-    enqueueOperationWithPayloadWrite(tag, payloadData.size.toLong(), { write(payloadData) }, compute)
+  companion object {
+    fun <R: Any> VfsLogOperationTrackingContext.trackPlainOperation(
+      tag: VfsOperationTag,
+      composeOperation: (OperationResult<R>) -> VfsOperation<R>,
+      performOperation: () -> R
+    ): R = trackOperation(tag) {
+      performOperation catchResult { result ->
+        completeTracking { composeOperation(result) }
+      }
+    }
+  }
 }
 
 /**

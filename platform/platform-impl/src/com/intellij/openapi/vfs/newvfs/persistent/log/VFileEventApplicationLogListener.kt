@@ -3,54 +3,56 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogOperationTrackingContext.Companion.trackPlainOperation
 
 class VFileEventApplicationLogListener(
-  private val context: VfsLogOperationWriteContext
+  private val context: VfsLogOperationTrackingContext
 ) : VFileEventApplicationListener {
   override fun beforeApply(event: VFileEvent) {
     val timestamp = System.currentTimeMillis()
     when (event) {
       is VFileContentChangeEvent -> {
         val fileId = (event.file as VirtualFileWithId).id
-        context.enqueueOperationWrite(VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE) {
+        context.trackPlainOperation(VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE, {
           VfsOperation.VFileEventOperation.EventStart.ContentChange(timestamp, fileId)
-        }
+        }) { Unit }
       }
       is VFileCopyEvent -> {
         val fileId = (event.file as VirtualFileWithId).id
         val newParentId = (event.newParent as VirtualFileWithId).id
-        context.enqueueOperationWrite(VfsOperationTag.VFILE_EVENT_COPY) {
+        context.trackPlainOperation(VfsOperationTag.VFILE_EVENT_COPY, {
           VfsOperation.VFileEventOperation.EventStart.Copy(timestamp, fileId, newParentId)
-        }
+        }) { Unit }
       }
       is VFileMoveEvent -> {
         val fileId = (event.file as VirtualFileWithId).id
         val oldParentId = (event.oldParent as VirtualFileWithId).id
         val newParentId = (event.newParent as VirtualFileWithId).id
-        context.enqueueOperationWrite(VfsOperationTag.VFILE_EVENT_MOVE) {
+        context.trackPlainOperation(VfsOperationTag.VFILE_EVENT_MOVE, {
           VfsOperation.VFileEventOperation.EventStart.Move(timestamp, fileId, oldParentId, newParentId)
-        }
+        }) { Unit }
       }
       is VFileDeleteEvent -> {
         val fileId = (event.file as VirtualFileWithId).id
-        context.enqueueOperationWrite(VfsOperationTag.VFILE_EVENT_DELETE) {
+        context.trackPlainOperation(VfsOperationTag.VFILE_EVENT_DELETE, {
           VfsOperation.VFileEventOperation.EventStart.Delete(timestamp, fileId)
-        }
+        }) { Unit }
       }
       is VFilePropertyChangeEvent -> {
         val fileId = (event.file as VirtualFileWithId).id
         val propName = event.propertyName
-        context.enqueueOperationWrite(VfsOperationTag.VFILE_EVENT_PROPERTY_CHANGED) {
+        context.trackPlainOperation(VfsOperationTag.VFILE_EVENT_PROPERTY_CHANGED, {
           VfsOperation.VFileEventOperation.EventStart.PropertyChange(timestamp, fileId, propName)
-        }
+        }) { Unit }
       }
       is VFileCreateEvent -> {
         val parentId = (event.parent as VirtualFileWithId).id
         val isDirectory = event.isDirectory
         val childName = event.childName.toByteArray()
-        context.enqueueOperationWithPayloadWrite(VfsOperationTag.VFILE_EVENT_CREATE, childName) { childNameRef->
+        context.trackPlainOperation(VfsOperationTag.VFILE_EVENT_CREATE, {
+          val childNameRef = context.payloadWriter(childName)
           VfsOperation.VFileEventOperation.EventStart.Create(timestamp, parentId, childNameRef, isDirectory)
-        }
+        }) { Unit }
       }
       else -> throw IllegalStateException("unexpected VFileEvent: ${javaClass}")
     }
@@ -69,8 +71,8 @@ class VFileEventApplicationLogListener(
     val result =
       if (throwable != null) OperationResult.fromException(throwable.javaClass.name)
       else OperationResult.fromValue(Unit)
-    context.enqueueOperationWrite(VfsOperationTag.VFILE_EVENT_END) {
+    context.trackPlainOperation(VfsOperationTag.VFILE_EVENT_END, {
       VfsOperation.VFileEventOperation.EventEnd(tag, result)
-    }
+    }) { Unit }
   }
 }

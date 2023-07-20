@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.PayloadSource
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.PayloadSource.Companion.isInline
+import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadStorageIO.Companion.fillData
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadStorageIO.PayloadAppendContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.ULongPacker
@@ -20,8 +21,8 @@ object InlinedPayloadStorage : PayloadStorageIO {
     require(isSuitableForInlining(sizeBytes)) { "payload of size $sizeBytes cannot be inlined (max size 7)" }
     return object : PayloadAppendContext {
       override fun fillData(data: ByteArray, offset: Int, length: Int): PayloadRef {
-        require(length.toLong() == sizeBytes) { "expected entry of size $sizeBytes, got $length"}
-        return inlineData(data .copyOfRange(offset, offset + length))
+        require(length.toLong() == sizeBytes) { "expected entry of size $sizeBytes, got $length" }
+        return inlineData(data.copyOfRange(offset, offset + length))
       }
 
       override fun fillData(body: OutputStream.() -> Unit): PayloadRef {

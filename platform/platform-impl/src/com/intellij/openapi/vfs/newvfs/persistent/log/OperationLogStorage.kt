@@ -8,11 +8,13 @@ interface OperationLogStorage {
   fun bytesForOperationDescriptor(tag: VfsOperationTag): Int
 
   /**
-   * Allocates space for an operation's descriptor and launches a write operation in [scope]
-   * @param compute is called at most once inside the launched coroutine
-   * contract: tag == compute().tag
+   * [completeTracking] must be called exactly once
    */
-  fun enqueueOperationWrite(tag: VfsOperationTag, compute: CloseableComputable<VfsOperation<*>>)
+  interface OperationTracker {
+    fun completeTracking(composeOperation: () -> VfsOperation<*>)
+  }
+
+  fun <R: Any> trackOperation(tag: VfsOperationTag, performOperation: OperationTracker.() -> R): R
 
   fun readAt(position: Long): OperationReadResult
 

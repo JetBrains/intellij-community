@@ -41,7 +41,7 @@ interface VfsLogEx: VfsLog {
   val connectionInterceptors: List<ConnectionInterceptor>
   val vFileEventApplicationListener: VFileEventApplicationListener
 
-  fun getOperationWriteContext(): VfsLogOperationWriteContext
+  fun getOperationWriteContext(): VfsLogOperationTrackingContext
 
   fun acquireCompactionContext(): VfsLogCompactionContext
   fun tryAcquireCompactionContext(): VfsLogCompactionContext?
