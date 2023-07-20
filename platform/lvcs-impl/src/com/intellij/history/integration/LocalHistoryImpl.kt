@@ -17,7 +17,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.util.FlushingDaemon
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.delete
@@ -53,6 +52,7 @@ class LocalHistoryImpl : LocalHistory(), Disposable {
     private set
 
   private var flusherTask: ScheduledFuture<*>? = null
+  private val initialFlush = AtomicBoolean(true)
 
   private var eventDispatcher: LocalHistoryEventDispatcher? = null
   private val isInitialized = AtomicBoolean()
@@ -78,9 +78,6 @@ class LocalHistoryImpl : LocalHistory(), Disposable {
       return
     }
 
-    // initialize persistent fs
-    PersistentFS.getInstance()
-    //TODO RC: check is contentStorage OK, otherwise drop all the entries
     ShutDownTracker.getInstance().registerShutdownTask(Runnable { doDispose() })
     initHistory()
     app.getMessageBus().simpleConnect().subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
@@ -90,7 +87,12 @@ class LocalHistoryImpl : LocalHistory(), Disposable {
         }
       }
     })
-    flusherTask = FlushingDaemon.runPeriodically(Runnable { changeList!!.force() })
+    flusherTask = FlushingDaemon.runPeriodically(Runnable {
+      if (initialFlush.compareAndSet(true, false)) {
+        changeList!!.purgeObsolete()
+      }
+      changeList!!.force()
+    })
     isInitialized.set(true)
   }
 
@@ -120,18 +122,14 @@ class LocalHistoryImpl : LocalHistory(), Disposable {
 
     flusherTask!!.cancel(false)
     flusherTask = null
-
-    // TODO(vadim.salavatov): purging at disposal might affect shutdown time, maybe we should move it to init()?
-    // flushes in the end
-    purgeObsolete()
     changeList!!.close()
     LocalHistoryLog.LOG.debug("Local history storage successfully closed.")
   }
 
-  private fun purgeObsolete() {
+  private fun ChangeList.purgeObsolete() {
     val period = daysToKeep * 1000L * 60L * 60L * 24L
     LocalHistoryLog.LOG.debug("Purging local history...")
-    changeList!!.purgeObsolete(period)
+    purgeObsolete(period)
   }
 
   @TestOnly
