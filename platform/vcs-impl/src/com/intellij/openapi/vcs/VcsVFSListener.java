@@ -443,7 +443,7 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected boolean isEventIgnored(@NotNull VFileEvent event) {
-    FilePath filePath = VcsUtil.getFilePath(event.getPath());
+    FilePath filePath = getEventFilePath(event);
     return !isUnderMyVcs(filePath) || myChangeListManager.isIgnoredFile(filePath);
   }
 
@@ -455,16 +455,33 @@ public abstract class VcsVFSListener implements Disposable {
     return filePath != null && ReadAction.compute(() -> !myProject.isDisposed() && myVcsManager.getVcsFor(filePath) == myVcs);
   }
 
+  @NotNull
+  private static FilePath getEventFilePath(@NotNull VFileEvent event) {
+    if (event instanceof VFileCreateEvent createEvent) {
+      return VcsUtil.getFilePath(event.getPath(), createEvent.isDirectory());
+    }
+
+    VirtualFile file = event.getFile();
+    if (file != null) {
+      // Do not use file.getPath(), as it is slower.
+      return VcsUtil.getFilePath(event.getPath(), file.isDirectory());
+    }
+    else {
+      LOG.error("VFileEvent should have VirtualFile: " + event);
+      return VcsUtil.getFilePath(event.getPath());
+    }
+  }
+
   private boolean allowedDeletion(@NotNull VFileEvent event) {
     if (myVcsFileListenerContextHelper.isDeletionContextEmpty()) return true;
 
-    return !myVcsFileListenerContextHelper.isDeletionIgnored(VcsUtil.getFilePath(event.getPath()));
+    return !myVcsFileListenerContextHelper.isDeletionIgnored(getEventFilePath(event));
   }
 
   private boolean allowedAddition(@NotNull VFileEvent event) {
     if (myVcsFileListenerContextHelper.isAdditionContextEmpty()) return true;
 
-    return !myVcsFileListenerContextHelper.isAdditionIgnored(VcsUtil.getFilePath(event.getPath()));
+    return !myVcsFileListenerContextHelper.isAdditionIgnored(getEventFilePath(event));
   }
 
   @RequiresBackgroundThread
