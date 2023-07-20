@@ -172,4 +172,30 @@
     <problem_class id="IfThenToSafeAccess" severity="INFO" attribute_key="INFO_ATTRIBUTES">If-Then foldable to '?.'</problem_class>
     <description>Foldable if-then</description>
   </problem>
+  <problem>
+    <file>callInvokeOperator3.kt</file>
+    <line>2</line>
+    <module>light_idea_test_case</module>
+    <package>callInvokeOperator3</package>
+    <entry_point TYPE="method" FQNAME="callInvokeOperator3.CallInvokeOperator3Kt void test(callInvokeOperator3.Foo foo)" />
+    <problem_class id="IfThenToSafeAccess" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">If-Then foldable to '?.'</problem_class>
+    <description>Foldable if-then</description>
+    <highlighted_element>if (foo != null)</highlighted_element>
+    <language>kotlin</language>
+    <offset>4</offset>
+    <length>16</length>
+  </problem>
+  <problem>
+    <file>callInvokeOperator4.kt</file>
+    <line>8</line>
+    <module>light_idea_test_case</module>
+    <package>callInvokeOperator4</package>
+    <entry_point TYPE="method" FQNAME="callInvokeOperator4.CallInvokeOperator4Kt void test(callInvokeOperator4.Foo foo)" />
+    <problem_class id="IfThenToSafeAccess" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">If-Then foldable to '?.'</problem_class>
+    <description>Foldable if-then</description>
+    <highlighted_element>if (foo != null)</highlighted_element>
+    <language>kotlin</language>
+    <offset>4</offset>
+    <length>16</length>
+  </problem>
 </problems>
