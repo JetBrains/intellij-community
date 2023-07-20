@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -419,11 +418,14 @@ fun getArgumentNameIfCanBeUsedForCalls(argument: KtValueArgument, resolvedCall: 
     return valueParameterSymbol.name
 }
 
-val KtIfExpression.branches: List<KtExpression?> get() = ifBranchesOrThis()
+val KtIfExpression.branches: List<KtExpression?>
+    get() {
+        fun KtExpression.ifBranchesOrThis(): List<KtExpression?> {
+            if (this !is KtIfExpression) return listOf(this)
+            return listOf(then) + `else`?.ifBranchesOrThis().orEmpty()
+        }
 
-private fun KtExpression.ifBranchesOrThis(): List<KtExpression?> {
-    if (this !is KtIfExpression) return listOf(this)
-    return listOf(then) + `else`?.ifBranchesOrThis().orEmpty()
-}
+        return ifBranchesOrThis()
+    }
 
 fun KtClass.isFunInterface(): Boolean = isInterface() && getFunKeyword() != null
