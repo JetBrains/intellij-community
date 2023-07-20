@@ -30,13 +30,11 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_PI
 import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile
-import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.docking.DockContainer
@@ -130,15 +128,8 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
           val newFile = (newSelection ?: return).getObject() as VirtualFile
           val newEditor = newFile.let { window.manager.getSelectedEditor(newFile) }
           newEditor?.selectNotify()
-          if (!EditorsSplitters.isOpenedInBulk(newFile) &&
-              GeneralSettings.getInstance().isSyncOnFrameActivation &&
-              newFile is NewVirtualFile) {
-            coroutineScope.launch {
-              blockingContext {
-                newFile.markDirty()
-                RefreshQueue.getInstance().refresh(true, false, null, listOf(newFile))
-              }
-            }
+          if (GeneralSettings.getInstance().isSyncOnFrameActivation) {
+            VfsUtil.markDirtyAndRefresh(true, false, false, newFile)
           }
         }
       })
