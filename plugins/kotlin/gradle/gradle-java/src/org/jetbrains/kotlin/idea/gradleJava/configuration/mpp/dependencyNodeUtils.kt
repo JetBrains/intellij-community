@@ -48,7 +48,7 @@ internal inline fun <reified T : Any> DataNode<*>.cast(): DataNode<out T> {
     return this as DataNode<T>
 }
 
-internal inline fun <reified T : Any> DataNode<*>.safeCast(): DataNode<out T>? {
+internal inline fun <reified T : Any> DataNode<*>.safeCastDataNode(): DataNode<out T>? {
     if (data !is T) return null
     @Suppress("UNCHECKED_CAST")
     return this as DataNode<T>
