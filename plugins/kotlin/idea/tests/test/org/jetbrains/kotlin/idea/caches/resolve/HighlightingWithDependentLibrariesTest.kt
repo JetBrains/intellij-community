@@ -24,8 +24,8 @@ import java.io.File
 class HighlightingWithDependentLibrariesTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor() = object : KotlinLightProjectDescriptor() {
         override fun configureModule(module: Module, model: ModifiableRootModel) {
-            val compiledJar1 = KotlinCompilerStandalone(listOf(File(testDataPath, "lib1"))).compile()
-            val compiledJar2 = KotlinCompilerStandalone(listOf(File(testDataPath, "lib2")), classpath = listOf(compiledJar1)).compile()
+            val compiledJar1 = KotlinCompilerStandalone(listOf(File(testDataDirectory, "lib1"))).compile()
+            val compiledJar2 = KotlinCompilerStandalone(listOf(File(testDataDirectory, "lib2")), classpath = listOf(compiledJar1)).compile()
 
             model.addLibraryEntry(createLibrary(module.project, compiledJar1, "baseLibrary"))
             model.addLibraryEntry(createLibrary(module.project, compiledJar2, "dependentLibrary"))

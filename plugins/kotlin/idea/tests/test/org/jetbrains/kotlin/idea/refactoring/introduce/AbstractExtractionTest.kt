@@ -351,7 +351,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
     protected fun doExtractInterfaceTest(path: String) = doExtractSuperTest(path, true)
 
     protected fun doTest(checkAdditionalAfterdata: Boolean = false, action: (PsiFile) -> Unit) {
-        val mainFile = File(testDataPath, fileName())
+        val mainFile = File(testDataDirectory, fileName())
 
         PluginTestCaseBase.addJdk(myFixture.projectDisposable, IdeaTestUtil::getMockJdk18)
 

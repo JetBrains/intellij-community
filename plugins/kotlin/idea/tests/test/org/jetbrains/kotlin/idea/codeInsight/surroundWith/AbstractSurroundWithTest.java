@@ -113,7 +113,7 @@ public abstract class AbstractSurroundWithTest extends KotlinLightCodeInsightFix
 
         String filePath = path + ".after";
         try {
-            String localPath = FilesKt.toRelativeString(new File(filePath), new File(getTestDataPath()));
+            String localPath = FilesKt.toRelativeString(new File(filePath), getTestDataDirectory());
             myFixture.checkResultByFile(localPath);
         }
         catch (FileComparisonFailure fileComparisonFailure) {

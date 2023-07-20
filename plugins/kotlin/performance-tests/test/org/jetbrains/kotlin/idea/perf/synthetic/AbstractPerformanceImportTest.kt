@@ -39,7 +39,7 @@ abstract class AbstractPerformanceImportTest : KotlinLightCodeInsightFixtureTest
             val dependencySuffixes = listOf(".dependency.kt", ".dependency.java", ".dependency1.kt", ".dependency2.kt")
             for (suffix in dependencySuffixes) {
                 val dependencyPath = fileName().replace(".kt", suffix)
-                if (File(testDataPath, dependencyPath).exists()) {
+                if (File(testDataDirectory, dependencyPath).exists()) {
                     fixture.configureByFile(dependencyPath)
                 }
             }

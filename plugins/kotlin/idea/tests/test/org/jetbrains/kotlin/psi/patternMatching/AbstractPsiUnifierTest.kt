@@ -34,7 +34,7 @@ abstract class AbstractPsiUnifierTest : KotlinLightCodeInsightFixtureTestCase() 
         val actualText =
             findPattern(file).toRange().match(file, KotlinPsiUnifier.DEFAULT).map { it.range.textRange.substring(file.getText()!!) }
                 .joinToString("\n\n")
-        KotlinTestUtils.assertEqualsToFile(File(testDataPath, "${fileName()}.match"), actualText)
+        KotlinTestUtils.assertEqualsToFile(File(testDataDirectory, "${fileName()}.match"), actualText)
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor = getProjectDescriptorFromTestName()

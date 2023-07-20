@@ -42,7 +42,7 @@ class SmartCompletionMultifileHandlerTest : KotlinFixtureCompletionBaseTestCase(
 
         val fileNames = listOf("$fileName-1.kt", "$fileName-2.kt", "$fileName.java")
 
-        myFixture.configureByFiles(*fileNames.filter { File(testDataPath + it).exists() }.toTypedArray())
+        myFixture.configureByFiles(*fileNames.filter { File(testDataDirectory, it).exists() }.toTypedArray())
 
         val items = complete(CompletionType.SMART, 1)
         if (items != null) {

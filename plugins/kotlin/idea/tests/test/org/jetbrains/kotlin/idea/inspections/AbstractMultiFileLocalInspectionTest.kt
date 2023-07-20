@@ -17,12 +17,11 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.util.slashedPath
 import java.io.File
 
 abstract class AbstractMultiFileLocalInspectionTest : AbstractLocalInspectionTest() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        val testFile = File(testDataDirectory.slashedPath, fileName())
+        val testFile = File(testDataDirectory, fileName())
         val config = JsonParser.parseString(FileUtil.loadFile(testFile, true)) as JsonObject
         val withRuntime = config["withRuntime"]?.asBoolean ?: false
         return if (withRuntime)

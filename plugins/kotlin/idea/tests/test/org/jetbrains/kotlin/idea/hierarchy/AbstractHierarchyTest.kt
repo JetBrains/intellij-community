@@ -133,8 +133,8 @@ abstract class AbstractHierarchyTest : KotlinHierarchyViewTestBase() {
             }
         } catch (failure: ComparisonFailure) {
             val actual = failure.actual
-            val verificationFilePath = testDataPath + "/" + getTestName(false) + "_verification.xml"
-            KotlinTestUtils.assertEqualsToFile(File(verificationFilePath), actual)
+            val verificationFile = File(testDataDirectory, getTestName(false) + "_verification.xml")
+            KotlinTestUtils.assertEqualsToFile(verificationFile, actual)
         }
     }
 

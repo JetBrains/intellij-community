@@ -110,7 +110,7 @@ abstract class AbstractCodeMoverTest : KotlinLightCodeInsightFixtureTestCase() {
         if (isApplicableExpected) {
             val afterFile = File("$path.after")
             try {
-                myFixture.checkResultByFile(afterFile.toRelativeString(File(testDataPath)))
+                myFixture.checkResultByFile(afterFile.toRelativeString(testDataDirectory))
             } catch (e: ComparisonFailure) {
                 KotlinTestUtils.assertEqualsToFile(afterFile, editor)
             }

@@ -28,7 +28,7 @@ import java.io.File
 
 abstract class AbstractMultiFileIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        val testFile = File(testDataPath, fileName())
+        val testFile = File(testDataDirectory, fileName())
         val config = JsonParser().parse(FileUtil.loadFile(testFile, true)) as JsonObject
         val withRuntime = config["withRuntime"]?.asBoolean ?: false
         return if (withRuntime)

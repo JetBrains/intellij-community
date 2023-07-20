@@ -31,7 +31,7 @@ abstract class AbstractMultifileRefactoringTest : KotlinLightCodeInsightFixtureT
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        val testConfigurationFile = File(super.getTestDataPath(), fileName())
+        val testConfigurationFile = File(testDataDirectory, fileName())
         val config = loadTestConfiguration(testConfigurationFile)
         val withRuntime = config["withRuntime"]?.asBoolean ?: false
         if (withRuntime) {

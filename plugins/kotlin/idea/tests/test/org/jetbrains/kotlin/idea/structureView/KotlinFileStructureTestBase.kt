@@ -64,6 +64,6 @@ abstract class KotlinFileStructureTestBase : KotlinLightCodeInsightFixtureTestCa
         PlatformTestUtil.waitForPromise(TreeUtil.promiseExpandAll(popupFixture.tree))
         PlatformTestUtil.waitWhileBusy(popupFixture.tree)
         val popupText = StructureViewUtil.print(popupFixture.tree, false, printInfo, null).trim { it <= ' ' }
-        assertSameLinesWithFile("$testDataPath/$treeFileName", popupText)
+        assertSameLinesWithFile("${testDataDirectory.path}/$treeFileName", popupText)
     }
 }

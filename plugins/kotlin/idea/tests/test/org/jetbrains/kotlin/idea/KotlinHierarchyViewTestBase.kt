@@ -27,7 +27,7 @@ abstract class KotlinHierarchyViewTestBase : KotlinLightCodeInsightFixtureTestCa
 
     @Throws(IOException::class)
     private fun loadExpectedStructure(): String {
-        val verificationFilePath = testDataPath + "/" + getTestName(false) + "_verification.xml"
-        return FileUtil.loadFile(File(verificationFilePath))
+        val verificationFile = File(testDataDirectory, getTestName(false) + "_verification.xml")
+        return FileUtil.loadFile(verificationFile)
     }
 }
