@@ -1,18 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.snippets
 
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.data.GitLabVisibilityLevel
+import java.awt.datatransfer.StringSelection
 
 /**
  * Service required to get a [CoroutineScope] when performing [GitLabCreateSnippetAction].
@@ -26,7 +28,7 @@ class GitLabSnippetService(private val serviceScope: CoroutineScope) {
   fun performCreateSnippetAction(e: AnActionEvent) {
     serviceScope.launch(Dispatchers.Default) {
       val cs = this
-      val vm = createVM(cs, e) ?: return@launch
+      val vm = createVM(cs, e) ?: return@launch   // TODO: Display error (and make button unavailable)
 
       if (!cs.async(Dispatchers.Main) {
           val dialog = GitLabCreateSnippetComponentFactory
@@ -41,14 +43,23 @@ class GitLabSnippetService(private val serviceScope: CoroutineScope) {
       val api = vm.getApi() ?: return@launch       // TODO: Display error
       val server = vm.getServer() ?: return@launch // TODO: Display error
 
-      api.graphQL.createSnippet(
+      val result = api.graphQL.createSnippet(
         server,
         data.onProject,
         data.title,
         data.description,
         if (data.isPrivate) GitLabVisibilityLevel.private else GitLabVisibilityLevel.public,
         vm.contents.await()
-      ) { it.name }
+      ) { it.name }.body() ?: return@launch       // TODO: Display error
+      val snippet = result.value ?: return@launch // TODO: Display error
+      val url = snippet.webUrl
+
+      if (data.isCopyUrl) {
+        CopyPasteManager.getInstance().setContents(StringSelection(url))
+      }
+      if (data.isOpenInBrowser) {
+        BrowserUtil.browse(url)
+      }
     }
   }
 
@@ -80,6 +91,9 @@ class GitLabSnippetService(private val serviceScope: CoroutineScope) {
         "",
 
         true,
+        true,
+        false,
+
         null,
         PathHandlingMode.RelativePaths
       )

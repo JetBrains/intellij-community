@@ -4,4 +4,5 @@ fragment snippet on Snippet {
   author {
     ...user
   }
+  webUrl
 }

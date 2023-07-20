@@ -9,4 +9,5 @@ class GitLabSnippetDTO(
   val id: String,
   val createdAt: Date,
   val author: GitLabUserDTO,
+  val webUrl: String
 )

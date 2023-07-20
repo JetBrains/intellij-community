@@ -90,8 +90,10 @@ internal object GitLabCreateSnippetComponentFactory {
           .bindItem({ data.pathHandlingMode }, { data.pathHandlingMode = it!! })
       }
 
-      row(message("snippet.create.private.label")) {
-        checkBox("").bindSelected(data::isPrivate)
+      row {
+        checkBox(message("snippet.create.private.label")).bindSelected(data::isPrivate)
+        checkBox(message("snippet.create.copy-url.label")).bindSelected(data::isCopyUrl)
+        checkBox(message("snippet.create.open-in-browser.label")).bindSelected(data::isOpenInBrowser)
       }
 
       row(message("snippet.create.account.label")) {

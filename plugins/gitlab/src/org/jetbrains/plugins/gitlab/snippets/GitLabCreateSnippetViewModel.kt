@@ -96,6 +96,9 @@ class CreateSnippetViewModelData(
   var description: @Nls String,
 
   var isPrivate: Boolean,
+  var isCopyUrl: Boolean,
+  var isOpenInBrowser: Boolean,
+
   var onProject: GitLabProjectCoordinates?,
   var pathHandlingMode: PathHandlingMode)
 
