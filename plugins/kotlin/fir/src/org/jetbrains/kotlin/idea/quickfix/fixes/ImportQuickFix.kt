@@ -289,6 +289,7 @@ class ImportQuickFix(
         private fun KtDeclarationSymbol.getImportKind(): ImportFixHelper.ImportKind? = when {
             this is KtPropertySymbol && isExtension -> ImportFixHelper.ImportKind.EXTENSION_PROPERTY
             this is KtPropertySymbol -> ImportFixHelper.ImportKind.PROPERTY
+            this is KtJavaFieldSymbol -> ImportFixHelper.ImportKind.PROPERTY
 
             this is KtFunctionSymbol && isOperator -> ImportFixHelper.ImportKind.OPERATOR
             this is KtFunctionSymbol && isExtension -> ImportFixHelper.ImportKind.EXTENSION_FUNCTION
