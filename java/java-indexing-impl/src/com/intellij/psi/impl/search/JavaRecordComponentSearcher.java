@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchRequestCollector;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.util.Processor;
@@ -20,16 +21,17 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
   public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<? super PsiReference> consumer) {
     PsiElement element = queryParameters.getElementToSearch();
     if (element instanceof PsiRecordComponent recordComponent) {
+      SearchScope scope = queryParameters.getEffectiveSearchScope();
       RecordNavigationInfo info = findNavigationInfo(recordComponent);
       if (info != null) {
         SearchRequestCollector optimizer = queryParameters.getOptimizer();
         optimizer.searchWord(info.myName,
-                             ReadAction.compute(() -> info.myLightMethod.getUseScope()),
+                             ReadAction.compute(() -> info.myLightMethod.getUseScope().intersectWith(scope)),
                              true,
                              info.myLightMethod);
 
         optimizer.searchWord(info.myName,
-                             ReadAction.compute(() -> info.myLightField.getUseScope()),
+                             ReadAction.compute(() -> info.myLightField.getUseScope().intersectWith(scope)),
                              true,
                              info.myLightField);
 

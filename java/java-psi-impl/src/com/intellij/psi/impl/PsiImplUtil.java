@@ -393,7 +393,8 @@ public final class PsiImplUtil {
       if (parent instanceof PsiDeclarationStatement) return new LocalSearchScope(parent.getParent());
     }
 
-    PsiModifierList modifierList = member.getModifierList();
+    PsiModifierList modifierList = (member instanceof PsiRecordComponent && aClass != null) ?
+                                   aClass.getModifierList() : member.getModifierList();
     int accessLevel = modifierList == null ? PsiUtil.ACCESS_LEVEL_PUBLIC : PsiUtil.getAccessLevel(modifierList);
     if (accessLevel == PsiUtil.ACCESS_LEVEL_PUBLIC ||
         accessLevel == PsiUtil.ACCESS_LEVEL_PROTECTED) {
