@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.NotNull;
 
-class ErrorStripeRangeMarkerTree extends HardReferencingRangeMarkerTree<ErrorStripeMarkerImpl> {
-
+final class ErrorStripeRangeMarkerTree extends HardReferencingRangeMarkerTree<ErrorStripeMarkerImpl> {
   ErrorStripeRangeMarkerTree(@NotNull Document document) {
     super(document);
   }
@@ -27,18 +26,17 @@ class ErrorStripeRangeMarkerTree extends HardReferencingRangeMarkerTree<ErrorStr
     return persistent1 == persistent2 ? 0 : persistent1 ? -1 : 1;
   }
 
-  @NotNull
   @Override
-  protected Node createNewNode(@NotNull ErrorStripeMarkerImpl key, int start, int end,
-                               boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+  protected @NotNull Node createNewNode(@NotNull ErrorStripeMarkerImpl key, int start, int end,
+                                        boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     return new Node(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
   }
 
-  static class Node extends RMNode<ErrorStripeMarkerImpl> {
+  static final class Node extends RMNode<ErrorStripeMarkerImpl> {
     final int myLayer;
 
     Node(@NotNull ErrorStripeRangeMarkerTree rangeMarkerTree,
-         @NotNull final ErrorStripeMarkerImpl key,
+         final @NotNull ErrorStripeMarkerImpl key,
          int start,
          int end,
          boolean greedyToLeft,

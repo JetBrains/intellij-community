@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import org.jetbrains.annotations.NotNull;
 
-class ErrorStripeMarkerImpl extends RangeMarkerImpl {
+final class ErrorStripeMarkerImpl extends RangeMarkerImpl {
   private static final Logger LOG = Logger.getInstance(ErrorStripeMarkerImpl.class);
 
   private final RangeHighlighterEx myHighlighter;

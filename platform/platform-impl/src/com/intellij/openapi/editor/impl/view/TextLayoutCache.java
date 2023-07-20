@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.Disposable;
@@ -24,7 +24,7 @@ import java.util.*;
  *
  * @see LineLayout
  */
-class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
+final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private static final Logger LOG = Logger.getInstance(TextLayoutCache.class);
 
   private static final int MAX_CHUNKS_IN_ACTIVE_EDITOR = 1000;

@@ -11,7 +11,7 @@ import javax.swing.JScrollPane
 import kotlin.math.max
 import kotlin.math.min
 
-class ScrollPositionCalculatorImpl : ScrollPositionCalculator {
+internal class ScrollPositionCalculatorImpl : ScrollPositionCalculator {
   override fun getHorizontalOffset(editor: Editor,
                                    targetLocation: Point,
                                    scrollType: ScrollType,
@@ -126,7 +126,7 @@ class ScrollPositionCalculatorImpl : ScrollPositionCalculator {
     val scrollOffset = editor.settings.verticalScrollOffset
     val scrollJump = editor.settings.verticalScrollJump
     // the two following lines should be both visible in view rectangle after scrolling (that's the meaning of the scroll offset setting)
-    //  If it is not possible, e.g. view rectangle is too small to contain both lines, then scrolling will go to the `centerPosition`
+    //  If it is not possible, e.g., view rectangle is too small to contain both lines, then scrolling will go to the `centerPosition`
     val offsetTopBound = addVerticalOffsetToPosition(editor, -scrollOffset, targetLocation)
     val offsetBottomBound = addVerticalOffsetToPosition(editor, scrollOffset, targetLocation) + lineHeight
 

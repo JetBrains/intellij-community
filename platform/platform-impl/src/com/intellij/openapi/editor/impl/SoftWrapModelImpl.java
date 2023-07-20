@@ -48,7 +48,7 @@ import java.util.List;
  * <p/>
  * Not thread-safe.
  */
-public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
+public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener,
              PropertyChangeListener, Dumpable, Disposable
 {

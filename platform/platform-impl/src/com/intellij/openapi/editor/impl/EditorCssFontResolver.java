@@ -1,6 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
-
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -24,7 +23,7 @@ import java.util.Map;
  * and {@link #EDITOR_FONT_NAME_PLACEHOLDER} should be specified as {@code font-family} in CSS.
  * Font style and size are configured as usual.
  */
-public class EditorCssFontResolver implements CSSFontResolver {
+public final class EditorCssFontResolver implements CSSFontResolver {
   /**
    * Can be used as a {@code font-family} value in CSS to represent editor font. The resolved font will have ligatures enabled,
    * if ligatures are enabled in editor font settings currently.
