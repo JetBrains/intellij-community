@@ -29,7 +29,7 @@ abstract class AbstractK2BindToElementTest : KotlinMultiFileLightCodeInsightFixt
         myFixture.project.executeWriteCommand("bindToElement") {
             nameReference.mainReference.bindToElement(bindTarget)
         }
-        myFixture.checkResultByFile("${myFixture.file.name}.after")
+        myFixture.checkResultByFile("${dataFile().name}.after")
     }
 
     private fun findElementToBind(): PsiElement? {
