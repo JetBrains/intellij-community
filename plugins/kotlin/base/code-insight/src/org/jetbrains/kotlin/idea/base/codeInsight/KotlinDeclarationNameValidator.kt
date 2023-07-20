@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 
@@ -36,11 +37,18 @@ class KotlinDeclarationNameValidator(
     }
 
     private fun KtAnalysisSession.hasConflict(identifier: Name): Boolean {
+        fun KtVariableLikeSymbol.isVisible(): Boolean {
+            val classSymbol = visibleDeclarationsContext.containingClass()?.getClassOrObjectSymbol() ?: return false
+            return isVisibleInClass(classSymbol)
+        }
+
         return when(target) {
             KotlinNameSuggestionProvider.ValidatorTarget.PROPERTY, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE, KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER -> {
                 val scope =
                     visibleDeclarationsContext.containingKtFile.getScopeContextForPosition(visibleDeclarationsContext).getCompositeScope()
-                scope.getCallableSymbols(identifier).filterIsInstance<KtVariableLikeSymbol>().any()
+                scope.getCallableSymbols(identifier).filterIsInstance<KtVariableLikeSymbol>().any {
+                    !it.isExtension && it.isVisible()
+                }
             }
             else -> false
         }
