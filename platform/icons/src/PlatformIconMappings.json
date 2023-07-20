@@ -29,6 +29,7 @@
       "profileCPU.svg": "actions/profileCPU.svg",
       "projectDirectory.svg": "actions/projectDirectory.svg",
       "reformatCode.svg": "actions/reformatCode.svg",
+      "runAll.svg": "actions/runAll.svg",
       "showReadAccess.svg": "actions/showReadAccess.svg",
       "showWriteAccess.svg": "actions/showWriteAccess.svg",
       "split.svg": "modules/split.svg",
@@ -553,7 +554,10 @@
         "nodes/newParameter.svg",
         "nodes/parameter.svg"
       ],
-      "plugin.svg": "nodes/plugin.svg",
+      "plugin.svg": [
+        "nodes/plugin.svg",
+        "nodes/pluginobsolete.svg"
+      ],
       "ppWeb.svg": "nodes/ppWeb.svg",
       "property.svg": [
         "nodes/property.svg",
@@ -732,7 +736,10 @@
       "toolWindowJsonPath.svg": "toolwindows/toolWindowJsonPath.svg",
       "toolWindowVariableView.svg": "toolwindows/toolWindowVariableView.svg",
       "vcs.svg": "toolwindows/toolWindowChanges.svg",
-      "web.svg": "toolwindows/webToolWindow.svg"
+      "web.svg": [
+        "toolwindows/webToolWindow.svg",
+        "general/web.svg"
+      ]
     },
     "vcs": {
       "branchLabel.svg": "icons/branchLabel.svg",
