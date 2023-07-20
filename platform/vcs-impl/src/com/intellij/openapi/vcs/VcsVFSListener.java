@@ -274,6 +274,10 @@ public abstract class VcsVFSListener implements Disposable {
       });
     }
 
+    private void processBeforeDeletedFile(@NotNull VFileDeleteEvent event) {
+      processBeforeDeletedFile(event.getFile());
+    }
+
     private void processBeforeDeletedFile(@NotNull VirtualFile file) {
       if (file.isDirectory() && file instanceof NewVirtualFile && !isDirectoryVersioningSupported() && !isRecursiveDeleteSupported()) {
         for (VirtualFile child : ((NewVirtualFile)file).getCachedChildren()) {
@@ -363,7 +367,7 @@ public abstract class VcsVFSListener implements Disposable {
         if (isEventIgnored(event)) continue;
 
         if (event instanceof VFileDeleteEvent && allowedDeletion(event)) {
-          processBeforeDeletedFile(((VFileDeleteEvent)event).getFile());
+          processBeforeDeletedFile((VFileDeleteEvent)event);
         }
         else if (event instanceof VFileMoveEvent) {
           processBeforeFileMovement((VFileMoveEvent)event);
