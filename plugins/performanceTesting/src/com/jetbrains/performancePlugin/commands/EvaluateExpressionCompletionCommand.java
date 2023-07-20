@@ -1,11 +1,13 @@
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.ui.TypingTarget;
+import com.intellij.openapi.ui.playback.PlaybackContext;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("TestOnlyProblems")
+import static com.intellij.openapi.ui.playback.commands.AlphaNumericTypeCommand.findTarget;
+
 public class EvaluateExpressionCompletionCommand extends CompletionCommand {
   public static final String NAME = "doCompleteInEvaluateExpression";
   public static final String PREFIX = CMD_PREFIX + NAME;
@@ -14,15 +16,10 @@ public class EvaluateExpressionCompletionCommand extends CompletionCommand {
   }
 
   @Override
-  public Editor getEditor(Project project) {
-    XDebuggerEvaluationDialog currentDialog = ShowEvaluateExpressionCommand.Companion.getCurrentDialog();
-    if (currentDialog == null) {
-      throw new IllegalStateException("XDebuggerEvaluationDialog is null, try to execute ShowEvaluateExpressionCommand");
-    }
-    Editor editor = currentDialog.getInputEditor().getEditor();
-    if (editor == null) {
-      throw new IllegalStateException("Editor is null for evaluate expression dialog");
-    }
-    return editor;
+  public Editor getEditor(PlaybackContext context) {
+    TypingTarget typingTarget =  findTarget(context);
+    if (typingTarget == null) throw new IllegalStateException("typingTarget is null");
+    if (!(typingTarget instanceof EditorComponentImpl)) throw new IllegalStateException("typingTarget is not EditorComponentImpl, but " + typingTarget.getClass());
+    return ((EditorComponentImpl) typingTarget).getEditor();
   }
 }
