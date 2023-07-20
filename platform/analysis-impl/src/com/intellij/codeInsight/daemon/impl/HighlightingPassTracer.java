@@ -10,7 +10,7 @@ import io.opentelemetry.api.common.AttributeKey;
  * Telemetry constants for daemon passes
  */
 final class HighlightingPassTracer {
-  static final IJTracer HIGHLIGHTING_PASS_TRACER = TelemetryManager.getInstance().getTracer(new Scope("HighlightingPasses", null));
+  static final IJTracer HIGHLIGHTING_PASS_TRACER = TelemetryManager.getInstance().getTracer(new Scope("HighlightingPasses"));
   static final AttributeKey<String> FILE_ATTR_SPAN_KEY = AttributeKey.stringKey("file");
   static final AttributeKey<String> CANCELLED_ATTR_SPAN_KEY = AttributeKey.stringKey("cancelled");
 }
