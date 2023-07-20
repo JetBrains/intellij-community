@@ -258,7 +258,7 @@ data class IfThenToSelectData(
                     if (replaced is KtQualifiedExpression) {
                         val call = replaced.callExpression
                         val callee = call?.calleeExpression
-                        if (callee != null && call.isCallingInvokeFunction(context)) {
+                        if (callee != null && callee.text != "invoke" && call.isCallingInvokeFunction(context)) {
                             replaced = factory.createExpressionByPattern("$0?.$1?.invoke()", replaced.receiverExpression, callee)
                         }
                     }
