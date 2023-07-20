@@ -36,7 +36,8 @@ internal object KindWeigher {
         defaultValue = false
     )
 
-    fun KtAnalysisSession.addWeight(lookupElement: LookupElement, symbol: KtSymbol?, context: WeighingContext) {
+    context(KtAnalysisSession)
+fun addWeight(lookupElement: LookupElement, symbol: KtSymbol?, context: WeighingContext) {
         lookupElement.isEnumEntry = symbol is KtEnumEntrySymbol
 
         if (lookupElement.lookupString != KtTokens.NULL_KEYWORD.value || lookupElement.`object` !is KeywordLookupObject) return

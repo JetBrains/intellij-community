@@ -19,7 +19,8 @@ internal class FirSuperEntryContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<FirSuperTypeCallNameReferencePositionContext>(basicContext, priority) {
-    override fun KtAnalysisSession.complete(
+    context(KtAnalysisSession)
+    override fun complete(
         positionContext: FirSuperTypeCallNameReferencePositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,

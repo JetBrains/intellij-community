@@ -56,8 +56,9 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
             createFix(diagnostic.expectedArrayType, diagnostic.psi)
         }
 
+    context(KtAnalysisSession)
     @Suppress("unused")
-    private fun KtAnalysisSession.createFix(expectedArrayType: KtType, psi: KtExpression): List<KotlinApplicatorTargetWithInput<KtExpression, Input>> {
+    private fun createFix(expectedArrayType: KtType, psi: KtExpression): List<KotlinApplicatorTargetWithInput<KtExpression, Input>> {
         val arrayClassId = (expectedArrayType as? KtUsualClassType)?.classId
         val primitiveType = arrayClassFqNameToPrimitiveType[arrayClassId?.asSingleFqName()?.toUnsafe()]
         val arrayOfCallName = ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY[primitiveType] ?: ArrayFqNames.ARRAY_OF_FUNCTION

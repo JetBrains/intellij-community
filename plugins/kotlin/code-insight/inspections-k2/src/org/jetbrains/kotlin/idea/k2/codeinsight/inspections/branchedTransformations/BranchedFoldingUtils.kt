@@ -106,7 +106,8 @@ internal object BranchedFoldingUtils {
      *     (for the concept of "match", see [collectAssignmentsAndCheck] function below).
      *   Otherwise, the number of all assignments.
      */
-    fun KtAnalysisSession.getFoldableAssignmentsFromBranches(expression: KtExpression?): Set<KtBinaryExpression> {
+    context(KtAnalysisSession)
+    fun getFoldableAssignmentsFromBranches(expression: KtExpression?): Set<KtBinaryExpression> {
         if (expression == null) return emptySet()
         val assignments = mutableSetOf<KtBinaryExpression>()
 
@@ -194,7 +195,8 @@ internal object BranchedFoldingUtils {
      *          - When [leftType] is a non-nullable type, types of right operands of [first] and [second] are both non-nullable, and
      *            they are the same.
      */
-    private fun KtAnalysisSession.checkAssignmentsMatch(
+    context(KtAnalysisSession)
+    private fun checkAssignmentsMatch(
         first: KtBinaryExpression,
         second: KtBinaryExpression,
         firstOperation: PsiElement?,
@@ -298,7 +300,8 @@ internal object BranchedFoldingUtils {
      *       return       // cannot be lifted because of the null returned expression
      *     }
      */
-    private fun KtAnalysisSession.getFoldableReturnsFromBranches(branches: List<KtExpression?>): FoldableReturns {
+    context(KtAnalysisSession)
+    private fun getFoldableReturnsFromBranches(branches: List<KtExpression?>): FoldableReturns {
         val foldableReturns = mutableListOf<KtReturnExpression>()
         for (branch in branches) {
             val foldableBranchedReturn = getFoldableBranchedReturn(branch)
@@ -324,7 +327,8 @@ internal object BranchedFoldingUtils {
      * It returns an empty list with `isFoldable = true` if [expression] is one of [KtBreakExpression], [KtContinueExpression],
      * [KtThrowExpression], and [KtCallExpression].
      */
-    fun KtAnalysisSession.getFoldableReturnsFromBranches(expression: KtExpression): FoldableReturns = when (expression) {
+    context(KtAnalysisSession)
+    fun getFoldableReturnsFromBranches(expression: KtExpression): FoldableReturns = when (expression) {
         is KtWhenExpression -> {
             val entries = expression.entries
             when {

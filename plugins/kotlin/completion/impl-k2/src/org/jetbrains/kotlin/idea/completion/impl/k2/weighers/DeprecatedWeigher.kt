@@ -12,7 +12,8 @@ internal object DeprecatedWeigher {
     const val WEIGHER_ID = "kotlin.deprecated"
     private var LookupElement.isDeprecated: Boolean by NotNullableUserDataProperty(Key("KOTLIN_DEPRECATED"), false)
 
-    fun KtAnalysisSession.addWeight(lookupElement: LookupElement, symbol: KtSymbol) {
+    context(KtAnalysisSession)
+fun addWeight(lookupElement: LookupElement, symbol: KtSymbol) {
         lookupElement.isDeprecated = symbol.deprecationStatus != null
     }
 

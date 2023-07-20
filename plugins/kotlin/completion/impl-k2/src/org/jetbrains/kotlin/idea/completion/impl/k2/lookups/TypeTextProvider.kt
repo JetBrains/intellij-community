@@ -16,7 +16,8 @@ internal object TypeTextProvider {
     /**
      * Creates lookup element's type text, based on provided classifier symbol.
      */
-    fun KtAnalysisSession.getTypeTextForClassifier(symbol: KtClassifierSymbol): String? = when (symbol) {
+    context(KtAnalysisSession)
+fun getTypeTextForClassifier(symbol: KtClassifierSymbol): String? = when (symbol) {
         is KtTypeAliasSymbol -> symbol.expandedType.render(renderer, position = Variance.INVARIANT)
         else -> null
     }
@@ -32,7 +33,8 @@ internal object TypeTextProvider {
      * ```
      * a lookup element `foo()` is suggested and its type text should be `Unit`.
      */
-    fun KtAnalysisSession.getTypeTextForCallable(
+    context(KtAnalysisSession)
+fun getTypeTextForCallable(
         signature: KtCallableSignature<*>,
         treatAsFunctionCall: Boolean
     ): String? = when (signature) {

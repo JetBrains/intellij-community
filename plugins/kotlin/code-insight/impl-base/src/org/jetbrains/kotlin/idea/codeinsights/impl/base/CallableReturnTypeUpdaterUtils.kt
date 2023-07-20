@@ -183,13 +183,15 @@ object CallableReturnTypeUpdaterUtils {
         override fun isValidFor(psi: PsiElement): Boolean = true
 
         companion object {
-            fun KtAnalysisSession.createByKtTypes(
+            context(KtAnalysisSession)
+            fun createByKtTypes(
                 ktType: KtType,
                 otherTypes: List<KtType> = emptyList(),
                 useTemplate: Boolean = false
             ): TypeInfo = TypeInfo(createTypeByKtType(ktType), otherTypes.map { createTypeByKtType(it) }, useTemplate)
 
-            private fun KtAnalysisSession.createTypeByKtType(ktType: KtType): Type = Type(
+            context(KtAnalysisSession)
+            private fun createTypeByKtType(ktType: KtType): Type = Type(
                 isUnit = ktType.isUnit,
                 longTypeRepresentation = ktType.render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.OUT_VARIANCE),
                 shortTypeRepresentation = ktType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE),

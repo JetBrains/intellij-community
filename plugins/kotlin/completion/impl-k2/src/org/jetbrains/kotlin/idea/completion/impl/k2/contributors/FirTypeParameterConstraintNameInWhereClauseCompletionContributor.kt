@@ -23,7 +23,8 @@ internal class FirTypeParameterConstraintNameInWhereClauseCompletionContributor(
     priority: Int
 ) : FirCompletionContributorBase<FirTypeConstraintNameInWhereClausePositionContext>(basicContext, priority) {
 
-    override fun KtAnalysisSession.complete(
+    context(KtAnalysisSession)
+    override fun complete(
         positionContext: FirTypeConstraintNameInWhereClausePositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,

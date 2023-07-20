@@ -421,7 +421,8 @@ internal object FirPositionCompletionContextDetector {
         }
     }
 
-    private fun KtAnalysisSession.recordOriginalDeclaration(originalFile: KtFile, declaration: KtDeclaration) {
+    context(KtAnalysisSession)
+private fun recordOriginalDeclaration(originalFile: KtFile, declaration: KtDeclaration) {
         try {
             declaration.recordOriginalDeclaration(PsiTreeUtil.findSameElementInCopy(declaration, originalFile))
         } catch (ignore: IllegalStateException) {

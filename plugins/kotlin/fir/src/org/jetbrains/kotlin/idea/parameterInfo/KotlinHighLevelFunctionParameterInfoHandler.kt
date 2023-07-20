@@ -242,7 +242,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             .count { it.node.elementType == KtTokens.COMMA }
     }
 
-    private fun KtAnalysisSession.renderParameter(
+    context(KtAnalysisSession)
+    private fun renderParameter(
         parameter: KtVariableLikeSignature<KtValueParameterSymbol>,
         includeName: Boolean
     ): String {

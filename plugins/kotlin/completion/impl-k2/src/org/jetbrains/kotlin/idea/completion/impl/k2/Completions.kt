@@ -15,7 +15,8 @@ import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal object Completions {
-    fun KtAnalysisSession.complete(
+    context(KtAnalysisSession)
+    fun complete(
         factory: FirCompletionContributorFactory,
         positionContext: FirRawPositionCompletionContext,
         weighingContext: WeighingContext,
@@ -129,7 +130,8 @@ internal object Completions {
         }
     }
 
-    fun KtAnalysisSession.createWeighingContext(
+    context(KtAnalysisSession)
+    fun createWeighingContext(
         basicContext: FirBasicCompletionContext,
         positionContext: FirRawPositionCompletionContext
     ): WeighingContext = when (positionContext) {
@@ -147,7 +149,8 @@ internal object Completions {
         else -> WeighingContext.createEmptyWeighingContext(positionContext.position)
     }
 
-    private fun KtAnalysisSession.createWeighingContextForNameReference(
+    context(KtAnalysisSession)
+    private fun createWeighingContextForNameReference(
         basicContext: FirBasicCompletionContext,
         positionContext: FirNameReferencePositionContext
     ): WeighingContext {

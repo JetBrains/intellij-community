@@ -29,7 +29,8 @@ infix fun KtType.isPossiblySubTypeOf(superType: KtType): Boolean {
     return superTypeWithReplacedTypeArguments != null && this isSubTypeOf superTypeWithReplacedTypeArguments
 }
 
-private fun KtAnalysisSession.buildClassTypeWithStarProjections(symbol: KtClassOrObjectSymbol, nullability: KtTypeNullability): KtType =
+context(KtAnalysisSession)
+private fun buildClassTypeWithStarProjections(symbol: KtClassOrObjectSymbol, nullability: KtTypeNullability): KtType =
     buildClassType(symbol) {
         repeat(symbol.typeParameters.size) {
             argument(KtStarTypeProjection(token))

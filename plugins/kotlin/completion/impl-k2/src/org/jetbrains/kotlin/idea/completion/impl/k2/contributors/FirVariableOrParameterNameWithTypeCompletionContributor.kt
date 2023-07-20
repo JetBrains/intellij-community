@@ -47,7 +47,8 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
 
     private val nameFiltersWithUserPrefixes: List<Pair<NameFilter, String>> = getNameFiltersWithUserPrefixes()
 
-    override fun KtAnalysisSession.complete(
+    context(KtAnalysisSession)
+    override fun complete(
         positionContext: FirRawPositionCompletionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
@@ -71,7 +72,8 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         completeClassesFromIndices(variableOrParameter, visibilityChecker, lookupNamesAdded, weighingContext)
     }
 
-    private fun KtAnalysisSession.completeFromParametersInFile(
+    context(KtAnalysisSession)
+    private fun completeFromParametersInFile(
         variableOrParameter: KtCallableDeclaration,
         visibilityChecker: CompletionVisibilityChecker,
         lookupNamesAdded: MutableSet<String>,
@@ -117,7 +119,8 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         }
     }
 
-    private fun KtAnalysisSession.completeClassesFromScopeContext(
+    context(KtAnalysisSession)
+    private fun completeClassesFromScopeContext(
         variableOrParameter: KtCallableDeclaration,
         visibilityChecker: CompletionVisibilityChecker,
         lookupNamesAdded: MutableSet<String>,
@@ -134,7 +137,8 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         }
     }
 
-    private fun KtAnalysisSession.completeClassesFromIndices(
+    context(KtAnalysisSession)
+    private fun completeClassesFromIndices(
         variableOrParameter: KtCallableDeclaration,
         visibilityChecker: CompletionVisibilityChecker,
         lookupNamesAdded: MutableSet<String>,
@@ -148,7 +152,8 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         }
     }
 
-    private fun KtAnalysisSession.addSuggestions(
+    context(KtAnalysisSession)
+    private fun addSuggestions(
         variableOrParameter: KtCallableDeclaration,
         symbol: KtClassifierSymbol,
         userPrefix: String,
@@ -165,7 +170,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
             is KtClassLikeSymbol -> symbol.name?.asString()
         } ?: return
 
-        val typeLookupElement = with(lookupElementFactory) { createTypeLookupElement(symbol) } ?: return
+        val typeLookupElement = with(lookupElementFactory) {createTypeLookupElement(symbol) } ?: return
 
         val nameSuggestions = KotlinNameSuggester.getCamelNames(
             shortNameString,
@@ -248,14 +253,16 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         }
     }
 
-    private fun KtAnalysisSession.getAvailableTypeParameters(scopes: KtScope): Sequence<KtTypeParameterSymbol> =
+    context(KtAnalysisSession)
+    private fun getAvailableTypeParameters(scopes: KtScope): Sequence<KtTypeParameterSymbol> =
         scopes.getClassifierSymbols().filterIsInstance<KtTypeParameterSymbol>()
 
     private fun getDeclarationFromReceiverTypeReference(typeReference: KtTypeReference): KtCallableDeclaration? {
         return (typeReference.parent as? KtCallableDeclaration)?.takeIf { it.receiverTypeReference == typeReference }
     }
 
-    private fun KtAnalysisSession.typeIsVisible(
+    context(KtAnalysisSession)
+    private fun typeIsVisible(
         type: KtType,
         visibilityChecker: CompletionVisibilityChecker,
         availableTypeParameters: Set<KtTypeParameterSymbol> = emptySet()

@@ -15,7 +15,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.idea.references.KtReference
 
-internal fun KtAnalysisSession.getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
+context(KtAnalysisSession)
+internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
     val scopeIndex = CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX
 
     return reference.resolveToSymbols().mapNotNull { symbol ->

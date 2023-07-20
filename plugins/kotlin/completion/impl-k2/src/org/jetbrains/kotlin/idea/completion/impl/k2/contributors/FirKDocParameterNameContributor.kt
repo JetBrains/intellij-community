@@ -23,7 +23,8 @@ internal open class FirKDocParameterNameContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<FirKDocParameterNamePositionContext>(basicContext, priority) {
-    override fun KtAnalysisSession.complete(
+    context(KtAnalysisSession)
+    override fun complete(
         positionContext: FirKDocParameterNamePositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters

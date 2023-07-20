@@ -809,7 +809,7 @@ class BasicCompletionKindGenerationSession(
                                     "continue" -> KtTokens.CONTINUE_KEYWORD
                                     else -> error("'$keyword' can only be 'break' or 'continue'")
                                 }
-                                collector.addElements(BreakContinueKeywordHandler(ktKeywordToken).createLookups(this, expression))
+                                collector.addElements(BreakContinueKeywordHandler(ktKeywordToken).createLookups(expression))
                             }
                         }
                     }

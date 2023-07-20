@@ -92,7 +92,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         val property = element.unwrapped as? KtDeclaration ?: return null
         analyseOnEdt(property) {
             val propertySymbol = property.getSymbol() as? KtCallableSymbol
-            return propertySymbol?.let(::getJvmName)
+            return propertySymbol?.let { getJvmName(it) }
         }
     }
 
@@ -171,7 +171,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
             val getter = propertySymbol?.getter
             val setter = propertySymbol?.setter
 
-            return getter?.let(::getJvmName) to setter?.let(::getJvmName)
+            return getter?.let { getJvmName(it) } to setter?.let { getJvmName(it) }
         }
     }
 

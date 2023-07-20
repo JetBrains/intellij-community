@@ -304,7 +304,8 @@ private fun renderFunctionTypeParameter(parameter: KtParameter): String? = with(
     }
 }
 
-private fun KtAnalysisSession.renderKDoc(
+context(KtAnalysisSession)
+private fun renderKDoc(
     symbol: KtSymbol,
     stringBuilder: StringBuilder,
 ) {
@@ -329,7 +330,8 @@ private fun KtAnalysisSession.renderKDoc(
     }
 }
 
-private fun KtAnalysisSession.findKDoc(symbol: KtSymbol): KDocContent? {
+context(KtAnalysisSession)
+private fun findKDoc(symbol: KtSymbol): KDocContent? {
     val ktElement = symbol.psi as? KtElement
     ktElement?.findKDoc()?.let {
         return it

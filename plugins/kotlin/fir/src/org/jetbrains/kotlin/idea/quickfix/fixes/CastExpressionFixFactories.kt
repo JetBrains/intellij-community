@@ -66,7 +66,8 @@ object CastExpressionFixFactories {
         )
     }
 
-    private fun KtAnalysisSession.createFix(
+    context(KtAnalysisSession)
+    private fun createFix(
         isDueToNullability: Boolean,
         actualType: KtType,
         expectedType: KtType,

@@ -54,7 +54,8 @@ internal class DestructuringWrongNameInspection : LocalInspectionTool() {
         }
     }
 
-    private fun KtAnalysisSession.getClassType(declaration: KtDestructuringDeclaration): KtNonErrorClassType? {
+    context(KtAnalysisSession)
+    private fun getClassType(declaration: KtDestructuringDeclaration): KtNonErrorClassType? {
         val initializer = declaration.initializer
         val parentAsParameter = declaration.parent as? KtParameter
         val type = when {

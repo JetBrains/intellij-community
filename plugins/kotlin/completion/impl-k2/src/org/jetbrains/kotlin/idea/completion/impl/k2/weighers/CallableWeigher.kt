@@ -62,7 +62,8 @@ internal object CallableWeigher {
         }
     }
 
-    fun KtAnalysisSession.addWeight(
+    context(KtAnalysisSession)
+fun addWeight(
         context: WeighingContext,
         lookupElement: LookupElement,
         signature: KtCallableSignature<*>,

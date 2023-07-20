@@ -32,7 +32,8 @@ internal class FirDeclarationFromUnresolvedNameContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
-    override fun KtAnalysisSession.complete(
+    context(KtAnalysisSession)
+    override fun complete(
         positionContext: FirRawPositionCompletionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
@@ -48,7 +49,8 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         }
     }
 
-    private fun KtAnalysisSession.processReference(
+    context(KtAnalysisSession)
+    private fun processReference(
         referenceScope: KtElement,
         currentDeclarationInFakeFile: KtNamedDeclaration,
         unresolvedRef: KtNameReferenceExpression
@@ -68,7 +70,8 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         }
     }
 
-    private fun KtAnalysisSession.shouldOfferCompletion(
+    context(KtAnalysisSession)
+    private fun shouldOfferCompletion(
         unresolvedRef: KtNameReferenceExpression,
         currentDeclarationInFakeFile: KtNamedDeclaration
     ): Boolean {
@@ -115,7 +118,8 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         return qualifiedExpression.receiverExpression
     }
 
-    private fun KtAnalysisSession.getReceiverType(symbol: KtCallableSymbol): KtType? {
+    context(KtAnalysisSession)
+    private fun getReceiverType(symbol: KtCallableSymbol): KtType? {
         return symbol.receiverType ?: (symbol as? KtCallableSymbol)?.getDispatchReceiverType()
     }
 

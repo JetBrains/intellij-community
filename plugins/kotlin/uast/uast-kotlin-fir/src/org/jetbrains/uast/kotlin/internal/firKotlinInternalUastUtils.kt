@@ -48,7 +48,8 @@ internal inline fun <R> analyzeForUast(
     }
 }
 
-internal fun KtAnalysisSession.containingKtClass(
+context(KtAnalysisSession)
+internal fun containingKtClass(
     ktConstructorSymbol: KtConstructorSymbol,
 ): KtClass? {
     return when (val psi = ktConstructorSymbol.psi) {
@@ -58,7 +59,8 @@ internal fun KtAnalysisSession.containingKtClass(
     }
 }
 
-internal fun KtAnalysisSession.toPsiClass(
+context(KtAnalysisSession)
+internal fun toPsiClass(
     ktType: KtType,
     source: UElement?,
     context: KtElement,
@@ -76,7 +78,8 @@ internal fun KtAnalysisSession.toPsiClass(
     )
 }
 
-internal fun KtAnalysisSession.toPsiMethod(
+context(KtAnalysisSession)
+internal fun toPsiMethod(
     functionSymbol: KtFunctionLikeSymbol,
     context: KtElement,
 ): PsiMethod? {
@@ -120,7 +123,8 @@ internal fun KtAnalysisSession.toPsiMethod(
     }
 }
 
-private fun KtAnalysisSession.toPsiMethodForDeserialized(
+context(KtAnalysisSession)
+private fun toPsiMethodForDeserialized(
     functionSymbol: KtFunctionLikeSymbol,
     context: KtElement,
     psi: KtFunction,
@@ -156,7 +160,8 @@ private fun KtAnalysisSession.toPsiMethodForDeserialized(
     psi.containingKtFile.findFacadeClass()?.lookup(fake = true)
 }
 
-private fun KtAnalysisSession.desc(
+context(KtAnalysisSession)
+private fun desc(
     functionSymbol: KtFunctionLikeSymbol,
     containingLightDeclaration: PsiModifierListOwner,
     context: KtElement
@@ -189,7 +194,8 @@ private fun KtAnalysisSession.desc(
     )
 }
 
-internal fun KtAnalysisSession.toPsiType(
+context(KtAnalysisSession)
+internal fun toPsiType(
     ktType: KtType,
     source: UElement?,
     context: KtElement,
@@ -202,7 +208,8 @@ internal fun KtAnalysisSession.toPsiType(
         config
     )
 
-internal fun KtAnalysisSession.toPsiType(
+context(KtAnalysisSession)
+internal fun toPsiType(
     ktType: KtType,
     containingLightDeclaration: PsiModifierListOwner?,
     context: KtElement,
@@ -234,7 +241,8 @@ internal fun KtAnalysisSession.toPsiType(
     ) ?: UastErrorType
 }
 
-internal fun KtAnalysisSession.receiverType(
+context(KtAnalysisSession)
+internal fun receiverType(
     ktCall: KtCallableMemberCall<*, *>,
     source: UElement,
     context: KtElement,
@@ -254,7 +262,8 @@ internal fun KtAnalysisSession.receiverType(
     )
 }
 
-internal fun KtAnalysisSession.isInheritedGenericType(ktType: KtType?): Boolean {
+context(KtAnalysisSession)
+internal fun isInheritedGenericType(ktType: KtType?): Boolean {
     if (ktType == null) return false
     return ktType is KtTypeParameterType &&
         // explicitly nullable, e.g., T?
@@ -263,7 +272,8 @@ internal fun KtAnalysisSession.isInheritedGenericType(ktType: KtType?): Boolean 
         nullability(ktType) != KtTypeNullability.NON_NULLABLE
 }
 
-internal fun KtAnalysisSession.nullability(ktType: KtType?): KtTypeNullability? {
+context(KtAnalysisSession)
+internal fun nullability(ktType: KtType?): KtTypeNullability? {
     if (ktType == null) return null
     if (ktType is KtErrorType) return null
     return if (ktType.canBeNull)
@@ -272,14 +282,16 @@ internal fun KtAnalysisSession.nullability(ktType: KtType?): KtTypeNullability? 
         KtTypeNullability.NON_NULLABLE
 }
 
-internal fun KtAnalysisSession.getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
+context(KtAnalysisSession)
+internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
     return (ktCallableDeclaration.getSymbol() as? KtCallableSymbol)?.returnType
 }
 
 /**
  * Finds Java stub-based [PsiElement] for symbols that refer to declarations in [KtLibraryModule].
  */
-internal tailrec fun KtAnalysisSession.psiForUast(symbol: KtSymbol, project: Project): PsiElement? {
+context(KtAnalysisSession)
+internal tailrec fun psiForUast(symbol: KtSymbol, project: Project): PsiElement? {
     if (symbol.origin == KtSymbolOrigin.LIBRARY) {
         return findPsi(symbol, project) ?: symbol.psi
     }

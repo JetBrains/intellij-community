@@ -37,7 +37,8 @@ object TypeMismatchFactories {
         getFixesForTypeMismatch(psi, expectedType = diagnostic.desiredType, actualType = actualType)
     }
 
-    private fun KtAnalysisSession.getFixesForTypeMismatch(
+    context(KtAnalysisSession)
+    private fun getFixesForTypeMismatch(
         psi: PsiElement,
         expectedType: KtType,
         actualType: KtType

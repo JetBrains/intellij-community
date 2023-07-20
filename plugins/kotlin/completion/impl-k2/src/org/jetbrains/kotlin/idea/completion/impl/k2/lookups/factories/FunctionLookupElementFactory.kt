@@ -33,7 +33,8 @@ import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.renderer.render
 
 internal class FunctionLookupElementFactory {
-    fun KtAnalysisSession.createLookup(
+    context(KtAnalysisSession)
+fun createLookup(
         name: Name,
         signature: KtFunctionLikeSignature<*>,
         options: CallableInsertionOptions,

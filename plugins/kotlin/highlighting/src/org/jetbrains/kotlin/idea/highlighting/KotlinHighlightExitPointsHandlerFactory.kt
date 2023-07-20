@@ -18,7 +18,7 @@ class KotlinHighlightExitPointsHandlerFactory: AbstractKotlinHighlightExitPoints
 
     override fun isInlinedArgument(declaration: KtDeclarationWithBody): Boolean {
         return declaration is KtFunction && analyze(declaration) {
-            this.isInlinedArgument(declaration, false)
+            isInlinedArgument(declaration, false)
         }
     }
 

@@ -73,23 +73,26 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     protected val scopeNameFilter: KtScopeNameFilter =
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
 
-    abstract fun KtAnalysisSession.complete(
+    context(KtAnalysisSession)
+    abstract fun complete(
         positionContext: C,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     )
 
-    protected fun KtAnalysisSession.addSymbolToCompletion(expectedType: KtType?, symbol: KtSymbol) {
+    context(KtAnalysisSession)
+    protected fun addSymbolToCompletion(expectedType: KtType?, symbol: KtSymbol) {
         if (symbol !is KtNamedSymbol) return
         // Don't offer any hidden deprecated items.
         if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
         with(lookupElementFactory) {
             createLookupElement(symbol, importStrategyDetector, expectedType = expectedType)
-                .let(sink::addElement)
+            .let(sink::addElement)
         }
     }
 
-    protected fun KtAnalysisSession.addClassifierSymbolToCompletion(
+    context(KtAnalysisSession)
+    protected fun addClassifierSymbolToCompletion(
         symbol: KtClassifierSymbol,
         context: WeighingContext,
         symbolOrigin: CompletionSymbolOrigin,
@@ -109,7 +112,8 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         sink.addElement(lookup)
     }
 
-    protected fun KtAnalysisSession.addCallableSymbolToCompletion(
+    context(KtAnalysisSession)
+    protected fun addCallableSymbolToCompletion(
         context: WeighingContext,
         signature: KtCallableSignature<*>,
         options: CallableInsertionOptions,

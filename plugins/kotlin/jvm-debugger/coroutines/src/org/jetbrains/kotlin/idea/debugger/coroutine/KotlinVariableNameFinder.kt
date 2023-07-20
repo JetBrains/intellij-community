@@ -53,7 +53,8 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
         }
     }
 
-    private fun KtAnalysisSession.findVariableNames(
+    context(KtAnalysisSession)
+    private fun findVariableNames(
         expression: KtExpression,
         boundaryElement: PsiElement,
         blocksToVisit: Sequence<KtBlockExpression>
@@ -93,7 +94,8 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
         return parameterList.parameters.mapNotNull { it.name }
     }
 
-    private fun KtAnalysisSession.findExpressionToStartAnalysisFrom(expression: KtExpression): KtExpression {
+    context(KtAnalysisSession)
+private fun findExpressionToStartAnalysisFrom(expression: KtExpression): KtExpression {
         var lastSeenBlockExpression = expression
         for (parent in expression.parents(withSelf = true)) {
             when (parent) {
@@ -110,16 +112,19 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
         return lastSeenBlockExpression
     }
 
-    private fun KtAnalysisSession.isCoroutineContextAvailable(expression: KtExpression) =
+    context(KtAnalysisSession)
+    private fun isCoroutineContextAvailable(expression: KtExpression) =
         isCoroutineContextAvailableFromFunction(expression) || isCoroutineContextAvailableFromLambda(expression)
 
-    private fun KtAnalysisSession.isCoroutineContextAvailableFromFunction(expression: KtExpression): Boolean {
+    context(KtAnalysisSession)
+    private fun isCoroutineContextAvailableFromFunction(expression: KtExpression): Boolean {
         val functionParent = expression.parentOfType<KtFunction>(withSelf = true) ?: return false
         val symbol = functionParent.getSymbol() as? KtFunctionSymbol ?: return false
         return symbol.isSuspend
     }
 
-    private fun KtAnalysisSession.isCoroutineContextAvailableFromLambda(expression: KtExpression): Boolean {
+    context(KtAnalysisSession)
+    private fun isCoroutineContextAvailableFromLambda(expression: KtExpression): Boolean {
         val literalParent = expression.parentOfType<KtFunctionLiteral>(withSelf = true) ?: return false
         val parentCall = KtPsiUtil.getParentCallIfPresent(literalParent) as? KtCallExpression ?: return false
         val call = parentCall.resolveCall()?.singleFunctionCallOrNull() ?: return false
@@ -148,7 +153,8 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
             false
         }
 
-    private fun KtAnalysisSession.isInlined(expression: KtBlockExpression): Boolean {
+    context(KtAnalysisSession)
+    private fun isInlined(expression: KtBlockExpression): Boolean {
         val parentFunction = expression.parentOfType<KtFunction>() ?: return false
         return isInlinedArgument(parentFunction, false)
     }

@@ -17,7 +17,8 @@ internal class FirSameAsFileClassifierNameCompletionContributor(
     priority: Int
 ) : FirCompletionContributorBase<FirClassifierNamePositionContext>(basicContext, priority) {
 
-    override fun KtAnalysisSession.complete(
+    context(KtAnalysisSession)
+    override fun complete(
         positionContext: FirClassifierNamePositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,

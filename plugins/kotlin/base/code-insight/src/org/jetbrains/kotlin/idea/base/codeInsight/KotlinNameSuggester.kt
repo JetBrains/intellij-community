@@ -132,7 +132,8 @@ class KotlinNameSuggester(
      *  - `print(<selection>intArrayOf(5)</selection>)` -> {message, intArrayOf, ints}
      *  - `print(<selection>listOf(User("Mary"), User("John"))</selection>)` -> {message, listOf, users}
      */
-    fun KtAnalysisSession.suggestExpressionNames(expression: KtExpression, validator: (String) -> Boolean = { true }): Sequence<String> {
+    context(KtAnalysisSession)
+    fun suggestExpressionNames(expression: KtExpression, validator: (String) -> Boolean = { true }): Sequence<String> {
         return (suggestNamesByValueArgument(expression, validator) +
                 suggestNamesByExpressionPSI(expression, validator).filter { name ->
                     name.length >= MIN_LENGTH_OF_NAME_BASED_ON_EXPRESSION_PSI
@@ -188,7 +189,8 @@ class KotlinNameSuggester(
      *  - `IntArray` -> {ints}
      *  - `List<User>` -> {users}
      */
-    fun KtAnalysisSession.suggestTypeNames(type: KtType): Sequence<String> {
+    context(KtAnalysisSession)
+    fun suggestTypeNames(type: KtType): Sequence<String> {
         return sequence {
             val primitiveType = getPrimitiveType(type)
             if (primitiveType != null) {
@@ -275,7 +277,8 @@ class KotlinNameSuggester(
      *  - `Int?` -> NullableInt
      *  - `(String) -> Boolean` -> StringPredicate
      */
-    fun KtAnalysisSession.suggestTypeAliasName(type: KtTypeElement): String {
+    context(KtAnalysisSession)
+    fun suggestTypeAliasName(type: KtTypeElement): String {
         var isExactMatch = true
 
         fun MutableList<String>.process(type: KtTypeElement?) {
@@ -550,7 +553,8 @@ class KotlinNameSuggester(
     }
 }
 
-private fun KtAnalysisSession.getPrimitiveType(type: KtType): PrimitiveType? {
+context(KtAnalysisSession)
+private fun getPrimitiveType(type: KtType): PrimitiveType? {
     return when {
         type.isBoolean -> PrimitiveType.BOOLEAN
         type.isChar -> PrimitiveType.CHAR
@@ -568,7 +572,8 @@ private val ITERABLE_LIKE_CLASS_IDS =
     listOf(FqNames.iterable, FqNames.array.toSafe())
         .map { ClassId.topLevel(it) }
 
-private fun KtAnalysisSession.getIterableElementType(type: KtType): KtType? {
+context(KtAnalysisSession)
+private fun getIterableElementType(type: KtType): KtType? {
     if (type is KtNonErrorClassType && type.classId in ITERABLE_LIKE_CLASS_IDS) {
         return type.ownTypeArguments.singleOrNull()?.type
     }

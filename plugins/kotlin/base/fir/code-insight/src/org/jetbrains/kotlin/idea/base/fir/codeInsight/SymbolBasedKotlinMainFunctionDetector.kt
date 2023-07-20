@@ -92,7 +92,8 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
         return true
     }
 
-    private fun KtAnalysisSession.buildMainParameterType(): KtType {
+    context(KtAnalysisSession)
+    private fun buildMainParameterType(): KtType {
         return buildClassType(StandardClassIds.Array) {
             val argumentType = buildClassType(StandardClassIds.String) {
                 nullability = KtTypeNullability.NON_NULLABLE

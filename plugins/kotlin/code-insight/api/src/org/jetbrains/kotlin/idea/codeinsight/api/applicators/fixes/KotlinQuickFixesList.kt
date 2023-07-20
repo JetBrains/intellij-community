@@ -20,8 +20,9 @@ class KotlinQuickFixesList @ForKtQuickFixesListBuilder @OptIn(PrivateForInline::
         return factories.flatMap { createQuickFixes(it, diagnostic) }
     }
 
+    context(KtAnalysisSession)
     @OptIn(PrivateForInline::class)
-    private fun KtAnalysisSession.createQuickFixes(
+    private fun createQuickFixes(
         quickFixFactory: KotlinQuickFixFactory,
         diagnostic: KtDiagnosticWithPsi<*>
     ): List<IntentionAction> = when (quickFixFactory) {
@@ -31,6 +32,7 @@ class KotlinQuickFixesList @ForKtQuickFixesListBuilder @OptIn(PrivateForInline::
                     as KotlinDiagnosticFixFactory<KtDiagnosticWithPsi<PsiElement>>
             createPlatformQuickFixes(diagnostic, factory)
         }
+
         is KotlinQuickFixFactory.KotlinQuickFixesPsiBasedFactory -> quickFixFactory.psiFactory.createQuickFix(diagnostic.psi)
     }
 

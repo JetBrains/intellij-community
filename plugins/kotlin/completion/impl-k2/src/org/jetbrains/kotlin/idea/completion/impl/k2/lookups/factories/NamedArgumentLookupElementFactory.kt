@@ -15,7 +15,8 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 
 internal class NamedArgumentLookupElementFactory {
-    fun KtAnalysisSession.createNamedArgumentLookup(name: Name, types: List<KtType>): LookupElement {
+    context(KtAnalysisSession)
+fun createNamedArgumentLookup(name: Name, types: List<KtType>): LookupElement {
         val typeText = types.singleOrNull()?.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT) ?: "..."
         val nameString = name.asString()
         return LookupElementBuilder.create(NamedArgumentLookupObject(name), "$nameString =")

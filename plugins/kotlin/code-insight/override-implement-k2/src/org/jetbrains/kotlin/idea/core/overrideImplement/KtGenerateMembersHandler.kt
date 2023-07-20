@@ -50,7 +50,7 @@ abstract class KtGenerateMembersHandler(
             @OptIn(KtAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 val entryMembers = analyze(classOrObject) {
-                    this.generateMembers(editor, classOrObject, selectedElements, copyDoc)
+                    createMemberEntries(editor, classOrObject, selectedElements, copyDoc)
                 }
                 val insertedBlocks = insertMembersAccordingToPreferredOrder(entryMembers, editor, classOrObject)
                 // Reference shortening is done in a separate analysis session because the session need to be aware of the newly generated
@@ -86,7 +86,8 @@ abstract class KtGenerateMembersHandler(
         }
     }
 
-    private fun KtAnalysisSession.generateMembers(
+    context(KtAnalysisSession)
+    private fun createMemberEntries(
         editor: Editor,
         currentClass: KtClassOrObject,
         selectedElements: Collection<KtClassMember>,
@@ -163,7 +164,8 @@ abstract class KtGenerateMembersHandler(
      * callable symbol for an overridable member that the user has picked to override (or implement), and the value is the stub
      * implementation for the chosen symbol.
      */
-    private fun KtAnalysisSession.getMembersOrderedByRelativePositionsInSuperTypes(
+    context(KtAnalysisSession)
+private fun getMembersOrderedByRelativePositionsInSuperTypes(
         currentClass: KtClassOrObject,
         newMemberSymbolsAndGeneratedPsi: Map<KtCallableSymbol, KtCallableDeclaration>
     ): List<MemberEntry> {

@@ -153,7 +153,8 @@ object WrapWithSafeLetCallFixFactories {
         )
     }
 
-    private fun KtAnalysisSession.isCallingFunctionalTypeVariableInLocalScope(callExpression: KtCallExpression): Boolean? {
+    context(KtAnalysisSession)
+    private fun isCallingFunctionalTypeVariableInLocalScope(callExpression: KtCallExpression): Boolean? {
         val calleeExpression = callExpression.calleeExpression
         val calleeName = calleeExpression?.text?.let(Name::identifierIfValid) ?: return null
         val callSite = callExpression.parent as? KtQualifiedExpression ?: callExpression
@@ -179,7 +180,8 @@ object WrapWithSafeLetCallFixFactories {
         else emptyList()
     }
 
-    private fun KtAnalysisSession.createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(
+    context(KtAnalysisSession)
+    private fun createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(
         nullableExpression: KtExpression?,
         isImplicitInvokeCallToMemberProperty: Boolean = false,
     ): List<KotlinApplicatorBasedQuickFix<KtExpression, Input>> {
@@ -202,7 +204,8 @@ object WrapWithSafeLetCallFixFactories {
         )
     }
 
-    private fun KtAnalysisSession.createWrapWithSafeLetCallInputForNullableExpression(
+    context(KtAnalysisSession)
+    private fun createWrapWithSafeLetCallInputForNullableExpression(
         nullableExpression: KtExpression?,
         isImplicitInvokeCallToMemberProperty: Boolean = false,
         surroundingExpression: KtExpression? = findParentExpressionAtNullablePosition(nullableExpression)
@@ -225,7 +228,8 @@ object WrapWithSafeLetCallFixFactories {
         )
     }
 
-    private fun KtAnalysisSession.getDeclaredParameterNameForArgument(argumentExpression: KtExpression): String? {
+    context(KtAnalysisSession)
+    private fun getDeclaredParameterNameForArgument(argumentExpression: KtExpression): String? {
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return null
         val callExpression = argumentExpression.parentOfType<KtCallExpression>()
         val successCallTarget = callExpression?.resolveCall()?.singleFunctionCallOrNull()?.symbol ?: return null
@@ -233,7 +237,8 @@ object WrapWithSafeLetCallFixFactories {
         return successCallTarget.valueParameters.getOrNull(valueArgument.argumentIndex)?.name?.identifierOrNullIfSpecial
     }
 
-    private fun KtAnalysisSession.findParentExpressionAtNullablePosition(expression: KtExpression?): KtExpression? {
+    context(KtAnalysisSession)
+    private fun findParentExpressionAtNullablePosition(expression: KtExpression?): KtExpression? {
         if (expression == null) return null
         var current = expression.surroundingExpression
         while (current != null && !isExpressionAtNullablePosition(current)) {
@@ -242,7 +247,8 @@ object WrapWithSafeLetCallFixFactories {
         return current
     }
 
-    private fun KtAnalysisSession.isExpressionAtNullablePosition(expression: KtExpression): Boolean {
+    context(KtAnalysisSession)
+    private fun isExpressionAtNullablePosition(expression: KtExpression): Boolean {
         val parent = expression.parent
         return when {
             parent is KtProperty && expression == parent.initializer -> {
@@ -300,7 +306,8 @@ object WrapWithSafeLetCallFixFactories {
      * type. The function returns null if any necessary assumptions are not met. For example, if the call is not resolved to a unique
      * function or the function doesn't have a parameter at the given index. Then caller can do whatever needed to cover such cases.
      */
-    private fun KtAnalysisSession.doesFunctionAcceptNull(call: KtCall, index: Int): Boolean? {
+    context(KtAnalysisSession)
+    private fun doesFunctionAcceptNull(call: KtCall, index: Int): Boolean? {
         val symbol = (call as? KtFunctionCall<*>)?.symbol ?: return null
         if (index == -1) {
             // Null extension receiver means the function does not accept extension receiver and hence cannot be invoked on a nullable

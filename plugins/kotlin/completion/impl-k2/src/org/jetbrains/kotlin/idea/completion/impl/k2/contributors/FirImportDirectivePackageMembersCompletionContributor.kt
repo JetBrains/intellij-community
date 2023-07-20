@@ -18,7 +18,8 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int
 ) : FirCompletionContributorBase<FirImportDirectivePositionContext>(basicContext, priority) {
-    override fun KtAnalysisSession.complete(
+    context(KtAnalysisSession)
+    override fun complete(
         positionContext: FirImportDirectivePositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,

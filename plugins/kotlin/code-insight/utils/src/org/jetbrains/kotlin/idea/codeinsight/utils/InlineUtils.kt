@@ -12,8 +12,9 @@ import org.jetbrains.kotlin.idea.base.psi.getContainingValueArgument
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
+context(KtAnalysisSession)
 @ApiStatus.Internal
-fun KtAnalysisSession.isInlinedArgument(argument: KtFunction, checkNonLocalReturn: Boolean): Boolean {
+fun isInlinedArgument(argument: KtFunction, checkNonLocalReturn: Boolean): Boolean {
     val parameterSymbol = getInlineArgumentSymbol(argument) ?: return false
     if (parameterSymbol.isNoinline || (checkNonLocalReturn && parameterSymbol.isCrossinline)) {
         return false
@@ -24,7 +25,8 @@ fun KtAnalysisSession.isInlinedArgument(argument: KtFunction, checkNonLocalRetur
             && (parameterType.isFunctionType || parameterType.isSuspendFunctionType)
 }
 
-private fun KtAnalysisSession.getInlineArgumentSymbol(argument: KtFunction): KtValueParameterSymbol? {
+context(KtAnalysisSession)
+private fun getInlineArgumentSymbol(argument: KtFunction): KtValueParameterSymbol? {
     if (argument !is KtFunctionLiteral && argument !is KtNamedFunction) return null
 
     val parentCallExpression = KtPsiUtil.getParentCallIfPresent(argument) as? KtCallExpression ?: return null
@@ -39,7 +41,8 @@ private fun KtAnalysisSession.getInlineArgumentSymbol(argument: KtFunction): KtV
     return null
 }
 
-private fun KtAnalysisSession.isArrayGeneratorConstructorCall(symbol: KtFunctionLikeSymbol): Boolean {
+context(KtAnalysisSession)
+private fun isArrayGeneratorConstructorCall(symbol: KtFunctionLikeSymbol): Boolean {
     fun checkParameters(symbol: KtFunctionLikeSymbol): Boolean {
         return symbol.valueParameters.size == 2
                 && symbol.valueParameters[0].returnType.isInt

@@ -28,7 +28,8 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompletionContext, priority: Int) :
     FirCompletionContributorBase<FirExpressionNameReferencePositionContext>(basicContext, priority) {
 
-    override fun KtAnalysisSession.complete(
+    context(KtAnalysisSession)
+    override fun complete(
         positionContext: FirExpressionNameReferencePositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
@@ -85,7 +86,8 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
         val types: List<KtType>
     )
 
-    private fun KtAnalysisSession.collectNamedArgumentInfos(
+    context(KtAnalysisSession)
+    private fun collectNamedArgumentInfos(
         callElement: KtCallElement,
         candidates: List<KtFunctionCall<*>>,
         currentArgumentIndex: Int
@@ -102,7 +104,8 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
         return nameToTypes.map { (name, types) -> NamedArgumentInfo(name, types.toList()) }
     }
 
-    private fun KtAnalysisSession.collectNotUsedParameterCandidates(
+    context(KtAnalysisSession)
+    private fun collectNotUsedParameterCandidates(
         callElement: KtCallElement,
         candidate: KtFunctionCall<*>,
         argumentsBeforeCurrent: List<KtValueArgument>

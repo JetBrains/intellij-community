@@ -36,7 +36,8 @@ internal class FirDeclarationFromOverridableMembersContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
-    override fun KtAnalysisSession.complete(
+    context(KtAnalysisSession)
+override fun complete(
         positionContext: FirRawPositionCompletionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,

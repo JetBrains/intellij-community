@@ -26,7 +26,8 @@ object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProvider() {
         }
     }
 
-    private fun KtAnalysisSession.isTestDeclaration(symbol: KtAnnotatedSymbol): Boolean {
+    context(KtAnalysisSession)
+    private fun isTestDeclaration(symbol: KtAnnotatedSymbol): Boolean {
         return when {
             isIgnored(symbol) -> false
             (symbol as? KtSymbolWithVisibility)?.visibility != Visibilities.Public -> false
@@ -36,7 +37,8 @@ object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProvider() {
         }
     }
 
-    private tailrec fun KtAnalysisSession.isIgnored(symbol: KtAnnotatedSymbol): Boolean {
+    context(KtAnalysisSession)
+    private tailrec fun isIgnored(symbol: KtAnnotatedSymbol): Boolean {
         if (symbol.hasAnnotation(KotlinTestAvailabilityChecker.IGNORE_FQ_NAME)) {
             return true
         }

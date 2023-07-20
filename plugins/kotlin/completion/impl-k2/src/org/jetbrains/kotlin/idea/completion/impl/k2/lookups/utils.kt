@@ -29,7 +29,8 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
 
-internal fun KtAnalysisSession.withClassifierSymbolInfo(
+context(KtAnalysisSession)
+internal fun withClassifierSymbolInfo(
     symbol: KtClassifierSymbol,
     elementBuilder: LookupElementBuilder
 ): LookupElementBuilder = elementBuilder
@@ -37,7 +38,8 @@ internal fun KtAnalysisSession.withClassifierSymbolInfo(
     .withIcon(getIconFor(symbol))
     .withTypeText(getTypeTextForClassifier(symbol))
 
-internal fun KtAnalysisSession.withCallableSignatureInfo(
+context(KtAnalysisSession)
+internal fun withCallableSignatureInfo(
     signature: KtCallableSignature<*>,
     elementBuilder: LookupElementBuilder
 ): LookupElementBuilder = elementBuilder

@@ -43,7 +43,8 @@ internal fun createStarTypeArgumentsList(typeArgumentsCount: Int): String =
 /**
  * @param skipJavaGettersAndSetters if true, skips Java getters and setters that are mapped to Kotlin properties.
  */
-internal fun KtAnalysisSession.collectLocalAndMemberNonExtensionsFromScopeContext(
+context(KtAnalysisSession)
+internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
     scopeContext: KtScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: KtScopeNameFilter,
@@ -76,7 +77,8 @@ internal fun KtAnalysisSession.collectLocalAndMemberNonExtensionsFromScopeContex
     }
 }
 
-internal fun KtAnalysisSession.collectStaticAndTopLevelNonExtensionsFromScopeContext(
+context(KtAnalysisSession)
+internal fun collectStaticAndTopLevelNonExtensionsFromScopeContext(
     scopeContext: KtScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: KtScopeNameFilter,
@@ -93,7 +95,8 @@ internal fun KtAnalysisSession.collectStaticAndTopLevelNonExtensionsFromScopeCon
  * @param skipJavaGettersAndSetters if true, skips Java getters and setters that are mapped to Kotlin properties.
  * @param indexInTower index of implicit receiver's scope in scope tower if it is known, otherwise null.
  */
-internal fun KtAnalysisSession.collectNonExtensionsForType(
+context(KtAnalysisSession)
+internal fun collectNonExtensionsForType(
     type: KtType,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: KtScopeNameFilter,
@@ -145,7 +148,8 @@ private fun Sequence<KtCallableSignature<*>>.filterOutJavaGettersAndSetters(
  * Returns non-extensions from [KtScope]. Resulting callables do not include synthetic Java properties and constructors of inner classes.
  * To get them use [collectNonExtensionsForType].
  */
-internal fun KtAnalysisSession.collectNonExtensionsFromScope(
+context(KtAnalysisSession)
+internal fun collectNonExtensionsFromScope(
     scope: KtScope,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: KtScopeNameFilter,
@@ -188,7 +192,8 @@ internal fun KtDeclaration.canDefinitelyNotBeSeenFromOtherFile(): Boolean {
     }
 }
 
-private fun KtAnalysisSession.isEnumEntriesProperty(symbol: KtCallableSymbol): Boolean {
+context(KtAnalysisSession)
+private fun isEnumEntriesProperty(symbol: KtCallableSymbol): Boolean {
     return symbol is KtPropertySymbol &&
             symbol.isStatic &&
             symbol.callableIdIfNonLocal?.callableName == StandardNames.ENUM_ENTRIES &&

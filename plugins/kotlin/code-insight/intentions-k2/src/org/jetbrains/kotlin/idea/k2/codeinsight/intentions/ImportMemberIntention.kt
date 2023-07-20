@@ -53,7 +53,8 @@ internal class ImportMemberIntention :
     }
 }
 
-private fun KtAnalysisSession.computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): ImportMemberIntention.Context? {
+context(KtAnalysisSession)
+private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): ImportMemberIntention.Context? {
     return when (symbol) {
         is KtConstructorSymbol,
         is KtClassOrObjectSymbol -> {
@@ -101,7 +102,8 @@ private fun KtAnalysisSession.computeContext(psi: KtNameReferenceExpression, sym
     }
 }
 
-private fun KtAnalysisSession.canBeImported(symbol: KtCallableSymbol): Boolean {
+context(KtAnalysisSession)
+private fun canBeImported(symbol: KtCallableSymbol): Boolean {
     if (symbol is KtEnumEntrySymbol) return true
     if (symbol.origin == KtSymbolOrigin.JAVA) {
         return when (symbol) {

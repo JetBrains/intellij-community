@@ -40,7 +40,8 @@ fun checkRedeclarationConflicts(declaration: KtNamedDeclaration, newName: String
     }
 }
 
-private fun KtAnalysisSession.checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, newName: Name, result: MutableList<UsageInfo>) {
+context(KtAnalysisSession)
+private fun checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, newName: Name, result: MutableList<UsageInfo>) {
 
   val symbol = declaration.getSymbol().let {
     (it as? KtValueParameterSymbol?)?.generatedPrimaryConstructorProperty ?: it
@@ -115,7 +116,8 @@ private fun KtAnalysisSession.checkDeclarationNewNameConflicts(declaration: KtNa
   }
 }
 
-private fun KtAnalysisSession.areSameSignatures(s1: KtFunctionLikeSymbol, s2: KtFunctionLikeSymbol): Boolean {
+context(KtAnalysisSession)
+private fun areSameSignatures(s1: KtFunctionLikeSymbol, s2: KtFunctionLikeSymbol): Boolean {
   return areTypesTheSame(s1.receiverType, s2.receiverType) && areTypesTheSame(s1.returnType,
                                                                               s2.returnType) && s1.valueParameters.size == s2.valueParameters.size && s1.valueParameters.zip(
     s2.valueParameters).all { (p1, p2) ->
@@ -124,7 +126,8 @@ private fun KtAnalysisSession.areSameSignatures(s1: KtFunctionLikeSymbol, s2: Kt
     s2.contextReceivers).all { (c1, c2) -> c1.type.isEqualTo(c2.type) }
 }
 
-private fun KtAnalysisSession.areTypesTheSame(t1: KtType?, t2: KtType?): Boolean {
+context(KtAnalysisSession)
+private fun areTypesTheSame(t1: KtType?, t2: KtType?): Boolean {
   if (t1 === t2) return true
   if (t2 == null) return false
   return t1?.isEqualTo(t2) ?: false
@@ -153,7 +156,8 @@ fun checkAccidentalPropertyOverrides(
     }
 }
 
-private fun KtAnalysisSession.checkAccidentalPropertyOverrides(
+context(KtAnalysisSession)
+private fun checkAccidentalPropertyOverrides(
     declaration: KtNamedDeclaration,
     newName: Name,
     result: MutableList<UsageInfo>

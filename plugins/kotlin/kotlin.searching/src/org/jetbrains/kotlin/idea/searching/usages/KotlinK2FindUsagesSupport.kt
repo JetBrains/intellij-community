@@ -65,7 +65,8 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         })
     }
 
-    private fun KtAnalysisSession.callReceiverRefersToCompanionObject(call: KtCall, companionObject: KtObjectDeclaration): Boolean {
+    context(KtAnalysisSession)
+    private fun callReceiverRefersToCompanionObject(call: KtCall, companionObject: KtObjectDeclaration): Boolean {
         if (call !is KtCallableMemberCall<*, *>) return false
         val dispatchReceiver = call.partiallyAppliedSymbol.dispatchReceiver
         val extensionReceiver = call.partiallyAppliedSymbol.extensionReceiver

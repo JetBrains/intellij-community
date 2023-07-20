@@ -52,7 +52,8 @@ internal class AnonymousTemplateEditingListener(private val psiFile: PsiFile, pr
         }
     }
 
-    private fun KtAnalysisSession.resolveSubtypeInfo(referenceExpression: KtReferenceExpression): SubtypeInfo? {
+    context(KtAnalysisSession)
+    private fun resolveSubtypeInfo(referenceExpression: KtReferenceExpression): SubtypeInfo? {
         val referencedClasses = sequence {
             for (symbol in referenceExpression.mainReference.resolveToSymbols()) {
                 if (symbol is KtNamedClassOrObjectSymbol) {

@@ -26,7 +26,8 @@ import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 // Analogous to Call.resolveCandidates() in plugins/kotlin/core/src/org/jetbrains/kotlin/idea/core/Utils.kt
-fun KtAnalysisSession.collectCallCandidates(callElement: KtElement): List<KtCallCandidateInfo> {
+context(KtAnalysisSession)
+fun collectCallCandidates(callElement: KtElement): List<KtCallCandidateInfo> {
     val (candidates, explicitReceiver) = when (callElement) {
         is KtCallElement -> {
             val explicitReceiver = callElement.getQualifiedExpressionForSelector()?.receiverExpression
@@ -43,7 +44,8 @@ fun KtAnalysisSession.collectCallCandidates(callElement: KtElement): List<KtCall
     return candidates.filter { filterCandidate(it, callElement, fileSymbol, explicitReceiver) }
 }
 
-private fun KtAnalysisSession.filterCandidate(
+context(KtAnalysisSession)
+private fun filterCandidate(
     candidateInfo: KtCallCandidateInfo,
     callElement: KtElement,
     fileSymbol: KtFileSymbol,
@@ -55,7 +57,8 @@ private fun KtAnalysisSession.filterCandidate(
     return filterCandidateByReceiverTypeAndVisibility(signature, callElement, fileSymbol, explicitReceiver)
 }
 
-fun KtAnalysisSession.filterCandidateByReceiverTypeAndVisibility(
+context(KtAnalysisSession)
+fun filterCandidateByReceiverTypeAndVisibility(
     signature: KtFunctionLikeSignature<KtFunctionLikeSymbol>,
     callElement: KtElement,
     fileSymbol: KtFileSymbol,
@@ -127,7 +130,8 @@ private val ARRAY_OF_FUNCTION_NAMES: Set<Name> = setOf(ArrayFqNames.ARRAY_OF_FUN
         ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY.values +
         ArrayFqNames.EMPTY_ARRAY
 
-fun KtAnalysisSession.isArrayOfCall(callElement: KtCallElement): Boolean {
+context(KtAnalysisSession)
+fun isArrayOfCall(callElement: KtCallElement): Boolean {
     val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return false
     val callableId = resolvedCall.partiallyAppliedSymbol.signature.callableIdIfNonLocal ?: return false
     return callableId.packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME && callableId.callableName in ARRAY_OF_FUNCTION_NAMES
@@ -136,7 +140,8 @@ fun KtAnalysisSession.isArrayOfCall(callElement: KtCallElement): Boolean {
 /**
  * @return value of the [JvmName] annotation on [symbol] declaration if present, and `null` otherwise
  */
-fun KtAnalysisSession.getJvmName(symbol: KtAnnotatedSymbol): String? {
+context(KtAnalysisSession)
+fun getJvmName(symbol: KtAnnotatedSymbol): String? {
     val jvmNameAnnotation = symbol.annotationsByClassId(StandardClassIds.Annotations.JvmName).firstOrNull() ?: return null
     val annotationValue = jvmNameAnnotation.arguments.singleOrNull()?.expression as? KtConstantAnnotationValue ?: return null
     val stringValue = annotationValue.constantValue as? KtConstantValue.KtStringConstantValue ?: return null

@@ -15,7 +15,8 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 object KotlinIconProvider {
-    fun KtAnalysisSession.getIconFor(symbol: KtSymbol): Icon? {
+    context(KtAnalysisSession)
+    fun getIconFor(symbol: KtSymbol): Icon? {
         symbol.psi?.let { referencedPsi ->
             if (referencedPsi !is KtElement) {
                 return getIconForJavaDeclaration(referencedPsi)

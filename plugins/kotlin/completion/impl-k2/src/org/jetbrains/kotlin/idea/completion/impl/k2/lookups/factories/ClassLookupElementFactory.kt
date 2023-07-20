@@ -29,7 +29,8 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.renderer.render
 
 internal class ClassLookupElementFactory {
-    fun KtAnalysisSession.createLookup(
+    context(KtAnalysisSession)
+fun createLookup(
         symbol: KtClassLikeSymbol,
         importingStrategy: ImportStrategy,
     ): LookupElementBuilder {

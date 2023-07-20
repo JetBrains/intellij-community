@@ -128,7 +128,8 @@ private val ITERABLE_CLASS_IDS: Set<ClassId> = setOf(
     DefaultTypeClassIds.CHAR_SEQUENCE
 )
 
-internal fun KtAnalysisSession.canBeIterated(type: KtType, checkNullability: Boolean = true): Boolean {
+context(KtAnalysisSession)
+internal fun canBeIterated(type: KtType, checkNullability: Boolean = true): Boolean {
     return when (type) {
         is KtFlexibleType -> canBeIterated(type.lowerBoundIfFlexible())
         is KtIntersectionType -> type.conjuncts.all { canBeIterated(it) }

@@ -151,7 +151,8 @@ internal class LiftReturnOrAssignmentInspection @JvmOverloads constructor(privat
         }
     }
 
-    private fun KtAnalysisSession.getStateForWhenOrTry(expression: KtExpression, keyword: PsiElement): List<LiftState>? {
+    context(KtAnalysisSession)
+    private fun getStateForWhenOrTry(expression: KtExpression, keyword: PsiElement): List<LiftState>? {
         if (skipLongExpressions && expression.getLineCount() > LINES_LIMIT) return null
         if (expression.parent.node.elementType == KtNodeTypes.ELSE) return null
 

@@ -329,7 +329,8 @@ class ImportQuickFix(
                 expressionWeight = expressionImportWeigher.weigh(symbol),
             )
 
-        fun KtAnalysisSession.createImportNameFix(
+        context(KtAnalysisSession)
+        fun createImportNameFix(
             indexProvider: KtSymbolFromIndexProvider,
             element: KtSimpleNameExpression,
             unresolvedName: Name
@@ -349,7 +350,8 @@ class ImportQuickFix(
             return createImportFix(element, candidateSymbols)
         }
 
-        private fun KtAnalysisSession.createImportTypeFix(
+        context(KtAnalysisSession)
+        private fun createImportTypeFix(
             indexProvider: KtSymbolFromIndexProvider,
             element: KtTypeReference
         ): ImportQuickFix? {
@@ -362,7 +364,8 @@ class ImportQuickFix(
             return createImportFix(element, collectTypesCandidates(indexProvider, unresolvedName, isVisible))
         }
 
-        private fun KtAnalysisSession.collectCallableCandidates(
+        context(KtAnalysisSession)
+        private fun collectCallableCandidates(
             indexProvider: KtSymbolFromIndexProvider,
             element: KtSimpleNameExpression,
             unresolvedName: Name,
@@ -392,7 +395,8 @@ class ImportQuickFix(
                 .toList()
         }
 
-        private fun KtAnalysisSession.collectTypesCandidates(
+        context(KtAnalysisSession)
+        private fun collectTypesCandidates(
             indexProvider: KtSymbolFromIndexProvider,
             unresolvedName: Name,
             isVisible: (KtNamedClassOrObjectSymbol) -> Boolean

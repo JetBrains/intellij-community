@@ -95,8 +95,9 @@ internal fun createKtClassMember(
     preferConstructorParameter: Boolean
 ): KtClassMember = KtClassMember(memberInfo, bodyType, preferConstructorParameter)
 
+context(KtAnalysisSession)
 @ApiStatus.Internal
-fun KtAnalysisSession.generateMember(
+fun generateMember(
     project: Project,
     ktClassMember: KtClassMember,
     symbol: KtCallableSymbol,
@@ -185,7 +186,8 @@ fun KtAnalysisSession.generateMember(
 /**
  * Returns true if the annotation itself is marked with @RequiresOptIn (or the old @Experimental), or if an extension wants to keep it.
  */
-private fun KtAnalysisSession.keepAnnotation(annotation: KtAnnotationApplication, file: KtFile?): Boolean {
+context(KtAnalysisSession)
+private fun keepAnnotation(annotation: KtAnnotationApplication, file: KtFile?): Boolean {
     val classId = annotation.classId ?: return false
     val symbol = getClassOrObjectSymbolByClassId(classId)
 
@@ -200,7 +202,8 @@ private fun KtClassOrObjectSymbol.hasRequiresOptInAnnotation(): Boolean = annota
     fqName == OptInNames.REQUIRES_OPT_IN_FQ_NAME || fqName == FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME
 }
 
-private fun KtAnalysisSession.generateConstructorParameter(
+context(KtAnalysisSession)
+private fun generateConstructorParameter(
     project: Project,
     symbol: KtCallableSymbol,
     renderer: KtDeclarationRenderer,
@@ -208,7 +211,8 @@ private fun KtAnalysisSession.generateConstructorParameter(
     return KtPsiFactory(project).createParameter(symbol.render(renderer))
 }
 
-private fun KtAnalysisSession.generateFunction(
+context(KtAnalysisSession)
+private fun generateFunction(
     project: Project,
     symbol: KtFunctionSymbol,
     renderer: KtDeclarationRenderer,
@@ -229,7 +233,8 @@ private fun KtAnalysisSession.generateFunction(
     return factory.createFunction(functionText)
 }
 
-private fun KtAnalysisSession.generateProperty(
+context(KtAnalysisSession)
+private fun generateProperty(
     project: Project,
     symbol: KtPropertySymbol,
     renderer: KtDeclarationRenderer,

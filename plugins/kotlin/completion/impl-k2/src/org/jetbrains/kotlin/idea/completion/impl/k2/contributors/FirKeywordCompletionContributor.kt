@@ -40,7 +40,8 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
 
     private val resolveDependentCompletionKeywordHandlers = ResolveDependentCompletionKeywordHandlerProvider(basicContext)
 
-    override fun KtAnalysisSession.complete(
+    context(KtAnalysisSession)
+    override fun complete(
         positionContext: FirRawPositionCompletionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
@@ -62,7 +63,8 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
     }
 
 
-    private fun KtAnalysisSession.completeWithResolve(position: PsiElement, expression: KtExpression?, weighingContext: WeighingContext) {
+    context(KtAnalysisSession)
+    private fun completeWithResolve(position: PsiElement, expression: KtExpression?, weighingContext: WeighingContext) {
         complete(position) { lookupElement, keyword ->
             val lookups = DefaultCompletionKeywordHandlerProvider.getHandlerForKeyword(keyword)
                 ?.createLookups(parameters, expression, lookupElement, project)

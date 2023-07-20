@@ -22,12 +22,15 @@ internal open class FirClassifierCompletionContributor(
     priority: Int,
 ) : FirCompletionContributorBase<FirNameReferencePositionContext>(basicContext, priority) {
 
-    protected open fun KtAnalysisSession.filterClassifiers(classifierSymbol: KtClassifierSymbol): Boolean = true
+    context(KtAnalysisSession)
+    protected open fun filterClassifiers(classifierSymbol: KtClassifierSymbol): Boolean = true
 
-    protected open fun KtAnalysisSession.getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy =
+    context(KtAnalysisSession)
+    protected open fun getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy =
         importStrategyDetector.detectImportStrategyForClassifierSymbol(classifierSymbol)
 
-    override fun KtAnalysisSession.complete(
+    context(KtAnalysisSession)
+    override fun complete(
         positionContext: FirNameReferencePositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
@@ -45,7 +48,8 @@ internal open class FirClassifierCompletionContributor(
         }
     }
 
-    private fun KtAnalysisSession.completeWithReceiver(
+    context(KtAnalysisSession)
+    private fun completeWithReceiver(
         receiver: KtElement,
         visibilityChecker: CompletionVisibilityChecker,
         context: WeighingContext
@@ -63,7 +67,8 @@ internal open class FirClassifierCompletionContributor(
         }
     }
 
-    private fun KtAnalysisSession.completeWithoutReceiver(
+    context(KtAnalysisSession)
+    private fun completeWithoutReceiver(
         positionContext: FirNameReferencePositionContext,
         visibilityChecker: CompletionVisibilityChecker,
         context: WeighingContext
@@ -103,7 +108,8 @@ internal class FirAnnotationCompletionContributor(
     priority: Int
 ) : FirClassifierCompletionContributor(basicContext, priority) {
 
-    override fun KtAnalysisSession.filterClassifiers(classifierSymbol: KtClassifierSymbol): Boolean = when (classifierSymbol) {
+    context(KtAnalysisSession)
+    override fun filterClassifiers(classifierSymbol: KtClassifierSymbol): Boolean = when (classifierSymbol) {
         is KtAnonymousObjectSymbol -> false
         is KtTypeParameterSymbol -> false
         is KtNamedClassOrObjectSymbol -> when (classifierSymbol.classKind) {
@@ -129,6 +135,7 @@ internal class FirClassifierReferenceCompletionContributor(
     priority: Int
 ) : FirClassifierCompletionContributor(basicContext, priority) {
 
-    override fun KtAnalysisSession.getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy =
+    context(KtAnalysisSession)
+    override fun getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy =
         ImportStrategy.DoNothing
 }

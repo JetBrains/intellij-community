@@ -20,7 +20,8 @@ data class CallableInsertionOptions(
         copy(insertionStrategy = newInsertionStrategy)
 }
 
-internal fun KtAnalysisSession.detectCallableOptions(symbol: KtCallableSymbol, importStrategyDetector: ImportStrategyDetector): CallableInsertionOptions {
+context(KtAnalysisSession)
+internal fun detectCallableOptions(symbol: KtCallableSymbol, importStrategyDetector: ImportStrategyDetector): CallableInsertionOptions {
     return CallableInsertionOptions(
         importingStrategy = importStrategyDetector.detectImportStrategyForCallableSymbol(symbol),
         insertionStrategy = when (symbol) {

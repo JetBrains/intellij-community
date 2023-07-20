@@ -42,7 +42,8 @@ internal class FirWhenWithSubjectConditionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<FirWithSubjectEntryPositionContext>(basicContext, priority) {
-    override fun KtAnalysisSession.complete(
+    context(KtAnalysisSession)
+    override fun complete(
         positionContext: FirWithSubjectEntryPositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
@@ -76,20 +77,23 @@ internal class FirWhenWithSubjectConditionContributor(
         addElseBranchIfSingleConditionInEntry(whenCondition)
     }
 
-    private fun KtAnalysisSession.getClassSymbol(subjectType: KtType): KtNamedClassOrObjectSymbol? {
+    context(KtAnalysisSession)
+    private fun getClassSymbol(subjectType: KtType): KtNamedClassOrObjectSymbol? {
         val classType = subjectType as? KtNonErrorClassType
         return classType?.classSymbol as? KtNamedClassOrObjectSymbol
     }
 
 
-    private fun KtAnalysisSession.addNullIfWhenExpressionCanReturnNull(type: KtType?) {
+    context(KtAnalysisSession)
+    private fun addNullIfWhenExpressionCanReturnNull(type: KtType?) {
         if (type?.canBeNull == true) {
             val lookupElement = createKeywordElement(keyword = KtTokens.NULL_KEYWORD.value)
             sink.addElement(lookupElement)
         }
     }
 
-    private fun KtAnalysisSession.completeAllTypes(
+    context(KtAnalysisSession)
+    private fun completeAllTypes(
         whenCondition: KtWhenCondition,
         visibilityChecker: CompletionVisibilityChecker,
         isSingleCondition: Boolean,
@@ -127,7 +131,8 @@ internal class FirWhenWithSubjectConditionContributor(
         }
     }
 
-    private fun KtAnalysisSession.isPrefixNeeded(classifier: KtClassifierSymbol): Boolean {
+    context(KtAnalysisSession)
+    private fun isPrefixNeeded(classifier: KtClassifierSymbol): Boolean {
         return when (classifier) {
             is KtAnonymousObjectSymbol -> return false
             is KtNamedClassOrObjectSymbol -> !classifier.classKind.isObject
@@ -136,7 +141,8 @@ internal class FirWhenWithSubjectConditionContributor(
         }
     }
 
-    private fun KtAnalysisSession.completeSubClassesOfSealedClass(
+    context(KtAnalysisSession)
+    private fun completeSubClassesOfSealedClass(
         classSymbol: KtNamedClassOrObjectSymbol,
         conditions: List<KtWhenCondition>,
         whenCondition: KtWhenCondition,
@@ -150,7 +156,7 @@ internal class FirWhenWithSubjectConditionContributor(
         allInheritors
             .asSequence()
             .filter { it.classIdIfNonLocal !in handledCasesClassIds }
-            .filter {  visibilityChecker.isVisible(it as KtClassifierSymbol) }
+            .filter { visibilityChecker.isVisible(it as KtClassifierSymbol) }
             .forEach { inheritor ->
                 val classId = inheritor.classIdIfNonLocal ?: return@forEach
                 addLookupElement(
@@ -167,7 +173,8 @@ internal class FirWhenWithSubjectConditionContributor(
         }
     }
 
-    private fun KtAnalysisSession.getHandledClassIds(conditions: List<KtWhenCondition>): Set<ClassId> =
+    context(KtAnalysisSession)
+    private fun getHandledClassIds(conditions: List<KtWhenCondition>): Set<ClassId> =
         conditions.mapNotNullTo(hashSetOf()) { condition ->
             val reference = when (condition) {
                 is KtWhenConditionWithExpression -> condition.expression?.reference()
@@ -178,8 +185,10 @@ internal class FirWhenWithSubjectConditionContributor(
             resolvesTo?.classIdIfNonLocal
         }
 
-    private fun KtAnalysisSession.getAllSealedInheritors(classSymbol: KtNamedClassOrObjectSymbol): Collection<KtNamedClassOrObjectSymbol> {
-        fun KtAnalysisSession.getAllSealedInheritorsTo(
+    context(KtAnalysisSession)
+    private fun getAllSealedInheritors(classSymbol: KtNamedClassOrObjectSymbol): Collection<KtNamedClassOrObjectSymbol> {
+
+        fun getAllSealedInheritorsTo(
             classSymbol: KtNamedClassOrObjectSymbol,
             destination: MutableSet<KtNamedClassOrObjectSymbol>
         ) {
@@ -203,7 +212,8 @@ internal class FirWhenWithSubjectConditionContributor(
     }
 
 
-    private fun KtAnalysisSession.completeEnumEntries(
+    context(KtAnalysisSession)
+    private fun completeEnumEntries(
         classSymbol: KtNamedClassOrObjectSymbol,
         conditions: List<KtWhenCondition>,
         visibilityChecker: CompletionVisibilityChecker,
@@ -235,7 +245,8 @@ internal class FirWhenWithSubjectConditionContributor(
         return entry.conditions.size == 1
     }
 
-    private fun KtAnalysisSession.addLookupElement(
+    context(KtAnalysisSession)
+    private fun addLookupElement(
         lookupString: String,
         symbol: KtNamedSymbol,
         fqName: FqName?,

@@ -49,7 +49,8 @@ internal class FirSuperMemberCompletionContributor(
         val signature: KtCallableSignature<*> get() = withValidityAssertion { _signature }
     }
 
-    override fun KtAnalysisSession.complete(
+    context(KtAnalysisSession)
+    override fun complete(
         positionContext: FirSuperReceiverNameReferencePositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
@@ -69,7 +70,8 @@ internal class FirSuperMemberCompletionContributor(
 
     }
 
-    private fun KtAnalysisSession.getSymbolsAndNamesNeedDisambiguation(
+    context(KtAnalysisSession)
+    private fun getSymbolsAndNamesNeedDisambiguation(
         superTypes: List<KtType>,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
@@ -105,7 +107,8 @@ internal class FirSuperMemberCompletionContributor(
         return Pair(allSymbols, nameNeedDisambiguation)
     }
 
-    private fun KtAnalysisSession.getNonExtensionsMemberSymbols(
+    context(KtAnalysisSession)
+    private fun getNonExtensionsMemberSymbols(
         receiverType: KtType,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
@@ -115,7 +118,8 @@ internal class FirSuperMemberCompletionContributor(
         }
     }
 
-    private fun KtAnalysisSession.collectCallToSuperMember(
+    context(KtAnalysisSession)
+    private fun collectCallToSuperMember(
         superReceiver: KtSuperExpression,
         nonExtensionMembers: Iterable<CallableInfo>,
         context: WeighingContext,
@@ -140,12 +144,14 @@ internal class FirSuperMemberCompletionContributor(
         }
     }
 
-    private fun KtAnalysisSession.getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy = when (signature) {
+    context(KtAnalysisSession)
+    private fun getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy = when (signature) {
         is KtFunctionLikeSignature<*> -> CallableInsertionStrategy.AsCall
         else -> CallableInsertionStrategy.AsIdentifier
     }
 
-    private fun KtAnalysisSession.collectDelegateCallToSuperMember(
+    context(KtAnalysisSession)
+    private fun collectDelegateCallToSuperMember(
         context: WeighingContext,
         superReceiver: KtSuperExpression,
         nonExtensionMembers: Iterable<CallableInfo>,
@@ -214,7 +220,8 @@ internal class FirSuperMemberCompletionContributor(
         }
     }
 
-    private fun KtAnalysisSession.wrapWithDisambiguationIfNeeded(
+    context(KtAnalysisSession)
+    private fun wrapWithDisambiguationIfNeeded(
         insertionStrategy: CallableInsertionStrategy,
         superType: KtType,
         callableSignature: KtCallableSignature<*>,

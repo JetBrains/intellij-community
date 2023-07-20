@@ -25,7 +25,8 @@ internal object ExpectedTypeWeigher {
             element.matchesExpectedType ?: MatchesExpectedType.NON_TYPABLE
     }
 
-    fun KtAnalysisSession.addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KtSymbol?) {
+    context(KtAnalysisSession)
+fun addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KtSymbol?) {
         val expectedType = context.expectedType
 
         lookupElement.matchesExpectedType = when {
@@ -48,7 +49,8 @@ internal object ExpectedTypeWeigher {
         }
     }
 
-    private fun KtAnalysisSession.matchesExpectedType(
+    context(KtAnalysisSession)
+private fun matchesExpectedType(
         symbol: KtSymbol,
         expectedType: KtType?
     ) = when {

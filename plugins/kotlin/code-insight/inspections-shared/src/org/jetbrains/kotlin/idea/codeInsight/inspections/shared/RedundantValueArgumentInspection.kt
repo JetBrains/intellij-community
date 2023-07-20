@@ -32,7 +32,7 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
         val arguments = argumentList.arguments
         val argumentIndex = arguments.indexOf(argument).takeIf { it >= 0 } ?: return
 
-        analyze(argument, action = fun KtAnalysisSession.() {
+        analyze(argument) {
             val argumentConstantValue = argumentExpression.evaluate(CONSTANT_EXPRESSION_EVALUATION) ?: return
             val call = callElement.resolveCall()?.successfulFunctionCallOrNull() ?: return
             val parameterSymbol = findTargetParameter(argumentExpression, call) ?: return
@@ -67,10 +67,11 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
                     holder.registerProblem(argument, description, ProblemHighlightType.LIKE_UNUSED_SYMBOL, quickFix)
                 }
             }
-        })
+        }
     })
 
-    private fun KtAnalysisSession.findTargetParameter(argumentExpression: KtExpression, call: KtFunctionCall<*>): KtValueParameterSymbol? {
+    context(KtAnalysisSession)
+    private fun findTargetParameter(argumentExpression: KtExpression, call: KtFunctionCall<*>): KtValueParameterSymbol? {
         val targetParameterSymbol = call.argumentMapping[argumentExpression]?.symbol ?: return null
 
         val targetFunctionSymbol = call.partiallyAppliedSymbol.symbol

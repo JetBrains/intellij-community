@@ -79,7 +79,8 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
     }
 
 
-    private fun KtAnalysisSession.complete(
+    context(KtAnalysisSession)
+    private fun complete(
         basicContext: FirBasicCompletionContext,
         positionContext: FirRawPositionCompletionContext,
     ) {
@@ -92,7 +93,8 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
     }
 
 
-    private fun KtAnalysisSession.recordOriginalFile(basicCompletionContext: FirBasicCompletionContext) {
+    context(KtAnalysisSession)
+    private fun recordOriginalFile(basicCompletionContext: FirBasicCompletionContext) {
         val originalFile = basicCompletionContext.originalKtFile
         val fakeFile = basicCompletionContext.fakeKtFile
         fakeFile.recordOriginalKtFile(originalFile)

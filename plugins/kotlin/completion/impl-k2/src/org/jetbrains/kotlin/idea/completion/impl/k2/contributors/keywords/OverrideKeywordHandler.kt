@@ -42,14 +42,16 @@ internal class OverrideKeywordHandler(
     private val basicContext: FirBasicCompletionContext
 ) : CompletionKeywordHandler<KtAnalysisSession>(KtTokens.OVERRIDE_KEYWORD) {
 
-    override fun KtAnalysisSession.createLookups(
+    context(KtAnalysisSession)
+    override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
         lookup: LookupElement,
         project: Project
     ): Collection<LookupElement> = createOverrideMemberLookups(parameters, declaration = null, project) + lookup
 
-    fun KtAnalysisSession.createOverrideMemberLookups(
+    context(KtAnalysisSession)
+    fun createOverrideMemberLookups(
         parameters: CompletionParameters,
         declaration: KtCallableDeclaration?,
         project: Project
@@ -64,7 +66,7 @@ internal class OverrideKeywordHandler(
         for (member in members) {
             val symbolPointer = member.memberInfo.symbolPointer
             val memberSymbol = symbolPointer.restoreSymbol()
-            requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored"}
+            requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored" }
 
             if (declaration != null && !canCompleteDeclarationWithMember(declaration, memberSymbol)) continue
             result += createLookupElementToGenerateSingleOverrideMember(member, declaration, classOrObject, isConstructorParameter, project)
@@ -83,7 +85,8 @@ internal class OverrideKeywordHandler(
         } else allMembers.toList()
     }
 
-    private fun KtAnalysisSession.canCompleteDeclarationWithMember(
+    context(KtAnalysisSession)
+    private fun canCompleteDeclarationWithMember(
         declaration: KtCallableDeclaration,
         symbolToOverride: KtCallableSymbol
     ): Boolean = when (declaration) {
@@ -100,8 +103,9 @@ internal class OverrideKeywordHandler(
         else -> false
     }
 
+    context(KtAnalysisSession)
     @OptIn(KtAllowAnalysisOnEdt::class)
-    private fun KtAnalysisSession.createLookupElementToGenerateSingleOverrideMember(
+    private fun createLookupElementToGenerateSingleOverrideMember(
         member: KtClassMember,
         declaration: KtCallableDeclaration?,
         classOrObject: KtClassOrObject,
@@ -110,7 +114,7 @@ internal class OverrideKeywordHandler(
     ): OverridesCompletionLookupElementDecorator {
         val symbolPointer = member.memberInfo.symbolPointer
         val memberSymbol = symbolPointer.restoreSymbol()
-        requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored"}
+        requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored" }
         check(memberSymbol is KtNamedSymbol)
         check(classOrObject !is KtEnumEntry)
 
@@ -149,7 +153,8 @@ internal class OverrideKeywordHandler(
         )
     }
 
-    private fun KtAnalysisSession.getSymbolTextForLookupElement(memberSymbol: KtCallableSymbol): String = buildString {
+    context(KtAnalysisSession)
+    private fun getSymbolTextForLookupElement(memberSymbol: KtCallableSymbol): String = buildString {
         append(KtTokens.OVERRIDE_KEYWORD.value)
             .append(" ")
             .append(memberSymbol.render(renderingOptionsForLookupElementRendering))

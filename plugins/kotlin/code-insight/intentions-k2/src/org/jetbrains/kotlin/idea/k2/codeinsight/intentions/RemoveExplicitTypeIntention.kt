@@ -95,7 +95,8 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableIntention<K
             return property?.isVar == true
         }
 
-    private fun KtAnalysisSession.publicReturnTypeShouldBePresentInApiMode(declaration: KtCallableDeclaration): Boolean {
+    context(KtAnalysisSession)
+    private fun publicReturnTypeShouldBePresentInApiMode(declaration: KtCallableDeclaration): Boolean {
         if (declaration.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) == ExplicitApiMode.DISABLED) return false
 
         if (declaration.containingClassOrObject?.isLocal == true) return false
@@ -106,7 +107,8 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableIntention<K
         return isPublicApi(symbolWithVisibility)
     }
 
-    private fun KtAnalysisSession.explicitTypeMightBeNeededForCorrectTypeInference(declaration: KtDeclaration): Boolean {
+    context(KtAnalysisSession)
+    private fun explicitTypeMightBeNeededForCorrectTypeInference(declaration: KtDeclaration): Boolean {
         val initializer = declaration.getInitializerOrGetterInitializer() ?: return true
         val initializerType = getInitializerTypeIfContextIndependent(initializer) ?: return true
         val explicitType = declaration.getReturnKtType()
@@ -119,7 +121,8 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableIntention<K
         return !typeCanBeRemoved
     }
 
-    private fun KtAnalysisSession.getInitializerTypeIfContextIndependent(initializer: KtExpression): KtType? {
+    context(KtAnalysisSession)
+    private fun getInitializerTypeIfContextIndependent(initializer: KtExpression): KtType? {
         return when (initializer) {
             is KtStringTemplateExpression -> buildClassType(DefaultTypeClassIds.STRING)
             is KtConstantExpression -> initializer.getClassId()?.let { buildClassType(it) }
@@ -136,7 +139,8 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableIntention<K
         }
     }
 
-    private fun KtAnalysisSession.returnTypeOfCallDependsOnTypeParameters(callExpression: KtCallExpression): Boolean {
+    context(KtAnalysisSession)
+    private fun returnTypeOfCallDependsOnTypeParameters(callExpression: KtCallExpression): Boolean {
         val call = callExpression.resolveCall()?.singleFunctionCallOrNull() ?: return true
         val callSymbol = call.partiallyAppliedSymbol.symbol
         val typeParameters = callSymbol.typeParameters
@@ -144,7 +148,8 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableIntention<K
         return typeParameters.any { typeReferencesTypeParameter(it, returnType) }
     }
 
-    private fun KtAnalysisSession.typeReferencesTypeParameter(typeParameter: KtTypeParameterSymbol, type: KtType): Boolean {
+    context(KtAnalysisSession)
+    private fun typeReferencesTypeParameter(typeParameter: KtTypeParameterSymbol, type: KtType): Boolean {
         return when (type) {
             is KtTypeParameterType -> type.symbol == typeParameter
             is KtNonErrorClassType -> type.ownTypeArguments.mapNotNull { it.type }.any { typeReferencesTypeParameter(typeParameter, it) }
