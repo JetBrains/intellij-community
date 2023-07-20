@@ -16,6 +16,12 @@
     <step key="navigationBar" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.NavigationBarStep"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStartupActivity"/>
+    <registryKey key="ide.experimental.ui.onboarding" defaultValue="false"
+                 description="Show the dialog on startup after first New UI switch with a proposal to start the onboarding."/>
+  </extensions>
+
   <actions resource-bundle="messages.NewUiOnboardingBundle">
     <action internal="true" id="StartNewUiOnboarding" class="com.intellij.platform.ide.newUiOnboarding.StartNewUiOnboardingAction"/>
   </actions>
