@@ -19,6 +19,7 @@ class PythonNewProjectWizardCollector : CounterUsagesCollector() {
     private val MAKE_AVAILABLE_TO_ALL_PROJECTS = EventFields.Boolean("make_available_to_all_projects")
     private val PREVIOUSLY_CONFIGURED = EventFields.Boolean("previously_configured")
     private val GENERATOR_FIELD = EventFields.Class("generator")
+    private val DJANGO_ADMIN_FIELD = EventFields.Boolean("django_admin")
     private val PROJECT_GENERATED_EVENT = GROUP.registerVarargEvent("project.generated",
                                                             INTERPRETER_TYPE,
                                                             EXECUTION_TYPE,
@@ -27,6 +28,8 @@ class PythonNewProjectWizardCollector : CounterUsagesCollector() {
                                                             INHERIT_GLOBAL_SITE_PACKAGE_FIELD,
                                                             MAKE_AVAILABLE_TO_ALL_PROJECTS,
                                                             PREVIOUSLY_CONFIGURED)
+
+    private val DJANGO_ADMIN_CHECKED = GROUP.registerEvent("django.admin.selected", DJANGO_ADMIN_FIELD)
 
     fun logPythonNewProjectGenerated(info: InterpreterStatisticsInfo, pythonVersion: LanguageLevel, generatorClass: Class<*>) {
       PROJECT_GENERATED_EVENT.log(
@@ -38,6 +41,10 @@ class PythonNewProjectWizardCollector : CounterUsagesCollector() {
         PREVIOUSLY_CONFIGURED.with(info.previouslyConfigured),
         GENERATOR_FIELD.with(generatorClass)
       )
+    }
+
+    fun logDjangoAdminSelected(djangoAdminSelected: Boolean) {
+      DJANGO_ADMIN_CHECKED.log(djangoAdminSelected)
     }
   }
 }
