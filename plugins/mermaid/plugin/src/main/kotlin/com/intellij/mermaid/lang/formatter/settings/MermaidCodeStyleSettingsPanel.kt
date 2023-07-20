@@ -11,6 +11,6 @@ internal class MermaidCodeStyleSettingsPanel(
   override fun initTabs(settings: CodeStyleSettings) {
     addIndentOptionsTab(settings)
 //    addBlankLinesTab(settings)
-//    addSpacesTab(settings)
+    addSpacesTab(settings)
   }
 }
