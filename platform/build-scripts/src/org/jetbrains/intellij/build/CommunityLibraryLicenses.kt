@@ -201,6 +201,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "AssertJ Swing", libraryName = "assertj-swing",
                    url = "https://github.com/assertj/assertj-swing")
       .apache("https://github.com/assertj/assertj-swing/blob/main/licence-header.txt"),
+    LibraryLicense(name = "Atlassian Commonmark", libraryName = "atlassian.commonmark",
+                   url = "https://github.com/commonmark/commonmark-java")
+      .simplifiedBsd("https://github.com/commonmark/commonmark-java/blob/main/LICENSE.txt"),
     LibraryLicense(name = "Automaton", libraryName = "automaton", url = "https://www.brics.dk/automaton/")
       .simplifiedBsd("https://github.com/cs-au-dk/dk.brics.automaton/blob/master/COPYING"),
     LibraryLicense(name = "batik", libraryName = "batik-transcoder", url = "https://xmlgraphics.apache.org/batik/")
@@ -259,6 +262,9 @@ object CommunityLibraryLicenses {
                    url = "https://code.google.com/p/decentxml").newBsd(),
     LibraryLicense(name = "docutils", attachedTo = "intellij.python", version = "0.12", license = "BSD",
                    url = "https://docutils.sourceforge.io/"),
+    LibraryLicense(name = "dotenv-kotlin", libraryName = "io.github.cdimascio.dotenv.kotlin",
+                   url = "https://github.com/cdimascio/dotenv-kotlin")
+      .apache("https://github.com/cdimascio/dotenv-kotlin/blob/master/LICENSE"),
     LibraryLicense(name = "Eclipse JDT Core", attachedTo = "intellij.platform.jps.build", version = "4.2.1", license = "CPL 1.0",
                    url = "https://www.eclipse.org/jdt/core/index.php"),
     LibraryLicense(name = "Eclipse Layout Kernel", url = "https://www.eclipse.org/elk/", libraryName = "eclipse-layout-kernel").eplV1(),
@@ -310,6 +316,9 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/google/auto/blob/master/LICENSE"),
     LibraryLicense(libraryName = "Gradle", url = "https://gradle.org/", licenseUrl = "https://gradle.org/license")
       .apache("https://github.com/gradle/gradle/blob/master/LICENSE"),
+    LibraryLicense(name = "graphql-java-dataloader", libraryName = "graphql.java.dataloader",
+                   url = "https://github.com/graphql-java/java-dataloader")
+      .apache("https://github.com/graphql-java/java-dataloader/blob/master/LICENSE"),
     LibraryLicense(name = "Grazie AI", libraryName = "ai.grazie.spell.gec.engine.local",
                    url = "https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/",
                    additionalLibraryNames = listOf("ai.grazie.nlp.patterns",
@@ -747,6 +756,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "rd text buffers",libraryName = "rd-text",
                    url = "https://github.com/JetBrains/rd/tree/master/rd-kt/rd-text")
       .apache("https://github.com/JetBrains/rd/blob/master/LICENSE"),
+    LibraryLicense(name = "Reactive Streams", libraryName = "reactivestreams.reactive.streams",
+                   url = "https://github.com/reactive-streams/reactive-streams-jvm")
+      .mit("https://github.com/reactive-streams/reactive-streams-jvm/blob/master/LICENSE"),
     LibraryLicense(name = "Relax NG Object Model", libraryName = "rngom-20051226-patched.jar",
                    url = "https://github.com/kohsuke/rngom", version = LibraryLicense.CUSTOM_REVISION)
       .mit("https://github.com/kohsuke/rngom/blob/master/licenceheader.txt"),
