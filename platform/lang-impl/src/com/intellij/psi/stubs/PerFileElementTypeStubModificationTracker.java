@@ -35,14 +35,19 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
 
   private final ConcurrentMap<String, List<StubFileElementType<?>>> myFileElementTypesCache = new ConcurrentHashMap<>();
   private final ConcurrentMap<StubFileElementType<?>, Long> myModCounts = new ConcurrentHashMap<>();
-  private final SynchronizedClearableLazy<StubUpdatingIndexStorage> myStubUpdatingIndexStorage = new SynchronizedClearableLazy<>(() -> {
+  private final SynchronizedClearableLazy<@Nullable StubUpdatingIndexStorage> myStubUpdatingIndexStorage = new SynchronizedClearableLazy<>(() -> {
     final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     fileBasedIndex.waitUntilIndicesAreInitialized();
-    UpdatableIndex<?, ?, ?, ?> index = fileBasedIndex.getIndex(StubUpdatingIndex.INDEX_ID);
-    while (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
-      index = ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?, ?>)index).getBaseIndex();
+    try {
+      UpdatableIndex<?, ?, ?, ?> index = fileBasedIndex.getIndex(StubUpdatingIndex.INDEX_ID);
+      while (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
+        index = ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?, ?>)index).getBaseIndex();
+      }
+      return (StubUpdatingIndexStorage)index;
+    } catch (IllegalStateException e) { // EA-753513 Index is not created for `Stubs`
+      LOG.error("Couldn't get stub indexing storage. Mod counts will be incremented without a precise check", e);
+      return null;
     }
-    return (StubUpdatingIndexStorage)index;
   });
 
   private final SimpleMessageBusConnection myProjectCloseListener;
@@ -64,6 +69,12 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   private final Queue<FileInfo> myProbablyExpensiveUpdates = new ArrayDeque<>();
   private final Set<StubFileElementType<?>> myModificationsInCurrentBatch = new HashSet<>();
 
+  private void registerModificationForAllElementTypes() {
+    myModCounts.keySet().forEach((fileElementType) -> {
+      myModCounts.merge(fileElementType, 1L, (count, value) -> count + value);
+    });
+  }
+
   private void registerModificationFor(@NotNull StubFileElementType<?> fileElementType) {
     myModificationsInCurrentBatch.add(fileElementType);
     myModCounts.compute(fileElementType, (__, value) -> {
@@ -76,6 +87,8 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     return myModificationsInCurrentBatch.contains(fileElementType);
   }
 
+  // TODO optimization: if nobody asked for a modification tracker of fileElementType, we don't have to count stub changes for it then.
+  //    Hence precise check for such fileElementTypes can be omitted.
   public Long getModificationStamp(@NotNull StubFileElementType<?> fileElementType) {
     return myModCounts.getOrDefault(fileElementType, 0L);
   }
@@ -100,12 +113,18 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   }
 
   private void fastCheck() {
+    var index = myStubUpdatingIndexStorage.getValue();
+    if (index == null) { // if indexes are not ready, then just increment global mod count and exit
+      myPendingUpdates.clear();
+      registerModificationForAllElementTypes();
+      return;
+    }
     while (!myPendingUpdates.isEmpty()) {
       VirtualFile file = myPendingUpdates.poll();
       if (file.isDirectory()) continue;
       if (!file.isValid()) {
         // file is deleted or changed externally
-        var beforeSuitableTypes = determinePreviousFileElementType(FileBasedIndex.getFileId(file), myStubUpdatingIndexStorage.getValue());
+        var beforeSuitableTypes = determinePreviousFileElementType(FileBasedIndex.getFileId(file), index);
         for (var type : beforeSuitableTypes) {
           registerModificationFor(type);
         }
@@ -115,7 +134,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
       if (project == null || project.isDisposed()) continue;
       IndexedFile indexedFile = new IndexedFileImpl(file, project);
       var current = determineCurrentFileElementType(indexedFile);
-      var beforeSuitableTypes = determinePreviousFileElementType(FileBasedIndex.getFileId(file), myStubUpdatingIndexStorage.getValue());
+      var beforeSuitableTypes = determinePreviousFileElementType(FileBasedIndex.getFileId(file), index);
       if (beforeSuitableTypes.size() > 1) {
         for (var type : beforeSuitableTypes) {
           registerModificationFor(type);
@@ -143,13 +162,19 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   }
 
   private void preciseCheck() {
-    DataIndexer<Integer, SerializedStubTree, FileContent> stubIndexer = myStubUpdatingIndexStorage.getValue().getIndexer();
+    var index = myStubUpdatingIndexStorage.getValue();
+    if (index == null) {
+      myProbablyExpensiveUpdates.clear();
+      registerModificationForAllElementTypes();
+      return;
+    }
+    DataIndexer<Integer, SerializedStubTree, FileContent> stubIndexer = index.getIndexer();
     while (!myProbablyExpensiveUpdates.isEmpty()) {
       FileInfo info = myProbablyExpensiveUpdates.poll();
       if (wereModificationsInCurrentBatch(info.type) || info.project.isDisposed()) continue;
       FileBasedIndexImpl.markFileIndexed(info.file, null);
       try {
-        var diffBuilder = (StubCumulativeInputDiffBuilder)myStubUpdatingIndexStorage.getValue().getForwardIndexAccessor()
+        var diffBuilder = (StubCumulativeInputDiffBuilder)index.getForwardIndexAccessor()
           .getDiffBuilder(
             FileBasedIndex.getFileId(info.file),
             null // see SingleEntryIndexForwardIndexAccessor#getDiffBuilder
@@ -212,7 +237,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     return stubBuilderType.getStubFileElementType();
   }
 
-  private @NotNull List<StubFileElementType<?>> determinePreviousFileElementType(int fileId, StubUpdatingIndexStorage index) {
+  private @NotNull List<StubFileElementType<?>> determinePreviousFileElementType(int fileId, @NotNull StubUpdatingIndexStorage index) {
     String storedVersion = index.getStoredSubIndexerVersion(fileId);
     if (storedVersion == null) return Collections.emptyList();
     return myFileElementTypesCache.compute(storedVersion, (__, value) -> {
