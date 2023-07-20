@@ -47,7 +47,6 @@ private class GraphQLApiHelperImpl(private val logger: Logger,
       val query = loadQuery()
       val request = GraphQLRequestDTO(query, variablesObject)
       val jsonBytes = serializer.toJsonBytes(request)
-      println(String(jsonBytes, java.nio.charset.StandardCharsets.UTF_8))
       if (logger.isTraceEnabled) {
         logger.trace("GraphQL request $uri : Request body: " + String(jsonBytes, Charsets.UTF_8))
       }

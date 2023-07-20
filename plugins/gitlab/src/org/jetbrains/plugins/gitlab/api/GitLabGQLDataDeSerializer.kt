@@ -9,6 +9,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.collaboration.api.dto.GraphQLErrorDTO
 import com.intellij.collaboration.api.dto.GraphQLResponseDTO
 import com.intellij.collaboration.api.graphql.GraphQLDataDeserializer
+import com.intellij.collaboration.api.graphql.GraphQLErrorException
 import com.intellij.collaboration.api.json.JsonDataSerializer
 import org.jetbrains.plugins.gitlab.api.GitLabRestJsonDataDeSerializer.genericConfig
 import java.io.Reader
@@ -36,7 +37,7 @@ object GitLabGQLDataDeSerializer : JsonDataSerializer, GraphQLDataDeserializer {
     val responseType = mapper.typeFactory
       .constructParametricType(GraphQLResponseDTO::class.java, JsonNode::class.java, GraphQLErrorDTO::class.java)
     val gqlResponse: GraphQLResponseDTO<out JsonNode, GraphQLErrorDTO> = responseSupplier(responseType)
-    return mapGQLResponse(gqlResponse, pathFromData, clazz)
+    return traverseGQLResponse(gqlResponse, pathFromData, clazz)
   }
 
   private fun <T> mapGQLResponse(result: GraphQLResponseDTO<out JsonNode, GraphQLErrorDTO>,
