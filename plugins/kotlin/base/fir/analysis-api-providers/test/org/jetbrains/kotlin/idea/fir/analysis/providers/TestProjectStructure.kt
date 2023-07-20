@@ -48,8 +48,7 @@ internal object TestProjectStructureReader {
     fun read(testDirectory: Path, jsonFileName: String = "structure.json"): TestProjectStructure {
         val jsonFile = testDirectory.resolve(jsonFileName)
 
-        @Suppress("DEPRECATION") // AS 4.0
-        val json = JsonParser().parse(FileUtil.loadFile(jsonFile.toFile(), /*convertLineSeparators=*/true))
+        val json = JsonParser.parseString(FileUtil.loadFile(jsonFile.toFile(), /*convertLineSeparators=*/true))
         return TestProjectStructure.parse(json)
     }
 

@@ -67,7 +67,7 @@ class KotlinMavenArchetypesProvider(private val kotlinPluginVersion: String, pri
     private fun loadVersions(): List<MavenArchetype> {
         return connectAndApply(VERSIONS_LIST_URL) { urlConnection ->
             urlConnection.inputStream.bufferedReader().use { reader ->
-                extractVersions(JsonParser().parse(reader))
+                extractVersions(JsonParser.parseReader(reader))
             }
         }
     }

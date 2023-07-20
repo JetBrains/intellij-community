@@ -29,7 +29,7 @@ import java.io.File
 abstract class AbstractMultiFileIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
         val testFile = File(testDataDirectory, fileName())
-        val config = JsonParser().parse(FileUtil.loadFile(testFile, true)) as JsonObject
+        val config = JsonParser.parseString(FileUtil.loadFile(testFile, true)) as JsonObject
         val withRuntime = config["withRuntime"]?.asBoolean ?: false
         return if (withRuntime)
             KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -39,7 +39,7 @@ abstract class AbstractMultiFileIntentionTest : KotlinLightCodeInsightFixtureTes
 
     protected fun doTest(path: String) {
         val testFile = File(path)
-        val config = JsonParser().parse(FileUtil.loadFile(testFile, true)) as JsonObject
+        val config = JsonParser.parseString(FileUtil.loadFile(testFile, true)) as JsonObject
         val mainFilePath = config.getString("mainFile")
         val intentionAction = Class.forName(config.getString("intentionClass")).getDeclaredConstructor().newInstance() as IntentionAction
         val isApplicableExpected = config["isApplicable"]?.asBoolean ?: true
