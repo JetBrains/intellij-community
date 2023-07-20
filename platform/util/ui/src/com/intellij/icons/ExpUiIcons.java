@@ -306,6 +306,9 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon OpenNewTab = load("expui/general/openNewTab.svg", -257413023, 2);
     /** 16x16 */ public static final @NotNull Icon Paste = load("expui/general/paste.svg", 1278512529, 2);
     /** 16x16 */ public static final @NotNull Icon Pin = load("expui/general/pin.svg", -1431984061, 2);
+    /** 16x16 */ public static final @NotNull Icon PinHovered = load("expui/general/pinHovered.svg", -1678268667, 2);
+    /** 16x16 */ public static final @NotNull Icon PinSelected = load("expui/general/pinSelected.svg", 73725357, 2);
+    /** 16x16 */ public static final @NotNull Icon PinSelectedHovered = load("expui/general/pinSelectedHovered.svg", -1008198008, 2);
     /** 16x16 */ public static final @NotNull Icon PluginUpdate = load("expui/general/pluginUpdate.svg", -1250370893, 2);
     /** 16x16 */ public static final @NotNull Icon PreviewHorizontally = load("expui/general/previewHorizontally.svg", 510613415, 2);
     /** 16x16 */ public static final @NotNull Icon PreviewOnly = load("expui/general/previewOnly.svg", -1461478213, 2);
