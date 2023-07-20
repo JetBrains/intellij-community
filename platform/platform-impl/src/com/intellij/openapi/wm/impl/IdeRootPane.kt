@@ -251,7 +251,12 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
 
     ComponentUtil.decorateWindowHeader(this)
 
-    installBorder()
+    if (SystemInfoRt.isXWindow) {
+      installLinuxBorder()
+    }
+    else {
+      border = UIManager.getBorder("Window.border")
+    }
 
     helper.init(frame, this, parentDisposable)
     updateMainMenuVisibility()
@@ -351,7 +356,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
 
     @Suppress("SENSELESS_COMPARISON") // frame = null when called from init of super
     if (frame != null && windowDecorationStyle == NONE) {
-      installBorder()
+      installLinuxBorder()
     }
   }
 
@@ -396,13 +401,15 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
 
   open fun getToolWindowPane(): ToolWindowPane = toolWindowPane!!
 
-  private fun installBorder() {
-    border = JBUI.CurrentTheme.Window.getBorder(!fullScreen && hideNativeLinuxTitle)
+  private fun installLinuxBorder() {
+    if (SystemInfoRt.isXWindow) {
+      border = JBUI.CurrentTheme.Window.getBorder(!fullScreen && hideNativeLinuxTitle)
+    }
   }
 
   private fun updateScreenState(fullScreen: Boolean) {
     this.fullScreen = fullScreen
-    installBorder()
+    installLinuxBorder()
     if (helper is DecoratedHelper) {
       val isCustomFrameHeaderVisible = !fullScreen || (SystemInfoRt.isMac && !isCompactHeader {
         computeMainActionGroups(CustomActionsSchema.getInstance())
