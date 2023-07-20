@@ -9,9 +9,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.NonExtendable
 public /*abstract*/ class AnnotationSession implements UserDataHolder {
   private final PsiFile myFile;
 
@@ -48,9 +50,10 @@ public /*abstract*/ class AnnotationSession implements UserDataHolder {
   }
 
   /**
-   * Minimum Severity is a hint that suggests what highlighting level is requested from this annotator.
-   * For example, "code smell detector" called on VCS commit might request error/warnings only and ignore INFORMATION.
-   * Knowing that, the corresponding annotator might react by skipping part of (the potentially expensive) work.
+   * @return Minimum Severity (or null if not specified) which is a hint that suggests what highlighting level is requested
+   * from this annotator in this specific annotation session.
+   * For example, "code smell detector" called on VCS commit might request ERROR/WARNING only and ignore INFORMATION annotations.
+   * Knowing this minimum requested severity, the corresponding annotator might react by skipping part of the (potentially expensive) work.
    * For example, spellchecker plugin might want to skip running itself altogether if minimumSeverity = WARNING.
    * This hint is only a hint, meaning that the annotator might choose to ignore it.
    */
