@@ -4,7 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;

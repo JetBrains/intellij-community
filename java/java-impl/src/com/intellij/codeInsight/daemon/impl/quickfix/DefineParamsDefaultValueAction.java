@@ -6,7 +6,7 @@ import com.intellij.codeInsight.generation.RecordConstructorMember;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.ParameterClassMember;
 import com.intellij.codeInsight.template.impl.TextExpression;
-import com.intellij.codeInspection.ModCommands;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;

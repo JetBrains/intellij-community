@@ -3,9 +3,9 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.ChangeToAppendUtil;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;

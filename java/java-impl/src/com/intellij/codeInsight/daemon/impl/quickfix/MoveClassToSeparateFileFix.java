@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;

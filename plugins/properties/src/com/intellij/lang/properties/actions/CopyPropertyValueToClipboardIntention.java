@@ -2,7 +2,7 @@
 package com.intellij.lang.properties.actions;
 
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInspection.ModCommands;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.Property;

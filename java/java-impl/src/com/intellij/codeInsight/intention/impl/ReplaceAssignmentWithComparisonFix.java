@@ -3,7 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAssignmentExpression;

@@ -3,12 +3,8 @@ package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.ModCommands;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommandQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;

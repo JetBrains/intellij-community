@@ -8,6 +8,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;

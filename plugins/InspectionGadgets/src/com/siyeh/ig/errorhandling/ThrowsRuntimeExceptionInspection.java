@@ -3,7 +3,7 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;

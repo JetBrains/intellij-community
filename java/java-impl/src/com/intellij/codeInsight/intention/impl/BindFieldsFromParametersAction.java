@@ -2,12 +2,12 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInspection.ModCommands;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ModChooseMember;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;

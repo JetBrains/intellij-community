@@ -3,7 +3,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;

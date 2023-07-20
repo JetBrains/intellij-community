@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInspection.ModCommands;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;

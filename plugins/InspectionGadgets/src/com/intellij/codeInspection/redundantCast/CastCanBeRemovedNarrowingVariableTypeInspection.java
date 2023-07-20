@@ -3,10 +3,10 @@ package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;

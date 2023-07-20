@@ -17,7 +17,7 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ModCommands;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;

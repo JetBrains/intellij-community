@@ -5,7 +5,7 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.util.TextRange;

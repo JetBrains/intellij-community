@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInspection.ModCommands;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModChooseAction;

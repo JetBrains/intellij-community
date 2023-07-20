@@ -26,6 +26,7 @@ package org.jetbrains.lang.manifest.highlighting;
 
 import com.intellij.codeInspection.*;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;

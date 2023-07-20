@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;

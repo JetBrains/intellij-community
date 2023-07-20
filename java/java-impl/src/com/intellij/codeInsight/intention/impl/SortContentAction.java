@@ -2,10 +2,10 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.google.common.collect.Comparators;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;

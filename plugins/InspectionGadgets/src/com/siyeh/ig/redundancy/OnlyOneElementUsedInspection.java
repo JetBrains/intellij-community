@@ -3,6 +3,7 @@ package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.*;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;

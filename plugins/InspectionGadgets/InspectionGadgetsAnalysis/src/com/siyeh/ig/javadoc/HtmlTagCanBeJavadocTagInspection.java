@@ -4,6 +4,7 @@ package com.siyeh.ig.javadoc;
 import com.intellij.codeInspection.*;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;

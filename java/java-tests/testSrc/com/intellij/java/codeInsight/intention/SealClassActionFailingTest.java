@@ -3,10 +3,10 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.impl.SealClassAction;
-import com.intellij.codeInspection.ModCommands;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction.ActionContext;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 

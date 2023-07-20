@@ -3,7 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiAnnotationMemberValue;

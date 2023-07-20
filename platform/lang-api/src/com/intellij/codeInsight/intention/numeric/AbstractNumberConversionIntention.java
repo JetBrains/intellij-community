@@ -3,12 +3,12 @@ package com.intellij.codeInsight.intention.numeric;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.ModCommands;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.lang.LangBundle;
 import com.intellij.modcommand.ModChooseAction;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;

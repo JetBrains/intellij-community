@@ -17,7 +17,7 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;

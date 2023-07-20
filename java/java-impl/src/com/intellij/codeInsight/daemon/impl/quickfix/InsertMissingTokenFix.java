@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInspection.ModCommands;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.ide.IdeBundle;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;

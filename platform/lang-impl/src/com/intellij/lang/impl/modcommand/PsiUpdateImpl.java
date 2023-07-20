@@ -5,7 +5,7 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
-import com.intellij.codeInspection.ModCommands;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.InjectionEditService;
@@ -34,8 +34,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static com.intellij.codeInspection.ModCommands.error;
-import static com.intellij.codeInspection.ModCommands.nop;
+import static com.intellij.modcommand.ModCommands.error;
+import static com.intellij.modcommand.ModCommands.nop;
 
 final class PsiUpdateImpl {
   static @NotNull ModCommand psiUpdate(@NotNull ModCommandAction.ActionContext context,

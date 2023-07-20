@@ -1,10 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInspection;
+package com.intellij.modcommand;
 
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.modcommand.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -179,13 +178,13 @@ public final class ModCommands {
     @NotNull Function<@NotNull T, @NotNull TextRange> range) {
     return new PsiUpdateModCommandAction<T>(element) {
       @Override
-      protected void invoke(@NotNull ActionContext context, @NotNull T element, @NotNull ModPsiUpdater updater) {
+      protected void invoke(@NotNull ModCommandAction.ActionContext context, @NotNull T element, @NotNull ModPsiUpdater updater) {
         action.accept(element, updater);
       }
 
       @Override
-      protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull T section) {
-        return Presentation.of(getFamilyName()).withHighlighting(range.apply(section));
+      protected @NotNull ModCommandAction.Presentation getPresentation(@NotNull ModCommandAction.ActionContext context, @NotNull T section) {
+        return ModCommandAction.Presentation.of(getFamilyName()).withHighlighting(range.apply(section));
       }
 
       @Override

@@ -2,7 +2,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInspection.ModCommands;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.modcommand.*;

@@ -5,7 +5,7 @@ import com.intellij.codeInsight.intention.FileModifier.SafeTypeForPreview;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;

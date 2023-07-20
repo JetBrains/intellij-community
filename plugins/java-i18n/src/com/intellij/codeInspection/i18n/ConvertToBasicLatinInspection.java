@@ -2,11 +2,11 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;

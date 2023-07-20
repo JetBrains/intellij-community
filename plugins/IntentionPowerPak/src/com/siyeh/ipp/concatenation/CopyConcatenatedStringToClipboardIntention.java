@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.concatenation;
 
-import com.intellij.codeInspection.ModCommands;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.*;

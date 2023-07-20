@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ModCommands;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.modcommand.ModCommands;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModPsiUpdater;

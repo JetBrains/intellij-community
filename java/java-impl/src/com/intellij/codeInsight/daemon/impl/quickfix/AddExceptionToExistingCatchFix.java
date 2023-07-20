@@ -3,12 +3,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.ModCommands;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.modcommand.ModChooseAction;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.PsiBasedModCommandAction;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;

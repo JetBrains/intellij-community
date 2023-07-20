@@ -16,7 +16,7 @@
 package com.siyeh.ig.bitwise;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.modcommand.ModPsiUpdater;

@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deprecation
 
-import com.intellij.codeInspection.PsiUpdateModCommandAction
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModCommandAction.Presentation
 import com.intellij.modcommand.ModPsiUpdater
@@ -27,7 +27,7 @@ private fun generateQualifierText(expr: PsiReferenceExpression,
   }
 }
 
-internal class ReplaceMethodCallFix(expr: PsiMethodCallExpression, replacementMethod: PsiMethod) : 
+internal class ReplaceMethodCallFix(expr: PsiMethodCallExpression, replacementMethod: PsiMethod) :
   PsiUpdateModCommandAction<PsiMethodCallExpression>(expr) {
   private val myReplacementMethodPointer =
     SmartPointerManager.getInstance(replacementMethod.project).createSmartPsiElementPointer(replacementMethod)
@@ -56,7 +56,7 @@ internal class ReplaceMethodCallFix(expr: PsiMethodCallExpression, replacementMe
   }
 }
 
-internal class ReplaceFieldReferenceFix(expr: PsiReferenceExpression, replacementMember: PsiMember) : 
+internal class ReplaceFieldReferenceFix(expr: PsiReferenceExpression, replacementMember: PsiMember) :
   PsiUpdateModCommandAction<PsiReferenceExpression>(expr) {
   private val myReplacementMemberPointer =
     SmartPointerManager.getInstance(replacementMember.project).createSmartPsiElementPointer(replacementMember)

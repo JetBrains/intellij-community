@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.collections;
 
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMethodCallExpression;

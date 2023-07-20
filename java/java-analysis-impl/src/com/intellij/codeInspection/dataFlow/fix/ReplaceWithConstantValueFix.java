@@ -3,11 +3,11 @@ package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ModCommands;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModChooseAction;
 import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.refactoring.extractMethod.ExtractMethodUtil;

@@ -2,7 +2,7 @@
 package com.siyeh.ipp.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;

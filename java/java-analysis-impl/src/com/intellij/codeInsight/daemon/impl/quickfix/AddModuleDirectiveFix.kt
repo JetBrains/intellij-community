@@ -2,10 +2,10 @@
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInspection.PsiUpdateModCommandAction
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiJavaModule

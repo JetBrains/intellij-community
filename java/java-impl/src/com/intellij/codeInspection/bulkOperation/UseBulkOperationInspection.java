@@ -3,7 +3,7 @@ package com.intellij.codeInspection.bulkOperation;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.java.JavaBundle;

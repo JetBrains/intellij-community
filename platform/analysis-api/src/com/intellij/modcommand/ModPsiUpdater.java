@@ -18,7 +18,7 @@ import java.util.function.BiConsumer;
 /**
  * A helper to perform editor command when building the {@link ModCommand}
  * 
- * @see com.intellij.codeInspection.ModCommands#psiUpdate(PsiElement, BiConsumer)
+ * @see ModCommands#psiUpdate(PsiElement, BiConsumer)
  */
 @ApiStatus.Experimental
 public interface ModPsiUpdater extends ModPsiNavigator {

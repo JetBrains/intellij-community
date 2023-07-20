@@ -6,7 +6,7 @@ import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.PsiElementResult;
 import com.intellij.codeInsight.template.impl.ConstantNode;
-import com.intellij.codeInspection.ModCommands;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;

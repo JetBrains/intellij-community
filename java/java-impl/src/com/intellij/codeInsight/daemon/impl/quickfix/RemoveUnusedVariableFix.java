@@ -3,13 +3,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.RemoveInitializerFix;
 import com.intellij.java.JavaBundle;
-import com.intellij.modcommand.ModChooseAction;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiBasedModCommandAction;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaElementKind;

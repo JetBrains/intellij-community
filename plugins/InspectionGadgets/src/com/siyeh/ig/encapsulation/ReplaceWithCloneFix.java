@@ -3,7 +3,7 @@ package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiArrayType;
