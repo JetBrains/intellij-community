@@ -199,8 +199,9 @@ class ImportQuickFix(
 
         context(KtAnalysisSession)
         private fun getFixes(element: PsiElement): List<ImportQuickFix> {
-            val project = element.project
-            val indexProvider = KtSymbolFromIndexProvider.create(project)
+            if (element !is KtElement) return emptyList()
+
+            val indexProvider = KtSymbolFromIndexProvider.createForElement(element)
 
             val quickFix = when (element) {
                 is KtTypeReference -> createImportTypeFix(indexProvider, element)
