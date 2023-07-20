@@ -20,10 +20,13 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addInterpretersAsync
+import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.statistics.InterpreterType
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
@@ -130,6 +133,14 @@ class PyAddNewPoetryPanel(private val project: Project?,
       baseSdkField.selectedSdk?.homePath, installPackagesCheckBox.isSelected)?.apply {
       PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk?.homePath
     }
+  }
+
+  override fun getStatisticInfo(): InterpreterStatisticsInfo {
+    return InterpreterStatisticsInfo(type = InterpreterType.POETRY,
+                                     target = InterpreterTarget.LOCAL,
+                                     globalSitePackage = false,
+                                     makeAvailableToAllProjects = false,
+                                     previouslyConfigured = false)
   }
 
   override fun validateAll(): List<ValidationInfo> =

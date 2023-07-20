@@ -22,7 +22,10 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
@@ -35,11 +38,17 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
-import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo;
+import com.jetbrains.python.newProject.collector.PythonNewProjectWizardCollector;
+import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageUtil;
+import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.remote.*;
 import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.statistics.PyStatisticToolsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +58,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+
 
 /**
  * This class encapsulates remote settings, so one should extend it for any python project that supports remote generation, at least
@@ -195,6 +205,12 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     }
 
     configureProject(project, baseDir, settings, module, synchronizer);
+    var statisticsInfo = settings.getInterpreterInfoForStatistics();
+    if (statisticsInfo instanceof InterpreterStatisticsInfo interpreterStatisticsInfo) {
+      PythonNewProjectWizardCollector.Companion.logPythonNewProjectGenerated(interpreterStatisticsInfo,
+                                                                             PyStatisticToolsKt.getVersion(settings.getSdk()),
+                                                                             this.getClass());
+    }
   }
 
   /**

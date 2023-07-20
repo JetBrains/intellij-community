@@ -20,12 +20,15 @@ import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.target.conda.condaSupportedLanguages
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
+import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.statistics.InterpreterType
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
@@ -124,6 +127,14 @@ open class PyAddNewCondaEnvPanel(
     // Old conda created, convert to new
     fixPythonCondaSdk(sdk, sdk.getOrCreateAdditionalData(), condaPath)
     return sdk
+  }
+
+  override fun getStatisticInfo(): InterpreterStatisticsInfo? {
+      return InterpreterStatisticsInfo(InterpreterType.CONDAVENV,
+                                       InterpreterTarget.LOCAL,
+                                       false,
+                                       makeSharedField.isSelected,
+                                       false)
   }
 
   override fun addChangeListener(listener: Runnable) {

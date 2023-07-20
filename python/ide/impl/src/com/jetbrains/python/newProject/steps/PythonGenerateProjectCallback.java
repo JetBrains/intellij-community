@@ -91,6 +91,7 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
     }
     if (projectSettings instanceof PyNewProjectSettings newProjectSettings) {
       newProjectSettings.setSdk(settingsStep.getSdk());
+      newProjectSettings.setInterpreterInfoForStatistics(settingsStep.getInterpreterInfoForStatistics());
       newProjectSettings.setInstallFramework(settingsStep.installFramework());
       newProjectSettings.setRemotePath(settingsStep.getRemotePath());
     }
