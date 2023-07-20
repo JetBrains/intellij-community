@@ -112,13 +112,16 @@ public class DefaultActionGroup extends ActionGroup {
     List<AnAction> uniqueActions = new ArrayList<>(actions.size());
     for (AnAction action : actions) {
       if (action == this) {
-        throw newThisGroupToItselfAddedException();
+        LOG.error(newThisGroupToItselfAddedException());
       }
-      if (action instanceof Separator || actionSet.add(action)) {
-        uniqueActions.add(action);
+      else if (action == null) {
+        LOG.error(nullActionAddedToTheGroupException());
+      }
+      else if (!(action instanceof Separator || actionSet.add(action))) {
+        LOG.error(newDuplicateActionAddedException(action));
       }
       else {
-        LOG.error(newDuplicateActionAddedException(action));
+        uniqueActions.add(action);
       }
     }
     mySortedChildren.addAll(uniqueActions);
@@ -127,6 +130,10 @@ public class DefaultActionGroup extends ActionGroup {
 
   private IllegalArgumentException newThisGroupToItselfAddedException() {
     return new IllegalArgumentException("Cannot add a group to itself: " + this + " (" + getTemplateText() + ")");
+  }
+
+  private IllegalArgumentException nullActionAddedToTheGroupException() {
+    return new IllegalArgumentException("Cannot add null action to the group " + this + " (" + getTemplateText() + ")");
   }
 
   private static IllegalArgumentException newDuplicateActionAddedException(@NotNull AnAction action) {
