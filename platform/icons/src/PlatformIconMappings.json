@@ -348,7 +348,10 @@
       ],
       "right.svg": "actions/forward.svg",
       "runAnything.svg": "actions/run_anything.svg",
-      "search.svg": "actions/find.svg",
+      "search.svg": [
+        "actions/find.svg",
+        "actions/search.svg"
+        ],
       "separatorHorizontal.svg": "general/separatorH.svg",
       "settings.svg": [
         "general/gearPlain.svg",
