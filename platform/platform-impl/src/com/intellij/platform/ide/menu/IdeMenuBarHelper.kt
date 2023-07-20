@@ -169,7 +169,7 @@ internal suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
                                            menuBar: JComponent,
                                            frame: JFrame,
                                            presentationFactory: PresentationFactory,
-                                           isFirstUpdate: Boolean): List<ActionGroup> {
+                                           isFirstUpdate: Boolean): List<ActionGroup>? {
   // enforce the "always-visible" flag for all main menu items
   // without forcing everyone to employ custom groups in their plugin.xml files.
   val adjustedGroup = object : ActionGroupWrapper(mainActionGroup) {
@@ -196,7 +196,7 @@ internal suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
     }
 
     // don't repeat - will do on next timer event
-    return emptyList()
+    return null
   }
 }
 
