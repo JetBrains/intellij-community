@@ -36,8 +36,9 @@ internal class FirDeclarationFromOverridableMembersContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
+
     context(KtAnalysisSession)
-override fun complete(
+    override fun complete(
         positionContext: FirRawPositionCompletionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
@@ -50,7 +51,7 @@ override fun complete(
         } ?: return
 
         if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-            val elements = with(OverrideKeywordHandler(basicContext)) { createOverrideMemberLookups(parameters, declaration, project) }
+            val elements = OverrideKeywordHandler(basicContext).createOverrideMemberLookups(parameters, declaration, project)
             sink.addAllElements(elements)
         }
     }

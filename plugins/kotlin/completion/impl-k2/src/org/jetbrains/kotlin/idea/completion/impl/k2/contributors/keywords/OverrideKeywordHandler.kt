@@ -129,9 +129,7 @@ internal class OverrideKeywordHandler(
         val baseClassName = containingSymbol?.name?.asString()
         val baseClassIcon = member.memberInfo.containingSymbolIcon
 
-        val baseLookupElement = with(basicContext.lookupElementFactory) {
-            createLookupElement(memberSymbol, basicContext.importStrategyDetector)
-        }
+        val baseLookupElement = basicContext.lookupElementFactory.createLookupElement(memberSymbol, basicContext.importStrategyDetector)
 
         val classOrObjectPointer = classOrObject.createSmartPointer()
         return OverridesCompletionLookupElementDecorator(

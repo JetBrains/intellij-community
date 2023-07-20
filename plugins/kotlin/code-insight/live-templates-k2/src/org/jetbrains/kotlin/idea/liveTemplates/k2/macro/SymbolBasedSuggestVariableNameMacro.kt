@@ -32,11 +32,9 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
                                 this
                             )
 
-                            with(NAME_SUGGESTER) {
-                                return ((defaultName?.let { sequenceOf(it) } ?: emptySequence()) + suggestExpressionNames(initializer))
-                                    .filter(nameValidator)
-                                    .toList()
-                            }
+                            return ((defaultName?.let { sequenceOf(it) } ?: emptySequence()) + NAME_SUGGESTER.suggestExpressionNames(initializer))
+                                .filter(nameValidator)
+                                .toList()
                         }
                     }
                 }
@@ -55,11 +53,9 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
                             KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
                             this
                         )
-                        with(NAME_SUGGESTER) {
-                            return ((defaultName?.let { sequenceOf(it) } ?: emptySequence()) + suggestTypeNames(symbol.returnType))
-                                .filter(nameValidator)
-                                .toList()
-                        }
+                        return ((defaultName?.let { sequenceOf(it) } ?: emptySequence()) + NAME_SUGGESTER.suggestTypeNames(symbol.returnType))
+                            .filter(nameValidator)
+                            .toList()
                     }
                 }
             }

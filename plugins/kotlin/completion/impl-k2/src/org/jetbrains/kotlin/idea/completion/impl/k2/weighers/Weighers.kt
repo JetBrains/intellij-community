@@ -163,25 +163,25 @@ internal object Weighers {
         symbolWithOrigin: KtSymbolWithOrigin?,
         substitutor: KtSubstitutor = KtSubstitutor.Empty(token)
     ) {
-        with(ExpectedTypeWeigher) { addWeight(context, lookupElement, symbolWithOrigin?.symbol) }
-        with(KindWeigher) { addWeight(lookupElement, symbolWithOrigin?.symbol, context) }
+        ExpectedTypeWeigher.addWeight(context, lookupElement, symbolWithOrigin?.symbol)
+        KindWeigher.addWeight(lookupElement, symbolWithOrigin?.symbol, context)
 
         if (symbolWithOrigin == null) return
         val symbol = symbolWithOrigin.symbol
 
         val availableWithoutImport = symbolWithOrigin.origin is CompletionSymbolOrigin.Scope
 
-        with(DeprecatedWeigher) { addWeight(lookupElement, symbol) }
-        with(PreferGetSetMethodsToPropertyWeigher) { addWeight(lookupElement, symbol) }
-        with(NotImportedWeigher) { addWeight(context, lookupElement, symbol, availableWithoutImport) }
-        with(ClassifierWeigher) { addWeight(lookupElement, symbol, symbolWithOrigin.origin) }
-        with(VariableOrFunctionWeigher) { addWeight(lookupElement, symbol) }
-        with(K2SoftDeprecationWeigher) { addWeight(lookupElement, symbol, context.languageVersionSettings) }
+        DeprecatedWeigher.addWeight(lookupElement, symbol)
+        PreferGetSetMethodsToPropertyWeigher.addWeight(lookupElement, symbol)
+        NotImportedWeigher.addWeight(context, lookupElement, symbol, availableWithoutImport)
+        ClassifierWeigher.addWeight(lookupElement, symbol, symbolWithOrigin.origin)
+        VariableOrFunctionWeigher.addWeight(lookupElement, symbol)
+        K2SoftDeprecationWeigher.addWeight(lookupElement, symbol, context.languageVersionSettings)
 
         if (symbol !is KtCallableSymbol) return
 
-        with(PreferContextualCallablesWeigher) { addWeight(lookupElement, symbol, context.contextualSymbolsCache) }
-        with(PreferFewerParametersWeigher) { addWeight(lookupElement, symbol) }
+        PreferContextualCallablesWeigher.addWeight(lookupElement, symbol, context.contextualSymbolsCache)
+        PreferFewerParametersWeigher. addWeight(lookupElement, symbol)
     }
 
     context(KtAnalysisSession)
@@ -191,7 +191,7 @@ internal object Weighers {
         signature: KtCallableSignature<*>,
         symbolOrigin: CompletionSymbolOrigin,
     ) {
-        with(CallableWeigher) { addWeight(context, lookupElement, signature, symbolOrigin) }
+        CallableWeigher.addWeight(context, lookupElement, signature, symbolOrigin)
 
         applyWeighsToLookupElement(context, lookupElement, KtSymbolWithOrigin(signature.symbol, symbolOrigin))
     }

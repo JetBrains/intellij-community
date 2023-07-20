@@ -41,7 +41,7 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
 
         return resolveCandidates(context) f@ { file, variables ->
             val importStrategyDetector = ImportStrategyDetector(file, context.project)
-            variables.mapTo(ArrayList()) { with(lookupElementFactory) { createLookupElement(it, importStrategyDetector) } }
+            variables.mapTo(ArrayList()) { lookupElementFactory.createLookupElement(it, importStrategyDetector) }
                 .toTypedArray()
         }
     }
@@ -73,7 +73,7 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
                 val variables = scope.getCallableSymbols()
                     .filterIsInstance<KtVariableLikeSymbol>()
                     .filter { !it.name.isSpecial && shouldDisplayVariable(it, file) }
-                    .filter { matcher == null || with(matcher) { match(it.returnType) } }
+                    .filter { matcher == null || matcher. match(it.returnType) }
 
                 return mapper(this@analyze, file, variables)
             }

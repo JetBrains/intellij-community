@@ -98,7 +98,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
             val type = parameter.getReturnKtType()
             if (typeIsVisible(type, visibilityChecker, availableTypeParameters)) {
 
-                val typeLookupElement = with(lookupElementFactory) { createTypeLookupElement(type) } ?: return@mapNotNull null
+                val typeLookupElement = lookupElementFactory.createTypeLookupElement(type) ?: return@mapNotNull null
                 val lookupElement = createLookupElement(variableOrParameter, name, typeLookupElement)
 
                 lookupElement to name
@@ -170,7 +170,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
             is KtClassLikeSymbol -> symbol.name?.asString()
         } ?: return
 
-        val typeLookupElement = with(lookupElementFactory) {createTypeLookupElement(symbol) } ?: return
+        val typeLookupElement = lookupElementFactory.createTypeLookupElement(symbol) ?: return
 
         val nameSuggestions = KotlinNameSuggester.getCamelNames(
             shortNameString,

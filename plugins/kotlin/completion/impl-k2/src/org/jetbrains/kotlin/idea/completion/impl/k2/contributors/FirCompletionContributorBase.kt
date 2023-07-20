@@ -85,10 +85,9 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         if (symbol !is KtNamedSymbol) return
         // Don't offer any hidden deprecated items.
         if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
-        with(lookupElementFactory) {
-            createLookupElement(symbol, importStrategyDetector, expectedType = expectedType)
+        lookupElementFactory
+            .createLookupElement(symbol, importStrategyDetector, expectedType = expectedType)
             .let(sink::addElement)
-        }
     }
 
     context(KtAnalysisSession)
@@ -130,9 +129,8 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
 
         // Don't offer any deprecated items that could leads to compile errors.
         if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
-        val lookup = with(lookupElementFactory) {
-            createCallableLookupElement(name, signature, options, context.expectedType)
-        }
+        val lookup = lookupElementFactory.createCallableLookupElement(name, signature, options, context.expectedType)
+
         priority?.let { lookup.priority = it }
 
         Weighers.applyWeighsToLookupElementForCallable(context, lookup, signature, symbolOrigin)
@@ -195,7 +193,5 @@ internal fun <C : FirRawPositionCompletionContext> KtAnalysisSession.complete(
     weighingContext: WeighingContext,
     sessionParameters: FirCompletionSessionParameters,
 ) {
-    with(contextContributor) {
-        complete(positionContext, weighingContext, sessionParameters)
-    }
+    contextContributor.complete(positionContext, weighingContext, sessionParameters)
 }

@@ -121,9 +121,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         @OptIn(KtAllowAnalysisOnEdt::class)
         allowAnalysisOnEdt {
             analyze(expr) {
-                with(KotlinNameSuggester(KotlinNameSuggester.Case.CAMEL)) {
-                    return suggestExpressionNames(expr).first()
-                }
+                return KotlinNameSuggester(KotlinNameSuggester.Case.CAMEL).suggestExpressionNames(expr).first()
             }
         }
     }

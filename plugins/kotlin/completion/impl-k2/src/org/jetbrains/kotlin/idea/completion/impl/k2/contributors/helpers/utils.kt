@@ -167,7 +167,7 @@ private fun Sequence<KtCallableSignature<*>>.filterNonExtensions(
 ): Sequence<KtCallableSignature<*>> = this
     .filterNot { it.symbol.isExtension }
     .filter { symbolFilter(it.symbol) }
-    .filter { with(visibilityChecker) { isVisible(it.symbol) } }
+    .filter { visibilityChecker.isVisible(it.symbol) }
 
 /**
  * Returns a filter aware of prefixes. For example, a variable with the name `prop` satisfies the filter for all the following prefixes:
