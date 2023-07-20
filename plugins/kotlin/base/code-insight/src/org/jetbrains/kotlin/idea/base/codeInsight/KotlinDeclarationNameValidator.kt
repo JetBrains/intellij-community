@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -10,21 +9,9 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 
 class KotlinDeclarationNameValidator(
     private val visibleDeclarationsContext: KtElement,
-    private val checkDeclarationsIn: Sequence<PsiElement>,
     private val target: KotlinNameSuggestionProvider.ValidatorTarget,
     private val analysisSession: KtAnalysisSession
 ) : (String) -> Boolean {
-
-    constructor(
-        visibleDeclarationsContext: KtElement,
-        target: KotlinNameSuggestionProvider.ValidatorTarget,
-        analysisSession: KtAnalysisSession
-    ) : this(
-        visibleDeclarationsContext,
-        visibleDeclarationsContext.siblings(withItself = false),
-        target,
-        analysisSession
-    )
 
     init {
         check(
@@ -41,7 +28,7 @@ class KotlinDeclarationNameValidator(
 
         if (analysisSession.hasConflict(identifier)) return false
 
-        return checkDeclarationsIn.none { declaration ->
+        return visibleDeclarationsContext.siblings(withItself = false).none { declaration ->
             declaration.findDescendantOfType<KtNamedDeclaration> { it.isConflicting(identifier) } != null
         }
     }
