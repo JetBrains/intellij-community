@@ -30,7 +30,7 @@ internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependenciesWi
 
     mppModel.sourceSetsByName.values.forEach { sourceSet ->
         val sourceSetModuleId = KotlinSourceSetModuleId(resolverCtx, gradleModule, sourceSet)
-        val sourceSetDataNode = moduleDataNode.findSourceSetNode(sourceSetModuleId) ?: return@forEach
+        val sourceSetDataNode = projectDataNode.findSourceSetDataNode(sourceSetModuleId) ?: return@forEach
         val sourceSetDependencies = dependencies[sourceSet.name]
 
         /* Call into extension points, skipping dependency population of source set if instructed */
