@@ -60,7 +60,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 public final class QuickFixFactoryImpl extends QuickFixFactory {
@@ -1050,7 +1053,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull List<IntentionAction> createExtendSealedClassFixes(@NotNull PsiJavaCodeReferenceElement subclassRef,
                                                                      @NotNull PsiClass parentClass,
                                                                      @NotNull PsiClass subClass) {
-    return Arrays.asList(ImplementOrExtendFix.createActions(subClass, parentClass));
+    ModCommandAction fix = ImplementOrExtendFix.createFix(subClass, parentClass);
+    return fix == null ? List.of() : List.of(fix.asIntention());
   }
 
   @Override

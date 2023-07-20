@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImplementOrExtendFix;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -52,13 +53,13 @@ public class RegistrationProblemsInspection extends DevKitUastInspectionBase {
         for (PsiClass componentClass : componentClasses) {
           if (ActionType.ACTION.myClassName.equals(componentClass.getQualifiedName()) &&
               !checkedClass.isInheritor(componentClass, true)) {
-            LocalQuickFix[] fixes = sourcePsi.getLanguage().is(JavaLanguage.INSTANCE) ?
-                                    ImplementOrExtendFix.createFixes(checkedClass, componentClass) :
-                                    LocalQuickFix.EMPTY_ARRAY;
+            ModCommandAction fix = sourcePsi.getLanguage().is(JavaLanguage.INSTANCE) ?
+                                   ImplementOrExtendFix.createFix(checkedClass, componentClass) :
+                                   null;
             ProblemHolderUtilKt.registerUProblem(holder, uClass,
                                                  DevKitBundle.message("inspections.registration.problems.incompatible.message",
                                                                       componentClass.getQualifiedName()),
-                                                 fixes);
+                                                 fix == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[] {fix.asQuickFix()});
           }
         }
         if (ActionType.ACTION.isOfType(checkedClass) && !hasNoArgConstructor(checkedClass)) {

@@ -17,10 +17,6 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.ui.ChooserInterceptor;
-import com.intellij.ui.UiInterceptors;
-
-import java.util.List;
 
 public class ExtractSetFromComparisonChainActionTest extends LightIntentionActionTestCase {
   @Override

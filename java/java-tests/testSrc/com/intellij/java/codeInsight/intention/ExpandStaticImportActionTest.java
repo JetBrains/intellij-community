@@ -2,10 +2,6 @@
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
-import com.intellij.ui.ChooserInterceptor;
-import com.intellij.ui.UiInterceptors;
-
-import java.util.List;
 
 public class ExpandStaticImportActionTest extends LightIntentionActionTestCase {
   @Override
