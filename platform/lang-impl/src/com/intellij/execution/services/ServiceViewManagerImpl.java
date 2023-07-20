@@ -78,6 +78,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   private final ServiceModel myModel;
   private final ServiceModelFilter myModelFilter;
   private final Map<String, Collection<ServiceViewContributor<?>>> myGroups = new ConcurrentHashMap<>();
+  private final Set<ServiceViewContributor<?>> myNotInitializedContributors = new HashSet<>();
   private final List<ServiceViewContentHolder> myContentHolders = new SmartList<>();
   private boolean myActivationActionsRegistered;
   private AutoScrollToSourceHandler myAutoScrollToSourceHandler;
@@ -751,6 +752,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   private void loadGroups() {
     for (ServiceViewContributor<?> contributor : CONTRIBUTOR_EP_NAME.getExtensionList()) {
       addToGroup(contributor);
+      myNotInitializedContributors.add(contributor);
     }
 
     registerToolWindows(myGroups.keySet());
@@ -760,9 +762,17 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     myProject.getMessageBus().connect(disposable).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
       public void toolWindowShown(@NotNull ToolWindow toolWindow) {
-        if (myGroups.containsKey(toolWindow.getId())) {
+        Collection<ServiceViewContributor<?>> contributors = myGroups.get(toolWindow.getId());
+        if (contributors != null) {
+          for (ServiceViewContributor<?> contributor : contributors) {
+            if (myNotInitializedContributors.remove(contributor)) {
+              ServiceEvent e = ServiceEvent.createResetEvent(contributor.getClass());
+              myModel.handle(e);
+            }
+          }
+        }
+        if (myNotInitializedContributors.isEmpty()) {
           Disposer.dispose(disposable);
-          myModel.getInvoker().invokeLater(() -> myModel.initRoots());
         }
       }
     });
@@ -1265,6 +1275,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
     @Override
     public void extensionRemoved(@NotNull ServiceViewContributor<?> extension, @NotNull PluginDescriptor pluginDescriptor) {
+      myNotInitializedContributors.remove(extension);
       ServiceEvent e = ServiceEvent.createUnloadSyncResetEvent(extension.getClass());
       myModel.handle(e).onProcessed(o -> {
         eventHandled(e);

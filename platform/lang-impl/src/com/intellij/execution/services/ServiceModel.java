@@ -61,7 +61,6 @@ final class ServiceModel implements Disposable, InvokerSupplier {
   private final Project myProject;
   private final Invoker myInvoker = Invoker.forBackgroundThreadWithoutReadAction(this);
   private final List<ServiceViewItem> myRoots = new CopyOnWriteArrayList<>();
-  private volatile boolean myRootsInitialized;
   private final List<ServiceModelEventListener> myListeners = new CopyOnWriteArrayList<>();
 
   ServiceModel(@NotNull Project project) {
@@ -88,39 +87,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
 
   @NotNull
   List<? extends ServiceViewItem> getRoots() {
-    return myRootsInitialized ? myRoots : Collections.emptyList();
-  }
-
-  CancellablePromise<Boolean> initRoots() {
-    return getInvoker().compute(() -> {
-      if (!myRootsInitialized) {
-        myRoots.clear();
-        myRoots.addAll(doGetRoots());
-        myRootsInitialized = true;
-        return true;
-      }
-      return false;
-    });
-  }
-
-  private List<? extends ServiceViewItem> doGetRoots() {
-    List<ServiceViewItem> result = new ArrayList<>();
-    for (ServiceViewContributor<?> contributor : CONTRIBUTOR_EP_NAME.getExtensionList()) {
-      try {
-        ContributorNode root = new ContributorNode(myProject, contributor);
-        root.loadChildren();
-        if (!root.getChildren().isEmpty()) {
-          result.add(root);
-        }
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        PluginException.logPluginError(LOG, "Failed to init service view contributor " + contributor.getClass(), e, contributor.getClass());
-      }
-    }
-    return result;
+    return myRoots;
   }
 
   private JBIterable<ServiceViewItem> doFindItems(Condition<? super ServiceViewItem> visitChildrenCondition,

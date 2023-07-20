@@ -152,9 +152,6 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
     return myModel.getInvoker();
   }
 
-  public void initRootsIfNeeded() {
-  }
-
   @NotNull
   private List<? extends ServiceViewItem> processGroups(@NotNull List<? extends ServiceViewItem> items, boolean visible) {
     if (visible) {
@@ -357,11 +354,6 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
     @Override
     public void eventProcessed(ServiceEvent e) {
       notifyListeners(e);
-    }
-
-    @Override
-    public void initRootsIfNeeded() {
-      myModel.initRoots();
     }
   }
 
