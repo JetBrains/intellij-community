@@ -32,7 +32,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
   public static final Key<@NlsSafe String> CUSTOM_KEY_STROKE_TEXT = new Key<>("CUSTOM_KEY_STROKE_TEXT");
   protected final ListPopupImpl myPopup;
-  private JLabel myShortcutLabel;
+  private @Nullable JLabel myShortcutLabel;
   private @Nullable JLabel myValueLabel;
   protected JLabel myMnemonicLabel;
   protected JLabel myIconLabel;
@@ -296,12 +296,18 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
       int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
       Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
-      int extra = hasNextIcon || hasInlineButtons ? leftRightInset - myButtonsSeparator.getPreferredSize().width : leftRightInset;
-      //noinspection UseDPIAwareBorders
-      myShortcutLabel.setBorder(new EmptyBorder(0, 0, 0, extra));
+      int expectedRightInset = leftRightInset * 2;
+      if (hasNextIcon || hasInlineButtons) {
+        expectedRightInset -= myButtonsSeparator.getPreferredSize().width;
+      }
+      if (myShortcutLabel != null) {
+        //noinspection UseDPIAwareBorders
+        myShortcutLabel.setBorder(new EmptyBorder(0, 0, 0, expectedRightInset - leftRightInset));
+        expectedRightInset = leftRightInset;
+      }
       //noinspection UseDPIAwareBorders
       selectablePanel.setBorder(
-        new EmptyBorder(0, innerInsets.left + leftRightInset, 0, leftRightInset));
+        new EmptyBorder(0, innerInsets.left + leftRightInset, 0, expectedRightInset));
     }
 
     if (step instanceof BaseListPopupStep) {
