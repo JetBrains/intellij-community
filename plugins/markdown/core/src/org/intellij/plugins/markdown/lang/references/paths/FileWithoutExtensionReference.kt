@@ -22,7 +22,8 @@ internal abstract class FileWithoutExtensionReference(
 
   override fun resolve(): PsiElement? {
     val referencedFile = findReferencedFile() ?: return null
-    if (referencedFile.parent.findChild(referencedFile.nameWithoutExtension) == null) {
+    val directory = referencedFile.parent ?: return null
+    if (directory.findChild(referencedFile.nameWithoutExtension) == null) {
       return PsiUtilCore.getPsiFile(element.project, referencedFile)
     }
     return null
