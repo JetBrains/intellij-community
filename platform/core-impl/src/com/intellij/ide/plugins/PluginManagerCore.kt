@@ -6,8 +6,8 @@ package com.intellij.ide.plugins
 import com.intellij.ReviseWhenPortedToJDK
 import com.intellij.core.CoreBundle
 import com.intellij.diagnostic.Activity
+import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.invalidate
 import com.intellij.ide.plugins.IdeaPluginPlatform.Companion.fromModuleId
 import com.intellij.openapi.application.PathManager
@@ -820,23 +820,21 @@ object PluginManagerCore {
     }
   }
 
-  @Synchronized
-  fun initializeAndSetPlugins(context: DescriptorListLoadingContext,
-                              loadingResult: PluginLoadingResult,
-                              coreLoader: ClassLoader): PluginSet {
-    val activity = StartUpMeasurer.startActivity("plugin initialization")
-    val initResult = initializePlugins(context = context,
-                                       loadingResult = loadingResult,
-                                       coreLoader = coreLoader,
-                                       checkEssentialPlugins = !isUnitTestMode,
-                                       parentActivity = activity)
-    pluginsToDisable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToDisable)
-    pluginsToEnable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToEnable)
-    shadowedBundledPlugins = Java11Shim.INSTANCE.copyOf(loadingResult.shadowedBundledIds)
-    activity.end()
-    activity.setDescription("plugin count: ${initResult.pluginSet.enabledPlugins.size}")
-    nullablePluginSet = initResult.pluginSet
-    return initResult.pluginSet
+  internal suspend fun initializeAndSetPlugins(context: DescriptorListLoadingContext, loadingResult: PluginLoadingResult): PluginSet {
+    val tracerShim = CoroutineTracerShim.coroutineTracerShim
+    return tracerShim.subTask("plugin initialization") {
+      val initResult = initializePlugins(context = context,
+                                         loadingResult = loadingResult,
+                                         coreLoader = PluginManagerCore::class.java.classLoader,
+                                         checkEssentialPlugins = !isUnitTestMode,
+                                         parentActivity = tracerShim.getTraceActivity())
+      pluginsToDisable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToDisable)
+      pluginsToEnable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToEnable)
+      shadowedBundledPlugins = Java11Shim.INSTANCE.copyOf(loadingResult.shadowedBundledIds)
+      //activity.setDescription("plugin count: ${initResult.pluginSet.enabledPlugins.size}")
+      nullablePluginSet = initResult.pluginSet
+      initResult.pluginSet
+    }
   }
 
   // do not use class reference here

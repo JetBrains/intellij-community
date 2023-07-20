@@ -33,11 +33,11 @@ fun rootTask(): CoroutineContext = MeasureCoroutineTime
  * See https://github.com/Kotlin/kotlinx.coroutines/issues/3414
  */
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
-suspend fun <X> subtask(
+suspend fun <T> subtask(
   name: String,
   context: CoroutineContext = EmptyCoroutineContext,
-  action: suspend CoroutineScope.() -> X,
-): X {
+  action: suspend CoroutineScope.() -> T,
+): T {
   val namedContext = context + CoroutineName(name)
   val measurer = coroutineContext[CoroutineTimeMeasurerKey]
   return if (measurer == null) {

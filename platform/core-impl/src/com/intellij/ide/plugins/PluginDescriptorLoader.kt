@@ -400,7 +400,7 @@ internal fun CoroutineScope.scheduleLoading(zipFilePoolDeferred: Deferred<ZipFil
   }
   val pluginSetDeferred = async {
     val pair = resultDeferred.await()
-    PluginManagerCore.initializeAndSetPlugins(pair.first, pair.second, PluginManagerCore::class.java.classLoader)
+    PluginManagerCore.initializeAndSetPlugins(context = pair.first, loadingResult = pair.second)
   }
 
   // logging is not as a part of plugin set job for performance reasons
@@ -467,26 +467,6 @@ private fun appendPlugin(descriptor: IdeaPluginDescriptor, target: StringBuilder
   val version = descriptor.version
   if (version != null) {
     target.append(" (").append(version).append(')')
-  }
-}
-
-// used and must be used only by Rider
-@Suppress("unused")
-@Internal
-suspend fun getLoadedPluginsForRider(): List<IdeaPluginDescriptorImpl?> {
-  PluginManagerCore.nullablePluginSet?.enabledPlugins?.let {
-    return it
-  }
-
-  val isUnitTestMode = PluginManagerCore.isUnitTestMode
-  val isRunningFromSources = PluginManagerCore.isRunningFromSources()
-  return DescriptorListLoadingContext(
-    isMissingSubDescriptorIgnored = true,
-    isMissingIncludeIgnored = isUnitTestMode,
-    checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
-  ).use { context ->
-    val result = loadDescriptors(context = context, isUnitTestMode = isUnitTestMode, isRunningFromSources = isRunningFromSources)
-    PluginManagerCore.initializeAndSetPlugins(context, result, PluginManagerCore::class.java.classLoader).enabledPlugins
   }
 }
 

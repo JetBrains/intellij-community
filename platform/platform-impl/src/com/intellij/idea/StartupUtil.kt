@@ -61,6 +61,7 @@ import java.util.function.BiFunction
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import javax.swing.*
+import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
 
 internal const val IDE_STARTED: String = "------------------------------------------------------ IDE STARTED ------------------------------------------------------"
@@ -95,6 +96,14 @@ fun CoroutineScope.startApplication(args: List<String>,
                                     appStarterDeferred: Deferred<AppStarter>,
                                     mainScope: CoroutineScope,
                                     busyThread: Thread) {
+  CoroutineTracerShim.coroutineTracerShim = object : CoroutineTracerShim {
+    override suspend fun getTraceActivity() = com.intellij.diagnostic.getTraceActivity()
+
+    override suspend fun <T> subTask(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T {
+      return subtask(name = name, context = context, action = action)
+    }
+  }
+
   val appInfoDeferred = async(CoroutineName("app info")) {
     // required for DisabledPluginsState and EUA
     ApplicationInfoImpl.getShadowInstance()
@@ -125,13 +134,11 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   val initAwtToolkitAndEventQueueJob = scheduleInitAwtToolkitAndEventQueue(lockSystemDirsJob, busyThread, isHeadless)
-  schedulePreloadingLafClasses()
 
-  // LookAndFeel type is not specified to avoid class loading
   val initLafJob = launch {
     initAwtToolkitAndEventQueueJob.join()
     // SwingDispatcher must be used after Toolkit init
-    withContext(RawSwingDispatcher) {
+    subtask("initUi", RawSwingDispatcher) {
       initUi(isHeadless)
     }
   }
@@ -216,7 +223,7 @@ fun CoroutineScope.startApplication(args: List<String>,
       }
     }
 
-    PluginManagerCore.scheduleDescriptorLoading(asyncScope, zipFilePoolDeferred)
+    PluginManagerCore.scheduleDescriptorLoading(coroutineScope = asyncScope, zipFilePoolDeferred = zipFilePoolDeferred)
   }
 
   // async - handle error separately

@@ -93,7 +93,7 @@ internal suspend fun initUi(isHeadless: Boolean) {
   }
 }
 
-internal fun CoroutineScope.schedulePreloadingLafClasses() {
+private fun CoroutineScope.schedulePreloadingLafClasses() {
   launch(CoroutineName("LaF class preloading") + Dispatchers.IO) {
     val classLoader = AppStarter::class.java.classLoader
     // preload class not in EDT
@@ -109,48 +109,24 @@ internal fun CoroutineScope.schedulePreloadingLafClasses() {
 }
 
 internal fun CoroutineScope.scheduleInitAwtToolkitAndEventQueue(lockSystemDirsJob: Job, busyThread: Thread, isHeadless: Boolean): Job {
-  return launch {
+  val task = launch {
     // this should happen before UI initialization - if we're not going to show the UI (in case another IDE instance is already running),
     // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
-    initAwtToolkit(lockSystemDirsJob, busyThread, isHeadless)
+    lockSystemDirsJob.join()
+
+    launch(CoroutineName("initAwtToolkit")) {
+      initAwtToolkit(busyThread)
+    }
+
+    // IdeaLaF uses AllIcons - icon manager must be activated
+    if (!isHeadless) {
+      launch(CoroutineName("icon manager activation")) {
+        IconManager.activate(CoreIconManager())
+      }
+    }
 
     withContext(RawSwingDispatcher) {
       patchSystem(isHeadless)
-    }
-  }
-}
-
-private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Thread, isHeadless: Boolean) {
-  launch(CoroutineName("initAwtToolkit")) {
-    lockSystemDirsJob.join()
-
-    checkHiDPISettings()
-    blockATKWrapper()
-
-    @Suppress("SpellCheckingInspection")
-    System.setProperty("sun.awt.noerasebackground", "true")
-    // mute system Cmd+`/Cmd+Shift+` shortcuts on macOS to avoid a conflict with corresponding platform actions (JBR-specific option)
-    System.setProperty("apple.awt.captureNextAppWinKey", "true")
-
-    subtask("awt toolkit creating") {
-      Toolkit.getDefaultToolkit()
-    }
-
-    subtask("awt auto shutdown configuring") {
-      /*
-      Make EDT to always persist while the main thread is alive. Otherwise, it's possible to have EDT being
-      terminated by [AWTAutoShutdown], which will break a `ReadMostlyRWLock` instance.
-      [AWTAutoShutdown.notifyThreadBusy(Thread)] will put the main thread into the thread map,
-      and thus will effectively disable auto shutdown behavior for this application.
-      */
-      AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
-    }
-  }
-
-  // IdeaLaF uses AllIcons - icon manager must be activated
-  if (!isHeadless) {
-    launch(CoroutineName("icon manager activation")) {
-      IconManager.activate(CoreIconManager())
     }
   }
 
@@ -159,6 +135,30 @@ private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Th
     // preload class not in EDT
     Class.forName(IdeEventQueue::class.java.name, true, classLoader)
     Class.forName(AWTExceptionHandler::class.java.name, true, classLoader)
+  }
+  schedulePreloadingLafClasses()
+  return task
+}
+
+private suspend fun initAwtToolkit(busyThread: Thread) {
+  checkHiDPISettings()
+  blockATKWrapper()
+
+  @Suppress("SpellCheckingInspection")
+  System.setProperty("sun.awt.noerasebackground", "true")
+  // mute system Cmd+`/Cmd+Shift+` shortcuts on macOS to avoid a conflict with corresponding platform actions (JBR-specific option)
+  System.setProperty("apple.awt.captureNextAppWinKey", "true")
+
+  subtask("awt toolkit creating") {
+    Toolkit.getDefaultToolkit()
+  }
+
+  subtask("awt auto shutdown configuring") {
+    // Make EDT to always persist while the main thread is alive.
+    // Otherwise, it's possible to have EDT being terminated by [AWTAutoShutdown], which will break a `ReadMostlyRWLock` instance.
+    // [AWTAutoShutdown.notifyThreadBusy(Thread)] will put the main thread into the thread map,
+    // and thus will effectively disable auto shutdown behavior for this application.
+    AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
   }
 }
 
