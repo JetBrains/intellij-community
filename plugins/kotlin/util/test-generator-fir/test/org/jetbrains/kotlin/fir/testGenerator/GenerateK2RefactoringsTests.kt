@@ -40,7 +40,7 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("refactoring/bindToElement/superTypeReference")
             model("refactoring/bindToElement/delegatedSuperTypeReference")
             model("refactoring/bindToElement/annotationReference")
-            model("refactoring/bindToElement/import", isRecursive = false)
+            model("refactoring/bindToElement/import")
         }
     }
 

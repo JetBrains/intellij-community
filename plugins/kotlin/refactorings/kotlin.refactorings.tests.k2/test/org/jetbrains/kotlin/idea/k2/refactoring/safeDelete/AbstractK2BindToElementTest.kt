@@ -4,35 +4,30 @@ package org.jetbrains.kotlin.idea.k2.refactoring.safeDelete
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
-abstract class AbstractK2BindToElementTest : KotlinLightCodeInsightFixtureTestCase() {
+abstract class AbstractK2BindToElementTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
     override fun isFirPlugin() = true
 
-    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
-
     @OptIn(KtAllowAnalysisOnEdt::class)
-    protected fun doTest(path: String) {
-        myFixture.copyDirectoryToProject("", "")
-        val file = myFixture.configureByFile(path)
-        val elem = file.findElementAt(myFixture.caretOffset) ?: error("Couldn't find element at caret")
+    override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) = allowAnalysisOnEdt {
+        val mainFile = files.first()
+        myFixture.configureFromExistingVirtualFile(mainFile.virtualFile)
+        val elem = mainFile.findElementAt(myFixture.caretOffset) ?: error("Couldn't find element at caret")
         val nameReference = elem.parentOfType<KtSimpleNameExpression>(withSelf = true)
             ?: error("Element at caret isn't of type 'KtSimpleNameExpression'")
         val bindTarget = findElementToBind()?.unwrapped ?: error("Could not find element to bind")
         myFixture.project.executeWriteCommand("bindToElement") {
-            allowAnalysisOnEdt {
-                nameReference.mainReference.bindToElement(bindTarget)
-            }
+            nameReference.mainReference.bindToElement(bindTarget)
         }
         myFixture.checkResultByFile("${myFixture.file.name}.after")
     }
